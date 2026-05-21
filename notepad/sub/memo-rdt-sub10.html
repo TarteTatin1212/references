@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕別冊S10 データ入出力とファイル形式の理論</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a3540;
+  --paper:#ece8de;
+  --paper-2:#d8d4c6;
+  --accent:#6a8590;
+  --accent-2:#8aa0a8;
+  --accent-3:#a07050;
+  --muted:#707a82;
+  --line:#c2c0b4;
+  --code-bg:#252a32;
+  --code-text:#e6e2d6;
+  --panel-bg:#f3eee2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✧";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.18;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.tip{background:rgba(106,133,144,0.10);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.S10</span>
+    <span class="kind-tag">別冊 ── SUB</span>
+    <span class="rdt-tag">DATA I/O</span>
+  </div>
+  <h1>データ入出力と<br>ファイル形式</h1>
+  <div class="subtitle">SUB.10 ── DATA I/O &amp; FILE FORMATS</div>
+  <p class="lead">本編Vol.11 で<b>エクスポート/インポート</b>を実装します。別冊S10では、その土台となる<b>データ入出力の理論</b>を深掘りします。<b>CSV と JSON の違い</b>、<b>文字コード</b>、<b>パースとシリアライズ</b>、<b>取り込み時のバリデーション</b>。「<b>外部とデータをやり取りする</b>」ための知識を、メモのエクスポートを例に身につけます。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 別冊S10で腑に落とす3つの問い</div>
+    <p>① <b>CSV と JSON</b> はどう使い分けるか／② なぜ<b>文字コード（UTF-8）</b>を意識する必要があるのか／③ <b>外部から取り込むデータ</b>を、なぜそのまま信じてはいけないのか — この3問に自分の言葉で答えられたらS10卒業です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 別冊S10のミッション</a></li>
+    <li><a href="#s02">02 エクスポートとインポート</a></li>
+    <li><a href="#s03">03 CSVとJSONの使い分け</a></li>
+    <li><a href="#s04">04 文字コードの罠</a></li>
+    <li><a href="#s05">05 シリアライズとパース</a></li>
+    <li><a href="#s06">06 取り込み時のバリデーション</a></li>
+    <li><a href="#s07">07 部分的な取り込み失敗</a></li>
+    <li><a href="#s08">08 データ入出力あるある失敗</a></li>
+    <li><a href="#s09">09 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>別冊S10のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">別冊S10は<b>「外部とデータをやり取りする設計を理解する」</b>回。本編Vol.11 で<b>メモのエクスポート（書き出し）・インポート（取り込み）</b>を実装します。これまでは<b>アプリ内で完結</b>していましたが、<b>ファイルという「外の世界」</b>と繋がる。新しい注意点が出てきます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">「外の世界」と繋がる</span><span class="tag-desc">新しい責任</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜエクスポート/インポートが必要か</div>
+        <p>使い込むと「<b>メモをバックアップしたい</b>」「<b>別のアプリに移したい</b>」「<b>大量のメモを一気に取り込みたい</b>」というニーズが。これが<b>データ入出力</b>の価値。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 「外」と繋がる難しさ</div>
+        <ul>
+          <li><b>形式</b>：CSV? JSON? どう書き出す</li>
+          <li><b>文字コード</b>：日本語が化けないように</li>
+          <li><b>信頼性</b>：取り込むデータは正しいとは限らない</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 別冊S10のゴール</div>
+        <ul class="check-list">
+          <li>CSV/JSONの使い分けが分かる</li>
+          <li>文字コードの罠を避けられる</li>
+          <li>パース/シリアライズを理解</li>
+          <li>取り込みデータを検証できる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// データ入出力の全体像</span>
+<span class="comment">// ─── これまで（アプリ内で完結）───</span>
+ブラウザ ⇔ アプリ ⇔ DB
+<span class="comment">// → 全部自分の管理下</span>
+
+
+<span class="comment">// ─── Vol.11（外部と繋がる）───</span>
+エクスポート（書き出し）:
+  DB → ファイル（CSV/JSON）→ 外部
+  「メモをバックアップ・移行」
+
+インポート（取り込み）:
+  外部 → ファイル → アプリ → DB
+  「メモを一括登録・復元」
+
+
+<span class="comment">// ─── 外と繋がる3つの注意点 ───</span>
+① 形式（CSV/JSON）
+   → どう表現するか（Section 03）
+
+② 文字コード（UTF-8）
+   → 日本語が化けないか（Section 04）
+
+③ 信頼性
+   → 取り込むデータは信用できない ★★★
+   → 検証が必要（Section 06）
+
+
+<span class="comment">// ─── 「外部データは信じない」が鍵 ───</span>
+<span class="comment">// 自分が作ったデータと違い、</span>
+<span class="comment">// インポートデータは何が来るか不明</span>
+<span class="comment">// → 別冊S6のSQLi、S7の例外と同じ精神</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「外部データは信用しない」が入出力の鉄則</div>
+    <p>データ入出力で最も大事な心構えは<b>「外から来るデータは信用しない」</b>。エクスポート（書き出し）は自分のデータなので安心ですが、<b>インポート（取り込み）は何が来るか分からない</b>——壊れたCSV、不正な値、文字化け、悪意あるデータ。別冊S6のSQLインジェクション、S7の例外設計と同じく、<b>「外部入力は疑ってかかる」</b>。インポートには<b>必ず検証（Section 06）</b>を入れます。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>エクスポートとインポート</h2><span class="en">EXPORT &amp; IMPORT</span></div>
+  <p class="pattern-desc"><b>エクスポート（書き出し）</b>と<b>インポート（取り込み）</b>は、向きが逆。エクスポートは<b>DB→ファイル</b>、インポートは<b>ファイル→DB</b>。難しさも違います。<b>インポートの方が圧倒的に難しい</b>——理由を理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">2つの方向と難易度の違い</span><span class="tag-desc">インポートが難しい</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// エクスポート（書き出し）</div>
+        <p>DBのメモを<b>ファイル形式に変換</b>して出力。<b>自分のデータ</b>なので<b>形式が分かっている</b>。比較的<b>簡単</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// インポート（取り込み）</div>
+        <p>ファイルを<b>読み込んでDBに登録</b>。<b>外から来る</b>ので<b>何が入っているか不明</b>。検証・エラー処理が必要で<b>難しい</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 難易度の比較</div>
+        <table class="compare-tbl">
+          <thead><tr><th></th><th>エクスポート</th><th>インポート</th></tr></thead>
+          <tbody>
+            <tr><td>方向</td><td>DB→ファイル</td><td>ファイル→DB</td></tr>
+            <tr><td>データ源</td><td>自分（信頼）</td><td>外部（不信）</td></tr>
+            <tr><td>難易度</td><td>易</td><td><b>難</b></td></tr>
+            <tr><td>検証</td><td>不要</td><td><b>必須</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// エクスポートとインポート</span>
+<span class="comment">// ─── エクスポート（簡単）───</span>
+DB のメモ
+  ↓ 取得（既存のfindActive等）
+List&lt;Memo&gt;
+  ↓ ファイル形式に変換（シリアライズ）
+CSV/JSON 文字列
+  ↓ ダウンロード
+ユーザーのファイル
+<span class="comment">// → 自分のデータ → 形式が確実 → 簡単 ★</span>
+
+
+<span class="comment">// ─── インポート（難しい）───</span>
+ユーザーのファイル
+  ↓ アップロード
+CSV/JSON 文字列（中身は不明！）
+  ↓ パース（解析）
+  ↓ 【検証】← ここが重要 ★★★
+  ↓ 正しいものだけ
+List&lt;Memo&gt;
+  ↓ DB に登録
+DB
+<span class="comment">// → 外部データ → 何が来るか不明 → 検証必須</span>
+
+
+<span class="comment">// ─── インポートが難しい理由 ───</span>
+壊れたCSV（列が足りない）
+不正な値（タイトルが空、日付が変）
+文字化け（文字コード違い）
+巨大ファイル（メモリ不足）
+重複データ（既存と被る）
+<span class="comment">// → これら全てに対処が必要 ★★★</span>
+<span class="comment">// → 「取り込めない場合」の設計が大事</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — エクスポートから作り、インポートは慎重に</div>
+    <p>実装の順序として<b>「エクスポートを先、インポートを後」</b>が定石。エクスポートは自分のデータを出すだけで<b>簡単・安全</b>。インポートは<b>検証・エラー処理が必要で難しい</b>。まずエクスポートで<b>「どんな形式で出すか」を確定</b>させ、その形式を<b>インポートで受け入れる</b>。本編Vol.11 もこの順序。<b>易しい方から作り、難しい方を慎重に</b>——別冊S2の段階的アプローチです。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>CSVとJSONの使い分け</h2><span class="en">CSV VS JSON</span></div>
+  <p class="pattern-desc">データ形式の代表<b>CSV</b>と<b>JSON</b>。どちらもテキスト形式ですが、得意分野が違います。<b>CSVは表（フラット）、JSONは構造（ネスト）</b>。メモ帳のデータに<b>どちらが向くか</b>を考えます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">CSV と JSON の特性</span><span class="tag-desc">表 vs 構造</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// CSV（カンマ区切り）</div>
+        <ul>
+          <li><b>表形式</b>（行と列）</li>
+          <li>Excelで開ける</li>
+          <li>シンプルだが<b>ネストが苦手</b></li>
+          <li>メモのタグ（複数）が表現しにくい</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// JSON（構造化）</div>
+        <ul>
+          <li><b>階層・配列</b>を表現できる</li>
+          <li>メモ＋タグ（複数）が自然</li>
+          <li>プログラムで扱いやすい</li>
+          <li>Excelでは開けない</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 使い分け</div>
+        <ul>
+          <li><b>CSV</b>：Excelで見たい・単純な表</li>
+          <li><b>JSON</b>：タグ等の構造・完全なバックアップ</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// CSV と JSON の比較</span>
+<span class="comment">// ─── CSV（表形式）───</span>
+id,title,content,category
+1,会議メモ,明日10時,仕事
+2,買い物,牛乳と卵,私用
+<span class="comment">// → シンプル、Excelで開ける</span>
+<span class="comment">// → でもタグ（複数）が困る ★</span>
+<span class="comment">//   tags 列に "重要;急ぎ" と詰める？</span>
+<span class="comment">//   → 区切り文字地獄（別冊S4の教訓）</span>
+
+
+<span class="comment">// ─── JSON（構造化）───</span>
+[
+  {
+    "id": 1,
+    "title": "会議メモ",
+    "content": "明日10時",
+    "category": "仕事",
+    "tags": ["重要", "急ぎ"]  <span class="comment">// 配列で自然 ★</span>
+  },
+  {
+    "id": 2,
+    "title": "買い物",
+    "tags": []
+  }
+]
+<span class="comment">// → タグ（複数）を配列で表現 ★★★</span>
+<span class="comment">// → メモの構造をそのまま保存できる</span>
+
+
+<span class="comment">// ─── メモ帳での使い分け ───</span>
+CSV エクスポート:
+  「Excelで一覧を見たい」
+  → タグは諦めるか ; 区切りで
+
+JSON エクスポート:
+  「完全バックアップ・タグも含めて」
+  → 構造をそのまま保存 ★
+
+<span class="comment">// → 用途で選ぶ（別冊S2のトレードオフ）</span>
+<span class="comment">// → 本編Vol.11 は両方 or どちらかを実装</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — タグ（多対多）があるなら JSON が自然</div>
+    <p>メモ帳には<b>タグ（多対多・別冊S4）</b>があります。これは<b>CSVだと表現が苦しい</b>——1メモに複数タグを「重要;急ぎ」と詰め込むと、別冊S4で学んだ<b>「カンマ区切り地獄」</b>の再来。一方<b>JSON なら配列 <code>["重要","急ぎ"]</code> で自然</b>。「構造のあるデータは JSON、単純な表は CSV」。メモの<b>完全バックアップには JSON</b>が向きます。データの<b>構造に形式を合わせる</b>のがポイントです。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>文字コードの罠</h2><span class="en">CHARACTER ENCODING</span></div>
+  <p class="pattern-desc">日本語を扱うアプリで避けて通れない<b>文字コード</b>。<b>UTF-8</b> が標準ですが、<b>Excel が Shift_JIS を期待する</b>などのズレで<b>文字化け</b>が起きます。仕組みを知れば防げます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">文字コードと文字化け</span><span class="tag-desc">UTF-8 が基本</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 文字コードとは</div>
+        <p>文字を<b>バイト列に変換する規則</b>。同じ「あ」でも、UTF-8 と Shift_JIS では<b>違うバイト</b>になる。<b>書く時と読む時で規則が違うと文字化け</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 標準は UTF-8</div>
+        <p>現代の標準は<b>UTF-8</b>。Web、JSON、多くのシステムが UTF-8。<b>基本は UTF-8 で統一</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// Excel の罠（CSV）</div>
+        <p>Excel は CSV を<b>Shift_JIS（環境による）</b>で開こうとし、UTF-8 の日本語が<b>文字化け</b>することがある。<b>BOM付きUTF-8</b>で回避できる場合も。</p>
+      </div>
+      <div class="code"><span class="code-head">// 文字コードの罠</span>
+<span class="comment">// ─── 文字化けの仕組み ───</span>
+「あ」を UTF-8 で書く → E3 81 82
+それを Shift_JIS で読む → 文字化け ★
+<span class="comment">// → 書く規則と読む規則が違うと化ける</span>
+
+
+<span class="comment">// ─── 基本方針：UTF-8 で統一 ───</span>
+<span class="comment">// 書き出し時に明示的に UTF-8</span>
+response.<span class="fn">setCharacterEncoding</span>(<span class="str">"UTF-8"</span>);
+response.<span class="fn">setContentType</span>(
+  <span class="str">"text/csv; charset=UTF-8"</span>);
+<span class="comment">// → 文字コードを明示する ★★★</span>
+
+
+<span class="comment">// ─── Excel の CSV 文字化け ───</span>
+<span class="comment">// UTF-8 のCSVをExcelで開くと</span>
+<span class="comment">// 日本語が化けることがある（環境依存）</span>
+
+<span class="comment">// 対策①：BOM付きUTF-8</span>
+<span class="comment">//   先頭に EF BB BF を付ける</span>
+<span class="comment">//   → Excelが UTF-8 と認識しやすい</span>
+byte[] bom = {(byte)0xEF, (byte)0xBB,
+              (byte)0xBF};
+
+<span class="comment">// 対策②：JSON を使う（Excelで開かない）</span>
+<span class="comment">//   → 文字化け問題を回避</span>
+
+
+<span class="comment">// ─── ファイル読み込み時も明示 ───</span>
+<span class="comment">// インポート時、UTF-8 で読む</span>
+<span class="kw">new</span> <span class="type">InputStreamReader</span>(
+  inputStream,
+  <span class="type">StandardCharsets</span>.UTF_8);
+<span class="comment">// → 文字コードを指定して読む ★★★</span>
+<span class="comment">// → 指定しないと環境依存で化ける</span>
+
+
+<span class="comment">// ─── 鉄則 ───</span>
+<span class="comment">// 書く時も読む時も「UTF-8」を明示</span>
+<span class="comment">// → 暗黙のデフォルトに頼らない ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 文字コードは「明示する」、デフォルトに頼らない</div>
+    <p>文字化けの最大の原因は<b>「文字コードを指定せず、暗黙のデフォルトに任せる」</b>こと。デフォルトは<b>OS・環境で変わる</b>ので、開発機では動いても本番で化ける。対策はシンプル：<b>書く時も読む時も、明示的に UTF-8 を指定</b>する。<code>StandardCharsets.UTF_8</code> を必ず渡す。「<b>環境のデフォルトを信用しない</b>」——文字コードを明示するだけで、文字化けの大半は防げます。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>シリアライズとパース</h2><span class="en">SERIALIZE &amp; PARSE</span></div>
+  <p class="pattern-desc">データ変換の2つの向き。<b>シリアライズ</b>（オブジェクト→文字列）と<b>パース</b>（文字列→オブジェクト）。エクスポートはシリアライズ、インポートはパース。<b>ライブラリに任せる</b>のが定石です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">シリアライズとパースの方向</span><span class="tag-desc">ライブラリに任せる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの変換</div>
+        <table class="compare-tbl">
+          <thead><tr><th>変換</th><th>向き</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td>シリアライズ</td><td>オブジェクト→文字列</td><td>エクスポート</td></tr>
+            <tr><td>パース</td><td>文字列→オブジェクト</td><td>インポート</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 手書きしない（ライブラリ）</div>
+        <p>CSV/JSONの変換は<b>自前で書かない</b>。ライブラリを使う：</p>
+        <ul>
+          <li><b>JSON</b>：Jackson（Spring標準）</li>
+          <li><b>CSV</b>：OpenCSV / Apache Commons CSV</li>
+        </ul>
+        <p style="margin-top:8px">手書きパースは<b>エスケープ・改行・引用符</b>でハマる（別冊S2のKISS：車輪の再発明をしない）。</p>
+      </div>
+      <div class="code"><span class="code-head">// シリアライズとパース</span>
+<span class="comment">// ─── JSON シリアライズ（エクスポート）───</span>
+<span class="comment">// Jackson（Spring標準）を使う</span>
+<span class="type">ObjectMapper</span> mapper = <span class="kw">new</span> <span class="type">ObjectMapper</span>();
+<span class="type">String</span> json =
+  mapper.<span class="fn">writeValueAsString</span>(memos);
+<span class="comment">// → List&lt;Memo&gt; → JSON文字列 ★</span>
+
+
+<span class="comment">// ─── JSON パース（インポート）───</span>
+<span class="type">List</span>&lt;<span class="type">Memo</span>&gt; memos = mapper.<span class="fn">readValue</span>(
+  json,
+  <span class="kw">new</span> <span class="type">TypeReference</span>&lt;<span class="type">List</span>&lt;<span class="type">Memo</span>&gt;&gt;(){});
+<span class="comment">// → JSON文字列 → List&lt;Memo&gt; ★</span>
+
+
+<span class="comment">// ─── 手書きパースの罠（NG）───</span>
+<span class="comment">// CSVを自前でsplit(",")すると…</span>
+String[] parts = line.<span class="fn">split</span>(<span class="str">","</span>);
+<span class="comment">// → "東京, 大阪" のようにカンマを含む</span>
+<span class="comment">//   値で破綻 ★</span>
+<span class="comment">// → 引用符・改行・エスケープも自前は地獄</span>
+<span class="comment">// → ライブラリに任せる（別冊S2のKISS）★★★</span>
+
+
+<span class="comment">// ─── CSV ライブラリ（OpenCSV例）───</span>
+<span class="comment">// 書き出し</span>
+<span class="type">CSVWriter</span> writer = <span class="kw">new</span> <span class="type">CSVWriter</span>(...);
+writer.<span class="fn">writeNext</span>(<span class="kw">new</span> <span class="type">String</span>[]{
+  <span class="str">"会議, 重要"</span>, <span class="str">"明日10時"</span>});
+<span class="comment">// → カンマを含む値も正しくエスケープ ★</span>
+
+<span class="comment">// 読み込み</span>
+<span class="type">CSVReader</span> reader = <span class="kw">new</span> <span class="type">CSVReader</span>(...);
+<span class="type">String</span>[] row = reader.<span class="fn">readNext</span>();
+<span class="comment">// → 引用符・改行を正しく解釈 ★★★</span>
+
+
+<span class="comment">// ─── 鉄則 ───</span>
+<span class="comment">// CSV/JSON のパースは自前で書かない</span>
+<span class="comment">// → 枯れたライブラリを使う ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — CSV/JSONのパースは「自前で書かない」</div>
+    <p>初学者がやりがちな失敗が<b>「CSVを <code>split(",")</code> で自前パース」</b>。一見動きますが、<b>値にカンマが含まれる（"東京, 大阪"）、改行が入る、引用符のエスケープ</b>で必ず破綻します。CSV/JSON は<b>仕様が意外と複雑</b>。だから<b>枯れたライブラリ（Jackson, OpenCSV）に任せる</b>のが鉄則（別冊S2のKISS・車輪の再発明をしない）。「<b>自分で書くべきでないものは書かない</b>」のも、立派な設計判断です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>取り込み時のバリデーション</h2><span class="en">IMPORT VALIDATION</span></div>
+  <p class="pattern-desc">インポートの核心<b>「取り込むデータを検証する」</b>。外部ファイルは<b>何が入っているか分からない</b>（Section 01）。タイトルが空、列が足りない、不正な値——<b>検証してから登録</b>します。別冊S7の例外、Vol.12のバリデーションに繋がります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">インポートデータの検証</span><span class="tag-desc">信じる前に確かめる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 検証すべきこと</div>
+        <ul>
+          <li><b>形式</b>：列が揃っているか</li>
+          <li><b>必須</b>：タイトルが空でないか</li>
+          <li><b>型</b>：日付が正しい形式か</li>
+          <li><b>長さ</b>：タイトルが長すぎないか</li>
+          <li><b>参照</b>：カテゴリが存在するか</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 既存のバリデーションを活用</div>
+        <p>本編Vol.2 で作った<b>@NotBlank/@Size</b> 等のバリデーション（Vol.12 で本格化）を、<b>インポートデータにも適用</b>。「画面入力もファイル入力も同じルールで検証」。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 検証のタイミング</div>
+        <p><b>DB登録の前</b>に検証。不正なら<b>登録せず、エラーを集めて報告</b>（Section 07）。</p>
+      </div>
+      <div class="code"><span class="code-head">// インポートの検証</span>
+<span class="comment">// ─── 検証の流れ ───</span>
+ファイル
+  ↓ パース
+List&lt;ImportRow&gt;（生データ）
+  ↓ 【1行ずつ検証】★★★
+  - タイトルが空でないか（@NotBlank）
+  - 長さは適切か（@Size）
+  - 日付は正しいか
+  - カテゴリは存在するか
+  ↓ 検証OKのものだけ
+List&lt;Memo&gt;
+  ↓ DB登録
+
+
+<span class="comment">// ─── 検証の実装イメージ ───</span>
+<span class="kw">for</span> (<span class="type">ImportRow</span> row : rows) {
+  <span class="comment">// 必須チェック</span>
+  <span class="kw">if</span> (row.<span class="fn">getTitle</span>() == <span class="kw">null</span>
+      || row.<span class="fn">getTitle</span>().<span class="fn">isBlank</span>()) {
+    errors.<span class="fn">add</span>(<span class="str">"行"</span> + n
+      + <span class="str">": タイトルが空です"</span>);
+    <span class="kw">continue</span>;  <span class="comment">// この行はスキップ</span>
+  }
+  <span class="comment">// 長さチェック</span>
+  <span class="kw">if</span> (row.<span class="fn">getTitle</span>().<span class="fn">length</span>() &gt; <span class="num">100</span>) {
+    errors.<span class="fn">add</span>(<span class="str">"行"</span> + n
+      + <span class="str">": タイトルが長すぎます"</span>);
+    <span class="kw">continue</span>;
+  }
+  <span class="comment">// 検証OK → 登録対象に</span>
+  valid.<span class="fn">add</span>(<span class="fn">toMemo</span>(row));
+}
+<span class="comment">// → 不正な行を除き、正しい行だけ登録 ★★★</span>
+
+
+<span class="comment">// ─── 既存バリデーションの再利用 ───</span>
+<span class="comment">// 画面入力で使う @NotBlank @Size を</span>
+<span class="comment">// インポートデータにも適用できる</span>
+<span class="comment">// → 「入力源が違っても同じルール」★</span>
+<span class="comment">// → 本編Vol.12 のバリデーションと統合</span>
+
+
+<span class="comment">// ─── 別冊S6,S7 とのつながり ───</span>
+<span class="comment">// S6：外部入力はSQLインジェクション対策</span>
+<span class="comment">// S7：不正データは例外で扱う</span>
+<span class="comment">// S10：取り込みデータは検証してから</span>
+<span class="comment">// → 「外部入力は疑う」が一貫 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「画面入力」も「ファイル入力」も同じ検証ルールで</div>
+    <p>インポートのバリデーションは、<b>画面入力と同じルール</b>を適用するのが理想。「タイトルは必須・100文字以内」というルールは、<b>入力源（画面/ファイル）に関わらず一貫</b>させるべき。本編Vol.2 で作り Vol.12 で本格化するバリデーションを、<b>インポートでも再利用</b>する。「<b>どこから来たデータでも、同じ品質基準で守る</b>」。検証ロジックを一元化すれば、漏れもなくなります。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>部分的な取り込み失敗</h2><span class="en">PARTIAL IMPORT FAILURE</span></div>
+  <p class="pattern-desc">インポートで<b>「100行中3行が不正」</b>だったらどうするか。別冊S9の<b>部分的失敗の3方針</b>がここでも登場。<b>全部やめる/正しい分だけ取り込む/結果を報告</b>。インポートでは<b>「報告」が特に重要</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">取り込み失敗の方針</span><span class="tag-desc">報告が重要</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3方針（別冊S9の再登場）</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">方針A</span>
+            <div class="name">全か無か</div>
+            <div class="desc">1行でも不正なら<b>全部取り込まない</b>。厳格。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">方針B</span>
+            <div class="name">正しい分だけ</div>
+            <div class="desc">不正行をスキップし<b>正しい行だけ登録</b>。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">方針C</span>
+            <div class="name">報告する</div>
+            <div class="desc">「97行取り込み、3行失敗（理由）」と<b>結果を返す</b>。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// インポートの推奨</div>
+        <p><b>方針B＋C</b>が親切：正しい行は取り込み、<b>失敗した行と理由を報告</b>。ユーザーは「どこを直せばいいか」分かる。</p>
+      </div>
+      <div class="code"><span class="code-head">// 部分的な取り込み失敗</span>
+<span class="comment">// ─── 方針B+C：取り込み＋報告（推奨）───</span>
+<span class="type">ImportResult</span> result =
+  importService.<span class="fn">importMemos</span>(file);
+
+result の中身：
+  成功: 97件
+  失敗: 3件
+    - 行5: タイトルが空
+    - 行12: カテゴリ「xxx」が存在しない
+    - 行88: 日付の形式が不正
+
+<span class="comment">// → 正しい97件は取り込む（方針B）</span>
+<span class="comment">// → 失敗3件を理由付きで報告（方針C）★★★</span>
+<span class="comment">// → ユーザーは「どこを直すか」分かる</span>
+
+
+<span class="comment">// ─── 結果のUI（別冊S8,S9）───</span>
+┌──────────────────────────────┐
+│ インポート結果                 │
+│ ✓ 97件を取り込みました         │
+│ ✗ 3件は取り込めませんでした    │
+│   行5: タイトルが空            │
+│   行12: カテゴリが存在しない    │
+│   行88: 日付が不正            │
+└──────────────────────────────┘
+<span class="comment">// → 透明性が高い（別冊S8の安心感）★</span>
+
+
+<span class="comment">// ─── 方針A（全か無か）の場合 ───</span>
+<span class="comment">// 「1行でも不正なら全部やめる」</span>
+<span class="comment">// → @Transactional でロールバック（別冊S5）</span>
+<span class="comment">// → 厳格だが「97件も無駄」になる</span>
+<span class="comment">// → 用途次第（給与データ等の厳格な場面向け）</span>
+
+
+<span class="comment">// ─── 判断（別冊S1,S9）───</span>
+メモのインポート → 方針B+C（柔軟・親切）
+厳格な業務データ → 方針A（全か無か）
+<span class="comment">// → 要求とユーザーの期待で選ぶ ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — インポートは「何が失敗したか」を必ず伝える</div>
+    <p>インポートで最悪なのは<b>「黙って一部が取り込まれない」</b>こと。ユーザーは「100件入れたのに97件しかない、なぜ?」と混乱する。だから<b>「97件成功、3件失敗（行5: タイトルが空...）」と理由付きで報告</b>する（方針C）。これは別冊S7の<b>「ユーザーに分かりやすく伝える」</b>、別冊S8の<b>「安心感」</b>の実践。<b>失敗を隠さず、直し方が分かるように伝える</b>のが親切なインポートです。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>データ入出力あるある失敗</h2><span class="en">DATA I/O PITFALLS</span></div>
+  <p class="pattern-desc">データ入出力で<b>初心者が踏みやすい失敗</b>を5つ。<b>文字化け・自前パース・検証なし</b>など。別冊S2・S6・S7・S9の知識で回避できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">データ入出力あるある 5選</span><span class="tag-desc">先人の轍を踏まない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 文字コードを指定せず文字化け ★★★</b></p>
+        <ul>
+          <li>デフォルト任せで日本語が化ける</li>
+          <li>対処：UTF-8 を明示（Section 04）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② CSVを split(",") で自前パース ★★★</b></p>
+        <ul>
+          <li>カンマ・引用符・改行で破綻</li>
+          <li>対処：ライブラリを使う（Section 05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ インポートデータを検証せず登録 ★★★</b></p>
+        <ul>
+          <li>不正データがそのままDBに</li>
+          <li>対処：登録前に検証（Section 06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 失敗を黙って無視</b></p>
+        <ul>
+          <li>一部取り込めなかったのに報告なし</li>
+          <li>対処：成功/失敗を報告（Section 07）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 巨大ファイルでメモリ不足</b></p>
+        <ul>
+          <li>全行を一度にメモリに載せる</li>
+          <li>対処：ストリーム処理・件数制限（別冊S9の大量配慮）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// あるある失敗の対処</span>
+<span class="comment">// ─── ① 文字コードの明示 ───</span>
+<span class="ann">NG:</span> new InputStreamReader(in);
+<span class="comment">// → デフォルト文字コード（環境依存）★</span>
+<span class="ann">OK:</span> new InputStreamReader(in,
+       StandardCharsets.UTF_8);
+<span class="comment">// → UTF-8 を明示 ★★★</span>
+
+
+<span class="comment">// ─── ② 自前パースをやめる ───</span>
+<span class="ann">NG:</span> line.split(",")
+<span class="comment">// → "東京, 大阪" で破綻 ★</span>
+<span class="ann">OK:</span> OpenCSV / Jackson を使う
+<span class="comment">// → エスケープ等を正しく処理 ★★★</span>
+
+
+<span class="comment">// ─── ③ 検証してから登録 ───</span>
+<span class="ann">NG:</span>
+for (row : rows)
+  mapper.insert(toMemo(row));  <span class="comment">// 無検証 ★</span>
+<span class="ann">OK:</span>
+for (row : rows) {
+  if (!valid(row)) { errors.add(...); continue; }
+  valid.add(toMemo(row));
+}
+mapper.bulkInsert(valid);  <span class="comment">// 検証済みのみ ★★★</span>
+
+
+<span class="comment">// ─── 良いデータ入出力の条件 ───</span>
+✓ 文字コードを明示（UTF-8）
+✓ パースはライブラリ
+✓ インポートは検証してから
+✓ 失敗を報告する
+✓ 大量はストリーム/件数制限 ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — データ入出力は「これまでの理論」が集まる場所</div>
+    <p>データ入出力は、別冊の理論が再集合する分野です。<b>S2</b>（KISS：自前パースしない）、<b>S6</b>（外部入力の安全性）、<b>S7</b>（失敗の例外・報告）、<b>S9</b>（大量データ配慮・部分失敗の方針）が全て関わる。新しく覚えることは「文字コード」「形式（CSV/JSON）」くらいで、<b>残りはこれまでの理論の応用</b>。積み上げてきた知識が、新しい場面でも効くことを実感できる回です。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">別冊S10 で<b>データ入出力とファイル形式の理論</b>が頭に入りました。本編Vol.11 で<b>エクスポート/インポート</b>を実装するとき、「なぜこの設計か」が見えるはずです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">S10 達成チェック</span><span class="tag-desc">データ入出力を語れる人になった</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>エクスポートとインポートの難易度差を説明できる</li>
+          <li>CSV と JSON を使い分けられる</li>
+          <li>タグ（多対多）は JSON が自然と分かる</li>
+          <li>文字コードを明示する重要性を理解</li>
+          <li>パースは自前で書かずライブラリと分かる</li>
+          <li>インポートは検証してから登録すると分かる</li>
+          <li>部分失敗は報告すると親切と理解</li>
+          <li>「外部データは信用しない」が腑に落ちた</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 別冊S10 で手に入れた入出力理論</span>
+✓ <span class="str">"エクスポートは易、インポートは難"</span>
+
+✓ <span class="str">"構造のあるデータは JSON、表は CSV"</span>
+
+✓ <span class="str">"文字コードは UTF-8 を明示"</span>
+
+✓ <span class="str">"パースは自前で書かずライブラリ"</span>
+
+✓ <span class="str">"インポートは検証してから登録"</span>
+
+✓ <span class="str">"部分失敗は理由付きで報告"</span>
+
+✓ <span class="str">"外部データは信用しない"</span>
+
+
+<span class="comment">// あなたは「データ入出力を語れる」</span>
+<span class="comment">// エンジニアに近づいた ★★★</span>
+
+<span class="comment">// 次回 本編Vol.11：</span>
+<span class="comment">//   エクスポート/インポート</span>
+<span class="comment">//   CSV/JSON書き出し・読み込み</span>
+<span class="comment">//   検証・文字コード・部分失敗の報告</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── 本編 VOL.11 へ</div>
+    <p>別冊S10 で<b>「データ入出力とファイル形式の理論」</b>を獲得しました。次は本編Vol.11「<b>エクスポート/インポート</b>」。メモを<b>CSV/JSON でファイルに書き出し</b>、<b>ファイルから取り込む</b>機能を実装します。別冊S10で学んだ<b>「文字コードの明示」「ライブラリでパース」「インポートの検証」「部分失敗の報告」</b>が、実装で形になります。さらに別冊S6（外部入力）・S7（例外）・S9（部分失敗）の知識も活きる。<b>本編Vol.11 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>SUB.10 / 14 ── DATA I/O &amp; FILE FORMATS（別冊）</span>
+</footer>
+
+</body>
+</html>

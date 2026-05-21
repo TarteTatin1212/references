@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.14 別冊 外部キー制約と業務</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a302a;
+  --paper:#ecede7;
+  --paper-2:#dce0d2;
+  --accent:#d4dabe;
+  --accent-2:#dde2c9;
+  --accent-3:#767c66;
+  --muted:#737a72;
+  --line:#c4ccba;
+  --code-bg:#1f231f;
+  --code-text:#ecede7;
+  --panel-bg:#f4f6ef;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✧';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.26;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--ink);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent-3)}
+.toc a:hover{color:var(--accent-3)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent-3);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#9aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(212,218,190,0.24);border-left:3px solid var(--accent-3);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent-3);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent-3);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.bad-good{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.bad-good .b,.bad-good .g{background:#fff;border:1px solid var(--line);padding:12px 14px}
+.bad-good .b{border-left:3px solid #b05050}
+.bad-good .g{border-left:3px solid var(--accent-3)}
+.bad-good .ph{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.15em;margin-bottom:6px}
+.bad-good .b .ph{color:#b05050}
+.bad-good .g .ph{color:var(--accent-3)}
+.bad-good .ttl{font-family:'Shippori Mincho',serif;font-size:14px;font-weight:700;color:var(--accent-3);margin-bottom:6px}
+.bad-good p{font-size:13px}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .bad-good{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.14 / 15</span>
+    <span class="kind-tag">別冊</span>
+  </div>
+  <h1>外部キー制約と<br>業務</h1>
+  <div class="subtitle">FOREIGN KEY IN PRACTICE ── DELETE DESIGN</div>
+  <p class="lead">
+    本編Vol.14で外部キー制約と <code style="font-family:'JetBrains Mono'">ON DELETE</code> を学びました。別冊S14では、業務システムで<b>「削除をどう設計するか」</b>の判断力を養います。<br>
+    キーワードは<b>「参照整合性の設計思想」「CASCADEの罠と論理削除」「複合外部キー」「制約の運用」「正規化との関係」</b>。<br>
+    削除は<b>「取り返しがつかない操作」</b>。だからこそ業務システムでは慎重な設計が求められます。<br>
+    Cの<b>完成フェーズの締めくくり</b>として、データ設計の総合力を固めます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#theme">01 この別冊のテーマ</a></li>
+    <li><a href="#integrity">02 参照整合性の設計思想</a></li>
+    <li><a href="#cascade-trap">03 CASCADEの罠と論理削除</a></li>
+    <li><a href="#delete-design">04 削除設計の判断フロー</a></li>
+    <li><a href="#composite">05 複合外部キーとインデックス</a></li>
+    <li><a href="#normalization">06 正規化との関係</a></li>
+    <li><a href="#operation">07 制約の運用とマイグレーション</a></li>
+    <li><a href="#trouble">08 外部キーのハマりどころ</a></li>
+    <li><a href="#next">09 次の本編へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="theme">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この別冊のテーマ</h2>
+    <span class="en">THEME</span>
+  </div>
+  <p class="pattern-desc">外部キー制約は<b>「データの正しさを DB が守る」</b>強力な仕組み。しかし<b>削除の挙動（特に CASCADE）</b>は事故の元にもなります。業務での<b>「賢い削除設計」</b>を学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-delete-design</span>
+      <span class="tag-desc">削除設計の重要性</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 削除が難しい理由</div>
+        <div class="role-card">
+          <span class="label">理由1</span>
+          <div class="name">取り返しがつかない</div>
+          <div class="desc">削除したデータは基本<b>戻らない</b>。「うっかり削除」が大事故に直結。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">理由2</span>
+          <div class="name">関連データへの波及</div>
+          <div class="desc">親を消すと子も消える（CASCADE）。<b>連鎖の範囲</b>を正しく把握しないと予想外の被害。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">理由3</span>
+          <div class="name">監査・履歴の要求</div>
+          <div class="desc">業務では「<b>誰がいつ消したか</b>」「<b>過去にどんなデータがあったか</b>」を残す要求が多い。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">理由4</span>
+          <div class="name">法令・コンプライアンス</div>
+          <div class="desc">「一定期間データを保持する義務」「個人情報は削除する義務」など、<b>法的要件</b>も絡む。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で答える5つの問い</span>
+
+<span class="comment">// 問1: 参照整合性とは何を守る？</span>
+<span class="comment">//   → 「親なき子」を作らせない</span>
+
+<span class="comment">// 問2: CASCADE はいつ危険？</span>
+<span class="comment">//   → 連鎖が予想外に広がる時</span>
+
+<span class="comment">// 問3: 論理削除 vs 物理削除？</span>
+<span class="comment">//   → 業務は論理削除が主流</span>
+
+<span class="comment">// 問4: 削除挙動はどう選ぶ？</span>
+<span class="comment">//   → データの関係性と要件で</span>
+
+<span class="comment">// 問5: 外部キーと正規化の関係は？</span>
+<span class="comment">//   → 正規化が外部キーを生む</span>
+
+
+<span class="comment">// 結論を先に：</span>
+<span class="comment">// ・外部キーは「親なき子」を防ぐ</span>
+<span class="comment">// ・CASCADE は便利だが慎重に</span>
+<span class="comment">// ・業務は論理削除が安全</span>
+<span class="comment">// ・削除設計は要件次第</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="integrity">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>参照整合性の設計思想</h2>
+    <span class="en">REFERENTIAL INTEGRITY</span>
+  </div>
+  <p class="pattern-desc"><b>参照整合性</b>とは「<b>参照は必ず実在する対象を指す</b>」という原則。外部キー制約はこれを DB が保証する仕組み。なぜ重要かを設計思想から理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">integrity-philosophy</span>
+      <span class="tag-desc">なぜ参照整合性が大事か</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 参照整合性が守る3つのこと</div>
+        <div class="role-card">
+          <span class="label">守ること1</span>
+          <div class="name">孤児データを作らない</div>
+          <div class="desc">「存在しない科目を参照する記録」を防ぐ。集計やJOINで<b>不可解な動作</b>を起こさない。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">守ること2</span>
+          <div class="name">アプリのバグから守る</div>
+          <div class="desc">アプリ側のバグで不正なデータを書こうとしても、<b>DBが最後の砦</b>として拒否。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">守ること3</span>
+          <div class="name">データの信頼性を担保</div>
+          <div class="desc">「このデータベースの参照は全て正しい」と<b>保証</b>される。分析・移行・連携が安全に。</div>
+        </div>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">「DBで守るか、アプリで守るか」論争</div>
+          <p>「外部キー制約を使わず、アプリ側でチェックすればいい」という考え方もあります。マイクロサービスや超大規模では外部キーを使わないことも。但し<b>「DBが守る方が確実」</b>が一般論。Cでは<b>外部キーを使う</b>標準的な設計を学びます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 参照整合性の3つの保証</span>
+
+<span class="comment">// ─── 保証1: INSERT時 ───</span>
+<span class="comment">// 子を追加する時、親が存在するか確認</span>
+
+INSERT INTO study_records
+  (subject_id, ...) VALUES (999, ...);
+<span class="comment">// → subject_id=999 が subjects になければ拒否</span>
+
+
+<span class="comment">// ─── 保証2: UPDATE時 ───</span>
+<span class="comment">// 子の外部キーを変更する時も確認</span>
+
+UPDATE study_records
+SET subject_id = 999 WHERE id = 1;
+<span class="comment">// → 999 が存在しなければ拒否</span>
+
+
+<span class="comment">// ─── 保証3: DELETE時 ───</span>
+<span class="comment">// 親を消す時、子をどうするか制御</span>
+
+DELETE FROM subjects WHERE id = 1;
+<span class="comment">// → ON DELETE の設定に従う</span>
+
+
+<span class="comment">// ─── 外部キーなしの悲劇（実例）───</span>
+
+<span class="comment">// 外部キーがないシステムで起きたこと：</span>
+
+<span class="comment">// 1. アプリのバグで subject_id=0 の記録が大量発生</span>
+<span class="comment">// 2. 集計画面で「不明な科目」が表示される</span>
+<span class="comment">// 3. 原因調査に何日もかかる</span>
+<span class="comment">// 4. データ修正の特別バッチを作る羽目に</span>
+
+<span class="comment">// → 外部キーがあれば「最初から防げた」</span>
+
+
+<span class="comment">// ─── 設計思想 ───</span>
+<span class="comment">// 「不正なデータは、そもそも</span>
+<span class="comment">//  保存させない」</span>
+
+<span class="comment">// 「後で掃除する」より</span>
+<span class="comment">// 「最初から汚さない」が鉄則</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="cascade-trap">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>CASCADEの罠と論理削除</h2>
+    <span class="en">CASCADE TRAP & SOFT DELETE</span>
+  </div>
+  <p class="pattern-desc">本編で採用した <code>CASCADE</code> は便利ですが<b>業務では危険</b>な面も。代わりに<b>論理削除（ソフトデリート）</b>が主流です。両者を深く比較します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">cascade-vs-soft</span>
+      <span class="tag-desc">物理削除と論理削除</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 物理削除 vs 論理削除</div>
+        <div class="role-card">
+          <span class="label">物理削除</span>
+          <div class="name">DELETE文でデータを消す（Vol.14本編）</div>
+          <div class="desc">DBから<b>本当に消える</b>。CASCADE で連鎖削除。シンプルだが<b>復元不可</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">論理削除</span>
+          <div class="name">deleted_at 等で「削除済み」を記録</div>
+          <div class="desc">データは残し、<b>「削除フラグ」で見えなくする</b>。復元可能・履歴が残る。業務の主流。</div>
+        </div>
+        <table class="compare-tbl" style="margin-top:12px">
+          <tr><th>観点</th><th>物理</th><th>論理</th></tr>
+          <tr><td>復元</td><td>不可</td><td>可能</td></tr>
+          <tr><td>履歴</td><td>残らない</td><td>残る</td></tr>
+          <tr><td>実装</td><td>簡単</td><td>やや複雑</td></tr>
+          <tr><td>データ量</td><td>減る</td><td>増え続ける</td></tr>
+        </table>
+        <p style="margin-top:12px;font-size:13.5px"><b>業務システムは論理削除が主流</b>。「消したつもりが取り返せない」リスクを避けるため。</p>
+      </div>
+      <div class="code"><span class="code-head">// 論理削除の実装</span>
+
+<span class="comment">// ─── 列を追加 ───</span>
+ALTER TABLE subjects
+  ADD COLUMN deleted_at DATETIME DEFAULT NULL;
+
+
+<span class="comment">// ─── 「削除」= UPDATE ───</span>
+UPDATE subjects
+SET deleted_at = NOW()
+WHERE id = 1;
+<span class="comment">// → 物理的には残っている</span>
+<span class="comment">// → deleted_at に日時が入った</span>
+
+
+<span class="comment">// ─── 「表示」は未削除のみ ───</span>
+SELECT * FROM subjects
+WHERE deleted_at IS NULL;
+<span class="comment">// → 削除済みは出てこない</span>
+
+
+<span class="comment">// ─── 「復元」も簡単 ───</span>
+UPDATE subjects
+SET deleted_at = NULL
+WHERE id = 1;
+<span class="comment">// → 復活！</span>
+
+
+<span class="comment">// ─── CASCADE の罠（実例）───</span>
+
+<span class="comment">// ECサイトで「商品カテゴリ」を削除したら</span>
+<span class="comment">// CASCADE で：</span>
+<span class="comment">//   ・カテゴリ内の全商品が消えた</span>
+<span class="comment">//   ・その商品の全注文履歴も消えた</span>
+<span class="comment">//   ・売上データが吹き飛んだ</span>
+
+<span class="comment">// → 「カテゴリ1つ」のつもりが大惨事</span>
+
+
+<span class="comment">// ─── 論理削除なら ───</span>
+
+<span class="comment">// カテゴリに deleted_at をセットするだけ</span>
+<span class="comment">// → 商品も注文も無事</span>
+<span class="comment">// → 表示だけ消える</span>
+<span class="comment">// → 間違えても復元できる</span>
+
+
+<span class="comment">// ─── Cの方針 ───</span>
+<span class="comment">// 学習のため物理削除＋CASCADEを学んだ。</span>
+<span class="comment">// 実務では「論理削除を検討する」</span>
+<span class="comment">// 引き出しを持っておく。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>CASCADE は本当に必要か</b>」を常に問うこと。「親子が完全に運命共同体」（注文と注文明細など）なら CASCADE が適切。しかし「<b>記録・履歴として価値がある</b>」データは、安易に CASCADE で消すと後悔します。<b>迷ったら RESTRICT か論理削除</b>。「消せる」より「消えない」方が安全な場面が業務では多い。</p>
+  </div>
+</section>
+
+<section id="delete-design">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>削除設計の判断フロー</h2>
+    <span class="en">DELETE DESIGN FLOW</span>
+  </div>
+  <p class="pattern-desc">「どの削除方式を選ぶか」を整理した<b>判断フロー</b>。業務でこの判断を求められた時の指針になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">delete-decision</span>
+      <span class="tag-desc">削除方式の選び方</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 判断のステップ</div>
+        <div style="background:#fff;border:1px solid var(--line);padding:14px;margin:8px 0">
+          <div style="font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px">Q1. 復元・履歴が必要?</div>
+          <div style="font-size:13px;padding-left:12px;border-left:2px solid var(--accent);margin-bottom:6px">YES → <b>論理削除</b></div>
+          <div style="font-size:13px;padding-left:12px;border-left:2px solid var(--accent)">NO → 次へ（物理削除）</div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--line);padding:14px;margin:8px 0">
+          <div style="font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px">Q2. 子データは親と運命共同体?</div>
+          <div style="font-size:13px;padding-left:12px;border-left:2px solid var(--accent);margin-bottom:6px">YES → <b>ON DELETE CASCADE</b></div>
+          <div style="font-size:13px;padding-left:12px;border-left:2px solid var(--accent)">NO → 次へ</div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--line);padding:14px;margin:8px 0">
+          <div style="font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px">Q3. 子があれば削除を止めたい?</div>
+          <div style="font-size:13px;padding-left:12px;border-left:2px solid var(--accent);margin-bottom:6px">YES → <b>ON DELETE RESTRICT</b></div>
+          <div style="font-size:13px;padding-left:12px;border-left:2px solid var(--accent)">子を残したい → <b>SET NULL</b></div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 業務での具体例</span>
+
+<span class="comment">// ─── 例1: 注文と注文明細 ───</span>
+<span class="comment">// 注文を消したら明細も不要</span>
+<span class="comment">// → 運命共同体 → CASCADE</span>
+<span class="comment">// （ただし注文は普通「論理削除」が多い）</span>
+
+
+<span class="comment">// ─── 例2: 顧客と注文履歴 ───</span>
+<span class="comment">// 顧客を消しても注文履歴は残したい</span>
+<span class="comment">// （売上分析・法的保持義務）</span>
+<span class="comment">// → RESTRICT or 論理削除</span>
+
+
+<span class="comment">// ─── 例3: 部署と社員 ───</span>
+<span class="comment">// 部署を消しても社員は残る</span>
+<span class="comment">// （別部署に異動するまで未所属）</span>
+<span class="comment">// → SET NULL（部署なし状態に）</span>
+
+
+<span class="comment">// ─── 例4: 学習記録アプリ（Vol.14）───</span>
+<span class="comment">// 科目を消したら記録も不要</span>
+<span class="comment">// （個人の学習記録・履歴義務なし）</span>
+<span class="comment">// → CASCADE（本編で採用）</span>
+<span class="comment">// ※ 実務なら論理削除も検討</span>
+
+
+<span class="comment">// ─── 判断の優先順位 ───</span>
+
+<span class="comment">// 1. まず「復元・履歴が要るか」</span>
+<span class="comment">//    → 要るなら論理削除一択</span>
+
+<span class="comment">// 2. 物理削除なら「連鎖の妥当性」</span>
+<span class="comment">//    → CASCADE / RESTRICT / SET NULL</span>
+
+<span class="comment">// 3. 迷ったら安全側（RESTRICT/論理）</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="composite">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>複合外部キーとインデックス</h2>
+    <span class="en">COMPOSITE FK & INDEX</span>
+  </div>
+  <p class="pattern-desc">外部キーには<b>複数列にまたがる「複合外部キー」</b>もあります。また外部キー列には<b>インデックス</b>が重要。発展的だが実務で役立つ知識。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">composite-index</span>
+      <span class="tag-desc">複合外部キーとINDEX</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 押さえるべき2点</div>
+        <div class="role-card">
+          <span class="label">複合外部キー</span>
+          <div class="name">複数列で1つの外部キー</div>
+          <div class="desc">親の主キーが複合キー（複数列）の場合、子も同じ列数で参照。「テナントID＋ユーザーID」など。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">外部キーとINDEX</span>
+          <div class="name">外部キー列にはインデックスを</div>
+          <div class="desc">外部キー列は<b>JOINや参照チェックで頻繁に使われる</b>。インデックスがないと遅い。MySQLは外部キー作成時に<b>自動でインデックスを作る</b>ことが多い。</div>
+        </div>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">削除時のパフォーマンス</div>
+          <p>CASCADE 削除で大量の子を消す時、子テーブルの外部キー列にインデックスがないと<b>非常に遅くなる</b>。「親1件削除に何分もかかる」事故も。<b>外部キー列のインデックスは必須</b>と考える。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 複合外部キーとインデックス</span>
+
+<span class="comment">// ─── 複合外部キーの例 ───</span>
+
+<span class="comment">// 親：複合主キー</span>
+CREATE TABLE enrollments (
+  tenant_id INT,
+  user_id INT,
+  ...
+  PRIMARY KEY (tenant_id, user_id)
+);
+
+<span class="comment">// 子：複合外部キーで参照</span>
+CREATE TABLE submissions (
+  id INT PRIMARY KEY,
+  tenant_id INT,
+  user_id INT,
+  ...
+  FOREIGN KEY (tenant_id, user_id)
+  REFERENCES enrollments(tenant_id, user_id)
+);
+
+<span class="comment">// → 2列セットで参照整合性を保証</span>
+
+
+<span class="comment">// ─── 外部キー列のインデックス ───</span>
+
+<span class="comment">// study_records.subject_id は</span>
+<span class="comment">// 外部キー → 自動でインデックスが付く</span>
+<span class="comment">// （MySQL の場合）</span>
+
+<span class="comment">// 確認：</span>
+SHOW INDEX FROM study_records;
+<span class="comment">// → subject_id のインデックスがある</span>
+
+
+<span class="comment">// ─── なぜインデックスが要るか ───</span>
+
+<span class="comment">// 1. JOIN が速くなる</span>
+<span class="comment">//    （subjects と study_records の結合）</span>
+
+<span class="comment">// 2. CASCADE 削除が速くなる</span>
+<span class="comment">//    （親削除時に子を探すのに使う）</span>
+
+<span class="comment">// 3. 参照チェックが速くなる</span>
+<span class="comment">//    （INSERT時の親存在確認）</span>
+
+
+<span class="comment">// → 外部キー = 実質インデックス必須</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="normalization">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>正規化との関係</h2>
+    <span class="en">NORMALIZATION</span>
+  </div>
+  <p class="pattern-desc">外部キーは<b>「正規化」</b>の産物。S1 で学んだ「テーブルを分ける」設計が、外部キーで結ばれる。データ設計の全体像を俯瞰します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">normalization</span>
+      <span class="tag-desc">正規化と外部キー</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 正規化のおさらい</div>
+        <p><b>正規化</b>とは「データの重複をなくし、1つの事実を1箇所に持つ」設計。S1 で学んだ「subjects と study_records を分ける」がまさにこれ。</p>
+        <p style="margin-top:8px">テーブルを分けると、<b>関連を表すために外部キーが必要</b >になる。「正規化 → テーブル分割 → 外部キーで結ぶ」が一連の流れ。</p>
+        <div class="role-card" style="margin-top:12px">
+          <span class="label">非正規化の例</span>
+          <div class="name">1テーブルに全部詰める</div>
+          <div class="desc">「記録テーブルに科目名も色も持つ」→ 科目名変更時に全記録を更新する羽目に。重複・不整合の温床。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">正規化の例</span>
+          <div class="name">科目と記録を分け、外部キーで結ぶ</div>
+          <div class="desc">科目情報は subjects に1箇所。記録は subject_id で参照。科目名変更は1箇所だけ。Cの設計。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 正規化と外部キーの流れ</span>
+
+<span class="comment">// ─── 非正規化（悪い例）───</span>
+
+study_records:
+  id | subject_name | subject_color | minutes
+   1 | Java         | red           | 60
+   2 | Java         | red           | 90
+   3 | Java         | red           | 120
+
+<span class="comment">// 問題：</span>
+<span class="comment">// ・"Java" "red" が何度も重複</span>
+<span class="comment">// ・色を変えたい時、全行を UPDATE</span>
+<span class="comment">// ・打ち間違いで "java" "Java" が混在</span>
+
+
+<span class="comment">// ─── 正規化（良い例・Cの設計）───</span>
+
+subjects:           <span class="comment">// 科目は1箇所</span>
+  id | name | color
+   1 | Java | red
+
+study_records:      <span class="comment">// 参照で繋ぐ</span>
+  id | subject_id | minutes
+   1 |     1      | 60
+   2 |     1      | 90
+   3 |     1      | 120
+
+<span class="comment">// 利点：</span>
+<span class="comment">// ・"Java" は1箇所だけ</span>
+<span class="comment">// ・色変更は subjects の1行だけ</span>
+<span class="comment">// ・subject_id で確実に参照</span>
+
+
+<span class="comment">// ─── 外部キーが繋ぐ ───</span>
+
+study_records.subject_id
+  → subjects.id を参照
+
+<span class="comment">// 正規化でテーブルを分けたから</span>
+<span class="comment">// 外部キーで「関連」を表現する</span>
+
+
+<span class="comment">// ─── 設計の流れ（C全体）───</span>
+
+<span class="comment">// S1: 1対多を見極める（正規化）</span>
+<span class="comment">// M1: 2テーブルを作る</span>
+<span class="comment">// M4: JOIN で関連を取得</span>
+<span class="comment">// M14: 外部キーで整合性を保証</span>
+
+<span class="comment">// → データ設計の一貫した物語</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="operation">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>制約の運用とマイグレーション</h2>
+    <span class="en">OPERATION & MIGRATION</span>
+  </div>
+  <p class="pattern-desc">外部キー制約は<b>「運用」</b>も大事。本番DBへの制約追加、スキーマ変更（マイグレーション）の注意点を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">operation</span>
+      <span class="tag-desc">制約の運用知識</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 運用の注意点</div>
+        <div class="role-card">
+          <span class="label">注意1</span>
+          <div class="name">既存データへの後付けは要注意</div>
+          <div class="desc">本編でも触れた通り、孤児データがあると制約追加が失敗。<b>本番では事前にデータクレンジング</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">注意2</span>
+          <div class="name">マイグレーションツールで管理</div>
+          <div class="desc">スキーマ変更は <b>Flyway / Liquibase</b> 等で<b>バージョン管理</b>。「いつ・誰が・何を変えたか」を記録。手動 ALTER は避ける。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">注意3</span>
+          <div class="name">外部キーの一時無効化</div>
+          <div class="desc">大量データ投入時など、一時的に制約チェックを止めることがある（<code>FOREIGN_KEY_CHECKS=0</code>）。<b>慎重に</b>。</div>
+        </div>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">本番への適用は段階的に</div>
+          <p>本番DBへのスキーマ変更は<b>「テスト環境で検証 → ステージング → 本番」</b>と段階的に。外部キー追加は<b>テーブルロック</b>が発生しうるので、アクセスの少ない時間帯に行うのが定石。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// マイグレーションの考え方</span>
+
+<span class="comment">// ─── Flyway のマイグレーションファイル例 ───</span>
+
+<span class="comment">// V1__create_subjects.sql</span>
+CREATE TABLE subjects (...);
+
+<span class="comment">// V2__create_study_records.sql</span>
+CREATE TABLE study_records (...);
+
+<span class="comment">// V3__add_foreign_key.sql</span>
+ALTER TABLE study_records
+  ADD CONSTRAINT fk_subject
+  FOREIGN KEY (subject_id)
+  REFERENCES subjects(id)
+  ON DELETE CASCADE;
+
+<span class="comment">// V4__add_last_studied_on.sql（Vol.13）</span>
+ALTER TABLE subjects
+  ADD COLUMN last_studied_on DATE;
+
+
+<span class="comment">// ─── 利点 ───</span>
+<span class="comment">// ・スキーマ変更が「履歴」として残る</span>
+<span class="comment">// ・チーム全員が同じDB構造になる</span>
+<span class="comment">// ・「いつ何を変えたか」が明確</span>
+<span class="comment">// ・新環境構築が自動化される</span>
+
+
+<span class="comment">// ─── 手動 ALTER の問題 ───</span>
+<span class="comment">// 「開発者Aだけが手で ALTER した」</span>
+<span class="comment">// → 開発者Bの環境と構造が違う</span>
+<span class="comment">// → 「自分の環境では動くのに」問題</span>
+
+
+<span class="comment">// ─── Cでの方針 ───</span>
+<span class="comment">// 学習なので手動 ALTER で進めた。</span>
+<span class="comment">// 実務では「マイグレーションツール」</span>
+<span class="comment">// を使うと知っておく。</span>
+
+
+<span class="comment">// ─── 外部キーチェックの一時停止 ───</span>
+<span class="comment">// （大量データ投入時など特殊ケース）</span>
+
+SET FOREIGN_KEY_CHECKS = 0;
+<span class="comment">// ... 大量 INSERT ...</span>
+SET FOREIGN_KEY_CHECKS = 1;
+
+<span class="comment">// ⚠ 整合性チェックを止めるので</span>
+<span class="comment">//   投入データが正しい前提でのみ使う</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>外部キーのハマりどころ</h2>
+    <span class="en">FK PITFALLS</span>
+  </div>
+  <p class="pattern-desc">外部キー制約まわりで<b>業務でよくある罠</b>を4つ。本編の内容と合わせて押さえます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">fk-pitfalls</span>
+      <span class="tag-desc">外部キーの罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある罠</div>
+        <div class="role-card">
+          <span class="label">PITFALL 1</span>
+          <div class="name">CASCADE の連鎖を把握していない</div>
+          <div class="desc"><b>原因</b>：A→B→C と多段で CASCADE があると、Aを消すとC まで連鎖。<br><b>対処</b>：CASCADE の連鎖範囲を図で把握。深い連鎖は危険。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 2</span>
+          <div class="name">テストデータの削除順序でエラー</div>
+          <div class="desc"><b>原因</b>：RESTRICT で、親（subjects）を子（records）より先に消そうとした。<br><b>対処</b>：削除は<b>子→親の順</b>。または CASCADE。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 3</span>
+          <div class="name">型の不一致で外部キーが作れない</div>
+          <div class="desc"><b>原因</b>：親の <code>id</code> が <code>INT</code> なのに子の <code>subject_id</code> が <code>BIGINT</code> 等。<br><b>対処</b>：親子の<b>型・文字コードを完全一致</b>させる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 4</span>
+          <div class="name">制約違反例外をユーザーに見せてしまう</div>
+          <div class="desc"><b>原因</b>：RESTRICT で削除拒否された時、生の例外がエラー画面に出る。<br><b>対処</b>：例外をキャッチし「<b>記録があるため削除できません</b>」と分かりやすく表示。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// PITFALL 4: ユーザーフレンドリーな処理</span>
+
+<span class="comment">// ─── ✗ NG: 生の例外を見せる ───</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/subjects/{id}/delete"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">delete</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Integer</span> id) {
+  subjectService.<span class="fn">delete</span>(id);
+  <span class="comment">// RESTRICT で例外 → 500エラー画面</span>
+  <span class="comment">// → ユーザーには意味不明</span>
+  <span class="kw">return</span> <span class="str">"redirect:/subjects"</span>;
+}
+
+
+<span class="comment">// ─── ✓ OK: 例外を捕まえて伝える ───</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/subjects/{id}/delete"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">delete</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Integer</span> id,
+    <span class="type">RedirectAttributes</span> ra) {
+  <span class="kw">try</span> {
+    subjectService.<span class="fn">delete</span>(id);
+  } <span class="kw">catch</span> (
+      <span class="type">DataIntegrityViolationException</span> e) {
+    ra.<span class="fn">addFlashAttribute</span>(<span class="str">"error"</span>,
+        <span class="str">"この科目には記録があるため"</span>
+      + <span class="str">"削除できません。"</span>);
+  }
+  <span class="kw">return</span> <span class="str">"redirect:/subjects"</span>;
+}
+
+<span class="comment">// → ユーザーに分かる言葉で伝える</span>
+<span class="comment">// → RedirectAttributes でメッセージ表示</span>
+
+
+<span class="comment">// ─── 削除順序の罠（PITFALL 2）───</span>
+
+<span class="comment">// RESTRICT の場合の正しい削除順：</span>
+
+<span class="comment">// 1. 先に子を消す</span>
+DELETE FROM study_records
+WHERE subject_id = 1;
+
+<span class="comment">// 2. 次に親を消す</span>
+DELETE FROM subjects WHERE id = 1;
+
+<span class="comment">// （CASCADE なら親だけ消せば連鎖）</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次の本編へ</h2>
+    <span class="en">TO THE FINAL VOLUME</span>
+  </div>
+  <p class="pattern-desc">別冊S14お疲れさまでした。<b>外部キーと削除設計の判断力</b>が身につきました。これで<b>完成フェーズの学習内容が完結</b>。次のVol.15 は<b>いよいよシリーズ完結</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">この別冊のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 持ち帰る5つの知見</div>
+        <div class="role-card">
+          <span class="label">知見1</span>
+          <div class="name">参照整合性は「親なき子」を防ぐ</div>
+          <div class="desc">DBが最後の砦・後で掃除より最初から汚さない</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見2</span>
+          <div class="name">業務は論理削除が主流</div>
+          <div class="desc">復元・履歴・誤削除対策</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見3</span>
+          <div class="name">削除設計は要件次第</div>
+          <div class="desc">復元要否→CASCADE/RESTRICT/SET NULL</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見4</span>
+          <div class="name">外部キー列にインデックス</div>
+          <div class="desc">JOIN・CASCADE削除・参照チェックが速く</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見5</span>
+          <div class="name">正規化が外部キーを生む</div>
+          <div class="desc">テーブル分割→関連を外部キーで表現</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.15 本編で起きること</span>
+
+<span class="comment">// タイトル：</span>
+<span class="comment">// 「完成版＋シリーズ完結」</span>
+
+<span class="comment">// やること：</span>
+<span class="comment">// 1. 全機能の統合・最終確認</span>
+<span class="comment">// 2. 学習記録アプリの完成形を見る</span>
+<span class="comment">// 3. Cシリーズ全15巻の振り返り</span>
+<span class="comment">// 4. 獲得スキルの総まとめ</span>
+<span class="comment">// 5. 今後の学習指針</span>
+
+<span class="comment">// 獲得スキル：</span>
+<span class="comment">// → 全機能統合</span>
+
+
+<span class="comment">// ─── ついに最終巻 ───</span>
+<span class="comment">// 土台（1-5）→ 実用機能（6-8）→</span>
+<span class="comment">// 統計（9-12）→ 完成（13-15）</span>
+<span class="comment">// Cの旅もいよいよ終着点へ</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(118,124,102,0.16)">
+    <div class="tip-label">NEXT STEP ── VOL.15 本編（最終巻）</div>
+    <p>別冊S14で<b>削除設計の判断力</b>を養いました。これで Cの<b>全技術要素を学び終えました</b>。次のVol.15 本編「<b>完成版＋シリーズ完結</b>」では、学習記録アプリの<b>完成形</b>を確認し、<b>全15巻の旅を振り返ります</b>。あなたが積み上げた技術の集大成。<b>いよいよ最終巻、本編Vol.15 へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.14 / 15 ── FOREIGN KEY IN PRACTICE（別冊）</span>
+</footer>
+
+</body>
+</html>

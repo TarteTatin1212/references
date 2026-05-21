@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕GitHub版 Vol.10 依存関係管理とプロジェクトの保守</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2f38;
+  --paper:#f0ede4;
+  --paper-2:#e2ddc8;
+  --accent:#c95444;
+  --accent-2:#5a6270;
+  --accent-3:#2da44e;
+  --muted:#6a7080;
+  --line:#cac4b2;
+  --code-bg:#1c2026;
+  --code-text:#e8e4dc;
+  --panel-bg:#faf5e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"⎇";position:absolute;right:-10px;top:-30px;font-size:300px;color:var(--accent);opacity:0.17;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-2);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:36px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.prompt{color:#7eb87e}
+.gh-out{color:#a8b8c8}
+.sec{color:#ff7b72;font-weight:700}
+.key{background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(201,84,68,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-2);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff;font-size:12.5px}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-2);font-family:'JetBrains Mono',monospace}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.gh-mock{background:#0d1117;color:#c9d1d9;border:1px solid #2a313a;border-radius:6px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.75;margin:8px 0}
+.gh-mock .gh-bar{color:#7d8590;border-bottom:1px solid #2a313a;padding-bottom:6px;margin-bottom:8px;font-size:11px}
+.gh-mock .gh-warn{color:#e3b341}
+.gh-mock .gh-red{color:#f85149}
+.gh-mock .gh-green{color:#3fb950}
+.gh-mock .gh-h{color:#e6edf3;font-weight:700}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:26px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.GH10</span>
+    <span class="kind-tag">GitHub版 ── MAINTENANCE</span>
+    <span class="rdt-tag">DEPENDENCIES</span>
+  </div>
+  <h1>依存関係管理と<br>プロジェクトの保守</h1>
+  <div class="subtitle">GH.10 ── DEPENDENCY MANAGEMENT &amp; MAINTENANCE</div>
+  <p class="lead">v1.0.0 をリリース（Vol.GH9）した後も、開発は続きます。今回は<b>「作った後の保守」</b>。Spring Boot や MyBatis などの<b>依存ライブラリ</b>には<b>脆弱性</b>が見つかることがあり、更新が必要。<b>Dependabot</b> で更新を自動検知し、<b>セキュリティを保つ</b>方法を学びます。<b>「リリースして終わりではない」</b>——保守の仕組みを作ります。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 GitHub版の赤線対策</div>
+    <p>Vol.GH10で詰まる場面：Dependabot の設定ファイル（<code>.github/dependabot.yml</code>）の YAML インデント、更新PRが大量に来て戸惑う、更新でテストが落ちる。<b>Section 07 で対処</b>。更新PRは<b>CI（Vol.GH8）が通れば安全</b>と判断できます。慌てず1つずつ対応を。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 この巻のミッション</a></li>
+    <li><a href="#s02">02 依存関係とは</a></li>
+    <li><a href="#s03">03 脆弱性とアップデート</a></li>
+    <li><a href="#s04">04 Dependabot の設定</a></li>
+    <li><a href="#s05">05 更新PRへの対応</a></li>
+    <li><a href="#s06">06 保守を続ける文化</a></li>
+    <li><a href="#s07">07 ハマりどころ＋NEXT</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>この巻のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">Vol.GH10 のゴールは<b>「リリース後の保守を仕組み化する」</b>こと。v1.0.0 を出したら終わりではありません。<b>依存ライブラリの脆弱性対応・更新</b>は、アプリを<b>安全に保ち続ける</b>ために不可欠。これを<b>Dependabot で自動化</b>します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">「作って終わり」ではない</span><span class="tag-desc">保守という仕事</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// リリース後に起きること</div>
+        <p>v1.0.0 を出した後も、世界は動きます：</p>
+        <ul>
+          <li>使っているライブラリに<b>脆弱性</b>が発見される</li>
+          <li>ライブラリの<b>新バージョン</b>が出る</li>
+          <li>放置すると<b>セキュリティリスク</b>が蓄積</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 保守の難しさ</div>
+        <p>脆弱性情報を<b>人が常に追う</b>のは無理。「気づいたら古くて危険なライブラリだらけ」になりがち。<b>仕組みで自動化</b>が必要。</p>
+
+        <div class="panel-head" style="margin-top:18px">// Dependabot</div>
+        <p>GitHub の機能。<b>依存ライブラリを監視し、更新や脆弱性を自動でPRで知らせる</b>。「人が追わなくても済む」仕組み。</p>
+      </div>
+      <div class="code"><span class="code-head">// 保守という継続的な仕事</span>
+<span class="comment">// ─── 開発のライフサイクル ───</span>
+要求 → 設計 → 実装 → テスト
+  → リリース（v1.0.0・Vol.GH9）
+  → <span class="sec">保守</span> ← ここがVol.GH10 ★★★
+       ↓
+     新しい要求 → また開発…
+<span class="comment">// → リリースは終わりでなく通過点</span>
+
+
+<span class="comment">// ─── 放置されたプロジェクトの末路 ───</span>
+1年放置すると…
+- ライブラリが何十個も古い
+- 既知の脆弱性が放置されている
+- いざ更新しようにも差が大きすぎて困難
+<span class="comment">// → 「塵も積もれば」の負債 ★</span>
+
+
+<span class="comment">// ─── Dependabot による自動化 ───</span>
+Dependabot が依存を監視
+  ↓
+更新/脆弱性を検知
+  ↓
+自動で更新PRを作成
+  ↓
+CI（Vol.GH8）が通れば安全に確認
+  ↓
+マージ
+<span class="comment">// → 人が追わなくても保守が回る ★★★</span>
+
+
+<span class="comment">// ─── 本シリーズの依存（保守対象）───</span>
+Spring Boot, MyBatis, MySQL Driver,
+JUnit, Mockito, AssertJ,
+Jackson（Vol.11で追加）...
+<span class="comment">// → これらを最新・安全に保つ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「リリースは通過点、保守は継続」</div>
+    <p>初学者は<b>「リリースしたら完成」</b>と思いがちですが、実際は<b>リリースは通過点</b>。アプリが使われ続ける限り、<b>依存ライブラリの更新・脆弱性対応という保守</b>が続きます。これを怠ると、<b>「動いてはいるが危険なアプリ」</b>になる。Vol.GH7 の機密管理と同じく<b>セキュリティの継続</b>。Dependabot で<b>「保守を仕組みに組み込む」</b>のが、長く使われるアプリの条件です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>依存関係とは</h2><span class="en">DEPENDENCIES</span></div>
+  <p class="pattern-desc"><b>依存関係（dependencies）</b>とは、<b>アプリが使っている外部ライブラリ</b>のこと。Spring Boot、MyBatis、Jackson——これらは<b>他人が作ったコード</b>。便利ですが、<b>その品質・安全性に依存</b>することになります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">依存関係の仕組み</span><span class="tag-desc">他人のコードを使う</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 依存関係とは</div>
+        <p>アプリは<b>多くのライブラリの上に成り立つ</b>。<code>pom.xml</code>/<code>build.gradle</code> に書いた依存が、アプリの土台。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 直接依存と推移的依存</div>
+        <ul>
+          <li><b>直接依存</b>：自分が明示的に追加（Spring Boot等）</li>
+          <li><b>推移的依存</b>：依存が依存しているもの（自動で入る）</li>
+        </ul>
+        <p style="margin-top:8px">1つのライブラリが<b>数十個の推移的依存</b>を連れてくることも。<b>全部が保守対象</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 依存の二面性</div>
+        <ul>
+          <li><b>メリット</b>：車輪の再発明をしない（別冊S2のKISS）</li>
+          <li><b>リスク</b>：他人のコードの問題を抱え込む</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 依存関係の構造</span>
+<span class="comment">// ─── pom.xml の依存（直接依存）───</span>
+&lt;dependencies&gt;
+  &lt;dependency&gt;
+    spring-boot-starter-web
+  &lt;/dependency&gt;
+  &lt;dependency&gt;
+    mybatis-spring-boot-starter
+  &lt;/dependency&gt;
+  &lt;dependency&gt;
+    jackson-databind  <span class="comment">// Vol.11で追加</span>
+  &lt;/dependency&gt;
+&lt;/dependencies&gt;
+<span class="comment">// → 自分で追加した依存（直接依存）</span>
+
+
+<span class="comment">// ─── 推移的依存（自動で入る）───</span>
+spring-boot-starter-web
+  ├ spring-web
+  ├ spring-webmvc
+  ├ tomcat-embed-core
+  ├ jackson-databind
+  └ ... （数十個）
+<span class="comment">// → 1個追加すると芋づる式に ★</span>
+<span class="comment">// → 全部が「保守対象」になる ★★★</span>
+
+
+<span class="comment">// ─── 依存ツリーを見る ───</span>
+<span class="prompt">$</span> <span class="kw">mvn dependency:tree</span>
+<span class="gh-out">com.example:memo-app
+├ spring-boot-starter-web
+│  ├ spring-web:6.x
+│  ├ tomcat-embed-core:10.x
+│  └ ...
+├ mybatis-spring-boot-starter
+└ ...</span>
+<span class="comment">// → 何に依存しているか全体が見える</span>
+
+
+<span class="comment">// ─── 依存の二面性（別冊S2）───</span>
+<span class="comment">// メリット：自分で書かなくていい（KISS）</span>
+<span class="comment">// リスク：他人のコードの脆弱性を抱える</span>
+<span class="comment">// → だから「監視と更新」が必要 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「使う依存」も自分の責任範囲</div>
+    <p>ライブラリを使うのは<b>賢い選択</b>（別冊S2：車輪の再発明をしない）。でも<b>「使ったライブラリの問題は、自分のアプリの問題」</b>になる。Jackson に脆弱性が見つかれば、Jackson を使う自分のアプリも危険。<b>「他人のコードだから関係ない」とは言えない</b>。だから<b>依存を把握し、更新を続ける</b>のが使う側の責任。便利さの代償として、保守がついてくるのです。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>脆弱性とアップデート</h2><span class="en">VULNERABILITY &amp; UPDATE</span></div>
+  <p class="pattern-desc">ライブラリには<b>脆弱性（セキュリティ上の欠陥）</b>が見つかることがあります。発見されると<b>修正版がリリース</b>される。<b>古いまま放置すると攻撃の的</b>に。更新の<b>種類とタイミング</b>を理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">脆弱性と更新の判断</span><span class="tag-desc">SemVerと連動</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 脆弱性とは</div>
+        <p>ライブラリの<b>セキュリティ上の欠陥</b>。攻撃に悪用される。発見されると<b>CVE（脆弱性ID）</b>が付き、修正版が出る。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 更新の種類（SemVer・Vol.GH9）</div>
+        <table class="compare-tbl">
+          <thead><tr><th>更新</th><th>リスク</th><th>対応</th></tr></thead>
+          <tbody>
+            <tr><td>PATCH（x.x.1）</td><td>低</td><td>すぐ更新</td></tr>
+            <tr><td>MINOR（x.1.x）</td><td>中</td><td>テスト後</td></tr>
+            <tr><td>MAJOR（1.x.x）</td><td>高</td><td>慎重に</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 判断の基準</div>
+        <ul>
+          <li><b>脆弱性修正</b>：優先的に更新</li>
+          <li><b>PATCH更新</b>：安心して更新（バグ修正のみ）</li>
+          <li><b>MAJOR更新</b>：互換性破壊→慎重にテスト</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 脆弱性とアップデート</span>
+<span class="comment">// ─── 脆弱性の例 ───</span>
+<div class="gh-mock">
+<span class="gh-red">⚠ Dependabot security alert</span>
+jackson-databind 2.x.x has a
+known vulnerability (CVE-XXXX-XXXX)
+
+Severity: <span class="gh-red">High</span>
+Fixed in: 2.x.y
+</div>
+<span class="comment">// → 「使っているライブラリが危険」と通知</span>
+<span class="comment">// → 修正版に更新すべき ★★★</span>
+
+
+<span class="comment">// ─── SemVer と更新リスク（Vol.GH9）───</span>
+2.15.<span class="kw">2</span> → 2.15.<span class="kw">3</span>（PATCH）
+  バグ/脆弱性修正のみ
+  → 安心して更新 ★
+
+2.<span class="kw">15</span>.2 → 2.<span class="kw">16</span>.0（MINOR）
+  機能追加（互換あり）
+  → テスト通れば更新
+
+<span class="kw">2</span>.15.2 → <span class="kw">3</span>.0.0（MAJOR）
+  互換性破壊
+  → コード修正が必要かも
+  → 慎重にテスト ★★★
+
+
+<span class="comment">// ─── 更新の判断フロー ───</span>
+脆弱性あり？
+  → Yes: 優先的に更新（セキュリティ）
+PATCH/MINOR？
+  → CIが通れば更新（Vol.GH8）
+MAJOR？
+  → 変更内容を確認・慎重にテスト
+
+
+<span class="comment">// ─── CI が安全網になる（Vol.GH8）───</span>
+<span class="comment">// 更新してもテストが緑なら</span>
+<span class="comment">// 「壊れていない」と判断できる ★★★</span>
+<span class="comment">// → 別冊S3：テストは変更の安全網</span>
+<span class="comment">// → 依存更新でもテストが守る</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 依存更新の安全性は「CI（テスト）」が保証する</div>
+    <p>依存ライブラリの更新は<b>「壊れないか不安」</b>になりがち。でも Vol.GH8 で作った<b>CI（自動テスト）</b>があれば安心。<b>更新PRに対してCIが走り、テストが緑なら「壊れていない」と判断</b>できる。これは別冊S3の<b>「テストは変更の安全網」</b>そのもの。日々のテスト（RDT版の核心）が、<b>依存更新という保守作業も支える</b>。テストへの投資が、保守の場面でも報われます。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>Dependabot の設定</h2><span class="en">DEPENDABOT SETUP</span></div>
+  <p class="pattern-desc"><b>Dependabot</b> を有効にします。① <b>脆弱性アラート</b>（GitHub が自動で警告）、② <b>バージョン更新</b>（<code>.github/dependabot.yml</code> で設定）。設定すると<b>更新を自動でPRにしてくれる</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Dependabot の2つの機能</span><span class="tag-desc">アラートと自動更新</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ① セキュリティアラート</div>
+        <p>GitHub が<b>自動で脆弱性を検知</b>して警告。設定不要（リポジトリ設定でON）。脆弱性が見つかると<b>更新PRを自動作成</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// ② バージョン更新</div>
+        <p><code>.github/dependabot.yml</code> を置くと、<b>定期的に依存をチェック</b>し、新しいバージョンがあれば<b>更新PRを作成</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 設定手順</div>
+        <ol class="step-list">
+          <li>Settings → Security → Dependabot を有効化</li>
+          <li><code>.github/dependabot.yml</code> を作成</li>
+          <li>パッケージエコシステム（maven/gradle）を指定</li>
+          <li>更新頻度（weekly等）を設定</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// .github/dependabot.yml</span>
+<span class="kw">version</span>: 2
+<span class="kw">updates</span>:
+  <span class="comment"># Maven の依存を監視</span>
+  - <span class="kw">package-ecosystem</span>: <span class="str">"maven"</span>
+    <span class="kw">directory</span>: <span class="str">"/"</span>
+    <span class="kw">schedule</span>:
+      <span class="kw">interval</span>: <span class="str">"weekly"</span>  <span class="comment"># 毎週チェック</span>
+    <span class="comment"># 一度に来るPR数を制限</span>
+    <span class="kw">open-pull-requests-limit</span>: 5
+    <span class="comment"># PRにラベルを付ける（Vol.GH4）</span>
+    <span class="kw">labels</span>:
+      - <span class="str">"dependencies"</span>
+
+  <span class="comment"># GitHub Actions 自体も更新対象（Vol.GH8）</span>
+  - <span class="kw">package-ecosystem</span>: <span class="str">"github-actions"</span>
+    <span class="kw">directory</span>: <span class="str">"/"</span>
+    <span class="kw">schedule</span>:
+      <span class="kw">interval</span>: <span class="str">"weekly"</span>
+
+
+<span class="comment">// ─── 設定後の動き ───</span>
+毎週月曜（例）：
+  Dependabot が依存をチェック
+    ↓ 新バージョンあり
+  更新PRを自動作成
+    ↓
+  CI（Vol.GH8）が自動実行
+    ↓ テスト緑
+  あなたが確認してマージ ★
+
+
+<span class="comment">// ─── セキュリティアラートの画面 ───</span>
+<div class="gh-mock">
+<span class="gh-bar">Security / Dependabot alerts</span>
+<span class="gh-warn">⚠ 2 open</span>
+- jackson-databind: High
+  → Dependabot がPR作成済み
+- (another): Moderate
+</div>
+<span class="comment">// → 脆弱性を見逃さない仕組み ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「open-pull-requests-limit」で PR の洪水を防ぐ</div>
+    <p>Dependabot を有効にすると、最初は<b>大量の更新PR</b>が来て圧倒されがち。<code>open-pull-requests-limit</code> で<b>同時に開くPR数を制限</b>すると、少しずつ対応できる。また <code>schedule: weekly</code> で<b>頻度を抑える</b>。「全部一気に」ではなく<b>「無理なく続けられるペース」</b>に設定するのがコツ。保守は<b>継続が大事</b>なので、自分が対応しきれる量に調整します。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>更新PRへの対応</h2><span class="en">HANDLING UPDATE PRS</span></div>
+  <p class="pattern-desc">Dependabot が作る<b>更新PR</b>への対応方法。これまで学んだ<b>PR・CI・レビュー</b>がそのまま活きます。<b>CIが緑かを確認し、マージ</b>。RDT版で積み上げた仕組みが、保守でも回ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">更新PRのレビューとマージ</span><span class="tag-desc">CIが判断材料</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 更新PRの中身</div>
+        <p>Dependabot のPRには<b>変更内容・リリースノート・互換性情報</b>が自動で書かれる。「何が変わるか」が分かる。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 対応の判断</div>
+        <ol class="step-list">
+          <li>PRの内容（更新の種類・SemVer）を確認</li>
+          <li><b>CIが緑か</b>を確認（Vol.GH8）</li>
+          <li>PATCH/MINORでCI緑 → マージ</li>
+          <li>MAJOR → 変更内容を慎重に確認</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// これまでの仕組みが活きる</div>
+        <ul>
+          <li><b>PR</b>（Vol.GH3）：更新もPR経由</li>
+          <li><b>CI</b>（Vol.GH8）：自動テストで安全確認</li>
+          <li><b>ブランチ保護</b>（Vol.GH6）：main を守る</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 更新PRへの対応</span>
+<span class="comment">// ─── Dependabot のPR画面 ───</span>
+<div class="gh-mock">
+<span class="gh-bar">Pull requests</span>
+<span class="gh-h">⬆ Bump jackson-databind
+  from 2.15.2 to 2.15.3</span>
+by dependabot
+
+PATCH update（バグ/脆弱性修正）
+<span class="gh-green">✓ CI / build (passed)</span>
+<span class="gh-green">✓ CI / test (passed)</span>
+
+Release notes:
+- セキュリティ修正 CVE-XXXX
+</div>
+
+
+<span class="comment">// ─── 対応フロー ───</span>
+PATCH更新（2.15.2→2.15.3）：
+  CI緑 → 安心してマージ ★
+  （バグ/脆弱性修正のみ）
+
+MINOR更新（2.15→2.16）：
+  CI緑 → マージ
+  （機能追加・互換あり）
+
+MAJOR更新（2.x→3.x）：
+  ⚠ 変更内容を確認
+  CI緑でも互換性破壊の可能性
+  → リリースノートを読む
+  → 必要ならコード修正 ★★★
+
+
+<span class="comment">// ─── これまでの仕組みが活きる ───</span>
+更新PR
+  → CI（Vol.GH8）が自動テスト
+  → ブランチ保護（Vol.GH6）でmain守る
+  → セルフレビュー（Vol.GH3）で確認
+  → マージ
+<span class="comment">// → 保守も同じワークフロー ★★★</span>
+<span class="comment">// → 積み上げた仕組みが報われる</span>
+
+
+<span class="comment">// ─── まとめてマージも可能 ───</span>
+<span class="comment"># Dependabot にコメントで指示</span>
+@dependabot merge
+@dependabot rebase
+<span class="comment"># → CI通過後に自動マージ等もできる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 更新PRこそ「CIの真価」が発揮される</div>
+    <p>依存更新は<b>「テストがあって本当に良かった」</b>と実感する場面。「Jackson を 2.15.2→2.15.3 に上げて大丈夫?」——手動で全機能を確認するのは無理。でも<b>CI（Vol.GH8）が全テストを自動実行</b>し、緑なら「壊れていない」と即判断できる。RDT版で<b>テストを積み上げてきた</b>からこそ、<b>依存更新を恐れず続けられる</b>。テストは「今を守る」だけでなく「未来の保守を支える」投資なのです。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>保守を続ける文化</h2><span class="en">MAINTENANCE CULTURE</span></div>
+  <p class="pattern-desc">保守は<b>「仕組み」だけでなく「習慣」</b>。Dependabot を入れても、<b>PRを放置</b>したら意味がない。<b>少しずつ・定期的に</b>対応する文化が、アプリを長く健全に保ちます。RDT版の集大成として、開発の全体像を振り返ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">保守を習慣にする</span><span class="tag-desc">小さく継続</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 保守を続けるコツ</div>
+        <ul>
+          <li><b>定期的に</b>：週1回など、更新PRを見る時間を作る</li>
+          <li><b>小さく</b>：溜めずにこまめに対応</li>
+          <li><b>CIを信じる</b>：緑なら安心してマージ</li>
+          <li><b>放置しない</b>：放置が最大の負債</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// RDT版の開発サイクル全体</div>
+        <p>GitHub版で学んだ流れ：</p>
+        <ul>
+          <li>要求（Issue）→ ブランチ → PR → CI → マージ → リリース → <b>保守</b></li>
+          <li>そして<b>保守から新しい要求</b>へ循環</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 開発は円環</div>
+        <p>リリースで終わりでなく、<b>保守を経て次の開発へ</b>。要求工学（別冊S1）の<b>「要求は進化する」</b>が、運用でも回り続ける。</p>
+      </div>
+      <div class="code"><span class="code-head">// 保守を含む開発の全体像</span>
+<span class="comment">// ─── GitHub版で築いた開発サイクル ───</span>
+   ┌──────────────────────────┐
+   │                          │
+要求(Issue)                    │
+   ↓ Vol.GH4                   │
+ブランチ                        │
+   ↓ Vol.GH2                   │
+実装＋コミット                  │
+   ↓ Vol.GH6（規約）           │
+PR                             │
+   ↓ Vol.GH3                   │
+CI（自動テスト）                │
+   ↓ Vol.GH8                   │
+レビュー＋マージ                │
+   ↓ Vol.GH6（保護）           │
+リリース                        │
+   ↓ Vol.GH9                   │
+<span class="sec">保守（依存更新）</span>             │
+   ↓ Vol.GH10                  │
+新しい要求 ────────────────────┘
+<span class="comment">// → 円環。開発は続く ★★★</span>
+
+
+<span class="comment">// ─── 保守の習慣 ───</span>
+✓ 週1回、更新PRを確認する時間
+✓ 溜めずにこまめに対応
+✓ CI緑なら安心してマージ
+✓ 脆弱性アラートは優先対応
+<span class="comment">// → 「小さく継続」が健全さを保つ ★</span>
+
+
+<span class="comment">// ─── RDT版 GitHub編で学んだこと ───</span>
+<span class="comment">// 要求の追跡（トレーサビリティ）</span>
+<span class="comment">// 品質を仕組みで守る（規約・保護・CI）</span>
+<span class="comment">// 機密を守る（シークレット管理）</span>
+<span class="comment">// 成果を世に出す（リリース）</span>
+<span class="comment">// 安全を保ち続ける（保守）★★★</span>
+<span class="comment">// → 開発の全工程を一周した</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「小さく継続」が放置の負債を防ぐ</div>
+    <p>保守の敵は<b>「放置」</b>。「後でまとめて」と溜めると、<b>更新の差が大きくなり、対応が困難に</b>。「Spring Boot を一気に2世代上げる」のは大変ですが、<b>こまめに1段ずつ</b>なら楽。Dependabot＋CI があれば、<b>週に数分の確認</b>で保守が回る。「<b>小さく、継続的に</b>」——これは RDT版全体を貫く<b>「1機能ずつ確実に」</b>の精神と同じ。健全なアプリは、地道な保守から生まれます。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>ハマりどころ＋NEXT STEP</h2><span class="en">PITFALLS &amp; NEXT</span></div>
+  <p class="pattern-desc">依存管理・保守で陥りやすい地雷を5つ。<b>★★★ 印は特に頻発</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.GH10 ハマりどころ 5選</span><span class="tag-desc">先に知れば回避できる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 更新PRを放置する ★★★</b></p>
+        <ul>
+          <li>溜まって差が大きくなり対応困難に</li>
+          <li>対処：定期的に・小さく対応（Section 06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② MAJOR更新を無確認でマージ ★★★</b></p>
+        <ul>
+          <li>互換性破壊でアプリが壊れる</li>
+          <li>対処：MAJORは変更内容を確認・テスト（Section 03,05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ dependabot.yml の YAML ミス</b></p>
+        <ul>
+          <li>インデント崩れで設定が効かない</li>
+          <li>対処：YAML のインデントを正確に（Section 04）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ テストがないと更新の安全が判断できない</b></p>
+        <ul>
+          <li>CIがないと「壊れたか」分からない</li>
+          <li>対処：CI（Vol.GH8）が前提（Section 03,05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 更新でテストが落ちて放置</b></p>
+        <ul>
+          <li>落ちたPRをそのまま放置</li>
+          <li>対処：落ちたら原因を確認、修正してから</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 主要な対処</span>
+<span class="comment">// ─── ② MAJOR更新の確認 ───</span>
+2.x → 3.x（MAJOR）の更新PR：
+  - CIが緑でも油断しない
+  - リリースノートで破壊的変更を確認
+  - 必要ならコード修正
+  - 別ブランチで十分テストしてから
+<span class="comment">// → MAJORは「慎重に」が鉄則 ★★★</span>
+
+
+<span class="comment">// ─── ⑤ 落ちたPRへの対応 ───</span>
+更新PRでCIが赤：
+  → 更新で何かが壊れた
+  → ログを見て原因特定
+  → コード修正 or 更新を見送り
+<span class="comment">// → 赤を放置しない（別冊S7：握りつぶさない）★</span>
+
+
+<span class="comment">// ─── ③ YAML の確認 ───</span>
+<span class="ann">NG:</span> インデントがズレている
+<span class="ann">OK:</span>
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+<span class="comment">// → スペース2つのインデントを揃える ★</span>
+
+
+<span class="comment">// ─── 保守の鉄則 ───</span>
+✓ こまめに対応（放置しない）
+✓ MAJORは慎重に
+✓ CIを安全網にする
+✓ 落ちたら原因究明
+✓ 脆弱性は優先 ★★★</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">GH10 達成チェック</span><span class="tag-desc">保守の仕組み完成</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェック</div>
+        <ul class="check-list">
+          <li>依存関係（直接/推移的）を理解した</li>
+          <li>脆弱性とアップデートの関係が分かる</li>
+          <li>SemVerで更新リスクを判断できる</li>
+          <li>Dependabot を設定できる</li>
+          <li>更新PRにCIで対応できる</li>
+          <li>MAJORは慎重に扱うと分かる</li>
+          <li>CIが依存更新を支えると理解</li>
+          <li>「小さく継続」の保守を理解した</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH10 で手に入れた力</span>
+✓ <span class="str">"依存ライブラリの保守の重要性"</span>
+
+✓ <span class="str">"Dependabot で更新を自動検知"</span>
+
+✓ <span class="str">"SemVerで更新リスクを判断"</span>
+
+✓ <span class="str">"CIで更新の安全を確認"</span>
+
+✓ <span class="str">"小さく継続する保守"</span>
+
+
+<span class="comment">// → 「作った後も安全に保つ」仕組み完成 ★★★</span>
+<span class="comment">// → 開発の全工程（要求→保守）を一周</span>
+
+<span class="comment">// 次回 Vol.GH11（予定）：</span>
+<span class="comment">//   コントリビューションガイド</span>
+<span class="comment">//   またはプロジェクトの公開・運営</span>
+<span class="comment">//   本編Vol.12 以降と連動</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.GH11 へ</div>
+    <p>Vol.GH10 で<b>「依存関係管理と保守」</b>の仕組みが整い、<b>リリース後もアプリを安全に保てる</b>ようになりました。Dependabot＋CI で、保守が自動で回ります。これで GitHub版は<b>要求→設計→実装→テスト→リリース→保守</b>の全工程を一周しました。次は Vol.GH11「<b>コントリビューションとプロジェクト運営編</b>」。<b>他者の貢献を受け入れる</b>仕組み（CONTRIBUTING・ライセンス）を学びます。本編Vol.12「バリデーション＆例外設計」と並行して進めましょう。<b>本編Vol.12 → Vol.GH11 の順</b>がおすすめです。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>GH.10 / 14 ── DEPENDENCY MANAGEMENT &amp; MAINTENANCE（GitHub版）</span>
+</footer>
+
+</body>
+</html>

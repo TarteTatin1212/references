@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.15 本編 完成版＋シリーズ完結</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2c25;
+  --paper:#e0ecde;
+  --paper-2:#c5dcc6;
+  --accent:#a8c2ac;
+  --accent-2:#bcd0bf;
+  --accent-3:#1f4a37;
+  --muted:#697867;
+  --line:#aac0a7;
+  --code-bg:#13211a;
+  --code-text:#e0ecde;
+  --panel-bg:#e9f3e5;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--accent-3);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;font-weight:600}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(168,194,172,0.14);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'✓';position:absolute;left:4px;color:var(--accent-3);font-size:14px;top:6px;font-weight:700}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.mock-screen{background:#fff;border:1px solid var(--line);margin:12px 0;font-family:'Noto Sans JP'}
+.mock-bar{background:#e0e0e0;padding:4px 12px;font-family:'JetBrains Mono';font-size:11px;color:#444}
+.mock-body{padding:16px}
+.mock-h{font-family:'Shippori Mincho',serif;font-size:18px;color:var(--accent-3);border-bottom:2px solid var(--accent);padding-bottom:6px;display:inline-block;margin-bottom:12px}
+
+.journey{margin:16px 0}
+.journey-phase{margin:14px 0}
+.journey-phase .ph-title{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;color:var(--accent-3);margin-bottom:6px;padding-left:10px;border-left:4px solid var(--accent)}
+.journey-vol{display:flex;gap:10px;padding:5px 0 5px 14px;font-size:13px;align-items:baseline}
+.journey-vol .vn{font-family:'JetBrains Mono';color:var(--accent);font-weight:600;min-width:48px}
+.journey-vol .vt{color:var(--ink)}
+.journey-vol .vs{color:var(--muted);font-size:11px;font-family:'JetBrains Mono';margin-left:auto}
+
+/* エンディング */
+.ending{margin:80px 0 0;padding:60px 40px;background:linear-gradient(135deg, var(--accent-3), #143524);color:var(--paper);text-align:center;border-radius:8px;position:relative;overflow:hidden}
+.ending::before{content:'✦';position:absolute;left:-30px;top:-40px;font-size:240px;font-family:'Shippori Mincho',serif;opacity:0.08;line-height:1}
+.ending::after{content:'✦';position:absolute;right:-30px;bottom:-60px;font-size:240px;font-family:'Shippori Mincho',serif;opacity:0.08;line-height:1}
+.ending > *{position:relative;z-index:1}
+.ending h2{font-family:'Shippori Mincho',serif;font-size:32px;font-weight:700;margin-bottom:12px;border:none;color:#fff}
+.subtitle-end{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.3em;color:var(--accent);margin-bottom:30px}
+.ending .message{max-width:600px;margin:0 auto 30px;font-size:15px;line-height:2;text-align:left}
+.ending .message b{color:#fff;font-weight:700}
+.series-list-end{background:rgba(255,255,255,0.08);border-radius:6px;padding:24px 28px;margin:24px auto 0;max-width:600px;text-align:left}
+.series-list-end .sl-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--accent);margin-bottom:14px;text-align:center}
+.series-list-end .sl-item{display:flex;gap:12px;padding:5px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.1)}
+.series-list-end .sl-item:last-child{border-bottom:none}
+.series-list-end .sl-no{font-family:'JetBrains Mono';color:var(--accent);min-width:42px}
+.series-list-end .sl-name{color:var(--paper)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .ending{padding:40px 24px}
+  .ending h2{font-size:24px}
+  .journey-vol{flex-wrap:wrap}
+  .journey-vol .vs{margin-left:0}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.15 / 15 ── FINAL</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>完成版＋<br>シリーズ完結</h1>
+  <div class="subtitle">GRAND FINALE ── ALL FEATURES INTEGRATED</div>
+  <p class="lead">
+    Vol.15、<b>ついに最終巻</b>です。獲得スキルは<b>「全機能統合」</b>。<br>
+    Vol.1 で2つの空のテーブルから始まった学習記録アプリは、<b>1対多取得・XML Mapper・N+1対策・検索・日付・動的SQL・集計・統計画面・トランザクション・外部キー</b>を経て、<b>業務システムと呼べる完成形</b>に到達しました。<br>
+    この巻では<b>全機能を統合確認</b>し、<b>15巻の旅を振り返り</b>、あなたが手に入れた力を<b>総まとめ</b>します。<br>
+    そして── <b>Cシリーズ、完結。</b>
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#complete-app">02 完成版アプリの全体像</a></li>
+    <li><a href="#feature-check">03 全機能の統合確認</a></li>
+    <li><a href="#architecture">04 完成したアーキテクチャ</a></li>
+    <li><a href="#journey">05 15巻の旅の振り返り</a></li>
+    <li><a href="#skills">06 獲得スキルの総まとめ</a></li>
+    <li><a href="#future">07 これからの学習指針</a></li>
+    <li><a href="#final">08 シリーズ完結</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">最終巻のミッションは<b>「完成形の確認」と「学びの統合」</b>。新しい機能の追加よりも、<b>15巻で積み上げたものの全体像</b>を掴むことが目的です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.15-mission</span>
+      <span class="tag-desc">最終巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">完成版アプリの全機能を確認</div>
+          <div class="desc">CRUD・検索・集計・統計・削除── これまで作った機能が<b>一つのアプリとして動く</b>ことを確認。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">アーキテクチャの全体像を理解</div>
+          <div class="desc">Controller / Service / Mapper / Entity / DTO / Form の<b>役割分担</b>を俯瞰し、「なぜこの構造か」を腑に落とす。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">学びを振り返り、次へ繋ぐ</div>
+          <div class="desc">15巻で得たスキルを<b>整理</b>し、<b>これから何を学ぶべきか</b>の指針を得る。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 完成版アプリの全機能</span>
+
+<span class="comment">// ─── 科目（subjects）───</span>
+✓ 一覧表示
+✓ 削除（外部キー CASCADE）
+
+<span class="comment">// ─── 学習記録（study_records）───</span>
+✓ 登録（日付・時間・メモ）
+✓ 科目別の表示（1対多・JOIN）
+✓ 検索（科目・期間・動的SQL）
+
+<span class="comment">// ─── 統計 ───</span>
+✓ 科目別集計（合計・平均・件数）
+✓ ダッシュボード（カード＋進捗バー）
+✓ 閾値フィルタ（HAVING）
+✓ 日別推移＋達成率（時系列）
+
+<span class="comment">// ─── データ整合性 ───</span>
+✓ トランザクション（@Transactional）
+✓ 外部キー制約（FOREIGN KEY）
+
+
+<span class="comment">// Vol.1 の「空のテーブル2つ」が</span>
+<span class="comment">// 業務システムと呼べる完成形に</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="complete-app">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成版アプリの全体像</h2>
+    <span class="en">THE COMPLETE APP</span>
+  </div>
+  <p class="pattern-desc">15巻を経て完成した<b>学習記録アプリ</b>。「何を・どれだけ・いつ学習したか」を記録し、可視化する<b>立派な業務システム</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">complete-screens</span>
+      <span class="tag-desc">完成版の画面構成</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主要画面マップ</div>
+        <table class="compare-tbl">
+          <tr><th>URL</th><th>機能</th><th>主な巻</th></tr>
+          <tr><td>/subjects</td><td>科目＆記録一覧・検索・削除</td><td>M2,6,8,14</td></tr>
+          <tr><td>/records/new</td><td>記録登録</td><td>M7,13</td></tr>
+          <tr><td>/stats</td><td>科目別統計・閾値フィルタ</td><td>M9,10,11</td></tr>
+          <tr><td>/stats/daily</td><td>日別推移・達成率</td><td>M12</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13px"><b>4つの画面</b>で、学習記録アプリとしての価値が完結。各画面に15巻の技術が詰まっています。</p>
+      </div>
+      <div class="code"><span class="code-head">// 完成版の体験フロー</span>
+
+<span class="comment">// ① 記録を登録</span>
+/records/new
+  → 科目・日付・時間・メモを入力
+  → 登録（study_records に INSERT）
+  → 科目の最終学習日も更新（M13）
+  → @Transactional で整合性保証
+
+
+<span class="comment">// ② 一覧で確認・検索</span>
+/subjects
+  → 科目ごとに記録が一覧表示（M4 JOIN）
+  → 科目・期間で絞り込み（M6,8 動的SQL）
+
+
+<span class="comment">// ③ 統計で振り返り</span>
+/stats
+  → 科目別の合計時間ランキング（M9）
+  → カード＋進捗バー（M10）
+  → 「60分以上の科目だけ」（M11 HAVING）
+
+/stats/daily
+  → 日別の学習推移（M12 時系列）
+  → 目標達成率
+
+
+<span class="comment">// ④ 整理</span>
+/subjects
+  → 不要な科目を削除（M14）
+  → 関連記録も CASCADE で削除
+
+
+<span class="comment">// 「記録 → 可視化 → 振り返り → 整理」</span>
+<span class="comment">// 学習サイクルを支える完成形</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="feature-check">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>全機能の統合確認</h2>
+    <span class="en">INTEGRATION CHECK</span>
+  </div>
+  <p class="pattern-desc">完成版が<b>すべて正しく動くか</b>を最終確認します。これまでの全機能を通しで動かす<b>総合テスト</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">final-test</span>
+      <span class="tag-desc">統合動作確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 統合確認チェックリスト</div>
+        <ul class="check-list">
+          <li>記録を登録できる（日付・時間・メモ）</li>
+          <li>登録時に科目の最終学習日も更新される</li>
+          <li>科目ごとに記録が一覧表示される</li>
+          <li>科目で絞り込み検索できる</li>
+          <li>期間で絞り込み検索できる</li>
+          <li>科目別の統計が表示される</li>
+          <li>進捗バーで割合が見える</li>
+          <li>閾値フィルタで絞り込める</li>
+          <li>日別の推移と達成率が見える</li>
+          <li>記録なしの日も0分で表示される</li>
+          <li>科目を削除でき、記録も連鎖削除される</li>
+          <li>エラー時にロールバックされる</li>
+        </ul>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ 全部動けば、完成版アプリの完成です！</p>
+      </div>
+      <div class="code"><span class="code-head">// 総合テストのシナリオ</span>
+
+<span class="comment">// ─── シナリオ：1週間の学習を記録 ───</span>
+
+<span class="comment">// 1. 月曜：Java を 60分</span>
+<span class="comment">// 2. 火曜：Spring を 90分</span>
+<span class="comment">// 3. 水曜：（記録なし）</span>
+<span class="comment">// 4. 木曜：Java を 120分</span>
+<span class="comment">// 5. 金曜：SQL を 30分</span>
+
+
+<span class="comment">// ─── 確認1：一覧 ───</span>
+/subjects
+<span class="comment">// → 各科目に記録がぶら下がって表示</span>
+
+
+<span class="comment">// ─── 確認2：検索 ───</span>
+/subjects?subjectId=1&from=...&to=...
+<span class="comment">// → Java の指定期間の記録だけ</span>
+
+
+<span class="comment">// ─── 確認3：統計 ───</span>
+/stats
+<span class="comment">// → Java 180分(最多), Spring 90分, SQL 30分</span>
+<span class="comment">// → 進捗バーで一目瞭然</span>
+
+/stats?minMinutes=60
+<span class="comment">// → Java と Spring のみ</span>
+
+/stats/daily
+<span class="comment">// → 月〜金の推移、水曜は0分</span>
+<span class="comment">// → 達成率（60分以上の日の割合）</span>
+
+
+<span class="comment">// ─── 確認4：削除 ───</span>
+<span class="comment">// SQL を削除 → 記録も消える</span>
+/stats
+<span class="comment">// → SQL が統計から消えている</span>
+
+
+<span class="comment">// 全機能が連携して動く = 完成！</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="architecture">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>完成したアーキテクチャ</h2>
+    <span class="en">FINAL ARCHITECTURE</span>
+  </div>
+  <p class="pattern-desc">15巻で築いた<b>層構造（レイヤードアーキテクチャ）</b>を俯瞰します。各層の<b>役割分担</b>こそが、保守しやすいシステムの土台です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">architecture</span>
+      <span class="tag-desc">層構造の全体像</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 各層の役割</div>
+        <div class="role-card">
+          <span class="label">Controller</span>
+          <div class="name">リクエストの受付と画面の選択</div>
+          <div class="desc">URLとメソッドのマッピング・パラメータ受取・Modelへの詰め込み。<b>薄く保つ</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">Service</span>
+          <div class="name">業務ロジックの中心</div>
+          <div class="desc">データの加工・トランザクション管理・複数Mapperの調整。<b>業務の頭脳</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">Mapper</span>
+          <div class="name">DBアクセス</div>
+          <div class="desc">SQL の実行。アノテーション or XML。<b>DBとの境界</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">Entity / DTO / Form</span>
+          <div class="name">データの器</div>
+          <div class="desc">Entity=テーブル / DTO=画面出力 / Form=画面入力。<b>役割で使い分け</b>。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 完成したパッケージ構造</span>
+
+com.example.todo/
+├ controller/
+│  ├ SubjectController      <span class="comment">// 科目・記録一覧</span>
+│  ├ StudyRecordController  <span class="comment">// 記録登録</span>
+│  └ StatsController        <span class="comment">// 統計画面</span>
+├ service/
+│  ├ SubjectService         <span class="comment">// 科目の業務</span>
+│  ├ StudyRecordService     <span class="comment">// 記録の業務</span>
+│  └ StatsService           <span class="comment">// 統計の業務</span>
+├ mapper/
+│  ├ SubjectMapper          <span class="comment">// 科目のDB</span>
+│  └ StudyRecordMapper      <span class="comment">// 記録のDB</span>
+├ entity/
+│  ├ Subject                <span class="comment">// subjects テーブル</span>
+│  └ StudyRecord            <span class="comment">// study_records テーブル</span>
+├ dto/
+│  ├ SubjectStat            <span class="comment">// 集計（Mapper用）</span>
+│  ├ SubjectStatView        <span class="comment">// 集計（画面用）</span>
+│  ├ DailyStat              <span class="comment">// 日別（Mapper用）</span>
+│  └ DailyStatView          <span class="comment">// 日別（画面用）</span>
+└ form/
+   └ StudyRecordForm        <span class="comment">// 記録入力</span>
+
+
+<span class="comment">// ─── データの流れ ───</span>
+
+リクエスト
+  ↓
+Controller（受付）
+  ↓
+Service（業務ロジック・@Transactional）
+  ↓
+Mapper（SQL）
+  ↓
+Database（外部キー制約）
+
+
+<span class="comment">// 各層が「自分の仕事」に集中</span>
+<span class="comment">// = 関心の分離</span>
+<span class="comment">// = 変更に強いシステム</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>この<b>層構造</b>こそ、15巻で最も大切な学びかもしれません。「Controller は薄く・Service に業務ロジック・Mapper は SQL だけ」── この<b>役割分担</b>を守れば、機能が増えても<b>破綻しない</b>。「<b>どこに何を書くか」が決まっている</b>から、チーム開発でも迷わない。これが<b>プロの設計</b>です。</p>
+  </div>
+</section>
+
+<section id="journey">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>15巻の旅の振り返り</h2>
+    <span class="en">THE JOURNEY</span>
+  </div>
+  <p class="pattern-desc">Vol.1 から Vol.15 まで、<b>4つのフェーズ</b>を通じて学習記録アプリを育ててきました。その軌跡を振り返ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">the-journey</span>
+      <span class="tag-desc">全15巻の歩み</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4フェーズ × 15巻</div>
+        <div class="journey">
+          <div class="journey-phase">
+            <div class="ph-title">土台フェーズ（Vol.1〜5）</div>
+            <div class="journey-vol"><span class="vn">Vol.1</span><span class="vt">プロジェクト引き継ぎ・2テーブル目追加</span></div>
+            <div class="journey-vol"><span class="vn">Vol.2</span><span class="vt">親子データを画面に出そう</span></div>
+            <div class="journey-vol"><span class="vn">Vol.3</span><span class="vt">XML Mapper 初登場</span></div>
+            <div class="journey-vol"><span class="vn">Vol.4</span><span class="vt">resultMap で関連取得</span></div>
+            <div class="journey-vol"><span class="vn">Vol.5</span><span class="vt">N+1問題を体験して直そう</span></div>
+          </div>
+          <div class="journey-phase">
+            <div class="ph-title">実用機能フェーズ（Vol.6〜8）</div>
+            <div class="journey-vol"><span class="vn">Vol.6</span><span class="vt">@RequestParam で絞り込もう</span></div>
+            <div class="journey-vol"><span class="vn">Vol.7</span><span class="vt">日付入力を完全攻略</span></div>
+            <div class="journey-vol"><span class="vn">Vol.8</span><span class="vt">動的SQL（if, where）を使おう</span></div>
+          </div>
+          <div class="journey-phase">
+            <div class="ph-title">統計フェーズ（Vol.9〜12）</div>
+            <div class="journey-vol"><span class="vn">Vol.9</span><span class="vt">GROUP BY で集計しよう</span></div>
+            <div class="journey-vol"><span class="vn">Vol.10</span><span class="vt">統計画面・第1段（科目別合計）</span></div>
+            <div class="journey-vol"><span class="vn">Vol.11</span><span class="vt">HAVING で集計に絞り込み</span></div>
+            <div class="journey-vol"><span class="vn">Vol.12</span><span class="vt">統計画面・第2段（日別＋達成率）</span></div>
+          </div>
+          <div class="journey-phase">
+            <div class="ph-title">完成フェーズ（Vol.13〜15）</div>
+            <div class="journey-vol"><span class="vn">Vol.13</span><span class="vt">複数テーブル更新と@Transactional応用</span></div>
+            <div class="journey-vol"><span class="vn">Vol.14</span><span class="vt">関連データ削除と外部キー制約</span></div>
+            <div class="journey-vol"><span class="vn">Vol.15</span><span class="vt">完成版＋シリーズ完結</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 成長の軌跡</span>
+
+<span class="comment">// ─── Vol.1 のあなた ───</span>
+<span class="comment">// 「2つ目のテーブルってどう作るの?」</span>
+<span class="comment">// 「1対多って何?」</span>
+
+
+<span class="comment">// ─── Vol.15 のあなた ───</span>
+<span class="comment">// ✓ 1対多を JOIN で取得できる</span>
+<span class="comment">// ✓ N+1問題を見抜いて直せる</span>
+<span class="comment">// ✓ 動的SQLで柔軟な検索を書ける</span>
+<span class="comment">// ✓ 集計クエリで統計画面を作れる</span>
+<span class="comment">// ✓ トランザクションで整合性を守れる</span>
+<span class="comment">// ✓ 外部キーで関連を設計できる</span>
+
+
+<span class="comment">// ─── 数字で見る成長 ───</span>
+
+<span class="comment">// テーブル：1個 → 2個（関連あり）</span>
+<span class="comment">// Mapper：アノテ → XML も使える</span>
+<span class="comment">// SQL：単純SELECT → JOIN/集計/動的SQL</span>
+<span class="comment">// 画面：一覧 → ダッシュボード</span>
+<span class="comment">// 整合性：なんとなく → 二重防御</span>
+
+
+<span class="comment">// 「初級者」から「中級者」へ</span>
+<span class="comment">// 確かな一歩を踏み出しました</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="skills">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>獲得スキルの総まとめ</h2>
+    <span class="en">SKILLS ACQUIRED</span>
+  </div>
+  <p class="pattern-desc">15巻で手に入れた<b>15の獲得スキル</b>。これらは<b>業務開発で日常的に使う実戦的な技術</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">skill-list</span>
+      <span class="tag-desc">獲得した15スキル</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 獲得スキル一覧</div>
+        <table class="compare-tbl">
+          <tr><th>Vol</th><th>獲得スキル</th></tr>
+          <tr><td>1</td><td>2テーブル設計</td></tr>
+          <tr><td>2</td><td>1対多取得（2回SQL方式）</td></tr>
+          <tr><td>3</td><td>XML Mapper 導入</td></tr>
+          <tr><td>4</td><td>resultMap + collection</td></tr>
+          <tr><td>5</td><td>N+1の発見と修正</td></tr>
+          <tr><td>6</td><td>検索獲得</td></tr>
+          <tr><td>7</td><td>LocalDate + @DateTimeFormat</td></tr>
+          <tr><td>8</td><td>動的SQL獲得</td></tr>
+          <tr><td>9</td><td>集計クエリ獲得</td></tr>
+          <tr><td>10</td><td>統計画面の素</td></tr>
+          <tr><td>11</td><td>集計の応用（HAVING）</td></tr>
+          <tr><td>12</td><td>時系列集計</td></tr>
+          <tr><td>13</td><td>トランザクション応用</td></tr>
+          <tr><td>14</td><td>外部キー/ON DELETE</td></tr>
+          <tr><td>15</td><td>全機能統合</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// スキルの体系</span>
+
+<span class="comment">// ─── データ取得の技術 ───</span>
+★ 1対多取得（JOIN / resultMap）
+★ N+1問題の対策
+★ 検索・動的SQL
+<span class="comment">// → 「必要なデータを正しく速く取る」</span>
+
+
+<span class="comment">// ─── データ加工の技術 ───</span>
+★ 集計（GROUP BY / 集計関数）
+★ HAVING（集計後の絞り込み）
+★ 時系列集計
+★ Service層での業務ロジック
+<span class="comment">// → 「データを意味ある情報に変える」</span>
+
+
+<span class="comment">// ─── データ整合性の技術 ───</span>
+★ トランザクション（@Transactional）
+★ 外部キー制約
+<span class="comment">// → 「データの正しさを守る」</span>
+
+
+<span class="comment">// ─── 画面の技術 ───</span>
+★ 日付入力（LocalDate）
+★ ダッシュボード（カード・進捗バー）
+<span class="comment">// → 「ユーザーに分かりやすく見せる」</span>
+
+
+<span class="comment">// ─── 設計の技術 ───</span>
+★ 2テーブル設計・正規化
+★ 層構造（Controller/Service/Mapper）
+★ DTO/Entity/Form の使い分け
+<span class="comment">// → 「保守しやすい構造を作る」</span>
+
+
+<span class="comment">// これら全てが「業務開発の基礎体力」</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>これらのスキルは<b>「学習記録アプリ」という1つの題材</b>を通じて学びました。しかし<b>応用範囲は無限大</b>です。「1対多」は「顧客と注文」「投稿とコメント」、「集計」は「売上分析」「アクセス解析」── <b>あらゆる業務システムで同じ技術が使えます</b>。<b>これだけ身につけば、立派な中級者</b>です。</p>
+  </div>
+</section>
+
+<section id="future">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>これからの学習指針</h2>
+    <span class="en">WHAT'S NEXT</span>
+  </div>
+  <p class="pattern-desc">Cシリーズを終えたあなたへ、<b>次に学ぶとよいテーマ</b>を提案します。中級者から<b>上級者・実戦力</b>への道筋です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">next-topics</span>
+      <span class="tag-desc">次に学ぶべきこと</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 次のステップ候補</div>
+        <div class="role-card">
+          <span class="label">STEP 1</span>
+          <div class="name">バリデーションとエラーハンドリング</div>
+          <div class="desc"><code>@Valid</code>・<code>BindingResult</code>・例外ハンドラ。「正しくない入力」を丁寧に扱う技術。業務では必須。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">STEP 2</span>
+          <div class="name">認証・認可（Spring Security）</div>
+          <div class="desc">ログイン・権限管理。「誰がアクセスできるか」を制御。実用アプリには不可欠。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">STEP 3</span>
+          <div class="name">REST API と JSON</div>
+          <div class="desc"><code>@RestController</code>・フロントエンド連携。SPA や モバイルアプリのバックエンドへ。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">STEP 4</span>
+          <div class="name">テスト（JUnit / Mockito）</div>
+          <div class="desc">単体テスト・結合テスト。「動き続けることを保証する」プロの必須技術。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">STEP 5</span>
+          <div class="name">ページング・パフォーマンス</div>
+          <div class="desc">大量データの分割表示・インデックス設計。「スケールするシステム」へ。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 学習ロードマップ</span>
+
+<span class="comment">// ─── 今ここ ───</span>
+[初級] CRUD（A v2）
+   ↓
+[中級] 1対多・集計・整合性（C）★完了!
+   ↓
+<span class="comment">// ─── これから ───</span>
+[中級+] バリデーション・例外処理
+   ↓
+[実用] 認証・認可（Security）
+   ↓
+[実用] REST API・テスト
+   ↓
+[上級] パフォーマンス・スケール
+
+
+<span class="comment">// ─── 学び方のアドバイス ───</span>
+
+<span class="comment">// 1. 手を動かす</span>
+<span class="comment">//    読むだけでなく、必ず動かす</span>
+<span class="comment">//    （Cで実践した通り）</span>
+
+<span class="comment">// 2. 小さく作って育てる</span>
+<span class="comment">//    完璧を目指さず、動くものから</span>
+<span class="comment">//    （Cの「各巻で動かす」姿勢）</span>
+
+<span class="comment">// 3. エラーを恐れない</span>
+<span class="comment">//    赤線・例外は学びのチャンス</span>
+<span class="comment">//    （Cの「ハマりどころ」で実感）</span>
+
+<span class="comment">// 4. 「なぜ」を問う</span>
+<span class="comment">//    動いた理由・動かない理由を考える</span>
+<span class="comment">//    （別冊で深掘りした姿勢）</span>
+
+
+<span class="comment">// あなたは、もう一人で歩ける</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="final">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>シリーズ完結</h2>
+    <span class="en">SERIES COMPLETE</span>
+  </div>
+  <p class="pattern-desc">15巻、本当にお疲れさまでした。最後に、このシリーズを締めくくります。</p>
+
+  <div class="ending">
+    <h2>学習記録アプリ編 全15巻 完結</h2>
+    <div class="subtitle-end">★ PRACTICE BOOK C — COMPLETE ★</div>
+    <div class="message">
+      <p>Vol.1 で<b>2つの空のテーブル</b>から始まった旅は、ここに完結します。</p>
+      <p style="margin-top:14px">あなたは<b>1対多の関連</b>を学び、<b>N+1問題</b>と戦い、<b>動的SQL</b>で柔軟さを手に入れ、<b>集計</b>でデータを意味ある情報に変え、<b>統計画面</b>で可視化し、<b>トランザクション</b>と<b>外部キー</b>でデータの正しさを守る術を身につけました。</p>
+      <p style="margin-top:14px">これらは<b>小手先のテクニックではありません</b>。どんな業務システムにも通じる<b>本質的な土台</b>です。学習記録アプリという小さな題材の中に、<b>実戦のすべて</b>が詰まっていました。</p>
+      <p style="margin-top:14px">うまく動かない時もあったでしょう。赤線に悩み、例外に詰まり、SQLが思い通りにならない夜もあったかもしれません。<b>その一つ一つを乗り越えた経験こそ</b>、あなたの本当の力です。</p>
+      <p style="margin-top:14px"><b>あなたは、もう初級者ではありません。</b><br>自分の手で、データを設計し、取得し、加工し、守れる──<b>確かな中級者</b>です。</p>
+      <p style="margin-top:14px">ここから先は、あなた自身の道。<br>このシリーズで得た<b>「動かしながら学ぶ姿勢」</b>と<b>「なぜを問う習慣」</b>を携えて、次の技術へ歩み出してください。</p>
+      <p style="margin-top:20px;text-align:center;font-size:17px"><b>本当に、お疲れさまでした。</b></p>
+    </div>
+    <div class="series-list-end">
+      <div class="sl-title">PRACTICE BOOK C ── 15 VOLUMES</div>
+      <div class="sl-item"><span class="sl-no">01-05</span><span class="sl-name">土台：2テーブル設計・XML Mapper・N+1対策</span></div>
+      <div class="sl-item"><span class="sl-no">06-08</span><span class="sl-name">実用機能：検索・日付処理・動的SQL</span></div>
+      <div class="sl-item"><span class="sl-no">09-12</span><span class="sl-name">統計：集計・ダッシュボード・時系列</span></div>
+      <div class="sl-item"><span class="sl-no">13-15</span><span class="sl-name">完成：トランザクション・外部キー・統合</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:40px;border-left-color:var(--accent-3);background:rgba(31,74,55,0.10)">
+    <div class="tip-label">最後の NEXT STEP ── 別冊S15</div>
+    <p>本編はこれで完結ですが、最後の別冊S15「<b>シリーズ完結＋次への道</b>」が残っています。<b>「Cで学んだことの全体像」「業務開発で次に求められること」「学び続けるための心構え」</b>を、これまでの別冊の集大成としてお届けします。<b>最後の別冊S15で、旅を締めくくりましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.15 / 15 ── GRAND FINALE（本編）</span>
+</footer>
+
+</body>
+</html>

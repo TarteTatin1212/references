@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕GitHub版 Vol.9 リリースとバージョン管理</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2f38;
+  --paper:#f0ede4;
+  --paper-2:#e2ddc8;
+  --accent:#c95444;
+  --accent-2:#5a6270;
+  --accent-3:#2da44e;
+  --muted:#6a7080;
+  --line:#cac4b2;
+  --code-bg:#1c2026;
+  --code-text:#e8e4dc;
+  --panel-bg:#faf5e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"⎇";position:absolute;right:-10px;top:-30px;font-size:300px;color:var(--accent);opacity:0.17;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-2);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.prompt{color:#7eb87e}
+.gh-out{color:#a8b8c8}
+.vmajor{color:#ff7b72;font-weight:700}
+.vminor{color:#7ee787;font-weight:700}
+.vpatch{color:#79c0ff;font-weight:700}
+.key{background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(201,84,68,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-2);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff;font-size:12.5px}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-2);font-family:'JetBrains Mono',monospace}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.gh-mock{background:#0d1117;color:#c9d1d9;border:1px solid #2a313a;border-radius:6px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.75;margin:8px 0}
+.gh-mock .gh-bar{color:#7d8590;border-bottom:1px solid #2a313a;padding-bottom:6px;margin-bottom:8px;font-size:11px}
+.gh-mock .gh-tag{color:#3fb950;font-weight:700}
+.gh-mock .gh-h{color:#e6edf3;font-weight:700}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.GH9</span>
+    <span class="kind-tag">GitHub版 ── RELEASE</span>
+    <span class="rdt-tag">VERSIONING</span>
+  </div>
+  <h1>リリースと<br>バージョン管理</h1>
+  <div class="subtitle">GH.09 ── RELEASE &amp; SEMANTIC VERSIONING</div>
+  <p class="lead">CI（Vol.GH8）で品質を自動で守れるようになりました。次は<b>「成果物を世に出す」</b>。<b>git tag</b> で特定時点に印を付け、<b>GitHub Releases</b> でバージョンを公開、<b>セマンティックバージョニング</b>でバージョン番号を意味あるものに。<b>「v1.0.0 ができました」</b>と宣言できる仕組みを作ります。本シリーズの集大成に向けた節目です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 GitHub版の赤線対策</div>
+    <p>Vol.GH9で詰まる場面：タグを <code>push</code> し忘れて GitHub に反映されない（<code>git push --tags</code> が必要）、バージョン番号の付け方の迷い、リリースとタグの違い。<b>Section 07 で対処</b>。タグは<b>付け間違えても消せる</b>ので、まず試して慣れましょう。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 この巻のミッション</a></li>
+    <li><a href="#s02">02 タグとは何か</a></li>
+    <li><a href="#s03">03 セマンティックバージョニング</a></li>
+    <li><a href="#s04">04 タグを打つ</a></li>
+    <li><a href="#s05">05 GitHub Releases</a></li>
+    <li><a href="#s06">06 リリースノートとCHANGELOG</a></li>
+    <li><a href="#s07">07 ハマりどころ＋NEXT</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>この巻のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">Vol.GH9 のゴールは<b>「リリースの仕組みを作る」</b>こと。これまで作ってきたメモ帳アプリを、<b>「v1.0.0」という明確なバージョン</b>として区切り、公開できるようにします。<b>「いつでも作っていた状態」から「節目を刻む状態」へ</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">「リリース」という節目</span><span class="tag-desc">成果物を世に出す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// これまでとの違い</div>
+        <p>Vol.GH1〜8 は<b>「開発を続ける」</b>仕組み（コミット・PR・CI）。Vol.GH9 は<b>「区切りをつけて世に出す」</b>。マラソンの<b>チェックポイント</b>のようなもの。</p>
+
+        <div class="panel-head" style="margin-top:18px">// リリースの3要素</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">要素1</span>
+            <div class="name">タグ</div>
+            <div class="desc"><b>特定のコミットに印</b>。「ここが v1.0.0」と固定。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">要素2</span>
+            <div class="name">バージョン番号</div>
+            <div class="desc"><b>意味のある番号</b>（v1.2.3）。何が変わったか伝わる。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">要素3</span>
+            <div class="name">リリースノート</div>
+            <div class="desc"><b>変更点の説明</b>。「何が新しいか」を伝える。</div>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH9 で作るリリースの流れ</span>
+<span class="comment">// ─── これまで（開発を続ける）───</span>
+コミット → PR → CI → マージ
+（延々と続く開発）
+
+
+<span class="comment">// ─── Vol.GH9（節目を刻む）───</span>
+US-001〜005 完成
+  ↓
+<span class="kw">git tag v1.0.0</span>        ← ① タグで印
+  ↓
+GitHub Releases       ← ② 公開
+  + リリースノート      ← ③ 変更点説明
+  ↓
+「v1.0.0 をリリースしました」★★★
+
+
+<span class="comment">// ─── リリースの価値 ───</span>
+- 「どの時点が完成版か」が明確
+- ユーザーは「v1.0.0」を入手できる
+- 「v1.0.0で何ができるか」が分かる
+- 後で「v1.0.0に戻す」ができる
+
+<span class="comment">// → 開発の節目を刻む ★★★</span>
+<span class="comment">// → RDT版で作ってきた成果を「形」に</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — リリースは「ここまでできた」の宣言</div>
+    <p>リリースは技術的には「タグを打つ」だけですが、意味は<b>「ここまで完成した、という宣言」</b>。US-001〜005 が揃った今、<b>「v1.0.0」</b>と区切ることで、<b>成果が形になる</b>。要求工学（別冊S1）の<b>マイルストーン（v1.0）</b>が、ついに現実のリリースになる瞬間。<b>「動くものを節目で区切る」</b>のは、達成感とともに、後の管理も楽にします。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>タグとは何か</h2><span class="en">WHAT IS A TAG</span></div>
+  <p class="pattern-desc"><b>タグ</b>は<b>「特定のコミットに付ける名前付きの印」</b>。ブランチが「動き続ける線」なら、タグは<b>「固定された一点」</b>。「このコミットが v1.0.0 だ」と<b>永久に動かない目印</b>を付けます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">タグ vs ブランチ</span><span class="tag-desc">動かない印</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// タグとブランチの違い</div>
+        <table class="compare-tbl">
+          <thead><tr><th></th><th>ブランチ</th><th>タグ</th></tr></thead>
+          <tbody>
+            <tr><td>性質</td><td>動く線</td><td><b>固定の点</b></td></tr>
+            <tr><td>用途</td><td>開発を進める</td><td>節目を記録</td></tr>
+            <tr><td>移動</td><td>コミットで進む</td><td><b>動かない</b></td></tr>
+            <tr><td>例</td><td>main, feature/x</td><td>v1.0.0</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 2種類のタグ</div>
+        <ul>
+          <li><b>軽量タグ</b>：単なる印（名前だけ）</li>
+          <li><b>注釈付きタグ</b>：作者・日付・メッセージ付き（推奨）</li>
+        </ul>
+        <p style="margin-top:8px">リリースには<b>注釈付きタグ</b>を使う。「誰が・いつ・何を」が残る。</p>
+      </div>
+      <div class="code"><span class="code-head">// タグの概念</span>
+<span class="comment">// ─── ブランチは動く、タグは固定 ───</span>
+コミット履歴：
+
+A---B---C---D---E  ← main（動き続ける）
+        |
+      <span class="gh-tag">v1.0.0</span>  ← タグ（Cに固定・動かない）
+
+<span class="comment">// main は E, F, G... と進むが</span>
+<span class="comment">// v1.0.0 は C を指したまま ★★★</span>
+<span class="comment">// → 「v1.0.0 の時点」がいつでも分かる</span>
+
+
+<span class="comment">// ─── タグでできること ───</span>
+<span class="prompt">$</span> <span class="kw">git checkout</span> v1.0.0
+<span class="comment">// → v1.0.0 の時点のコードに戻れる ★</span>
+<span class="comment">// → 「v1.0.0 で何が起きたか」を調査</span>
+
+
+<span class="comment">// ─── 軽量タグ vs 注釈付きタグ ───</span>
+<span class="comment"># 軽量タグ（印だけ）</span>
+<span class="prompt">$</span> <span class="kw">git tag</span> v1.0.0
+
+<span class="comment"># 注釈付きタグ（推奨）★</span>
+<span class="prompt">$</span> <span class="kw">git tag -a</span> v1.0.0 <span class="kw">-m</span> <span class="str">"初回リリース"</span>
+<span class="comment">// → 作者・日付・メッセージが記録される</span>
+<span class="comment">// → リリースには注釈付きを使う ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — タグは「動かない」からこそ信頼できる</div>
+    <p>タグの価値は<b>「一度打ったら動かない」</b>こと。ブランチ（main）は新しいコミットでどんどん進みますが、<b>タグ v1.0.0 は永久にその時点を指し続ける</b>。だから「v1.0.0 のコードが見たい」「v1.0.0 に戻したい」がいつでもできる。<b>「あの完成版の状態」を永久保存する栞（しおり）</b>がタグ。リリースの土台になる、シンプルで強力な仕組みです。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>セマンティックバージョニング</h2><span class="en">SEMANTIC VERSIONING</span></div>
+  <p class="pattern-desc">バージョン番号<b>「v1.2.3」</b>には<b>意味があります</b>。<b>セマンティックバージョニング（SemVer）</b>は、番号の付け方のルール。<b>MAJOR.MINOR.PATCH</b> の3つで「何が変わったか」を表現します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">MAJOR.MINOR.PATCH の意味</span><span class="tag-desc">番号で変更の規模を示す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの数字の意味</div>
+        <table class="compare-tbl">
+          <thead><tr><th>位置</th><th>名前</th><th>上げるとき</th></tr></thead>
+          <tbody>
+            <tr><td>1番目</td><td><b>MAJOR</b></td><td>互換性を壊す変更</td></tr>
+            <tr><td>2番目</td><td><b>MINOR</b></td><td>後方互換の機能追加</td></tr>
+            <tr><td>3番目</td><td><b>PATCH</b></td><td>後方互換のバグ修正</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// Conventional Commits との対応</div>
+        <p>Vol.GH6 の<b>コミット規約</b>と綺麗に対応：</p>
+        <ul>
+          <li><b>feat</b>（機能追加）→ MINOR を上げる</li>
+          <li><b>fix</b>（バグ修正）→ PATCH を上げる</li>
+          <li><b>互換性破壊</b> → MAJOR を上げる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// セマンティックバージョニング</span>
+<span class="comment">// ─── v1.2.3 の構造 ───</span>
+v <span class="vmajor">1</span> . <span class="vminor">2</span> . <span class="vpatch">3</span>
+  │   │   └ <span class="vpatch">PATCH</span>：バグ修正
+  │   └──── <span class="vminor">MINOR</span>：機能追加（互換あり）
+  └──────── <span class="vmajor">MAJOR</span>：互換性を壊す変更
+
+
+<span class="comment">// ─── バージョンが上がる例 ───</span>
+v1.0.0  初回リリース（US-001〜005）
+  ↓ バグ修正（fix）
+v1.0.<span class="vpatch">1</span>  検索の不具合を修正
+  ↓ 機能追加（feat）
+v1.<span class="vminor">1</span>.0  エクスポート機能を追加
+  ↓ さらに機能追加
+v1.<span class="vminor">2</span>.0  ページネーション追加
+  ↓ 互換性を壊す大改修
+v<span class="vmajor">2</span>.0.0  DB構造を一新（移行が必要）
+
+
+<span class="comment">// ─── 上の位が上がると下はリセット ───</span>
+v1.2.3 → MINOR上げ → v1.<span class="vminor">3</span>.<span class="vpatch">0</span>
+                            （PATCHは0に）
+v1.3.0 → MAJOR上げ → v<span class="vmajor">2</span>.<span class="vminor">0</span>.<span class="vpatch">0</span>
+                          （MINOR/PATCHは0に）
+
+
+<span class="comment">// ─── Conventional Commits と対応（Vol.GH6）───</span>
+feat: → MINOR ↑（機能追加）
+fix:  → PATCH ↑（バグ修正）
+互換性破壊 → MAJOR ↑
+
+<span class="comment">// → コミットの type からバージョンが決まる</span>
+<span class="comment">// → 規約が一貫している ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — バージョン番号は「ユーザーへのメッセージ」</div>
+    <p>SemVer の本質は<b>「番号を見れば、アップデートの影響が分かる」</b>こと。<b>PATCH 上げ（v1.0.0→v1.0.1）なら安心して更新</b>（バグ修正だけ）、<b>MAJOR 上げ（v1→v2）なら要注意</b>（互換性が壊れる＝移行作業が要る）。番号が<b>ユーザーへのメッセージ</b>になる。適当に番号を振るのでなく、<b>変更の規模を番号で正直に伝える</b>のが SemVer の約束です。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>タグを打つ</h2><span class="en">CREATE A TAG</span></div>
+  <p class="pattern-desc">実際に<b>v1.0.0 のタグ</b>を打ちます。US-001〜005 が完成した今が<b>最初のリリースの好機</b>。注釈付きタグを作り、GitHub に push します。<b>push を忘れない</b>のがポイント（Section 07）。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">v1.0.0 タグの作成と push</span><span class="tag-desc">注釈付きタグ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// タグを打つ手順</div>
+        <ol class="step-list">
+          <li>main が最新・テスト緑（CI通過）を確認</li>
+          <li>注釈付きタグを作成（<code>-a -m</code>）</li>
+          <li>GitHub に push（<code>--tags</code> または <code>push origin v1.0.0</code>）</li>
+          <li>GitHub のタグ一覧で確認</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// タグを打つタイミング</div>
+        <ul>
+          <li><b>main にあるべき変更が全て入った</b>状態</li>
+          <li><b>CIが緑</b>（テスト通過・Vol.GH8）</li>
+          <li>→ 「リリースできる品質」が保証された時点</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// タグの作成と push</span>
+<span class="comment">// ─── ① 状態確認 ───</span>
+<span class="prompt">$</span> <span class="kw">git switch</span> main
+<span class="prompt">$</span> <span class="kw">git pull</span>
+<span class="comment"># main が最新・CI緑を確認 ★</span>
+
+
+<span class="comment">// ─── ② 注釈付きタグを作成 ───</span>
+<span class="prompt">$</span> <span class="kw">git tag -a</span> v1.0.0 <span class="kw">-m</span> <span class="str">"v1.0.0 初回リリース
+
+メモ帳アプリ初版。
+- メモのCRUD（US-001）
+- カテゴリ分類（US-002）
+- タグ付け（US-003）
+- 検索（US-004）
+- ピン/アーカイブ（US-005）"</span>
+<span class="comment">// → 作者・日付・メッセージが記録 ★</span>
+
+
+<span class="comment">// ─── ③ GitHub に push ───</span>
+<span class="prompt">$</span> <span class="kw">git push</span> origin v1.0.0
+<span class="comment"># または全タグまとめて：</span>
+<span class="prompt">$</span> <span class="kw">git push --tags</span>
+<span class="comment">// → タグを忘れず push（重要・Section 07）★★★</span>
+<span class="comment">// → 通常の push ではタグは送られない！</span>
+
+
+<span class="comment">// ─── ④ 確認 ───</span>
+<span class="prompt">$</span> <span class="kw">git tag</span>
+<span class="gh-out">v1.0.0</span>
+
+<span class="prompt">$</span> <span class="kw">git show</span> v1.0.0
+<span class="gh-out">tag v1.0.0
+Tagger: あなた &lt;...&gt;
+Date:   ...
+v1.0.0 初回リリース ...</span>
+
+
+<span class="comment">// ─── GitHub上でも確認 ───</span>
+<div class="gh-mock">
+<div class="gh-bar">github.com/.../tags</div>
+<span class="gh-tag">🏷 v1.0.0</span>  Latest
+   v1.0.0 初回リリース
+   3 commits to main since this tag
+</div>
+<span class="comment">// → タグが GitHub に表示される ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — タグは「git push --tags」しないと共有されない</div>
+    <p>最も多いミス：<b>タグを打ったのに GitHub に出てこない</b>。原因は、<b>通常の <code>git push</code> ではタグが送られない</b>から。タグは<b><code>git push origin v1.0.0</code></b>（個別）または <b><code>git push --tags</code></b>（全部）で<b>明示的に push</b>する必要があります。「ローカルにタグはあるのに GitHub にない」と思ったら、まず push を確認。これは Section 07 のハマりどころでも再掲します。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>GitHub Releases</h2><span class="en">GITHUB RELEASES</span></div>
+  <p class="pattern-desc"><b>GitHub Releases</b> は、タグを<b>「正式なリリース」として公開</b>する機能。タグに<b>リリースノート（変更点の説明）</b>を添え、必要なら<b>成果物（jar等）を添付</b>。ユーザーが「最新版」を入手できる場所になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">タグからリリースを作成</span><span class="tag-desc">タグ＋説明＋成果物</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// タグとリリースの違い</div>
+        <ul>
+          <li><b>タグ</b>：コミットへの印（git の機能）</li>
+          <li><b>リリース</b>：タグに<b>説明・成果物</b>を添えた公開物（GitHub の機能）</li>
+        </ul>
+        <p style="margin-top:8px">リリースは<b>タグの上に乗る</b>。タグなしにリリースは作れない。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 作成手順</div>
+        <ol class="step-list">
+          <li>GitHub の <b>Releases → Draft a new release</b></li>
+          <li>タグ <b>v1.0.0</b> を選択</li>
+          <li>タイトル・リリースノートを記入</li>
+          <li>必要なら成果物（jar）を添付</li>
+          <li><b>Publish release</b></li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// GitHub Releases</span>
+<span class="comment">// ─── タグ → リリース ───</span>
+git tag v1.0.0       ← ① 印（git）
+       ↓
+GitHub Release       ← ② 公開物（GitHub）
+  + リリースノート
+  + 成果物（任意）
+
+
+<span class="comment">// ─── リリース画面のイメージ ───</span>
+<div class="gh-mock">
+<div class="gh-bar">github.com/.../releases</div>
+<span class="gh-h">📦 v1.0.0 — 初回リリース</span>  Latest
+<span class="gh-tag">🏷 v1.0.0</span>
+
+## ✨ 新機能
+- メモのCRUD（US-001）
+- カテゴリ分類（US-002）
+- タグ付け（US-003）
+- 全文検索（US-004）
+- ピン留め・アーカイブ（US-005）
+
+## 📦 Assets
+memo-app-1.0.0.jar  (24.5 MB)
+Source code (zip)
+Source code (tar.gz)
+</div>
+
+
+<span class="comment">// ─── リリースの価値 ───</span>
+- ユーザーが「最新の安定版」を入手
+- 「v1.0.0 で何ができるか」が一目
+- 成果物（jar）をダウンロード可能
+- 過去のリリースも一覧で残る ★★★
+
+
+<span class="comment">// ─── CI と連携（Vol.GH8）───</span>
+<span class="comment">// GitHub Actions で「タグ push 時に</span>
+<span class="comment">// 自動でビルド→リリース作成」も可能</span>
+<span class="comment">// → リリースの自動化（発展）★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — リリースは「ユーザーが見る入口」</div>
+    <p>GitHub Releases は<b>「ユーザーがこのアプリと最初に出会う場所」</b>になることが多い。OSS なら、訪問者は<b>Releases を見て「最新版は何か・何ができるか」</b>を判断する。だから<b>リリースノートを丁寧に書く</b>のが大事（Section 06）。タグが「git の技術的な印」なら、リリースは<b>「ユーザーに向けた発表」</b>。GitHub版Vol.5 の README と並ぶ、<b>対外的な顔</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>リリースノートとCHANGELOG</h2><span class="en">RELEASE NOTES &amp; CHANGELOG</span></div>
+  <p class="pattern-desc">リリースで重要なのが<b>「何が変わったか」の記録</b>。<b>リリースノート</b>（そのリリースの変更点）と<b>CHANGELOG</b>（全リリースの履歴）。Vol.GH6 の<b>Conventional Commits</b> があれば、これらを<b>半自動で生成</b>できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">変更点を記録する</span><span class="tag-desc">コミットから生成できる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// リリースノートとCHANGELOG</div>
+        <ul>
+          <li><b>リリースノート</b>：1つのリリースの変更点（Releases に書く）</li>
+          <li><b>CHANGELOG.md</b>：全リリースの履歴（リポジトリに置く）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 書き方（ユーザー視点）</div>
+        <p>技術的詳細でなく<b>「ユーザーにとって何が変わったか」</b>を書く。<b>新機能・改善・修正</b>で分類。</p>
+
+        <div class="panel-head" style="margin-top:18px">// Conventional Commits から生成</div>
+        <p>Vol.GH6 の規約があれば、<b>feat→新機能、fix→修正</b>と<b>自動分類</b>できる。GitHub の「Generate release notes」機能も使える。</p>
+      </div>
+      <div class="code"><span class="code-head">// CHANGELOG.md（全リリース履歴）</span>
+<span class="kw"># Changelog</span>
+
+<span class="kw">## [1.0.0] - 2024-XX-XX</span>
+<span class="kw">### Added（新機能）</span>
+- メモのCRUD機能（US-001）
+- カテゴリによる分類（US-002）
+- 複数タグ付け（US-003）
+- キーワード全文検索（US-004）
+- ピン留め・アーカイブ（US-005）
+
+<span class="comment"># 将来のリリース例：</span>
+<span class="kw">## [1.1.0] - 将来</span>
+<span class="kw">### Added</span>
+- エクスポート/インポート機能
+<span class="kw">### Fixed（修正）</span>
+- 検索結果の並び順の不具合
+
+
+<span class="comment">// ─── Conventional Commits から生成 ───</span>
+<span class="comment"># Vol.GH6 の規約に沿ったコミット：</span>
+feat(memo): メモ作成を追加
+feat(search): 全文検索を追加
+fix(memo): 空タイトルエラーを修正
+        ↓ 自動分類
+### Added
+- メモ作成
+- 全文検索
+### Fixed
+- 空タイトルエラー
+<span class="comment">// → type からセクションが決まる ★★★</span>
+
+
+<span class="comment">// ─── GitHub の自動生成機能 ───</span>
+<span class="comment"># Releases 作成時に</span>
+<span class="comment"># 「Generate release notes」ボタン</span>
+<span class="comment"># → マージされたPRから自動でノート生成</span>
+<span class="comment"># → PRタイトルが整っていると綺麗（Vol.GH6,7）★</span>
+
+
+<span class="comment">// ─── 「Keep a Changelog」形式 ───</span>
+Added    新機能
+Changed  既存機能の変更
+Fixed    バグ修正
+Removed  削除された機能
+<span class="comment">// → 標準的な分類（覚えておくと便利）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 良いコミット規約が、良いリリースノートを生む</div>
+    <p>Vol.GH6 で<b>Conventional Commits</b>（feat/fix/docs）を整えた効果が、ここで開花します。<b>type で分類されたコミット</b>から、<b>リリースノートを半自動生成</b>できる。「feat → 新機能」「fix → 修正」と並べるだけ。<b>日々の丁寧なコミットが、リリース時の作業を楽にする</b>。RDT版で積み上げた規律が、最後に<b>リリースという形で報われる</b>のです。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>ハマりどころ＋NEXT STEP</h2><span class="en">PITFALLS &amp; NEXT</span></div>
+  <p class="pattern-desc">リリース・バージョン管理で陥りやすい地雷を5つ。<b>★★★ 印は特に頻発</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.GH9 ハマりどころ 5選</span><span class="tag-desc">先に知れば回避できる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① タグを push し忘れる ★★★</b></p>
+        <ul>
+          <li>通常の push ではタグが送られない</li>
+          <li>対処：<code>git push origin v1.0.0</code> / <code>--tags</code>（Section 04）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② バージョン番号の付け方に迷う ★★★</b></p>
+        <ul>
+          <li>機能追加なのに PATCH を上げる等</li>
+          <li>対処：feat→MINOR、fix→PATCH、破壊→MAJOR（Section 03）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ タグとリリースを混同する</b></p>
+        <ul>
+          <li>タグ＝git の印、リリース＝GitHub の公開物</li>
+          <li>対処：タグを打ってからリリースを作る（Section 05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 間違ったコミットにタグを打つ</b></p>
+        <ul>
+          <li>未テストの状態でタグ</li>
+          <li>対処：タグを削除して打ち直し（下記）。CI緑を確認してから</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ リリースノートが技術的すぎる</b></p>
+        <ul>
+          <li>内部の変更ばかりでユーザーに伝わらない</li>
+          <li>対処：「ユーザーにとって何が変わったか」を書く（Section 06）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 主要な対処</span>
+<span class="comment">// ─── ① タグの push ───</span>
+<span class="prompt">$</span> <span class="kw">git tag -a</span> v1.0.0 <span class="kw">-m</span> <span class="str">"..."</span>
+<span class="prompt">$</span> <span class="kw">git push</span> origin v1.0.0  <span class="comment"># 忘れずに ★★★</span>
+
+
+<span class="comment">// ─── ④ タグの打ち直し ───</span>
+<span class="comment"># ローカルのタグを削除</span>
+<span class="prompt">$</span> <span class="kw">git tag -d</span> v1.0.0
+<span class="comment"># リモートのタグも削除</span>
+<span class="prompt">$</span> <span class="kw">git push</span> origin :refs/tags/v1.0.0
+<span class="comment"># 正しいコミットで打ち直し</span>
+<span class="prompt">$</span> <span class="kw">git tag -a</span> v1.0.0 <span class="kw">-m</span> <span class="str">"..."</span>
+<span class="prompt">$</span> <span class="kw">git push</span> origin v1.0.0
+<span class="comment">// → タグは消して打ち直せる ★</span>
+<span class="comment">// ※ ただし公開後の打ち直しは混乱の元</span>
+<span class="comment">//   なので「CI緑を確認してから打つ」が基本</span>
+
+
+<span class="comment">// ─── ② バージョン番号の判断 ───</span>
+バグ修正だけ      → PATCH（v1.0.1）
+機能追加（互換）  → MINOR（v1.1.0）
+互換性を壊す      → MAJOR（v2.0.0）
+<span class="comment">// → 迷ったら「ユーザーへの影響」で考える</span>
+
+
+<span class="comment">// ─── 初回は v1.0.0、開発中は v0.x ───</span>
+<span class="comment"># 開発途中（不安定）: v0.1.0, v0.2.0...</span>
+<span class="comment"># 最初の安定版: v1.0.0 ★</span>
+<span class="comment"># → 本シリーズは US-001〜005 完成で v1.0.0</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">GH9 達成チェック</span><span class="tag-desc">リリースの仕組み完成</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェック</div>
+        <ul class="check-list">
+          <li>タグとブランチの違いを説明できる</li>
+          <li>注釈付きタグを作れる</li>
+          <li>タグを push できる（--tags）</li>
+          <li>セマンティックバージョニングを理解</li>
+          <li>feat→MINOR、fix→PATCHが分かる</li>
+          <li>GitHub Releases を作れる</li>
+          <li>CHANGELOG/リリースノートを書ける</li>
+          <li>コミット規約がリリースを楽にすると分かる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH9 で手に入れた力</span>
+✓ <span class="str">"タグで節目を固定できる"</span>
+
+✓ <span class="str">"セマンティックバージョニングで</span>
+   <span class="str"> 番号に意味を持たせる"</span>
+
+✓ <span class="str">"GitHub Releases で公開できる"</span>
+
+✓ <span class="str">"変更点をCHANGELOGに記録できる"</span>
+
+✓ <span class="str">"コミット規約がリリースを楽にする"</span>
+
+
+<span class="comment">// → 「成果物を世に出す」仕組みが完成 ★★★</span>
+<span class="comment">// → v1.0.0 をリリースできる状態に</span>
+
+<span class="comment">// 次回 Vol.GH10（予定）：</span>
+<span class="comment">//   GitHub Pages / Wiki でドキュメント公開</span>
+<span class="comment">//   または依存関係管理（Dependabot）</span>
+<span class="comment">//   本編Vol.11 のエクスポート機能と連動</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.GH10 へ</div>
+    <p>Vol.GH9 で<b>「リリースとバージョン管理」</b>の仕組みが整い、<b>v1.0.0 を世に出せる</b>ようになりました。タグ・SemVer・Releases・CHANGELOG が揃い、Vol.GH6 のコミット規約が報われました。次は Vol.GH10「<b>依存関係管理とプロジェクトの保守編</b>」。<b>Dependabot</b> でライブラリの更新を自動検知し、<b>セキュリティを保つ</b>方法を学びます。本編Vol.11「エクスポート/インポート」で外部連携が増える流れと並行して進めましょう。<b>本編Vol.11 → Vol.GH10 の順</b>がおすすめです。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>GH.09 / 14 ── RELEASE &amp; VERSIONING（GitHub版）</span>
+</footer>
+
+</body>
+</html>

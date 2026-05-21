@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.14 本編 関連データ削除と外部キー制約</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2c25;
+  --paper:#e1ecdf;
+  --paper-2:#c6dcc7;
+  --accent:#a0bca4;
+  --accent-2:#b4cbb8;
+  --accent-3:#1f4836;
+  --muted:#697867;
+  --line:#abc0a8;
+  --code-bg:#13211a;
+  --code-text:#e1ecdf;
+  --panel-bg:#eaf3e6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(160,188,164,0.12);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.fk-diagram{background:#fff;border:1px solid var(--line);padding:16px;margin:12px 0;font-family:'JetBrains Mono';font-size:12px}
+.fk-box{border:2px solid var(--accent);border-radius:6px;padding:8px 12px;margin:8px 0;background:#fafdf8}
+.fk-box .tn{font-weight:700;color:var(--accent-3);margin-bottom:4px}
+.fk-arrow{text-align:center;color:var(--accent);font-size:16px;margin:4px 0}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.14 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>関連データ削除と<br>外部キー制約</h1>
+  <div class="subtitle">FOREIGN KEY ── REFERENTIAL INTEGRITY</div>
+  <p class="lead">
+    Vol.14は<b>「外部キー/ON DELETE」</b>のマイルストーン。完成フェーズ第2弾です。<br>
+    Vol.13 では<b>アプリ層</b>（<code style="font-family:'JetBrains Mono'">@Transactional</code>）でデータ整合性を守りました。Vol.14 では<b>DB層</b>──データベース自身が整合性を守る<b>外部キー制約</b>を学びます。<br>
+    テーマは<b>「科目を削除したら、その学習記録はどうなるか」</b>。<code style="font-family:'JetBrains Mono'">ON DELETE CASCADE</code> と <code style="font-family:'JetBrains Mono'">RESTRICT</code> の使い分けで、<b>「親を消すと子も消える/消せない」</b>を制御します。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>Vol.14は<b>DB（SQL）が主舞台</b>。Java の新しい import はほぼなし。<br>
+    削除機能で <code>@Delete</code>（<code>org.apache.ibatis.annotations.Delete</code>）を使うので import を確認。<br>
+    外部キー制約違反は<b>実行時に例外</b>（<code>DataIntegrityViolationException</code> 等）として飛んできます。Vol.13 の <code>@Transactional</code> と組み合わせると、削除失敗時もロールバックされます。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#fk-basics">04 外部キー制約とは</a></li>
+    <li><a href="#on-delete">05 ON DELETE の挙動</a></li>
+    <li><a href="#create">06 ファイル作成と改修</a></li>
+    <li><a href="#run">07 ブラウザで動かして確認</a></li>
+    <li><a href="#trouble">08 ハマりどころと対処</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.14では<b>外部キー制約</b>を導入し、<b>科目削除機能</b>を実装します。「親を消したら子はどうなるか」を制御する設計を学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.14-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">外部キー制約を設定する</div>
+          <div class="desc"><code>study_records.subject_id</code> が <code>subjects.id</code> を参照する<b>外部キー</b>を設定。「存在しない科目の記録は作れない」を保証。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">ON DELETE の挙動を選ぶ</div>
+          <div class="desc"><code>CASCADE</code>（科目削除で記録も削除）か <code>RESTRICT</code>（記録があれば科目削除を拒否）を<b>業務要件で選択</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">科目削除機能を実装する</div>
+          <div class="desc">一覧に「削除」ボタンを追加。外部キー制約により<b>関連記録が適切に処理</b>される。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻でやること</span>
+
+<span class="comment">// 外部キー制約を追加</span>
+ALTER TABLE study_records
+  ADD CONSTRAINT fk_subject
+  FOREIGN KEY (subject_id)
+  REFERENCES subjects(id)
+  ON DELETE CASCADE;
+  <span class="comment">// ↑ 科目削除で記録も削除する設定</span>
+
+
+<span class="comment">// 科目削除の動作</span>
+
+DELETE FROM subjects WHERE id = 1;
+  ↓
+  ① subjects から Java を削除
+  ② study_records の Java の記録も
+     自動的に削除（CASCADE）
+
+<span class="comment">// 「親を消すと子も消える」</span>
+
+
+<span class="comment">// RESTRICT の場合</span>
+
+ON DELETE RESTRICT
+  ↓
+DELETE FROM subjects WHERE id = 1;
+  → 記録があるとエラー
+  → 「記録がある科目は消せない」
+
+
+<span class="comment">// 業務要件で挙動を選ぶのが今巻のテーマ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>外部キー制約は<b>「DB自身がデータ整合性を守る仕組み」</b>。Vol.13 の <code>@Transactional</code> が<b>アプリ層</b>の防御なら、外部キーは<b>DB層</b>の防御。<b>二重の防御</b>で「存在しない科目を参照する記録（孤児データ）」を防ぎます。「<b>アプリのバグでも DB が最後の砦になる</b>」── これが外部キーの価値です。</p>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── ブラウザで見える画面</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.14 のゴールは<b>科目削除機能</b>。削除ボタンを押すと、外部キー制約の設定に従って<b>関連記録も処理</b>されます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-screen</span>
+      <span class="tag-desc">削除機能のイメージ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 科目一覧に削除ボタン</div>
+        <div style="background:#fff;border:1px solid var(--line);font-family:'Noto Sans JP'">
+          <div style="background:#e0e0e0;padding:4px 12px;font-family:'JetBrains Mono';font-size:11px">▮ http://localhost:8080/subjects</div>
+          <div style="padding:16px">
+            <div style="font-family:'Shippori Mincho',serif;font-size:16px;color:var(--accent-3);font-weight:700;margin-bottom:10px">科目一覧</div>
+            <div style="display:flex;justify-content:space-between;padding:8px 12px;border:1px solid #ddd;margin:4px 0;font-size:13px">
+              <span><b style="color:var(--accent-3)">Java</b>（記録 5件）</span>
+              <span style="color:#b05050;border:1px solid #b05050;padding:2px 10px;border-radius:3px;font-size:12px">削除</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 12px;border:1px solid #ddd;margin:4px 0;font-size:13px">
+              <span><b style="color:var(--accent-3)">Spring Boot</b>（記録 3件）</span>
+              <span style="color:#b05050;border:1px solid #b05050;padding:2px 10px;border-radius:3px;font-size:12px">削除</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 12px;border:1px solid #ddd;margin:4px 0;font-size:13px">
+              <span><b style="color:var(--accent-3)">HTML/CSS</b>（記録 0件）</span>
+              <span style="color:#b05050;border:1px solid #b05050;padding:2px 10px;border-radius:3px;font-size:12px">削除</span>
+            </div>
+          </div>
+        </div>
+        <p style="margin-top:12px;font-size:13px"><b>CASCADE設定なら</b>：「Java」削除で5件の記録も消える。<b>RESTRICT設定なら</b>：記録のある科目はエラーで消せない。</p>
+      </div>
+      <div class="code"><span class="code-head">// プロジェクト構造の変化</span>
+
+todo/
+├ DB:
+│  └ study_records に外部キー制約
+│     <span class="kw">FOREIGN KEY (subject_id)</span>
+│     <span class="kw">REFERENCES subjects(id)</span>
+│     <span class="kw">ON DELETE CASCADE</span>
+├ src/main/java/com/example/todo/
+│  ├ mapper/
+│  │  └ SubjectMapper.java     <span class="comment">// 改修</span>
+│  │      <span class="kw">// + deleteById()</span>
+│  ├ service/
+│  │  └ SubjectService.java    <span class="comment">// 改修</span>
+│  │      <span class="kw">// + delete()</span>
+│  └ controller/
+│     └ SubjectController.java <span class="comment">// 改修</span>
+│         <span class="kw">// + POST /subjects/{id}/delete</span>
+└ src/main/resources/templates/
+   └ subjects/list.html        <span class="comment">// 改修</span>
+       <span class="kw">// + 削除ボタン（POST form）</span>
+
+
+<span class="comment">// DB制約＋削除機能の実装</span>
+<span class="comment">// 整合性は DB が保証する</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.14 は<b>Vol.1 の2テーブル設計</b>と<b>Vol.13 のトランザクション</b>の集大成。削除機能は A v2 の CRUD の D（Delete）の応用です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">前提知識</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前提知識</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>該当箇所</th></tr>
+          <tr><td>2テーブルの1対多設計</td><td>本編 M1 / 別冊 S1</td></tr>
+          <tr><td>削除機能（CRUD の D）</td><td>A v2</td></tr>
+          <tr><td>POST + PRG パターン</td><td>A v2</td></tr>
+          <tr><td>@Transactional</td><td>本編 M13</td></tr>
+          <tr><td>@Delete アノテーション</td><td>A v2 / 本巻</td></tr>
+        </table>
+        <div style="margin-top:16px;font-size:13.5px"><b>新しく学ぶこと</b>：</div>
+        <ol class="step-list" style="margin-top:6px">
+          <li>外部キー制約（FOREIGN KEY）</li>
+          <li>参照整合性（孤児データの防止）</li>
+          <li>ON DELETE CASCADE / RESTRICT / SET NULL</li>
+          <li>制約違反の例外ハンドリング</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// 整合性を守る2層の復習</span>
+
+<span class="comment">// ─── Vol.13: アプリ層 ───</span>
+
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">register</span>(...) {
+  <span class="comment">// 複数操作を1取引に</span>
+  <span class="comment">// 失敗したら全部ロールバック</span>
+}
+<span class="comment">// → Java（Spring）が整合性を守る</span>
+
+
+<span class="comment">// ─── Vol.14: DB層 ───</span>
+
+FOREIGN KEY (subject_id)
+REFERENCES subjects(id)
+<span class="comment">// → DB が整合性を守る</span>
+<span class="comment">// → 「存在しない科目の記録」を</span>
+<span class="comment">//   DB レベルで拒否</span>
+
+
+<span class="comment">// ─── 二重防御 ───</span>
+
+<span class="comment">// アプリのバグで不正なデータを</span>
+<span class="comment">// 書き込もうとしても、</span>
+<span class="comment">// DB の外部キー制約が最後に弾く。</span>
+
+<span class="comment">// 「DBが最後の砦」</span>
+<span class="comment">// → これが堅牢なシステムの条件</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="fk-basics">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>外部キー制約とは</h2>
+    <span class="en">WHAT IS A FOREIGN KEY</span>
+  </div>
+  <p class="pattern-desc"><b>外部キー（FOREIGN KEY）</b>は「<b>あるテーブルの列が、別のテーブルの主キーを参照する</b>」制約。「子テーブルの値は、必ず親テーブルに存在する」を DB が保証します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">fk-concept</span>
+      <span class="tag-desc">外部キーの仕組み</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 親子の参照関係</div>
+        <div class="fk-diagram">
+          <div class="fk-box">
+            <div class="tn">subjects（親）</div>
+            <div>id（主キー）, name, color, ...</div>
+          </div>
+          <div class="fk-arrow">▲ 参照</div>
+          <div class="fk-box">
+            <div class="tn">study_records（子）</div>
+            <div>id, <b style="color:var(--accent-3)">subject_id（外部キー）</b>, ...</div>
+          </div>
+        </div>
+        <p style="margin-top:10px;font-size:13px"><code>study_records.subject_id</code> は <code>subjects.id</code> を<b>参照</b>。外部キー制約があると、<b>存在しない subject_id の記録は作れない</b>。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">孤児データ（orphan）の防止</div>
+          <p>外部キーがないと、<b>「親が存在しない子」（孤児データ）</b>が生まれうる。「subject_id = 999（存在しない）の記録」など。外部キー制約はこれを<b>DBレベルで防ぐ</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 外部キーが守ること</span>
+
+<span class="comment">// ─── 外部キーなしの世界（危険）───</span>
+
+<span class="comment">// study_records に好きな subject_id を入れられる</span>
+INSERT INTO study_records
+  (subject_id, studied_on, minutes)
+VALUES (<span class="num">999</span>, '2026-05-20', 60);
+<span class="comment">// → subject_id=999 の科目は存在しない！</span>
+<span class="comment">// → でも INSERT できてしまう</span>
+<span class="comment">// → 「孤児データ」発生</span>
+
+<span class="comment">// 後で集計すると：</span>
+<span class="comment">// 科目名が出ない・JOIN で消える等の不具合</span>
+
+
+<span class="comment">// ─── 外部キーありの世界（安全）───</span>
+
+ALTER TABLE study_records
+  ADD CONSTRAINT fk_subject
+  FOREIGN KEY (subject_id)
+  REFERENCES subjects(id);
+
+<span class="comment">// 同じ INSERT を試すと：</span>
+INSERT INTO study_records
+  (subject_id, ...) VALUES (<span class="num">999</span>, ...);
+
+<span class="comment">// ERROR 1452:</span>
+<span class="comment">// Cannot add or update a child row:</span>
+<span class="comment">// a foreign key constraint fails</span>
+<span class="comment">// → DB が拒否！</span>
+<span class="comment">// → 孤児データを作れない</span>
+
+
+<span class="comment">// ─── 外部キーが保証する2方向 ───</span>
+
+<span class="comment">// 【INSERT/UPDATE 時】</span>
+<span class="comment">// 子に「存在しない親」を参照させない</span>
+
+<span class="comment">// 【DELETE 時】</span>
+<span class="comment">// 親を消す時、子をどうするか</span>
+<span class="comment">// → ON DELETE で制御（次セクション）</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="on-delete">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>ON DELETE の挙動</h2>
+    <span class="en">ON DELETE BEHAVIOR</span>
+  </div>
+  <p class="pattern-desc">外部キーの<b>核心</b>。「<b>親を削除した時、子をどうするか</b>」を <code>ON DELETE</code> で指定します。3つの主要な挙動を業務要件で選びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">on-delete-types</span>
+      <span class="tag-desc">3つの挙動</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ON DELETE の3つの挙動</div>
+        <div class="role-card">
+          <span class="label">CASCADE</span>
+          <div class="name">親を消すと子も消える</div>
+          <div class="desc">「科目を削除 → その記録も全部削除」。<b>「親がなくなった子は不要」</b>な場合。学習記録アプリに適する。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">RESTRICT</span>
+          <div class="name">子があれば親を消せない</div>
+          <div class="desc">「記録がある科目は削除拒否」。<b>「うっかり消して大量データ消失」を防ぐ</b>。安全重視。多くのDBのデフォルト。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">SET NULL</span>
+          <div class="name">親を消すと子の外部キーを NULL に</div>
+          <div class="desc">「科目削除 → 記録は残るが subject_id が NULL」。<b>記録を残したいが親は切る</b>場合。列が NULL 許容である必要。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>Vol.14 では CASCADE を採用</b>。「科目を消したら、その学習記録も不要」が自然なため。</p>
+      </div>
+      <div class="code"><span class="code-head">// 3つの挙動を比較</span>
+
+<span class="comment">// 前提：Java（id=1）に5件の記録がある</span>
+<span class="comment">// 「Java を削除」を試みる</span>
+
+
+<span class="comment">// ─── CASCADE ───</span>
+FOREIGN KEY (subject_id)
+REFERENCES subjects(id)
+ON DELETE CASCADE;
+
+DELETE FROM subjects WHERE id = 1;
+<span class="comment">// → Java が削除される</span>
+<span class="comment">// → Java の記録5件も自動削除</span>
+<span class="comment">// → 「親子まとめて消える」</span>
+
+
+<span class="comment">// ─── RESTRICT ───</span>
+FOREIGN KEY (subject_id)
+REFERENCES subjects(id)
+ON DELETE RESTRICT;
+
+DELETE FROM subjects WHERE id = 1;
+<span class="comment">// ERROR 1451:</span>
+<span class="comment">// Cannot delete or update a parent row</span>
+<span class="comment">// → 記録があるので削除拒否</span>
+<span class="comment">// → 「先に記録を消せ」と言われる</span>
+
+
+<span class="comment">// ─── SET NULL ───</span>
+FOREIGN KEY (subject_id)
+REFERENCES subjects(id)
+ON DELETE SET NULL;
+
+DELETE FROM subjects WHERE id = 1;
+<span class="comment">// → Java が削除される</span>
+<span class="comment">// → 記録5件は残るが subject_id = NULL</span>
+<span class="comment">// → 「親なし記録」になる</span>
+<span class="comment">// （subject_id が NULL 許容の必要あり）</span>
+
+
+<span class="comment">// ─── 業務での選び方 ───</span>
+
+<span class="comment">// CASCADE: 親子が運命共同体</span>
+<span class="comment">//   （注文と注文明細、など）</span>
+
+<span class="comment">// RESTRICT: 誤削除を防ぎたい</span>
+<span class="comment">//   （顧客と注文履歴、など）</span>
+
+<span class="comment">// SET NULL: 子を孤児として残す</span>
+<span class="comment">//   （担当者と案件、など）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><code>CASCADE</code> は<b>強力だが危険</b>でもあります。「科目を1つ消したら、知らないうちに数百件の記録が消えた」という事故も。業務では<b>「本当に親子が運命共同体か」</b>を慎重に判断。迷ったら <code>RESTRICT</code>（安全側）にして、「先に子を消す」運用にすることも多い。<b>削除は取り返しがつかない</b>ので慎重に。</p>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ファイル作成と改修</h2>
+    <span class="en">CREATE & MODIFY</span>
+  </div>
+  <p class="pattern-desc"><b>DB制約追加＋Mapper追加＋Service追加＋Controller追加＋HTML改修</b>。科目削除機能を一通り実装します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">add-fk</span>
+      <span class="tag-desc">① DBに外部キー制約を追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>DBクライアントを開く</li>
+          <li>既存の孤児データがないか確認（あると制約追加が失敗）</li>
+          <li>右のSQLで外部キー制約を追加（CASCADE）</li>
+          <li>実行</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">既存データに注意</div>
+          <p>外部キー制約を後から追加する時、<b>既存データに孤児（存在しない subject_id）があると失敗</b>します。まず孤児がないか確認。テーブル作成時に最初から制約を付けるのが理想ですが、Vol.14 では学習のため後付けします。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 外部キー制約の追加SQL</span>
+
+<span class="comment">// ─── まず孤児データを確認 ───</span>
+SELECT * FROM study_records r
+WHERE NOT EXISTS (
+  SELECT 1 FROM subjects s
+  WHERE s.id = r.subject_id
+);
+<span class="comment">// → 0件なら OK（孤児なし）</span>
+
+
+<span class="comment">// ─── 外部キー制約を追加 ───</span>
+ALTER TABLE study_records
+  ADD CONSTRAINT fk_subject
+  FOREIGN KEY (subject_id)
+  REFERENCES subjects(id)
+  ON DELETE CASCADE;
+
+
+<span class="comment">// ─── 確認 ───</span>
+SHOW CREATE TABLE study_records;
+<span class="comment">// → CONSTRAINT fk_subject FOREIGN KEY ...</span>
+<span class="comment">//   ON DELETE CASCADE が表示される</span>
+
+
+<span class="comment">// ─── もし RESTRICT にしたいなら ───</span>
+<span class="comment">// ON DELETE RESTRICT に変える</span>
+<span class="comment">// （Vol.14 では CASCADE で進める）</span>
+
+
+<span class="comment">// ─── 制約を外したい時（参考）───</span>
+<span class="comment">// ALTER TABLE study_records</span>
+<span class="comment">//   DROP FOREIGN KEY fk_subject;</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">add-mapper</span>
+      <span class="tag-desc">② SubjectMapper に削除メソッド追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectMapper.java</code> を開く</li>
+          <li><code>deleteById()</code> を <code>@Delete</code> で追加</li>
+          <li>import に <code>@Delete</code> を追加</li>
+          <li>保存</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.java（追加部分）</span>
+
+<span class="kw">import</span> org.apache.ibatis.annotations.Delete;
+<span class="comment">// 他のimportは省略</span>
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+
+  <span class="comment">// 既存メソッド省略 ...</span>
+
+  <span class="comment">// ★ Vol.14で追加</span>
+  <span class="ann">@Delete</span>(<span class="str">"DELETE FROM subjects "</span>
+        + <span class="str">"WHERE id = #{id}"</span>)
+  <span class="kw">void</span> <span class="fn">deleteById</span>(<span class="type">Integer</span> id);
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・@Delete アノテーション</span>
+<span class="comment">// ・引数1個なので @Param 省略可</span>
+<span class="comment">// ・このDELETE実行時、外部キー制約により</span>
+<span class="comment">//   study_records の関連記録も</span>
+<span class="comment">//   CASCADE で自動削除される</span>
+<span class="comment">//   （Mapper側は subjects を消すだけ）</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">add-service</span>
+      <span class="tag-desc">③ SubjectService に delete メソッド追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectService.java</code> を開く</li>
+          <li><code>delete()</code> メソッドを追加</li>
+          <li>クラスに <code>@Transactional</code> があることを確認</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">@Transactional との連携</div>
+          <p>削除中に何らかのエラーが起きた場合、<code>@Transactional</code> があれば<b>ロールバック</b>されます。Vol.13 の知識がここでも活きる。「削除＋他の処理」を組み合わせる時、トランザクションで守るのが安全。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectService.java（追加部分）</span>
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public class</span> <span class="type">SubjectService</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectMapper</span> subjectMapper;
+
+  <span class="comment">// 既存メソッド省略 ...</span>
+
+  <span class="comment">// ★ Vol.14で追加</span>
+  <span class="kw">public void</span> <span class="fn">delete</span>(<span class="type">Integer</span> id) {
+    subjectMapper.<span class="fn">deleteById</span>(id);
+    <span class="comment">// → subjects から削除</span>
+    <span class="comment">// → 外部キー CASCADE で</span>
+    <span class="comment">//   関連する study_records も削除</span>
+  }
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・Service は subjects の削除を指示するだけ</span>
+<span class="comment">// ・関連記録の削除は DB が自動で行う</span>
+<span class="comment">// ・「DBに任せる」のが外部キーの利点</span>
+<span class="comment">// ・Javaで「先に子を消して...」を</span>
+<span class="comment">//   書かなくて済む</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">add-controller</span>
+      <span class="tag-desc">④ SubjectController に削除アクション追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectController.java</code> を開く</li>
+          <li><code>@PostMapping("/subjects/{id}/delete")</code> を追加</li>
+          <li>削除後は <code>redirect:/subjects</code>（PRGパターン）</li>
+          <li>import に <code>@PathVariable</code> 等を追加</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">削除は POST で（GET厳禁）</div>
+          <p>削除のような<b>「状態を変える操作」は必ず POST</b>。GET で削除できると、URLを踏むだけ・クローラーのアクセスだけで消えてしまう大事故に。A v2 で学んだ<b>「副作用のある操作は POST」</b>の鉄則。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectController.java（追加部分）</span>
+
+<span class="kw">import</span> org.springframework.web.bind.annotation.PathVariable;
+<span class="kw">import</span> org.springframework.web.bind.annotation.PostMapping;
+<span class="comment">// 他のimportは省略</span>
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">SubjectController</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectService</span> subjectService;
+
+  <span class="comment">// 既存メソッド省略 ...</span>
+
+  <span class="comment">// ★ Vol.14で追加</span>
+  <span class="ann">@PostMapping</span>(<span class="str">"/subjects/{id}/delete"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">delete</span>(
+      <span class="ann">@PathVariable</span> <span class="type">Integer</span> id) {
+
+    subjectService.<span class="fn">delete</span>(id);
+
+    <span class="comment">// PRG パターン：削除後リダイレクト</span>
+    <span class="kw">return</span> <span class="str">"redirect:/subjects"</span>;
+  }
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・@PostMapping（GET不可）</span>
+<span class="comment">// ・@PathVariable で URL から id 取得</span>
+<span class="comment">// ・redirect で PRG パターン</span>
+<span class="comment">//   （リロードで二重削除を防ぐ）</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-template</span>
+      <span class="tag-desc">⑤ list.html に削除ボタン追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>subjects/list.html</code> を開く</li>
+          <li>各科目に削除用の <code>&lt;form method="post"&gt;</code> を追加</li>
+          <li>action は <code>@{/subjects/{id}/delete}</code></li>
+          <li>誤操作防止に <code>onclick</code> で確認ダイアログ</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">確認ダイアログで誤削除防止</div>
+          <p>削除は取り返しがつかないので、<code>onclick="return confirm('削除しますか?')"</code> で<b>確認ダイアログ</b>を出すのが定番。CASCADE の場合は「関連記録も削除されます」と<b>警告</b>するとより親切。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// list.html（削除ボタン追加部分）</span>
+
+<span class="comment">&lt;!-- 各科目の行に削除フォームを追加 --&gt;</span>
+
+&lt;<span class="kw">div</span> <span class="ann">th:each</span>=<span class="str">"s : ${allSubjects}"</span>&gt;
+  &lt;<span class="kw">span</span> <span class="ann">th:text</span>=<span class="str">"${s.name}"</span>&gt;&lt;/<span class="kw">span</span>&gt;
+
+  <span class="comment">&lt;!-- ★ Vol.14で追加：削除フォーム --&gt;</span>
+  &lt;<span class="kw">form</span> <span class="ann">method</span>=<span class="str">"post"</span>
+        <span class="ann">th:action</span>=
+          <span class="str">"@{/subjects/{id}/delete(id=${s.id})}"</span>
+        <span class="ann">style</span>=<span class="str">"display:inline"</span>
+        <span class="ann">onsubmit</span>=
+          <span class="str">"return confirm('この科目と
+            関連する記録を全て削除します。
+            よろしいですか?')"</span>&gt;
+    &lt;<span class="kw">button</span> <span class="ann">type</span>=<span class="str">"submit"</span>&gt;削除&lt;/<span class="kw">button</span>&gt;
+  &lt;/<span class="kw">form</span>&gt;
+&lt;/<span class="kw">div</span>&gt;
+
+
+<span class="comment">// ─── ポイント ───</span>
+
+<span class="comment">// ・@{/subjects/{id}/delete(id=${s.id})}</span>
+<span class="comment">//   → URL に id を埋め込む Thymeleaf 記法</span>
+
+<span class="comment">// ・method="post"（GET不可）</span>
+
+<span class="comment">// ・onsubmit で確認ダイアログ</span>
+<span class="comment">//   CASCADE なので「記録も消える」と警告</span>
+
+<span class="comment">// ・display:inline でボタンを横並びに</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かして確認</h2>
+    <span class="en">RUN IN BROWSER</span>
+  </div>
+  <p class="pattern-desc">起動して<b>科目削除</b>を試します。CASCADE により関連記録も消えるのを確認。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">browser-check</span>
+      <span class="tag-desc">動作確認の手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>アプリ起動・<code>/subjects</code> を開く</li>
+          <li>記録のある科目（例：SQL・1件）の削除ボタンを押す</li>
+          <li>確認ダイアログで「OK」</li>
+          <li>科目一覧から SQL が消える</li>
+          <li>DBで <code>study_records</code> を確認 → SQL の記録も消えている（CASCADE）</li>
+          <li>統計画面 <code>/stats</code> でも SQL が消えていることを確認</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ ここまで動けばVol.14クリア！</p>
+        <p style="margin-top:6px;font-size:13px"><b>「親を消すと子も消える」</b>を DB が自動でやってくれる安心感を実感。</p>
+      </div>
+      <div class="code"><span class="code-head">// SQLログと確認</span>
+
+<span class="comment">// ─── 削除時のSQLログ ───</span>
+==&gt;  Preparing:
+  DELETE FROM subjects WHERE id = ?
+==&gt; Parameters: 3
+&lt;==    Updates: 1
+
+<span class="comment">// → Mapper が実行したのは</span>
+<span class="comment">//   subjects の DELETE だけ</span>
+
+
+<span class="comment">// ─── しかし DB の中では ───</span>
+
+<span class="comment">// 外部キー CASCADE により：</span>
+<span class="comment">// 1. study_records の subject_id=3 を自動削除</span>
+<span class="comment">// 2. subjects の id=3 を削除</span>
+
+<span class="comment">// （DB が連鎖削除を実行）</span>
+<span class="comment">// → Java は subjects の削除を頼むだけ</span>
+
+
+<span class="comment">// ─── 確認クエリ ───</span>
+
+<span class="comment">// 科目が消えたか</span>
+SELECT * FROM subjects WHERE id = 3;
+<span class="comment">// → 0件</span>
+
+<span class="comment">// 関連記録も消えたか</span>
+SELECT * FROM study_records
+WHERE subject_id = 3;
+<span class="comment">// → 0件（CASCADE で連鎖削除）</span>
+
+
+<span class="comment">// ─── RESTRICT だった場合の比較 ───</span>
+
+<span class="comment">// 記録のある科目を削除しようとすると：</span>
+<span class="comment">// org.springframework.dao</span>
+<span class="comment">//   .DataIntegrityViolationException</span>
+<span class="comment">// → 削除が拒否される</span>
+<span class="comment">// → @Transactional でロールバック</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">業務での感動ポイント</div>
+    <p>「<b>subjects を消すだけで、関連記録も自動で消える</b>」── これが CASCADE の便利さ。Java 側で「先に study_records を消して、次に subjects を消して...」と<b>手動で書く必要がない</b>。<b>DB が連鎖を保証</b>してくれる。「<b>整合性の管理を DB に任せられる</b>」のが外部キー制約の真価です。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">外部キー制約は<b>「制約違反エラー」</b>が頻発します。よくある6つのトラブルを押さえます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">troubles</span>
+      <span class="tag-desc">起きやすいトラブル6選</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card">
+          <span class="label">TROUBLE 1</span>
+          <div class="name">外部キー追加時に "constraint fails"</div>
+          <div class="desc"><b>原因</b>：既存データに孤児（存在しない subject_id）がある。<br><b>対処</b>：制約追加前に孤児データを削除 or 修正。<code>NOT EXISTS</code> で確認。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 2</span>
+          <div class="name">RESTRICTで科目削除がエラーになる</div>
+          <div class="desc"><b>原因</b>：記録がある科目を削除しようとした（RESTRICT の正常動作）。<br><b>対処</b>：先に記録を削除する、CASCADE に変える、または「削除不可」とユーザーに通知。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 3</span>
+          <div class="name">CASCADEで意図せず大量データ消失</div>
+          <div class="desc"><b>原因</b>：CASCADE の連鎖を理解せず、親を消したら子が大量に消えた。<br><b>対処</b>：CASCADE は慎重に。確認ダイアログ・論理削除（後述）も検討。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 4</span>
+          <div class="name">削除ボタンが GET になっている</div>
+          <div class="desc"><b>原因</b>：<code>&lt;a href&gt;</code> で削除を実装。GET なので危険。<br><b>対処</b>：<code>&lt;form method="post"&gt;</code> で POST にする。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 5</span>
+          <div class="name">SET NULL なのに NOT NULL 列</div>
+          <div class="desc"><b>原因</b>：<code>ON DELETE SET NULL</code> なのに外部キー列が <code>NOT NULL</code>。NULL にできず矛盾。<br><b>対処</b>：SET NULL を使うなら列を NULL 許容にする。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 6</span>
+          <div class="name">制約名の重複でALTERが失敗</div>
+          <div class="desc"><b>原因</b>：同じ制約名（fk_subject）が既にある。<br><b>対処</b>：別名にする、または既存制約を DROP してから追加。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// TROUBLE 1: 孤児データの処理</span>
+
+<span class="comment">// ─── エラー ───</span>
+ALTER TABLE study_records
+  ADD CONSTRAINT fk_subject ...;
+
+<span class="comment">// ERROR 1452:</span>
+<span class="comment">// Cannot add or update a child row</span>
+<span class="comment">// → 既存データに孤児がある</span>
+
+
+<span class="comment">// ─── 対処：孤児を確認 ───</span>
+SELECT * FROM study_records r
+WHERE NOT EXISTS (
+  SELECT 1 FROM subjects s
+  WHERE s.id = r.subject_id
+);
+
+
+<span class="comment">// ─── 孤児を削除 or 修正 ───</span>
+<span class="comment">// 削除する場合：</span>
+DELETE FROM study_records
+WHERE subject_id NOT IN (
+  SELECT id FROM subjects
+);
+
+<span class="comment">// その後、制約追加が成功する</span>
+
+
+<span class="code-head" style="margin-top:14px">// 補足：論理削除という選択肢</span>
+
+<span class="comment">// 「物理削除」（DELETE）の代わりに</span>
+<span class="comment">// 「論理削除」を使う設計もある</span>
+
+<span class="comment">// deleted_at カラムを追加し、</span>
+<span class="comment">// DELETE せず UPDATE で「削除日時」を記録</span>
+
+UPDATE subjects
+SET deleted_at = NOW()
+WHERE id = 1;
+
+<span class="comment">// 表示時は WHERE deleted_at IS NULL で除外</span>
+
+<span class="comment">// メリット：</span>
+<span class="comment">// ・誤削除しても復元できる</span>
+<span class="comment">// ・履歴が残る</span>
+
+<span class="comment">// デメリット：</span>
+<span class="comment">// ・全クエリに条件追加が必要</span>
+<span class="comment">// ・データが増え続ける</span>
+
+<span class="comment">// → 業務システムでは論理削除が主流</span>
+<span class="comment">// → Cでは物理削除で学ぶ（基礎として）</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.14本編の<b>完了チェックリスト</b>。完成フェーズも残すは最終巻のみ。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol14-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li>孤児データがないことを確認</li>
+          <li><code>study_records</code> に外部キー制約を追加</li>
+          <li><code>ON DELETE CASCADE</code> を指定</li>
+          <li><code>SubjectMapper</code> に <code>deleteById()</code>（<code>@Delete</code>）追加</li>
+          <li><code>SubjectService</code> に <code>delete()</code> 追加</li>
+          <li><code>SubjectController</code> に <code>@PostMapping(".../delete")</code> 追加</li>
+          <li>削除後 <code>redirect:/subjects</code>（PRG）</li>
+          <li><code>list.html</code> に削除フォーム（POST）追加</li>
+          <li>確認ダイアログ（onsubmit/confirm）</li>
+          <li>アプリ起動時にエラーが出ない</li>
+          <li>科目削除で一覧から消える</li>
+          <li>CASCADE で関連記録も消える</li>
+          <li>統計画面でも消えた科目が出ない</li>
+          <li>削除ボタンが GET でなく POST</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.14本編完了！</b><br>
+          <b>外部キー/ON DELETE</b>のスキル達成。完成フェーズ残り1巻。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で獲得したスキル</span>
+
+★ <span class="kw">外部キー/ON DELETE</span> ── 達成！
+
+  <span class="comment">// できるようになったこと:</span>
+  <span class="comment">// ・外部キー制約（FOREIGN KEY）</span>
+  <span class="comment">// ・参照整合性・孤児データの防止</span>
+  <span class="comment">// ・ON DELETE CASCADE / RESTRICT / SET NULL</span>
+  <span class="comment">// ・削除機能の実装（POST + PRG）</span>
+  <span class="comment">// ・DBレベルの整合性保証</span>
+  <span class="comment">// ・物理削除と論理削除の違い</span>
+
+
+<span class="code-head" style="margin-top:14px">// 整合性を守る2層が完成</span>
+
+<span class="comment">// Vol.13 アプリ層（@Transactional）✓</span>
+<span class="comment">// Vol.14 DB層（外部キー制約）✓</span>
+<span class="comment">// → 二重防御で堅牢なシステム</span>
+
+
+<span class="code-head" style="margin-top:14px">// 次にやること</span>
+
+<span class="comment">// ① 別冊 S14「外部キー制約と業務」</span>
+
+<span class="comment">// ② Vol.15 本編：</span>
+<span class="comment">//   「完成版＋シリーズ完結」</span>
+<span class="comment">//   → 全機能の統合</span>
+<span class="comment">//   → Cシリーズ完結！</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(31,72,54,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S14</div>
+    <p>本編Vol.14お疲れさまでした。<b>外部キー制約</b>で DB 層の整合性保証を手に入れました。別冊S14「<b>外部キー制約と業務</b>」では、<b>「参照整合性の設計思想」「CASCADE の罠と論理削除」「複合外部キー」「制約の運用」「正規化との関係」</b>を扱います。業務システムで<b>「削除をどう設計するか」</b>の判断力を養う巻。<b>続けて別冊S14へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.14 / 15 ── FOREIGN KEY（本編）</span>
+</footer>
+
+</body>
+</html>

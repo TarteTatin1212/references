@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕Vol.10 一括操作 複数選択とバルク処理</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2940;
+  --paper:#f3f0e6;
+  --paper-2:#e4dfcd;
+  --accent:#2d5485;
+  --accent-2:#507aa8;
+  --accent-3:#8a6a3a;
+  --muted:#6a7484;
+  --line:#c6c1b0;
+  --code-bg:#1a2236;
+  --code-text:#e8e4d4;
+  --panel-bg:#ede7d3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✦";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.phase-badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700;letter-spacing:0.05em}
+.ph-req{background:#e8eef6;color:#2d5485;border:1px solid #2d5485}
+.ph-des{background:#f0ebe0;color:#8a6a3a;border:1px solid #8a6a3a}
+.ph-imp{background:#e6efe8;color:#3a6a4a;border:1px solid #3a6a4a}
+.ph-test{background:#f3e8e8;color:#9a4040;border:1px solid #9a4040}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.key{background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(45,84,133,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.10</span>
+    <span class="kind-tag">本編 ── MAIN</span>
+    <span class="rdt-tag">REQ · DESIGN · TEST</span>
+  </div>
+  <h1>一括操作<br>複数選択とバルク処理</h1>
+  <div class="subtitle">VOL.10 ── BULK OPERATION</div>
+  <p class="lead">Vol.9 でアーカイブ・削除は<b>1件ずつ</b>でした。今回は<b>「複数メモをまとめて操作」</b>します。チェックボックスで<b>複数選択</b>し、<b>IN句でまとめてアーカイブ/削除</b>。別冊S9で学んだ<b>「まとめて1回」「空リストの罠」「単一SQLの原子性」「件数表示＋確認」</b>が実装で形に。別冊S5・S6・S8の知識も総動員する<b>総合演習</b>です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら — Vol.10 で新たに使うもの</div>
+    <p>実装の新規 import はほぼ無し。<code>@RequestParam List&lt;Long&gt; ids</code>（複数チェックボックスの受け取り・Vol.6 で既出）。XML で <code>&lt;foreach&gt;</code>（IN句・Vol.7 で既出）。空リスト対策のため Service で <code>ids.isEmpty()</code> チェック。<code>Ctrl + Shift + O</code>整理。<b>別冊S9を開きながら</b>進めましょう。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 要求の確認（一括操作）</a></li>
+    <li><a href="#s02">02 受入条件をテストケース化</a></li>
+    <li><a href="#s03">03 仕様化：複数選択のUI</a></li>
+    <li><a href="#s04">04 設計①：IN句でまとめて処理</a></li>
+    <li><a href="#s05">05 設計②：空リストと原子性</a></li>
+    <li><a href="#s06">06 実装</a></li>
+    <li><a href="#s07">07 テスト（一括処理と境界）</a></li>
+    <li><a href="#s08">08 ブラウザ確認＋ハマりどころ</a></li>
+    <li><a href="#s09">09 レビュー・評価＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>要求の確認（一括操作）</h2><span class="phase-badge ph-req">PHASE: REQ</span><span class="en">REVISIT REQUIREMENT</span></div>
+  <p class="pattern-desc">いつも通り<b>まず要求から</b>。Vol.9 でアーカイブ・削除を実装しましたが<b>1件ずつ</b>。使ってみると「<b>古いメモを何十件もまとめて整理したい</b>」というニーズが。これも<b>使い込んで生まれた要求</b>（US-005の延長）です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">一括操作の要求と背景</span><span class="tag-desc">1件ずつは面倒</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ一括操作が必要か</div>
+        <p>Vol.9 のアーカイブは便利ですが、<b>50件のメモを整理</b>するには<b>50回ボタンを押す</b>。これは苦痛（別冊S9）。「<b>選んでまとめて</b>」が欲しい。</p>
+
+        <div class="panel-head" style="margin-top:18px">// US-005 の拡張</div>
+        <div class="role-card" style="margin-top:8px">
+          <span class="label">US-005 拡張 / SHOULD</span>
+          <div class="name">複数メモをまとめて整理したい</div>
+          <div class="desc"><b>As a</b> メモが大量にあるユーザー<br><b>I want</b> 複数のメモを選んで一括でアーカイブ/削除したい<br><b>so that</b> 整理の手間を大幅に減らせる</div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// 一括操作の対象</div>
+        <ul>
+          <li><b>一括アーカイブ</b>：選んだメモをまとめてアーカイブ</li>
+          <li><b>一括削除</b>：選んだメモをまとめて削除（要確認）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 一括操作の受入条件</span>
+<span class="ann">@AC1</span> 複数選択して一括アーカイブ
+Given: 複数のメモがある
+When : 3件を選んで一括アーカイブ
+Then : 選んだ3件がアーカイブされる
+       （選んでないメモは変わらない）
+
+<span class="ann">@AC2</span> 複数選択して一括削除
+Given: 複数のメモがある
+When : 3件を選んで一括削除（確認後）
+Then : 選んだ3件が削除される
+
+<span class="ann">@AC3</span> 0件選択で実行
+Given: メモがある
+When : 何も選ばず一括操作を実行
+Then : エラーにならず、何も起きない
+       （または「選択してください」）★
+
+<span class="ann">@AC4</span> 一括処理の原子性
+Given: 複数メモを一括処理
+When : 処理が途中で失敗する
+Then : 全件処理されない（中途半端にしない）
+
+<span class="ann">@AC5</span> 一括削除は件数確認 ★★★
+Given: 複数メモを選んで削除
+When : 削除ボタンを押す
+Then : 「N件削除します」と確認が出る
+
+
+<span class="comment">// ─── @AC3 空選択・@AC5 件数確認が肝 ───</span>
+<span class="comment">// 別冊S9：空リストの罠・件数表示</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「0件選択」も必ず仕様に含める</div>
+    <p>一括操作で見落としやすいのが<b>@AC3「0件選択で実行」</b>。ユーザーが<b>何も選ばずに「一括アーカイブ」を押す</b>ことは必ず起きる。このとき<b>エラー（IN () 構文エラー・別冊S9）になってはいけない</b>。「何も起きない」または「選択してください」と<b>親切に</b>。複数選択UIは<b>「0個選択」という境界</b>を常に考慮する——別冊S3の境界値、別冊S9の空リストの罠です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>受入条件をテストケース化</h2><span class="phase-badge ph-req">PHASE: REQ→TEST</span><span class="en">AC TO TEST CASES</span></div>
+  <p class="pattern-desc">一括操作の受入条件をテストに。<b>「選んだものだけ処理、選んでないものは無傷」</b>が肝。さらに<b>@AC3（空リスト）の境界</b>を必ずテスト。別冊S9の<b>「空リストの罠」</b>を防ぎます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">一括処理のテストケース</span><span class="tag-desc">選択と非選択・空リスト</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テストケース一覧</div>
+        <table class="compare-tbl">
+          <thead><tr><th>検証</th><th>期待</th><th>層</th></tr></thead>
+          <tbody>
+            <tr><td>選んだ3件をアーカイブ</td><td>3件のみ変化</td><td>結合</td></tr>
+            <tr><td>選んでないメモ</td><td>無傷</td><td>結合</td></tr>
+            <tr><td>選んだ3件を削除</td><td>3件のみ削除</td><td>結合</td></tr>
+            <tr><td>空リストで実行</td><td><b>エラーなし</b></td><td><b>結合</b></td></tr>
+            <tr><td>0件選択の判定</td><td>スキップ</td><td>単体</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>「選んだものだけ・選んでないものは無傷」</b>を両方検証（別冊S9）。<b>空リスト（@AC3）</b>も必須。</p>
+      </div>
+      <div class="code"><span class="code-head">// 受入条件 → テスト層</span>
+<span class="comment">// ─── 結合テスト（@MybatisTest+H2）───</span>
+
+@AC1 一括アーカイブ
+  → 選んだ3件が archived=true
+  → 選んでない2件は archived=false ★★★
+  （両方確認 = 別冊S9）
+
+@AC2 一括削除
+  → 選んだ3件が消える
+  → 選んでないメモは残る
+
+@AC3 空リストでエラーなし ★★★
+  → ids=[] で実行
+  → 例外が出ない（別冊S9の罠回避）
+
+@AC4 原子性
+  → 単一SQLで全件処理 or 全件失敗
+
+
+<span class="comment">// ─── 単体テスト（Mockito）───</span>
+@AC3 空リストの判定
+  → Service が空なら Mapper を呼ばない
+  → verify(mapper, never()).bulkArchive()
+
+
+<span class="comment">// ─── 「選んでないものは無傷」が肝 ───</span>
+<span class="comment">// 一括処理は「対象だけ」を変えるべき</span>
+<span class="comment">// → 選んでないメモまで変わったら大事故</span>
+<span class="comment">// → IN句の対象が正しいか検証 ★★★</span>
+
+
+<span class="comment">// ─── 空リストの境界（別冊S3,S9）───</span>
+<span class="comment">// 「0件選択」は必ず起きる境界</span>
+<span class="comment">// → IN () エラーを防ぐ仕組みをテスト</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 一括処理は「対象外が無傷」を必ず確認する</div>
+    <p>一括処理のテストで最も重要なのは<b>「選んだものだけが処理され、選んでないものは一切変わらない」</b>こと。「3件選んでアーカイブ→その3件だけ archived=true、残り2件は false のまま」。もし<b>IN句の条件にミス</b>があると、<b>選んでないメモまで処理</b>される大事故に。だから<b>「対象が変わった」と「対象外が無傷」の両方</b>を検証する。一括処理は影響が大きいので、テストも厳密にします。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>仕様化：複数選択のUI</h2><span class="phase-badge ph-req">PHASE: SPEC</span><span class="en">SPECIFICATION</span></div>
+  <p class="pattern-desc">複数選択の<b>画面と操作</b>を仕様化します。<b>チェックボックスで選択</b>、<b>全選択</b>、<b>選択件数の表示</b>、<b>一括アクションボタン</b>。別冊S9の<b>「件数を見せる」</b>UXを反映します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">複数選択の画面仕様</span><span class="tag-desc">チェックボックスと一括ボタン</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// UI構成（別冊S9）</div>
+        <ul>
+          <li>各メモ行に<b>チェックボックス</b></li>
+          <li><b>全選択</b>チェックボックス（ヘッダー）</li>
+          <li><b>一括アクション</b>：アーカイブ／削除ボタン</li>
+          <li>選択した <b>ids[] を一括送信</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// URL設計</div>
+        <table class="compare-tbl">
+          <thead><tr><th>操作</th><th>URL</th></tr></thead>
+          <tbody>
+            <tr><td>一括アーカイブ</td><td>POST /memos/bulk/archive</td></tr>
+            <tr><td>一括削除</td><td>POST /memos/bulk/delete</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 確認（別冊S8,S9）</div>
+        <ul>
+          <li><b>一括アーカイブ</b>：復元可→確認軽め</li>
+          <li><b>一括削除</b>：取り返しつかない→<b>件数確認</b></li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 複数選択の画面イメージ</span>
+<span class="comment">// ─── 一覧に選択UI（別冊S9）───</span>
+┌──────────────────────────────┐
+│ メモ一覧                      │
+│ ☑全選択  [3件選択中]          │
+│   [一括アーカイブ][一括削除]   │
+├──────────────────────────────┤
+│ ☑ 古いメモ1                   │
+│ ☑ 古いメモ2                   │
+│ ☑ 古いメモ3                   │
+│ ☐ 重要メモ（選択しない）       │
+└──────────────────────────────┘
+
+
+<span class="comment">// ─── 送信されるリクエスト ───</span>
+POST /memos/bulk/archive
+  ids=1&ids=2&ids=3
+<span class="comment">// → チェックした分だけ ids[] で送信</span>
+<span class="comment">// → Vol.6 のタグ複数選択と同じ仕組み ★</span>
+
+
+<span class="comment">// ─── 一括削除の確認（別冊S9）───</span>
+一括削除ボタン押下
+  ↓
+「選択した3件を完全に削除します。
+ この操作は取り消せません。」
+  [削除する] [キャンセル]
+<span class="comment">// → 件数「3件」を明示 ★★★</span>
+<span class="comment">// → 誤操作防止（別冊S8,S9）</span>
+
+
+<span class="comment">// ─── 0件選択時（@AC3）───</span>
+何も選ばず実行
+  → 「メモを選択してください」
+  → エラーにせず親切に（別冊S9）★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「全選択」は便利だが一括削除と組むと危険</div>
+    <p><b>全選択</b>チェックボックスは便利ですが、<b>一括削除と組み合わさると危険</b>。「全選択→一括削除」で<b>全メモが消える</b>事故が起きうる。だから<b>件数確認（@AC5）が一層重要</b>。「100件を削除します」と出れば、「全部消えるところだった」と気づける（別冊S9）。全選択のような<b>強力な機能ほど、確認という安全装置</b>をしっかり。利便性と安全性のバランスです。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>設計①：IN句でまとめて処理</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">BULK WITH IN CLAUSE</span></div>
+  <p class="pattern-desc"><b>別冊S9の集大成</b>。一括処理を<b>IN句＋foreach</b>で<b>「まとめて1回のSQL」</b>に。ループで1件ずつではなく、<b>単一SQLで全件処理</b>。DB往復1回で効率的、かつ原子的です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">IN句による一括SQL（別冊S9の実践）</span><span class="tag-desc">まとめて1回</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 設計方針（別冊S9）</div>
+        <p><b>ループで1件ずつ（N回）</b>ではなく、<b>IN句で1回</b>。<code>UPDATE ... WHERE id IN (...)</code>。Vol.7 の <code>&lt;foreach&gt;</code> を再利用。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 必要な Mapper メソッド</div>
+        <ul>
+          <li><code>bulkArchive(ids)</code>：一括アーカイブ</li>
+          <li><code>bulkDelete(ids)</code>：一括削除</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// なぜ単一SQLか（別冊S9）</div>
+        <ul>
+          <li>DB往復が<b>1回</b>（効率）</li>
+          <li>単一SQLは<b>原子的</b>（@AC4）</li>
+          <li>シンプル（KISS・別冊S2）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 一括処理のMapper（別冊S9）</span>
+<span class="comment">// ─── MemoMapper.java（追加）───</span>
+<span class="kw">void</span> <span class="fn">bulkArchive</span>(<span class="type">List</span>&lt;<span class="type">Long</span>&gt; ids);
+<span class="kw">void</span> <span class="fn">bulkDelete</span>(<span class="type">List</span>&lt;<span class="type">Long</span>&gt; ids);
+
+
+<span class="comment">// ─── MemoMapper.xml（IN句＋foreach）───</span>
+<span class="comment">// 一括アーカイブ</span>
+<span class="kw">&lt;update</span> id=<span class="str">"bulkArchive"</span><span class="kw">&gt;</span>
+  UPDATE memos
+     SET archived = true
+   WHERE id IN
+  <span class="ann">&lt;foreach</span> item=<span class="str">"id"</span> collection=<span class="str">"list"</span>
+           open=<span class="str">"("</span> separator=<span class="str">","</span>
+           close=<span class="str">")"</span><span class="ann">&gt;</span>
+    #{id}
+  <span class="ann">&lt;/foreach&gt;</span>
+<span class="kw">&lt;/update&gt;</span>
+<span class="comment">// → 全て #{} で安全（別冊S6）★</span>
+
+<span class="comment">// 一括削除</span>
+<span class="kw">&lt;delete</span> id=<span class="str">"bulkDelete"</span><span class="kw">&gt;</span>
+  DELETE FROM memos
+   WHERE id IN
+  &lt;foreach item="id" collection="list"
+           open="(" separator=","
+           close=")"&gt;
+    #{id}
+  &lt;/foreach&gt;
+<span class="kw">&lt;/delete&gt;</span>
+
+
+<span class="comment">// ─── 実行されるSQL ───</span>
+UPDATE memos SET archived=true
+ WHERE id IN (1, 2, 3);
+<span class="comment">// → 3件を1回で更新（DB往復1回）★★★</span>
+
+
+<span class="comment">// ─── ループ（N回）との違い（別冊S9）───</span>
+<span class="ann">NG:</span> for(id) { update(id); }  <span class="comment">// N回往復</span>
+<span class="ann">OK:</span> bulkArchive(ids);        <span class="comment">// 1回往復 ★★★</span>
+<span class="comment">// → 別冊S9：DB往復を減らす</span>
+<span class="comment">// → 別冊S6 のN+1対策と同じ原則</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — foreach の collection は List なら "list"</div>
+    <p>MyBatis の <code>&lt;foreach&gt;</code> で、引数が<b>単一の List</b>（<code>bulkArchive(List&lt;Long&gt; ids)</code>）の場合、<code>collection="list"</code> と指定します（MyBatis のデフォルト名）。あるいは <code>@Param("ids")</code> を付けて <code>collection="ids"</code> とも書ける。Vol.7 のタグ検索では <code>@Param</code> 経由でしたが、<b>単一List引数なら "list"</b> が使える。この違いでハマることがあるので、<code>@Param</code> で明示するのが確実です（Section 08）。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>設計②：空リストと原子性</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">EMPTY LIST &amp; ATOMICITY</span></div>
+  <p class="pattern-desc">別冊S9の<b>2大ポイント</b>を設計に。<b>空リスト（@AC3）</b>は <code>IN ()</code> エラーになるので<b>Service でガード</b>。<b>原子性（@AC4）</b>は単一SQLで自然に確保。「<b>0件なら何もしない</b>」を仕組みで保証します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">空リスト対策と原子性の設計</span><span class="tag-desc">別冊S9の核心</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 空リスト対策（別冊S9）</div>
+        <p><code>IN ()</code> は<b>構文エラー</b>。空リストが来たら<b>Service でガード</b>して Mapper を呼ばない。</p>
+        <ul>
+          <li>Service で <code>ids.isEmpty()</code> をチェック</li>
+          <li>空なら<b>何もせず return</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 原子性（別冊S9）</div>
+        <p>単一の <code>UPDATE/DELETE ... WHERE id IN (...)</code> は<b>それ自体が原子的</b>（DB保証）。追加の @Transactional は不要。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 設計の要点</div>
+        <ul>
+          <li>空リストガードは<b>Service</b>に（業務ロジック）</li>
+          <li>単一SQLで原子性を<b>自動確保</b></li>
+          <li>シンプルさを保つ（KISS）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 空リストガードと原子性</span>
+<span class="comment">// ─── Service で空リストガード（@AC3）───</span>
+<span class="ann">@Service</span>
+<span class="kw">public class</span> <span class="type">MemoService</span> {
+
+  <span class="kw">public void</span> <span class="fn">bulkArchive</span>(<span class="type">List</span>&lt;<span class="type">Long</span>&gt; ids) {
+    <span class="comment">// 空リストガード（別冊S9）★★★</span>
+    <span class="kw">if</span> (ids == <span class="kw">null</span> || ids.<span class="fn">isEmpty</span>()) {
+      <span class="kw">return</span>;  <span class="comment">// 何もしない</span>
+    }
+    mapper.<span class="fn">bulkArchive</span>(ids);
+    <span class="comment">// → IN () エラーを未然に防ぐ ★</span>
+  }
+
+  <span class="kw">public void</span> <span class="fn">bulkDelete</span>(<span class="type">List</span>&lt;<span class="type">Long</span>&gt; ids) {
+    <span class="kw">if</span> (ids == <span class="kw">null</span> || ids.<span class="fn">isEmpty</span>()) {
+      <span class="kw">return</span>;
+    }
+    mapper.<span class="fn">bulkDelete</span>(ids);
+  }
+}
+
+
+<span class="comment">// ─── 原子性は単一SQLで自動確保（@AC4）───</span>
+<span class="comment">// UPDATE ... WHERE id IN (1,2,3) は</span>
+<span class="comment">// 1文のSQL → 原子的（DB保証）</span>
+<span class="comment">// → 3件全部成功 or 全部失敗</span>
+<span class="comment">// → @Transactional は不要（別冊S9）★★★</span>
+
+
+<span class="comment">// ─── なぜ単一SQLが優れるか（別冊S9）───</span>
+ループ + @Transactional:
+  原子性は得られるが DB往復 N回
+単一SQL（IN句）:
+  原子性も効率も両立 ★★★
+  + コードもシンプル（KISS・別冊S2）
+
+
+<span class="comment">// ─── ガードを Service に置く理由 ───</span>
+<span class="comment">// 「空なら何もしない」は業務ルール</span>
+<span class="comment">// → Service の責務（別冊S2の層分離）</span>
+<span class="comment">// → Mapper は「SQLを実行するだけ」に保つ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「単一SQL」が効率・原子性・単純さを同時に実現</div>
+    <p>別冊S9で学んだ通り、一括処理は<b>「単一SQL（IN句）」が三拍子そろう</b>：①<b>効率</b>（DB往復1回）、②<b>原子性</b>（DBが自動保証、@Transactional不要）、③<b>単純さ</b>（コードがシンプル・KISS）。ループ＋@Transactional でも原子性は得られますが、DB往復がN回で非効率。<b>「1文のSQLで表現できるなら、それが最善」</b>。空リストのガードだけ Service で足せば完成です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>実装</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">IMPLEMENTATION</span></div>
+  <p class="pattern-desc">設計に沿って実装。<b>Mapper（IN句）</b>、<b>Service（空リストガード）</b>、<b>Controller（ids受け取り）</b>、<b>View（チェックボックス＋確認）</b>。Vol.6 の複数値受け取り、Vol.7 の foreach を再利用します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Controller の実装</span><span class="tag-desc">複数idの受け取り</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Controller の追加</div>
+        <p><code>@RequestParam(required=false) List&lt;Long&gt; ids</code> で複数idを受け取る（Vol.6 と同じ）。処理後は一覧へリダイレクト（PRG）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// required=false の意味</div>
+        <p>0件選択だと ids が送られない→null。<code>required=false</code> で null を許容し、Service のガードで処理。</p>
+      </div>
+      <div class="code"><span class="code-head">// MemoController（一括操作）</span>
+<span class="comment">// ─── 一括アーカイブ ───</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/bulk/archive"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">bulkArchive</span>(
+    <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+    <span class="type">List</span>&lt;<span class="type">Long</span>&gt; ids,
+    <span class="type">RedirectAttributes</span> ra) {
+
+  service.<span class="fn">bulkArchive</span>(ids);
+  <span class="comment">// → Service が空リストをガード（@AC3）★</span>
+
+  <span class="comment">// 結果フィードバック（別冊S9）</span>
+  <span class="kw">int</span> count = (ids == <span class="kw">null</span>)
+    ? <span class="num">0</span> : ids.<span class="fn">size</span>();
+  ra.<span class="fn">addFlashAttribute</span>(<span class="str">"message"</span>,
+    count + <span class="str">"件をアーカイブしました"</span>);
+  <span class="kw">return</span> <span class="str">"redirect:/memos"</span>;  <span class="comment">// PRG</span>
+}
+
+
+<span class="comment">// ─── 一括削除 ───</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/bulk/delete"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">bulkDelete</span>(
+    <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+    <span class="type">List</span>&lt;<span class="type">Long</span>&gt; ids,
+    <span class="type">RedirectAttributes</span> ra) {
+
+  service.<span class="fn">bulkDelete</span>(ids);
+  <span class="kw">int</span> count = (ids == <span class="kw">null</span>)
+    ? <span class="num">0</span> : ids.<span class="fn">size</span>();
+  ra.<span class="fn">addFlashAttribute</span>(<span class="str">"message"</span>,
+    count + <span class="str">"件を削除しました"</span>);
+  <span class="kw">return</span> <span class="str">"redirect:/memos"</span>;
+}
+<span class="comment">// → 「N件処理しました」と伝える（別冊S9）★</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">View の実装（複数選択＋確認）</span><span class="tag-desc">チェックボックスと件数確認</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// View の構成</div>
+        <ul>
+          <li>1つの form で<b>全メモを囲む</b></li>
+          <li>各メモに <code>name="ids"</code> のチェックボックス</li>
+          <li>一括ボタン（アーカイブ／削除）</li>
+          <li>削除は<b>JS で件数確認</b>（別冊S9）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// list.html（複数選択）</span>
+<span class="comment">// ─── 一括操作フォーム ───</span>
+<span class="kw">&lt;form</span> id=<span class="str">"bulkForm"</span> method=<span class="str">"post"</span><span class="kw">&gt;</span>
+  <span class="comment">&lt;!-- 一括ボタン --&gt;</span>
+  <span class="kw">&lt;button</span> type=<span class="str">"submit"</span>
+    formaction=<span class="str">"/memos/bulk/archive"</span><span class="kw">&gt;</span>
+    一括アーカイブ
+  <span class="kw">&lt;/button&gt;</span>
+  <span class="kw">&lt;button</span> type=<span class="str">"submit"</span>
+    formaction=<span class="str">"/memos/bulk/delete"</span>
+    onclick=<span class="str">"return confirmDelete()"</span><span class="kw">&gt;</span>
+    一括削除
+  <span class="kw">&lt;/button&gt;</span>
+
+  <span class="comment">&lt;!-- 各メモのチェックボックス --&gt;</span>
+  <span class="kw">&lt;tr</span> th:each=<span class="str">"memo : ${memos}"</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;td&gt;</span>
+      <span class="kw">&lt;input</span> type=<span class="str">"checkbox"</span>
+        name=<span class="str">"ids"</span>
+        th:value=<span class="str">"${memo.id}"</span>
+        class=<span class="str">"memo-check"</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;/td&gt;</span>
+    <span class="kw">&lt;td</span> th:text=<span class="str">"${memo.title}"</span><span class="kw">&gt;</span><span class="kw">&lt;/td&gt;</span>
+  <span class="kw">&lt;/tr&gt;</span>
+<span class="kw">&lt;/form&gt;</span>
+
+
+<span class="comment">// ─── 件数確認（別冊S9）★★★ ───</span>
+<span class="kw">&lt;script&gt;</span>
+<span class="kw">function</span> <span class="fn">confirmDelete</span>() {
+  <span class="kw">const</span> n = document
+    .<span class="fn">querySelectorAll</span>(
+      <span class="str">'.memo-check:checked'</span>).length;
+  <span class="kw">if</span> (n === <span class="num">0</span>) {
+    <span class="fn">alert</span>(<span class="str">'メモを選択してください'</span>);
+    <span class="kw">return false</span>;  <span class="comment">// @AC3</span>
+  }
+  <span class="kw">return</span> <span class="fn">confirm</span>(
+    n + <span class="str">'件を完全に削除します。\n'</span>
+    + <span class="str">'この操作は取り消せません。'</span>);
+  <span class="comment">// → 件数を見せて確認（別冊S8,S9）★★★</span>
+}
+<span class="kw">&lt;/script&gt;</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — formaction で1つのフォームを複数アクションに振り分け</div>
+    <p>1つのチェックボックス群を、<b>アーカイブと削除の両方</b>で使いたい場合、<code>&lt;button formaction="..."&gt;</code> が便利。同じフォーム内で<b>ボタンごとに送信先（action）を変えられる</b>。「同じ選択を、アーカイブにも削除にも使う」が綺麗に書ける。一括削除のボタンだけ <code>onclick</code> で件数確認（別冊S9）を挟む。<b>選択は共通、アクションは分岐</b>——一括操作UIの定石です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>テスト（一括処理と境界）</h2><span class="phase-badge ph-test">PHASE: TEST</span><span class="en">TEST</span></div>
+  <p class="pattern-desc">一括処理を結合テストで検証。<b>「選んだものだけ・選んでないものは無傷」</b>、そして<b>@AC3（空リスト）の境界</b>。別冊S9の<b>「空リストの罠」</b>を、テストで確実に防ぎます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">結合テスト — 一括処理と空リスト</span><span class="tag-desc">対象と境界の検証</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 検証ポイント</div>
+        <ul>
+          <li><b>@AC1</b>：選んだ3件がアーカイブ、残りは無傷</li>
+          <li><b>@AC2</b>：選んだ3件が削除、残りは残る</li>
+          <li><b>@AC3</b>：空リストでエラーなし ★★★</li>
+        </ul>
+        <p style="margin-top:8px"><b>@AC3（空リスト）</b>は別冊S9の罠回避を保証する重要テスト。Service のガードが効くか確認。</p>
+      </div>
+      <div class="code"><span class="code-head">// MemoBulkTest.java（結合・H2）</span>
+<span class="ann">@MybatisTest</span>
+<span class="ann">@Import</span>(<span class="type">MemoService</span>.<span class="kw">class</span>)  <span class="comment">// Serviceも対象</span>
+<span class="kw">class</span> <span class="type">MemoBulkTest</span> {
+  <span class="ann">@Autowired</span> <span class="type">MemoService</span> service;
+  <span class="ann">@Autowired</span> <span class="type">MemoMapper</span> mapper;
+
+  <span class="comment">// @AC1 選んだものだけアーカイブ ★★★</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">選んだメモだけ一括アーカイブ</span>() {
+    <span class="comment">// メモ5件を用意</span>
+    <span class="type">Memo</span> m1=<span class="fn">memo</span>(<span class="str">"1"</span>); mapper.<span class="fn">insert</span>(m1);
+    <span class="type">Memo</span> m2=<span class="fn">memo</span>(<span class="str">"2"</span>); mapper.<span class="fn">insert</span>(m2);
+    <span class="type">Memo</span> m3=<span class="fn">memo</span>(<span class="str">"3"</span>); mapper.<span class="fn">insert</span>(m3);
+    <span class="type">Memo</span> m4=<span class="fn">memo</span>(<span class="str">"4"</span>); mapper.<span class="fn">insert</span>(m4);
+    <span class="type">Memo</span> m5=<span class="fn">memo</span>(<span class="str">"5"</span>); mapper.<span class="fn">insert</span>(m5);
+
+    <span class="comment">// 3件を一括アーカイブ</span>
+    service.<span class="fn">bulkArchive</span>(<span class="type">List</span>.<span class="fn">of</span>(
+      m1.<span class="fn">getId</span>(), m2.<span class="fn">getId</span>(), m3.<span class="fn">getId</span>()));
+
+    <span class="comment">// 選んだ3件は archived=true</span>
+    <span class="fn">assertThat</span>(mapper.<span class="fn">findById</span>(m1.<span class="fn">getId</span>())
+      .<span class="fn">isArchived</span>()).<span class="fn">isTrue</span>();
+    <span class="comment">// 選んでない m4,m5 は archived=false ★★★</span>
+    <span class="fn">assertThat</span>(mapper.<span class="fn">findById</span>(m4.<span class="fn">getId</span>())
+      .<span class="fn">isArchived</span>()).<span class="fn">isFalse</span>();
+    <span class="fn">assertThat</span>(mapper.<span class="fn">findById</span>(m5.<span class="fn">getId</span>())
+      .<span class="fn">isArchived</span>()).<span class="fn">isFalse</span>();
+    <span class="comment">// → 対象だけ・対象外は無傷（別冊S9）★★★</span>
+  }
+
+  <span class="comment">// @AC3 空リストでエラーなし ★★★</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">空リストでもエラーにならない</span>() {
+    <span class="comment">// 空リスト・null で実行</span>
+    <span class="fn">assertThatNoException</span>()
+      .<span class="fn">isThrownBy</span>(() -> {
+        service.<span class="fn">bulkArchive</span>(<span class="type">List</span>.<span class="fn">of</span>());
+        service.<span class="fn">bulkArchive</span>(<span class="kw">null</span>);
+      });
+    <span class="comment">// → IN () エラーが出ない</span>
+    <span class="comment">// → Service のガードが効く（別冊S9）★★★</span>
+  }
+
+  <span class="comment">// @AC2 一括削除</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">選んだメモだけ一括削除</span>() {
+    <span class="comment">// 3件削除、残りは残る（省略）</span>
+  }
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 空リストのテストは「例外が出ないこと」を検証する</div>
+    <p>@AC3（空リスト）のテストは、AssertJ の <code>assertThatNoException().isThrownBy(...)</code> で<b>「例外が出ないこと」を明示的に検証</b>します。普通のテストは「結果が正しいか」を見ますが、ここでは<b>「エラーにならないこと自体」がテスト対象</b>。別冊S9の<b>「空リストの罠（IN () エラー）」</b>を、Service のガードが確実に防いでいるか保証する。<b>「異常が起きないこと」も立派なテスト</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>ブラウザ確認＋ハマりどころ</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">VERIFY &amp; PITFALLS</span></div>
+  <p class="pattern-desc">テストが緑になったらブラウザで確認。<b>複数選択・一括処理・件数確認</b>を目視。Vol.10 で踏みやすい一括処理特有の地雷を5つ先回りします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.10 ハマりどころ 5選</span><span class="tag-desc">一括処理特有の地雷</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 空リストで IN () エラー ★★★</b></p>
+        <ul>
+          <li>0件選択で実行→構文エラー</li>
+          <li>対処：Service で空リストガード（別冊S9・Section 05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② foreach の collection 名ミス ★★★</b></p>
+        <ul>
+          <li>単一List引数で collection="ids" にして動かない</li>
+          <li>対処：<code>@Param("ids")</code> を付ける、または "list"</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ 一括削除に件数確認なし ★★★</b></p>
+        <ul>
+          <li>選択した全件が一瞬で消える</li>
+          <li>対処：JS で件数確認（別冊S9・Section 06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ ループで1件ずつ処理</b></p>
+        <ul>
+          <li>N回のDB往復で遅い</li>
+          <li>対処：IN句でまとめて1回（別冊S9・Section 04）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 選んでないメモまで処理</b></p>
+        <ul>
+          <li>IN句の対象指定ミス</li>
+          <li>対処：「対象外が無傷」をテスト（Section 07）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// テスト＆ブラウザ確認</span>
+<span class="comment">// ─── テスト結果 ───</span>
+MemoBulkTest
+  ✓ 選んだメモだけ一括アーカイブ
+  ✓ 選んだメモだけ一括削除
+  ✓ 空リストでもエラーにならない ★★★
+MemoStateTest（既存・Vol.9）
+  ✓ 全て緑
+
+<span class="kw">all green</span> ★★★
+
+
+<span class="comment">// ─── ② foreach の collection 名 ───</span>
+<span class="ann">NG:</span>
+void bulkArchive(List&lt;Long&gt; ids);
+&lt;foreach collection="ids" ...&gt;
+<span class="comment">// → 単一List引数だと "ids" で動かない場合 ★</span>
+
+<span class="ann">OK:</span>
+void bulkArchive(@Param("ids") List&lt;Long&gt; ids);
+&lt;foreach collection="ids" ...&gt;
+<span class="comment">// → @Param で明示すれば確実 ★★★</span>
+<span class="comment">// （または collection="list" を使う）</span>
+
+
+<span class="comment">// ─── ① 空リストガード ───</span>
+<span class="ann">OK:</span>
+if (ids == null || ids.isEmpty()) return;
+mapper.bulkArchive(ids);
+<span class="comment">// → IN () を未然に防ぐ（別冊S9）★★★</span>
+
+
+<span class="comment">// ─── ブラウザ確認（別冊S8,S9）───</span>
+<span class="comment">// - 複数チェック→一括アーカイブ→3件消える</span>
+<span class="comment">// - 選んでないメモは残る（@AC1）★★★</span>
+<span class="comment">// - 一括削除→「3件削除します」確認（@AC5）</span>
+<span class="comment">// - 0件で実行→「選択してください」（@AC3）</span>
+<span class="comment">// - 「N件処理しました」表示（別冊S9）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 一括削除は「全選択→削除」を必ず自分で試す</div>
+    <p>ブラウザ確認で<b>必ず試すべき</b>なのが<b>「全選択して一括削除」</b>。これは最も危険な操作で、<b>件数確認が正しく出るか</b>を体で確かめる。「全選択（100件）→削除→『100件削除します』と出るか」。もし確認なしで消えたら大事故（別冊S9）。<b>自分が一番怖い操作を、自分で試して安全を確認</b>する。一括処理は影響が大きいぶん、ブラウザ確認も入念に行います。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>レビュー・評価＆次巻へ</h2><span class="phase-badge ph-test">PHASE: REVIEW</span><span class="en">REVIEW &amp; NEXT</span></div>
+  <p class="pattern-desc">一括操作を実装しました。<b>効率（IN句）・安全（原子性・空リスト）・UX（件数確認）</b>が揃ったか振り返ります。別冊S5・S6・S8・S9の知識を<b>総動員</b>した、集大成の回でした。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.10 卒業チェック</span><span class="tag-desc">一括処理の総合演習</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 要求の達成</div>
+        <ul class="check-list">
+          <li>一括操作の @AC1〜@AC5 をテスト化した</li>
+          <li>各テストが緑になった</li>
+          <li>既存テスト（Vol.9）も緑のまま</li>
+          <li>使い込んで生まれた要求を実装した</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 設計の評価（別冊S9）</div>
+        <ul class="check-list">
+          <li>IN句でまとめて処理した（効率）</li>
+          <li>単一SQLで原子性を確保した</li>
+          <li>空リストを Service でガードした</li>
+          <li>件数確認で誤操作を防いだ（UX）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 総合演習として</div>
+        <ul class="check-list">
+          <li>別冊S6（N+1/IN句）を活かした</li>
+          <li>別冊S5（原子性）を意識した</li>
+          <li>別冊S8（確認のUX）を反映した</li>
+          <li>別冊S9（一括処理）を実践した</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.10 で完成したフロー</span>
+<span class="comment">// ─── 要求（REQ）───</span>
+一括操作（US-005の延長）
+@AC3 空リスト・@AC5 件数確認が肝
+  ↓
+<span class="comment">// ─── 設計（DESIGN）───</span>
+IN句＋foreach（まとめて1回・別冊S9）
++ 空リストガード（Service）
++ 単一SQLで原子性（別冊S9）
+  ↓
+<span class="comment">// ─── 実装（IMPL）───</span>
+複数チェックボックス＋件数確認
++ formaction で選択を使い分け
+  ↓
+<span class="comment">// ─── テスト（TEST）───</span>
+対象だけ処理・対象外は無傷
++ 空リストで例外が出ない（@AC3）
+
+
+<span class="comment">// ─── Vol.10 は理論の総合演習 ───</span>
+別冊S5（原子性）   → 単一SQLの原子性
+別冊S6（IN句/N+1） → まとめて1回
+別冊S8（確認UX）   → 件数確認
+別冊S9（一括処理） → 全面的に実践
+<span class="comment">// → これまでの知識が一度に活きた ★★★</span>
+
+
+<span class="comment">// 次回 Vol.11：</span>
+<span class="comment">//   エクスポート/インポート</span>
+<span class="comment">//   メモをファイルに書き出し・読み込み</span>
+<span class="comment">//   外部連携・データ移行</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.11 へ</div>
+    <p>Vol.10 で<b>一括操作</b>を実装し、これまでの理論（別冊S5・S6・S8・S9）を<b>総動員</b>しました。効率・安全・UXを兼ね備えた一括処理ができました。次は Vol.11「<b>エクスポート/インポート</b>」。メモを<b>ファイル（CSV/JSON）に書き出し</b>、<b>ファイルから読み込む</b>機能を実装します。データの<b>バックアップ・移行・外部連携</b>を可能に。ファイル処理・形式変換という新しいテーマが登場。並行して<b>別冊S10</b>、<b>GitHub版Vol.10</b>を進めると効果的。<b>本編Vol.11 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>VOL.10 / 14 ── BULK OPERATION（本編）</span>
+</footer>
+
+</body>
+</html>
