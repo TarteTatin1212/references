@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.2 本編 親子関係のあるデータを画面に出そう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1e2c25;
+  --paper:#e7ece4;
+  --paper-2:#d2dbcf;
+  --accent:#34543f;
+  --accent-2:#527558;
+  --accent-3:#1c3023;
+  --muted:#697868;
+  --line:#b5c2b0;
+  --code-bg:#15221b;
+  --code-text:#e7ece4;
+  --panel-bg:#eff3ed;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(52,84,63,0.08);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.warn-future{margin:24px 0;padding:14px 20px;background:#fff4e6;border-left:3px solid #cc7a00;font-size:13.5px}
+.warn-future .wl{font-family:'JetBrains Mono',monospace;font-size:11px;color:#cc7a00;letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.warn-future p{font-size:13.5px;line-height:1.75}
+.warn-future b{color:#7a4a00}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.mock-screen{background:#fff;border:1px solid var(--line);margin:12px 0;font-family:'Noto Sans JP',sans-serif}
+.mock-bar{background:#e0e0e0;padding:4px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#444;border-bottom:1px solid #c0c0c0}
+.mock-body{padding:16px}
+.mock-h{font-family:'Shippori Mincho',serif;font-size:18px;margin-bottom:12px;color:var(--accent-3);border-bottom:2px solid var(--accent);padding-bottom:6px;display:inline-block}
+.mock-subject{background:#fff;border-left:4px solid var(--accent);padding:8px 12px;margin:8px 0}
+.mock-subject .sn{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700}
+.mock-records{margin-left:18px;margin-top:4px}
+.mock-records .rec{font-size:12px;color:var(--ink);padding:2px 0;border-bottom:1px dotted var(--line)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.02 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>親子関係のあるデータを<br>画面に出そう</h1>
+  <div class="subtitle">DISPLAY PARENT-CHILD DATA ── FIRST CONTACT</div>
+  <p class="lead">
+    Vol.2は<b>「1対多取得（基礎）」</b>の獲得が目標です。<br>
+    Vol.1で作った <code style="font-family:'JetBrains Mono'">subjects</code>（科目）に対して、子テーブル <code style="font-family:'JetBrains Mono'">study_records</code>（学習記録）を加え、<b>「科目ごとに学習記録が入れ子で並ぶ画面」</b>を作ります。<br>
+    この巻では<b>「とりあえず動かす」</b>を優先し、性能の話は後回し。<b>意図的に「2回SQL方式」</b>で実装します。Vol.4で <code style="font-family:'JetBrains Mono'">resultMap</code>、Vol.5で<b>N+1問題</b>と進む3段階の<b>1段目</b>です。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>新しいクラス <code>StudyRecord</code> を使う場面で赤線が出ます。<br>
+    <b>自動修正</b>: <code>Ctrl + Shift + O</code>（Organize Imports）。<br>
+    <b>個別修正</b>: 赤線にカーソルを合わせて <code>Ctrl + 1</code> → 「Import 'StudyRecord' (...)」を選択。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#table">04 study_recordsを設計する</a></li>
+    <li><a href="#sql">05 SQLでテーブル作成＆データ投入</a></li>
+    <li><a href="#create">06 クラス／インターフェイス作成の手順</a></li>
+    <li><a href="#run">07 ブラウザで動かして確認</a></li>
+    <li><a href="#trouble">08 ハマりどころと対処</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.2は<b>「1対多取得 ── 入り口の体験」</b>。<b>あえて素朴な実装</b>でまず動かして、その後Vol.4・Vol.5で改善していく<b>3段階の最初</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.2-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">study_records テーブルが存在する</div>
+          <div class="desc">外部キー <code>subject_id</code> 付きで子テーブルを作成し、初期データ（10件程度）を投入する。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">Subject に List&lt;StudyRecord&gt; を持たせる</div>
+          <div class="desc">親エンティティが子のリストを<b>フィールドとして保持</b>する設計。1対多のJava側表現。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">画面に「科目＋その学習記録」が入れ子表示される</div>
+          <div class="desc"><code>/subjects</code> を開くと、各科目の下に学習記録の一覧が出る。<b>「2回SQL」で実装</b>（あえて）。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 「2回SQL」とは？</span>
+
+<span class="comment">// ① まず subjects を取得</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> subjects;
+
+<span class="comment">// ② 各 subject ごとに study_records を取得</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> study_records
+<span class="kw">WHERE</span> subject_id = ?;
+<span class="comment">//   ↑ subjects の件数だけ繰り返し実行</span>
+
+
+<span class="comment">// = 全部で「1 + N回」のSQL実行</span>
+<span class="comment">// = これがいわゆる「N+1問題」</span>
+<span class="comment">// = Vol.5 で発見・修正する</span>
+
+
+<span class="comment">// Vol.2ではあえてこの方式で実装</span>
+<span class="comment">// → 「動く」を最速で体験</span>
+<span class="comment">// → Vol.4 で resultMap に進化</span>
+<span class="comment">// → Vol.5 で N+1 修正</span></div>
+    </div>
+  </div>
+
+  <div class="warn-future">
+    <div class="wl">FUTURE PROBLEM ──</div>
+    <p>Vol.2の実装は<b>意図的にN+1問題を抱えています</b>。コンソールログでSQLが何度も出るのを<b>あえて見ます</b>。「動くけど効率が悪い」── これを体感してから改善する方が、対策の意味が分かります。<b>性能対策はVol.5本編・S5別冊で本格化</b>。</p>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── ブラウザで見える画面</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.2のゴール画面はこれ。Vol.1で作った <code style="font-family:'JetBrains Mono'">/subjects</code> を改修し、<b>各科目の下に学習記録の入れ子表示</b>を加えます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-screen</span>
+      <span class="tag-desc">/subjects の改修後画面</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 完成画面のモック</div>
+        <div class="mock-screen">
+          <div class="mock-bar">▮ http://localhost:8080/subjects</div>
+          <div class="mock-body">
+            <div class="mock-h">科目別 学習記録一覧</div>
+            <div class="mock-subject">
+              <div class="sn">Java</div>
+              <div class="mock-records">
+                <div class="rec">2026-05-10 ── 60分（基礎構文の復習）</div>
+                <div class="rec">2026-05-12 ── 90分（コレクション）</div>
+              </div>
+            </div>
+            <div class="mock-subject">
+              <div class="sn">Spring Boot</div>
+              <div class="mock-records">
+                <div class="rec">2026-05-11 ── 45分（DI解説の動画視聴）</div>
+                <div class="rec">2026-05-13 ── 120分（チュートリアル）</div>
+              </div>
+            </div>
+            <div class="mock-subject">
+              <div class="sn">SQL</div>
+              <div class="mock-records">
+                <div class="rec">2026-05-09 ── 30分（JOIN練習）</div>
+              </div>
+            </div>
+            <div class="mock-subject">
+              <div class="sn">HTML/CSS</div>
+              <div class="mock-records" style="color:var(--muted);font-style:italic">（記録なし）</div>
+            </div>
+            <div class="mock-subject">
+              <div class="sn">JavaScript</div>
+              <div class="mock-records" style="color:var(--muted);font-style:italic">（記録なし）</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.2で追加・変更するファイル</span>
+
+todo/
+├ src/main/java/com/example/todo/
+│  ├ entity/
+│  │  ├ Subject.java        <span class="comment">// 改修</span>
+│  │  │   <span class="kw">// + records フィールド追加</span>
+│  │  └ <span class="kw">StudyRecord.java</span>     <span class="comment">// ★ 新規</span>
+│  ├ mapper/
+│  │  ├ SubjectMapper.java  <span class="comment">// そのまま</span>
+│  │  └ <span class="kw">StudyRecordMapper.java</span> <span class="comment">// ★ 新規</span>
+│  ├ service/
+│  │  └ SubjectService.java <span class="comment">// 改修</span>
+│  │      <span class="kw">// + findAllWithRecords()</span>
+│  └ controller/
+│     └ SubjectController.java <span class="comment">// 改修</span>
+│         <span class="kw">// list() の中身を差し替え</span>
+└ src/main/resources/templates/
+   └ subjects/list.html      <span class="comment">// 改修</span>
+       <span class="kw">// 入れ子の th:each</span>
+
+<span class="comment">// 新規2ファイル、改修4ファイル</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.2はVol.1とS1の内容を前提にします。<b>S1で学んだ「外部キーは多側に置く」</b>の原則が、ここで実装として現れます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">前提となる知識</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// どこで学んだか</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>該当箇所</th></tr>
+          <tr><td>subjectsテーブル・5科目</td><td>本編M1</td></tr>
+          <tr><td>Subject エンティティ／Mapper／Service／Controller</td><td>本編M1</td></tr>
+          <tr><td><code>th:each</code> の繰り返し</td><td>A v2 Vol.3</td></tr>
+          <tr><td>1対多／外部キーは多側</td><td>別冊S1</td></tr>
+          <tr><td>命名規則（複数形・id・{単数}_id）</td><td>別冊S1</td></tr>
+          <tr><td>NOT NULL の判断</td><td>別冊S1</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// 復習：S1の主要原則</span>
+
+<span class="comment">// 原則1: 外部キーは「多」側に置く</span>
+<span class="comment">//   → subject_id は study_records に</span>
+
+<span class="comment">// 原則2: 命名規則</span>
+<span class="comment">//   → テーブルは複数形 study_records</span>
+<span class="comment">//   → 外部キーは subject_id</span>
+
+<span class="comment">// 原則3: 主キーは物理キー</span>
+<span class="comment">//   → study_records.id も連番</span>
+
+<span class="comment">// 原則4: 迷ったらNOT NULL</span>
+<span class="comment">//   → subject_id, studied_on, minutes</span>
+<span class="comment">//     は全部 NOT NULL（必須）</span>
+
+
+<span class="comment">// これらをこの巻で実装する</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="table">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>study_recordsを設計する</h2>
+    <span class="en">DESIGN STUDY_RECORDS</span>
+  </div>
+  <p class="pattern-desc">Cの<b>2テーブル目</b>であり、<b>子テーブル</b>です。S1で学んだ原則をそのまま適用します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">table-design</span>
+      <span class="tag-desc">study_records の設計</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 列の設計</div>
+        <table class="compare-tbl">
+          <tr><th>列名</th><th>型</th><th>意味</th></tr>
+          <tr><td><code>id</code></td><td>INT</td><td>主キー（自動採番）</td></tr>
+          <tr><td><code>subject_id</code></td><td>INT</td><td>★ 外部キー（subjects.id）</td></tr>
+          <tr><td><code>studied_on</code></td><td>DATE</td><td>学習した日</td></tr>
+          <tr><td><code>minutes</code></td><td>INT</td><td>学習時間（分）</td></tr>
+          <tr><td><code>memo</code></td><td>VARCHAR(200)</td><td>メモ（任意）</td></tr>
+          <tr><td><code>created_at</code></td><td>DATETIME</td><td>レコード作成時刻</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// DDL（CREATE TABLE文）</span>
+
+<span class="kw">CREATE TABLE</span> study_records (
+  id          <span class="type">INT</span>          <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  subject_id  <span class="type">INT</span>          <span class="kw">NOT NULL</span>,
+  studied_on  <span class="type">DATE</span>         <span class="kw">NOT NULL</span>,
+  minutes     <span class="type">INT</span>          <span class="kw">NOT NULL</span>,
+  memo        <span class="type">VARCHAR</span>(<span class="num">200</span>),
+  created_at  <span class="type">DATETIME</span>     <span class="kw">NOT NULL</span>
+              <span class="kw">DEFAULT</span> CURRENT_TIMESTAMP,
+  <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">FOREIGN KEY</span> (subject_id)
+    <span class="kw">REFERENCES</span> subjects(id)
+);
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・subject_id NOT NULL</span>
+<span class="comment">//   = どの科目か必ず指定</span>
+<span class="comment">// ・FOREIGN KEY で参照整合性を保証</span>
+<span class="comment">//   = subjects に存在しない id は</span>
+<span class="comment">//     入れられなくなる</span>
+<span class="comment">// ・ON DELETE は Vol.14 で扱う</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><code>FOREIGN KEY</code> 制約を貼ることで、<b>「subjects に id=99 がないのに、study_records に subject_id=99 を入れる」</b>といったデータ不整合を、DBレベルで防げます。「<b>嘘のデータが入らない</b>」── 業務開発で<b>必ず付けるべき安全装置</b>です。</p>
+  </div>
+</section>
+
+<section id="sql">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>SQLでテーブル作成＆データ投入</h2>
+    <span class="en">EXECUTE SQL</span>
+  </div>
+  <p class="pattern-desc">DDLとINSERT文を実行します。<b>初期データは5件のJava記録／3件のSpring Boot記録／1件のSQL記録</b>で、3科目だけにデータを入れます。HTML/CSSとJavaScriptは<b>あえて記録なし</b>──これでThymeleafの「記録なし表示」も確認できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">execute-sql</span>
+      <span class="tag-desc">DDL と INSERT</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行手順</div>
+        <ol class="step-list">
+          <li>MySQLに接続（<code>mysql -u root -p</code>）</li>
+          <li><code>USE todo_db;</code></li>
+          <li>DDLを実行（右コード①）</li>
+          <li>INSERT文を実行（右コード②）</li>
+          <li><code>SELECT COUNT(*) FROM study_records;</code> で 9件返ることを確認</li>
+        </ol>
+        <p style="margin-top:14px;font-size:13px"><b>あえて科目に偏り</b>を持たせています：</p>
+        <ul style="margin-left:18px;font-size:13px">
+          <li>Java: 5件</li>
+          <li>Spring Boot: 3件</li>
+          <li>SQL: 1件</li>
+          <li>HTML/CSS: 0件</li>
+          <li>JavaScript: 0件</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// ① DDL</span>
+
+<span class="kw">CREATE TABLE</span> study_records (
+  id          <span class="type">INT</span>          <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  subject_id  <span class="type">INT</span>          <span class="kw">NOT NULL</span>,
+  studied_on  <span class="type">DATE</span>         <span class="kw">NOT NULL</span>,
+  minutes     <span class="type">INT</span>          <span class="kw">NOT NULL</span>,
+  memo        <span class="type">VARCHAR</span>(<span class="num">200</span>),
+  created_at  <span class="type">DATETIME</span>     <span class="kw">NOT NULL</span>
+              <span class="kw">DEFAULT</span> CURRENT_TIMESTAMP,
+  <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">FOREIGN KEY</span> (subject_id)
+    <span class="kw">REFERENCES</span> subjects(id)
+);
+
+
+<span class="code-head" style="margin-top:14px">// ② INSERT</span>
+
+<span class="kw">INSERT INTO</span> study_records
+  (subject_id, studied_on, minutes, memo)
+<span class="kw">VALUES</span>
+  <span class="comment">-- Java（5件）</span>
+  (<span class="num">1</span>, <span class="str">'2026-05-08'</span>, <span class="num">60</span>,  <span class="str">'文法復習'</span>),
+  (<span class="num">1</span>, <span class="str">'2026-05-10'</span>, <span class="num">60</span>,  <span class="str">'基礎構文の復習'</span>),
+  (<span class="num">1</span>, <span class="str">'2026-05-12'</span>, <span class="num">90</span>,  <span class="str">'コレクション'</span>),
+  (<span class="num">1</span>, <span class="str">'2026-05-14'</span>, <span class="num">120</span>, <span class="str">'例外処理'</span>),
+  (<span class="num">1</span>, <span class="str">'2026-05-16'</span>, <span class="num">45</span>,  <span class="str">'ジェネリクス'</span>),
+  <span class="comment">-- Spring Boot（3件）</span>
+  (<span class="num">2</span>, <span class="str">'2026-05-11'</span>, <span class="num">45</span>,  <span class="str">'DI解説の動画視聴'</span>),
+  (<span class="num">2</span>, <span class="str">'2026-05-13'</span>, <span class="num">120</span>, <span class="str">'チュートリアル'</span>),
+  (<span class="num">2</span>, <span class="str">'2026-05-15'</span>, <span class="num">90</span>,  <span class="str">'@Transactional'</span>),
+  <span class="comment">-- SQL（1件）</span>
+  (<span class="num">3</span>, <span class="str">'2026-05-09'</span>, <span class="num">30</span>,  <span class="str">'JOIN練習'</span>);
+
+
+<span class="code-head" style="margin-top:14px">// ③ 確認</span>
+<span class="kw">SELECT</span> <span class="kw">COUNT</span>(*) <span class="kw">FROM</span> study_records;
+<span class="comment">-- 9 が返れば OK</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>クラス／インターフェイス作成の手順</h2>
+    <span class="en">CREATE CLASSES STEP-BY-STEP</span>
+  </div>
+  <p class="pattern-desc">2つの<b>新規ファイル</b>と4つの<b>改修</b>を行います。順序は<b>「Entity → Mapper → Service → Controller → HTML」</b>の下流方向（M1と同じ）。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-studyrecord-entity</span>
+      <span class="tag-desc">① StudyRecord エンティティ（新規）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順（Eclipse操作）</div>
+        <ol class="step-list">
+          <li><code>com.example.todo.entity</code> を<b>右クリック</b></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Class</span></li>
+          <li>Name欄に <code>StudyRecord</code></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">Finish</span></li>
+          <li>右のコードを書く</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">なぜ LocalDate？</div>
+          <p>DBの <code>DATE</code> 型はJava側で <code>LocalDate</code> に対応。<code>Date</code>（古い）ではなく<b>必ず <code>LocalDate</code></b> を使う（Java 8以降の標準）。日付処理はVol.7・S7で完全攻略します。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// StudyRecord.java（新規）</span>
+
+<span class="kw">package</span> com.example.todo.entity;
+
+<span class="kw">import</span> java.time.LocalDate;
+<span class="kw">import</span> java.time.LocalDateTime;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">StudyRecord</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> id;
+  <span class="kw">private</span> <span class="type">Integer</span> subjectId;
+  <span class="kw">private</span> <span class="type">LocalDate</span> studiedOn;
+  <span class="kw">private</span> <span class="type">Integer</span> minutes;
+  <span class="kw">private</span> <span class="type">String</span> memo;
+  <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+}
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・DB側 subject_id ↔ Java側 subjectId</span>
+<span class="comment">//   は application.properties の</span>
+<span class="comment">//   map-underscore-to-camel-case で自動変換</span>
+<span class="comment">// ・LocalDate は java.time パッケージ</span>
+<span class="comment">// ・@Data で全 getter/setter 自動生成</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-studyrecord-mapper</span>
+      <span class="tag-desc">② StudyRecordMapper（新規）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>com.example.todo.mapper</code> を<b>右クリック</b></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Interface</span>（★Classじゃない）</li>
+          <li>Name欄に <code>StudyRecordMapper</code></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">Finish</span></li>
+          <li>右のコードを書く</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">@Param とは？</div>
+          <p>SQLの <code>#{subjectId}</code> がJavaの引数 <code>subjectId</code> に対応していると<b>MyBatisに明示</b>するアノテーションです。これがないと「subjectId が見つかりません」エラーになります。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// StudyRecordMapper.java（新規）</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> org.apache.ibatis.annotations.Param;
+<span class="kw">import</span> org.apache.ibatis.annotations.Select;
+<span class="kw">import</span> com.example.todo.entity.StudyRecord;
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">StudyRecordMapper</span> {
+
+  <span class="ann">@Select</span>(<span class="str">"SELECT * FROM study_records "</span>
+        + <span class="str">"WHERE subject_id = #{subjectId} "</span>
+        + <span class="str">"ORDER BY studied_on"</span>)
+  <span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt; <span class="fn">findBySubjectId</span>(
+        <span class="ann">@Param</span>(<span class="str">"subjectId"</span>) <span class="type">Integer</span> subjectId);
+}
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・findBySubjectId(1) と呼べば</span>
+<span class="comment">//   subject_id = 1 の記録だけ返る</span>
+<span class="comment">// ・@Param で「Javaの引数 subjectId を</span>
+<span class="comment">//   SQLの #{subjectId} に渡す」と明示</span>
+<span class="comment">// ・ORDER BY で日付順</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-subject-entity</span>
+      <span class="tag-desc">③ Subject に records を追加（改修）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>既存の <code>Subject.java</code> を開く</li>
+          <li>フィールドに <code>List&lt;StudyRecord&gt; records;</code> を追加</li>
+          <li>import文を追加（<code>Ctrl+Shift+O</code>）</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">「Java側で1対多を表現」</div>
+          <p>S1で学んだ通り、DB側では <code>study_records</code> に <code>subject_id</code> を持たせます。<b>Java側では逆に</b>、Subject側に「自分の記録のリスト」を持たせるのが自然です。「画面に出すときの形」に合わせる、というのがJavaオブジェクトの設計思想。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Subject.java（改修後）</span>
+
+<span class="kw">package</span> com.example.todo.entity;
+
+<span class="kw">import</span> java.time.LocalDateTime;
+<span class="kw">import</span> java.util.List;            <span class="comment">// ★ 追加</span>
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Subject</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> id;
+  <span class="kw">private</span> <span class="type">String</span> name;
+  <span class="kw">private</span> <span class="type">String</span> color;
+  <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+
+  <span class="comment">// ★ 追加：子のリスト</span>
+  <span class="kw">private</span> <span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt; records;
+}
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・records は DB の列じゃない</span>
+<span class="comment">// → Service で詰めてあげる</span>
+<span class="comment">// ・@Data があるので</span>
+<span class="comment">//   getRecords()/setRecords() 自動生成</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-subject-service</span>
+      <span class="tag-desc">④ SubjectService に findAllWithRecords()（改修）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>既存の <code>SubjectService.java</code> を開く</li>
+          <li><code>StudyRecordMapper</code> を <code>@Autowired</code> で注入</li>
+          <li><code>findAllWithRecords()</code> メソッドを追加</li>
+          <li>import文を追加（<code>Ctrl+Shift+O</code>）</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">これが「2回SQL」の正体</div>
+          <p><code>findAll()</code> で subjects を1回、ループ内で <code>findBySubjectId()</code> を <b>subjects件数（=5回）</b> 実行。<b>合計1+5=6回のSQL</b>がコンソールに流れます。これが N+1 問題の典型例。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectService.java（改修後）</span>
+
+<span class="kw">package</span> com.example.todo.service;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Service;
+<span class="kw">import</span> org.springframework.transaction.annotation.Transactional;
+<span class="kw">import</span> com.example.todo.entity.Subject;
+<span class="kw">import</span> com.example.todo.entity.StudyRecord;
+<span class="kw">import</span> com.example.todo.mapper.SubjectMapper;
+<span class="kw">import</span> com.example.todo.mapper.StudyRecordMapper;
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public class</span> <span class="type">SubjectService</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectMapper</span> subjectMapper;
+
+  <span class="ann">@Autowired</span>                          <span class="comment">// ★ 追加</span>
+  <span class="kw">private</span> <span class="type">StudyRecordMapper</span> studyRecordMapper;
+
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>() {
+    <span class="kw">return</span> subjectMapper.<span class="fn">findAll</span>();
+  }
+
+  <span class="comment">// ★ 新規メソッド</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>() {
+    <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; subjects =
+        subjectMapper.<span class="fn">findAll</span>();      <span class="comment">// ← SQL ①</span>
+    <span class="kw">for</span> (<span class="type">Subject</span> s : subjects) {
+      <span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt; records =
+          studyRecordMapper
+              .<span class="fn">findBySubjectId</span>(s.<span class="fn">getId</span>()); <span class="comment">// ← SQL ②×N</span>
+      s.<span class="fn">setRecords</span>(records);
+    }
+    <span class="kw">return</span> subjects;
+  }
+}</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-subject-controller</span>
+      <span class="tag-desc">⑤ SubjectController を改修</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>既存の <code>SubjectController.java</code> を開く</li>
+          <li><code>list()</code> メソッドの <code>findAll()</code> を <code>findAllWithRecords()</code> に差し替え</li>
+        </ol>
+        <p style="margin-top:14px;font-size:13px"><b>たった1行の変更</b>です。これだけでViewに渡るデータが「Subjectだけ」から「Subject＋記録リスト」に変わります。</p>
+      </div>
+      <div class="code"><span class="code-head">// SubjectController.java（改修後）</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind.annotation.GetMapping;
+<span class="kw">import</span> com.example.todo.service.SubjectService;
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">SubjectController</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectService</span> subjectService;
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/subjects"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> model) {
+    model.<span class="fn">addAttribute</span>(<span class="str">"subjects"</span>,
+        subjectService
+            .<span class="fn">findAllWithRecords</span>());    <span class="comment">// ★ 差し替え</span>
+    <span class="kw">return</span> <span class="str">"subjects/list"</span>;
+  }
+}
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・findAll() → findAllWithRecords()</span>
+<span class="comment">// ・templates のパスは "subjects/list" のまま</span>
+<span class="comment">// ・HTML側は次で改修</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-template</span>
+      <span class="tag-desc">⑥ subjects/list.html を改修</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>既存の <code>templates/subjects/list.html</code> を開く</li>
+          <li>表組み構造を<b>入れ子のリスト構造</b>に変更</li>
+          <li>外側ループ：科目／内側ループ：記録</li>
+          <li>記録なし時の表示も入れる</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">入れ子の th:each</div>
+          <p>外側で科目を回し、その内側で <code>s.records</code> をさらに回します。Thymeleafでは<b>入れ子の <code>th:each</code> も普通に書ける</b>のがポイント。「親オブジェクト変数.子のリスト」でアクセスできます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// templates/subjects/list.html（改修後）</span>
+
+&lt;!<span class="type">DOCTYPE</span> html&gt;
+&lt;<span class="kw">html</span> <span class="ann">xmlns:th</span>=<span class="str">"http://www.thymeleaf.org"</span>&gt;
+&lt;<span class="kw">head</span>&gt;
+  &lt;<span class="kw">meta</span> <span class="ann">charset</span>=<span class="str">"UTF-8"</span>&gt;
+  &lt;<span class="kw">title</span>&gt;科目別学習記録一覧&lt;/<span class="kw">title</span>&gt;
+&lt;/<span class="kw">head</span>&gt;
+&lt;<span class="kw">body</span>&gt;
+  &lt;<span class="kw">h1</span>&gt;科目別 学習記録一覧&lt;/<span class="kw">h1</span>&gt;
+
+  &lt;<span class="kw">div</span> <span class="ann">th:each</span>=<span class="str">"s : ${subjects}"</span>&gt;
+    &lt;<span class="kw">h2</span> <span class="ann">th:text</span>=<span class="str">"${s.name}"</span>&gt;&lt;/<span class="kw">h2</span>&gt;
+
+    &lt;!-- 記録あり --&gt;
+    &lt;<span class="kw">ul</span> <span class="ann">th:if</span>=<span class="str">"${!#lists.isEmpty(s.records)}"</span>&gt;
+      &lt;<span class="kw">li</span> <span class="ann">th:each</span>=<span class="str">"r : ${s.records}"</span>&gt;
+        &lt;<span class="kw">span</span> <span class="ann">th:text</span>=<span class="str">"${r.studiedOn}"</span>&gt;&lt;/<span class="kw">span</span>&gt;
+        ── 
+        &lt;<span class="kw">span</span> <span class="ann">th:text</span>=<span class="str">"${r.minutes}"</span>&gt;&lt;/<span class="kw">span</span>&gt;分
+        （&lt;<span class="kw">span</span> <span class="ann">th:text</span>=<span class="str">"${r.memo}"</span>&gt;&lt;/<span class="kw">span</span>&gt;）
+      &lt;/<span class="kw">li</span>&gt;
+    &lt;/<span class="kw">ul</span>&gt;
+
+    &lt;!-- 記録なし --&gt;
+    &lt;<span class="kw">p</span> <span class="ann">th:if</span>=<span class="str">"${#lists.isEmpty(s.records)}"</span>&gt;
+      （記録なし）
+    &lt;/<span class="kw">p</span>&gt;
+  &lt;/<span class="kw">div</span>&gt;
+&lt;/<span class="kw">body</span>&gt;
+&lt;/<span class="kw">html</span>&gt;
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・#lists.isEmpty() で空判定</span>
+<span class="comment">// ・記録ありなら ul/li 出力</span>
+<span class="comment">// ・記録なしなら p で代替表示</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かして確認</h2>
+    <span class="en">RUN IN BROWSER</span>
+  </div>
+  <p class="pattern-desc">6ファイルを書き終えたら<b>起動して動作確認</b>。<b>コンソールログで「6回SQL」が流れること</b>も観察してください──これがVol.5の伏線です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">browser-check</span>
+      <span class="tag-desc">起動と動作確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>TodoApplication.java</code> を右クリック → <span class="menu-code" style="color:var(--accent-3)">Run As</span> → <span class="menu-code" style="color:var(--accent-3)">Spring Boot App</span></li>
+          <li><code>Started TodoApplication</code> を確認</li>
+          <li>ブラウザで <code>http://localhost:8080/subjects</code> を開く</li>
+          <li>5科目それぞれに学習記録（あるもの）が入れ子で並ぶ</li>
+          <li>HTML/CSS と JavaScript の下に<b>「（記録なし）」</b>が出る</li>
+          <li>★コンソールで<b>SELECT文が合計6回</b>流れているか確認</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ ここまで動けばVol.2クリア！</p>
+      </div>
+      <div class="code"><span class="code-head">// コンソールに出るSQLログ（注目）</span>
+
+<span class="comment">// ── 最初の1回（subjects 取得）──</span>
+==&gt;  Preparing: SELECT * FROM subjects ORDER BY id
+==&gt; Parameters:
+&lt;==      Total: 5
+
+<span class="comment">// ── ループ内のN回（記録取得）──</span>
+==&gt;  Preparing: SELECT * FROM study_records
+              WHERE subject_id = ? ORDER BY studied_on
+==&gt; Parameters: 1(Integer)
+&lt;==      Total: 5
+==&gt;  Preparing: SELECT * FROM study_records
+              WHERE subject_id = ? ORDER BY studied_on
+==&gt; Parameters: 2(Integer)
+&lt;==      Total: 3
+==&gt;  Preparing: SELECT * FROM study_records
+              WHERE subject_id = ? ORDER BY studied_on
+==&gt; Parameters: 3(Integer)
+&lt;==      Total: 1
+==&gt;  Preparing: SELECT * FROM study_records
+              WHERE subject_id = ? ORDER BY studied_on
+==&gt; Parameters: 4(Integer)
+&lt;==      Total: 0
+==&gt;  Preparing: SELECT * FROM study_records
+              WHERE subject_id = ? ORDER BY studied_on
+==&gt; Parameters: 5(Integer)
+&lt;==      Total: 0
+
+
+<span class="comment">// 合計：1 + 5 = 6回</span>
+<span class="comment">// = 「N+1問題」のN+1（N=5）</span>
+<span class="comment">// → Vol.5 で1回のJOINに改善する</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>このログを「気持ち悪いな」と感じられたら、<b>あなたの開発者センスが目覚めつつあります</b>。「画面1枚出すのにSQL6回はやりすぎでは？」── その<b>違和感</b>が、Vol.5で<b>N+1問題</b>を学ぶ動機になります。違和感は忘れずに持っておいてください。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">Vol.2で<b>起きやすいトラブル5選</b>。FOREIGN KEY 関連と「N+1の違和感」がメインです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">troubles</span>
+      <span class="tag-desc">起きやすいトラブル</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card">
+          <span class="label">TROUBLE 1</span>
+          <div class="name">CREATE TABLE で Cannot add foreign key constraint</div>
+          <div class="desc"><b>原因</b>：参照先の <code>subjects</code> テーブルが存在しない／文字コード不一致／<code>subjects.id</code> の型と合わない。<br><b>対処</b>：<code>SHOW CREATE TABLE subjects;</code> で確認。<code>subjects.id</code> が <code>INT</code> なら <code>subject_id INT</code> に揃える。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 2</span>
+          <div class="name">INSERT で Cannot add or update a child row</div>
+          <div class="desc"><b>原因</b>：存在しない <code>subject_id</code>（例：99）を入れようとした。<br><b>対処</b>：<code>SELECT id FROM subjects;</code> で存在する id を確認してINSERT。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 3</span>
+          <div class="name">画面に記録が表示されない</div>
+          <div class="desc"><b>原因</b>：Subject に <code>records</code> フィールドを追加し忘れ／<code>@Data</code> の自動生成がエラー／Service で <code>setRecords</code> し忘れ。<br><b>対処</b>：<code>findAllWithRecords()</code> の中で <code>s.setRecords(records)</code> しているか確認。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 4</span>
+          <div class="name">studiedOn が null と表示される</div>
+          <div class="desc"><b>原因</b>：DBが <code>studied_on</code>／Javaが <code>studiedOn</code> で命名がズレ、かつ <code>map-underscore-to-camel-case</code> が無効。<br><b>対処</b>：<code>application.properties</code> に <code>mybatis.configuration.map-underscore-to-camel-case=true</code> があるか確認（Aで設定済みのはず）。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 5</span>
+          <div class="name">Parameter 'subjectId' not found</div>
+          <div class="desc"><b>原因</b>：Mapperメソッドの引数に <code>@Param("subjectId")</code> が付いていない。<br><b>対処</b>：<code>@Param("subjectId") Integer subjectId</code> と付ける。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// FK制約エラーの典型出力</span>
+
+<span class="comment">// ── TROUBLE 1 の出力 ──</span>
+ERROR <span class="num">1215</span> (HY000):
+  Cannot add foreign key constraint
+
+
+<span class="comment">// ── 原因チェックの定型 ──</span>
+
+<span class="comment">// ① 参照先テーブル存在？</span>
+<span class="kw">SHOW TABLES</span>;
+
+<span class="comment">// ② 参照先列の型一致？</span>
+<span class="kw">SHOW CREATE TABLE</span> subjects;
+<span class="comment">//   ↑ subjects.id INT NOT NULL AUTO_INCREMENT</span>
+<span class="comment">//   ↓ study_records.subject_id INT NOT NULL</span>
+
+<span class="comment">// ③ ENGINE / CHARSET 揃ってる？</span>
+<span class="comment">//   通常は両方 InnoDB / utf8mb4</span>
+
+
+<span class="comment">// ── TROUBLE 2 の出力 ──</span>
+ERROR <span class="num">1452</span> (<span class="num">23000</span>):
+  Cannot add or update a child row:
+  a foreign key constraint fails
+
+
+<span class="comment">// ── 対処：存在する id でINSERT ──</span>
+<span class="kw">SELECT</span> id, name <span class="kw">FROM</span> subjects;
+<span class="comment">//   ↑ ここに出ている id しか使えない</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.2本編の<b>完了チェックリスト</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol2-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li>MySQLに <code>study_records</code> テーブルが存在する</li>
+          <li><code>SELECT COUNT(*) FROM study_records;</code> で 9 が返る</li>
+          <li><code>StudyRecord.java</code>（Entity）が作成済み</li>
+          <li><code>StudyRecordMapper.java</code>（Interface）が作成済み</li>
+          <li><code>Subject.java</code> に <code>records</code> フィールドが追加されている</li>
+          <li><code>SubjectService.java</code> に <code>findAllWithRecords()</code> が追加されている</li>
+          <li><code>SubjectController</code> が <code>findAllWithRecords()</code> を呼んでいる</li>
+          <li><code>templates/subjects/list.html</code> が入れ子表示に改修されている</li>
+          <li><code>http://localhost:8080/subjects</code> で科目＋記録の入れ子が表示される</li>
+          <li>HTML/CSS と JavaScript の下に「（記録なし）」が出る</li>
+          <li>コンソールに合計6回のSQLログが流れる</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.2本編完了！</b><br>
+          <b>1対多取得（基礎）</b>の獲得です。素朴な実装ですが、Cの世界の扉が開きました。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で獲得したスキル</span>
+
+★ <span class="kw">1対多取得（基礎）</span> ── 獲得！
+
+  <span class="comment">// できるようになったこと:</span>
+  <span class="comment">// ・FOREIGN KEY 付きで子テーブル作成</span>
+  <span class="comment">// ・@Param で動的なSQL引数渡し</span>
+  <span class="comment">// ・親エンティティに List&lt;子&gt; を持たせる</span>
+  <span class="comment">// ・Service で親子を組み立てる</span>
+  <span class="comment">// ・Thymeleaf で入れ子表示</span>
+
+
+<span class="code-head" style="margin-top:14px">// 次にやること</span>
+
+<span class="comment">// ① 別冊 S2 を読む</span>
+<span class="comment">//   タイトル: 「関連オブジェクトの取得戦略」</span>
+<span class="comment">//   内容: 即時/遅延ロード、3つの戦略、業務判断</span>
+
+<span class="comment">// ② Vol.3 本編：</span>
+<span class="comment">//   タイトル: 「XML Mapper初登場・SELECTを移そう」</span>
+<span class="comment">//   獲得スキル: XML Mapper 導入</span>
+<span class="comment">//   内容: アノテーションSQL → XML への移行</span>
+<span class="comment">//        （同じ画面が動き続けることを確認）</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(52,84,63,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S2</div>
+    <p>本編Vol.2お疲れさまでした。<b>本編と対になる別冊S2</b>「関連オブジェクトの取得戦略」では、今日Vol.2で<b>意図的にやった「2回SQL方式」</b>が何者なのか──そして<b>他にどんな戦略があるのか</b>を、業務目線で深掘りします。<br>「即時ロード」「遅延ロード」「都度取得 vs 一括取得」── これらの選択がプロジェクトに与える影響を、性能とメモリの観点で学びます。<b>続けて別冊S2へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.02 / 15 ── PARENT-CHILD DISPLAY（本編）</span>
+</footer>
+
+</body>
+</html>

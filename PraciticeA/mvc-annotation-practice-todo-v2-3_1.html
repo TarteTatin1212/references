@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.3 Taskエンティティと一覧画面を整えよう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3d2817;
+  --paper:#f4ecd8;
+  --paper-2:#e8dcc0;
+  --accent:#a87233;
+  --accent-2:#c69558;
+  --accent-3:#6b4423;
+  --accent-4:#2d5f3f;
+  --muted:#7a6952;
+  --line:#c9b896;
+  --code-bg:#2a1f15;
+  --code-text:#f0e4cc;
+  --panel-bg:#faf3e0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✎';position:absolute;right:0px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid #c43;padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--accent-3);border-bottom-color:var(--accent-3)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}
+.tag{color:#a3c9ff}
+.attr{color:#ffc88a}
+
+/* WHAT/HOW/WHY 3カラム */
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+
+/* 用語カード */
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+
+/* ハマりどころカード */
+.pitfall{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:12px 0}
+.pitfall-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:8px}
+.pitfall-block{font-size:13px;padding:8px 12px;margin:6px 0;border-left:3px solid}
+.pitfall-symptom{background:rgba(196,67,51,0.07);border-left-color:#c43}
+.pitfall-cause{background:rgba(168,114,51,0.10);border-left-color:var(--accent)}
+.pitfall-fix{background:rgba(45,95,63,0.08);border-left-color:var(--accent-4)}
+.pitfall-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;font-weight:700;margin-right:6px;display:inline-block;min-width:60px}
+
+.tip{margin:18px 0;padding:14px 20px;background:rgba(168,114,51,0.10);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+
+/* 手順ガイド */
+.step-guide{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0}
+.step-guide-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+.step-guide ol{list-style:none;counter-reset:s;margin:0}
+.step-guide li{counter-increment:s;padding:6px 0 6px 32px;position:relative;font-size:13.5px;line-height:1.7}
+.step-guide li::before{content:counter(s);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+/* チェックリスト */
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+
+/* 図解用 */
+.flow-diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;background:#fff;border:1px solid var(--line);padding:14px 18px;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+/* キーボードショートカット */
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 8px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600}
+.kbd{display:inline-block;background:var(--paper-2);border:1px solid var(--line);padding:0 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;border-radius:3px;color:var(--accent-3)}
+.menu{display:inline-block;background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--accent-3);border-radius:2px}
+
+/* NG/OK 対比 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.compare-box{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:13.5px}
+.compare-ng{border-top:3px solid #c43}
+.compare-ok{border-top:3px solid var(--accent-4)}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px}
+.compare-ng .compare-label{color:#c43}
+.compare-ok .compare-label{color:var(--accent-4)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .whw{grid-template-columns:1fr}
+  .compare{grid-template-columns:1fr}
+  .term-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.03 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <h1>Taskエンティティと<br>一覧画面を整えよう</h1>
+  <p class="subtitle">FROM MAP TO ENTITY + FIRST THYMELEAF VIEW</p>
+  <p class="lead">Vol.2で<b>「DBから取ったデータがブラウザで見える」</b>状態まで到達しました。しかし中身は<code style="font-family:'JetBrains Mono'">Map&lt;String, Object&gt;</code>の生データで、画面はJSONベタ表示。Vol.3では<b>「本物の作り」</b>に置き換えます── <code style="font-family:'JetBrains Mono'">Task</code>クラス（エンティティ）を作り、Mapperを型安全に、Controllerを<b>ThymeleafでHTML描画</b>に進化させます。巻末で<b>表組みの一覧画面</b>がブラウザに表示されます。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">💡 v2リニューアル方針（Vol.3から本格反映）</div>
+    <p style="font-size:13.5px">Vol.3から学習体験を底上げするための4つの新セクションを導入：<br>
+    ① <b>この巻の地図（WHAT/HOW/WHY）</b>── 何を・どう・なぜ作るかを最初に提示<br>
+    ② <b>用語カード</b>── 新出の専門用語を「定義／構造／対比／嬉しさ」の4観点で解説<br>
+    ③ <b>因果で説明するハマりどころ</b>── 症状→原因→対処を一直線で結ぶ<br>
+    ④ <b>仕組みの可視化</b>── 書いたコードが全体のどこに位置するか図解</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.03</div>
+  <ul>
+    <li><a href="#map">01 この巻の地図</a></li>
+    <li><a href="#raw-retire">02 rawパッケージの正体と引退</a></li>
+    <li><a href="#term-entity">03 用語カード：エンティティ</a></li>
+    <li><a href="#create-task">04 Taskクラスを作る</a></li>
+    <li><a href="#term-lombok">05 用語カード：Lombok</a></li>
+    <li><a href="#new-mapper">06 Mapperを本物に置き換える</a></li>
+    <li><a href="#new-controller">07 Controllerを本物に置き換える</a></li>
+    <li><a href="#term-thymeleaf">08 用語カード：Thymeleaf</a></li>
+    <li><a href="#list-html">09 一覧画面のHTMLを作る</a></li>
+    <li><a href="#runcheck">10 ブラウザで動かして確認</a></li>
+    <li><a href="#pitfalls">11 ハマりどころ（因果で説明）</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="map">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻の地図</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">v2の新セクション。各巻の冒頭で<b>「何を作るか」「どう作るか」「なぜそうするか」</b>を最初に整理します。手を動かす前に全体像を掴むことで、各セクションの位置づけが明確になります。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を作るか</div>
+      <div class="whw-desc">
+        <b>表組みのTODO一覧画面</b>。Vol.2の<code style="font-family:'JetBrains Mono'">/raw</code>はJSON文字列の塊でしたが、Vol.3末では<code style="font-family:'JetBrains Mono'">/tasks</code>でブラウザに<b>HTMLの表</b>が表示されます。中身は<code style="font-family:'JetBrains Mono'">Task</code>クラスで型安全。
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう作るか</div>
+      <div class="whw-desc">
+        ① <code style="font-family:'JetBrains Mono'">Task</code>クラスを作る（<b>Lombokの@Data</b>）<br>
+        ② Mapperを<code style="font-family:'JetBrains Mono'">List&lt;Task&gt;</code>を返すよう書き換える<br>
+        ③ Controllerを<b>@Controller</b>に変えてModelにデータを載せる<br>
+        ④ <b>Thymeleaf</b>テンプレートで表組みを描画
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜそうするか</div>
+      <div class="whw-desc">
+        <code style="font-family:'JetBrains Mono'">Map&lt;String,Object&gt;</code>は<b>キー名のタイポでも実行時まで気付かない</b>危険な構造。エンティティクラスなら<b>コンパイル時に検出</b>でき、補完も効く。これが業務開発の<b>標準的な作り</b>です。
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol-3 transformation</span>
+      <span class="tag-desc">Vol.2末 → Vol.3末への進化</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Vol.2末（現状）</div>
+<div class="flow-diagram" style="border:none;padding:0">[Browser] /raw
+   ↓ JSONベタ表示
+[RawTaskController]
+   ↓ Map&lt;String,Object&gt;
+[RawTaskMapper]
+   ↓ SELECT * FROM tasks
+[MySQL]
+
+× キー名の保証なし
+× 補完が効かない
+× HTMLじゃない</div>
+        <div class="panel-head" style="margin-top:18px">// Vol.3末（目標）</div>
+<div class="flow-diagram" style="border:none;padding:0">[Browser] /tasks
+   ↓ 表組みのHTML
+[TaskController]
+   ↓ Model.addAttribute
+[Thymeleafテンプレート]
+   ↓ List&lt;Task&gt;
+[TaskMapper]
+   ↓ Task型で取得
+[MySQL]
+
+○ 型安全
+○ 補完が効く
+○ HTML描画</div>
+      </div>
+      <div class="code"><span class="code-head">// この巻でやること（順番）</span>
+
+<span class="comment">// ① Taskクラス作成</span>
+<span class="kw">package</span> com.example.todo.entity;
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Task</span> {
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+  <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+}
+
+<span class="comment">// ② Mapper置き換え</span>
+<span class="kw">package</span> com.example.todo.mapper;
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">TaskMapper</span> {
+  <span class="ann">@Select</span>(<span class="str">"SELECT ... FROM tasks ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>();
+}
+
+<span class="comment">// ③ Controller置き換え</span>
+<span class="kw">package</span> com.example.todo.controller;
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">TaskController</span> {
+  <span class="ann">@GetMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> model) { ... }
+}
+
+<span class="comment">// ④ Thymeleafテンプレート作成</span>
+src/main/resources/templates/tasks/list.html
+
+<span class="comment">// ⑤ rawパッケージ削除</span>
+<span class="comment">// 仮実装を撤去して完成形へ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>このVol.3は<b>「v2の真骨頂」</b>とも言える巻です。<b>Mapで雑に動かす→エンティティで型安全に整える</b>という流れは、業務開発で<b>「プロトタイプ→本実装」</b>の進化を体験する縮図。最後まで進めれば<b>「業務でもこう書く」</b>という形が手に入ります。</p>
+  </div>
+</section>
+
+<section id="raw-retire">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>rawパッケージの正体と引退</h2>
+    <span class="en">RETIRE THE SCAFFOLDING</span>
+  </div>
+  <p class="pattern-desc">Vol.2で唐突に登場した<code style="font-family:'JetBrains Mono'">raw</code>パッケージ。<b>これは標準用語ではなく、本書独自の便宜的な命名でした</b>。意味と引退の段取りを明確にしておきます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">what-is-raw</span>
+      <span class="tag-desc">仮実装の正体</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// rawパッケージとは何だったか</div>
+        <p style="font-size:13.5px;line-height:1.85">「<b>生（なま）のデータ＝型なしの<code style="font-family:'JetBrains Mono'">Map&lt;String, Object&gt;</code>で扱う仮置きのコード</b>」を入れたパッケージです。一般的には<b>「仮実装（scaffold）」「プロトタイプ」「動作確認用コード」</b>と呼ばれるものに相当します。</p>
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>なぜVol.2で使ったか</b>── 「DBから取ったデータがブラウザに見える」体験を<b>最速で届ける</b>ため。本物の<code style="font-family:'JetBrains Mono'">Task</code>クラスやService層を作る前に、骨抜きで動かす必要がありました。</p>
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>どこへ消えるか</b>── このVol.3の最後で<b>完全に削除</b>します。本物の<code style="font-family:'JetBrains Mono'">entity</code>／<code style="font-family:'JetBrains Mono'">mapper</code>／<code style="font-family:'JetBrains Mono'">controller</code>パッケージに置き換わります。</p>
+      </div>
+      <div class="code"><span class="code-head">// 現在のプロジェクト構造</span>
+
+todo/
+└ src/main/java/com/example/todo/
+   ├ TodoApplication.java
+   ├ controller/
+   │  └ HelloController.java
+   └ raw/                          <span class="comment">// ★Vol.3で削除予定★</span>
+      ├ RawTaskMapper.java         <span class="comment">// Map版Mapper</span>
+      └ RawTaskController.java     <span class="comment">// JSON返却Controller</span>
+
+
+<span class="code-head" style="margin-top:18px">// Vol.3終了時の構造（目標）</span>
+
+todo/
+└ src/main/java/com/example/todo/
+   ├ TodoApplication.java
+   ├ controller/
+   │  ├ HelloController.java
+   │  └ TaskController.java        <span class="comment">// ★NEW</span>
+   ├ entity/
+   │  └ Task.java                  <span class="comment">// ★NEW</span>
+   └ mapper/
+      └ TaskMapper.java            <span class="comment">// ★NEW</span>
+
+<span class="comment">// rawパッケージは消滅</span>
+<span class="comment">// 本物の3層構造に置き換わる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>本書のような<b>「動くものを早く見せたい」教材</b>では、仮実装→本実装の置き換えは頻出パターンです。実務でも<b>プロトタイプ（PoC）</b>→<b>本番実装</b>という流れは普通にあるので、「仮で雑に作って、後で型安全に整える」段取りは現場感覚としても自然です。</p>
+  </div>
+</section>
+
+<section id="term-entity">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>用語カード：エンティティ</h2>
+    <span class="en">TERM CARD — ENTITY</span>
+  </div>
+  <p class="pattern-desc">v2の新セクション。専門用語を<b>「定義／構造／対比／嬉しさ」</b>の4観点で解説します。最初の用語は<b>エンティティ</b>── これからずっと使う基本概念です。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #01</span>
+    <div class="term-card-title">エンティティ（Entity）</div>
+    <div class="term-card-sub">DB の 1 行を表すクラス</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>データベースの<b>1行（1レコード）に相当するデータ</b>をまとめて持つJavaクラス。<code>tasks</code>テーブルの1行 ↔ <code>Task</code>クラスのインスタンス1個、という対応関係。</dd>
+      <dt>構造</dt>
+      <dd>テーブルの<b>カラム名と同じ名前のフィールド</b>を持つ。各フィールドにgetter/setterを用意（Lombokで自動生成）。普通はビジネスロジックを持たず、<b>データを入れる箱</b>に徹する。</dd>
+      <dt>対比</dt>
+      <dd><code>Map&lt;String, Object&gt;</code>と比較：<br>
+        <b>Mapの場合</b>── <code>map.get("titel")</code>とタイポしてもコンパイル成功、実行時に<code>null</code>で気付く。<br>
+        <b>エンティティの場合</b>── <code>task.getTitel()</code>と書いたら<b>赤線が出てコンパイル不可</b>。エディタが守ってくれる。
+      </dd>
+      <dt>嬉しさ</dt>
+      <dd>① <b>型安全</b>（タイポを実行前に検出）<br>② <b>補完が効く</b>（<kbd class="kbd">Ctrl</kbd>+<kbd class="kbd">Space</kbd>でフィールド一覧）<br>③ <b>意図が読める</b>（<code>Task</code>と書けば誰でもタスクのデータと分かる）<br>④ <b>refactor安全</b>（フィールド名変更が一括で済む）</dd>
+    </dl>
+  </div>
+
+  <div class="compare">
+    <div class="compare-box compare-ng">
+      <div class="compare-label">✗ NG: Map で扱う</div>
+      <pre style="font-family:'JetBrains Mono';font-size:12px;line-height:1.7;margin-top:6px">Map&lt;String, Object&gt; row = ...;
+String title = (String) row.get(<b>"titel"</b>);
+<span style="color:#c43">// ↑ タイポ ↓ コンパイル通る
+// 実行時に title = null
+// 画面に「null」と出てから気付く</span></pre>
+    </div>
+    <div class="compare-box compare-ok">
+      <div class="compare-label">○ OK: エンティティで扱う</div>
+      <pre style="font-family:'JetBrains Mono';font-size:12px;line-height:1.7;margin-top:6px">Task task = ...;
+String title = task.<b>getTitel</b>();
+<span style="color:var(--accent-4)">// ↑ 赤線が即座に出る
+// "The method getTitel() is undefined"
+// 書いた瞬間に気付ける</span></pre>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">TIP ──</div>
+    <p>業務開発では<b>「テーブル名は複数形（tasks）／エンティティ名は単数形（Task）」</b>が定番。テーブルは「複数の行が入る箱」、エンティティは「その1個」なのでこの命名は理にかなっています。</p>
+  </div>
+</section>
+
+<section id="create-task">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>Taskクラスを作る</h2>
+    <span class="en">CREATE TASK ENTITY CLASS</span>
+  </div>
+  <p class="pattern-desc">いよいよ本物の<code style="font-family:'JetBrains Mono'">Task</code>エンティティを作ります。<code style="font-family:'JetBrains Mono'">entity</code>パッケージを新規作成し、その下に<code style="font-family:'JetBrains Mono'">Task</code>クラスを配置します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">step-by-step</span>
+      <span class="tag-desc">Eclipseでの具体手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// クラス作成の具体手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">A. entityパッケージを作る</div>
+          <ol>
+            <li>左の<span class="menu">パッケージ・エクスプローラー</span>で<code>src/main/java</code> &gt; <code>com.example.todo</code>を右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">パッケージ</span></li>
+            <li>名前に <code>com.example.todo.entity</code> と入力</li>
+            <li><span class="menu">完了(F)</span>をクリック</li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">B. Taskクラスを作る</div>
+          <ol>
+            <li>作った<code>entity</code>パッケージを右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">クラス</span></li>
+            <li>名前に <code>Task</code> と入力</li>
+            <li><span class="menu">完了(F)</span>をクリック</li>
+            <li>右のコード欄の内容をクラスにコピペ</li>
+            <li><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> でimport自動補完</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13px;margin-top:14px;color:var(--muted)"><b>POINT:</b> インターフェイスとクラスを間違えないこと。エンティティは<b>クラス</b>。<code>@Mapper</code>を付けるMapperは<b>インターフェイス</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// src/main/java/com/example/todo/entity/Task.java</span>
+
+<span class="kw">package</span> com.example.todo.entity;
+
+<span class="kw">import</span> java.time.LocalDateTime;
+
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Task</span> {
+
+  <span class="kw">private</span> <span class="type">Long</span> id;
+
+  <span class="kw">private</span> <span class="type">String</span> title;
+
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+
+  <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+}
+
+
+<span class="comment">// ─────────────────────</span>
+<span class="comment">// たったこれだけ。</span>
+<span class="comment">// @Dataの力でgetter/setterは</span>
+<span class="comment">// 全部自動生成される。</span>
+<span class="comment">// ─────────────────────</span>
+
+
+<span class="code-head" style="margin-top:18px">// テーブルとクラスの対応</span>
+
+<span class="comment">// MySQLのtasksテーブル</span>
++----+--------+------+------------+
+| id | title  | done | created_at |
++----+--------+------+------------+
+|  1 | 牛乳  |    0 | 2026-05-17 |
+|  2 | パン  |    1 | 2026-05-17 |
++----+--------+------+------------+
+
+<span class="comment">// ↕ 自動対応</span>
+
+<span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+task.<span class="fn">setId</span>(<span class="num">1L</span>);
+task.<span class="fn">setTitle</span>(<span class="str">"牛乳"</span>);
+task.<span class="fn">setDone</span>(<span class="kw">false</span>);
+task.<span class="fn">setCreatedAt</span>(...);
+
+<span class="comment">// テーブル1行 = Taskインスタンス1個</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>フィールド名は<code style="font-family:'JetBrains Mono'">createdAt</code>（キャメルケース）で、テーブルのカラム名<code style="font-family:'JetBrains Mono'">created_at</code>（スネークケース）と<b>形が違う</b>ことに注目。これはVol.2で設定した<code style="font-family:'JetBrains Mono'">map-underscore-to-camel-case=true</code>のおかげで<b>自動変換</b>されます。だから両方の流儀でJava側・DB側がきれいに書けます。</p>
+  </div>
+</section>
+
+<section id="term-lombok">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>用語カード：Lombok</h2>
+    <span class="en">TERM CARD — LOMBOK</span>
+  </div>
+  <p class="pattern-desc">Vol.1から依存に入れていた<b>Lombok</b>。ついに登場です。先ほどのTaskクラスで使った<code style="font-family:'JetBrains Mono'">@Data</code>がLombokの代表機能。<b>面倒なボイラープレートコードを自動生成</b>してくれる魔法のライブラリです。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #02</span>
+    <div class="term-card-title">Lombok</div>
+    <div class="term-card-sub">ボイラープレート撲滅ライブラリ</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>Javaクラスに<b>アノテーションを付けるだけで、getter/setter/toString/equals/hashCodeなどを自動生成</b>してくれるライブラリ。コンパイル時にバイトコードを直接書き換える仕組み。</dd>
+      <dt>構造</dt>
+      <dd>主なアノテーション：<br>
+        <code>@Data</code> ── 全部入り（getter+setter+toString+equals+hashCode）<br>
+        <code>@Getter</code>／<code>@Setter</code> ── 個別<br>
+        <code>@NoArgsConstructor</code> ── 引数なしコンストラクタ<br>
+        <code>@AllArgsConstructor</code> ── 全フィールド引数コンストラクタ<br>
+        <code>@Builder</code> ── Builderパターンを自動実装
+      </dd>
+      <dt>対比</dt>
+      <dd><b>Lombokなし</b>── 4フィールドのクラスでもgetter/setterを書くと<b>40行以上</b>に膨らむ。<br>
+        <b>Lombokあり</b>── <code>@Data</code>の1行で同じ機能。<b>コード量1/5以下</b>。
+      </dd>
+      <dt>嬉しさ</dt>
+      <dd>① <b>コードが激減</b>（本質的なフィールド定義だけ書けばよい）<br>② <b>修正漏れ防止</b>（フィールド追加時にgetter追加し忘れる事故なし）<br>③ <b>読みやすい</b>（クラスの意図が一目で分かる）<br>④ <b>業務でも標準</b>（多くのプロジェクトで採用）</dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">@data-magic</span>
+      <span class="tag-desc">@Dataが裏で生成するコード</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// @Dataがやってくれること</div>
+        <p style="font-size:13.5px;line-height:1.85"><code>@Data</code>を1行付けると、コンパイル時に<b>下記のコードが自動的に追加された状態</b>になります（実際のソースには書かれませんが、バイトコードに展開されます）。</p>
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px">これにより、エディタの補完にも<code>getTitle()</code>や<code>setDone()</code>がちゃんと出てきます。Lombokは「<b>書かなくても、書いたのと同じ</b>」を実現する仕組み。</p>
+        <div style="background:rgba(168,114,51,0.08);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent)">
+          <b>注意</b>── Eclipseで使うには<b>Lombokプラグインのインストール</b>が必要。Vol.1のプロジェクト作成時にPleiadesに入っていればOKです。入っていない場合は<code>lombok.jar</code>を実行してEclipseに紐付けます。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 実際のソース（あなたが書く）</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Task</span> {
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+  <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+}
+
+
+<span class="code-head" style="margin-top:18px">// Lombokが裏で展開するコード（イメージ）</span>
+
+<span class="kw">public class</span> <span class="type">Task</span> {
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+  <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+
+  <span class="comment">// ↓ 全部自動生成 ↓</span>
+
+  <span class="kw">public</span> <span class="type">Long</span> <span class="fn">getId</span>() {
+    <span class="kw">return</span> id;
+  }
+  <span class="kw">public void</span> <span class="fn">setId</span>(<span class="type">Long</span> id) {
+    <span class="kw">this</span>.id = id;
+  }
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">getTitle</span>() {
+    <span class="kw">return</span> title;
+  }
+  <span class="kw">public void</span> <span class="fn">setTitle</span>(<span class="type">String</span> title) {
+    <span class="kw">this</span>.title = title;
+  }
+  <span class="kw">public</span> <span class="type">Boolean</span> <span class="fn">getDone</span>() {
+    <span class="kw">return</span> done;
+  }
+  <span class="kw">public void</span> <span class="fn">setDone</span>(<span class="type">Boolean</span> done) {
+    <span class="kw">this</span>.done = done;
+  }
+  <span class="comment">// ...createdAtのgetter/setter</span>
+  <span class="comment">// ...toString()</span>
+  <span class="comment">// ...equals()</span>
+  <span class="comment">// ...hashCode()</span>
+}
+
+<span class="comment">// ↑ これを書かずに済む！</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">TIP ──</div>
+    <p>Lombokが本当に裏で生成しているか確認したければ、Eclipseで<b>アウトラインビュー</b>（<span class="menu">ウィンドウ</span> → <span class="menu">ビューの表示</span> → <span class="menu">アウトライン</span>）を開いてください。<code>Task</code>クラスを選ぶと、ソースに書いていないはずの<code>getId()</code>や<code>setTitle()</code>がメソッド一覧に並んでいるのが見えます。これがLombokの仕事です。</p>
+  </div>
+</section>
+
+<section id="new-mapper">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>Mapperを本物に置き換える</h2>
+    <span class="en">REPLACE MAPPER WITH ENTITY VERSION</span>
+  </div>
+  <p class="pattern-desc">Vol.2の<code style="font-family:'JetBrains Mono'">RawTaskMapper</code>（<code style="font-family:'JetBrains Mono'">Map&lt;String, Object&gt;</code>を返すもの）を、<b>型安全な<code style="font-family:'JetBrains Mono'">TaskMapper</code></b>（<code style="font-family:'JetBrains Mono'">List&lt;Task&gt;</code>を返すもの）に置き換えます。返り値の型が変わるだけで、書き心地が劇的に良くなります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">step-by-step</span>
+      <span class="tag-desc">TaskMapper作成手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">A. mapperパッケージを作る</div>
+          <ol>
+            <li><code>src/main/java</code> &gt; <code>com.example.todo</code>を右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">パッケージ</span></li>
+            <li>名前に <code>com.example.todo.mapper</code> と入力</li>
+            <li><span class="menu">完了(F)</span></li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">B. TaskMapper<b>インターフェイス</b>を作る</div>
+          <ol>
+            <li>作った<code>mapper</code>パッケージを右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">インターフェイス</span>（<b>クラスではない</b>）</li>
+            <li>名前に <code>TaskMapper</code> と入力</li>
+            <li><span class="menu">完了(F)</span></li>
+            <li>右のコードをコピペして <span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> でimport補完</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <div style="background:rgba(196,67,51,0.08);padding:10px 14px;margin-top:10px;font-size:13px;border-left:3px solid #c43">
+          <b>⚠ ハマりどころ予告</b>── 「クラス」と「インターフェイス」を間違えないこと。Mapperは<b>必ずインターフェイス</b>です。実装クラスはMyBatisが裏で自動生成します。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// src/main/java/com/example/todo/mapper/TaskMapper.java</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.util.List;
+
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> org.apache.ibatis.annotations.Select;
+
+<span class="kw">import</span> com.example.todo.entity.Task;
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">TaskMapper</span> {
+
+  <span class="ann">@Select</span>(<span class="str">"SELECT id, title, done, created_at "</span>
+        + <span class="str">"FROM tasks ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>();
+}
+
+
+<span class="code-head" style="margin-top:18px">// 何が変わったか（RawTaskMapperと比較）</span>
+
+<span class="comment">// 旧版（RawTaskMapper / Vol.2）</span>
+<span class="type">List</span>&lt;<span class="type">Map</span>&lt;<span class="type">String</span>, <span class="type">Object</span>&gt;&gt; <span class="fn">findAllRaw</span>();
+
+<span class="comment">// 新版（TaskMapper / Vol.3）</span>
+<span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>();
+
+<span class="comment">// 違いは「返り値の型」だけ</span>
+<span class="comment">// でも、その差は大きい：</span>
+
+<span class="comment">// Map版: row.get("titel") タイポ無検出</span>
+<span class="comment">// Task版: task.getTitel() コンパイル不可</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>SQLの結果カラム名は<code style="font-family:'JetBrains Mono'">created_at</code>（スネークケース）、Taskクラスのフィールドは<code style="font-family:'JetBrains Mono'">createdAt</code>（キャメルケース）。<b>名前が違うのにどうやって対応する？</b> Vol.2のapplication.propertiesに書いた<code style="font-family:'JetBrains Mono'">mybatis.configuration.map-underscore-to-camel-case=true</code>が、MyBatisに「スネーク→キャメル変換しろ」と指示しています。<b>裏で文字列変換が走って自動マッピング</b>される、という因果です。</p>
+  </div>
+</section>
+
+<section id="new-controller">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>Controllerを本物に置き換える</h2>
+    <span class="en">REPLACE CONTROLLER WITH MVC VERSION</span>
+  </div>
+  <p class="pattern-desc">Vol.2の<code style="font-family:'JetBrains Mono'">RawTaskController</code>は<code style="font-family:'JetBrains Mono'">@RestController</code>でJSONを返していました。Vol.3では<b><code style="font-family:'JetBrains Mono'">@Controller</code></b>に変えて<b>Thymeleafテンプレートを描画</b>するよう書き直します。<b>MVCのCの本領発揮</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">@restcontroller-vs-@controller</span>
+      <span class="tag-desc">2つのControllerアノテーションの違い</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// @RestController と @Controller の違い</div>
+
+        <div class="compare">
+          <div class="compare-box compare-ng" style="border-top-color:var(--accent-2)">
+            <div class="compare-label" style="color:var(--accent-2)">@RestController</div>
+            <p style="font-size:12.5px;margin-top:6px">返り値を<b>JSON文字列</b>として返す。Vol.2の<code>RawTaskController</code>はこれ。<b>API用</b>。</p>
+            <pre style="font-family:'JetBrains Mono';font-size:11.5px;margin-top:6px">return tasks;
+// ↓ ブラウザに表示
+[{"id":1,...},{"id":2,...}]</pre>
+          </div>
+          <div class="compare-box compare-ok">
+            <div class="compare-label">@Controller</div>
+            <p style="font-size:12.5px;margin-top:6px">返り値を<b>テンプレート名</b>として扱う。<b>HTML画面用</b>。Modelにデータ載せて渡す。</p>
+            <pre style="font-family:'JetBrains Mono';font-size:11.5px;margin-top:6px">return "tasks/list";
+// ↓ ブラウザに表示
+&lt;table&gt;...HTMLが描画される...</pre>
+          </div>
+        </div>
+
+        <p style="font-size:13px;margin-top:14px;line-height:1.85"><b>因果関係：</b> <code>@Controller</code>がついたメソッドが<code>"tasks/list"</code>を返すと、Spring MVCは<code>templates/tasks/list.html</code>を探してThymeleafで描画します。これが「ViewResolver」という仕組みの働きです。</p>
+      </div>
+      <div class="code"><span class="code-head">// src/main/java/com/example/todo/controller/TaskController.java</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> java.util.List;
+
+<span class="kw">import</span> org.springframework.stereotype.Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind.annotation.GetMapping;
+
+<span class="kw">import</span> com.example.todo.entity.Task;
+<span class="kw">import</span> com.example.todo.mapper.TaskMapper;
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">TaskController</span> {
+
+  <span class="kw">private final</span> <span class="type">TaskMapper</span> taskMapper;
+
+  <span class="comment">// コンストラクタ注入（DI）</span>
+  <span class="kw">public</span> <span class="fn">TaskController</span>(<span class="type">TaskMapper</span> taskMapper) {
+    <span class="kw">this</span>.taskMapper = taskMapper;
+  }
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> model) {
+
+    <span class="comment">// ① DBからTask一覧を取得</span>
+    <span class="type">List</span>&lt;<span class="type">Task</span>&gt; tasks = taskMapper.<span class="fn">findAll</span>();
+
+    <span class="comment">// ② Modelに載せる（HTMLに渡すデータ）</span>
+    model.<span class="fn">addAttribute</span>(<span class="str">"tasks"</span>, tasks);
+
+    <span class="comment">// ③ テンプレート名を返す</span>
+    <span class="kw">return</span> <span class="str">"tasks/list"</span>;
+    <span class="comment">// → templates/tasks/list.html が描画される</span>
+  }
+}
+
+<span class="code-head" style="margin-top:18px">// 処理の流れ（仕組み）</span>
+
+GET /tasks
+  ↓
+TaskController.list() が呼ばれる
+  ↓
+taskMapper.findAll() でDB問合せ
+  ↓ List&lt;Task&gt; 取得
+model.addAttribute("tasks", tasks)
+  ↓
+return "tasks/list"
+  ↓
+Spring MVCのViewResolverが
+templates/tasks/list.html を探す
+  ↓
+Thymeleafがテンプレートを処理
+  ↓
+HTMLがブラウザに返る</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>コンストラクタ注入</b>」（<code style="font-family:'JetBrains Mono'">final</code> ＋ コンストラクタ）は業務開発で<b>もっとも推奨される依存注入の書き方</b>。<code style="font-family:'JetBrains Mono'">@Autowired</code>を書く必要すらありません（Springが自動でコンストラクタ呼び出し）。<b>final</b>付きなので「<b>後から差し替え不可＝不変</b>」が保証されます。詳しい仕組みはVol.4のService層で深掘りします。</p>
+  </div>
+</section>
+
+<section id="term-thymeleaf">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>用語カード：Thymeleaf</h2>
+    <span class="en">TERM CARD — THYMELEAF</span>
+  </div>
+  <p class="pattern-desc">Vol.1から依存に入れていた<b>Thymeleaf（タイムリーフ）</b>がついに登場。<b>Spring Boot公式が推奨するテンプレートエンジン</b>です。これまでJSON返却だった画面が、ここからHTMLに進化します。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #03</span>
+    <div class="term-card-title">Thymeleaf（テンプレートエンジン）</div>
+    <div class="term-card-sub">HTML+データ → 動的HTMLの生成器</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd><b>HTMLテンプレート</b>に<b>Javaのデータ</b>を埋め込んで、最終的なHTMLを<b>サーバー側で生成</b>する仕組み。Spring Bootの<b>標準推奨</b>。</dd>
+      <dt>構造</dt>
+      <dd>テンプレートファイル（<code>.html</code>）に<b>専用の属性</b>を書く：<br>
+        <code>th:text</code> ── テキストとして表示<br>
+        <code>th:each</code> ── リストをループして繰り返し描画<br>
+        <code>th:if</code>／<code>th:unless</code> ── 条件分岐<br>
+        <code>${...}</code> ── Modelに載せたデータを参照
+      </dd>
+      <dt>対比</dt>
+      <dd><b>JSP（旧来の仕組み）</b>── HTMLの中にJavaコードが混在し、読みづらい。<br>
+        <b>Thymeleaf</b>── <b>普通のHTMLとして開ける</b>。<code>th:</code>属性は無視されるので、デザイナーがブラウザでプレビューできる。
+      </dd>
+      <dt>嬉しさ</dt>
+      <dd>① <b>サーバー側でHTML完成</b>（SEO/初期表示に強い）<br>② <b>Javaの値を安全に埋め込める</b>（XSS自動エスケープ）<br>③ <b>普通のHTMLとして読める</b>（プレビュー可能）<br>④ <b>Spring Bootとの統合が完璧</b>（設定不要）</dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">how-it-works</span>
+      <span class="tag-desc">テンプレートが画面になる仕組み</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テンプレート＋データ＝HTML</div>
+
+<div class="flow-diagram" style="border:none;padding:0">[1] テンプレート（list.html）
+  &lt;tr th:each="task : ${tasks}"&gt;
+    &lt;td th:text="${task.title}"&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+
+           ＋
+
+[2] Modelに載ったデータ
+  tasks = [Task(牛乳), Task(パン)]
+
+           ↓ Thymeleaf
+
+[3] 生成されるHTML
+  &lt;tr&gt;&lt;td&gt;牛乳&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;パン&lt;/td&gt;&lt;/tr&gt;
+
+           ↓ ブラウザへ
+
+[4] 表として表示される</div>
+
+        <p style="font-size:13px;margin-top:14px;line-height:1.85"><b>因果関係：</b> Controllerが<code>model.addAttribute("tasks", tasks)</code>とデータを載せる →  Thymeleafがテンプレート中の<code>${tasks}</code>でそれを参照 → <code>th:each</code>でリストをループ → HTMLが完成、という流れです。</p>
+      </div>
+      <div class="code"><span class="code-head">// 主なThymeleaf属性の早見表</span>
+
+<span class="comment">// テキスト表示</span>
+&lt;<span class="tag">span</span> <span class="attr">th:text</span>=<span class="str">"${task.title}"</span>&gt;&lt;/<span class="tag">span</span>&gt;
+<span class="comment">// → タスクのタイトルが表示される</span>
+
+
+<span class="comment">// 繰り返し</span>
+&lt;<span class="tag">tr</span> <span class="attr">th:each</span>=<span class="str">"task : ${tasks}"</span>&gt;
+  &lt;<span class="tag">td</span> <span class="attr">th:text</span>=<span class="str">"${task.title}"</span>&gt;&lt;/<span class="tag">td</span>&gt;
+&lt;/<span class="tag">tr</span>&gt;
+<span class="comment">// → リストの数だけ&lt;tr&gt;が増える</span>
+
+
+<span class="comment">// 条件分岐</span>
+&lt;<span class="tag">span</span> <span class="attr">th:if</span>=<span class="str">"${task.done}"</span>&gt;✓&lt;/<span class="tag">span</span>&gt;
+&lt;<span class="tag">span</span> <span class="attr">th:unless</span>=<span class="str">"${task.done}"</span>&gt;-&lt;/<span class="tag">span</span>&gt;
+<span class="comment">// → done=trueなら✓、falseなら-</span>
+
+
+<span class="comment">// 属性に変数埋め込み</span>
+&lt;<span class="tag">a</span> <span class="attr">th:href</span>=<span class="str">"@{/tasks/{id}(id=${task.id})}"</span>&gt;
+<span class="comment">// → href="/tasks/1" のようにURL生成</span>
+
+
+<span class="comment">// 連結</span>
+&lt;<span class="tag">td</span> <span class="attr">th:text</span>=<span class="str">"|ID: ${task.id}|"</span>&gt;
+<span class="comment">// → "ID: 1" のように|で挟むと連結</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">TIP ──</div>
+    <p>Thymeleafテンプレートは<b>必ず</b><code style="font-family:'JetBrains Mono'">src/main/resources/templates/</code>配下に置きます。これはVol.1で出ていた警告<code style="font-family:'JetBrains Mono'">Cannot find template location: classpath:/templates/</code>の<b>原因の場所</b>。Vol.3でこのフォルダにファイルを作れば、警告も自動的に消えます。</p>
+  </div>
+</section>
+
+<section id="list-html">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>一覧画面のHTMLを作る</h2>
+    <span class="en">CREATE LIST TEMPLATE</span>
+  </div>
+  <p class="pattern-desc">いよいよ画面ファイルを作ります。<code style="font-family:'JetBrains Mono'">templates/tasks/</code>フォルダを作り、その下に<code style="font-family:'JetBrains Mono'">list.html</code>を配置します。Controllerが<code style="font-family:'JetBrains Mono'">return "tasks/list"</code>と書いたら、Springはこのパスを探しに行きます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">step-by-step</span>
+      <span class="tag-desc">templates/tasks/list.html 作成手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">A. tasksフォルダを作る</div>
+          <ol>
+            <li><code>src/main/resources/templates</code>を右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">フォルダー</span></li>
+            <li>名前に <code>tasks</code> と入力</li>
+            <li><span class="menu">完了(F)</span></li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">B. list.htmlファイルを作る</div>
+          <ol>
+            <li>作った<code>tasks</code>フォルダを右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">ファイル</span></li>
+            <li>名前に <code>list.html</code> と入力（拡張子<b>.html</b>必須）</li>
+            <li><span class="menu">完了(F)</span></li>
+            <li>右のコードをコピペ</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <div style="background:rgba(168,114,51,0.08);padding:10px 14px;margin-top:10px;font-size:13px;border-left:3px solid var(--accent)">
+          <b>POINT</b>── <code>&lt;html xmlns:th="http://www.thymeleaf.org"&gt;</code> の<code>xmlns:th</code>宣言は<b>必ず</b>。これがあるからThymeleafは<code>th:</code>属性を認識します。<b>呪文として最初に書く</b>と覚えてください。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// src/main/resources/templates/tasks/list.html</span>
+
+&lt;!DOCTYPE html&gt;
+&lt;<span class="tag">html</span> <span class="attr">lang</span>=<span class="str">"ja"</span>
+      <span class="attr">xmlns:th</span>=<span class="str">"http://www.thymeleaf.org"</span>&gt;
+&lt;<span class="tag">head</span>&gt;
+  &lt;<span class="tag">meta</span> <span class="attr">charset</span>=<span class="str">"UTF-8"</span>&gt;
+  &lt;<span class="tag">title</span>&gt;TODO 一覧&lt;/<span class="tag">title</span>&gt;
+  &lt;<span class="tag">style</span>&gt;
+    body { font-family: sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #999; padding: 8px 12px; }
+    th { background: #f0e8d0; }
+    .done { color: green; font-weight: bold; }
+  &lt;/<span class="tag">style</span>&gt;
+&lt;/<span class="tag">head</span>&gt;
+&lt;<span class="tag">body</span>&gt;
+
+  &lt;<span class="tag">h1</span>&gt;TODO 一覧&lt;/<span class="tag">h1</span>&gt;
+
+  &lt;<span class="tag">table</span>&gt;
+    &lt;<span class="tag">thead</span>&gt;
+      &lt;<span class="tag">tr</span>&gt;
+        &lt;<span class="tag">th</span>&gt;ID&lt;/<span class="tag">th</span>&gt;
+        &lt;<span class="tag">th</span>&gt;タイトル&lt;/<span class="tag">th</span>&gt;
+        &lt;<span class="tag">th</span>&gt;完了&lt;/<span class="tag">th</span>&gt;
+        &lt;<span class="tag">th</span>&gt;作成日時&lt;/<span class="tag">th</span>&gt;
+      &lt;/<span class="tag">tr</span>&gt;
+    &lt;/<span class="tag">thead</span>&gt;
+    &lt;<span class="tag">tbody</span>&gt;
+
+      <span class="comment">&lt;!-- tasksをループ --&gt;</span>
+      &lt;<span class="tag">tr</span> <span class="attr">th:each</span>=<span class="str">"task : ${tasks}"</span>&gt;
+        &lt;<span class="tag">td</span> <span class="attr">th:text</span>=<span class="str">"${task.id}"</span>&gt;&lt;/<span class="tag">td</span>&gt;
+        &lt;<span class="tag">td</span> <span class="attr">th:text</span>=<span class="str">"${task.title}"</span>&gt;&lt;/<span class="tag">td</span>&gt;
+        &lt;<span class="tag">td</span>&gt;
+          &lt;<span class="tag">span</span> <span class="attr">th:if</span>=<span class="str">"${task.done}"</span>
+                <span class="attr">class</span>=<span class="str">"done"</span>&gt;✓&lt;/<span class="tag">span</span>&gt;
+          &lt;<span class="tag">span</span> <span class="attr">th:unless</span>=<span class="str">"${task.done}"</span>&gt;-&lt;/<span class="tag">span</span>&gt;
+        &lt;/<span class="tag">td</span>&gt;
+        &lt;<span class="tag">td</span> <span class="attr">th:text</span>=<span class="str">"${task.createdAt}"</span>&gt;&lt;/<span class="tag">td</span>&gt;
+      &lt;/<span class="tag">tr</span>&gt;
+
+    &lt;/<span class="tag">tbody</span>&gt;
+  &lt;/<span class="tag">table</span>&gt;
+
+&lt;/<span class="tag">body</span>&gt;
+&lt;/<span class="tag">html</span>&gt;</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><b>仕組みの確認</b>── このHTMLでは<code style="font-family:'JetBrains Mono'">${task.title}</code>と書いてますが、これはJavaの<code style="font-family:'JetBrains Mono'">task.getTitle()</code>を呼ぶ意味。Thymeleafが<b>JavaBean規約（フィールド名にgetを付けてキャメルケース）</b>に従って自動でgetterを探します。これが「<code style="font-family:'JetBrains Mono'">@Data</code>でgetterを生成しておく必要があった理由」── <b>Lombok → Thymeleaf という因果</b>が繋がります。</p>
+  </div>
+</section>
+
+<section id="runcheck">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>🚀 ブラウザで動かして確認</h2>
+    <span class="en">RUN AND VERIFY</span>
+  </div>
+  <p class="pattern-desc">いよいよVol.3の集大成。これまでに作った4つのファイル（Task / TaskMapper / TaskController / list.html）が連携して<b>表組みのTODO一覧画面</b>が表示されます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol-3-complete</span>
+      <span class="tag-desc">最終動作確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動作確認の流れ</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">A. アプリを起動する</div>
+          <ol>
+            <li><code>TodoApplication.java</code>を右クリック</li>
+            <li><span class="menu">実行(R)</span> → <span class="menu">Spring Boot アプリケーション</span></li>
+            <li>コンソールに <code>Started TodoApplication in X.XXX seconds</code> が出るまで待つ</li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">B. ブラウザでアクセス</div>
+          <ol>
+            <li>ブラウザを開く</li>
+            <li>URL欄に <code>http://localhost:8080/tasks</code> と入力</li>
+            <li>表組みのTODO一覧が表示されればOK</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13px;margin-top:12px;line-height:1.85"><b>確認チェックリスト：</b></p>
+        <ul class="checklist">
+          <li>表組み（テーブル）が表示される</li>
+          <li>Vol.2でINSERTした3件のタスクが行として並んでいる</li>
+          <li>「完了」列に✓や-のマークが出ている</li>
+          <li>「作成日時」が表示されている</li>
+          <li>コンソールに赤いエラーログが出ていない</li>
+        </ul>
+
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.3完了！</b> <code>Map&lt;String,Object&gt;</code>とおさらばし、<b>型安全な3層構造</b>の入口に到達しました。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 期待されるブラウザ表示</span>
+
+http://localhost:8080/tasks
+
+╔════════════════════════════════╗
+║         TODO 一覧               ║
+╠════╦═════════╦═════╦═══════════╣
+║ ID ║ タイトル ║ 完了║ 作成日時  ║
+╠════╬═════════╬═════╬═══════════╣
+║  1 ║ 牛乳    ║  -  ║ 2026-...  ║
+║  2 ║ パン    ║  ✓  ║ 2026-...  ║
+║  3 ║ 卵      ║  -  ║ 2026-...  ║
+╚════╩═════════╩═════╩═══════════╝
+
+
+<span class="code-head" style="margin-top:18px">// Vol.3完成プロジェクト構造</span>
+
+todo/
+├ pom.xml
+├ src/main/java/com/example/todo/
+│  ├ TodoApplication.java
+│  ├ controller/
+│  │  ├ HelloController.java
+│  │  └ TaskController.java        <span class="comment">// ★NEW</span>
+│  ├ entity/
+│  │  └ Task.java                  <span class="comment">// ★NEW</span>
+│  ├ mapper/
+│  │  └ TaskMapper.java            <span class="comment">// ★NEW</span>
+│  └ raw/                          <span class="comment">// ★後で削除</span>
+│     ├ RawTaskMapper.java
+│     └ RawTaskController.java
+└ src/main/resources/
+   ├ application.properties
+   └ templates/
+      └ tasks/
+         └ list.html               <span class="comment">// ★NEW</span>
+
+
+<span class="code-head" style="margin-top:18px">// rawパッケージを削除する</span>
+
+<span class="comment">// 動作確認できたら：</span>
+<span class="comment">// 1. com.example.todo.raw を右クリック</span>
+<span class="comment">// 2. 削除(D)</span>
+<span class="comment">// 3. 「アプリの再起動」を待つ</span>
+<span class="comment">// 4. /tasks がまだ動くことを確認</span>
+
+<span class="comment">// これで仮実装の卒業完了！</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>Vol.2の<code style="font-family:'JetBrains Mono'">/raw</code>はrawパッケージを削除した時点で<b>消滅します</b>（アクセスすると404に変わる）。これはRawTaskControllerが消えたから当然の結果── 「<b>クラスが消えると、そのクラスが提供していたURLも消える</b>」という因果関係を体感できる瞬間です。</p>
+  </div>
+</section>
+
+<section id="pitfalls">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>ハマりどころ（因果で説明）</h2>
+    <span class="en">PITFALLS — CAUSE &amp; EFFECT</span>
+  </div>
+  <p class="pattern-desc">v2の新セクション。Vol.3でよく起きるエラーを<b>「症状→原因→対処」</b>の因果で結びます。エラー文の<b>どこを見ればよいか</b>も併記。</p>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 1 ── ホワイトラベル500: Error querying database</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      ブラウザに「Whitelabel Error Page (type=Internal Server Error, status=500)」、ログに <code>BadSqlGrammarException</code> や <code>### SQL:</code> の行が出る
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <b><code>@Select</code>内のSQLにタイポ</b>がある（<code>ORDERD BY</code>など）。MySQLが文法エラーで拒否 → MyBatisが例外 → Spring MVCが500を返す、という因果連鎖。<b>ログの<code>### SQL:</code></b>に<b>実際に実行されたSQL</b>が出るので、まずそこを読む。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      <code>TaskMapper</code>の<code>@Select</code>内SQLを修正。本書の正解は <code>"SELECT id, title, done, created_at FROM tasks ORDER BY id"</code>。DevToolsが自動再起動するのでブラウザ再読込で復帰。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 2 ── 404: /tasks にアクセスしてもページが見つからない</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      ブラウザに「Whitelabel Error Page (type=Not Found, status=404)」、コンソールに例外スタックトレースは<b>無し</b>
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <b>そのURLを担当するControllerが見つからない</b>。考えられる原因は3つ：① <code>@GetMapping("/tasks")</code>のパス文字列にタイポ／② <code>@Controller</code>アノテーションを書き忘れた／③ <code>TaskController</code>を<code>com.example.todo</code>パッケージ<b>外</b>に作ってしまい、<code>@ComponentScan</code>に拾われていない。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      ① <code>"/tasks"</code> のスペル確認／② <code>@Controller</code>がついているか確認／③ パッケージ階層が<code>com.example.todo.controller</code>になっているか確認。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 3 ── 500: Could not resolve view with name 'tasks/list'</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      コンソールログに <code>Could not resolve view with name 'tasks/list' in servlet with name 'dispatcherServlet'</code>
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <b>Thymeleafがテンプレートファイルを見つけられない</b>。Controllerが<code>"tasks/list"</code>を返したので、Springは<code>src/main/resources/templates/tasks/list.html</code>を探したが<b>無かった</b>、または<b>場所が違う</b>。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      ファイルの場所を確認： <code>src/main/resources/templates/tasks/list.html</code>。<b>「templatesフォルダ直下にtasksフォルダ、その中にlist.html」</b>という3階層が正解。<code>resources/tasks/list.html</code>（templatesが抜けている）など要注意。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 4 ── 画面に「null」と表示される列がある</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      テーブルは表示されるが、特定の列（例えば「作成日時」）に<b>null</b>と出る
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <b>DBカラム名 → Javaフィールド名の自動変換が効いていない</b>。例えば<code>created_at</code>カラムを<code>createdAt</code>フィールドに対応させる設定が抜けている。具体的にはVol.2のapplication.propertiesに<code>map-underscore-to-camel-case=true</code>がない、またはタイポしている。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      <code>application.properties</code>に <code>mybatis.configuration.map-underscore-to-camel-case=true</code> を追加。アプリ再起動後、再度<code>/tasks</code>を開く。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 5 ── getter not found / 補完にgetTitle()が出ない</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      <code>Task</code>クラスに<code>@Data</code>を付けたのに、<code>task.getTitle()</code>が赤線になる、または補完候補に出てこない
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <b>EclipseにLombokプラグインが入っていない</b>。pom.xmlに<code>lombok</code>依存があってもMavenはコンパイル時に解決するだけ。Eclipseのエディタが<code>@Data</code>を「理解」するには別途プラグインが必要。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      Pleiades版なら最初から入っているはず。入っていない場合は<code>~/.m2/repository/org/projectlombok/lombok/X.X.X/lombok-X.X.X.jar</code>をダブルクリックで実行 → Eclipseインストールパスを指定 → Eclipse再起動。
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── エラーログの読み方</div>
+    <p><b>長いスタックトレースは「3点だけ」読めばOK</b>です：<br>
+    ① <b>一番上の例外名</b>（例：<code>BadSqlGrammarException</code> ＝ SQL文法エラー）<br>
+    ② <b><code>### SQL:</code> 行</b>（実際に走ったSQL）<br>
+    ③ <b><code>### The error may exist in</code> 行</b>（原因のファイル）<br>
+    残りの <code>at xxx.xxx(...)</code> はライブラリ内部の経路なので、自分のコード（<code>com.example.todo.*</code>）以外は気にしなくて大丈夫です。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+  <div class="tip-label">NEXT STEP ── VOL.4</div>
+  <p>お疲れさまでした。Vol.3で<b>「型安全な3層構造の入口」</b>に到達しました。Task / TaskMapper / TaskControllerの3つが揃い、ブラウザにきれいなHTML画面が出る── これがMVCの「<b>動く最小形</b>」です。次のVol.4では<b>Service層を導入</b>します。今のControllerはMapperを直接呼んでいますが、業務開発では<b>Controller → Service → Mapper</b>の3層を経るのが鉄則。「<b>責務の分離</b>」という設計原則の本領に踏み込みます。<code style="font-family:'JetBrains Mono'">@Service</code>アノテーション、<code style="font-family:'JetBrains Mono'">@Transactional</code>、そして<b>なぜService層が必要か</b>を因果で説明します。タイトルは「<b>Service層を導入して責務を分けよう</b>」── お楽しみに。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.03 / 10 ── ENTITY + THYMELEAF</span>
+</footer>
+
+</body>
+</html>

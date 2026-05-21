@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.6 編集機能を作ろう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3d2817;
+  --paper:#f4ecd8;
+  --paper-2:#e8dcc0;
+  --accent:#c98e44;
+  --accent-2:#e0ad6c;
+  --accent-3:#6b4423;
+  --accent-4:#2d5f3f;
+  --muted:#7a6952;
+  --line:#c9b896;
+  --code-bg:#2a1f15;
+  --code-text:#f0e4cc;
+  --panel-bg:#faf3e0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✎';position:absolute;right:0px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid #c43;padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--accent-3);border-bottom-color:var(--accent-3)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}
+.tag{color:#a3c9ff}
+.attr{color:#ffc88a}
+
+/* WHAT/HOW/WHY */
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+
+/* 用語カード */
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+
+/* ファイル一覧 */
+.file-list{background:#fff;border:1px solid var(--line);padding:0;margin:14px 0;overflow:hidden}
+.file-list-header{background:var(--accent);color:var(--paper);font-family:'Shippori Mincho',serif;font-weight:700;padding:10px 18px;letter-spacing:0.05em;font-size:14px}
+.file-list-row{display:grid;grid-template-columns:80px 110px 1fr 110px;gap:14px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13.5px}
+.file-list-row:last-child{border-bottom:none}
+.file-list-row.is-new{background:rgba(45,95,63,0.06)}
+.file-list-row.is-edit{background:rgba(201,142,68,0.08)}
+.file-status{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;padding:3px 10px;border-radius:3px;text-align:center}
+.file-status.new{background:var(--accent-4);color:var(--paper)}
+.file-status.edit{background:var(--accent);color:var(--paper)}
+.file-type{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);letter-spacing:0.05em}
+.file-path{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink)}
+.file-section{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--accent-3);text-align:right}
+
+/* ハマりどころカード */
+.pitfall{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:12px 0}
+.pitfall-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:8px}
+.pitfall-block{font-size:13px;padding:8px 12px;margin:6px 0;border-left:3px solid}
+.pitfall-symptom{background:rgba(196,67,51,0.07);border-left-color:#c43}
+.pitfall-cause{background:rgba(201,142,68,0.10);border-left-color:var(--accent)}
+.pitfall-fix{background:rgba(45,95,63,0.08);border-left-color:var(--accent-4)}
+.pitfall-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;font-weight:700;margin-right:6px;display:inline-block;min-width:60px}
+
+.tip{margin:18px 0;padding:14px 20px;background:rgba(201,142,68,0.10);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+
+/* 手順ガイド */
+.step-guide{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0}
+.step-guide-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+.step-guide ol{list-style:none;counter-reset:s;margin:0}
+.step-guide li{counter-increment:s;padding:6px 0 6px 32px;position:relative;font-size:13.5px;line-height:1.7}
+.step-guide li::before{content:counter(s);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+/* チェックリスト */
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+
+/* 図解用 */
+.flow-diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;background:#fff;border:1px solid var(--line);padding:14px 18px;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+/* キーボードショートカット */
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 8px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600}
+.menu{display:inline-block;background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--accent-3);border-radius:2px}
+
+/* NG/OK 対比 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.compare-box{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:13.5px}
+.compare-ng{border-top:3px solid #c43}
+.compare-ok{border-top:3px solid var(--accent-4)}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px}
+.compare-ng .compare-label{color:#c43}
+.compare-ok .compare-label{color:var(--accent-4)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .whw{grid-template-columns:1fr}
+  .compare{grid-template-columns:1fr}
+  .term-grid{grid-template-columns:1fr}
+  .file-list-row{grid-template-columns:1fr;gap:4px}
+  .file-section{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.06 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <h1>編集機能を<br>作ろう</h1>
+  <p class="subtitle">CREATE THE EDIT FEATURE</p>
+  <p class="lead">Vol.5で<b>新規登録（Create）</b>を獲得しました。Vol.6では<b>既存タスクの編集機能</b>を作ります── CRUDの<b>U（Update）</b>への第一歩です。一覧の各行に「編集」リンクを置き、クリックすると<b>既存値が初期表示</b>された編集画面が現れ、タイトル変更 → 「更新」ボタンで保存。Vol.5本編で身につけた<b>6ステップCRUDテンプレート</b>の応用問題として進めます。新登場するのは<b>@PathVariable</b>（URLからIDを取り出す仕組み）と<b>@Update</b>（UPDATE文を発行するアノテーション）。学ぶ概念は多くないですが、<b>「編集ライフサイクル」</b>という考え方が深い意味を持つ巻です。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">💡 Vol.6の前提</div>
+    <p style="font-size:13.5px">Vol.5を完走している前提です。<code style="font-family:'JetBrains Mono'">/tasks</code>でTODO一覧、<code style="font-family:'JetBrains Mono'">/tasks/new</code>で新規登録が動く状態がスタート地点。<b>Vol.5本編の6ステップテンプレート</b>を覚えていればなお良し。Vol.5 ADDを未読なら、本巻と並行して読むと「<b>同じパターンの繰り返し</b>」が見えてきます。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.06</div>
+  <ul>
+    <li><a href="#map">01 この巻の地図</a></li>
+    <li><a href="#file-list">02 この巻で作るパッケージ・ファイル一覧</a></li>
+    <li><a href="#term-pathvariable">03 用語カード：@PathVariable</a></li>
+    <li><a href="#term-update">04 用語カード：@Update</a></li>
+    <li><a href="#term-edit-form">05 用語カード：編集Formと「既存値の初期表示」</a></li>
+    <li><a href="#create-form">06 TaskEditFormクラスを作る</a></li>
+    <li><a href="#add-mapper-methods">07 Mapperに findById・update を追加</a></li>
+    <li><a href="#add-service-methods">08 Serviceに findById・update を追加</a></li>
+    <li><a href="#update-controller">09 Controllerに編集GET・更新POST を追加</a></li>
+    <li><a href="#templates">10 list.html修正 + edit.html新規作成</a></li>
+    <li><a href="#runcheck">11 ブラウザで動かして確認</a></li>
+    <li><a href="#pitfalls">12 ハマりどころ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="map">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻の地図</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">編集機能の流れを把握しましょう。Vol.5の登録機能と<b>そっくり同じパターン</b>に、<b>「既存値の事前ロード」</b>と<b>「URLからのID取得」</b>が加わるだけです。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を作るか</div>
+      <div class="whw-desc">
+        <b>編集機能</b>の一連の流れ。一覧の各行の「<b>編集</b>」リンク → 編集画面（既存値が表示済み） → 値を変更して「<b>更新</b>」ボタン → DB更新 → 一覧へ自動遷移。
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう作るか</div>
+      <div class="whw-desc">
+        ① <code style="font-family:'JetBrains Mono'">TaskEditForm</code>クラスを作る（id・title・done）<br>
+        ② Mapperに<b><code>@Select</code> byId</b>と<b><code>@Update</code></b>を追加<br>
+        ③ Serviceに<b><code>findById()</code></b>と<b><code>update()</code></b>を追加<br>
+        ④ Controllerに<b>編集GET</b>と<b>更新POST</b>を追加（<code>@PathVariable</code>）<br>
+        ⑤ <b>edit.html</b>を新規作成、<b>list.html</b>に「編集」リンク追加
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜそうするか</div>
+      <div class="whw-desc">
+        <b>編集</b>は業務開発で最も頻繁に作る機能。一度パターンを掴めば応用が利く。<b>URLにIDを含める設計</b>と<b>既存値を埋めたフォーム表示</b>は、<b>RESTful設計</b>の中核思想です（深掘りは別冊）。
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol-6-flow</span>
+      <span class="tag-desc">編集の処理の流れ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ユーザー操作と処理の流れ</div>
+<div class="flow-diagram" style="border:none;padding:0">[ブラウザ] 一覧画面
+   |
+   ↓ 「編集」リンクをクリック
+   ↓ GET /tasks/2/edit
+   ↓ (URLにIDを含める)
+   |
+[Controller] editForm(@PathVariable id=2)
+   ↓ taskService.findById(2)
+   |
+[Service] findById(2)
+   ↓ taskMapper.findById(2)
+   |
+[Mapper] @Select byId
+   ↓ SELECT ... WHERE id = 2
+   |
+[MySQL] 1行返す
+   ↑ Taskインスタンス
+   |
+[Controller]
+   ↓ Task → TaskEditForm に詰める
+   ↓ Modelに載せる
+   ↓ return "tasks/edit"
+   |
+[Thymeleaf] edit.html を描画
+   ↓ 既存値が input に表示される
+   |
+[ユーザー] タイトル変更
+   ↓ 「更新」クリック
+   ↓ POST /tasks/2/edit
+   |
+[Controller] update(@PathVariable id=2, form)
+   ↓ taskService.update(form)
+   |
+[Service] update(form)
+   ↓ (@Transactional)
+   ↓ TaskEditForm → Task 変換
+   ↓ taskMapper.update(task)
+   |
+[Mapper] @Update
+   ↓ UPDATE ... SET ... WHERE id = ?
+   |
+[MySQL] 1行更新
+   ↑ 完了
+   |
+[Controller]
+   ↓ return "redirect:/tasks"
+   |
+[ブラウザ] 一覧画面（更新後）
+   ↓ 変更が反映されて見える</div>
+      </div>
+      <div class="code"><span class="code-head">// この巻でやることのコード骨格</span>
+
+<span class="comment">// ① TaskEditForm（受け皿、3フィールド）</span>
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskEditForm</span> {
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+}
+
+
+<span class="comment">// ② Mapperに2メソッド追加</span>
+<span class="ann">@Select</span>(<span class="str">"SELECT ... WHERE id = #{id}"</span>)
+<span class="type">Task</span> <span class="fn">findById</span>(<span class="type">Long</span> id);
+
+<span class="ann">@Update</span>(<span class="str">"UPDATE tasks SET "</span> +
+        <span class="str">"title = #{title}, "</span> +
+        <span class="str">"done = #{done} "</span> +
+        <span class="str">"WHERE id = #{id}"</span>)
+<span class="kw">void</span> <span class="fn">update</span>(<span class="type">Task</span> task);
+
+
+<span class="comment">// ③ Serviceに2メソッド追加</span>
+<span class="kw">public</span> <span class="type">Task</span> <span class="fn">findById</span>(<span class="type">Long</span> id) {
+  <span class="kw">return</span> taskMapper.<span class="fn">findById</span>(id);
+}
+
+<span class="ann">@Transactional</span>  <span class="comment">// 書き込み有効</span>
+<span class="kw">public void</span> <span class="fn">update</span>(<span class="type">TaskEditForm</span> form) {
+  <span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+  task.<span class="fn">setId</span>(form.<span class="fn">getId</span>());
+  task.<span class="fn">setTitle</span>(form.<span class="fn">getTitle</span>());
+  task.<span class="fn">setDone</span>(form.<span class="fn">getDone</span>());
+  taskMapper.<span class="fn">update</span>(task);
+}
+
+
+<span class="comment">// ④ Controllerに2メソッド追加</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+    <span class="type">Model</span> m) {
+  <span class="type">Task</span> task = taskService.<span class="fn">findById</span>(id);
+  <span class="type">TaskEditForm</span> form = <span class="kw">new</span> <span class="type">TaskEditForm</span>();
+  form.<span class="fn">setId</span>(task.<span class="fn">getId</span>());
+  form.<span class="fn">setTitle</span>(task.<span class="fn">getTitle</span>());
+  form.<span class="fn">setDone</span>(task.<span class="fn">getDone</span>());
+  m.<span class="fn">addAttribute</span>(<span class="str">"taskEditForm"</span>, form);
+  <span class="kw">return</span> <span class="str">"tasks/edit"</span>;
+}
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">update</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+    <span class="type">TaskEditForm</span> taskEditForm) {
+  taskService.<span class="fn">update</span>(taskEditForm);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「Vol.5の応用問題」</div>
+    <p>Vol.5の登録機能と<b>パターンは同じ</b>です。違いは<b>2つだけ</b>：<br>
+    ① 編集画面を表示する時、<b>既存値をDBから取り出して Form に詰める</b>（新規登録時は空っぽだった）<br>
+    ② URLに<b>ID</b>を含めて、どのタスクを編集するかを示す（<code>/tasks/2/edit</code>のように）<br>
+    この2点を押さえれば、あとはVol.5と同じ流れ。<b>パターン認識</b>が活きる場面です。</p>
+  </div>
+</section>
+
+<section id="file-list">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>この巻で作るパッケージ・ファイル一覧</h2>
+    <span class="en">FILES TO CREATE / MODIFY</span>
+  </div>
+  <p class="pattern-desc">Vol.5に近い構成。<b>新規2件、修正4件</b>です。<code>form</code>パッケージは既にVol.5で作ったので、TaskEditForm はそこに追加するだけ。</p>
+
+  <div class="file-list">
+    <div class="file-list-header">📋 Vol.6 で扱うパッケージ・ファイル</div>
+
+    <div class="file-list-row is-new">
+      <span class="file-status new">🆕 NEW</span>
+      <span class="file-type">クラス</span>
+      <span class="file-path">com.example.todo.form.<b>TaskEditForm.java</b></span>
+      <span class="file-section">→ Section 06</span>
+    </div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">クラス</span>
+      <span class="file-path">com.example.todo.mapper.<b>TaskMapper.java</b></span>
+      <span class="file-section">→ Section 07</span>
+    </div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">クラス</span>
+      <span class="file-path">com.example.todo.service.<b>TaskService.java</b></span>
+      <span class="file-section">→ Section 08</span>
+    </div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">クラス</span>
+      <span class="file-path">com.example.todo.controller.<b>TaskController.java</b></span>
+      <span class="file-section">→ Section 09</span>
+    </div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">テンプレート</span>
+      <span class="file-path">templates/tasks/<b>list.html</b></span>
+      <span class="file-section">→ Section 10</span>
+    </div>
+
+    <div class="file-list-row is-new">
+      <span class="file-status new">🆕 NEW</span>
+      <span class="file-type">テンプレート</span>
+      <span class="file-path">templates/tasks/<b>edit.html</b></span>
+      <span class="file-section">→ Section 10</span>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 作業順</div>
+    <p>Vol.5と同じ<b>「データの流れに沿って下から上へ」</b>：Form → Mapper → Service → Controller → テンプレート。<b>下位の層から作る</b>と、上位の層が必要なものを呼び出せる状態が整います。コンパイルエラーを最小化できる順序です。</p>
+  </div>
+</section>
+
+<section id="term-pathvariable">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>用語カード：@PathVariable</h2>
+    <span class="en">TERM — @PATHVARIABLE</span>
+  </div>
+  <p class="pattern-desc">Vol.6で初登場する<b>@PathVariable</b>。「<b>URLの一部を引数として受け取る</b>」アノテーションです。<code style="font-family:'JetBrains Mono'">/tasks/2/edit</code> の「2」をJavaの変数に取り出すための仕組み。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #01</span>
+    <div class="term-card-title">@PathVariable</div>
+    <div class="term-card-sub">URLパス変数の値を引数で受け取る</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>Springのアノテーション。<code>@GetMapping("/tasks/<b>{id}</b>/edit")</code> のように <b>URLパスに置いた<code>{name}</code></b> の部分を、メソッド引数にバインドする。</dd>
+      <dt>仕組み</dt>
+      <dd>SpringがURLを照合する時、<code>{id}</code> の位置に来た値（例：<code>2</code>）を抽出し、<b>引数の型に自動変換</b>して渡す。<code>Long</code>型なら数値に、<code>String</code>型なら文字列に。</dd>
+      <dt>書き方</dt>
+      <dd><code>@GetMapping("/tasks/{id}/edit")</code> と<code>@PathVariable Long id</code> の <b>名前を一致</b>させるのが基本。違う名前にしたい時は <code>@PathVariable("id") Long taskId</code> と明示。</dd>
+      <dt>使いどころ</dt>
+      <dd>① <b>編集画面</b>（どのレコードを編集するか）<br>
+        ② <b>削除処理</b>（どのレコードを削除するか）<br>
+        ③ <b>詳細表示</b>（どのレコードを表示するか）<br>
+        共通点：<b>「特定のレコードに対する操作」</b>でIDをURLで指定する場面
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pathvariable-mechanism</span>
+      <span class="tag-desc">URLからJavaへの値の流れ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// パス変数の動き</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>具体例</b>： ブラウザが <code>GET /tasks/2/edit</code> を送信した時：</p>
+
+        <ol style="padding-left:24px;font-size:13.5px;line-height:1.85;margin-top:6px">
+          <li>Springがルーティング表を引く</li>
+          <li><code>/tasks/{id}/edit</code> パターンにマッチ</li>
+          <li><code>{id}</code> の位置から <code>"2"</code> を抽出</li>
+          <li>引数の型 <code>Long</code> に変換 → <code>2L</code></li>
+          <li>メソッドに渡す</li>
+        </ol>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>：型変換も自動。<code>{id}</code>に「abc」のような数値変換できない値が来たら<b>400 Bad Request</b>を自動で返す。
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>名前の一致が鍵</b>：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">@GetMapping("/tasks/<b>{id}</b>/edit")
+public String editForm(
+    @PathVariable Long <b>id</b>,  // ← 名前一致
+    Model m) { ... }</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><code>{id}</code> と<code>@PathVariable Long id</code> の名前が同じだから自動で繋がる。違う名前にしたい場合は明示的に指定。</p>
+      </div>
+      <div class="code"><span class="code-head">// 基本パターン</span>
+
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id,  <span class="comment">// ← 名前一致</span>
+    <span class="type">Model</span> model) {
+
+  <span class="comment">// id にURLから取った値が入る</span>
+  <span class="comment">// GET /tasks/2/edit なら id = 2L</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// 名前を変えたい場合</span>
+
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(
+    <span class="ann">@PathVariable</span>(<span class="str">"id"</span>) <span class="type">Long</span> taskId,
+    <span class="type">Model</span> model) {
+  <span class="comment">// taskId にURLから取った値が入る</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// 複数のパス変数</span>
+
+<span class="ann">@GetMapping</span>(<span class="str">"/users/{userId}/tasks/{taskId}"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">view</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> userId,
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> taskId) {
+  <span class="comment">// 2つとも自動で取り出される</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// 型変換も自動</span>
+
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">view</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id) {...}
+
+<span class="comment">// GET /tasks/abc → 400 Bad Request</span>
+<span class="comment">// （abcはLongに変換不可）</span>
+
+<span class="comment">// String を使えば任意の値受付け</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">view</span>(
+    <span class="ann">@PathVariable</span> <span class="type">String</span> id) {...}
+
+
+<span class="code-head" style="margin-top:18px">// クエリ文字列との対比</span>
+
+<span class="comment">// パス変数（推奨、業界標準）</span>
+GET /tasks/2/edit
+<span class="ann">@PathVariable</span> <span class="type">Long</span> id
+
+<span class="comment">// クエリ文字列（古い形）</span>
+GET /tasks/edit?id=2
+<span class="ann">@RequestParam</span> <span class="type">Long</span> id
+
+<span class="comment">// RESTful設計ではパス変数が標準</span>
+<span class="comment">// URLの読みやすさが違う</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「URLにIDを含める」のがREST流</div>
+    <p>業界標準の<b>RESTful URL設計</b>では、<b>「リソースのID」はURLパスに含める</b>のが鉄則。<code>/tasks/2/edit</code> は「タスクの2番を編集」と<b>URLから読み取れる</b>のが利点。クエリ文字列（<code>?id=2</code>）よりも<b>意味が明確で、ブックマークしやすく、SEOにも良い</b>。深掘りは別冊で。</p>
+  </div>
+</section>
+
+<section id="term-update">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>用語カード：@Update</h2>
+    <span class="en">TERM — @UPDATE</span>
+  </div>
+  <p class="pattern-desc">Vol.5で覚えた<code style="font-family:'JetBrains Mono'">@Insert</code>の仲間。<b>UPDATE文を発行</b>するMyBatisのアノテーションです。書き方はほぼ同じ。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #02</span>
+    <div class="term-card-title">@Update</div>
+    <div class="term-card-sub">UPDATE文を発行するMyBatisアノテーション</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>MyBatisのアノテーション。Mapperインタフェースのメソッドに付けて、<b>UPDATE文の発行</b>を宣言する。<code>@Select</code>・<code>@Insert</code>と同じ作法。</dd>
+      <dt>仕組み</dt>
+      <dd>メソッドが呼ばれると、MyBatisが<b>SQLの<code>#{プロパティ名}</code>部分</b>を引数オブジェクトの値で置き換え、PreparedStatementで実行。返り値は普通<code>void</code>か<code>int</code>（影響行数）。</dd>
+      <dt>典型例</dt>
+      <dd><code>@Update("UPDATE tasks SET title = #{title}, done = #{done} WHERE id = #{id}")</code><br>
+        Task型の引数を取り、その<code>title</code>・<code>done</code>・<code>id</code>を使う。<br>
+        <b>WHERE句忘れに注意</b>── 忘れると全レコード更新の事故になる。
+      </dd>
+      <dt>仲間</dt>
+      <dd><code>@Select</code> ── SELECT文（読み取り）<br>
+        <code>@Insert</code> ── INSERT文（登録）<br>
+        <code>@Update</code> ── UPDATE文（更新）<br>
+        <code>@Delete</code> ── DELETE文（削除、Vol.7で扱う）
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">update-sql-patterns</span>
+      <span class="tag-desc">UPDATE文のパターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// UPDATEの2つのパターン</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>パターンA：全項目更新</b>（Vol.6で採用）</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">UPDATE tasks
+SET title = #{title}, done = #{done}
+WHERE id = #{id}</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px">編集可能な<b>全項目</b>を一度に更新。シンプル。Vol.6のように<b>編集Formで全項目を扱う</b>場面に向く。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>パターンB：部分更新</b>（Vol.7で予告される）</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">UPDATE tasks
+SET done = #{done}
+WHERE id = #{id}</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>特定の項目のみ</b>を更新。Vol.7の「完了切替」のように、<b>1項目だけ変えたい</b>場面で使う。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>使い分け</b>：両方とも有効な設計。プロジェクトの方針による。深掘りは別冊で。</p>
+      </div>
+      <div class="code"><span class="code-head">// @Update の基本</span>
+
+<span class="ann">@Update</span>(<span class="str">"UPDATE tasks SET "</span> +
+        <span class="str">"title = #{title}, "</span> +
+        <span class="str">"done = #{done} "</span> +
+        <span class="str">"WHERE id = #{id}"</span>)
+<span class="kw">void</span> <span class="fn">update</span>(<span class="type">Task</span> task);
+
+
+<span class="code-head" style="margin-top:18px">// MyBatis が裏で発行するSQL</span>
+
+<span class="comment">// Service側で:</span>
+<span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+task.<span class="fn">setId</span>(<span class="num">2L</span>);
+task.<span class="fn">setTitle</span>(<span class="str">"買い物リスト更新"</span>);
+task.<span class="fn">setDone</span>(<span class="kw">true</span>);
+taskMapper.<span class="fn">update</span>(task);
+
+<span class="comment">// 実際にMySQLに送られるSQL:</span>
+UPDATE tasks
+SET title = <span class="str">'買い物リスト更新'</span>,
+    done = true
+WHERE id = 2;
+
+<span class="comment">// 1行が更新される</span>
+
+
+<span class="code-head" style="margin-top:18px">// ★絶対に忘れてはいけないWHERE句★</span>
+
+<span class="comment">// WHERE句なしのUPDATE文…</span>
+<span class="ann">@Update</span>(<span class="str">"UPDATE tasks SET done = true"</span>)
+<span class="kw">void</span> <span class="fn">updateAllDone</span>();
+
+<span class="comment">// → 実行すると 全タスクの done が true に</span>
+<span class="comment">// → 通常のレコード単位の更新では</span>
+<span class="comment">//   絶対にWHERE id = #{id} を入れる</span>
+
+
+<span class="code-head" style="margin-top:18px">// 返り値で影響行数を取れる</span>
+
+<span class="ann">@Update</span>(<span class="str">"UPDATE tasks ..."</span>)
+<span class="kw">int</span> <span class="fn">update</span>(<span class="type">Task</span> task);
+
+<span class="comment">// 戻り値 = 更新された行数</span>
+<span class="comment">// 1 → 成功（1行更新）</span>
+<span class="comment">// 0 → 該当レコードなし</span>
+<span class="comment">// 業務上、これでチェックする派もある</span>
+
+<span class="comment">// Vol.6 では void で OK</span>
+<span class="comment">// シンプルさを優先</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「WHERE句忘れの恐怖」</div>
+    <p>UPDATE文で最も恐ろしいのは<b>WHERE句忘れ</b>。<code>UPDATE tasks SET done = true</code>を実行すると<b>全レコードの done が true</b>になる。本番DBでやらかすと<b>取り返しがつかない</b>。だから<code>@Update</code>を書く時は<b>必ずWHERE句から先に書く</b>癖をつけましょう（実務で広く推奨されるテクニック）。</p>
+  </div>
+</section>
+
+<section id="term-edit-form">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>用語カード：編集Formと「既存値の初期表示」</h2>
+    <span class="en">TERM — PRE-FILLED EDIT FORM</span>
+  </div>
+  <p class="pattern-desc">編集機能と新規登録の<b>最大の違い</b>は、画面表示時に<b>既存値を入力欄に埋めておく</b>こと。この「<b>事前ロード</b>」がVol.6の核心アイデアです。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #03</span>
+    <div class="term-card-title">編集Formの「既存値の初期表示」</div>
+    <div class="term-card-sub">Controller が事前にDB値を Form に詰める</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>編集画面を表示する時、<b>Controllerが先にDBから現在の値を取得し、Form にコピーしてからModelに載せる</b>パターン。Thymeleafがその Form の値を <code>th:field</code> 経由でinputに表示する。</dd>
+      <dt>新規登録との違い</dt>
+      <dd><b>新規登録</b>（Vol.5）：<code>new TaskForm()</code> で空っぽのFormを渡す → 入力欄も空っぽ<br>
+        <b>編集</b>（Vol.6）：DBから取った値で埋めた Form を渡す → 入力欄に<b>既存値が表示</b>される
+      </dd>
+      <dt>必要なメソッド</dt>
+      <dd>① Mapperに<b><code>findById()</code></b>（1件取得）<br>
+        ② Serviceで<b>Task → TaskEditForm</b>に値を詰め替え<br>
+        ③ Controllerでそれを<b>Modelに載せる</b><br>
+        ④ テンプレートで<code>th:object</code>＋<code>th:field</code>を使って表示
+      </dd>
+      <dt>嬉しさ</dt>
+      <dd>① ユーザーが<b>「今の値が何か」を見ながら変更できる</b><br>
+        ② <b>変えたくない項目はそのまま</b>送られる（再入力不要）<br>
+        ③ <b>誤入力の確認</b>がしやすい
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prefill-pattern</span>
+      <span class="tag-desc">事前ロードのコードパターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 編集画面表示時のControllerの仕事</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>4ステップ</b>で構成されます：</p>
+
+        <ol style="padding-left:24px;font-size:13.5px;line-height:1.85;margin-top:8px">
+          <li><b>URLからIDを取り出す</b>（<code>@PathVariable</code>）</li>
+          <li><b>DBから既存Taskを取得</b>（<code>taskService.findById()</code>）</li>
+          <li><b>Taskの値を新しいTaskEditFormにコピー</b></li>
+          <li><b>Modelに載せて、edit.htmlを返す</b></li>
+        </ol>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px">この4ステップを終えると、Thymeleafがレンダリング時に <code>th:field="*{title}"</code> を見て <code>value="現在のタイトル"</code> 属性を生成し、<b>inputに既存値が表示される</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 編集画面表示時のControllerコード</span>
+
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+    <span class="type">Model</span> model) {
+
+  <span class="comment">// ① DBから既存Taskを取得</span>
+  <span class="type">Task</span> task = taskService.<span class="fn">findById</span>(id);
+
+  <span class="comment">// ② TaskEditForm を作って</span>
+  <span class="comment">//    Taskの値を詰める</span>
+  <span class="type">TaskEditForm</span> form = <span class="kw">new</span> <span class="type">TaskEditForm</span>();
+  form.<span class="fn">setId</span>(task.<span class="fn">getId</span>());
+  form.<span class="fn">setTitle</span>(task.<span class="fn">getTitle</span>());
+  form.<span class="fn">setDone</span>(task.<span class="fn">getDone</span>());
+
+  <span class="comment">// ③ Modelに載せる</span>
+  model.<span class="fn">addAttribute</span>(<span class="str">"taskEditForm"</span>, form);
+
+  <span class="comment">// ④ edit.html を返す</span>
+  <span class="kw">return</span> <span class="str">"tasks/edit"</span>;
+}
+
+
+<span class="code-head" style="margin-top:18px">// 結果：edit.htmlがレンダリングされる</span>
+
+<span class="comment">// テンプレート側で…</span>
+<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span>
+       <span class="attr">th:field</span>=<span class="str">"*{title}"</span><span class="tag">&gt;</span>
+
+<span class="comment">// Thymeleafが生成するHTML：</span>
+<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span>
+       <span class="attr">id</span>=<span class="str">"title"</span>
+       <span class="attr">name</span>=<span class="str">"title"</span>
+       <span class="attr">value</span>=<span class="str">"買い物リスト"</span><span class="tag">&gt;</span>
+       <span class="comment">// ↑ 既存値が value 属性に</span>
+
+<span class="comment">// → ブラウザに既存値が表示される</span>
+
+
+<span class="code-head" style="margin-top:18px">// 新規登録との対比</span>
+
+<span class="comment">// === Vol.5 新規登録 ===</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/new"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">newForm</span>(<span class="type">Model</span> m) {
+
+  m.<span class="fn">addAttribute</span>(<span class="str">"taskForm"</span>,
+    <span class="kw">new</span> <span class="type">TaskForm</span>());
+    <span class="comment">// ↑ 空っぽ</span>
+
+  <span class="kw">return</span> <span class="str">"tasks/new"</span>;
+}
+<span class="comment">// 入力欄も空で表示</span>
+
+
+<span class="comment">// === Vol.6 編集 ===</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(...) {
+
+  <span class="type">Task</span> task = taskService.<span class="fn">findById</span>(id);
+  <span class="type">TaskEditForm</span> form = <span class="kw">new</span> <span class="type">TaskEditForm</span>();
+  <span class="comment">// DBの値を詰める ↓</span>
+  form.<span class="fn">setId</span>(task.<span class="fn">getId</span>());
+  form.<span class="fn">setTitle</span>(task.<span class="fn">getTitle</span>());
+  form.<span class="fn">setDone</span>(task.<span class="fn">getDone</span>());
+
+  m.<span class="fn">addAttribute</span>(<span class="str">"taskEditForm"</span>, form);
+  <span class="kw">return</span> <span class="str">"tasks/edit"</span>;
+}
+<span class="comment">// 入力欄に既存値が表示</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「Form は表示用と入力用の両刀」</div>
+    <p>Form クラスは<b>「画面表示用の値の入れ物」</b>と<b>「画面入力受付の容器」</b>の<b>両方</b>を兼ねています。新規登録時は空っぽで作って表示し、編集時は既存値を詰めて表示する── どちらも同じ Form クラスで対応できるのが Thymeleaf + Spring の威力。<b>表示と入力で別クラスを作る必要はない</b>のが省力化のポイントです。</p>
+  </div>
+</section>
+
+<section id="create-form">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>TaskEditFormクラスを作る</h2>
+    <span class="en">CREATE TASKEDITFORM</span>
+  </div>
+  <p class="pattern-desc">既存の <code style="font-family:'JetBrains Mono'">com.example.todo.form</code> パッケージに、編集用の新Formクラスを追加します。<code style="font-family:'JetBrains Mono'">TaskForm</code>（登録用）と分けるのは、<b>編集には id・done フィールドが必要</b>だからです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">step-by-step</span>
+      <span class="tag-desc">具体手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">TaskEditFormクラスを作る</div>
+          <ol>
+            <li><span class="menu">パッケージ・エクスプローラー</span>で <code>com.example.todo.form</code> を右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">クラス</span></li>
+            <li>名前に <code>TaskEditForm</code> と入力</li>
+            <li><span class="menu">完了(F)</span> をクリック</li>
+            <li>右のコードをコピペ</li>
+            <li><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> でimport補完（<code>lombok.Data</code>）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>TaskFormとTaskEditFormの違い</b>：</p>
+
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px">
+          <thead>
+            <tr style="background:var(--paper-2)">
+              <th style="border:1px solid var(--line);padding:8px;text-align:left">フィールド</th>
+              <th style="border:1px solid var(--line);padding:8px;text-align:center">TaskForm（登録）</th>
+              <th style="border:1px solid var(--line);padding:8px;text-align:center">TaskEditForm（編集）</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px"><code>id</code></td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center;color:var(--muted)">─（DBが自動採番）</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center;color:var(--accent);font-weight:700">✓</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px"><code>title</code></td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center;color:var(--accent);font-weight:700">✓</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center;color:var(--accent);font-weight:700">✓</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px"><code>done</code></td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center;color:var(--muted)">─（初期は false 固定）</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center;color:var(--accent);font-weight:700">✓</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>：編集はDBの既存レコードを<b>どれにするか</b>（id）と<b>完了状態</b>（done）も指定する必要があるので、TaskFormより<b>2フィールド多い</b>。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// src/main/java/com/example/todo/form/TaskEditForm.java</span>
+
+<span class="kw">package</span> com.example.todo.form;
+
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskEditForm</span> {
+
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+
+}
+
+
+<span class="code-head" style="margin-top:18px">// このクラスの設計意図</span>
+
+<span class="comment">// ① 3フィールド</span>
+<span class="comment">//   ・id: どのレコードを編集するか</span>
+<span class="comment">//        （hidden inputで保持）</span>
+<span class="comment">//   ・title: 編集対象のテキスト</span>
+<span class="comment">//   ・done: チェックボックスで切替</span>
+
+<span class="comment">// ② @Data でgetter/setter自動生成</span>
+<span class="comment">//   ・getId / setId</span>
+<span class="comment">//   ・getTitle / setTitle</span>
+<span class="comment">//   ・getDone / setDone</span>
+
+<span class="comment">// ③ DB項目との対応</span>
+<span class="comment">//   ・id ←→ tasks.id</span>
+<span class="comment">//   ・title ←→ tasks.title</span>
+<span class="comment">//   ・done ←→ tasks.done</span>
+<span class="comment">//   created_at は編集対象外</span>
+
+
+<span class="code-head" style="margin-top:18px">// TaskForm（Vol.5）との対比</span>
+
+<span class="comment">// === TaskForm（登録用） ===</span>
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="comment">// 登録時に必要なのは title だけ</span>
+}
+
+<span class="comment">// === TaskEditForm（編集用） ===</span>
+<span class="kw">public class</span> <span class="type">TaskEditForm</span> {
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+  <span class="comment">// 編集時は3項目を扱う</span>
+}
+
+<span class="comment">// 「画面によってFormを分ける」が原則</span>
+<span class="comment">// 1つのFormに登録/編集を兼用させると</span>
+<span class="comment">// バリデーション/設計が歪む</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「Form は画面の数だけ作る」</div>
+    <p>業務開発では<b>「画面ごとに専用のForm」</b>を作るのが基本。新規登録画面 → <code>TaskForm</code>、編集画面 → <code>TaskEditForm</code>、削除画面 → <code>TaskDeleteForm</code>（Vol.7予告）。一見クラスが増えますが、<b>各画面の独立性が保たれ、バリデーションが書きやすい</b>のが利点です。</p>
+  </div>
+</section>
+
+<section id="add-mapper-methods">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>Mapperに findById・update を追加</h2>
+    <span class="en">ADD MAPPER METHODS</span>
+  </div>
+  <p class="pattern-desc">既存の<code style="font-family:'JetBrains Mono'">TaskMapper</code>に<b>2メソッド追加</b>します。「<b>IDで1件取得</b>」と「<b>更新</b>」── SQLが2つ増えるだけのシンプルな修正です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">add-mapper-methods</span>
+      <span class="tag-desc">Mapperを修正する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">TaskMapper.java を修正</div>
+          <ol>
+            <li><code>com.example.todo.mapper.TaskMapper.java</code> を開く</li>
+            <li>既存の <code>findAll()</code> と <code>insert()</code> の後に <code>findById()</code> と <code>update()</code> を追加</li>
+            <li><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> でimport補完（<code>@Update</code>のimport追加）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>追加するSQLの解読</b>：</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>findById</b>：</p>
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">SELECT id, title, done, created_at
+FROM tasks
+WHERE id = #{id}</pre>
+        <p style="font-size:13px;margin-top:6px;line-height:1.7">findAllにWHERE句を追加した形。<code>#{id}</code>に引数のIDが入る。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>update</b>：</p>
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">UPDATE tasks
+SET title = #{title}, done = #{done}
+WHERE id = #{id}</pre>
+        <p style="font-size:13px;margin-top:6px;line-height:1.7"><code>created_at</code>は更新対象外。<b>WHERE句は絶対必須</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 修正後の TaskMapper.java（全体）</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.util.List;
+
+<span class="kw">import</span> org.apache.ibatis.annotations.Insert;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> org.apache.ibatis.annotations.Select;
+<span class="kw">import</span> org.apache.ibatis.annotations.Update;  <span class="comment">// ★追加</span>
+
+<span class="kw">import</span> com.example.todo.entity.Task;
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">TaskMapper</span> {
+
+  <span class="comment">// 一覧（Vol.3）</span>
+  <span class="ann">@Select</span>(<span class="str">"SELECT id, title, done, "</span> +
+          <span class="str">"created_at FROM tasks "</span> +
+          <span class="str">"ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>();
+
+  <span class="comment">// 登録（Vol.5）</span>
+  <span class="ann">@Insert</span>(<span class="str">"INSERT INTO tasks "</span> +
+          <span class="str">"(title, done, created_at) "</span> +
+          <span class="str">"VALUES (#{title}, false, NOW())"</span>)
+  <span class="kw">void</span> <span class="fn">insert</span>(<span class="type">Task</span> task);
+
+
+  <span class="comment">// 1件取得（Vol.6で追加）</span>
+  <span class="ann">@Select</span>(<span class="str">"SELECT id, title, done, "</span> +
+          <span class="str">"created_at FROM tasks "</span> +
+          <span class="str">"WHERE id = #{id}"</span>)
+  <span class="type">Task</span> <span class="fn">findById</span>(<span class="type">Long</span> id);
+
+
+  <span class="comment">// 更新（Vol.6で追加）</span>
+  <span class="ann">@Update</span>(<span class="str">"UPDATE tasks SET "</span> +
+          <span class="str">"title = #{title}, "</span> +
+          <span class="str">"done = #{done} "</span> +
+          <span class="str">"WHERE id = #{id}"</span>)
+  <span class="kw">void</span> <span class="fn">update</span>(<span class="type">Task</span> task);
+}
+
+
+<span class="code-head" style="margin-top:18px">// SQLの実行イメージ</span>
+
+<span class="comment">// findById の動き</span>
+<span class="type">Task</span> task = mapper.<span class="fn">findById</span>(<span class="num">2L</span>);
+
+<span class="comment">// MyBatisが流すSQL:</span>
+SELECT id, title, done, created_at
+FROM tasks
+WHERE id = 2;
+
+<span class="comment">// 結果（1行）が Task に変換される</span>
+
+
+<span class="code-head" style="margin-top:18px">// update の動き</span>
+<span class="type">Task</span> t = <span class="kw">new</span> <span class="type">Task</span>();
+t.<span class="fn">setId</span>(<span class="num">2L</span>);
+t.<span class="fn">setTitle</span>(<span class="str">"新タイトル"</span>);
+t.<span class="fn">setDone</span>(<span class="kw">true</span>);
+mapper.<span class="fn">update</span>(t);
+
+<span class="comment">// MyBatisが流すSQL:</span>
+UPDATE tasks
+SET title = <span class="str">'新タイトル'</span>, done = true
+WHERE id = 2;</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「<code>#{id}</code>」の命名規則</div>
+    <p>SQL内の<code>#{}</code>プレースホルダの中身は<b>引数オブジェクトのプロパティ名</b>と一致させます。<code>findById(Long id)</code>のように引数が単一の場合、引数名そのままで参照できる（<code>#{id}</code>）。<code>update(Task task)</code>のようにオブジェクトを渡す場合は、<b>そのオブジェクトのプロパティ名</b>（<code>#{title}</code>、<code>#{done}</code>、<code>#{id}</code>）で参照。</p>
+  </div>
+</section>
+
+<section id="add-service-methods">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>Serviceに findById・update を追加</h2>
+    <span class="en">ADD SERVICE METHODS</span>
+  </div>
+  <p class="pattern-desc">Service層に<b>2メソッド追加</b>。<code style="font-family:'JetBrains Mono'">findById()</code>は読み取り（クラスの<code style="font-family:'JetBrains Mono'">readOnly=true</code>が効く）、<code style="font-family:'JetBrains Mono'">update()</code>は書き込み（<code style="font-family:'JetBrains Mono'">@Transactional</code>で上書き）。Vol.5の<code style="font-family:'JetBrains Mono'">register()</code>と同じ作法です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">add-service-methods</span>
+      <span class="tag-desc">Serviceを修正する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">TaskService.java を修正</div>
+          <ol>
+            <li><code>com.example.todo.service.TaskService.java</code> を開く</li>
+            <li>既存の <code>findAll()</code> と <code>register()</code> の下に <code>findById()</code> と <code>update()</code> を追加</li>
+            <li><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> でimport補完（<code>TaskEditForm</code>のimport追加）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>2つのメソッドの役割</b>：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b><code>findById()</code></b> ── ID指定で1件取得。読み取り専用なのでアノテーションは不要（クラスの<code>readOnly=true</code>が効く）</li>
+          <li><b><code>update()</code></b> ── 編集Formを受け取り、Task に詰めてMapperに渡す。書き込みなので<code>@Transactional</code>を付ける</li>
+        </ul>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>：<code>register()</code>と<code>update()</code>は<b>パターンが全く同じ</b>── Formを受け取って、Taskに詰めて、Mapperに渡す。差は<b>Mapper呼び出しが<code>insert()</code>か<code>update()</code>か</b>だけ。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 修正後の TaskService.java（全体）</span>
+
+<span class="kw">package</span> com.example.todo.service;
+
+<span class="kw">import</span> java.util.List;
+
+<span class="kw">import</span> org.springframework.stereotype.Service;
+<span class="kw">import</span> org.springframework.transaction
+       .annotation.Transactional;
+
+<span class="kw">import</span> com.example.todo.entity.Task;
+<span class="kw">import</span> com.example.todo.form.TaskEditForm;     <span class="comment">// ★追加</span>
+<span class="kw">import</span> com.example.todo.form.TaskForm;
+<span class="kw">import</span> com.example.todo.mapper.TaskMapper;
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>(readOnly = <span class="kw">true</span>)
+<span class="kw">public class</span> <span class="type">TaskService</span> {
+
+  <span class="kw">private final</span> <span class="type">TaskMapper</span> taskMapper;
+
+  <span class="kw">public</span> <span class="fn">TaskService</span>(<span class="type">TaskMapper</span> taskMapper) {
+    <span class="kw">this</span>.taskMapper = taskMapper;
+  }
+
+  <span class="comment">// 一覧（Vol.4）</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>() {
+    <span class="kw">return</span> taskMapper.<span class="fn">findAll</span>();
+  }
+
+  <span class="comment">// 新規登録（Vol.5）</span>
+  <span class="ann">@Transactional</span>
+  <span class="kw">public void</span> <span class="fn">register</span>(<span class="type">TaskForm</span> form) {
+    <span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+    task.<span class="fn">setTitle</span>(form.<span class="fn">getTitle</span>());
+    taskMapper.<span class="fn">insert</span>(task);
+  }
+
+
+  <span class="comment">// 1件取得（Vol.6で追加）</span>
+  <span class="kw">public</span> <span class="type">Task</span> <span class="fn">findById</span>(<span class="type">Long</span> id) {
+    <span class="kw">return</span> taskMapper.<span class="fn">findById</span>(id);
+  }
+
+
+  <span class="comment">// 更新（Vol.6で追加）</span>
+  <span class="ann">@Transactional</span>   <span class="comment">// ★書き込み有効</span>
+  <span class="kw">public void</span> <span class="fn">update</span>(<span class="type">TaskEditForm</span> form) {
+    <span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+    task.<span class="fn">setId</span>(form.<span class="fn">getId</span>());
+    task.<span class="fn">setTitle</span>(form.<span class="fn">getTitle</span>());
+    task.<span class="fn">setDone</span>(form.<span class="fn">getDone</span>());
+    taskMapper.<span class="fn">update</span>(task);
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// register() と update() のパターン</span>
+
+<span class="comment">// 両方とも同じ流れ：</span>
+<span class="comment">// 1. Formを受け取る</span>
+<span class="comment">// 2. 新Taskインスタンスを作る</span>
+<span class="comment">// 3. Formの値をTaskにコピー</span>
+<span class="comment">// 4. Mapperに渡す</span>
+
+<span class="comment">// 違いは「Mapperのどのメソッドを呼ぶか」</span>
+<span class="comment">// register: taskMapper.insert(task)</span>
+<span class="comment">// update:   taskMapper.update(task)</span>
+
+<span class="comment">// パターン認識の力</span>
+<span class="comment">// → Vol.7も同じパターンで書ける</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「Service層の対称性」</div>
+    <p>登録と更新は<b>「ほぼ同じ構造」</b>を持っています。これはVol.4で作ったService層の<b>「業務ロジックの居場所」</b>がうまく機能している証拠です。<b>パターンに乗ったコードは読みやすく、応用しやすい</b>── 業務開発のリズムが手に馴染んできた感覚があるはずです。</p>
+  </div>
+</section>
+
+<section id="update-controller">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>Controllerに編集GET・更新POST を追加</h2>
+    <span class="en">UPDATE TASKCONTROLLER</span>
+  </div>
+  <p class="pattern-desc"><code style="font-family:'JetBrains Mono'">TaskController</code>に<b>2メソッドを追加</b>。<b>GET</b>で編集画面を表示する<code style="font-family:'JetBrains Mono'">editForm()</code>、<b>POST</b>で更新処理する<code style="font-family:'JetBrains Mono'">update()</code>。<code>@PathVariable</code>で URL からIDを取り出すのが新しい部分です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">update-controller</span>
+      <span class="tag-desc">Controllerを修正する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">TaskController.java を修正</div>
+          <ol>
+            <li><code>com.example.todo.controller.TaskController.java</code> を開く</li>
+            <li>既存の <code>create()</code> の下に <code>editForm()</code> と <code>update()</code> を追加</li>
+            <li><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> でimport補完（<code>@PathVariable</code>、<code>TaskEditForm</code>のimport追加）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>2メソッドの役割</b>：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b><code>editForm()</code></b> ── <code>GET /tasks/{id}/edit</code>を受ける。<code>findById()</code>で既存値取得 → <code>TaskEditForm</code>に詰めてModelに載せる</li>
+          <li><b><code>update()</code></b> ── <code>POST /tasks/{id}/edit</code>を受ける。<code>update()</code>を呼んで<b>一覧へリダイレクト</b></li>
+        </ul>
+
+        <div style="background:rgba(201,142,68,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent)">
+          <b>POINT</b>：URL設計は <b><code>/tasks/{id}/edit</code></b> で統一。GET（編集画面表示）もPOST（更新実行）も同じURL。<b>HTTPメソッドで処理を分ける</b>のは Vol.5の<code>/tasks</code>（GET一覧 / POST登録）と同じパターン。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 修正後の TaskController.java（全体）</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> java.util.List;
+
+<span class="kw">import</span> org.springframework.stereotype.Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind.annotation
+       .GetMapping;
+<span class="kw">import</span> org.springframework.web.bind.annotation
+       .PathVariable;                <span class="comment">// ★追加</span>
+<span class="kw">import</span> org.springframework.web.bind.annotation
+       .PostMapping;
+
+<span class="kw">import</span> com.example.todo.entity.Task;
+<span class="kw">import</span> com.example.todo.form.TaskEditForm;  <span class="comment">// ★追加</span>
+<span class="kw">import</span> com.example.todo.form.TaskForm;
+<span class="kw">import</span> com.example.todo.service.TaskService;
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">TaskController</span> {
+
+  <span class="kw">private final</span> <span class="type">TaskService</span> taskService;
+
+  <span class="kw">public</span> <span class="fn">TaskController</span>(
+      <span class="type">TaskService</span> taskService) {
+    <span class="kw">this</span>.taskService = taskService;
+  }
+
+  <span class="comment">// 一覧（Vol.3〜4）</span>
+  <span class="ann">@GetMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> model) {
+    <span class="type">List</span>&lt;<span class="type">Task</span>&gt; tasks =
+      taskService.<span class="fn">findAll</span>();
+    model.<span class="fn">addAttribute</span>(<span class="str">"tasks"</span>, tasks);
+    <span class="kw">return</span> <span class="str">"tasks/list"</span>;
+  }
+
+  <span class="comment">// 新規登録フォーム表示（Vol.5）</span>
+  <span class="ann">@GetMapping</span>(<span class="str">"/tasks/new"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">newForm</span>(<span class="type">Model</span> model) {
+    model.<span class="fn">addAttribute</span>(<span class="str">"taskForm"</span>,
+      <span class="kw">new</span> <span class="type">TaskForm</span>());
+    <span class="kw">return</span> <span class="str">"tasks/new"</span>;
+  }
+
+  <span class="comment">// 新規登録実行（Vol.5）</span>
+  <span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+      <span class="type">TaskForm</span> taskForm) {
+    taskService.<span class="fn">register</span>(taskForm);
+    <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+  }
+
+
+  <span class="comment">// 編集フォーム表示（Vol.6で追加）</span>
+  <span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(
+      <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+      <span class="type">Model</span> model) {
+
+    <span class="type">Task</span> task = taskService.<span class="fn">findById</span>(id);
+
+    <span class="type">TaskEditForm</span> form = <span class="kw">new</span> <span class="type">TaskEditForm</span>();
+    form.<span class="fn">setId</span>(task.<span class="fn">getId</span>());
+    form.<span class="fn">setTitle</span>(task.<span class="fn">getTitle</span>());
+    form.<span class="fn">setDone</span>(task.<span class="fn">getDone</span>());
+
+    model.<span class="fn">addAttribute</span>(<span class="str">"taskEditForm"</span>, form);
+    <span class="kw">return</span> <span class="str">"tasks/edit"</span>;
+  }
+
+
+  <span class="comment">// 更新実行（Vol.6で追加）</span>
+  <span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">update</span>(
+      <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+      <span class="type">TaskEditForm</span> taskEditForm) {
+
+    taskService.<span class="fn">update</span>(taskEditForm);
+    <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// editForm() の処理の流れ</span>
+
+<span class="comment">// 1. URLからIDを取得</span>
+<span class="comment">//    GET /tasks/2/edit → id = 2L</span>
+
+<span class="comment">// 2. DBから既存タスクを取得</span>
+<span class="type">Task</span> task = taskService.<span class="fn">findById</span>(<span class="num">2L</span>);
+
+<span class="comment">// 3. TaskEditForm に値を詰める</span>
+<span class="type">TaskEditForm</span> form = <span class="kw">new</span> <span class="type">TaskEditForm</span>();
+form.<span class="fn">setId</span>(task.<span class="fn">getId</span>());
+form.<span class="fn">setTitle</span>(task.<span class="fn">getTitle</span>());
+form.<span class="fn">setDone</span>(task.<span class="fn">getDone</span>());
+
+<span class="comment">// 4. Modelに載せて edit.html へ</span>
+model.<span class="fn">addAttribute</span>(<span class="str">"taskEditForm"</span>, form);
+<span class="kw">return</span> <span class="str">"tasks/edit"</span>;
+
+
+<span class="code-head" style="margin-top:18px">// update() の処理の流れ</span>
+
+<span class="comment">// 1. URLからIDを取得（パス変数）</span>
+<span class="comment">// 2. フォーム値を引数の TaskEditForm に</span>
+<span class="comment">//    自動バインド（@ModelAttribute）</span>
+<span class="comment">//    hidden inputの id も含めて</span>
+<span class="comment">// 3. Service に渡す</span>
+<span class="comment">// 4. リダイレクト</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「同じURLで処理が分かれる」復習</div>
+    <p>Vol.5で覚えた<b>「同じURLでもHTTPメソッドで処理が分かれる」</b>パターンが Vol.6 でも活躍します。<code>/tasks/{id}/edit</code>に対して、<b>GET</b>なら<code>editForm()</code>（画面表示）、<b>POST</b>なら<code>update()</code>（実行）。<b>「表示は GET、実行は POST」</b>の鉄則を守れば、URL設計が一貫します。</p>
+  </div>
+</section>
+
+<section id="templates">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>list.html修正 + edit.html新規作成</h2>
+    <span class="en">UPDATE TEMPLATES</span>
+  </div>
+  <p class="pattern-desc">最後は画面側の作業。<b>一覧画面の各行に「編集」リンクを追加</b>し、<b>編集画面を新規作成</b>します。Vol.5の new.html とほぼ同じ作りですが、<b>checkbox</b>と<b>hidden id</b>が新登場します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">list-html-update</span>
+      <span class="tag-desc">A. list.html に「編集」リンクを追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// list.html を修正</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">list.html を修正</div>
+          <ol>
+            <li><code>src/main/resources/templates/tasks/list.html</code> を開く</li>
+            <li>テーブルに新しい<b>「操作」列</b>を追加</li>
+            <li>各行に編集リンクを配置（<code>th:href</code> で <code>/tasks/{id}/edit</code> 形式のURLを動的生成）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>動的URL生成の解説</b>：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">th:href="@{/tasks/{id}/edit(id=${task.id})}"</pre>
+
+        <p style="font-size:13px;margin-top:8px;line-height:1.7">この記法で、<code>{id}</code> 部分が <code>${task.id}</code> の値に置き換わる。Thymeleafの<b>URL式</b>の構文。<code>${task.id} = 2</code>なら<code>/tasks/2/edit</code>になる。</p>
+      </div>
+      <div class="code"><span class="code-head">// templates/tasks/list.html（修正後の抜粋）</span>
+
+<span class="tag">&lt;table</span> <span class="attr">border</span>=<span class="str">"1"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;thead&gt;</span>
+    <span class="tag">&lt;tr&gt;</span>
+      <span class="tag">&lt;th&gt;</span>ID<span class="tag">&lt;/th&gt;</span>
+      <span class="tag">&lt;th&gt;</span>タイトル<span class="tag">&lt;/th&gt;</span>
+      <span class="tag">&lt;th&gt;</span>完了<span class="tag">&lt;/th&gt;</span>
+      <span class="tag">&lt;th&gt;</span>作成日時<span class="tag">&lt;/th&gt;</span>
+      <span class="tag">&lt;th&gt;</span>操作<span class="tag">&lt;/th&gt;</span> <span class="comment">// ★追加</span>
+    <span class="tag">&lt;/tr&gt;</span>
+  <span class="tag">&lt;/thead&gt;</span>
+  <span class="tag">&lt;tbody&gt;</span>
+    <span class="tag">&lt;tr</span> <span class="attr">th:each</span>=<span class="str">"task : ${tasks}"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;td</span> <span class="attr">th:text</span>=<span class="str">"${task.id}"</span><span class="tag">&gt;&lt;/td&gt;</span>
+      <span class="tag">&lt;td</span> <span class="attr">th:text</span>=<span class="str">"${task.title}"</span><span class="tag">&gt;&lt;/td&gt;</span>
+      <span class="tag">&lt;td</span> <span class="attr">th:text</span>=<span class="str">"${task.done}"</span><span class="tag">&gt;&lt;/td&gt;</span>
+      <span class="tag">&lt;td</span> <span class="attr">th:text</span>=<span class="str">"${task.createdAt}"</span><span class="tag">&gt;&lt;/td&gt;</span>
+
+      <span class="comment">&lt;!-- ★編集リンク追加 --&gt;</span>
+      <span class="tag">&lt;td&gt;</span>
+        <span class="tag">&lt;a</span> <span class="attr">th:href</span>=<span class="str">"@{/tasks/{id}/edit(id=${task.id})}"</span><span class="tag">&gt;</span>
+          編集
+        <span class="tag">&lt;/a&gt;</span>
+      <span class="tag">&lt;/td&gt;</span>
+    <span class="tag">&lt;/tr&gt;</span>
+  <span class="tag">&lt;/tbody&gt;</span>
+<span class="tag">&lt;/table&gt;</span>
+
+
+<span class="code-head" style="margin-top:18px">// 生成されるHTML（task.id=2 の場合）</span>
+
+<span class="tag">&lt;tr&gt;</span>
+  <span class="tag">&lt;td&gt;</span>2<span class="tag">&lt;/td&gt;</span>
+  <span class="tag">&lt;td&gt;</span>買い物リスト<span class="tag">&lt;/td&gt;</span>
+  <span class="tag">&lt;td&gt;</span>false<span class="tag">&lt;/td&gt;</span>
+  <span class="tag">&lt;td&gt;</span>2026-05-17 ...<span class="tag">&lt;/td&gt;</span>
+  <span class="tag">&lt;td&gt;</span>
+    <span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="str">"/tasks/2/edit"</span><span class="tag">&gt;</span>編集<span class="tag">&lt;/a&gt;</span>
+  <span class="tag">&lt;/td&gt;</span>
+<span class="tag">&lt;/tr&gt;</span>
+
+<span class="comment">// {id} に task.id の値が埋め込まれる</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">edit-html-create</span>
+      <span class="tag-desc">B. edit.html を新規作成</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// edit.html を作成</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">edit.html を新規作成</div>
+          <ol>
+            <li><code>src/main/resources/templates/tasks</code> フォルダを右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">ファイル</span></li>
+            <li>名前に <code>edit.html</code> と入力</li>
+            <li><span class="menu">完了(F)</span> をクリック</li>
+            <li>右のコードをコピペ</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>Vol.5の new.html との違い</b>：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b>hidden input</b>で<code>id</code>を保持（送信時にどのレコードを更新するか伝える）</li>
+          <li><b>checkbox</b>で完了状態を切り替える（<code>done</code>フィールド）</li>
+          <li><b>th:action</b>のURLが<code>/tasks/{id}/edit</code>形式（動的）</li>
+        </ul>
+
+        <div style="background:rgba(201,142,68,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent)">
+          <b>POINT</b>：<code>th:field="*{id}"</code>でhidden inputを書くと、Thymeleafが既存のid値を自動で<code>value</code>属性に埋めてくれる。<b>編集時にどのレコードか</b>を画面側で保持する仕組み。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// src/main/resources/templates/tasks/edit.html</span>
+
+<span class="tag">&lt;!DOCTYPE html&gt;</span>
+<span class="tag">&lt;html</span> <span class="attr">xmlns:th</span>=<span class="str">"http://www.thymeleaf.org"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;head&gt;</span>
+  <span class="tag">&lt;meta</span> <span class="attr">charset</span>=<span class="str">"UTF-8"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;title&gt;</span>タスク編集<span class="tag">&lt;/title&gt;</span>
+<span class="tag">&lt;/head&gt;</span>
+<span class="tag">&lt;body&gt;</span>
+  <span class="tag">&lt;h1&gt;</span>タスク編集<span class="tag">&lt;/h1&gt;</span>
+
+  <span class="tag">&lt;form</span>
+      <span class="attr">th:action</span>=<span class="str">"@{/tasks/{id}/edit(id=*{id})}"</span>
+      <span class="attr">th:object</span>=<span class="str">"${taskEditForm}"</span>
+      <span class="attr">method</span>=<span class="str">"post"</span><span class="tag">&gt;</span>
+
+    <span class="comment">&lt;!-- id を hidden で保持 --&gt;</span>
+    <span class="tag">&lt;input</span>
+        <span class="attr">type</span>=<span class="str">"hidden"</span>
+        <span class="attr">th:field</span>=<span class="str">"*{id}"</span><span class="tag">&gt;</span>
+
+    <span class="tag">&lt;p&gt;</span>
+      <span class="tag">&lt;label&gt;</span>
+        タイトル:
+        <span class="tag">&lt;input</span>
+            <span class="attr">type</span>=<span class="str">"text"</span>
+            <span class="attr">th:field</span>=<span class="str">"*{title}"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;/label&gt;</span>
+    <span class="tag">&lt;/p&gt;</span>
+
+    <span class="tag">&lt;p&gt;</span>
+      <span class="tag">&lt;label&gt;</span>
+        <span class="tag">&lt;input</span>
+            <span class="attr">type</span>=<span class="str">"checkbox"</span>
+            <span class="attr">th:field</span>=<span class="str">"*{done}"</span><span class="tag">&gt;</span>
+        完了
+      <span class="tag">&lt;/label&gt;</span>
+    <span class="tag">&lt;/p&gt;</span>
+
+    <span class="tag">&lt;p&gt;</span>
+      <span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="str">"submit"</span><span class="tag">&gt;</span>
+        更新
+      <span class="tag">&lt;/button&gt;</span>
+    <span class="tag">&lt;/p&gt;</span>
+  <span class="tag">&lt;/form&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    <span class="tag">&lt;a</span> <span class="attr">th:href</span>=<span class="str">"@{/tasks}"</span><span class="tag">&gt;</span>
+      一覧に戻る
+    <span class="tag">&lt;/a&gt;</span>
+  <span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span>
+
+
+<span class="code-head" style="margin-top:18px">// 生成されるHTML（taskEditForm.id=2 の場合）</span>
+
+<span class="tag">&lt;form</span> <span class="attr">action</span>=<span class="str">"/tasks/2/edit"</span> <span class="attr">method</span>=<span class="str">"post"</span><span class="tag">&gt;</span>
+
+  <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"hidden"</span>
+         <span class="attr">id</span>=<span class="str">"id"</span> <span class="attr">name</span>=<span class="str">"id"</span>
+         <span class="attr">value</span>=<span class="str">"2"</span><span class="tag">&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span>
+           <span class="attr">id</span>=<span class="str">"title"</span> <span class="attr">name</span>=<span class="str">"title"</span>
+           <span class="attr">value</span>=<span class="str">"買い物リスト"</span><span class="tag">&gt;</span>
+                <span class="comment">// 既存値が表示</span>
+  <span class="tag">&lt;/p&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"checkbox"</span>
+           <span class="attr">id</span>=<span class="str">"done"</span> <span class="attr">name</span>=<span class="str">"done"</span>
+           <span class="attr">value</span>=<span class="str">"true"</span><span class="tag">&gt;</span>
+                <span class="comment">// 既存がtrueならchecked属性も</span>
+    <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"hidden"</span>
+           <span class="attr">name</span>=<span class="str">"_done"</span> <span class="attr">value</span>=<span class="str">"on"</span><span class="tag">&gt;</span>
+           <span class="comment">// checkbox の Thymeleaf仕掛け</span>
+  <span class="tag">&lt;/p&gt;</span>
+  ...
+<span class="tag">&lt;/form&gt;</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「checkboxのhidden仕掛け」</div>
+    <p>HTMLのcheckboxは<b>「チェック無しの時、値が送信されない」</b>仕様。これだと「checkboxを外して送信」しても <code>done</code> が更新されない。Thymeleafは<b>自動で<code>_done</code>というhidden inputを生成</b>してこの問題を解決します。<b>「checkbox外し → done=false で送信」</b>がきちんと動くのは、この仕掛けのおかげです。</p>
+  </div>
+</section>
+
+<section id="runcheck">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>🚀 ブラウザで動かして確認</h2>
+    <span class="en">RUN AND VERIFY</span>
+  </div>
+  <p class="pattern-desc">いよいよ動作確認。<b>一覧 → 編集リンク → 既存値表示 → 値変更 → 更新 → 一覧（変更反映）</b>の流れを確認します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol-6-runcheck</span>
+      <span class="tag-desc">動作確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動作確認の流れ</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">動作確認の手順</div>
+          <ol>
+            <li>保存後、DevToolsの自動再起動を待つ（コンソールで<code>Started TodoApplication</code>確認）</li>
+            <li>ブラウザで <code>http://localhost:8080/tasks</code> を再読み込み</li>
+            <li>一覧の各行に「<b>編集</b>」リンクが表示されている</li>
+            <li>2行目の「編集」をクリック → URLが <code>/tasks/2/edit</code> に</li>
+            <li>編集画面に<b>既存のタイトル・完了状態が表示</b>されている</li>
+            <li>タイトルを変更、または完了チェックを切り替え</li>
+            <li>「更新」ボタンをクリック</li>
+            <li>自動で一覧画面に戻る（URLが <code>/tasks</code>）</li>
+            <li>変更内容が一覧に反映されている</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13px;margin-top:14px;line-height:1.85"><b>確認チェックリスト：</b></p>
+        <ul class="checklist">
+          <li>一覧の各行に「編集」リンクが表示される</li>
+          <li>クリックで <code>/tasks/{id}/edit</code> に遷移する（IDが正しい）</li>
+          <li>編集画面に<b>既存値が初期表示</b>される</li>
+          <li>タイトル変更 → 一覧に反映される</li>
+          <li>完了チェック切り替え → 一覧に反映される</li>
+          <li>コンソールに <code>SELECT ... WHERE id = ?</code> と <code>UPDATE ...</code> のSQLが出る</li>
+          <li>更新後のURLは <code>/tasks</code>（リダイレクトされている）</li>
+          <li>ERRORログが出ていない</li>
+        </ul>
+
+        <div style="background:#fff;border-left:3px solid var(--accent-4);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.6完了！</b> <b>CRUDのU（Update）</b>を獲得しました。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 期待されるコンソールログ</span>
+
+<span class="comment">// 編集画面表示時</span>
+DEBUG TaskMapper.findById
+  ==&gt; Preparing: SELECT id, title,
+      done, created_at FROM tasks
+      WHERE id = ?
+  ==&gt; Parameters: 2(Long)
+  &lt;==      Total: 1
+
+<span class="comment">// 「更新」ボタン押下時</span>
+DEBUG TaskMapper.update
+  ==&gt; Preparing: UPDATE tasks SET
+      title = ?, done = ?
+      WHERE id = ?
+  ==&gt; Parameters: 買い物リスト(String),
+                  true(Boolean), 2(Long)
+  &lt;==    Updates: 1
+
+<span class="comment">// リダイレクト後の再表示</span>
+DEBUG TaskMapper.findAll
+  ==&gt; Preparing: SELECT ...
+  &lt;==      Total: 3   ← 一覧再取得
+
+
+<span class="code-head" style="margin-top:18px">// ブラウザの体験</span>
+
+[1] /tasks                  一覧
+    ┌──────────────────┐
+    │ ID 1 牛乳   - [編集] │ ← クリック
+    │ ID 2 パン   - [編集] │
+    │ ID 3 卵     ✓ [編集] │
+    └──────────────────┘
+          ↓
+[2] /tasks/2/edit          編集
+    ┌──────────────────┐
+    │ タイトル: [パン     ]  │ ← 既存値表示
+    │ □ 完了               │
+    │ [更新]                │ ← クリック
+    └──────────────────┘
+          ↓
+[3] /tasks                  一覧
+    ┌──────────────────┐
+    │ ID 1 牛乳   -        │
+    │ ID 2 ★更新後★ ✓     │ ← 反映！
+    │ ID 3 卵     ✓        │
+    └──────────────────┘
+
+<span class="good">★ Vol.6 完成 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「CRUDのUを獲得」</div>
+    <p>業務開発で<b>最も頻繁に作る機能</b>が「編集」。Vol.6でその<b>基本パターン</b>を身につけました。「画面に既存値を表示してユーザーに編集させ、変更を保存する」── これがあらゆる業務システムの<b>核心UX</b>です。次のVol.7では<b>完了切替（1クリックUPDATE）</b>と<b>削除（DELETE）</b>を扱います。</p>
+  </div>
+</section>
+
+<section id="pitfalls">
+  <div class="section-header">
+    <span class="section-num">12</span>
+    <h2>ハマりどころ（因果で説明）</h2>
+    <span class="en">PITFALLS — CAUSE &amp; EFFECT</span>
+  </div>
+  <p class="pattern-desc">Vol.6のハマりは<b>「動的URL」「checkbox」「@PathVariable」</b>の3軸に集中。Vol.3 ADDの<b>9ステップ思考フロー</b>で淡々と解きましょう。</p>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 1 ── 編集リンクをクリックすると 404</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      一覧の「編集」リンクをクリックすると <b>404 Not Found</b>。URLバーは <code>/tasks/{id}/edit</code>（<code>{id}</code>のまま）になっている。
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      list.html の <code>th:href</code> が <code>"/tasks/{id}/edit"</code> のように<b>静的に書かれている</b>。Thymeleafの<b>URL式（<code>@{...}</code>）</b>と<b>パス変数指定 <code>(id=${task.id})</code></b> がない。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      <code>th:href="@{/tasks/{id}/edit(id=${task.id})}"</code> の形式に修正。<b><code>@{...}</code>でURL式を開き、<code>(id=...)</code>で動的値を指定</b>する。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 2 ── 編集画面で既存値が表示されない</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      編集画面の入力欄が<b>空っぽ</b>で表示される。
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      Controllerの <code>editForm()</code> で、<code>findById()</code>から取得したTaskの値を<b>TaskEditFormに詰めるのを忘れている</b>。または <code>new TaskEditForm()</code> をそのままModelに載せている。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      <code>form.setId(task.getId())</code>、<code>form.setTitle(task.getTitle())</code>、<code>form.setDone(task.getDone())</code> の3行を必ず書く。Vol.4 ADDの「Service層のFat / Thin」を意識すれば、こうした詰め替え処理は本来Serviceに置くべきだが、本巻ではControllerで簡潔に。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 3 ── 更新後にどのレコードが更新されたか不明</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      更新後、<b>別のレコード</b>が更新されている、または<b>NullPointerException</b>が起きる。
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      edit.html の<b>hidden inputで id を保持していない</b>。送信時に id が null になり、SQLが<code>WHERE id = NULL</code>を実行（該当0件、エラー）。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      edit.html に <code>&lt;input type="hidden" th:field="*{id}"&gt;</code> を入れる。これで送信時に <code>name=id&amp;value=2</code> が送られ、TaskEditForm.id にセットされる。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 4 ── 完了チェックを外しても false にならない</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      編集画面で完了のcheckboxを<b>外して</b>更新ボタンを押しても、<b>done が true のまま</b>になる。
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      checkbox を <code>th:field="*{done}"</code> ではなく、<code>name="done"</code> 等で手書きしている。HTMLのcheckboxは外した時に<b>何も送信しない</b>仕様で、Thymeleafの<code>_done</code>仕掛けが効いていない。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      checkbox を必ず <code>th:field="*{done}"</code> で書く。Thymeleafが裏で <code>_done</code> hidden を自動生成し、「外した時は false」を保証する。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 5 ── @PathVariable で id が null</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      Controllerに渡される <code>id</code> が常に <code>null</code> または例外
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <code>@GetMapping("/tasks/{id}/edit")</code> のパス変数名 <code>{id}</code> と、<code>@PathVariable Long id</code> の引数名が<b>一致していない</b>（例：<code>{taskId}</code> と <code>id</code>）。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      パス変数名と引数名を<b>同じ</b>にする。違う名前にしたい場合は <code>@PathVariable("id") Long taskId</code> と明示。
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「動的URLとchecbox特有のクセ」</div>
+    <p>Vol.6特有のハマりは<b>「動的URL（<code>{id}</code>記法）」「checkboxのhidden仕掛け」「<code>@PathVariable</code>の名前一致」</b>に集中。これらは<b>Vol.7（完了切替・削除）でも使う基礎</b>。本巻でしっかり身につけておくと、Vol.7以降が楽になります。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+  <div class="tip-label">NEXT STEP ── VOL.7</div>
+  <p>お疲れさまでした。Vol.6で<b>CRUDのU（Update）</b>を獲得しました。<b>編集ライフサイクル</b>（一覧 → 編集画面に既存値表示 → 変更 → 保存 → 一覧反映）を体験することで、業務開発で最頻出の機能パターンが手に入りました。<br><br>
+  「<b>なぜURLにIDを含めるのか？</b>」「<b>RESTful URL設計とは？</b>」「<b>@PathVariableの裏側は？</b>」── これらの<b>「なぜ」</b>に深く答えるのが、続編の<b>Vol.6 別冊（ADD）「URLパス変数と編集ライフサイクル」</b>です。本編で動かせた今、別冊で<b>設計思想</b>を覗くベストタイミング。<br><br>
+  次のVol.7では<b>完了切替と削除</b>を作ります。<b>CRUDのD（Delete）</b>に挑むと同時に、<b>「リストから1クリックで状態を変える」UI</b>パターンも学びます。Vol.6で覚えた<code>@PathVariable</code>と<code>@Update</code>がそのまま活きる応用問題です。お楽しみに。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.06 / 10 ── EDIT FEATURE</span>
+</footer>
+
+</body>
+</html>

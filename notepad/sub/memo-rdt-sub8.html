@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕別冊S8 UX設計とソフトデリートの理論</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a3540;
+  --paper:#ece8de;
+  --paper-2:#d8d4c6;
+  --accent:#6a8590;
+  --accent-2:#8aa0a8;
+  --accent-3:#a07050;
+  --muted:#707a82;
+  --line:#c2c0b4;
+  --code-bg:#252a32;
+  --code-text:#e6e2d6;
+  --panel-bg:#f3eee2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✧";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.18;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.tip{background:rgba(106,133,144,0.10);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.S8</span>
+    <span class="kind-tag">別冊 ── SUB</span>
+    <span class="rdt-tag">UX &amp; SOFT DELETE</span>
+  </div>
+  <h1>UX設計とソフトデリート<br>「消す」を設計する</h1>
+  <div class="subtitle">SUB.08 ── UX DESIGN &amp; SOFT DELETE</div>
+  <p class="lead">本編Vol.9 で<b>ピン留め・並び替え・アーカイブ</b>を実装します。別冊S8では、その土台となる<b>UX設計と「消す」の理論</b>を深掘りします。<b>物理削除と論理削除（ソフトデリート）</b>、<b>状態の持たせ方</b>、<b>並び順の設計</b>、<b>取り消せるUX</b>。「<b>ユーザーが安心して使える</b>」設計を学びます。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 別冊S8で腑に落とす3つの問い</div>
+    <p>① <b>アーカイブ</b>はなぜ「削除」と分けるのか／② <b>物理削除と論理削除</b>はどう使い分けるか／③ <b>「うっかり消した」を防ぐ</b>UXとは何か — この3問に自分の言葉で答えられたらS8卒業です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 別冊S8のミッション</a></li>
+    <li><a href="#s02">02 UXとは何か</a></li>
+    <li><a href="#s03">03 物理削除と論理削除</a></li>
+    <li><a href="#s04">04 ソフトデリートの設計</a></li>
+    <li><a href="#s05">05 状態の持たせ方</a></li>
+    <li><a href="#s06">06 並び順の設計</a></li>
+    <li><a href="#s07">07 取り消せるUX</a></li>
+    <li><a href="#s08">08 UX設計あるある失敗</a></li>
+    <li><a href="#s09">09 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>別冊S8のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">別冊S8は<b>「ユーザー体験（UX）を設計する」</b>回。これまでは<b>「機能が動く」</b>ことを中心に作ってきました。でも本編Vol.9 以降は<b>「使いやすさ」「安心して使える」</b>という、より人間寄りの設計が問われます。技術だけでなく<b>「使う人の気持ち」</b>を設計に取り込みます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">「動く」の先にある「使える」</span><span class="tag-desc">UXの視点</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 本編Vol.9 で扱う機能</div>
+        <ul>
+          <li><b>ピン留め</b>：よく使うメモを上に固定</li>
+          <li><b>並び替え</b>：更新順・作成順・名前順</li>
+          <li><b>アーカイブ</b>：消さずに隠す（ソフトデリート）</li>
+        </ul>
+        <p style="margin-top:8px">どれも<b>「使い勝手」</b>に関わる機能。技術的には簡単でも、<b>UX設計の判断</b>が肝。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 別冊S8のゴール</div>
+        <ul class="check-list">
+          <li>物理削除と論理削除を使い分けられる</li>
+          <li>ソフトデリートを設計できる</li>
+          <li>状態（ピン・アーカイブ）の持たせ方が分かる</li>
+          <li>「取り消せる」UXを設計できる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 「動く」から「使える」へ</span>
+<span class="comment">// ─── これまで（機能中心）───</span>
+US-001〜004：
+  メモを作る・分類・タグ・検索
+  → 「できる」を実現
+
+
+<span class="comment">// ─── Vol.9以降（UX中心）───</span>
+「よく使うメモが下に埋もれる」
+  → ピン留めで上に固定したい
+
+「終わったメモを消したいが、
+  後で見たいかも」
+  → アーカイブ（消さずに隠す）
+
+「うっかり大事なメモを削除した」
+  → 取り消せると安心
+
+
+<span class="comment">// ─── UXの問い ───</span>
+<span class="comment">// 「技術的にできるか」ではなく</span>
+<span class="comment">// 「ユーザーが快適・安心か」★★★</span>
+<span class="comment">// → 別冊S1の WHY に立ち返る</span>
+<span class="comment">// → 「なぜこの機能が要るか」</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — UX設計は「要求のWHY」に立ち返る</div>
+    <p>ピン留めやアーカイブのような機能は、<b>「なぜそれが欲しいか（WHY）」</b>を理解しないと的外れになります（別冊S1）。「アーカイブ＝消す」と勘違いすると、ユーザーの<b>「消したくないけど隠したい」</b>という本当の願いを外す。UX設計とは<b>「ユーザーの本当の願いを技術で叶える」</b>こと。要求工学（別冊S1）と地続きです。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>UXとは何か</h2><span class="en">WHAT IS UX</span></div>
+  <p class="pattern-desc"><b>UX（ユーザー体験）</b>とは、ユーザーが<b>アプリを使う中で得る体験全体</b>。見た目（UI）だけでなく、<b>「迷わない」「安心できる」「ストレスがない」</b>を含む。良いUXは<b>「使う人の気持ちを先回り」</b>します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">UXの構成要素</span><span class="tag-desc">UIだけではない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// UX を支える要素</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">要素1</span>
+            <div class="name">分かりやすさ</div>
+            <div class="desc">迷わず操作できる。何が起きるか予測できる。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">要素2</span>
+            <div class="name">安心感</div>
+            <div class="desc">取り返しがつく。間違えても怖くない。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">要素3</span>
+            <div class="name">効率</div>
+            <div class="desc">よく使う操作が簡単。無駄な手順がない。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// UI と UX の違い</div>
+        <ul>
+          <li><b>UI</b>：見た目・操作部品（ボタン等）</li>
+          <li><b>UX</b>：使った<b>体験全体</b>（UIを含む）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// UX を具体例で</span>
+<span class="comment">// ─── 悪いUX ───</span>
+削除ボタンを押す
+  → 即座に消える（確認なし）
+  → 取り消せない
+  → 「あ、間違えた…」😱
+<span class="comment">// → 不安・ストレス ★</span>
+
+
+<span class="comment">// ─── 良いUX ───</span>
+削除ボタンを押す
+  → 「削除しますか?」確認
+  → 削除しても「取り消す」リンク
+  → またはアーカイブ（後で戻せる）
+  → 「間違えても大丈夫」😌
+<span class="comment">// → 安心して使える ★★★</span>
+
+
+<span class="comment">// ─── メモ帳でのUX設計 ───</span>
+ピン留め：
+  よく使うメモを上に
+  → 「探す手間」を減らす（効率）
+
+アーカイブ：
+  消さずに隠す
+  → 「消すのが怖い」を解消（安心）
+
+並び替え：
+  好みの順で見られる
+  → 「自分のやり方で」（自由度）
+
+
+<span class="comment">// ─── UX = 気持ちの設計 ───</span>
+<span class="comment">// 技術 + 「使う人の気持ち」★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 良いUXは「取り返しがつく」</div>
+    <p>UX設計で最も重要な原則の一つが<b>「取り返しがつく」</b>こと。人は<b>間違えます</b>。間違えても<b>「元に戻せる」</b>と分かっていれば、安心して操作できる。逆に「一度押したら取り返しがつかない」と、ユーザーは<b>怖くて操作をためらう</b>。本編Vol.9 のアーカイブ（消さずに隠す）は、まさに<b>「取り返しがつく削除」</b>。安心感がUXの土台です。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>物理削除と論理削除</h2><span class="en">HARD VS SOFT DELETE</span></div>
+  <p class="pattern-desc">「消す」には<b>2種類</b>あります。<b>物理削除（DELETE）</b>＝データを本当に消す。<b>論理削除（ソフトデリート）</b>＝消したことにする（フラグを立てるだけ）。本編Vol.9 のアーカイブは<b>論理削除</b>の応用です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">2つの「消す」の違い</span><span class="tag-desc">本当に消す vs 隠す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <table class="compare-tbl">
+          <thead><tr><th></th><th>物理削除</th><th>論理削除</th></tr></thead>
+          <tbody>
+            <tr><td>動作</td><td>DELETE文</td><td>フラグを立てる</td></tr>
+            <tr><td>データ</td><td>本当に消える</td><td>残る（隠れる）</td></tr>
+            <tr><td>復元</td><td>不可</td><td><b>可能</b></td></tr>
+            <tr><td>容量</td><td>減る</td><td>増え続ける</td></tr>
+            <tr><td>例</td><td>完全削除</td><td>アーカイブ・ゴミ箱</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 使い分け</div>
+        <ul>
+          <li><b>物理削除</b>：本当に要らない・容量・法令</li>
+          <li><b>論理削除</b>：復元の可能性・履歴・安心感</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// メモ帳での適用</div>
+        <p>アーカイブ＝論理削除（隠すが残す）。完全削除＝物理削除。<b>2段階</b>にすると安心。</p>
+      </div>
+      <div class="code"><span class="code-head">// 物理削除と論理削除</span>
+<span class="comment">// ─── 物理削除（本当に消す）───</span>
+<span class="kw">DELETE FROM</span> memos
+ <span class="kw">WHERE</span> id = #{id};
+<span class="comment">// → データが消える</span>
+<span class="comment">// → 復元不可 ★</span>
+
+
+<span class="comment">// ─── 論理削除（消したことにする）───</span>
+<span class="comment">// archived フラグを立てるだけ</span>
+<span class="kw">UPDATE</span> memos
+ <span class="kw">SET</span> archived = <span class="kw">true</span>
+ <span class="kw">WHERE</span> id = #{id};
+<span class="comment">// → データは残る</span>
+<span class="comment">// → 一覧では archived=false だけ表示</span>
+<span class="comment">// → archived=true は「隠れる」</span>
+<span class="comment">// → 戻すのも簡単（false に戻す）★★★</span>
+
+
+<span class="comment">// ─── 一覧の取得（論理削除考慮）───</span>
+<span class="comment">// 通常の一覧（アーカイブ済みを除く）</span>
+SELECT * FROM memos
+ WHERE archived = false
+ ORDER BY updated_at DESC;
+
+<span class="comment">// アーカイブ一覧（隠したものだけ）</span>
+SELECT * FROM memos
+ WHERE archived = true;
+
+
+<span class="comment">// ─── メモ帳の2段階削除（安心設計）───</span>
+通常メモ
+  ↓ アーカイブ（論理削除）
+アーカイブ済み（隠れるが残る）
+  ↓ 完全削除（物理削除）
+本当に消える
+
+<span class="comment">// → 2段階で「うっかり消し」を防ぐ ★★★</span>
+<span class="comment">// → ゴミ箱と同じ発想</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「ゴミ箱」は論理削除の身近な例</div>
+    <p>OS の<b>ゴミ箱</b>が論理削除の典型。「削除」してもすぐ消えず<b>ゴミ箱に移動（隠れる）</b>、後で<b>復元</b>できる。本当に消すのは「ゴミ箱を空にする」とき。本編Vol.9 のアーカイブも同じ発想。<b>「1段階目で隠す（論理削除）、2段階目で本当に消す（物理削除）」</b>。この2段階が<b>「うっかり消し」からユーザーを守る</b>定番のUXパターンです。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>ソフトデリートの設計</h2><span class="en">SOFT DELETE DESIGN</span></div>
+  <p class="pattern-desc"><b>ソフトデリート（論理削除）</b>を実装するときの設計を学びます。<b>フラグの持ち方</b>、<b>一覧クエリへの影響</b>、<b>注意点</b>。便利ですが<b>「全クエリに条件追加が必要」</b>という落とし穴もあります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ソフトデリートの設計と注意点</span><span class="tag-desc">便利だが落とし穴も</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// フラグの持ち方</div>
+        <ul>
+          <li><b>boolean フラグ</b>：<code>archived</code>（true/false）</li>
+          <li><b>日時</b>：<code>archived_at</code>（NULLなら未アーカイブ）</li>
+        </ul>
+        <p style="margin-top:8px">日時方式は<b>「いつアーカイブしたか」</b>も分かる。本シリーズはシンプルに<b>boolean</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 落とし穴：全クエリに条件追加</div>
+        <p>論理削除を入れると、<b>通常の一覧・検索すべてに <code>archived = false</code></b> を足す必要がある。忘れると<b>「消したはずのメモが出る」</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// トレードオフ（別冊S2）</div>
+        <p><b>安心（復元可能）</b>と<b>複雑さ（全クエリに条件）</b>のトレードオフ。メモ帳のように<b>復元が嬉しい</b>場面では論理削除が勝つ。</p>
+      </div>
+      <div class="code"><span class="code-head">// ソフトデリートの設計</span>
+<span class="comment">// ─── テーブル設計 ───</span>
+<span class="kw">ALTER TABLE</span> memos
+  <span class="kw">ADD COLUMN</span> archived <span class="type">BOOLEAN</span>
+    <span class="kw">NOT NULL DEFAULT</span> <span class="kw">false</span>;
+<span class="comment">// → archived フラグを追加 ★</span>
+
+
+<span class="comment">// ─── 操作 ───</span>
+<span class="comment">// アーカイブする（論理削除）</span>
+UPDATE memos SET archived=true
+ WHERE id=#{id};
+
+<span class="comment">// 復元する（戻す）</span>
+UPDATE memos SET archived=false
+ WHERE id=#{id};
+
+<span class="comment">// 完全削除する（物理削除）</span>
+DELETE FROM memos WHERE id=#{id};
+
+
+<span class="comment">// ─── 落とし穴：全クエリに条件 ★★★ ───</span>
+<span class="comment">// 通常一覧</span>
+SELECT * FROM memos
+ WHERE archived = false ★  ← 必須
+
+<span class="comment">// 検索（Vol.7,8）にも追加が必要！</span>
+SELECT * FROM memos
+ &lt;where&gt;
+   AND archived = false ★  ← 忘れがち
+   ... 他の検索条件 ...
+ &lt;/where&gt;
+
+<span class="comment">// カテゴリ別件数などにも影響</span>
+<span class="comment">// → 「archived=false」を入れ忘れると</span>
+<span class="comment">//   アーカイブ済みメモが漏れて表示される ★</span>
+
+
+<span class="comment">// ─── 対策：デフォルトで除外する設計 ───</span>
+<span class="comment">// 共通の検索条件にする・ビューを使う等</span>
+<span class="comment">// → 「条件追加を忘れない」工夫</span>
+<span class="comment">// → 本シリーズは各クエリに明示的に追加</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — ソフトデリートは「全クエリへの影響」を忘れない</div>
+    <p>論理削除の最大の落とし穴は<b>「通常クエリ全部に <code>archived = false</code> を追加し忘れる」</b>こと。一覧・検索・件数集計——すべてに影響します。1か所忘れると<b>「アーカイブしたはずのメモが検索に出る」</b>バグに。導入するなら<b>「全クエリへの影響を洗い出す」</b>のが鉄則。だからこそ<b>テスト（別冊S3）で「アーカイブ済みが一覧に出ない」を検証</b>するのが重要です。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>状態の持たせ方</h2><span class="en">STATE MANAGEMENT</span></div>
+  <p class="pattern-desc">ピン留め・アーカイブのような<b>「状態」</b>をどう持つか。<b>boolean フラグ</b>が基本ですが、状態が増えると<b>設計の判断</b>が要ります。本編Vol.9 の <code>pinned</code>・<code>archived</code> の設計を考えます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">状態フラグの設計</span><span class="tag-desc">boolean か enum か</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// メモが持つ状態</div>
+        <ul>
+          <li><b>pinned</b>：ピン留めされているか（true/false）</li>
+          <li><b>archived</b>：アーカイブされているか（true/false）</li>
+        </ul>
+        <p style="margin-top:8px">それぞれ独立した boolean。「ピン留めかつアーカイブ」も理論上ありうる（実際は稀）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// boolean を増やす vs enum</div>
+        <table class="compare-tbl">
+          <thead><tr><th>方式</th><th>向く場面</th></tr></thead>
+          <tbody>
+            <tr><td>複数boolean</td><td>独立した状態</td></tr>
+            <tr><td>enum（status）</td><td>排他的な状態</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:8px">ピンとアーカイブは<b>独立</b>なので boolean が自然。「下書き/公開/削除済み」のような<b>排他的状態</b>なら enum。</p>
+      </div>
+      <div class="code"><span class="code-head">// 状態の持たせ方</span>
+<span class="comment">// ─── 複数 boolean（独立状態）───</span>
+<span class="kw">class</span> <span class="type">Memo</span> {
+  <span class="kw">private</span> <span class="type">boolean</span> pinned;    <span class="comment">// ピン留め</span>
+  <span class="kw">private</span> <span class="type">boolean</span> archived;  <span class="comment">// アーカイブ</span>
+}
+<span class="comment">// → 2つは独立（組み合わせ自由）</span>
+<span class="comment">// → ピン留め＆未アーカイブ 等 ★</span>
+
+
+<span class="comment">// ─── enum（排他的状態）───</span>
+<span class="comment">// もし「状態が排他的」なら：</span>
+<span class="kw">enum</span> <span class="type">MemoStatus</span> {
+  DRAFT, PUBLISHED, ARCHIVED
+}
+<span class="comment">// → 同時に1つの状態しか取れない</span>
+<span class="comment">// → メモ帳のピン/アーカイブには不向き</span>
+<span class="comment">//   （独立なので boolean が正解）</span>
+
+
+<span class="comment">// ─── 状態の判断基準 ───</span>
+Q. 2つの状態は同時に成立する?
+   YES → 別々の boolean ★
+   NO（排他的）→ enum
+
+
+<span class="comment">// ─── 状態とクエリの組み合わせ ───</span>
+通常一覧：
+  WHERE archived = false
+  ORDER BY pinned DESC,  ← ピンを上に
+           updated_at DESC
+
+<span class="comment">// → pinned=true が先頭に来る</span>
+<span class="comment">// → 状態が「並び順」にも影響 ★★★</span>
+<span class="comment">// → 次の Section 06 で詳説</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「独立か排他か」で boolean か enum を選ぶ</div>
+    <p>状態設計の判断軸：<b>「複数の状態が同時に成立するか」</b>。ピン留めとアーカイブは<b>独立</b>（ピン留めしつつアーカイブも理論上可）なので<b>別々の boolean</b>。一方「下書き→公開→アーカイブ」のように<b>1つしか取れない（排他的）</b>なら<b>enum（status列）</b>が適切。boolean を増やしすぎると組み合わせが爆発するので、<b>排他的なら enum でまとめる</b>のが整理のコツです。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>並び順の設計</h2><span class="en">SORT ORDER DESIGN</span></div>
+  <p class="pattern-desc"><b>並び順</b>は地味ですがUXの要。「ピン留めを上に」「更新順／作成順／名前順を選べる」。<b>複数キーのソート</b>と<b>ユーザーが選べる並び替え</b>の設計を学びます。本編Vol.9 で実装します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">並び順の設計</span><span class="tag-desc">複数キー＋ユーザー選択</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ピン留めを最優先に</div>
+        <p>並び順は<b>複数キー</b>で決まる。「まずピン留め、その中で更新順」。<code>ORDER BY pinned DESC, updated_at DESC</code>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// ユーザーが選べる並び替え</div>
+        <ul>
+          <li>更新順（既定）</li>
+          <li>作成順</li>
+          <li>名前順（タイトル）</li>
+        </ul>
+        <p style="margin-top:8px">並び順をユーザーが選べると<b>自由度</b>が上がる。ただし<b>安全に実装</b>（別冊S6の ${} 注意）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// ソート列の安全性</div>
+        <p>ソート列を動的にするとき、<b>ユーザー入力を直接 ORDER BY に入れない</b>（別冊S6）。<b>ホワイトリスト</b>で許可した列だけ。</p>
+      </div>
+      <div class="code"><span class="code-head">// 並び順の設計</span>
+<span class="comment">// ─── 複数キーソート（ピン優先）───</span>
+SELECT * FROM memos
+ WHERE archived = false
+ ORDER BY
+   <span class="ann">pinned DESC</span>,        <span class="comment">← まずピン留めを上</span>
+   updated_at DESC;     <span class="comment">← その中で更新順</span>
+<span class="comment">// → ピン留めメモが常に先頭 ★★★</span>
+
+
+<span class="comment">// ─── ユーザーが並び順を選ぶ ───</span>
+<span class="comment">// URL: /memos?sort=created</span>
+<span class="comment">// SearchForm に sort を追加</span>
+
+<span class="comment">// ─── 安全なソート列の扱い（別冊S6）───</span>
+<span class="ann">NG:</span> ORDER BY ${sort}
+<span class="comment">// → ユーザー入力を直接 → インジェクション ★</span>
+
+<span class="ann">OK:</span> ホワイトリストで検証
+<span class="kw">String</span> orderBy = <span class="kw">switch</span> (sort) {
+  <span class="kw">case</span> <span class="str">"created"</span> -> <span class="str">"created_at DESC"</span>;
+  <span class="kw">case</span> <span class="str">"title"</span>   -> <span class="str">"title ASC"</span>;
+  <span class="kw">default</span>       -> <span class="str">"updated_at DESC"</span>;
+};
+<span class="comment">// → 許可した値だけ → 安全 ★★★</span>
+<span class="comment">// → Mapper には検証済みの値を渡す</span>
+
+
+<span class="comment">// ─── 並び順とピンの組み合わせ ───</span>
+<span class="comment">// どの並び順でも「ピン留めは上」を維持：</span>
+ORDER BY pinned DESC, ${検証済みの並び順}
+<span class="comment">// → ピン優先は常に先頭キー ★</span>
+
+
+<span class="comment">// ─── UX：既定値を賢く ───</span>
+<span class="comment">// 何も選ばなければ「更新順」</span>
+<span class="comment">// → 最近触ったメモが上＝自然 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — ソート列を動的にするなら必ずホワイトリスト</div>
+    <p>並び替えで<b>ソート列をユーザーが選べる</b>ようにするとき、別冊S6の <code>${}</code> の危険が再来します。<code>ORDER BY ${sort}</code> でユーザー入力を直接使うと<b>SQLインジェクション</b>。必ず<b>「許可した列名だけ通すホワイトリスト」</b>（switch文等）で検証してから使う。「ユーザーが選ぶ＝ユーザー入力＝危険」。<b>動的なソートこそ、安全性の意識が必要</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>取り消せるUX</h2><span class="en">UNDOABLE UX</span></div>
+  <p class="pattern-desc">良いUXの核心<b>「取り消せる」</b>。削除前の<b>確認</b>、削除後の<b>取り消し（Undo）</b>、<b>アーカイブという緩衝</b>。ユーザーが<b>「間違えても大丈夫」</b>と感じられる設計を学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">「間違えても大丈夫」の設計</span><span class="tag-desc">3つの安全策</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 取り消せるUXの3パターン</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">策1</span>
+            <div class="name">事前確認</div>
+            <div class="desc">「削除しますか?」のダイアログ。実行前に止める。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">策2</span>
+            <div class="name">事後Undo</div>
+            <div class="desc">削除後「取り消す」リンク。実行後に戻せる。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">策3</span>
+            <div class="name">緩衝（アーカイブ）</div>
+            <div class="desc">即削除せず一旦隠す。後でいつでも戻せる。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// メモ帳での適用</div>
+        <ul>
+          <li>完全削除 → <b>事前確認</b>（取り返しつかないから）</li>
+          <li>アーカイブ → <b>緩衝</b>（いつでも復元可）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 取り消せるUXの実装パターン</span>
+<span class="comment">// ─── 策1：事前確認（物理削除）───</span>
+<span class="comment">// 完全削除は取り返しつかない</span>
+<span class="comment">// → 確認ダイアログ</span>
+&lt;button onclick=
+  "return confirm('完全に削除しますか?')"&gt;
+  完全削除
+&lt;/button&gt;
+<span class="comment">// → 誤クリックを1段階で止める ★</span>
+
+
+<span class="comment">// ─── 策3：緩衝（アーカイブ）───</span>
+<span class="comment">// アーカイブは論理削除＝戻せる</span>
+<span class="comment">// → 確認すら不要（戻せるから）</span>
+[アーカイブ] → 隠れる
+[アーカイブ一覧で復元] → 戻る
+<span class="comment">// → 「間違えても1クリックで戻る」★★★</span>
+
+
+<span class="comment">// ─── 削除の安心レベル ───</span>
+通常メモ
+  ↓ アーカイブ（緩衝・戻せる）
+  ↓   確認不要（安全だから）
+アーカイブ済み
+  ↓ 完全削除（取り返しつかない）
+  ↓   確認必須（危険だから）★
+本当に消える
+
+
+<span class="comment">// ─── 確認の使い分け ───</span>
+戻せる操作（アーカイブ）：確認不要
+  → 気軽に操作できる ★
+戻せない操作（完全削除）：確認必須
+  → 慎重にさせる ★
+
+<span class="comment">// → 「危険度に応じた摩擦」を設計 ★★★</span>
+<span class="comment">// → 安全な操作は軽く、危険な操作は重く</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「危険度に応じた摩擦」を設計する</div>
+    <p>確認ダイアログは<b>「摩擦（手間）」</b>です。摩擦は<b>多すぎるとうざく、少なすぎると事故</b>る。コツは<b>「危険度に応じて摩擦を変える」</b>。戻せるアーカイブは<b>摩擦ゼロ（即実行）</b>で気軽に。戻せない完全削除は<b>摩擦あり（確認）</b>で慎重に。「全部に確認」も「全部確認なし」も悪いUX。<b>操作の危険度を見極めて、適切な摩擦を置く</b>のが設計です。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>UX設計あるある失敗</h2><span class="en">UX PITFALLS</span></div>
+  <p class="pattern-desc">UX・状態設計で<b>初心者が踏みやすい失敗</b>を5つ。<b>確認の乱用・論理削除の条件漏れ・ソート列の危険</b>など。技術と気持ちの両面から回避策を学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">UX設計あるある 5選</span><span class="tag-desc">先人の轍を踏まない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 論理削除の条件漏れ ★★★</b></p>
+        <ul>
+          <li>一部クエリに archived=false を入れ忘れ</li>
+          <li>アーカイブ済みが漏れて表示</li>
+          <li>対処：全クエリを洗い出し、テストで検証（Section 04）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② 確認ダイアログの乱用</b></p>
+        <ul>
+          <li>何でも「本当に?」→ うざい・形骸化</li>
+          <li>対処：危険な操作だけ確認（Section 07）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ ソート列にユーザー入力を直接 ★★★</b></p>
+        <ul>
+          <li>${sort} でインジェクション</li>
+          <li>対処：ホワイトリスト検証（別冊S6・Section 06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 取り消せない破壊的操作</b></p>
+        <ul>
+          <li>確認もUndoもなく即完全削除</li>
+          <li>対処：アーカイブ（緩衝）か確認を入れる</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 状態が増えすぎて管理不能</b></p>
+        <ul>
+          <li>boolean を乱立させ組み合わせ爆発</li>
+          <li>対処：排他的なら enum でまとめる（Section 05）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// あるある失敗の対処</span>
+<span class="comment">// ─── ① 論理削除の条件漏れ検出 ───</span>
+<span class="comment">// テストで守る（別冊S3）：</span>
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">アーカイブ済みは一覧に出ない</span>() {
+  <span class="comment">// メモを作ってアーカイブ</span>
+  service.<span class="fn">archive</span>(memoId);
+  <span class="comment">// 通常一覧を取得</span>
+  <span class="kw">var</span> list = service.<span class="fn">findActive</span>();
+  <span class="comment">// アーカイブ済みが含まれない</span>
+  <span class="fn">assertThat</span>(list)
+    .<span class="fn">noneMatch</span>(m ->
+      m.<span class="fn">getId</span>().<span class="fn">equals</span>(memoId));
+  <span class="comment">// → 条件漏れがあれば落ちる ★★★</span>
+}
+
+
+<span class="comment">// ─── ③ ソート列の安全化 ───</span>
+<span class="ann">NG:</span> ORDER BY ${userSort}
+<span class="ann">OK:</span> switch で許可リスト → 検証済み値のみ
+
+
+<span class="comment">// ─── 良いUX設計の条件 ───</span>
+✓ 戻せる操作を基本に（アーカイブ）
+✓ 危険な操作だけ確認（摩擦を使い分け）
+✓ 論理削除は全クエリに条件＋テスト
+✓ ソート列はホワイトリスト
+✓ 状態は独立=boolean/排他=enum ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 論理削除のバグは「テストでしか気づけない」</div>
+    <p>論理削除の条件漏れ（①）は<b>見た目では気づきにくい</b>。アーカイブした直後は問題なくても、<b>「検索したらアーカイブ済みが混ざる」</b>のは特定の操作でしか露見しない。だから<b>「アーカイブ済みが各画面に出ないこと」をテストで網羅</b>するのが唯一の確実な防御。別冊S3の<b>「テストは変更の安全網」</b>が、論理削除という横断的な変更でこそ威力を発揮します。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">別冊S8 で<b>UX設計とソフトデリートの理論</b>が頭に入りました。本編Vol.9 で<b>ピン留め・並び替え・アーカイブ</b>を実装するとき、設計判断の「なぜ」が見えるはずです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">S8 達成チェック</span><span class="tag-desc">UXを語れる人になった</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>UX は UI を含む「体験全体」と分かる</li>
+          <li>良いUXは「取り返しがつく」と理解</li>
+          <li>物理削除と論理削除を使い分けられる</li>
+          <li>ソフトデリートを設計できる</li>
+          <li>論理削除は全クエリに影響すると知っている</li>
+          <li>独立=boolean/排他=enum で状態を持てる</li>
+          <li>複数キーソート・ピン優先を書ける</li>
+          <li>ソート列はホワイトリストと分かる</li>
+          <li>危険度に応じた摩擦を設計できる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 別冊S8 で手に入れた UX 理論</span>
+✓ <span class="str">"良いUXは取り返しがつく"</span>
+
+✓ <span class="str">"アーカイブ=論理削除（隠すが残す）"</span>
+
+✓ <span class="str">"論理削除は全クエリに条件追加"</span>
+
+✓ <span class="str">"独立な状態はboolean、排他はenum"</span>
+
+✓ <span class="str">"ピン優先は複数キーソートで"</span>
+
+✓ <span class="str">"ソート列はホワイトリスト"</span>
+
+✓ <span class="str">"危険度に応じた摩擦を設計"</span>
+
+
+<span class="comment">// あなたは「UXを語れる」</span>
+<span class="comment">// エンジニアに近づいた ★★★</span>
+
+<span class="comment">// 次回 本編Vol.9：</span>
+<span class="comment">//   ピン留め・並び替え・アーカイブ</span>
+<span class="comment">//   状態フラグ＋複数キーソート</span>
+<span class="comment">//   論理削除（ソフトデリート）</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── 本編 VOL.9 へ</div>
+    <p>別冊S8 で<b>「UX設計とソフトデリートの理論」</b>を獲得しました。次は本編Vol.9「<b>ピン留め・並び替え・アーカイブ</b>」。使い込んで出てきた<b>新しい要求（追加US）</b>を実装します。<b>pinned・archived の状態フラグ</b>、<b>複数キーソート（ピン優先）</b>、<b>論理削除（アーカイブ）</b>——別冊S8で学んだ理論が形になります。論理削除の<b>「全クエリへの影響」</b>をテストで守るのも実践。要求は<b>進化する</b>（別冊S1）——その実装フェーズへ。<b>本編Vol.9 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>SUB.08 / 14 ── UX DESIGN &amp; SOFT DELETE（別冊）</span>
+</footer>
+
+</body>
+</html>

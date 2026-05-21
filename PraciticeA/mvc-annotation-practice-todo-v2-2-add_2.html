@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.2 補足 ──「なぜこのコードになるのか」</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3d2817;
+  --paper:#f4ecd8;
+  --paper-2:#e8dcc0;
+  --accent:#9a6533;
+  --accent-2:#c19a6b;
+  --accent-3:#6b4423;
+  --accent-4:#2d5f3f;
+  --muted:#7a6952;
+  --line:#c9b896;
+  --code-bg:#2a1f15;
+  --code-text:#f0e4cc;
+  --panel-bg:#faf3e0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'?';position:absolute;right:0px;top:-30px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+.add-tag{display:inline-block;background:#c43;color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:40px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid #c43;padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--accent-3);border-bottom-color:var(--accent-3)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}
+
+/* WHAT/HOW/WHY 3カラム */
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+
+/* 用語カード */
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+
+/* 思考ステップカード */
+.think-step{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;position:relative;padding-left:60px;min-height:60px}
+.think-step::before{content:attr(data-step);position:absolute;left:14px;top:14px;background:var(--accent);color:var(--paper);width:36px;height:36px;line-height:36px;text-align:center;border-radius:50%;font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700}
+.think-step-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.think-step-body{font-size:13.5px;line-height:1.8}
+
+/* アナロジー（例え話）ボックス */
+.analogy{background:#fffdf6;border:1px dashed var(--accent);border-left:4px solid var(--accent);padding:14px 18px;margin:12px 0}
+.analogy-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px}
+.analogy-title::before{content:'🍳 ';margin-right:4px}
+.analogy p{font-size:13.5px;line-height:1.85}
+
+/* before/after コード対比 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.compare-box{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:13.5px}
+.compare-ng{border-top:3px solid #c43}
+.compare-ok{border-top:3px solid var(--accent-4)}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px}
+.compare-ng .compare-label{color:#c43}
+.compare-ok .compare-label{color:var(--accent-4)}
+
+.tip{margin:18px 0;padding:14px 20px;background:rgba(154,101,51,0.10);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+
+/* 図解用 */
+.flow-diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;background:#fff;border:1px solid var(--line);padding:14px 18px;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+/* role-card (役割カード) */
+.role-card{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;display:grid;grid-template-columns:90px 1fr;gap:14px;align-items:start}
+.role-card-icon{font-family:'Shippori Mincho',serif;font-size:36px;color:var(--accent);text-align:center;line-height:1;padding-top:6px}
+.role-card-name{font-family:'Shippori Mincho',serif;font-size:16px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.role-card-job{font-size:13.5px;line-height:1.7}
+
+/* チェックリスト */
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:220px}
+  h1{font-size:28px}
+  .toc ul{flex-direction:column;gap:8px}
+  .whw{grid-template-columns:1fr}
+  .compare{grid-template-columns:1fr}
+  .term-grid{grid-template-columns:1fr}
+  .role-card{grid-template-columns:60px 1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.02 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <span class="add-tag">+ ADD</span>
+  <h1>なぜこのコードに<br>なるのか</h1>
+  <p class="subtitle">VOL.2 SUPPLEMENT — THE REASONING BEHIND THE CODE</p>
+  <p class="lead">Vol.2では「DBからデータを取ってブラウザで見る」コードを書きました。動きはしたものの──<b>「なぜ自分で<code style="font-family:'JetBrains Mono'">@RestController</code>や<code style="font-family:'JetBrains Mono'">@Mapper</code>と書こうと思いつくのか」</b>、その<b>発想のイメージ</b>が湧かない方が多いはずです。この補足版は<b>「ゼロから自分で書き起こせる」</b>レベルまで思考の地図を描きます。コードを写すのではなく、<b>必要な役割を考えて、それをJavaに翻訳する</b>── その筋道を一緒に辿ります。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">💡 この補足版の使い方</div>
+    <p style="font-size:13.5px">Vol.2を読み終え、動かした後に読んでください。この補足の役割は<b>「動くコードの背後にある考え方」</b>を明らかにすること。新しいコードは追加しません── <b>同じコードを別の角度から見る</b>ことで、次に同じような要件が来た時に<b>自分で書ける</b>状態を目指します。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.02 ADD</div>
+  <ul>
+    <li><a href="#purpose">01 この補足の目的</a></li>
+    <li><a href="#big-picture">02 大きな絵 ── DBからブラウザの旅</a></li>
+    <li><a href="#role-thinking">03 役割を分ける思考法</a></li>
+    <li><a href="#why-rest">04 なぜ @RestController なのか</a></li>
+    <li><a href="#why-field">05 なぜ「フィールド+コンストラクタ」なのか</a></li>
+    <li><a href="#why-mapping">06 なぜ @GetMapping でURLが繋がるのか</a></li>
+    <li><a href="#why-interface">07 なぜMapperは interface なのか</a></li>
+    <li><a href="#why-select">08 なぜ @Select だけでSQLが動くのか</a></li>
+    <li><a href="#why-listmap">09 なぜ List&lt;Map&lt;String,Object&gt;&gt; なのか</a></li>
+    <li><a href="#full-flow">10 起動からブラウザ表示までを通して見る</a></li>
+    <li><a href="#checklist">11 自分で書くためのチェックリスト</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="purpose">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この補足の目的</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">何を解説し、何は解説しないか── 最初に範囲を明示します。<b>新しいコードは出てきません</b>。Vol.2のコードを<b>別の角度から</b>説明する補足版です。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を解説するか</div>
+      <div class="whw-desc">
+        Vol.2で書いた<code style="font-family:'JetBrains Mono'">RawTaskController</code>と<code style="font-family:'JetBrains Mono'">RawTaskMapper</code>の<b>「なぜこの形になるのか」</b>を一行ずつ。「DBからブラウザに出したい」という要件から、どう考えればあのコードに辿り着くかの<b>思考の道筋</b>。
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう解説するか</div>
+      <div class="whw-desc">
+        ① <b>大きな絵</b>を先に描いて全体像を掴む<br>
+        ② <b>役割の分解</b>で「誰が何をするか」を整理<br>
+        ③ <b>役割をJavaに翻訳</b>する手順を明示<br>
+        ④ <b>アナロジー（例え話）</b>で抽象概念を具体化
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜこの補足が必要か</div>
+      <div class="whw-desc">
+        コードを<b>写経</b>しても、次に違う要件が来た時に<b>応用できない</b>から。「<b>要件 → 役割 → コード</b>」の翻訳力こそが業務で求められる力。この補足で<b>その筋肉</b>を鍛えます。
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>この補足を読み終えたとき、<b>「次に『△△の一覧をブラウザに出して』と言われたら、同じパターンで自分で書ける」</b>状態になっているのが目標です。<b>パターン認識</b>こそがプログラミングの本質的な力です。</p>
+  </div>
+</section>
+
+<section id="big-picture">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>大きな絵 ── DBからブラウザの旅</h2>
+    <span class="en">THE BIG PICTURE</span>
+  </div>
+  <p class="pattern-desc">コードを見る前に<b>全体像</b>を描きましょう。「DBのデータをブラウザで見る」── 一見シンプルですが、実は<b>4つの主役</b>が関わる長い旅です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">the-journey</span>
+      <span class="tag-desc">データの旅路</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// データが辿る道のり</div>
+<div class="flow-diagram" style="border:none;padding:0">         [あなた]
+            ↓
+    ① ブラウザでURLを入力
+    "http://localhost:8080/raw"
+            ↓ HTTPリクエスト
+   ━━━━━━━━━━━━━━━━━
+   ★ Spring Boot アプリ ★
+   ━━━━━━━━━━━━━━━━━
+   ② Controllerが受ける
+        ↓
+   ③ Mapperに「DBから取って」
+        ↓
+   ④ MyBatisがSQL発行
+        ↓ SELECT文
+   ━━━━━━━━━━━━━━━━━
+   ★    MySQL    ★
+   ━━━━━━━━━━━━━━━━━
+   ⑤ MySQLが結果を返す
+        ↑ レコード3件
+   ④ MyBatisが Map に詰める
+        ↑ List&lt;Map&gt;
+   ③ Mapperが返す
+        ↑
+   ② Controllerが受け取る
+        ↑
+   ① ブラウザにJSONとして送る
+        ↑ HTTPレスポンス
+         [あなた]
+   画面にJSONが見える！</div>
+      </div>
+      <div class="code"><span class="code-head">// 4つの主役</span>
+
+<span class="comment">// ① ブラウザ ──────────────</span>
+<span class="comment">// あなたが操作するもの</span>
+<span class="comment">// HTTPリクエストを送る側</span>
+<span class="comment">// 画面表示する側</span>
+
+
+<span class="comment">// ② Spring Boot アプリ ─────</span>
+<span class="comment">// (Controller + Mapper)</span>
+<span class="comment">// ブラウザとDBの間に立つ</span>
+<span class="comment">// リクエストを受けて</span>
+<span class="comment">// DBを呼んで</span>
+<span class="comment">// レスポンスを返す</span>
+
+
+<span class="comment">// ③ MyBatis ────────────</span>
+<span class="comment">// ライブラリ（裏方）</span>
+<span class="comment">// Mapperインタフェースを</span>
+<span class="comment">// 実装クラスにしてくれる</span>
+<span class="comment">// SQLを実行する</span>
+<span class="comment">// 結果をJavaに変換する</span>
+
+
+<span class="comment">// ④ MySQL ─────────────</span>
+<span class="comment">// データの倉庫</span>
+<span class="comment">// 永続化されたテーブルを持つ</span>
+<span class="comment">// SQLを受けて結果を返す</span>
+
+
+<span class="comment">// この4つが連携して</span>
+<span class="comment">// 「DBからブラウザ」が成立する</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── レストランで考える</div>
+    <p>このデータの旅は、レストランの注文プロセスとそっくりです：<br>
+    <b>お客さん（ブラウザ）</b>が<b>ホール係（Controller）</b>に「ハンバーグください」と注文 → ホール係が<b>調理場の伝令（Mapper）</b>に伝える → 伝令が<b>厨房（MySQL）</b>にオーダーを通す → 厨房がハンバーグを作って渡す → 伝令がホール係に持ってくる → ホール係がお客さんに提供。<b>誰一人としてサボれない、でも全員違う仕事をしている</b>── これがソフトウェアの「責務分離」の発想です。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>1つの目的を達成するのに、複数の主役が連携する</b>」── これがほぼ全てのWebアプリの構造です。この絵を頭に持っておけば、どのコードがどの主役の仕事なのか<b>一目で分かる</b>ようになります。</p>
+  </div>
+</section>
+
+<section id="role-thinking">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>役割を分ける思考法</h2>
+    <span class="en">DECOMPOSING ROLES</span>
+  </div>
+  <p class="pattern-desc">「<b>なぜControllerとMapperの2つに分かれているのか？</b>」── 1つのクラスに全部書いてもいいのでは？ という素朴な疑問に答えます。<b>役割を分ける思考</b>こそ、コードを書く前に必要な準備運動です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-split</span>
+      <span class="tag-desc">なぜ分けるのか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 「DBからブラウザ」のやることリスト</div>
+        <p style="font-size:13.5px;line-height:1.85;margin-bottom:12px">「DBからブラウザに出す」をやるには、最低でも次の<b>5つの仕事</b>が必要です：</p>
+        <ol style="padding-left:24px;font-size:13.5px;line-height:1.95">
+          <li>HTTPリクエストを<b>受ける</b></li>
+          <li>そのURLが何を求めているか<b>判断する</b></li>
+          <li>DBに<b>SQLを発行する</b></li>
+          <li>DBの結果を<b>Javaの形に変換する</b></li>
+          <li>結果を<b>HTTPレスポンスとして返す</b></li>
+        </ol>
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px">これを<b>1つのクラスに詰め込む</b>ことも技術的には可能です。しかし、現場ではほぼ全てのプロジェクトで<b>役割ごとにクラスを分ける</b>。なぜでしょうか？</p>
+      </div>
+      <div class="code"><span class="code-head">// 役割を「誰がやるか」で分けると…</span>
+
+<span class="comment">// ① HTTPを受ける ──┐</span>
+<span class="comment">// ② URL判断 ───┤ → Controller</span>
+<span class="comment">// ⑤ レスポンス返す ─┘</span>
+
+<span class="comment">// ③ SQL発行 ─────┐</span>
+<span class="comment">// ④ 結果変換 ─────┤ → Mapper (MyBatis任せ)</span>
+
+
+<span class="code-head" style="margin-top:18px">// もし1クラスに詰め込んだら…</span>
+
+<span class="kw">public class</span> <span class="type">EverythingController</span> {
+  <span class="ann">@GetMapping</span>(<span class="str">"/raw"</span>)
+  <span class="kw">public</span> <span class="type">Object</span> <span class="fn">everything</span>() {
+    <span class="comment">// HTTPの判断</span>
+    <span class="comment">// ↓</span>
+    <span class="comment">// DB接続を直接開く</span>
+    <span class="type">Connection</span> conn = ...;
+    <span class="comment">// ↓</span>
+    <span class="comment">// PreparedStatement作る</span>
+    <span class="type">PreparedStatement</span> ps = ...;
+    <span class="comment">// ↓</span>
+    <span class="comment">// SQL実行</span>
+    <span class="type">ResultSet</span> rs = ps.<span class="fn">executeQuery</span>();
+    <span class="comment">// ↓</span>
+    <span class="comment">// ResultSetをMapに変換</span>
+    <span class="comment">// ↓</span>
+    <span class="comment">// JSONに整形</span>
+    <span class="kw">return</span> ...;
+  }
+}
+
+<span class="comment">// 100行超のメソッドが完成</span>
+<span class="comment">// 読めない、テストできない、</span>
+<span class="comment">// 修正もできない悪夢</span></div>
+    </div>
+  </div>
+
+  <p style="font-size:14.5px;margin:24px 0 12px"><b>なぜ分けるのか、3つの理由：</b></p>
+
+  <div class="think-step" data-step="1">
+    <div class="think-step-title">役割が違うものは、変わるタイミングも違う</div>
+    <div class="think-step-body">
+      Controllerは「URL設計」「HTTPの作法」が変わると変わる。Mapperは「テーブル構造」「SQL」が変わると変わる。<b>変わる理由が違うものは分けておく</b>と、片方を直してももう片方に影響しない。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="2">
+    <div class="think-step-title">専門家を割り当てられる</div>
+    <div class="think-step-body">
+      Controllerには<b>「Spring MVCの作法」</b>に強い人を、Mapperには<b>「SQLとDB」</b>に強い人を担当させられる。一人で全部できなくても、<b>分業</b>すれば回せる。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="3">
+    <div class="think-step-title">フレームワーク（Spring/MyBatis）が役割を区別する</div>
+    <div class="think-step-body">
+      Springは<code style="font-family:'JetBrains Mono'">@Controller</code>が付いたクラスを<b>「Web受付」</b>として扱い、MyBatisは<code style="font-family:'JetBrains Mono'">@Mapper</code>が付いたインタフェースを<b>「DB窓口」</b>として扱う。<b>役割をアノテーションで宣言</b>することで、フレームワークが面倒を見てくれる。
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">roles-in-vol2</span>
+      <span class="tag-desc">Vol.2のコードを役割で読み直す</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 役割カード</div>
+
+        <div class="role-card">
+          <div class="role-card-icon">受</div>
+          <div>
+            <div class="role-card-name">Controller（受付係）</div>
+            <div class="role-card-job">仕事：HTTPリクエストを受け取り、誰に何を依頼するか判断し、結果を返す。<br>
+            Vol.2では <code>RawTaskController</code> が担当。</div>
+          </div>
+        </div>
+
+        <div class="role-card">
+          <div class="role-card-icon">伝</div>
+          <div>
+            <div class="role-card-name">Mapper（DB伝令係）</div>
+            <div class="role-card-job">仕事：DB専用の窓口。「これ持ってきて」と頼まれたらSQLを発行して結果を返す。<br>
+            Vol.2では <code>RawTaskMapper</code> が担当（インタフェースのみ、実装はMyBatis任せ）。</div>
+          </div>
+        </div>
+
+        <div class="role-card">
+          <div class="role-card-icon">蔵</div>
+          <div>
+            <div class="role-card-name">MySQL（記録の倉庫）</div>
+            <div class="role-card-job">仕事：データを保管し、SQLで問い合わせられたら答える。<br>
+            Vol.2では <code>tasks</code>テーブルが該当。</div>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 役割と実装の対応</span>
+
+<span class="comment">// ┌───────────────┐</span>
+<span class="comment">// │ 受付係(Controller)   │</span>
+<span class="comment">// │ RawTaskController    │</span>
+<span class="comment">// └────────┬──────┘</span>
+<span class="comment">//          │ 依頼</span>
+<span class="comment">// ┌────────▼──────┐</span>
+<span class="comment">// │ 伝令係(Mapper)       │</span>
+<span class="comment">// │ RawTaskMapper(IF)    │</span>
+<span class="comment">// └────────┬──────┘</span>
+<span class="comment">//          │ SQL</span>
+<span class="comment">// ┌────────▼──────┐</span>
+<span class="comment">// │ 倉庫(Database)       │</span>
+<span class="comment">// │ MySQL の tasks       │</span>
+<span class="comment">// └───────────────┘</span>
+
+
+<span class="code-head" style="margin-top:18px">// 自分で考える手順</span>
+
+<span class="comment">// 「DBの何かをブラウザで見せる」と</span>
+<span class="comment">// 言われたら、まず役割を割り振る：</span>
+
+<span class="comment">// 1. URLを受ける誰か</span>
+<span class="comment">//    → Controllerを作る</span>
+
+<span class="comment">// 2. DBに問い合わせる誰か</span>
+<span class="comment">//    → Mapper(interface)を作る</span>
+
+<span class="comment">// 3. テーブルから取る方法</span>
+<span class="comment">//    → @SelectでSQLを書く</span>
+
+<span class="comment">// この3点が決まれば</span>
+<span class="comment">// コードの骨格は決まる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>役割で分ける</b>」という考え方は、現場では「<b>関心の分離</b>（Separation of Concerns）」と呼ばれる<b>設計の鉄則</b>です。Vol.2のControllerとMapperの2分割は、その最小例。これからVol.4で<b>Service層</b>を入れて3分割になりますが、考え方は同じ── <b>「変わる理由が違うものは分ける」</b>です。</p>
+  </div>
+</section>
+
+<section id="why-rest">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>なぜ @RestController なのか</h2>
+    <span class="en">WHY @RESTCONTROLLER</span>
+  </div>
+  <p class="pattern-desc">Controllerには2種類あります── <code style="font-family:'JetBrains Mono'">@Controller</code>と<code style="font-family:'JetBrains Mono'">@RestController</code>。なぜVol.2では<b>後者</b>を選んだのか。<b>「目的に合ったアノテーションを選ぶ」</b>という発想を身につけます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">controller-types</span>
+      <span class="tag-desc">2つのControllerの違い</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 自分への問い：何を返したい？</div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-bottom:12px">「DBの中身を最速で見たい」── このVol.2の目的に対して、選択肢は2つ：</p>
+
+        <div class="compare">
+          <div class="compare-box compare-ng" style="border-top-color:var(--accent-2)">
+            <div class="compare-label" style="color:var(--accent-2)">選択肢A: @Controller</div>
+            <p style="font-size:12.5px;margin-top:6px"><b>HTMLページを返す</b>用。テンプレートファイル（<code>list.html</code>等）を別途用意し、Modelにデータを載せる必要あり。</p>
+            <p style="font-size:12px;margin-top:6px;color:var(--muted)">必要なもの: Controller + Model + テンプレート</p>
+          </div>
+          <div class="compare-box compare-ok">
+            <div class="compare-label">選択肢B: @RestController</div>
+            <p style="font-size:12.5px;margin-top:6px"><b>データ（JSON）を返す</b>用。テンプレート不要。返り値オブジェクトが<b>そのままJSONに変換</b>される。</p>
+            <p style="font-size:12px;margin-top:6px;color:var(--muted)">必要なもの: Controllerのみ</p>
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>Vol.2の目的</b>は「最速で動くものを見たい」── そこに「テンプレートを作る手間」は<b>余計</b>。だから <code style="font-family:'JetBrains Mono'">@RestController</code> を選ぶのが自然な判断です。Vol.3で<b>表組み画面</b>を作る段になって初めて、<code style="font-family:'JetBrains Mono'">@Controller</code>に切り替えます。</p>
+      </div>
+      <div class="code"><span class="code-head">// @RestController の意味</span>
+
+<span class="ann">@RestController</span>
+<span class="kw">public class</span> <span class="type">RawTaskController</span> {
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/raw"</span>)
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Map</span>&lt;<span class="type">String</span>,<span class="type">Object</span>&gt;&gt;
+        <span class="fn">rawList</span>() {
+    <span class="kw">return</span> mapper.<span class="fn">findAllRaw</span>();
+    <span class="comment">// ↑ この返り値が</span>
+    <span class="comment">// 自動でJSONに変換される</span>
+    <span class="comment">// [{"id":1,...},...]</span>
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// もし @Controller だったら…</span>
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">RawTaskController</span> {
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/raw"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">rawList</span>(<span class="type">Model</span> model) {
+    model.<span class="fn">addAttribute</span>(
+      <span class="str">"tasks"</span>,
+      mapper.<span class="fn">findAllRaw</span>());
+    <span class="kw">return</span> <span class="str">"tasks/raw"</span>;
+    <span class="comment">// ↑ templates/tasks/raw.html</span>
+    <span class="comment">// が必要になる（追加作業）</span>
+  }
+}
+
+<span class="comment">// Vol.2では「画面に見せる」</span>
+<span class="comment">// よりも「中身を見る」が目的</span>
+<span class="comment">// だから @RestController が正解</span></div>
+    </div>
+  </div>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD</span>
+    <div class="term-card-title">@RestController</div>
+    <div class="term-card-sub">REST API用のController宣言</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd><code>@Controller</code> + <code>@ResponseBody</code> の合成アノテーション。「このクラスはWeb受付」かつ「メソッドの返り値をHTTPレスポンスのボディに直接書く」を同時に宣言。</dd>
+      <dt>結果</dt>
+      <dd>メソッドが<code>List</code>や<code>Map</code>を返すと、Springが<b>Jackson</b>というライブラリで自動的にJSONに変換してブラウザに送る。テンプレートは介在しない。</dd>
+      <dt>使いどころ</dt>
+      <dd>① REST APIエンドポイント／② JavaScriptが裏で呼ぶAPI／③ <b>動作確認用</b>のお手軽な可視化（Vol.2はコレ）</dd>
+    </dl>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>アノテーションは<b>「フレームワークへの宣言」</b>です。<code style="font-family:'JetBrains Mono'">@RestController</code>と書くことで、あなたはSpringに<b>「このクラスをWeb受付として扱え、かつ返り値はそのままレスポンスにしろ」</b>と命令しているわけです。アノテーション選びは<b>「自分が何をしたいかをフレームワークに伝える行為」</b>。要件を見たら、それに合うアノテーションを選ぶのが第一歩。</p>
+  </div>
+</section>
+
+<section id="why-field">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>なぜ「フィールド+コンストラクタ」なのか</h2>
+    <span class="en">WHY FIELD + CONSTRUCTOR</span>
+  </div>
+  <p class="pattern-desc">Vol.2のControllerには<code style="font-family:'JetBrains Mono'">private final RawTaskMapper mapper;</code>というフィールドがあり、コンストラクタで受け取っています。<b>なぜこの形なのか？</b> 「<b>依存注入（DI）</b>」というSpringの中核思想がここに詰まっています。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-this-shape</span>
+      <span class="tag-desc">なぜこのコードの形なのか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 自分への問い：Controllerは何が必要？</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>Controllerは単独では仕事ができません</b>。なぜなら、HTTPを受けるだけが仕事で、<b>DBにアクセスする能力は持っていない</b>から。だから<b>Mapperを「持って」おく</b>必要がある。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px">「持っておく」とは、Javaでは<b>フィールドに保存しておく</b>こと。だから：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;margin-top:6px;border-radius:2px"><b>private final RawTaskMapper mapper;</b></pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px">という<b>フィールド宣言</b>が必要になります。「<code>mapper</code>という名前でMapperを<b>覚えておく場所</b>」を作ったわけです。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>では、そのフィールドに誰が値を入れるのか？</b>── ここで<b>コンストラクタ</b>の出番です。</p>
+      </div>
+      <div class="code"><span class="code-head">// フィールド + コンストラクタ の意味</span>
+
+<span class="kw">public class</span> <span class="type">RawTaskController</span> {
+
+  <span class="comment">// ① フィールド：覚えておく場所</span>
+  <span class="kw">private final</span> <span class="type">RawTaskMapper</span> mapper;
+
+  <span class="comment">// ② コンストラクタ：受け取る入口</span>
+  <span class="kw">public</span> <span class="fn">RawTaskController</span>(
+    <span class="type">RawTaskMapper</span> mapper) {
+
+    <span class="kw">this</span>.mapper = mapper;
+    <span class="comment">// ↑ 渡されたmapperを</span>
+    <span class="comment">// フィールドに保存</span>
+  }
+
+  <span class="comment">// ③ メソッド：保存したmapperを使う</span>
+  <span class="ann">@GetMapping</span>(<span class="str">"/raw"</span>)
+  <span class="kw">public</span> <span class="type">List</span>&lt;...&gt; <span class="fn">rawList</span>() {
+    <span class="kw">return</span> mapper.<span class="fn">findAllRaw</span>();
+    <span class="comment">// ↑ this.mapper を使う</span>
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// 誰がコンストラクタを呼ぶ？</span>
+
+<span class="comment">// あなたではない。Spring本体です。</span>
+<span class="comment">// Springが起動時に：</span>
+<span class="comment">// 1. RawTaskMapperを作る（用意する）</span>
+<span class="comment">// 2. RawTaskControllerを作る時に</span>
+<span class="comment">//    そのMapperを渡す</span>
+<span class="comment">// 3. Controllerはmapperを保持する</span>
+
+<span class="comment">// これが「依存注入(DI)」</span>
+<span class="comment">// = 必要なものを外から注入する</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── 寿司職人と仕入れ業者</div>
+    <p>寿司職人（Controller）は<b>魚を捌くプロ</b>です。でも<b>魚を仕入れる能力は持っていない</b>。だから店には<b>仕入れ業者（Mapper）</b>が必要。職人は「業者を覚えておくメモ帳」を持ち、注文が来たら業者に魚を頼みます。<br><br>
+    <b>では業者を誰が職人に紹介する？</b>── 店長（Spring）です。店を開く時、店長が「この業者から仕入れて」と紹介する。職人は「ありがとう、メモした」と業者の連絡先を覚えます。これが<b>コンストラクタ注入</b>の正体です。</p>
+  </div>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD</span>
+    <div class="term-card-title">依存注入（Dependency Injection / DI）</div>
+    <div class="term-card-sub">Springの中核思想</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>クラスが必要とする<b>他のクラス（＝依存）</b>を、自分で作るのではなく、<b>外から受け取る</b>仕組み。</dd>
+      <dt>構造</dt>
+      <dd>① 必要なものを<b>フィールド</b>に宣言<br>② <b>コンストラクタ</b>で受け取る<br>③ <b>Spring</b>が起動時に自動でコンストラクタを呼んで注入</dd>
+      <dt>嬉しさ</dt>
+      <dd>① クラス同士が<b>緩く結合</b>される（差し替えやすい）<br>② <b>テスト時に偽物を注入</b>できる<br>③ クラスは<b>「使う側」</b>に集中でき、<b>「作る責任」</b>を持たなくて良い</dd>
+    </dl>
+  </div>
+
+  <p style="font-size:14.5px;margin:24px 0 12px"><b>「private final」と書く意味：</b></p>
+
+  <div class="think-step" data-step="1">
+    <div class="think-step-title">private ── 外から触らせない</div>
+    <div class="think-step-body">
+      <code>mapper</code>は<b>このクラスの内部状態</b>。外のクラスが勝手に書き換えると挙動が壊れる。だから<code>private</code>で隠す。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="2">
+    <div class="think-step-title">final ── 一度入れたら変えない</div>
+    <div class="think-step-body">
+      コンストラクタで受け取ったmapperを<b>後から差し替えない</b>と保証する。<code>final</code>を付けると、変数の<b>再代入が禁止</b>される。これにより「<b>このControllerはずっとこのMapperを使う</b>」という不変条件が手に入る。
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>必要なものはフィールドに宣言してコンストラクタで受け取る</b>」── これは<b>Spring業務開発の鉄則テンプレート</b>です。Vol.4で<code style="font-family:'JetBrains Mono'">@Service</code>クラスを作る時も、Vol.6以降で複数のService/Mapperを組み合わせる時も、<b>全く同じ形</b>で書きます。一度この形を覚えれば、応用できます。</p>
+  </div>
+</section>
+
+<section id="why-mapping">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>なぜ @GetMapping("/raw") でURLが繋がるのか</h2>
+    <span class="en">WHY @GETMAPPING WORKS</span>
+  </div>
+  <p class="pattern-desc">ブラウザで<code style="font-family:'JetBrains Mono'">http://localhost:8080/raw</code>を開くと、<code style="font-family:'JetBrains Mono'">rawList()</code>メソッドが呼ばれます。<b>なぜそうなるのか？</b> アノテーションが<b>「フレームワークへの目印」</b>として働く仕組みを解き明かします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">routing-mechanism</span>
+      <span class="tag-desc">URLからメソッドへの紐付け</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 仕組み：Springの「ルーティング」</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>アプリ起動時</b>、Springは<code>@Controller</code>や<code>@RestController</code>が付いたクラスを<b>全部探し出します</b>。そして各メソッドの<code>@GetMapping</code>や<code>@PostMapping</code>を見て、<b>URL → メソッドの対応表</b>を作ります。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px">対応表ができたら、Springは<b>HTTPリクエストを待ち受けます</b>。リクエストが来たら、URLとHTTPメソッドで対応表を引いて、該当メソッドを呼びます。</p>
+
+        <div style="background:rgba(154,101,51,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent)">
+          <b>因果関係：</b> <code>@GetMapping("/raw")</code> という<b>宣言</b> → 起動時にSpringが対応表に登録 → ブラウザから<code>GET /raw</code>が来た時、その対応表を引いて<code>rawList()</code>を呼び出す。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 起動時に作られる対応表（イメージ）</span>
+
+URL ROUTING TABLE
+─────────────────────────────
+  GET  /                → HelloController.hello()
+  GET  /raw             → RawTaskController.rawList()
+  GET  /favicon.ico     → (静的リソース)
+─────────────────────────────
+
+
+<span class="code-head" style="margin-top:18px">// リクエスト処理の流れ</span>
+
+<span class="comment">// ブラウザ：</span>
+GET /raw HTTP/1.1
+Host: localhost:8080
+
+           ↓
+
+<span class="comment">// Spring DispatcherServlet：</span>
+<span class="comment">// 1. URL = /raw を受信</span>
+<span class="comment">// 2. METHOD = GET を確認</span>
+<span class="comment">// 3. ルーティング表を引く</span>
+<span class="comment">// 4. RawTaskController#rawList()</span>
+<span class="comment">//    にマッチ</span>
+<span class="comment">// 5. そのメソッドを呼ぶ</span>
+
+           ↓
+
+<span class="comment">// あなたのコード：</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/raw"</span>)
+<span class="kw">public</span> ... <span class="fn">rawList</span>() {
+  <span class="kw">return</span> mapper.<span class="fn">findAllRaw</span>();
+}
+
+           ↓
+
+<span class="comment">// レスポンス返却</span></div>
+    </div>
+  </div>
+
+  <p style="font-size:14.5px;margin:24px 0 12px"><b>アノテーションの3つの構成要素：</b></p>
+
+  <div class="think-step" data-step="1">
+    <div class="think-step-title">@GetMapping = 「GETリクエストを受ける」の宣言</div>
+    <div class="think-step-body">
+      HTTPには<b>GET / POST / PUT / DELETE</b>などの<b>メソッド</b>がある。<code>@GetMapping</code>は「GETだけ受ける」という指定。POSTで来たら無視（404）。「<b>表示は GET、登録は POST</b>」が定番。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="2">
+    <div class="think-step-title">("/raw") = どのパスを担当するかの宣言</div>
+    <div class="think-step-body">
+      <code>"/raw"</code>と書けばURLの<code>/raw</code>を担当。<code>"/tasks"</code>なら<code>/tasks</code>。<b>あなたが好きに決めて良い</b>── ただし他のメソッドと被ってはダメ。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="3">
+    <div class="think-step-title">メソッド名は自由</div>
+    <div class="think-step-body">
+      <code>rawList()</code>でも<code>fetchAll()</code>でも<code>helloWorld()</code>でも動く。Springはアノテーションで判断するので、<b>メソッド名はあなたのため</b>に分かりやすく付ければよい。
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>アノテーションは目印</b>」と覚えてください。<code style="font-family:'JetBrains Mono'">@GetMapping</code>は「<b>これがGETの受付窓口だよ</b>」とSpringに教えるシール。Springは起動時に全クラスをスキャンしてこのシールを集め、対応表を作る。あなたの仕事は「<b>適切な位置にシールを貼る</b>」こと。これがSpring業務開発の<b>第一原理</b>です。</p>
+  </div>
+</section>
+
+<section id="why-interface">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>なぜMapperは interface なのか</h2>
+    <span class="en">WHY MAPPER IS INTERFACE</span>
+  </div>
+  <p class="pattern-desc">Mapperは<code style="font-family:'JetBrains Mono'">public class</code>ではなく<code style="font-family:'JetBrains Mono'">public interface</code>です。<b>中身（実装）を書いていないのに、なぜ動くのか？</b> ── これがMyBatisの<b>魔法の核心</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">interface-magic</span>
+      <span class="tag-desc">実装なしで動く仕組み</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 違和感の正体</div>
+
+        <p style="font-size:13.5px;line-height:1.85">普通のJavaなら── interfaceを使うには<b>必ず実装クラスを書く</b>必要があります：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12px;background:var(--paper-2);padding:10px;margin-top:6px;border-radius:2px;line-height:1.6">interface Animal { void cry(); }
+
+// 実装クラスがないと使えない
+class Dog implements Animal {
+  public void cry() { ... }
+}</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>ところがMapperは違います</b>。<code>RawTaskMapper</code>に<code>implements</code>するクラスを<b>誰も書いていない</b>── にも関わらず、Controllerから普通に呼び出せる。これは<b>誰かが裏で実装クラスを作っている</b>ということです。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px">その「誰か」が── <b>MyBatis</b>です。</p>
+      </div>
+      <div class="code"><span class="code-head">// あなたが書くコード</span>
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">RawTaskMapper</span> {
+
+  <span class="ann">@Select</span>(<span class="str">"SELECT * FROM tasks "</span> +
+          <span class="str">"ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Map</span>&lt;<span class="type">String</span>,<span class="type">Object</span>&gt;&gt;
+        <span class="fn">findAllRaw</span>();
+}
+
+<span class="comment">// メソッドの中身を書いていない！</span>
+<span class="comment">// それなのに動く。なぜ？</span>
+
+
+<span class="code-head" style="margin-top:18px">// MyBatisが裏で生成するコード（イメージ）</span>
+
+<span class="kw">public class</span> <span class="type">RawTaskMapper$$Generated</span>
+       <span class="kw">implements</span> <span class="type">RawTaskMapper</span> {
+
+  <span class="kw">private</span> <span class="type">SqlSession</span> session;
+
+  <span class="ann">@Override</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Map</span>&lt;<span class="type">String</span>,<span class="type">Object</span>&gt;&gt;
+         <span class="fn">findAllRaw</span>() {
+
+    <span class="comment">// 1. @Selectから SQL を取得</span>
+    <span class="type">String</span> sql = <span class="str">"SELECT * FROM tasks "</span>
+              + <span class="str">"ORDER BY id"</span>;
+
+    <span class="comment">// 2. DB接続を借りる</span>
+    <span class="type">Connection</span> conn = ...;
+
+    <span class="comment">// 3. SQL実行</span>
+    <span class="type">ResultSet</span> rs = ...;
+
+    <span class="comment">// 4. ResultSetをListMapに変換</span>
+    <span class="type">List</span>&lt;...&gt; result = ...;
+
+    <span class="comment">// 5. 返す</span>
+    <span class="kw">return</span> result;
+  }
+}
+
+<span class="comment">// これを MyBatis が自動で作る</span>
+<span class="comment">// あなたは書かなくて良い</span></div>
+    </div>
+  </div>
+
+  <p style="font-size:14.5px;margin:24px 0 12px"><b>なぜinterfaceが採用されているのか、3つの理由：</b></p>
+
+  <div class="think-step" data-step="1">
+    <div class="think-step-title">interfaceは「契約」だけを記述する</div>
+    <div class="think-step-body">
+      interfaceは「<b>このメソッドが存在し、こういう型を返す</b>」という<b>約束ごと</b>だけを書くもの。<b>実装の詳細は書かない</b>。MyBatisは<b>あなたが書いた契約（メソッド名・引数・返り値・@Select）</b>から、自動的に実装を生成できる。これが「書かなくて済む」を可能にする鍵。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="2">
+    <div class="think-step-title">Javaの仕組み「動的プロキシ」を使う</div>
+    <div class="think-step-body">
+      Javaには<b>「実行時に interface の実装クラスを動的に生成する」</b>機能（Dynamic Proxy）が標準で備わっている。MyBatisはこれを使って、起動時に<code>RawTaskMapper</code>の<b>偽物の実装クラス</b>を作り、Springに渡している。Controllerが受け取る<code>mapper</code>は、実はその<b>動的に作られた偽物</b>です。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="3">
+    <div class="think-step-title">interfaceなら何度でも作り直せる</div>
+    <div class="think-step-body">
+      もしクラスとして実装が固定されていたら、テスト時に<b>偽物のMapper</b>に差し替えるのが難しい。interfaceなら<b>テスト用の実装クラス</b>を別途用意して差し替えられる。<b>柔軟性</b>のためでもある。
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── 注文書と業者</div>
+    <p>あなたが「<b>魚を仕入れる注文書のテンプレート</b>」を作るとします── 「魚種・量・到着日を書く欄」がある書面です。これがinterface。<br><br>
+    <b>実際にその注文書を埋めて魚を持ってくる業者</b>は別に契約します。書面を渡せば、業者は中身を読み取って魚を仕入れて持ってくる。あなたは<b>業者がどうやって仕入れるかは知らなくていい</b>── 注文書のフォーマットさえ決めれば、結果が手に入る。<br><br>
+    <code>@Mapper</code>付きinterface = 注文書のフォーマット。MyBatis = それを読んで仕事する業者。</p>
+  </div>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD</span>
+    <div class="term-card-title">@Mapper</div>
+    <div class="term-card-sub">MyBatisへの「これは私のクライアント」宣言</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>MyBatisに「<b>このinterfaceの実装を起動時に生成して、Springに登録しろ</b>」と命令するアノテーション。</dd>
+      <dt>結果</dt>
+      <dd>起動時、MyBatisが<code>@Mapper</code>を見つける → 動的プロキシで実装クラス生成 → SpringのDIコンテナに登録 → 他のクラスがコンストラクタで受け取れるようになる。</dd>
+      <dt>注意</dt>
+      <dd>必ず<b>interface</b>に付ける。classに付けても効かない。これは「interfaceでないと動的プロキシが作れない」というJavaの制約。</dd>
+    </dl>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>書かなくていいコードは書かない</b>」── これがMyBatisの設計思想です。DB接続の細かい処理、PreparedStatementの作成、ResultSetのループ、Mapへの変換── これら全てを<b>毎回書くのは時間の無駄</b>。だからMyBatisが自動で生成する。あなたは<b>「何が欲しいか（SQL + 返り値の型）」</b>を宣言するだけ。<b>「How」ではなく「What」を書く</b>── これが現代のフレームワークの賢い使い方です。</p>
+  </div>
+</section>
+
+<section id="why-select">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>なぜ @Select だけでSQLが動くのか</h2>
+    <span class="en">WHY @SELECT WORKS</span>
+  </div>
+  <p class="pattern-desc">Mapperのメソッドに<code style="font-family:'JetBrains Mono'">@Select("SELECT * FROM tasks ORDER BY id")</code>と書くだけで、本当にDBにSQLが飛んでいる。<b>このマジックの正体</b>を見ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">select-mechanism</span>
+      <span class="tag-desc">@SelectがSQL実行に化ける流れ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// メソッド呼び出しからSQL実行まで</div>
+
+        <p style="font-size:13.5px;line-height:1.85">Controllerが<code>mapper.findAllRaw()</code>と書くと、裏では<b>連鎖反応</b>が起きます。一つずつ追います。</p>
+
+<div class="flow-diagram" style="border:none;padding:0;margin-top:14px">[1] Controllerが呼ぶ
+      mapper.findAllRaw()
+            ↓
+[2] mapperの正体は動的プロキシ
+      実装クラス（MyBatis製）が
+      この呼び出しを横取り
+            ↓
+[3] プロキシがメソッドを調査
+      "findAllRaw" メソッドに
+      @Selectアノテーションが
+      付いているか？
+            ↓ YES
+[4] @Selectの中のSQL文字列を取得
+      "SELECT * FROM tasks
+       ORDER BY id"
+            ↓
+[5] DataSourceから接続を借りる
+      (Vol.2のproperties設定で
+       MySQLに繋がる)
+            ↓
+[6] PreparedStatementで実行
+            ↓
+[7] ResultSetを受け取る
+            ↓
+[8] 返り値の型を見て変換
+      List&lt;Map&lt;String,Object&gt;&gt;
+      なので、各行をMapに変換
+            ↓
+[9] List を Controller に返す</div>
+      </div>
+      <div class="code"><span class="code-head">// あなたが書くコード</span>
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">RawTaskMapper</span> {
+
+  <span class="ann">@Select</span>(<span class="str">"SELECT * FROM tasks "</span> +
+          <span class="str">"ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Map</span>&lt;<span class="type">String</span>,<span class="type">Object</span>&gt;&gt;
+        <span class="fn">findAllRaw</span>();
+}
+
+<span class="comment">// たったこれだけ。</span>
+<span class="comment">// 残り全てはMyBatisが面倒見る。</span>
+
+
+<span class="code-head" style="margin-top:18px">// もし MyBatis がなかったら…</span>
+
+<span class="kw">public</span> <span class="type">List</span>&lt;...&gt; <span class="fn">findAllRaw</span>() {
+  <span class="kw">try</span> (<span class="type">Connection</span> conn =
+       dataSource.<span class="fn">getConnection</span>();
+       <span class="type">PreparedStatement</span> ps =
+       conn.<span class="fn">prepareStatement</span>(
+       <span class="str">"SELECT * FROM tasks ORDER BY id"</span>);
+       <span class="type">ResultSet</span> rs =
+       ps.<span class="fn">executeQuery</span>()) {
+
+    <span class="type">List</span>&lt;<span class="type">Map</span>&lt;<span class="type">String</span>,<span class="type">Object</span>&gt;&gt;
+      result = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+    <span class="type">ResultSetMetaData</span> meta =
+      rs.<span class="fn">getMetaData</span>();
+    <span class="kw">int</span> cols = meta.<span class="fn">getColumnCount</span>();
+
+    <span class="kw">while</span> (rs.<span class="fn">next</span>()) {
+      <span class="type">Map</span>&lt;<span class="type">String</span>,<span class="type">Object</span>&gt; row =
+        <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();
+      <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= cols; i++) {
+        row.<span class="fn">put</span>(meta.<span class="fn">getColumnName</span>(i),
+                rs.<span class="fn">getObject</span>(i));
+      }
+      result.<span class="fn">add</span>(row);
+    }
+    <span class="kw">return</span> result;
+
+  } <span class="kw">catch</span> (<span class="type">SQLException</span> e) {
+    <span class="kw">throw new</span> <span class="type">RuntimeException</span>(e);
+  }
+}
+
+<span class="comment">// 20行を超える地獄</span>
+<span class="comment">// これを毎回書く時代もあった</span></div>
+    </div>
+  </div>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD</span>
+    <div class="term-card-title">@Select</div>
+    <div class="term-card-sub">「このメソッドはこのSELECTを実行する」宣言</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>MyBatisのアノテーション。「<b>このメソッドが呼ばれたら、中のSQL文字列を実行して、結果を返り値の型に変換せよ</b>」という命令。</dd>
+      <dt>使い分け</dt>
+      <dd><code>@Select</code> ── SELECT文／<code>@Insert</code> ── INSERT文／<code>@Update</code> ── UPDATE文／<code>@Delete</code> ── DELETE文。Vol.5以降で全部登場します。</dd>
+      <dt>結果型の決定</dt>
+      <dd>返り値の宣言（<code>List&lt;Map&gt;</code>とか）を見て、MyBatisが<b>結果の入れ物の形</b>を決める。<code>List</code>なら複数行、単一オブジェクトなら1行、<code>int</code>ならCOUNT結果、など。</dd>
+    </dl>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>SQLを直接書く</b>」のがMyBatisの方針です。JPA/Hibernateのような<b>「SQLを書かないでもOK」</b>のライブラリと違って、MyBatisは<b>SQLを隠さない</b>。これは<b>「SQLは書いた方が見通しが良い」「最適化が容易」</b>という思想。<b>業務開発、特にSI現場でMyBatisが好まれる理由</b>がここにあります。</p>
+  </div>
+</section>
+
+<section id="why-listmap">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>なぜ List&lt;Map&lt;String,Object&gt;&gt; なのか</h2>
+    <span class="en">WHY LIST OF MAP</span>
+  </div>
+  <p class="pattern-desc">Vol.2の返り値はやたら複雑な<code style="font-family:'JetBrains Mono'">List&lt;Map&lt;String, Object&gt;&gt;</code>でした。<b>なぜこんな型なのか？</b> Vol.3で<code style="font-family:'JetBrains Mono'">List&lt;Task&gt;</code>に置き換えた理由も含めて整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">type-breakdown</span>
+      <span class="tag-desc">型を一段ずつ解きほぐす</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 入れ子になっている型を一段ずつ読む</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><code>List&lt;Map&lt;String, Object&gt;&gt;</code>は一見複雑ですが、<b>外側から1つずつ</b>読むと簡単です：</p>
+
+        <div class="think-step" data-step="1" style="margin-top:14px">
+          <div class="think-step-title">外側の List ── 「複数の行を入れる箱」</div>
+          <div class="think-step-body">
+            SELECTの結果は<b>複数行</b>。だから「複数」を表現する<code>List</code>で囲む。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">中身の Map ── 「1行を表す」</div>
+          <div class="think-step-body">
+            DBの1行は「<b>id=1, title=牛乳, done=false, created_at=...</b>」のような<b>キーと値のペア</b>。これは<code>Map</code>の典型的な用途。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">Map&lt;String, Object&gt; ── 「列名（String）→ 値（Object）」</div>
+          <div class="think-step-body">
+            キーは「カラム名（文字列）」、値は「何でも入る箱（Object）」。なぜObjectか── <b>列によって型が違うから</b>。idは数値、titleは文字列、doneは真偽値…。<b>共通の親クラスとしてのObjectで受ける</b>のが最小ルール。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 型を分解して読む</span>
+
+<span class="type">List</span>&lt;<span class="type">Map</span>&lt;<span class="type">String</span>, <span class="type">Object</span>&gt;&gt;
+─┬─ ─┬─ ─┬───── ─┬───
+ │   │   │       │
+ │   │   │       └ 値（何でも入る）
+ │   │   └─ キー（列名）
+ │   └─ 1行を表すMap
+ └── 複数行を表すList
+
+
+<span class="code-head" style="margin-top:18px">// 実体イメージ</span>
+
+[
+  {
+    <span class="str">"id"</span>: 1,
+    <span class="str">"title"</span>: <span class="str">"牛乳"</span>,
+    <span class="str">"done"</span>: <span class="kw">false</span>,
+    <span class="str">"created_at"</span>: <span class="str">"2026-..."</span>
+  },
+  {
+    <span class="str">"id"</span>: 2,
+    <span class="str">"title"</span>: <span class="str">"パン"</span>,
+    <span class="str">"done"</span>: <span class="kw">true</span>,
+    <span class="str">"created_at"</span>: <span class="str">"2026-..."</span>
+  },
+  ...
+]
+
+<span class="comment">// ↑ これがJSONとしてブラウザに行く</span>
+
+
+<span class="code-head" style="margin-top:18px">// なぜVol.3でこれを捨てるか</span>
+
+<span class="comment">// Object は何でも入る = 何が入ってるか</span>
+<span class="comment">// 取り出すまで分からない</span>
+<span class="type">Object</span> raw = row.<span class="fn">get</span>(<span class="str">"title"</span>);
+<span class="comment">// ↑ String? Integer? null?</span>
+<span class="type">String</span> title = (<span class="type">String</span>) raw;
+<span class="comment">// ↑ キャストが必要で危険</span>
+
+<span class="comment">// Task クラスなら型が確定</span>
+<span class="type">Task</span> t = ...;
+<span class="type">String</span> title = t.<span class="fn">getTitle</span>();
+<span class="comment">// ↑ キャスト不要・安全</span></div>
+    </div>
+  </div>
+
+  <p style="font-size:14.5px;margin:24px 0 12px"><b>「なぜVol.2はあえてこの型を使ったか」── 理由は2つ：</b></p>
+
+  <div class="think-step" data-step="1">
+    <div class="think-step-title">エンティティクラスを作る前でも動かせるから</div>
+    <div class="think-step-body">
+      <code>Map&lt;String, Object&gt;</code>は<b>どんなテーブルの結果でも受けられる万能型</b>。<code>Task</code>クラスをまだ作っていない状態で「とりあえずDBの中身を見たい」目的を達成できる。これがVol.2で<b>「動くものを最速で見せる」</b>戦略にハマる。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="2">
+    <div class="think-step-title">「型安全でないと困る」を体感させるため</div>
+    <div class="think-step-body">
+      Vol.3で<code>Task</code>に置き換えた時、<b>「ああ、Mapだとここが弱かったんだな」</b>と<b>差を体感</b>できる。<b>不便を一度経験させてから便利を提示する</b>── これが教材的な意図です。
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── ダンボール箱と専用ケース</div>
+    <p><code>List&lt;Map&lt;String, Object&gt;&gt;</code>は<b>「何でも入る大きなダンボール箱」</b>。とりあえず何でも放り込めるけど、取り出す時に「これ何の道具だっけ？」と確認しないといけない。<br><br>
+    <code>List&lt;Task&gt;</code>（Vol.3）は<b>「ハンマー専用のケース」</b>。<b>ハンマー以外は入らないけど、取り出した瞬間にハンマーだと分かる</b>。試作段階では汎用の箱、本格運用には専用ケース── これが型の使い分けです。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>初期段階では緩い型 → 後で厳密な型に置き換える</b>」── これは現場でもよくある進化パターンです。プロトタイプを<code>Map</code>で素早く作り、要件が固まったらエンティティクラスを作って差し替える。Vol.2→Vol.3の流れはまさにこの実務的進化を体験させるための設計です。</p>
+  </div>
+</section>
+
+<section id="full-flow">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>起動からブラウザ表示までを通して見る</h2>
+    <span class="en">END-TO-END FLOW</span>
+  </div>
+  <p class="pattern-desc">ここまでの全要素を<b>1つのストーリー</b>に繋ぎます。<b>アプリ起動の瞬間</b>から<b>ブラウザに表示される瞬間</b>まで、Vol.2のコードがどう連鎖して動くかを追体験します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">startup-phase</span>
+      <span class="tag-desc">起動時に何が起きるか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// フェーズ1：アプリ起動（リクエスト前）</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">SpringApplication.run() でブート</div>
+          <div class="think-step-body">
+            <code>TodoApplication</code>の<code>main</code>メソッドから<code>SpringApplication.run()</code>が呼ばれる。これが全ての出発点。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">@ComponentScan が動く</div>
+          <div class="think-step-body">
+            <code>@SpringBootApplication</code>に含まれる<code>@ComponentScan</code>が<code>com.example.todo</code>以下を<b>全部スキャン</b>。<code>@Controller</code>、<code>@RestController</code>、<code>@Service</code>、<code>@Component</code>等のシールが貼られたクラスを<b>全部見つける</b>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">Mapper探索（MyBatis）</div>
+          <div class="think-step-body">
+            <code>@Mapper</code>が貼られたinterfaceを<b>全部見つける</b>。動的プロキシで実装クラスを<b>生成</b>。DIコンテナに登録。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">Bean生成とDI</div>
+          <div class="think-step-body">
+            <code>RawTaskMapper</code>のプロキシを先に生成。次に<code>RawTaskController</code>を生成しようとして、コンストラクタに<code>RawTaskMapper</code>が必要と判明。<b>すでに作ってあるプロキシを引数として渡す</b>。これでControllerが完成。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="5">
+          <div class="think-step-title">ルーティング表の構築</div>
+          <div class="think-step-body">
+            全Controllerの全メソッドを調査して、<code>@GetMapping</code>等から<b>URL→メソッド</b>の対応表を作る。<code>/raw → RawTaskController#rawList()</code>がここで登録される。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="6">
+          <div class="think-step-title">Tomcat起動</div>
+          <div class="think-step-body">
+            内蔵Tomcatがポート8080でリッスン開始。<b>これで待ち受け完了</b>。コンソールに<code>Started TodoApplication in X.XXX seconds</code>が出る。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 起動時のメモリの中（イメージ）</span>
+
+DIコンテナ (Bean一覧)
+─────────────────────────────
++ TodoApplication
++ RawTaskMapper (プロキシ)
++ RawTaskController
+   └ mapper field = ↑のプロキシ
++ HelloController
++ DataSource
++ SqlSession
++ DispatcherServlet
++ ...その他多数...
+─────────────────────────────
+
+ルーティング表
+─────────────────────────────
+GET  /         → HelloController#hello
+GET  /raw      → RawTaskController#rawList
+─────────────────────────────
+
+Tomcat: listening on :8080
+DataSource: connected to MySQL ✓
+[Started TodoApplication]</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">request-phase</span>
+      <span class="tag-desc">リクエストが来てから返るまで</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// フェーズ2：リクエスト処理</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">ブラウザがGET /raw を送信</div>
+          <div class="think-step-body">
+            あなたが<code>http://localhost:8080/raw</code>を開いた瞬間、ブラウザは<code>GET /raw HTTP/1.1</code>というHTTPリクエストを送る。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">DispatcherServlet が受信</div>
+          <div class="think-step-body">
+            Tomcatが受け取り、Springの<b>DispatcherServlet</b>（全てのHTTPリクエストの中央受付）に渡す。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">ルーティング表を引く</div>
+          <div class="think-step-body">
+            URL=<code>/raw</code>、メソッド=<code>GET</code>でルーティング表検索。<b><code>RawTaskController#rawList()</code></b>がヒット。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">rawList() を呼ぶ</div>
+          <div class="think-step-body">
+            DIコンテナから<code>RawTaskController</code>のBeanを取得。その<code>rawList()</code>メソッドを呼び出す。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="5">
+          <div class="think-step-title">mapper.findAllRaw() を呼ぶ</div>
+          <div class="think-step-body">
+            <code>rawList()</code>の中で<code>mapper.findAllRaw()</code>が呼ばれる。<code>mapper</code>はMyBatis製プロキシなので、メソッド呼び出しが横取りされる。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="6">
+          <div class="think-step-title">SQL発行と結果取得</div>
+          <div class="think-step-body">
+            プロキシが<code>@Select</code>のSQLをMySQLに送る。MySQLが結果を返す。プロキシが<code>List&lt;Map&gt;</code>に変換して返す。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="7">
+          <div class="think-step-title">Jackson が JSON 化</div>
+          <div class="think-step-body">
+            Controllerが<code>List&lt;Map&gt;</code>を返り値として返す。<code>@RestController</code>のおかげで、Springが<b>Jackson</b>というJSONライブラリで自動変換。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="8">
+          <div class="think-step-title">HTTPレスポンス返却</div>
+          <div class="think-step-body">
+            JSONが<code>HTTP/1.1 200 OK</code>のレスポンスボディとしてブラウザに返る。<b>画面にJSONが見える</b>。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// リクエストの旅（時系列）</span>
+
+00:00.000 GET /raw HTTP/1.1
+          ↓
+00:00.001 Tomcat受信
+          ↓
+00:00.002 DispatcherServlet起動
+          ↓
+00:00.003 ルーティング検索
+          → RawTaskController#rawList
+          ↓
+00:00.004 rawList() 呼び出し
+          ↓
+00:00.005 mapper.findAllRaw() 呼び出し
+          ↓ (プロキシが横取り)
+00:00.006 SQL文字列を取得
+          "SELECT * FROM tasks
+           ORDER BY id"
+          ↓
+00:00.007 MySQLへSQL送信
+          ↓
+00:00.020 MySQL: 結果3行返却
+          ↓
+00:00.021 ResultSet → List&lt;Map&gt; 変換
+          ↓
+00:00.022 Controllerが受け取る
+          ↓
+00:00.023 Jackson: JSON変換
+          [{"id":1,...},...]
+          ↓
+00:00.024 HTTPレスポンス送信
+          ↓
+00:00.025 ブラウザに表示
+
+
+<span class="comment">// 全部で25ミリ秒くらい</span>
+<span class="comment">// あなたは「一瞬で表示された」と思う</span>
+<span class="comment">// 裏でこんなにたくさん動いている</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>この流れの中で<b>あなたが書いたコード</b>は、<code>RawTaskController</code>と<code>RawTaskMapper</code>の2ファイルだけ。<b>残りは全部フレームワークが用意してくれた</b>。これが「<b>Springが面倒を見てくれる</b>」の正体です。<b>あなたがアノテーションでシールを貼ると、フレームワークがその合図を読んで動く</b>── この感覚を持っておくと、新しいコードを書く時の発想がぐっと早くなります。</p>
+  </div>
+</section>
+
+<section id="checklist">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>自分で書くためのチェックリスト</h2>
+    <span class="en">CHECKLIST FOR WRITING ON YOUR OWN</span>
+  </div>
+  <p class="pattern-desc">最後に、<b>次に同じような要件が来た時</b>に、ゼロから自分で書くための<b>思考の手順</b>をテンプレート化します。これを順に辿れば、初学者でも「DBから取ってブラウザに出す」コードが書けるようになります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">writing-template</span>
+      <span class="tag-desc">要件→コードへの翻訳テンプレート</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 7ステップ思考テンプレート</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">要件を1文で書き出す</div>
+          <div class="think-step-body">
+            例：「<b>商品一覧をブラウザのJSONで見たい</b>」<br>
+            主語と目的語を明確にする。ここでは「商品（products）」と「JSON」がキーワード。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">登場人物を割り出す</div>
+          <div class="think-step-body">
+            ① <b>受付係 = Controller</b>（HTTPを受ける）<br>
+            ② <b>DB窓口 = Mapper</b>（SQLを発行する）<br>
+            ③ <b>テーブル = DB</b>（productsテーブル）<br>
+            この3点セットが必須。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">Controllerを設計する</div>
+          <div class="think-step-body">
+            ・JSON返却なので<b><code>@RestController</code></b>を使う<br>
+            ・URLを決める（例：<code>/products</code>）→ <code>@GetMapping("/products")</code><br>
+            ・必要な依存（Mapper）をフィールドに、コンストラクタで受け取る<br>
+            ・メソッドは<code>mapper.findAll()</code>を呼んで返すだけ
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">Mapperを設計する</div>
+          <div class="think-step-body">
+            ・<b><code>@Mapper</code>付きの interface</b>を作る<br>
+            ・必要なメソッドを宣言（<code>findAll()</code>等）<br>
+            ・<code>@Select</code>でSQLを書く<br>
+            ・返り値はとりあえず<code>List&lt;Map&lt;String, Object&gt;&gt;</code>でOK（型を作るのは後で）
+          </div>
+        </div>
+
+        <div class="think-step" data-step="5">
+          <div class="think-step-title">パッケージ配置を決める</div>
+          <div class="think-step-body">
+            ・Controller → <code>com.example.todo.controller</code><br>
+            ・Mapper → <code>com.example.todo.mapper</code> または <code>raw</code><br>
+            <b><code>com.example.todo</code>の下</b>に置くこと（ComponentScanの範囲）
+          </div>
+        </div>
+
+        <div class="think-step" data-step="6">
+          <div class="think-step-title">起動して確認</div>
+          <div class="think-step-body">
+            ・<code>TodoApplication.java</code>を実行<br>
+            ・コンソールにエラーがないか確認<br>
+            ・ブラウザで<code>http://localhost:8080/products</code>を開く<br>
+            ・JSONが表示されれば成功
+          </div>
+        </div>
+
+        <div class="think-step" data-step="7">
+          <div class="think-step-title">エラーが出たら因果で読む</div>
+          <div class="think-step-body">
+            ・404 → URLとアノテーション値の確認<br>
+            ・500 → スタックトレースの上から3点（例外名・<code>### SQL:</code>・<code>### The error may exist in</code>）を読む<br>
+            ・起動失敗 → DataSource設定の確認
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 要件：「商品一覧をJSONで見たい」</span>
+<span class="comment">// → 完成コードの形（テンプレート）</span>
+
+
+<span class="comment">// ① Mapper（DB窓口）</span>
+<span class="kw">package</span> com.example.shop.mapper;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> java.util.Map;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> org.apache.ibatis.annotations.Select;
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">ProductMapper</span> {
+
+  <span class="ann">@Select</span>(<span class="str">"SELECT * FROM products "</span> +
+          <span class="str">"ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Map</span>&lt;<span class="type">String</span>, <span class="type">Object</span>&gt;&gt;
+        <span class="fn">findAllRaw</span>();
+}
+
+
+<span class="comment">// ② Controller（受付係）</span>
+<span class="kw">package</span> com.example.shop.controller;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> java.util.Map;
+<span class="kw">import</span> org.springframework.web.bind.annotation
+       .GetMapping;
+<span class="kw">import</span> org.springframework.web.bind.annotation
+       .RestController;
+<span class="kw">import</span> com.example.shop.mapper.ProductMapper;
+
+<span class="ann">@RestController</span>
+<span class="kw">public class</span> <span class="type">ProductController</span> {
+
+  <span class="kw">private final</span> <span class="type">ProductMapper</span> mapper;
+
+  <span class="kw">public</span> <span class="fn">ProductController</span>(
+      <span class="type">ProductMapper</span> mapper) {
+    <span class="kw">this</span>.mapper = mapper;
+  }
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/products"</span>)
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Map</span>&lt;<span class="type">String</span>, <span class="type">Object</span>&gt;&gt;
+        <span class="fn">list</span>() {
+    <span class="kw">return</span> mapper.<span class="fn">findAllRaw</span>();
+  }
+}
+
+
+<span class="comment">// ─────────────────────</span>
+<span class="comment">// Vol.2のコードと「ほぼ同じ形」</span>
+<span class="comment">// テーブル名とクラス名を変えるだけ</span>
+<span class="comment">// これが「パターン認識」の力</span></div>
+    </div>
+  </div>
+
+  <p style="font-size:14.5px;margin:24px 0 12px"><b>業務開発の「定型パターン」を覚える：</b></p>
+
+  <ul class="checklist">
+    <li>「DBから取ってブラウザに出す」要件 → <b>Controller + Mapper の2点セット</b></li>
+    <li>JSON返却なら <code>@RestController</code>、HTMLページなら <code>@Controller</code></li>
+    <li>Mapper は必ず <b>interface</b>、<code>@Mapper</code> を付ける</li>
+    <li>SQL は <code>@Select</code> アノテーションに直接書く</li>
+    <li>依存（Mapper）は <b>private final + コンストラクタ</b> で受け取る</li>
+    <li>URL は <code>@GetMapping("/...")</code> で決める</li>
+    <li>パッケージは必ず <code>com.example.todo</code>（または各プロジェクトのルート）の下に置く</li>
+  </ul>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 最後に一言</div>
+    <p><b>「書くべきコードは決まっている。あなたは要件をそのコードに翻訳するだけ。」</b><br>
+    Spring業務開発では、<b>パターン</b>が<b>9割</b>です。新しい要件が来ても、「Controller + Mapper + テーブル」「@RestController + @Mapper + @Select」「フィールド + コンストラクタ」── この<b>テンプレート</b>を組み合わせるだけ。<b>このパターンが手に馴染めば、業務コードは怖くなくなります</b>。Vol.3以降で同じパターンが何度も登場するので、繰り返しの中で身体で覚えていきましょう。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+  <div class="tip-label">この補足を読み終えたあなたへ</div>
+  <p>お疲れさまでした。Vol.2のコードが<b>「写すもの」から「自分で書けるもの」</b>に近づいたはずです。<b>パターンが見えてきた</b>感覚があれば、この補足の役割は果たせました。<br><br>
+  Vol.3以降では<b>Service層</b>、<b>登録/更新/削除</b>、<b>バリデーション</b>、<b>例外処理</b>と続いていきますが、根底の発想は<b>全部同じ</b>── 「要件 → 役割 → アノテーション → コード」の翻訳です。新しい要件が出てきたら、まず<b>この補足の「7ステップ思考テンプレート」</b>に戻ってきてください。次巻以降もこのレベルの「なぜ」の解説を組み込みながら進めます。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.02 ADD ── THE REASONING BEHIND THE CODE</span>
+</footer>
+
+</body>
+</html>

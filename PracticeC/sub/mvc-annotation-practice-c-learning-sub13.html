@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.13 別冊 @Transactional完全理解</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a302a;
+  --paper:#ebece6;
+  --paper-2:#dadecf;
+  --accent:#ccd4b6;
+  --accent-2:#d6ddc2;
+  --accent-3:#727963;
+  --muted:#737a72;
+  --line:#c0c8b6;
+  --code-bg:#1f231f;
+  --code-text:#ebece6;
+  --panel-bg:#f3f5ee;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✧';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.24;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--ink);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent-3)}
+.toc a:hover{color:var(--accent-3)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent-3);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#9aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(204,212,182,0.22);border-left:3px solid var(--accent-3);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent-3);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent-3);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.bad-good{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.bad-good .b,.bad-good .g{background:#fff;border:1px solid var(--line);padding:12px 14px}
+.bad-good .b{border-left:3px solid #b05050}
+.bad-good .g{border-left:3px solid var(--accent-3)}
+.bad-good .ph{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.15em;margin-bottom:6px}
+.bad-good .b .ph{color:#b05050}
+.bad-good .g .ph{color:var(--accent-3)}
+.bad-good .ttl{font-family:'Shippori Mincho',serif;font-size:14px;font-weight:700;color:var(--accent-3);margin-bottom:6px}
+.bad-good p{font-size:13px}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .bad-good{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.13 / 15</span>
+    <span class="kind-tag">別冊</span>
+  </div>
+  <h1>@Transactional<br>完全理解</h1>
+  <div class="subtitle">DEEP DIVE ── ROLLBACK, PROPAGATION & ISOLATION</div>
+  <p class="lead">
+    本編Vol.13で <code style="font-family:'JetBrains Mono'">@Transactional</code> の基本とロールバックを体験しました。しかし本編で触れた<b>「効かないトラブル」</b>の真の原因や、<code style="font-family:'JetBrains Mono'">@Transactional</code> が持つ<b>多くの設定</b>はまだ謎のまま。<br>
+    別冊S13では、<b>「ロールバックされる例外の条件」「プロキシの仕組み（なぜ同一クラス内で効かないか）」「トランザクションの伝播（propagation）」「分離レベル（isolation）」「readOnly」</b>を完全網羅します。<br>
+    <code style="font-family:'JetBrains Mono'">@Transactional</code> を<b>「おまじない」から「使いこなす道具」へ</b>。技術面接でも最頻出のテーマです。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#theme">01 この別冊のテーマ</a></li>
+    <li><a href="#rollback-rule">02 ロールバックされる例外の条件</a></li>
+    <li><a href="#proxy">03 プロキシの仕組み</a></li>
+    <li><a href="#self-invoke">04 同一クラス内呼び出しの罠</a></li>
+    <li><a href="#propagation">05 トランザクションの伝播</a></li>
+    <li><a href="#isolation">06 分離レベル</a></li>
+    <li><a href="#readonly">07 readOnly 属性</a></li>
+    <li><a href="#trouble">08 効かない罠の総まとめ</a></li>
+    <li><a href="#next">09 次の本編へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="theme">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この別冊のテーマ</h2>
+    <span class="en">THEME</span>
+  </div>
+  <p class="pattern-desc"><code>@Transactional</code> は<b>「付けるだけ」で動く</b>反面、<b>「なぜか効かない」</b>トラブルが頻発します。原因はほぼ<b>「プロキシの仕組み」と「例外の種類」</b>。本巻でこの2大原因を完全に理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-deep</span>
+      <span class="tag-desc">深く理解する価値</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 「効かない」の主な原因</div>
+        <div class="role-card">
+          <span class="label">原因1</span>
+          <div class="name">例外の種類（チェック例外）</div>
+          <div class="desc">デフォルトでは<b>RuntimeException系のみ</b>ロールバック。チェック例外は素通り。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">原因2</span>
+          <div class="name">プロキシ（同一クラス内呼び出し）</div>
+          <div class="desc">同じクラスの <code>this.method()</code> 呼び出しでは効かない。AOPプロキシの仕組み。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">原因3</span>
+          <div class="name">private メソッド</div>
+          <div class="desc"><code>@Transactional</code> は public でしか効かない。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">原因4</span>
+          <div class="name">例外の握りつぶし（try-catch）</div>
+          <div class="desc">catch して再スローしないと、Spring が例外を検知できない。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で答える5つの問い</span>
+
+<span class="comment">// 問1: どんな例外でロールバックされる？</span>
+<span class="comment">//   → RuntimeException系がデフォルト</span>
+
+<span class="comment">// 問2: なぜ同一クラス内呼び出しで効かない？</span>
+<span class="comment">//   → プロキシを経由しないから</span>
+
+<span class="comment">// 問3: 伝播（propagation）とは？</span>
+<span class="comment">//   → トランザクションの入れ子のルール</span>
+
+<span class="comment">// 問4: 分離レベル（isolation）とは？</span>
+<span class="comment">//   → 同時実行時の見え方の制御</span>
+
+<span class="comment">// 問5: readOnly は何のため？</span>
+<span class="comment">//   → 読み取り専用の最適化</span>
+
+
+<span class="comment">// 結論を先に：</span>
+<span class="comment">// ・ロールバックは RuntimeException系</span>
+<span class="comment">// ・プロキシ経由でないと効かない</span>
+<span class="comment">// ・伝播・分離レベルは「必要時に調整」</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="rollback-rule">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>ロールバックされる例外の条件</h2>
+    <span class="en">ROLLBACK RULES</span>
+  </div>
+  <p class="pattern-desc">本編で「例外でロールバック」と学びましたが、<b>厳密には「どんな例外でも」ではありません</b>。Spring のデフォルトルールを正確に理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">rollback-default</span>
+      <span class="tag-desc">デフォルトのロールバックルール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 例外の種類とロールバック</div>
+        <table class="compare-tbl">
+          <tr><th>例外の種類</th><th>デフォルトで</th></tr>
+          <tr><td>RuntimeException<br>（非チェック例外）</td><td>ロールバックする</td></tr>
+          <tr><td>Error</td><td>ロールバックする</td></tr>
+          <tr><td>チェック例外<br>（Exception系）</td><td><b>ロールバックしない</b></td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>意外な落とし穴</b>：<code>IOException</code> や <code>SQLException</code> などの<b>チェック例外はデフォルトでロールバックされない</b>。「例外が出たのにコミットされた」事故の原因No.1。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">なぜこの仕様か</div>
+          <p>歴史的経緯で、<b>「チェック例外は『想定内の事態』、非チェック例外は『想定外の異常』」</b>という思想。想定外（バグ等）ならロールバック、想定内（業務エラー）なら呼び出し側が処理、という考え方。但し実務では<b>「全例外でロールバック」</b>が安全なことが多い。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// ロールバック条件の制御</span>
+
+<span class="comment">// ─── デフォルト ───</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">method</span>() {
+  <span class="comment">// RuntimeException → ロールバック ✓</span>
+  <span class="comment">// IOException → ロールバックしない ✗</span>
+}
+
+
+<span class="comment">// ─── 全例外でロールバック（推奨）───</span>
+<span class="ann">@Transactional</span>(rollbackFor = <span class="type">Exception</span>.<span class="kw">class</span>)
+<span class="kw">public void</span> <span class="fn">method</span>() <span class="kw">throws</span> <span class="type">Exception</span> {
+  <span class="comment">// あらゆる例外でロールバック ✓</span>
+}
+
+
+<span class="comment">// ─── 特定の例外を除外 ───</span>
+<span class="ann">@Transactional</span>(
+    noRollbackFor = <span class="type">SomeException</span>.<span class="kw">class</span>)
+<span class="kw">public void</span> <span class="fn">method</span>() {
+  <span class="comment">// SomeException ではロールバックしない</span>
+}
+
+
+<span class="comment">// ─── 実務の鉄則 ───</span>
+
+<span class="comment">// 「想定外の状況では全部ロールバック」</span>
+<span class="comment">// が最も安全</span>
+
+<span class="comment">// → rollbackFor = Exception.class</span>
+<span class="comment">//   を付けるプロジェクトが多い</span>
+
+
+<span class="comment">// ─── 本編 Vol.13 の実験 ───</span>
+
+<span class="comment">// throw new RuntimeException(...)</span>
+<span class="comment">// → RuntimeException なのでデフォルトで</span>
+<span class="comment">//   ロールバックされた</span>
+
+<span class="comment">// もし throw new Exception(...) なら</span>
+<span class="comment">// → デフォルトではロールバックされず</span>
+<span class="comment">//   INSERT が残ってしまう（要注意）</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="proxy">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>プロキシの仕組み</h2>
+    <span class="en">PROXY MECHANISM</span>
+  </div>
+  <p class="pattern-desc"><code>@Transactional</code> の「効かない」問題の<b>根本原因</b>がこれ。Spring は<b>「プロキシ」</b>という代理オブジェクトを使ってトランザクションを管理しています。仕組みを理解すれば全ての謎が解けます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">proxy-how</span>
+      <span class="tag-desc">プロキシが包む仕組み</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// プロキシとは</div>
+        <p>Spring は <code>@Transactional</code> の付いたクラスを<b>「プロキシ（代理人）」で包みます</b>。あなたが呼ぶのは<b>本物ではなくプロキシ</b>。</p>
+        <p style="margin-top:8px">プロキシが「<b>メソッド呼び出しの前後でトランザクション処理</b>」を挟みます。</p>
+        <ol class="step-list" style="margin-top:6px">
+          <li>呼び出し → プロキシが受ける</li>
+          <li>プロキシがトランザクション開始</li>
+          <li>本物のメソッドを実行</li>
+          <li>プロキシがコミット or ロールバック</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">AOP（アスペクト指向）</div>
+          <p>この「メソッドの前後に処理を挟む」技術を<b>AOP</b>と呼びます。<code>@Transactional</code> は AOP で実装されている。「<b>本来の処理に横断的な関心事（トランザクション）を織り込む</b>」仕組み。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// プロキシの動作イメージ</span>
+
+<span class="comment">// ─── あなたが書くコード ───</span>
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public class</span> <span class="type">StudyRecordService</span> {
+  <span class="kw">public void</span> <span class="fn">register</span>(...) {
+    <span class="comment">// DB操作</span>
+  }
+}
+
+
+<span class="comment">// ─── Spring が裏で作るもの（概念）───</span>
+
+<span class="kw">class</span> <span class="type">StudyRecordService$$Proxy</span>
+    <span class="kw">extends</span> <span class="type">StudyRecordService</span> {
+
+  <span class="kw">private</span> <span class="type">StudyRecordService</span> real;
+
+  <span class="ann">@Override</span>
+  <span class="kw">public void</span> <span class="fn">register</span>(...) {
+    <span class="comment">// ① トランザクション開始</span>
+    txManager.<span class="fn">begin</span>();
+    <span class="kw">try</span> {
+      real.<span class="fn">register</span>(...);  <span class="comment">// 本物を呼ぶ</span>
+      <span class="comment">// ② コミット</span>
+      txManager.<span class="fn">commit</span>();
+    } <span class="kw">catch</span> (<span class="type">RuntimeException</span> e) {
+      <span class="comment">// ③ ロールバック</span>
+      txManager.<span class="fn">rollback</span>();
+      <span class="kw">throw</span> e;
+    }
+  }
+}
+
+
+<span class="comment">// ─── あなたが @Autowired で受け取るのは ───</span>
+
+<span class="ann">@Autowired</span>
+<span class="kw">private</span> <span class="type">StudyRecordService</span> service;
+<span class="comment">// → 実はプロキシが注入されている</span>
+<span class="comment">// → service.register() を呼ぶと</span>
+<span class="comment">//   プロキシ経由でトランザクション管理</span>
+
+
+<span class="comment">// ─── 重要な帰結 ───</span>
+<span class="comment">// トランザクションが効くのは</span>
+<span class="comment">// 「プロキシ経由で呼ばれた時」だけ。</span>
+
+<span class="comment">// プロキシを経由しない呼び出しでは</span>
+<span class="comment">// トランザクションが効かない。</span>
+<span class="comment">// → 次セクションの「同一クラス内」問題</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="self-invoke">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>同一クラス内呼び出しの罠</h2>
+    <span class="en">SELF-INVOCATION TRAP</span>
+  </div>
+  <p class="pattern-desc">本編 TROUBLE 2 で触れた<b>「同一クラス内で効かない」</b>問題。プロキシの仕組みを理解した今なら、その理由が分かります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">self-invocation</span>
+      <span class="tag-desc">なぜ自己呼び出しで効かないか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 自己呼び出しの問題</div>
+        <p>同じクラス内で <code>this.otherMethod()</code> と呼ぶと、<b>プロキシを経由しません</b>。<code>this</code> は<b>本物のオブジェクト</b>を指すので、プロキシのトランザクション処理が挟まらない。</p>
+        <p style="margin-top:8px">結果、<code>otherMethod()</code> に <code>@Transactional</code> を付けても<b>効かない</b>。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">解決策</div>
+          <p>① <b>別の Service クラスに分ける</b>（最も一般的）。② self-injection（自分自身をプロキシ経由で注入）。③ メソッドを呼び出し元に統合。<b>①が最もクリーン</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 自己呼び出しの罠</span>
+
+<span class="comment">// ─── ✗ NG: 同一クラス内呼び出し ───</span>
+<span class="ann">@Service</span>
+<span class="kw">public class</span> <span class="type">MyService</span> {
+
+  <span class="kw">public void</span> <span class="fn">outer</span>() {
+    <span class="comment">// this 経由 = プロキシを通らない</span>
+    <span class="fn">inner</span>();  <span class="comment">// = this.inner()</span>
+  }
+
+  <span class="ann">@Transactional</span>
+  <span class="kw">public void</span> <span class="fn">inner</span>() {
+    <span class="comment">// ← この @Transactional は効かない！</span>
+    <span class="comment">// outer から呼ばれると</span>
+    <span class="comment">// プロキシを経由しないため</span>
+  }
+}
+
+
+<span class="comment">// ─── ✓ OK: 別クラスに分ける ───</span>
+<span class="ann">@Service</span>
+<span class="kw">public class</span> <span class="type">OuterService</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">InnerService</span> innerService;
+
+  <span class="kw">public void</span> <span class="fn">outer</span>() {
+    <span class="comment">// 別クラス = プロキシ経由</span>
+    innerService.<span class="fn">inner</span>();  <span class="comment">// 効く！</span>
+  }
+}
+
+<span class="ann">@Service</span>
+<span class="kw">public class</span> <span class="type">InnerService</span> {
+
+  <span class="ann">@Transactional</span>
+  <span class="kw">public void</span> <span class="fn">inner</span>() {
+    <span class="comment">// プロキシ経由で呼ばれるので効く ✓</span>
+  }
+}
+
+
+<span class="comment">// ─── 本編 Vol.13 はなぜ大丈夫だった？───</span>
+
+<span class="comment">// Controller → Service.register()</span>
+<span class="comment">// Controller は別クラス</span>
+<span class="comment">// → プロキシ経由で register が呼ばれた</span>
+<span class="comment">// → @Transactional が効いた ✓</span>
+
+
+<span class="comment">// 「外部から呼ばれる public メソッド」に</span>
+<span class="comment">// @Transactional を付けるのが基本</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="propagation">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>トランザクションの伝播</h2>
+    <span class="en">PROPAGATION</span>
+  </div>
+  <p class="pattern-desc"><b>伝播（propagation）</b>は「<b>トランザクションが入れ子になった時のルール</b>」。Service が別の Service を呼ぶ時、トランザクションをどう扱うか。普段はデフォルトで十分ですが、知っておくと役立ちます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">propagation</span>
+      <span class="tag-desc">主要な伝播タイプ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主要な propagation</div>
+        <div class="role-card">
+          <span class="label">REQUIRED</span>
+          <div class="name">既存があれば参加・なければ新規（デフォルト）</div>
+          <div class="desc">最も一般的。呼び出し元にトランザクションがあれば<b>それに乗る</b>、なければ<b>新しく作る</b>。普段はこれ。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">REQUIRES_NEW</span>
+          <div class="name">常に新しいトランザクション</div>
+          <div class="desc">呼び出し元と<b>独立した</b>トランザクション。「ログだけは必ず残したい」など、親がロールバックしても残したい処理に。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">SUPPORTS</span>
+          <div class="name">あれば参加・なければ非トランザクション</div>
+          <div class="desc">トランザクションがあれば乗る、なくても動く。読み取り系で使うことも。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">NESTED</span>
+          <div class="name">入れ子（セーブポイント）</div>
+          <div class="desc">親の中に部分的なロールバックポイントを作る。高度な制御。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>普段は REQUIRED（デフォルト）で十分</b>。REQUIRES_NEW は「独立させたい時」に使う。</p>
+      </div>
+      <div class="code"><span class="code-head">// 伝播の使用例</span>
+
+<span class="comment">// ─── デフォルト（REQUIRED）───</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">parentMethod</span>() {
+  serviceA.<span class="fn">methodA</span>();  <span class="comment">// 同じトランザクション</span>
+  serviceB.<span class="fn">methodB</span>();  <span class="comment">// 同じトランザクション</span>
+  <span class="comment">// → A も B も親と運命を共にする</span>
+  <span class="comment">// → どれか失敗で全部ロールバック</span>
+}
+
+
+<span class="comment">// ─── REQUIRES_NEW（独立）───</span>
+<span class="ann">@Transactional</span>(
+    propagation = <span class="type">Propagation</span>.REQUIRES_NEW)
+<span class="kw">public void</span> <span class="fn">writeLog</span>() {
+  <span class="comment">// 親と独立したトランザクション</span>
+  <span class="comment">// 親がロールバックしても</span>
+  <span class="comment">// このログは残る</span>
+}
+
+
+<span class="comment">// ─── 使い分けの典型例 ───</span>
+
+<span class="comment">// 「注文処理」（親・REQUIRED）</span>
+<span class="comment">//   ・在庫を減らす</span>
+<span class="comment">//   ・注文を記録</span>
+<span class="comment">//   → どれか失敗で全部取り消し</span>
+
+<span class="comment">// 「監査ログ」（REQUIRES_NEW）</span>
+<span class="comment">//   ・「誰が何をしようとしたか」</span>
+<span class="comment">//   → 注文が失敗しても</span>
+<span class="comment">//     「試みた」記録は残したい</span>
+
+
+<span class="comment">// ─── Cでの方針 ───</span>
+<span class="comment">// 学習記録アプリではデフォルト</span>
+<span class="comment">// （REQUIRED）で十分。</span>
+<span class="comment">// 伝播は「知識として」押さえる。</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="isolation">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>分離レベル</h2>
+    <span class="en">ISOLATION LEVELS</span>
+  </div>
+  <p class="pattern-desc"><b>分離レベル（isolation）</b>は ACID の <b>I（Isolation）</b>の具体的な制御。「<b>複数のトランザクションが同時実行された時、互いにどこまで見えるか</b>」を決めます。S9 で触れた ACID の深掘り。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">isolation</span>
+      <span class="tag-desc">4つの分離レベル</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 分離レベルと防げる問題</div>
+        <table class="compare-tbl">
+          <tr><th>レベル</th><th>防げる問題</th></tr>
+          <tr><td>READ UNCOMMITTED</td><td>（ほぼ何も防げない）</td></tr>
+          <tr><td>READ COMMITTED</td><td>ダーティリード</td></tr>
+          <tr><td>REPEATABLE READ</td><td>＋ 反復不能読み取り</td></tr>
+          <tr><td>SERIALIZABLE</td><td>＋ ファントムリード（完全分離）</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>下に行くほど厳格だが遅い</b>。MySQL のデフォルトは <code>REPEATABLE READ</code>、PostgreSQL は <code>READ COMMITTED</code>。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">3つの問題</div>
+          <p><b>ダーティリード</b>：未コミットの変更を読む。<b>反復不能読み取り</b>：同じSELECTが2回で違う結果。<b>ファントムリード</b>：途中で行が増減する。同時実行が多いシステムで問題になる。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 分離レベルの指定</span>
+
+<span class="comment">// ─── 指定方法 ───</span>
+<span class="ann">@Transactional</span>(
+    isolation = <span class="type">Isolation</span>.READ_COMMITTED)
+<span class="kw">public void</span> <span class="fn">method</span>() {
+  ...
+}
+
+
+<span class="comment">// ─── 3つの問題（同時実行で起きる）───</span>
+
+<span class="comment">// 【ダーティリード】</span>
+<span class="comment">// TxA: UPDATE（まだコミットしてない）</span>
+<span class="comment">// TxB: その未確定の値を読む</span>
+<span class="comment">// TxA: ロールバック</span>
+<span class="comment">// → TxB は「存在しなかった値」を読んだ</span>
+
+
+<span class="comment">// 【反復不能読み取り】</span>
+<span class="comment">// TxA: SELECT → 100</span>
+<span class="comment">// TxB: UPDATE して COMMIT → 200</span>
+<span class="comment">// TxA: 同じ SELECT → 200</span>
+<span class="comment">// → 同じトランザクション内で値が変わった</span>
+
+
+<span class="comment">// 【ファントムリード】</span>
+<span class="comment">// TxA: SELECT COUNT → 5件</span>
+<span class="comment">// TxB: INSERT して COMMIT</span>
+<span class="comment">// TxA: 同じ SELECT COUNT → 6件</span>
+<span class="comment">// → 行数が変わった（幻の行）</span>
+
+
+<span class="comment">// ─── 実務の方針 ───</span>
+
+<span class="comment">// ほとんどの場合 DB のデフォルトで十分</span>
+<span class="comment">// 厳格にするほど性能が落ちる</span>
+
+<span class="comment">// 「同時に同じデータを更新する」</span>
+<span class="comment">// クリティカルな処理だけ</span>
+<span class="comment">// 分離レベルを上げることを検討</span>
+
+
+<span class="comment">// ─── Cでの方針 ───</span>
+<span class="comment">// 個人利用の学習記録アプリは</span>
+<span class="comment">// 同時実行がほぼないので</span>
+<span class="comment">// デフォルトで全く問題なし</span>
+<span class="comment">// 「知識として」理解しておく</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="readonly">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>readOnly 属性</h2>
+    <span class="en">READONLY ATTRIBUTE</span>
+  </div>
+  <p class="pattern-desc"><code>@Transactional(readOnly = true)</code> は<b>「読み取り専用」</b>の宣言。参照系のメソッドに付けると<b>パフォーマンス最適化</b>になります。実務でよく使う属性。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">readonly</span>
+      <span class="tag-desc">readOnly の効果</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// readOnly の効果</div>
+        <div class="role-card">
+          <span class="label">効果1</span>
+          <div class="name">最適化のヒント</div>
+          <div class="desc">DBやORMに「<b>このトランザクションは書き込みしない</b>」と伝え、最適化を促す。フラッシュ処理のスキップなど。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">効果2</span>
+          <div class="name">意図の明示</div>
+          <div class="desc">コードを読む人に「<b>これは参照専用</b>」と伝わる。可読性向上。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">効果3</span>
+          <div class="name">誤った書き込みの抑止</div>
+          <div class="desc">設定によっては、readOnly内で書き込むとエラー。<b>意図しない更新を防ぐ</b>安全装置。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>使い分け</b>：参照系メソッドは <code>readOnly = true</code>、更新系はデフォルト（false）。クラスにデフォルトを設定し、更新系で上書きするパターンも。</p>
+      </div>
+      <div class="code"><span class="code-head">// readOnly の使い方</span>
+
+<span class="comment">// ─── 参照系メソッド ───</span>
+<span class="ann">@Transactional</span>(readOnly = <span class="kw">true</span>)
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>() {
+  <span class="kw">return</span> subjectMapper.<span class="fn">findAll</span>();
+  <span class="comment">// 読み取りだけ → readOnly</span>
+}
+
+
+<span class="comment">// ─── 更新系メソッド ───</span>
+<span class="ann">@Transactional</span>  <span class="comment">// readOnly = false（デフォルト）</span>
+<span class="kw">public void</span> <span class="fn">register</span>(...) {
+  studyRecordMapper.<span class="fn">insert</span>(...);
+  <span class="comment">// 書き込みあり → readOnly にしない</span>
+}
+
+
+<span class="comment">// ─── クラスデフォルト + メソッド上書き ───</span>
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>(readOnly = <span class="kw">true</span>)  <span class="comment">// クラス全体は読み取り</span>
+<span class="kw">public class</span> <span class="type">SubjectService</span> {
+
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>() {
+    <span class="comment">// クラスの readOnly=true を継承</span>
+  }
+
+  <span class="ann">@Transactional</span>  <span class="comment">// メソッドで上書き（false）</span>
+  <span class="kw">public void</span> <span class="fn">register</span>(...) {
+    <span class="comment">// 更新系はここで readOnly=false に</span>
+  }
+}
+
+
+<span class="comment">// ─── 実務の定番パターン ───</span>
+
+<span class="comment">// 「参照系は readOnly=true、</span>
+<span class="comment">//  更新系はデフォルト」</span>
+
+<span class="comment">// → 大半が参照系のシステムで</span>
+<span class="comment">//   パフォーマンス向上</span>
+
+
+<span class="comment">// ─── Cでの方針 ───</span>
+<span class="comment">// 必須ではないが、付けると</span>
+<span class="comment">// 「意図が明確」になる良い習慣</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>効かない罠の総まとめ</h2>
+    <span class="en">ALL THE TRAPS</span>
+  </div>
+  <p class="pattern-desc"><code>@Transactional</code> が<b>「効かない」</b>原因を<b>一覧</b>にまとめます。トラブル時はこのチェックリストを上から確認すれば解決します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">all-traps</span>
+      <span class="tag-desc">効かない原因チェックリスト</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 効かない6大原因</div>
+        <div class="role-card">
+          <span class="label">罠1</span>
+          <div class="name">チェック例外でロールバックされない</div>
+          <div class="desc"><code>rollbackFor = Exception.class</code> を付ける。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">罠2</span>
+          <div class="name">同一クラス内呼び出し</div>
+          <div class="desc">別のServiceクラスに分ける。プロキシ経由にする。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">罠3</span>
+          <div class="name">private メソッド</div>
+          <div class="desc">public にする。プロキシは public しか包めない。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">罠4</span>
+          <div class="name">例外の握りつぶし（try-catch）</div>
+          <div class="desc">catch 内で再スロー、または catch しない。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">罠5</span>
+          <div class="name">jakarta 版を import</div>
+          <div class="desc">Spring 版（org.springframework...）に統一。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">罠6</span>
+          <div class="name">そもそも @Transactional がない</div>
+          <div class="desc">Service クラスかメソッドに付けたか確認。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// トラブル時のチェック手順</span>
+
+<span class="comment">// 「ロールバックされない！」時の確認順</span>
+
+<span class="comment">// □ 1. @Transactional は付いている?</span>
+<span class="comment">//      → Service の public メソッド/クラス</span>
+
+<span class="comment">// □ 2. 例外の種類は?</span>
+<span class="comment">//      → RuntimeException なら デフォルトOK</span>
+<span class="comment">//      → チェック例外なら rollbackFor 必要</span>
+
+<span class="comment">// □ 3. try-catch で握りつぶしてない?</span>
+<span class="comment">//      → catch して何もしてないと効かない</span>
+
+<span class="comment">// □ 4. 同一クラス内で呼んでない?</span>
+<span class="comment">//      → this.method() は効かない</span>
+
+<span class="comment">// □ 5. private になってない?</span>
+<span class="comment">//      → public にする</span>
+
+<span class="comment">// □ 6. import は Spring 版?</span>
+<span class="comment">//      → org.springframework...transaction</span>
+
+
+<span class="comment">// ─── デバッグのコツ ───</span>
+
+<span class="comment">// application.properties に：</span>
+logging.level.org.springframework
+    .transaction = DEBUG
+
+<span class="comment">// → トランザクションの開始/コミット/</span>
+<span class="comment">//   ロールバックがログに出る</span>
+<span class="comment">// → 「本当に効いているか」が見える</span>
+
+
+<span class="comment">// ─── 鉄則 ───</span>
+
+<span class="comment">// 1. 外部から呼ぶ public メソッドに付ける</span>
+<span class="comment">// 2. rollbackFor = Exception.class 推奨</span>
+<span class="comment">// 3. 不要な try-catch を書かない</span>
+<span class="comment">// 4. Service の責務を適切に分割</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次の本編へ</h2>
+    <span class="en">TO THE NEXT VOLUME</span>
+  </div>
+  <p class="pattern-desc">別冊S13お疲れさまでした。<code>@Transactional</code> を<b>完全に理解</b>しました。次のVol.14 では<b>外部キー制約</b>── データベース自身がデータ整合性を守る仕組みを学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">この別冊のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 持ち帰る5つの知見</div>
+        <div class="role-card">
+          <span class="label">知見1</span>
+          <div class="name">ロールバックは RuntimeException系</div>
+          <div class="desc">チェック例外は rollbackFor が必要</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見2</span>
+          <div class="name">プロキシ経由でないと効かない</div>
+          <div class="desc">同一クラス内呼び出しは効かない</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見3</span>
+          <div class="name">伝播は普段 REQUIRED</div>
+          <div class="desc">独立させたい時 REQUIRES_NEW</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見4</span>
+          <div class="name">分離レベルは普段デフォルト</div>
+          <div class="desc">同時実行が多い時だけ調整</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見5</span>
+          <div class="name">参照系は readOnly=true</div>
+          <div class="desc">最適化と意図の明示</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.14 本編で起きること</span>
+
+<span class="comment">// タイトル：</span>
+<span class="comment">// 「関連データ削除と外部キー制約」</span>
+
+<span class="comment">// やること：</span>
+<span class="comment">// 1. 科目を削除したら記録はどうなる?</span>
+<span class="comment">// 2. 外部キー制約（FOREIGN KEY）</span>
+<span class="comment">// 3. ON DELETE CASCADE / RESTRICT</span>
+<span class="comment">// 4. 削除機能の実装</span>
+<span class="comment">// 5. DBレベルでの整合性保証</span>
+
+<span class="comment">// 獲得スキル：</span>
+<span class="comment">// → 外部キー/ON DELETE</span>
+
+
+<span class="comment">// ─── 整合性を守る2つの層 ───</span>
+<span class="comment">// Vol.13: アプリ層（@Transactional）</span>
+<span class="comment">// Vol.14: DB層（外部キー制約）</span>
+<span class="comment">// → 二重の防御で堅牢なシステムに</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(114,121,99,0.16)">
+    <div class="tip-label">NEXT STEP ── VOL.14 本編</div>
+    <p>別冊S13で <code>@Transactional</code> を<b>完全マスター</b>しました。次のVol.14 本編「<b>関連データ削除と外部キー制約</b>」では、<b>データベース自身がデータ整合性を守る仕組み</b>＝外部キー制約を学びます。「科目を削除したら、その記録はどうなるか」── <code>ON DELETE CASCADE</code> / <code>RESTRICT</code> を扱います。Vol.13 のアプリ層に続き、<b>DB層での整合性保証</b>。本編Vol.14 へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.13 / 15 ── @TRANSACTIONAL DEEP DIVE（別冊）</span>
+</footer>
+
+</body>
+</html>

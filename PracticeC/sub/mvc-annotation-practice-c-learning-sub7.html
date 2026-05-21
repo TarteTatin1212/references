@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.7 別冊 日付・時刻の業務設計</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a302a;
+  --paper:#e8eae3;
+  --paper-2:#d4d8ce;
+  --accent:#96a283;
+  --accent-2:#aab59a;
+  --accent-3:#5a624e;
+  --muted:#737a72;
+  --line:#b8c0b1;
+  --code-bg:#1f231f;
+  --code-text:#e8eae3;
+  --panel-bg:#f0f2eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✧';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#9aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(150,162,131,0.09);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.case-card{background:#fff;border:1px solid var(--line);padding:16px 18px;margin:14px 0}
+.case-card .ph{font-family:'JetBrains Mono',monospace;font-size:11px;color:#a04040;letter-spacing:0.1em;margin-bottom:6px}
+.case-card .ttl{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--accent-3);margin-bottom:8px}
+.case-card .body{font-size:13.5px;line-height:1.75}
+.case-card .res{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:13px;color:#a04040}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.07 / 15</span>
+    <span class="kind-tag">別冊</span>
+  </div>
+  <h1>日付・時刻の<br>業務設計</h1>
+  <div class="subtitle">DATETIME IN BUSINESS ── TIMEZONE & STORAGE</div>
+  <p class="lead">
+    本編Vol.7で<b>日付入力の基本</b>を制覇しました。しかし業務開発の日付処理には<b>まだ多くの罠</b>があります。<b>タイムゾーン・サマータイム・うるう年・うるう秒</b>──知らないと本番で痛い目を見る項目たち。<br>
+    別冊S7では、<b>「業務で安全に使える日付設計」</b>に必要な知識を多角的に深掘ります。キーワードは<b>「UTC vs JST」「DATE / DATETIME / TIMESTAMP の使い分け」「業務での落とし穴3選」「日付計算のお作法」「タイムゾーンを意識した API 設計」</b>。<br>
+    Cの中で<b>「業務システムらしい運用品質」</b>を獲得する別冊。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#theme">01 この別冊のテーマ</a></li>
+    <li><a href="#utc-jst">02 UTC vs JST の世界観</a></li>
+    <li><a href="#db-types">03 DATE / DATETIME / TIMESTAMP</a></li>
+    <li><a href="#java-types">04 Java側の型選択</a></li>
+    <li><a href="#disasters">05 業務での落とし穴3選</a></li>
+    <li><a href="#calc">06 日付計算のお作法</a></li>
+    <li><a href="#api">07 タイムゾーンを意識したAPI設計</a></li>
+    <li><a href="#trouble">08 ハマりどころ集</a></li>
+    <li><a href="#next">09 次の本編へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="theme">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この別冊のテーマ</h2>
+    <span class="en">THEME</span>
+  </div>
+  <p class="pattern-desc">日付処理は<b>「動かす」と「業務で安全に使う」</b>の間に<b>大きな距離</b>があります。本編Vol.7で日付入力を動かしましたが、本番運用では<b>タイムゾーン・型選択・計算</b>といった多くの判断が必要。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-business-design</span>
+      <span class="tag-desc">業務設計が問われる理由</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動くと安全に使えるは別物</div>
+        <div class="role-card">
+          <span class="label">場面1</span>
+          <div class="name">海外拠点や海外ユーザーがある</div>
+          <div class="desc">日本以外のタイムゾーンが入ると<b>「同じ日」が違う日付になる</b>。UTC基準で考えないとデータが混乱。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">場面2</span>
+          <div class="name">締切や期限の管理</div>
+          <div class="desc">「5月20日23:59まで」をどう保存・比較するか。<b>うるう年・月末・年度跨ぎ</b>のロジックは要注意。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">場面3</span>
+          <div class="name">作成日時の正確性</div>
+          <div class="desc">「いつ作られたレコードか」「いつ更新されたか」を正確に記録。<b>監査ログ・履歴追跡</b>の根幹。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">場面4</span>
+          <div class="name">日付の計算</div>
+          <div class="desc">「3ヶ月後」「翌営業日」「祝日除く」など。<b>カレンダーの計算</b>は意外と難しい。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で答える4つの問い</span>
+
+<span class="comment">// 問1: UTCとJSTどちらで保存？</span>
+<span class="comment">//   → 国内専用ならJST、国際展開ならUTC</span>
+
+<span class="comment">// 問2: DATE/DATETIME/TIMESTAMP使い分け？</span>
+<span class="comment">//   → 日付のみ/日時/UTC自動変換 の違い</span>
+
+<span class="comment">// 問3: 業務でよくある罠は？</span>
+<span class="comment">//   → 月跨ぎ計算・うるう年・サマータイム</span>
+
+<span class="comment">// 問4: APIで日付をどう受け渡す？</span>
+<span class="comment">//   → ISO 8601形式 + タイムゾーン明示</span>
+
+
+<span class="comment">// 結論を先に：</span>
+<span class="comment">// ・国内専用なら DATE/DATETIME + LocalDate</span>
+<span class="comment">// ・国際展開なら TIMESTAMP + Instant</span>
+<span class="comment">// ・ISO 8601 形式が世界共通の標準</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="utc-jst">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>UTC vs JST の世界観</h2>
+    <span class="en">UTC vs JST</span>
+  </div>
+  <p class="pattern-desc"><b>タイムゾーン</b>は日付処理の<b>最初の判断</b>。「<b>世界標準時（UTC）」と「日本時間（JST）」</b>のどちらを基準にするか、で設計が変わります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">timezone-basics</span>
+      <span class="tag-desc">タイムゾーンの基礎</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// タイムゾーンの基本</div>
+        <div class="role-card">
+          <span class="label">UTC</span>
+          <div class="name">協定世界時（Coordinated Universal Time）</div>
+          <div class="desc"><b>世界共通の基準時刻</b>。タイムゾーンの「ゼロ点」。各国の時刻はUTCからの<b>オフセット</b>で表現される。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">JST</span>
+          <div class="name">日本標準時（Japan Standard Time）</div>
+          <div class="desc">UTC <b>+9時間</b>。日本の時刻。<b>サマータイムなし</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">原則</span>
+          <div class="name">国際展開ならUTC基準</div>
+          <div class="desc">DBには<b>UTC</b>で保存し、画面表示時にユーザーのタイムゾーンに変換するのが現代の主流。<b>「保存はUTC、表示はローカル」</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">例外</span>
+          <div class="name">国内専用ならJST直接でOK</div>
+          <div class="desc">日本人だけが使うシステムなら、<b>DBにもJSTで保存して問題なし</b>。学習記録アプリはこちら。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 同じ瞬間を異なる表現で見る</span>
+
+<span class="comment">// ある瞬間：日本で 2026-05-20 09:00</span>
+
+<span class="comment">// ─── 表現1: ローカル時刻 + TZ ───</span>
+<span class="num">2026-05-20</span>T<span class="num">09:00</span>+<span class="num">09:00</span>
+<span class="comment">// → 2026年5月20日 9:00、UTC+9（日本）</span>
+
+
+<span class="comment">// ─── 表現2: UTC ───</span>
+<span class="num">2026-05-20</span>T<span class="num">00:00</span>Z
+<span class="comment">// → UTCで 0:00 (Z = ゼロタイム)</span>
+
+
+<span class="comment">// 同じ瞬間だが表現が異なる</span>
+
+
+<span class="comment">// ─── 落とし穴 ───</span>
+
+<span class="comment">// 例: 「日本で2026-05-20の出来事」</span>
+
+<span class="comment">// ・JST 9:00 を UTC で保存 → 2026-05-20 00:00 UTC</span>
+<span class="comment">//   → 表示時にJSTに戻すと 2026-05-20 9:00 ✓</span>
+
+<span class="comment">// ・JST 5:00 を UTC で保存 → 2026-05-19 20:00 UTC</span>
+<span class="comment">//   → 日付だけ取り出すと 5-19 になる…</span>
+<span class="comment">//   → 「日本では5-20の出来事」のはずが</span>
+<span class="comment">//     UTCでは5-19扱いになる罠</span>
+
+
+<span class="comment">// → これがタイムゾーン地獄の入り口</span>
+
+
+<span class="code-head" style="margin-top:14px">// 学習記録アプリの判断</span>
+
+<span class="comment">// 対象：日本のユーザーのみ</span>
+<span class="comment">// → JST 直接で OK</span>
+<span class="comment">// → 「学習日」は LocalDate（時刻なし）</span>
+<span class="comment">// → DBは DATE 型</span>
+<span class="comment">// → タイムゾーン考慮は実質不要</span>
+
+
+<span class="comment">// ─── 将来海外展開する場合は ───</span>
+<span class="comment">// LocalDate → LocalDateTime / Instant</span>
+<span class="comment">// DATE → DATETIME / TIMESTAMP</span>
+<span class="comment">// に変えていく必要あり</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>とりあえずタイムゾーン考慮しなくていいや</b>」と思って国内専用で作ると、後から国際展開する時に<b>データマイグレーションが地獄</b>になります。<b>新規開発時に「将来の海外展開可能性」</b>を関係者に確認し、可能性ありなら<b>最初からUTC基準</b>で設計するのが鉄則。</p>
+  </div>
+</section>
+
+<section id="db-types">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>DATE / DATETIME / TIMESTAMP の使い分け</h2>
+    <span class="en">DB TYPE CHOICE</span>
+  </div>
+  <p class="pattern-desc">MySQL の日付関連型は3つ：<code>DATE</code>、<code>DATETIME</code>、<code>TIMESTAMP</code>。<b>業務での使い分け</b>を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">db-types</span>
+      <span class="tag-desc">3つの型の違い</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// MySQLの日付型</div>
+        <table class="compare-tbl">
+          <tr><th>型</th><th>範囲</th><th>用途</th></tr>
+          <tr><td><code>DATE</code></td><td>1000-01-01 〜 9999-12-31</td><td>日付のみ（時刻不要）</td></tr>
+          <tr><td><code>DATETIME</code></td><td>1000-01-01 〜 9999-12-31</td><td>日時（タイムゾーン非対応）</td></tr>
+          <tr><td><code>TIMESTAMP</code></td><td>1970-01-01 〜 2038-01-19</td><td>日時（UTC自動変換対応）</td></tr>
+        </table>
+        <div style="margin-top:14px;font-size:13.5px"><b>使い分けの原則</b>：</div>
+        <ul style="margin-left:18px;font-size:13.5px;margin-top:6px">
+          <li>「学習日」「誕生日」など<b>日付だけ</b> → <code>DATE</code></li>
+          <li>「予定開始時刻」「ログ記録時刻」など<b>日時</b> → <code>DATETIME</code></li>
+          <li>「レコード作成時刻」など<b>UTC基準で残したい</b> → <code>TIMESTAMP</code></li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 学習記録アプリでの選択</span>
+
+<span class="kw">CREATE TABLE</span> study_records (
+  id          <span class="type">INT</span> <span class="kw">PRIMARY KEY</span>,
+
+  subject_id  <span class="type">INT</span>,
+  studied_on  <span class="type">DATE</span>,        <span class="comment">// ✓ 日付のみ</span>
+  minutes     <span class="type">INT</span>,
+  memo        <span class="type">VARCHAR</span>(<span class="num">200</span>),
+
+  created_at  <span class="type">DATETIME</span>     <span class="comment">// ✓ レコード作成時刻</span>
+              <span class="kw">DEFAULT</span> CURRENT_TIMESTAMP
+);
+
+
+<span class="comment">// なぜこの選択か：</span>
+
+<span class="comment">// ・studied_on は「Java を 5月20日 勉強した」</span>
+<span class="comment">//   → 時刻不要、日単位の集計で十分</span>
+<span class="comment">//   → DATE が最適</span>
+
+<span class="comment">// ・created_at は「いつ記録登録したか」</span>
+<span class="comment">//   → 監査・履歴用</span>
+<span class="comment">//   → DATETIME（時刻まで欲しい）</span>
+<span class="comment">//   → 国内専用なら DATETIME でOK</span>
+<span class="comment">//   → 国際展開なら TIMESTAMP の方が安心</span>
+
+
+<span class="code-head" style="margin-top:14px">// TIMESTAMP の特徴と落とし穴</span>
+
+<span class="comment">// 特徴1: 2038年問題</span>
+<span class="comment">// TIMESTAMP の上限は 2038-01-19 03:14:07 UTC</span>
+<span class="comment">// → それ以降のシステム稼働は危険</span>
+<span class="comment">// → 長期運用なら DATETIME を選ぶ判断もある</span>
+
+
+<span class="comment">// 特徴2: タイムゾーン自動変換</span>
+<span class="comment">// MySQL内部では UTC で保存</span>
+<span class="comment">// 取得時にセッションのタイムゾーンに変換</span>
+<span class="comment">// → 「DBサーバの設定でタイムゾーンが変わると</span>
+<span class="comment">//   返ってくる値が変わる」という地雷</span>
+
+
+<span class="comment">// ─── 推奨の現代的選択 ───</span>
+<span class="comment">// 「日付のみ」    → DATE</span>
+<span class="comment">// 「日時・国内のみ」→ DATETIME</span>
+<span class="comment">// 「日時・国際的」  → DATETIME + 別途タイムゾーン列</span>
+<span class="comment">//                  または UTC で保存し型は DATETIME</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="java-types">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>Java側の型選択</h2>
+    <span class="en">JAVA TYPE CHOICE</span>
+  </div>
+  <p class="pattern-desc">Java 8 以降の <code>java.time</code> パッケージには<b>多数の日付型</b>があります。それぞれの使い分けを整理。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">java-types</span>
+      <span class="tag-desc">java.time の主要型</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主要な6つの型</div>
+        <table class="compare-tbl">
+          <tr><th>型</th><th>表すもの</th><th>用途</th></tr>
+          <tr><td><code>LocalDate</code></td><td>日付（年月日）</td><td>誕生日・学習日</td></tr>
+          <tr><td><code>LocalTime</code></td><td>時刻（時分秒）</td><td>営業時間など</td></tr>
+          <tr><td><code>LocalDateTime</code></td><td>日時（TZなし）</td><td>国内向け日時</td></tr>
+          <tr><td><code>ZonedDateTime</code></td><td>日時＋TZ</td><td>多TZ対応のイベント</td></tr>
+          <tr><td><code>Instant</code></td><td>UTCの瞬間</td><td>ログ・監査・国際API</td></tr>
+          <tr><td><code>Duration / Period</code></td><td>期間</td><td>計算結果</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>使い分け</b>：「日付だけ」なら <code>LocalDate</code>、「日時」なら <code>LocalDateTime</code>、「グローバル」なら <code>Instant</code>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 学習記録アプリでの選択</span>
+
+<span class="kw">public class</span> <span class="type">StudyRecord</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> id;
+  <span class="kw">private</span> <span class="type">Integer</span> subjectId;
+  <span class="kw">private</span> <span class="type">LocalDate</span> studiedOn;     <span class="comment">// 学習日</span>
+  <span class="kw">private</span> <span class="type">Integer</span> minutes;
+  <span class="kw">private</span> <span class="type">String</span> memo;
+  <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt; <span class="comment">// 作成時刻</span>
+}
+
+
+<span class="comment">// DB↔Java の対応：</span>
+<span class="comment">// DATE      ↔ LocalDate</span>
+<span class="comment">// DATETIME  ↔ LocalDateTime</span>
+<span class="comment">// TIMESTAMP ↔ Instant or LocalDateTime</span>
+
+
+<span class="code-head" style="margin-top:14px">// 古い型を使わない理由</span>
+
+<span class="comment">// ─── ✗ 使ってはいけない型 ───</span>
+
+<span class="kw">java.util.Date</span>         <span class="comment">// 古い・混乱の元</span>
+<span class="kw">java.util.Calendar</span>     <span class="comment">// 古い・複雑</span>
+<span class="kw">java.sql.Date</span>          <span class="comment">// JDBC専用・避ける</span>
+<span class="kw">java.sql.Timestamp</span>     <span class="comment">// 同上</span>
+
+
+<span class="comment">// これらの問題：</span>
+<span class="comment">// ・スレッドセーフでない</span>
+<span class="comment">// ・タイムゾーン管理が曖昧</span>
+<span class="comment">// ・APIが直感的でない（月が0始まり等）</span>
+<span class="comment">// ・mutable（変更可能）で副作用が出る</span>
+
+
+<span class="comment">// ─── ✓ Java 8以降の現代的型 ───</span>
+
+<span class="kw">java.time.LocalDate</span>
+<span class="kw">java.time.LocalDateTime</span>
+<span class="kw">java.time.Instant</span>
+<span class="kw">java.time.ZonedDateTime</span>
+
+
+<span class="comment">// メリット：</span>
+<span class="comment">// ・スレッドセーフ（不変オブジェクト）</span>
+<span class="comment">// ・タイムゾーン扱いが明確</span>
+<span class="comment">// ・直感的なAPI</span>
+<span class="comment">// ・計算メソッドが豊富</span>
+
+
+<span class="comment">// ─── Cでの方針 ───</span>
+<span class="comment">// 全15巻で java.time のみ使用</span>
+<span class="comment">// java.util.Date は一切登場しない</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>レガシーコードに <code>java.util.Date</code> が混じっていることはよくあります。<b>新規コードでは絶対に使わない</b>。既存コードで使われていても、<b>触る機会があれば <code>java.time</code> に置き換える</b>のが現代の方針。これは<b>業界共通のコンセンサス</b>です。</p>
+  </div>
+</section>
+
+<section id="disasters">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>業務での落とし穴3選</h2>
+    <span class="en">FIELD DISASTERS</span>
+  </div>
+  <p class="pattern-desc">日付処理の<b>業務での災厄事例</b>を3つ紹介。「<b>そんなのある？</b>」と思える内容ですが、すべて<b>実話ベース</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">disasters</span>
+      <span class="tag-desc">業務での災厄</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 落とし穴3選</div>
+        <div class="case-card">
+          <div class="ph">DISASTER 1</div>
+          <div class="ttl">「月末跨ぎで請求が消えた」</div>
+          <div class="body">月締めの請求処理で、<b>「翌月1日 00:00 までの取引を当月分」</b>とすべきところ、<b>「当月末 23:59:59 まで」</b>と書いてしまった。<b>うるう秒</b>のせいで2分の取引が当月にも翌月にも入らず<b>消えた</b>。年に1度の伝説的バグ。</div>
+          <div class="res">対策：境界条件は <code>&lt;</code>（未満）で書く。<code>WHERE t.created_at &gt;= '2026-05-01' AND t.created_at &lt; '2026-06-01'</code> が定石。</div>
+        </div>
+        <div class="case-card">
+          <div class="ph">DISASTER 2</div>
+          <div class="ttl">「翌日が誕生日のはずなのに今日が誕生日扱い」</div>
+          <div class="body">海外サーバ（UTC）に日本人ユーザーの誕生日を保存。アメリカ深夜に日本人がアクセス → JSTでは翌日、UTCではまだ今日 → <b>翌日が誕生日のはずなのに今日が誕生日として表示</b>。</div>
+          <div class="res">対策：日付比較は<b>ユーザーのタイムゾーンで判定</b>。「日本人ユーザー＝JSTで判定」を関数化。</div>
+        </div>
+        <div class="case-card">
+          <div class="ph">DISASTER 3</div>
+          <div class="ttl">「3月1日のはずなのに2月29日と表示」</div>
+          <div class="body"><b>「現在から3年後の月日」</b>を計算するロジック。3年後がうるう年ではない時、<b>2024-02-29 → 2027-02-29</b> として計算するも、その日は存在せず<b>例外</b>。あるいは無理やり 02-28 にして<b>「3月1日」が消える</b>。</div>
+          <div class="res">対策：<code>LocalDate</code> の <code>plusYears(3)</code> は<b>うるう年補正してくれる</b>。手動計算ではなく <b>java.time の標準メソッド</b>を使う。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// DISASTER 1 の正しい書き方</span>
+
+<span class="comment">// ─── ✗ NG: BETWEEN 使用 ───</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> transactions
+<span class="kw">WHERE</span> created_at <span class="kw">BETWEEN</span>
+  <span class="str">'2026-05-01 00:00:00'</span>
+  <span class="kw">AND</span> <span class="str">'2026-05-31 23:59:59'</span>;
+
+<span class="comment">// 問題：</span>
+<span class="comment">// 23:59:59.001 〜 23:59:59.999 の取引が漏れる</span>
+<span class="comment">// マイクロ秒精度の場合さらに細かく抜ける</span>
+
+
+<span class="comment">// ─── ✓ OK: 半開区間 ───</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> transactions
+<span class="kw">WHERE</span> created_at <span class="kw">&gt;=</span> <span class="str">'2026-05-01'</span>
+  <span class="kw">AND</span> created_at <span class="kw">&lt;</span>  <span class="str">'2026-06-01'</span>;
+
+<span class="comment">// → 「5月開始から6月開始の手前まで」</span>
+<span class="comment">// → ぴったり1ヶ月分を漏れなく取得</span>
+
+
+<span class="code-head" style="margin-top:14px">// DISASTER 3 の正しい書き方</span>
+
+<span class="comment">// ─── ✗ NG: 手動計算 ───</span>
+<span class="type">int</span> year = today.<span class="fn">getYear</span>() + <span class="num">3</span>;
+<span class="type">int</span> month = today.<span class="fn">getMonthValue</span>();
+<span class="type">int</span> day = today.<span class="fn">getDayOfMonth</span>();
+<span class="type">LocalDate</span> threeYearsLater =
+    <span class="type">LocalDate</span>.<span class="fn">of</span>(year, month, day);
+<span class="comment">// 2024-02-29 + 3年 → LocalDate.of(2027,2,29)</span>
+<span class="comment">// → 例外 DateTimeException</span>
+
+
+<span class="comment">// ─── ✓ OK: 標準メソッド ───</span>
+<span class="type">LocalDate</span> threeYearsLater =
+    today.<span class="fn">plusYears</span>(<span class="num">3</span>);
+<span class="comment">// 2024-02-29 + 3年 → 2027-02-28</span>
+<span class="comment">// （標準メソッドが自動補正）</span>
+
+
+<span class="comment">// ─── 教訓 ───</span>
+<span class="comment">// 日付計算は「自分で頑張らない」</span>
+<span class="comment">// java.time の標準メソッドを使う</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「日付処理のバグ」は<b>「年に数回しか起きないが、起きた時にデータ整合性を破壊する」</b>のが特徴です。月末・年末・うるう年・サマータイム切替日── これらの「特殊な日」<b>すべてを念頭においたテスト</b>が業務開発では必要。<b>「2月29日に動くか」</b>を意識的にテストするだけでも、品質が一段上がります。</p>
+  </div>
+</section>
+
+<section id="calc">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>日付計算のお作法</h2>
+    <span class="en">DATE CALCULATION</span>
+  </div>
+  <p class="pattern-desc"><code>java.time</code> パッケージの<b>計算系メソッド</b>を整理。業務でよく使うパターンを押さえます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">date-calc</span>
+      <span class="tag-desc">よく使う計算パターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 業務でよくある計算</div>
+        <div class="role-card">
+          <span class="label">パターン1</span>
+          <div class="name">N日後／N日前</div>
+          <div class="desc"><code>plusDays(7)</code> で7日後、<code>minusDays(3)</code> で3日前。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">パターン2</span>
+          <div class="name">月の月末／月初</div>
+          <div class="desc"><code>withDayOfMonth(1)</code> で月初、<code>with(TemporalAdjusters.lastDayOfMonth())</code> で月末。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">パターン3</span>
+          <div class="name">日数差・月数差</div>
+          <div class="desc"><code>ChronoUnit.DAYS.between(d1, d2)</code> で日数差。<code>Period.between(d1, d2).getDays()</code> など。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">パターン4</span>
+          <div class="name">曜日判定</div>
+          <div class="desc"><code>getDayOfWeek()</code> で <code>DayOfWeek</code> 列挙体が返る。<code>== DayOfWeek.SUNDAY</code> で日曜判定。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 業務での実例</span>
+
+<span class="kw">import</span> java.time.LocalDate;
+<span class="kw">import</span> java.time.DayOfWeek;
+<span class="kw">import</span> java.time.temporal.ChronoUnit;
+<span class="kw">import</span> java.time.temporal.TemporalAdjusters;
+
+
+<span class="comment">// ─── 1週間後 ───</span>
+<span class="type">LocalDate</span> today = <span class="type">LocalDate</span>.<span class="fn">now</span>();
+<span class="type">LocalDate</span> nextWeek = today.<span class="fn">plusDays</span>(<span class="num">7</span>);
+<span class="comment">// または</span>
+<span class="type">LocalDate</span> nextWeek2 = today.<span class="fn">plusWeeks</span>(<span class="num">1</span>);
+
+
+<span class="comment">// ─── 1ヶ月後 ───</span>
+<span class="type">LocalDate</span> nextMonth = today.<span class="fn">plusMonths</span>(<span class="num">1</span>);
+
+
+<span class="comment">// ─── 今月の月末 ───</span>
+<span class="type">LocalDate</span> endOfMonth = today
+    .<span class="fn">with</span>(<span class="type">TemporalAdjusters</span>.<span class="fn">lastDayOfMonth</span>());
+
+
+<span class="comment">// ─── 今月の月初 ───</span>
+<span class="type">LocalDate</span> startOfMonth = today.<span class="fn">withDayOfMonth</span>(<span class="num">1</span>);
+
+
+<span class="comment">// ─── 日数差 ───</span>
+<span class="kw">long</span> days = <span class="type">ChronoUnit</span>.DAYS
+    .<span class="fn">between</span>(date1, date2);
+
+
+<span class="comment">// ─── 曜日判定 ───</span>
+<span class="type">DayOfWeek</span> dow = today.<span class="fn">getDayOfWeek</span>();
+<span class="kw">if</span> (dow == <span class="type">DayOfWeek</span>.SUNDAY) {
+  <span class="comment">// 日曜の処理</span>
+}
+
+
+<span class="comment">// ─── 平日のみカウント（祝日除く別途必要）───</span>
+<span class="kw">if</span> (dow != <span class="type">DayOfWeek</span>.SATURDAY
+ && dow != <span class="type">DayOfWeek</span>.SUNDAY) {
+  <span class="comment">// 平日処理</span>
+}
+
+
+<span class="comment">// ─── 翌営業日（祝日考慮なし）───</span>
+<span class="type">LocalDate</span> nextBusinessDay = today.<span class="fn">plusDays</span>(<span class="num">1</span>);
+<span class="kw">while</span> (nextBusinessDay.<span class="fn">getDayOfWeek</span>() ==
+       <span class="type">DayOfWeek</span>.SATURDAY ||
+       nextBusinessDay.<span class="fn">getDayOfWeek</span>() ==
+       <span class="type">DayOfWeek</span>.SUNDAY) {
+  nextBusinessDay = nextBusinessDay.<span class="fn">plusDays</span>(<span class="num">1</span>);
+}
+<span class="comment">// 祝日も除外したい場合はライブラリ必要</span>
+<span class="comment">// （内閣府の祝日CSV使うのが日本流）</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="api">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>タイムゾーンを意識したAPI設計</h2>
+    <span class="en">TIMEZONE-AWARE API</span>
+  </div>
+  <p class="pattern-desc">REST API で日付・時刻を受け渡す時の<b>業界標準</b>を押さえます。<b>ISO 8601形式</b>が世界共通の表記。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">api-design</span>
+      <span class="tag-desc">API での日付表記</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ISO 8601 の代表的形式</div>
+        <table class="compare-tbl">
+          <tr><th>形式</th><th>例</th><th>用途</th></tr>
+          <tr><td>YYYY-MM-DD</td><td>2026-05-20</td><td>日付のみ（DATE）</td></tr>
+          <tr><td>YYYY-MM-DDTHH:MM:SS</td><td>2026-05-20T15:30:00</td><td>日時（TZなし）</td></tr>
+          <tr><td>YYYY-MM-DDTHH:MM:SSZ</td><td>2026-05-20T15:30:00Z</td><td>UTC日時</td></tr>
+          <tr><td>YYYY-MM-DDTHH:MM:SS+09:00</td><td>2026-05-20T15:30:00+09:00</td><td>TZ明示</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>本編Vol.7 で採用</b>：HTML <code>&lt;input type="date"&gt;</code> は YYYY-MM-DD 形式を送ってくる。<code>@DateTimeFormat(iso = ISO.DATE)</code> がこれと一致。</p>
+      </div>
+      <div class="code"><span class="code-head">// API設計のベストプラクティス</span>
+
+<span class="comment">// ─── 1. すべてISO 8601で受け渡し ───</span>
+
+<span class="comment">// クライアント → サーバ（JSON）</span>
+{
+  <span class="str">"studiedOn"</span>: <span class="str">"2026-05-20"</span>,
+  <span class="str">"minutes"</span>: <span class="num">60</span>
+}
+
+<span class="comment">// サーバ → クライアント</span>
+{
+  <span class="str">"id"</span>: <span class="num">123</span>,
+  <span class="str">"studiedOn"</span>: <span class="str">"2026-05-20"</span>,
+  <span class="str">"createdAt"</span>: <span class="str">"2026-05-20T15:30:00+09:00"</span>
+}
+
+
+<span class="comment">// ─── 2. タイムゾーンを明示 ───</span>
+
+<span class="comment">// 国際展開なら ↓ が安全</span>
+<span class="str">"createdAt"</span>: <span class="str">"2026-05-20T06:30:00Z"</span>
+<span class="comment">// → UTC で表現</span>
+
+
+<span class="comment">// ─── 3. 表示はクライアント側で変換 ───</span>
+
+<span class="comment">// JavaScript:</span>
+<span class="kw">const</span> dt = <span class="kw">new</span> Date(<span class="str">"2026-05-20T06:30:00Z"</span>);
+dt.toLocaleString(<span class="str">'ja-JP'</span>);
+<span class="comment">// → "2026/5/20 15:30:00"</span>
+<span class="comment">// （ブラウザの設定タイムゾーンで表示）</span>
+
+
+<span class="comment">// ─── 学習記録アプリは ───</span>
+
+<span class="comment">// HTML &lt;input type="date"&gt; → "2026-05-20"</span>
+<span class="comment">// Spring @DateTimeFormat → LocalDate</span>
+<span class="comment">// MyBatis TypeHandler → DB DATE</span>
+
+
+<span class="comment">// すべて YYYY-MM-DD で統一</span>
+<span class="comment">// = ISO 8601 形式</span>
+<span class="comment">// = 世界共通標準</span>
+
+
+<span class="comment">// Vol.7で「美しい」と感じたのは</span>
+<span class="comment">// この標準への一貫性のおかげ</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころ集</h2>
+    <span class="en">PITFALLS</span>
+  </div>
+  <p class="pattern-desc">日付処理の<b>追加ハマりどころ4選</b>。本編Vol.7では触れなかった「業務寄り」の罠です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">extra-pitfalls</span>
+      <span class="tag-desc">業務寄りの罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 業務寄りの罠</div>
+        <div class="role-card">
+          <span class="label">PITFALL 1</span>
+          <div class="name">JST と UTC の境界での集計ズレ</div>
+          <div class="desc"><b>原因</b>：DBに UTC で保存、画面で JST 表示。「5月20日の合計」を集計すると、UTC では 5月20日 0:00〜5月21日 0:00（JST 9:00〜翌日 9:00）の範囲。<br><b>対処</b>：集計時に <b>JST に変換した日付でグループ化</b>。<code>DATE_FORMAT(CONVERT_TZ(created_at, 'UTC', 'Asia/Tokyo'), '%Y-%m-%d')</code> など。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 2</span>
+          <div class="name">うるう年判定を自前で書く</div>
+          <div class="desc"><b>原因</b>：「4年に1度」と思って <code>year % 4 == 0</code> で判定する。<b>これは間違い</b>（100で割れて400で割れない年はうるう年ではない）。<br><b>対処</b>：<code>Year.isLeap(year)</code> や <code>LocalDate</code> 標準メソッドを使う。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 3</span>
+          <div class="name">古い API と新しい API の混在</div>
+          <div class="desc"><b>原因</b>：レガシーコードに <code>java.util.Date</code>、新コードに <code>LocalDate</code>。変換しながら共存するが、<b>変換時のバグが頻発</b>。<br><b>対処</b>：境界に変換ヘルパを置き、全コードでどちらか統一する移行計画を立てる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 4</span>
+          <div class="name">DST（サマータイム）の存在を忘れる</div>
+          <div class="desc"><b>原因</b>：海外サーバ運用で、年2回サマータイム切替日に時刻が1時間ズレる。<b>その1時間は2回存在する／存在しない</b>。<br><b>対処</b>：日本にはDSTがないが、海外のシステムでは <code>ZonedDateTime</code> を使い、<b>タイムゾーン情報を必ず持たせる</b>。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// PITFALL 2: うるう年判定の罠</span>
+
+<span class="comment">// ─── ✗ NG: 自前判定 ───</span>
+<span class="kw">boolean</span> isLeapYear = (year % <span class="num">4</span> == <span class="num">0</span>);
+<span class="comment">// → 2100年も「うるう年」と判定する</span>
+<span class="comment">// → 実際の2100年はうるう年ではない</span>
+
+
+<span class="comment">// ─── 正しいルール ───</span>
+<span class="comment">// ① 4で割り切れる → うるう年候補</span>
+<span class="comment">// ② ただし 100で割り切れる → 平年</span>
+<span class="comment">// ③ ただし 400で割り切れる → うるう年</span>
+
+<span class="comment">// 例:</span>
+<span class="comment">// 2024: 4で割れる → うるう年 ✓</span>
+<span class="comment">// 2100: 4で割れる、100でも割れる、400では割れない → 平年</span>
+<span class="comment">// 2000: 4で割れる、100で割れる、400でも割れる → うるう年 ✓</span>
+
+
+<span class="comment">// ─── ✓ OK: 標準メソッド ───</span>
+<span class="kw">import</span> java.time.Year;
+
+<span class="kw">boolean</span> isLeap = <span class="type">Year</span>.<span class="fn">isLeap</span>(<span class="num">2100</span>);
+<span class="comment">// → false（正しい）</span>
+
+<span class="kw">boolean</span> isLeap2 = <span class="type">Year</span>.<span class="fn">isLeap</span>(<span class="num">2000</span>);
+<span class="comment">// → true（正しい）</span>
+
+
+<span class="comment">// ─── 教訓 ───</span>
+<span class="comment">// 「自分でカレンダーを実装しない」</span>
+<span class="comment">// java.time を信じて使う</span>
+
+
+<span class="code-head" style="margin-top:14px">// PITFALL 4: DST の罠</span>
+
+<span class="comment">// ─── アメリカでの典型例 ───</span>
+
+<span class="comment">// 2026-03-08 2:00 AM 米国DST 開始日</span>
+<span class="comment">// 1:59:59 → 3:00:00 にジャンプ</span>
+<span class="comment">// → 2:00〜2:59 は「存在しない時刻」</span>
+
+
+<span class="comment">// 2026-11-01 2:00 AM 米国DST 終了日</span>
+<span class="comment">// 1:59:59 → 1:00:00 に戻る</span>
+<span class="comment">// → 1:00〜1:59 は「2回存在する時刻」</span>
+
+
+<span class="comment">// 国内アプリには影響なし</span>
+<span class="comment">// 海外展開する時は要注意</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次の本編へ</h2>
+    <span class="en">TO THE NEXT VOLUME</span>
+  </div>
+  <p class="pattern-desc">別冊S7お疲れさまでした。<b>「業務で安全な日付処理」</b>の感性が育ちました。次のVol.8で<b>動的SQL</b>を学ぶと、Vol.6の検索とVol.7の日付が組み合わさり、<b>本格的な検索機能</b>が完成します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">この別冊のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 持ち帰る5つの知見</div>
+        <div class="role-card">
+          <span class="label">知見1</span>
+          <div class="name">国内専用ならJST、国際なら UTC</div>
+          <div class="desc">最初の判断で全設計が変わる</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見2</span>
+          <div class="name">DB型は DATE / DATETIME / TIMESTAMP</div>
+          <div class="desc">用途で使い分け・2038年問題は要注意</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見3</span>
+          <div class="name">Java は java.time のみ使う</div>
+          <div class="desc">java.util.Date は禁忌</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見4</span>
+          <div class="name">境界条件は半開区間で書く</div>
+          <div class="desc">&gt;= AND &lt; が漏れの少ない書き方</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見5</span>
+          <div class="name">ISO 8601 が世界共通標準</div>
+          <div class="desc">YYYY-MM-DD で揃えると全てが噛み合う</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.8 本編で起きること</span>
+
+<span class="comment">// タイトル：</span>
+<span class="comment">// 「動的SQL（if, where）を使おう」</span>
+
+<span class="comment">// やること：</span>
+<span class="comment">// 1. Vol.6の「科目絞り込み」と</span>
+<span class="comment">//    新規の「期間絞り込み」を統合</span>
+<span class="comment">// 2. &lt;if&gt; &lt;where&gt; で条件を動的に組み立て</span>
+<span class="comment">// 3. Vol.6で分けた2メソッドを1つに統合</span>
+<span class="comment">//    （シンプルに作って後で統合の完成）</span>
+<span class="comment">// 4. &lt;foreach&gt; の予告（複数科目絞り込み）</span>
+
+<span class="comment">// 獲得スキル：</span>
+<span class="comment">// → 動的SQL獲得</span>
+
+
+<span class="comment">// Vol.6 (検索) + Vol.7 (日付) が</span>
+<span class="comment">// Vol.8 で結合され、</span>
+<span class="comment">// 「期間で絞り込み」が完成する</span>
+<span class="comment">// → 業務システムらしい検索画面</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(90,98,78,0.12)">
+    <div class="tip-label">NEXT STEP ── VOL.8 本編</div>
+    <p>別冊S7で<b>「業務日付の感性」</b>を得ました。次のVol.8 本編「<b>動的SQL（if, where）を使おう</b>」では、いよいよXML Mapperの<b>真骨頂</b>である動的SQLを学びます。<br>Vol.6の「科目絞り込み」と新規の「期間絞り込み」を組み合わせ、<b>業務システムらしい検索画面</b>を完成。Vol.6で<b>意図的に分けた2メソッド</b>を1つに統合する伏線回収もあります。本編Vol.8 へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.07 / 15 ── DATETIME IN BUSINESS（別冊）</span>
+</footer>
+
+</body>
+</html>

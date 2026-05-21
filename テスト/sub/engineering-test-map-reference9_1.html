@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト 地図編 手で動かす〜自動で動く編 Vol.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;--paper:#f0ebe0;--paper-2:#e3dcc8;
+  --accent:#3d4f7c;--accent-2:#6b7a96;--accent-3:#b89968;
+  --muted:#6a6457;--line:#c8c0a8;
+  --code-bg:#1c2138;--code-text:#f0ebe0;--panel-bg:#f7f3e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"⊙";position:absolute;top:-50px;right:-20px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.12;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.map-tag{display:inline-block;background:var(--accent-3);color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:660px;margin-top:20px;color:var(--ink);font-size:15px}
+.axis-banner{display:inline-block;margin-top:18px;background:var(--paper-2);border-left:3px solid var(--accent-3);padding:8px 16px;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--ink);letter-spacing:0.1em}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em}
+.pattern-desc{max-width:700px;font-size:14px;margin-bottom:20px;color:var(--ink)}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:16px}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:22px 26px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:22px 26px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}.code .type{color:#c2a3ff}.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}.code .ann{color:#f7c08a}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.07);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+.tip.copper{border-left-color:var(--accent-3);background:rgba(184,153,104,0.12)}
+.tip.copper .tip-head{color:var(--accent-3)}
+.term-map{display:grid;grid-template-columns:170px 1fr;gap:8px 16px;font-size:13px}
+.term-map dt{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;padding:4px 0;border-bottom:1px dashed var(--line)}
+.term-map dd{padding:4px 0;border-bottom:1px dashed var(--line)}
+/* 年表 */
+.timeline{position:relative;padding-left:24px;border-left:2px solid var(--accent-3);font-size:13px}
+.timeline .era{position:relative;padding:10px 0 10px 6px}
+.timeline .era::before{content:"●";position:absolute;left:-32px;top:8px;color:var(--accent-3);font-size:14px;background:var(--panel-bg);width:22px;text-align:center}
+.timeline .year{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.1em;display:block}
+.timeline .label{font-weight:700;color:var(--ink);display:block;margin-top:2px}
+.timeline .desc{font-size:12px;color:var(--muted);margin-top:2px;display:block}
+/* サイクル図 */
+.cycle{display:flex;align-items:center;justify-content:center;gap:0;font-family:'JetBrains Mono',monospace;font-size:11.5px;flex-wrap:wrap;margin:10px 0}
+.cycle .node{background:#fff;border:1px solid var(--accent-2);padding:10px 14px;min-width:90px;text-align:center}
+.cycle .node.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cycle .arr{color:var(--accent);font-weight:700;padding:0 6px}
+/* 頻度比較 */
+.freq-bar{display:flex;align-items:center;gap:10px;font-size:12px;font-family:'JetBrains Mono',monospace;margin:6px 0}
+.freq-bar .label{min-width:110px;font-weight:600;color:var(--accent);font-size:11px}
+.freq-bar .track{flex:1;height:16px;background:#f0eee5;border-radius:3px;overflow:hidden;position:relative}
+.freq-bar .fill{height:100%;background:linear-gradient(to right,var(--accent-3),var(--accent))}
+.freq-bar .value{min-width:90px;text-align:right;color:var(--ink);font-size:11px}
+/* 因果鎖 */
+.chain{padding-left:0;list-style:none;font-size:13px}
+.chain li{padding:8px 14px;background:#fff;border-left:3px solid var(--accent-3);margin-bottom:8px;position:relative}
+.chain li::after{content:"↓";display:block;text-align:center;color:var(--accent-3);font-size:14px;margin-top:6px;margin-bottom:-12px}
+.chain li:last-child::after{content:""}
+.chain li b{color:var(--accent)}
+/* テーブル */
+.cmp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+.cmp-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:left;padding:8px 10px;letter-spacing:0.1em;border-bottom:1px solid var(--line)}
+.cmp-table td{padding:8px 10px;border-bottom:1px dashed var(--line);vertical-align:top}
+.cmp-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;width:140px}
+.page-footer{border-top:2px solid var(--ink);margin-top:80px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:200px}.cycle{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="map-tag">MAP</span>
+  <span class="vol-tag">MAP VOL.09 / 10</span>
+  <h1>手で動かす〜自動で動く編</h1>
+  <div class="subtitle">地図編 Vol.9 — FROM MANUAL TO AUTOMATED</div>
+  <p class="lead">
+    本編Vol.9ではCI/CDの実装を学びました。地図編Vol.9では一段引いて、<b>「人がやっていたことが、なぜ自動化されていったのか」</b>を時間軸で読み解きます。テストの実行頻度は数ヶ月に1度から、毎コミットへ。<b>検証が「イベント」から「環境」へと変わった</b>大きな流れの中で、CI/CDの位置づけが見えてきます。
+  </p>
+  <span class="axis-banner">主な軸 / TIME AXIS — 時間軸で読み解く</span>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 テスト頻度の歴史的変化</a></li>
+    <li><a href="#sec02">02 手作業時代の課題</a></li>
+    <li><a href="#sec03">03 スクリプト化の時代</a></li>
+    <li><a href="#sec04">04 CI登場と頻度革命</a></li>
+    <li><a href="#sec05">05 CDと「常に出荷可能」</a></li>
+    <li><a href="#sec06">06 DevOpsという文化</a></li>
+    <li><a href="#sec07">07 「環境」としてのテスト</a></li>
+    <li><a href="#term">用語の地図</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>テスト頻度の歴史的変化</h2>
+    <span class="en">FREQUENCY EVOLUTION</span>
+  </div>
+  <p class="pattern-desc">
+    テストの実行頻度は、過去70年で<b>劇的に変化</b>しました。1960年代は「リリース前にまとめて」だったものが、現代では「毎コミットごと」。この頻度の変化が、ソフトウェア開発のあらゆる側面を変えていきました。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">frequency</span>
+      <span class="tag-desc">テスト実行頻度の歴史的推移</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 頻度の推移</div>
+        <div class="freq-bar">
+          <span class="label">1960s</span>
+          <div class="track"><div class="fill" style="width:5%"></div></div>
+          <span class="value">数ヶ月に1度</span>
+        </div>
+        <div class="freq-bar">
+          <span class="label">1980s</span>
+          <div class="track"><div class="fill" style="width:15%"></div></div>
+          <span class="value">毎月</span>
+        </div>
+        <div class="freq-bar">
+          <span class="label">1990s</span>
+          <div class="track"><div class="fill" style="width:30%"></div></div>
+          <span class="value">週次</span>
+        </div>
+        <div class="freq-bar">
+          <span class="label">2000s</span>
+          <div class="track"><div class="fill" style="width:55%"></div></div>
+          <span class="value">毎日 (夜間)</span>
+        </div>
+        <div class="freq-bar">
+          <span class="label">2010s</span>
+          <div class="track"><div class="fill" style="width:80%"></div></div>
+          <span class="value">毎コミット</span>
+        </div>
+        <div class="freq-bar">
+          <span class="label">2020s</span>
+          <div class="track"><div class="fill" style="width:100%"></div></div>
+          <span class="value">継続的</span>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          60年で<b style="color:var(--ink)">頻度は数百万倍</b>に。これは技術の進歩だけでなく、ソフトウェアに対する社会の要求の変化でもある。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// なぜ頻度が変わったか</span>
+
+<span class="kw">1960s</span>: テスト=リリース前の儀式
+  メインフレーム時代
+  ソフトを「焼き付けて」出荷
+  間違うとやり直しが大事
+
+<span class="kw">1980s</span>: 月次リリース体制
+  企業システム
+  月1の定期メンテ枠でテスト
+
+<span class="kw">1990s</span>: 週次の動作確認
+  PCソフト・Webの登場
+  リリース間隔が短くなる
+
+<span class="kw">2000s</span>: 夜間ビルドの自動化
+  CruiseControl, Hudson登場
+  毎晩テスト実行が当たり前に
+
+<span class="kw">2010s</span>: 毎コミットの自動実行
+  Jenkins, Travis CI隆盛
+  分単位のフィードバック
+
+<span class="kw">2020s</span>: 常時実行 + 即デプロイ
+  GitHub Actions時代
+  検証 = 環境の一部</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この変化の意味</div>
+    検証は<b>「特別な活動」から「日常の背景」へ</b>と変化しました。誰かが意識して「テストする」のではなく、コミットすれば<b>自動で検証されてしまう</b>環境が当たり前に。これは品質保証のあり方そのものを変えました。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>手作業時代の課題</h2>
+    <span class="en">MANUAL ERA</span>
+  </div>
+  <p class="pattern-desc">
+    自動化される前、テストは<b>人が画面を触って確かめる</b>仕事でした。専門のテスターが画面を操作し、結果をメモし、不具合を報告する。この時代の課題が、後の自動化への動機を形作りました。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">manual era</span>
+      <span class="tag-desc">手作業によるテストの限界</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手作業の構造的問題</div>
+        <table class="cmp-table">
+          <tr><th>問題</th><th>結果</th></tr>
+          <tr><td>遅い</td><td>1機能の確認に数時間〜数日</td></tr>
+          <tr><td>不安定</td><td>人によって判定基準が違う</td></tr>
+          <tr><td>再現困難</td><td>同じ操作を毎回再現できない</td></tr>
+          <tr><td>退屈</td><td>同じ操作を繰り返す精神的負担</td></tr>
+          <tr><td>スケールしない</td><td>機能が増えても人は増やせない</td></tr>
+          <tr><td>抜け落ちる</td><td>変更時に確認漏れが必発</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// 手作業時代の典型的1日</span>
+
+09:00 リリース予定機能のリスト確認
+10:00 機能Aの操作手順書を読む
+10:30 画面で操作
+       「ボタンが反応した」
+       「画面遷移OK」
+       「保存OK」とメモ
+12:00 ランチ
+13:00 機能Bの手順書
+...
+17:00 機能Eまで完了
+18:00 報告書をまとめる
+
+<span class="comment">// 1日で5機能のテスト</span>
+<span class="comment">// 100機能あれば20営業日</span>
+<span class="comment">// = 1ヶ月の検証期間</span>
+
+       <span class="comment">↓</span>
+
+<span class="kw">問題</span>:
+  ・リリース間隔が縮まると追いつかない
+  ・「いつも通り動く」の確認に
+    多大な人手を投入
+  ・退屈で離職率も高い
+
+       <span class="comment">↓</span>
+
+<span class="ann">「同じことを繰り返すなら</span>
+<span class="ann"> 機械にやらせるべき」</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>手動テスト（manual test）</b>＝人が手作業で行うテスト。
+    <br><b>リグレッションテスト（regression test）</b>＝既存機能が壊れていないか確認するテスト。手作業時代は最も時間を食う仕事の代表。
+    <br><b>テスト工程</b>＝開発工程の一区切りとしてテストを行うフェーズ。手作業時代の象徴的な仕組み。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>スクリプト化の時代</h2>
+    <span class="en">SCRIPTING ERA</span>
+  </div>
+  <p class="pattern-desc">
+    1990年代後半から、テストを<b>「スクリプトとして書く」</b>動きが広まりました。JUnit（1997年頃）、Selenium（2004年）など、現代でも使われるツールの原型が次々と登場。<b>「テスト=コード」</b>という発想の革命でした。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">scripting</span>
+      <span class="tag-desc">テストを「書く」時代の幕開け</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// スクリプト化の歴史</div>
+        <div class="timeline">
+          <div class="era">
+            <span class="year">1997</span>
+            <span class="label">JUnit (Java)</span>
+            <span class="desc">Kent Beck・Erich Gammaが作成。「単体テストをコードに書く」の原点</span>
+          </div>
+          <div class="era">
+            <span class="year">1999</span>
+            <span class="label">XP / TDD</span>
+            <span class="desc">テストを「先に書く」発想が広まる</span>
+          </div>
+          <div class="era">
+            <span class="year">2004</span>
+            <span class="label">Selenium</span>
+            <span class="desc">ブラウザ操作の自動化。E2Eテストの先駆け</span>
+          </div>
+          <div class="era">
+            <span class="year">2009</span>
+            <span class="label">Hudson / Jenkins</span>
+            <span class="desc">CIサーバの定番。OSSとして急速に普及</span>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="comment">// テスト=コード革命の本質</span>
+
+<span class="kw">それまで</span>:
+  テスト = 手順書
+  「ボタンAを押し、画面Bを確認」
+  人が読んで実行
+
+       <span class="comment">↓</span>
+
+<span class="kw">スクリプト化以降</span>:
+  テスト = 実行可能なコード
+  プログラムが代わりに実行
+
+       <span class="comment">↓</span>
+
+<span class="kw">何が変わったか</span>:
+
+  ① 何度でも同じ実行ができる
+     → 再現性
+  ② 速い
+     → 人手の数百倍以上
+  ③ 履歴が残る
+     → バージョン管理可能
+  ④ コードと一緒に進化する
+     → 仕様変更にテストも追随
+
+       <span class="comment">↓</span>
+
+<span class="ann">「テストもまたソースコード」</span>
+<span class="ann">この発想の転換が革命的</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">スクリプト化の意義</div>
+    手作業からスクリプトへの移行は、<b>「テストの価値が記録され、累積するようになった」</b>転換点。一度書けば資産になる。書いた人が辞めても残る。これにより<b>「テストの数」が組織の財産</b>になりました。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>CI登場と頻度革命</h2>
+    <span class="en">CI REVOLUTION</span>
+  </div>
+  <p class="pattern-desc">
+    2000年代、<b>「テストはあるが、走らせるのは時々」</b>という状態から、<b>「変更のたびに自動で走る」</b>という発想が登場します。これがCI（継続的インテグレーション）の本質。<b>頻度を上げることが本質的価値</b>であると気づいた瞬間でした。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">CI revolution</span>
+      <span class="tag-desc">頻度こそが価値を生む</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// CIのサイクル</div>
+        <div class="cycle">
+          <div class="node">commit</div>
+          <div class="arr">▶</div>
+          <div class="node active">build &amp; test</div>
+          <div class="arr">▶</div>
+          <div class="node">notify</div>
+        </div>
+        <div class="cycle">
+          <div class="node">fix</div>
+          <div class="arr">▶</div>
+          <div class="node">commit</div>
+          <div class="arr">▶</div>
+          <div class="node">...再び</div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          サイクルが<b style="color:var(--ink)">数分単位で回り続ける</b>。問題は数時間後ではなく数分後に発覚する。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// なぜ「頻度」が本質なのか</span>
+
+<span class="kw">問題発見の早さ</span>:
+
+  発見が早い → 直すコストが安い
+  (地図編Vol.1 Boehm曲線)
+
+  毎日テスト → 1日分の変更だけ調査
+  毎月テスト → 1ヶ月分の変更を調査
+
+  → <span class="ann">調査範囲が劇的に変わる</span>
+
+<span class="kw">変更の心理的負担</span>:
+
+  「次のテストはいつ?」
+  ↓
+  「翌月」  → 不安・慎重・遅い
+  ↓
+  「即時」  → 安心・大胆・速い
+
+  → <span class="ann">開発文化そのものが変わる</span>
+
+<span class="kw">統合の痛み</span>:
+
+  まれにしかやらない統合
+  → 大量の競合・衝突
+
+  頻繁にやる統合
+  → 小さな衝突を都度解消
+
+  → <span class="ann">統合が「痛くない」状態に</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">頻度がもたらす変化</div>
+    CIは<b>「テストの内容」を変えたのではなく、「テストの頻度」を変えた</b>イノベーションです。同じテストでも、月1回走らせるのと毎コミット走らせるのでは、得られる価値が桁違いに違う。<b>頻度こそが質を変える</b>—これは多くの分野で観察される現象です。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>CDと「常に出荷可能」</h2>
+    <span class="en">CD AND ALWAYS-SHIPPABLE</span>
+  </div>
+  <p class="pattern-desc">
+    CIが「テストを常に回す」だとすると、CDは<b>「常に出荷可能な状態を保つ」</b>仕組みです。さらに進めば「自動で出荷する」（継続的デプロイメント）まで行きます。<b>テストと出荷が一体化した</b>世界に到達しました。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">CD</span>
+      <span class="tag-desc">CDが意味する2つの段階</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// CDの2つのレベル</div>
+        <table class="cmp-table">
+          <tr><th>段階</th><th>意味</th></tr>
+          <tr><td>Delivery</td><td>常に「出荷できる状態」にしておく</td></tr>
+          <tr><td>Deployment</td><td>合格したら自動で「出荷してしまう」</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">頻度の極致</b>: 1日に何十回もリリース、というのが現代のWebサービスでは普通。Amazon・Netflix等は1秒に複数回デプロイすると言われる。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 「出荷頻度」の歴史</span>
+
+<span class="kw">1990s</span>:
+  CDをCD-ROMに焼いて出荷
+  半年に1度 / 年1回
+
+<span class="kw">2000s</span>:
+  Webサービス登場
+  数週間に1度のリリース
+
+<span class="kw">2010s</span>:
+  CI/CD普及
+  日次〜週次リリース
+
+<span class="kw">現在</span>:
+  Amazon: <span class="ann">1秒に複数回</span>
+  Netflix: <span class="ann">1日数千回</span>
+  Google: <span class="ann">継続的に</span>
+
+       <span class="comment">↓</span>
+
+<span class="kw">これが可能になった条件</span>:
+
+  ・自動テストが網羅的にある
+  ・CIで常に検証されている
+  ・問題があれば即ロールバック
+  ・「壊れない仕組み」が前提
+
+       <span class="comment">↓</span>
+
+<span class="ann">テストへの投資が</span>
+<span class="ann">ビジネス速度を決める時代</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この帰結の意味</div>
+    リリース頻度=ビジネス価値の差別化要因になりました。<b>「テストがしっかりある会社は、競合より速く改善できる」</b>。これがもはや事業優位性の源泉です。テストは「品質を守る」だけでなく「<b>速度を生む</b>」道具へと進化したのです。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>DevOpsという文化</h2>
+    <span class="en">DEVOPS CULTURE</span>
+  </div>
+  <p class="pattern-desc">
+    CI/CDの普及と並行して<b>DevOps</b>という概念が登場しました。開発（Dev）と運用（Ops）の垣根を取り払い、両者が一体となってソフトウェアを動かし続ける文化です。<b>自動化はDevOpsの基盤</b>であり、テスト自動化はその中核に位置します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">DevOps</span>
+      <span class="tag-desc">開発と運用の融合</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 従来 vs DevOps</div>
+        <table class="cmp-table">
+          <tr><th>観点</th><th>従来</th></tr>
+          <tr><td>役割</td><td>開発と運用が別チーム</td></tr>
+          <tr><td>引き継ぎ</td><td>開発→運用への「お渡し」</td></tr>
+          <tr><td>障害責任</td><td>運用が対応・原因は開発に問い合わせ</td></tr>
+          <tr><td>変更</td><td>月次・四半期単位</td></tr>
+        </table>
+        <table class="cmp-table" style="margin-top:8px">
+          <tr><th>観点</th><th>DevOps</th></tr>
+          <tr><td>役割</td><td>一体のチーム</td></tr>
+          <tr><td>引き継ぎ</td><td>「お渡し」がない・全員が両方</td></tr>
+          <tr><td>障害責任</td><td>開発・運用共同で対応</td></tr>
+          <tr><td>変更</td><td>日次・常時</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// DevOpsを支える要素</span>
+
+<span class="ann">① Infrastructure as Code</span>
+  サーバ構築もコードで管理
+  Terraform, Ansible
+
+<span class="ann">② Containerization</span>
+  Docker・Kubernetes
+  本番と同じ環境がどこでも
+
+<span class="ann">③ CI/CD</span>
+  GitHub Actions・GitLab CI
+  常時自動化
+
+<span class="ann">④ Automated Testing</span>
+  ピラミッド全層の自動テスト
+  これがすべての前提
+
+<span class="ann">⑤ Monitoring &amp; Observability</span>
+  Prometheus・Grafana・Datadog
+  本番の状態が常に見える
+
+       <span class="comment">↓</span>
+
+<span class="kw">自動テストは</span>
+<span class="kw">DevOpsの基盤として</span>
+<span class="kw">不可欠な存在</span>
+
+<span class="comment">// テストがない=DevOpsはできない</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>DevOps</b>＝開発と運用を一体化する文化・実践の総称。2009年頃から広まる。
+    <br><b>Infrastructure as Code</b>＝インフラ設定をコードで管理する手法。
+    <br><b>SRE（Site Reliability Engineering）</b>＝Google発の運用方法論。DevOpsを工学的に体系化したもの。
+    <br><b>可観測性 / Observability</b>＝システムの内部状態を外から推測できる性質。ログ・メトリクス・トレースが3本柱。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>「環境」としてのテスト</h2>
+    <span class="en">TEST AS ENVIRONMENT</span>
+  </div>
+  <p class="pattern-desc">
+    ここまでの時間軸を振り返ると、テストは<b>「イベント（時々やる行為）」から「環境（常にそこにあるもの）」へ</b>と変質しました。空気のように存在し、意識されなくなった時こそ、テストが最も価値を発揮している瞬間です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">test as environment</span>
+      <span class="tag-desc">「環境」としてのテストへ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 変質の構造</div>
+        <ol class="chain">
+          <li>初期: テスト=<b>儀式</b>（リリース前の特別な作業）</li>
+          <li>中期: テスト=<b>イベント</b>（決まったタイミングで実行）</li>
+          <li>後期: テスト=<b>習慣</b>（毎日・毎コミット）</li>
+          <li>現代: テスト=<b>環境</b>（意識せず常に走っている）</li>
+        </ol>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          現代のエンジニアは<b style="color:var(--ink)">「テストを走らせる」とは言わない</b>。「テストが走る」と言う。主語が人から仕組みに変わった。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 「環境」化することの意味</span>
+
+<span class="kw">儀式の時代</span>:
+  「来月のテスト工程に向けて準備を」
+  → 大ごと・特別
+
+<span class="kw">イベントの時代</span>:
+  「金曜にテストを走らせます」
+  → スケジュールされた予定
+
+<span class="kw">習慣の時代</span>:
+  「コミット時に毎回走ります」
+  → ルーチン
+
+<span class="kw">環境の時代</span>:
+  「テストはいつも背景で走っている」
+  → 空気のように存在
+
+       <span class="comment">↓</span>
+
+<span class="kw">この変化が示すもの</span>:
+
+  検証は「特別な営み」ではなく
+  「ソフトウェア開発という活動の
+   一部、当たり前の構成要素」
+  になった
+
+       <span class="comment">↓</span>
+
+<span class="ann">テストがある = 当たり前</span>
+<span class="ann">CIが回る = 当たり前</span>
+<span class="ann">これが現代の基準点</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この巻のまとめ</div>
+    地図編Vol.1で「テストはどこから来たか」と歴史を辿り、地図編Vol.9で「テストはどこへ向かったか」を振り返りました。<b>儀式→イベント→習慣→環境</b>という変質の旅。<b>本編Vol.9のCI/CDは、この長い旅の到達点</b>として位置づくのです。テスト自動化を実装する時、自分が立っている地点の歴史的意味も意識しておくと、より深い理解になります。
+  </div>
+</section>
+
+<section id="term">
+  <div class="section-header">
+    <span class="section-num">★</span>
+    <h2>用語の地図</h2>
+    <span class="en">GLOSSARY</span>
+  </div>
+  <p class="pattern-desc">
+    この巻で登場した用語を<b>関係が分かる形で並べて</b>整理します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">glossary</span>
+      <span class="tag-desc">本巻で扱った用語の一覧</span>
+    </div>
+    <div class="demo-body" style="grid-template-columns:1fr">
+      <div class="panel" style="border-right:none">
+        <div class="panel-head">// 並べて見ると関係が分かる</div>
+        <dl class="term-map">
+          <dt>手動テスト</dt><dd>人が手作業で行うテスト。自動化前の主流</dd>
+          <dt>リグレッションテスト</dt><dd>既存機能が壊れていないか確認するテスト</dd>
+          <dt>テスト工程</dt><dd>開発工程の一区切りとしてテストを行うフェーズ</dd>
+          <dt>JUnit</dt><dd>1997年登場のJava用テストフレームワーク。「テスト=コード」の原点</dd>
+          <dt>Selenium</dt><dd>2004年登場のブラウザ自動操作ツール。E2Eの先駆け</dd>
+          <dt>Jenkins / Hudson</dt><dd>OSSのCIサーバ。2009年頃から急速に普及</dd>
+          <dt>CI</dt><dd>Continuous Integration。変更ごとに自動でビルド・テスト</dd>
+          <dt>CD (Delivery)</dt><dd>Continuous Delivery。常に出荷可能な状態を保つ</dd>
+          <dt>CD (Deployment)</dt><dd>Continuous Deployment。合格したら自動で本番反映</dd>
+          <dt>DevOps</dt><dd>開発と運用を一体化する文化。2009年頃から</dd>
+          <dt>SRE</dt><dd>Site Reliability Engineering。Google発の運用方法論</dd>
+          <dt>IaC</dt><dd>Infrastructure as Code。インフラもコードで管理</dd>
+          <dt>可観測性</dt><dd>Observability。システムの内部状態を外から推測できる性質</dd>
+          <dt>環境化</dt><dd>テストが特別な活動から日常の背景へと変質した現象</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tip copper" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  いよいよシリーズ最終ペアです。<b>本編Vol.10「困った時のテスト編」</b>では、現場でよく遭遇する10個の困りごとをQ&A形式で扱います。辞書として使える巻。<b>地図編Vol.10「テスト学習の地図編」</b>では、本編＋地図編 全20巻を振り返り、テスト学習者がつまずく構造を整理。<b>シリーズ完結</b>を迎えます。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST MAP — VOL.09</span>
+  <span>FROM MANUAL TO AUTOMATED</span>
+</footer>
+
+</body>
+</html>

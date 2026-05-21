@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕Vol.4 1対多の表示・絞り込み</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2940;
+  --paper:#f3f0e6;
+  --paper-2:#e4dfcd;
+  --accent:#2d5485;
+  --accent-2:#507aa8;
+  --accent-3:#8a6a3a;
+  --muted:#6a7484;
+  --line:#c6c1b0;
+  --code-bg:#1a2236;
+  --code-text:#e8e4d4;
+  --panel-bg:#ede7d3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✦";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.phase-badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700;letter-spacing:0.05em}
+.ph-req{background:#e8eef6;color:#2d5485;border:1px solid #2d5485}
+.ph-des{background:#f0ebe0;color:#8a6a3a;border:1px solid #8a6a3a}
+.ph-imp{background:#e6efe8;color:#3a6a4a;border:1px solid #3a6a4a}
+.ph-test{background:#f3e8e8;color:#9a4040;border:1px solid #9a4040}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.key{background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(45,84,133,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.screen-mock{background:#fff;border:2px solid var(--ink);padding:16px;margin:8px 0;font-family:'Noto Sans JP',sans-serif;font-size:13px;line-height:1.75}
+.screen-mock .sm-head{background:var(--accent);color:#fff;margin:-16px -16px 12px;padding:8px 14px;font-weight:700;font-size:13px}
+.screen-mock table{width:100%;border-collapse:collapse;margin-top:6px}
+.screen-mock th{background:var(--paper-2);padding:6px 10px;text-align:left;font-size:12px;border:1px solid var(--line)}
+.screen-mock td{padding:6px 10px;font-size:12px;border:1px solid var(--line)}
+.badge-cat{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;color:#fff;font-weight:700}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.4</span>
+    <span class="kind-tag">本編 ── MAIN</span>
+    <span class="rdt-tag">REQ · DESIGN · TEST</span>
+  </div>
+  <h1>1対多の表示・絞り込み<br>テーブルをつなぐ</h1>
+  <div class="subtitle">VOL.04 ── ONE-TO-MANY ── JOIN &amp; FILTERING</div>
+  <p class="lead">いよいよ<b>2テーブルをつなぐ</b>回。memos に <b>category_id</b> を追加し、<b>LEFT JOIN でカテゴリ名を一緒に取得</b>します。<b>resultMap の association</b> が初登場。さらに<b>カテゴリ別の絞り込み</b>を実装。「3テーブル設計」の本領が出始めます。<b>JOIN の結果は結合テストで検証</b>します。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら — Vol.4 で新たに使うもの</div>
+    <p>実装の新規 import はほぼ無し。XML で <code>&lt;resultMap&gt;</code> と <code>&lt;association&gt;</code> が初登場。Controller で絞り込み用の <code>@RequestParam</code> が登場。テストで JOIN を含む結合テスト。<code>Ctrl + Shift + O</code> で整理、<code>Ctrl + 1</code> でクイック修正。<b>Vol.2,3 のコードを開きながら</b>進めましょう。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 要求の確認（US-002の続き）</a></li>
+    <li><a href="#s02">02 受入条件をテストケース化</a></li>
+    <li><a href="#s03">03 仕様化：JOINと絞り込み</a></li>
+    <li><a href="#s04">04 設計①：関連とデータ取得</a></li>
+    <li><a href="#s05">05 設計②：resultMapとassociation</a></li>
+    <li><a href="#s06">06 実装</a></li>
+    <li><a href="#s07">07 テスト（JOINは結合テストで）</a></li>
+    <li><a href="#s08">08 ブラウザ確認＋ハマりどころ</a></li>
+    <li><a href="#s09">09 レビュー・評価＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>要求の確認（US-002の続き）</h2><span class="phase-badge ph-req">PHASE: REQ</span><span class="en">REVISIT REQUIREMENT</span></div>
+  <p class="pattern-desc">Vol.3 で categories マスタを作りましたが、<b>まだメモと繋がっていません</b>。US-002 の「<b>カテゴリで分類</b>」を本当に実現するには、<b>メモにカテゴリを紐付ける</b>必要があります。Vol.4 は US-002 の<b>後半戦</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">US-002 の完成に必要なもの</span><span class="tag-desc">マスタだけでは足りない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Vol.3 で足りなかったこと</div>
+        <p>Vol.3 では categories の<b>箱</b>を作りました。でも US-002「<b>メモをカテゴリで分類したい</b>」には、<b>メモとカテゴリの紐付け</b>が必要。これが Vol.4 のスコープ。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 要求を分解</div>
+        <ul>
+          <li>メモに<b>カテゴリを設定</b>できる（memos に category_id）</li>
+          <li>一覧で<b>カテゴリ名を表示</b>（JOIN）</li>
+          <li><b>カテゴリで絞り込み</b>（WHERE）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 新しい受入条件の追加</div>
+        <p>US-002 に<b>絞り込みの受入条件</b>を追加します。要求は<b>進化する</b>（別冊S1の変更管理）。Vol.3 時点では「分類できる」だったのが、Vol.4 で「絞り込める」に育ちます。</p>
+      </div>
+      <div class="code"><span class="code-head">// US-002 の受入条件（Vol.4で追加分）</span>
+<span class="ann">@AC5</span> カテゴリ設定（正常系）
+Given: カテゴリ「仕事」が存在する
+When : メモ作成時に「仕事」を選ぶ
+Then : メモにカテゴリが紐付く
+
+<span class="ann">@AC6</span> カテゴリ名の表示
+Given: 「仕事」カテゴリのメモがある
+When : 一覧を表示する
+Then : メモ行に「仕事」と表示される
+
+<span class="ann">@AC7</span> 未分類の表示
+Given: カテゴリ未設定のメモがある
+When : 一覧を表示する
+Then : 「未分類」と表示される（エラーにしない）
+
+<span class="ann">@AC8</span> カテゴリ絞り込み
+Given: 複数カテゴリのメモがある
+When : 「仕事」で絞り込む
+Then : 「仕事」のメモだけ表示される
+
+
+<span class="comment">// ─── @AC7 が設計を左右する ★★★ ───</span>
+<span class="comment">// 「未分類」を許すか？</span>
+<span class="comment">// → 許す（category_id は NULL 可）</span>
+<span class="comment">// → だから LEFT JOIN（後述）</span>
+<span class="comment">// → 要求が JOIN の種類を決める</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「未分類を許すか」は要求で決まる</div>
+    <p>@AC7「未分類のメモを表示する」が、<b>設計を大きく左右</b>します。「メモは必ずカテゴリを持つ」なら INNER JOIN・NOT NULL。「未分類もOK」なら<b>LEFT JOIN・NULL許容</b>。本シリーズは<b>「思いついたらすぐメモ（カテゴリは後で）」</b>というペルソナ（田中さん）に合わせ、<b>未分類を許す</b>。<b>要求がJOINの種類を決める</b>のです。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>受入条件をテストケース化</h2><span class="phase-badge ph-req">PHASE: REQ→TEST</span><span class="en">AC TO TEST CASES</span></div>
+  <p class="pattern-desc">JOIN・絞り込みの受入条件をテストケースに変換します。これらは<b>「DBの動作」</b>なので、ほとんど<b>結合テスト（@MybatisTest + H2）</b>になります。別冊S3の<b>「JOIN結果は実DBで検証」</b>がそのまま活きます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">テストケース表と層振り分け</span><span class="tag-desc">JOIN系は結合テスト</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テストケース一覧</div>
+        <table class="compare-tbl">
+          <thead><tr><th>検証</th><th>期待</th><th>層</th></tr></thead>
+          <tbody>
+            <tr><td>カテゴリ名が取れる</td><td>「仕事」</td><td>結合</td></tr>
+            <tr><td>未分類のメモ</td><td>NULL/未分類</td><td>結合</td></tr>
+            <tr><td>カテゴリ絞り込み</td><td>該当のみ</td><td>結合</td></tr>
+            <tr><td>絞り込みなし</td><td>全件</td><td>結合</td></tr>
+            <tr><td>絞り込みロジック分岐</td><td>条件で切替</td><td>単体</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>JOIN・絞り込みの結果は実DB</b>でないと検証できない（別冊S3）。Service の「絞り込みありなしの分岐」だけ単体で。</p>
+      </div>
+      <div class="code"><span class="code-head">// 受入条件 → テスト層の振り分け</span>
+<span class="comment">// ─── 結合テスト（@MybatisTest+H2）───</span>
+@AC6 カテゴリ名表示
+  → JOINの結果を実DBで確認
+
+@AC7 未分類の表示
+  → LEFT JOINでNULLになるか確認
+
+@AC8 絞り込み
+  → WHERE句が効くか確認
+
+<span class="comment">// → 全部「SQLの動作」 ★★★</span>
+<span class="comment">// → モックでは検証不可</span>
+<span class="comment">// → 実DBの結合テストが必須</span>
+
+
+<span class="comment">// ─── 単体テスト（Mockito）───</span>
+Service の絞り込み分岐：
+  categoryId が null → findAll()
+  categoryId あり → findByCategory()
+
+<span class="comment">// → ロジックの分岐はモックで検証 ★</span>
+<span class="comment">// → 「正しいMapperメソッドを呼ぶか」</span>
+
+
+<span class="comment">// ─── 別冊S3の判断がそのまま ───</span>
+<span class="comment">// 「何が正しさを守るか」で層を選ぶ：</span>
+<span class="comment">//   JOIN・WHERE = SQL（DB）→ 結合</span>
+<span class="comment">//   分岐ロジック = Java → 単体</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — JOIN を書いたら必ず結合テスト</div>
+    <p>JOIN は<b>「2つのテーブルをどう繋ぐか」</b>の指定。少しのミス（ON句の間違い、JOINの種類間違い）で<b>結果が激変</b>します。しかも<b>モックでは検証不可</b>（別冊S3）。だから<b>JOIN を書いたら必ず実DB（H2）で結合テスト</b>。「想定した行数・想定したカテゴリ名が取れるか」を確認するのが鉄則です。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>仕様化：JOINと絞り込み</h2><span class="phase-badge ph-req">PHASE: SPEC</span><span class="en">SPECIFICATION</span></div>
+  <p class="pattern-desc">要求を技術仕様に。<b>一覧表示の SQL（JOIN）</b>と<b>絞り込みの URL 設計</b>を決めます。「未分類も表示」（@AC7）から<b>LEFT JOIN</b>が確定します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">JOIN の種類と URL 設計</span><span class="tag-desc">LEFT JOIN が要求から決まる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ LEFT JOIN か</div>
+        <table class="compare-tbl">
+          <thead><tr><th>JOIN種類</th><th>未分類メモは</th></tr></thead>
+          <tbody>
+            <tr><td>INNER JOIN</td><td><b>消える</b>（NG）</td></tr>
+            <tr><td>LEFT JOIN</td><td><b>残る</b>（@AC7に合致）</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>@AC7「未分類も表示」</b>を満たすには<b>LEFT JOIN</b>。INNER だと category_id が NULL のメモが消えてしまう。<b>要求が JOIN を決める</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 絞り込みの URL 設計</div>
+        <ul>
+          <li>全件：<code>GET /memos</code></li>
+          <li>絞り込み：<code>GET /memos?categoryId=1</code></li>
+          <li><b>クエリパラメータ</b>で絞り込み条件を渡す</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 仕様：SQL と画面</span>
+<span class="comment">// ─── 一覧の SQL（LEFT JOIN）───</span>
+<span class="kw">SELECT</span> m.id, m.title, m.content,
+       m.category_id,
+       c.name <span class="kw">AS</span> category_name,
+       c.color <span class="kw">AS</span> category_color
+  <span class="kw">FROM</span> memos m
+  <span class="ann">LEFT JOIN</span> categories c
+    <span class="kw">ON</span> m.category_id = c.id
+ <span class="kw">ORDER BY</span> m.updated_at <span class="kw">DESC</span>;
+
+<span class="comment">// → 未分類（category_id=NULL）も</span>
+<span class="comment">//   category_name=NULL で残る ★★★</span>
+
+
+<span class="comment">// ─── 絞り込みの SQL ───</span>
+<span class="comment">// categoryId 指定時のみ WHERE 追加</span>
+... <span class="kw">WHERE</span> m.category_id = #{categoryId}
+
+
+<span class="comment">// ─── 完成画面イメージ ───</span>
+┌──────────────────────────────┐
+│ メモ一覧                       │
+│ [全部▼] ← カテゴリで絞り込み    │
+├──────────────────────────────┤
+│ タイトル    │ カテゴリ │更新   │
+├──────────────────────────────┤
+│ 会議メモ    │●仕事    │11:23 │
+│ 買い物      │（未分類）│10:05 │ ←@AC7
+│ Java学習    │●学習    │09:30 │
+└──────────────────────────────┘
+       ↑ @AC6 カテゴリ名表示
+       ↑ @AC7 未分類も消えない</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — INNER と LEFT を間違えると要求違反</div>
+    <p><b>INNER JOIN</b>は「両方に存在する行だけ」、<b>LEFT JOIN</b>は「左（memos）は全部残す」。もし INNER で書くと、<b>カテゴリ未設定のメモが一覧から消える</b>——@AC7 違反です。<b>「未分類も見せたい」という要求が LEFT JOIN を要求している</b>。この対応を意識すると、JOINの選択を間違えません。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>設計①：関連とデータ取得</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">RELATION &amp; FETCH</span></div>
+  <p class="pattern-desc">memos に <b>category_id</b> を追加し、<b>Memo が Category を持つ</b>データ構造に設計します。Vol.1 の DDL（FK・ON DELETE SET NULL）がここで活きます。<b>「メモを消してもカテゴリは残る、カテゴリを消してもメモは残る」</b>方針です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Memo に Category を持たせる</span><span class="tag-desc">オブジェクトの関連</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Memo エンティティの拡張</div>
+        <p>Memo に2つ追加：</p>
+        <ul>
+          <li><b>categoryId</b>：Long・FK（DBの値）</li>
+          <li><b>category</b>：Category 型・JOINで取得した実体</li>
+        </ul>
+        <p style="margin-top:8px"><b>categoryId は「参照」、category は「実体」</b>。一覧表示では category.name を使います。</p>
+
+        <div class="panel-head" style="margin-top:18px">// DDL の変更（Vol.1で設計済み）</div>
+        <p>memos に category_id を追加。<b>ON DELETE SET NULL</b>＝カテゴリ削除時、メモの category_id を NULL に（メモは残す）。Vol.1 の削除戦略が効きます。</p>
+      </div>
+      <div class="code"><span class="code-head">// Memo.java の拡張 + DDL</span>
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Memo</span> {
+    <span class="kw">private</span> <span class="type">Long</span> id;
+
+    <span class="ann">@NotBlank</span> <span class="ann">@Size</span>(max = <span class="num">200</span>)
+    <span class="kw">private</span> <span class="type">String</span> title;
+
+    <span class="kw">private</span> <span class="type">String</span> content;
+
+    <span class="comment">// ↓ Vol.4 で追加</span>
+    <span class="kw">private</span> <span class="type">Long</span> categoryId;     <span class="comment">// FK（参照）</span>
+    <span class="kw">private</span> <span class="type">Category</span> category;   <span class="comment">// 実体（JOIN）</span>
+
+    <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+    <span class="kw">private</span> <span class="type">LocalDateTime</span> updatedAt;
+}
+
+
+<span class="comment">// ─── DDL：memos に FK 追加 ───</span>
+<span class="kw">ALTER TABLE</span> memos
+  <span class="kw">ADD COLUMN</span> category_id <span class="type">BIGINT</span>,
+  <span class="kw">ADD FOREIGN KEY</span> (category_id)
+    <span class="kw">REFERENCES</span> categories(id)
+    <span class="ann">ON DELETE SET NULL</span>;
+    <span class="comment">// ↑ カテゴリ削除→メモのcategory_id</span>
+    <span class="comment">//   をNULLに（メモは残る）★★★</span>
+
+
+<span class="comment">// ─── 削除戦略の確認（Vol.1設計）───</span>
+カテゴリ「仕事」を削除
+  ↓ ON DELETE SET NULL
+「仕事」だったメモ → category_id=NULL
+  ↓
+一覧では「未分類」と表示（@AC7）
+<span class="comment">// → メモは絶対に消えない ★★★</span>
+<span class="comment">// → 「メモは大事」という設計思想</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — categoryId（参照）と category（実体）を分ける</div>
+    <p>Memo に<b>2つの「カテゴリ」</b>を持たせます。<b>categoryId</b>（保存・更新で使う FK の値）と<b>category</b>（JOIN で取得したカテゴリの実体）。<b>「保存するときは id、表示するときは実体」</b>。この分離が、フォーム送信（id を受け取る）と一覧表示（名前を出す）の両方を自然に扱えます。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>設計②：resultMapとassociation</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">RESULTMAP &amp; ASSOCIATION</span></div>
+  <p class="pattern-desc">JOIN で取得した<b>「メモ＋カテゴリ」を1つの Memo オブジェクトに組み立てる</b>仕組みが、MyBatis の <b>resultMap</b> と <b>association</b>。1対多（正確には多対1）の関連を<b>オブジェクトにマッピング</b>する設計です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">resultMap で JOIN 結果を組み立てる</span><span class="tag-desc">association = 1つの関連</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ resultMap が必要か</div>
+        <p>JOIN の結果は<b>フラットな1行</b>（memo列＋category列）。これを <b>Memo オブジェクト（中に Category を持つ）</b>に組み立てるには、<b>「どの列がどのプロパティか」のマッピング指示</b>が要る。それが resultMap。</p>
+
+        <div class="panel-head" style="margin-top:18px">// association とは</div>
+        <ul>
+          <li><b>association</b>：1つの関連オブジェクト（Memo→1つのCategory）</li>
+          <li><b>collection</b>：複数の関連（後の Vol.5 タグで登場）</li>
+        </ul>
+        <p style="margin-top:8px">Vol.4 は<b>多対1（メモ→1カテゴリ）</b>なので<b>association</b>を使います。</p>
+      </div>
+      <div class="code"><span class="code-head">// resultMap + association（XML）</span>
+<span class="comment">// ─── JOIN結果（フラット）───</span>
+id│title  │category_id│cat_name│cat_color
+1 │会議メモ│1          │仕事    │#d63131
+2 │買い物  │NULL       │NULL    │NULL
+
+<span class="comment">// ↓ これを Memo オブジェクトに組み立てる</span>
+
+
+<span class="comment">// ─── MemoMapper.xml ───</span>
+<span class="kw">&lt;resultMap</span> id=<span class="str">"MemoWithCategory"</span>
+           type=<span class="str">"Memo"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;id</span> property=<span class="str">"id"</span>
+      column=<span class="str">"id"</span><span class="kw">/&gt;</span>
+  <span class="kw">&lt;result</span> property=<span class="str">"title"</span>
+          column=<span class="str">"title"</span><span class="kw">/&gt;</span>
+  <span class="kw">&lt;result</span> property=<span class="str">"content"</span>
+          column=<span class="str">"content"</span><span class="kw">/&gt;</span>
+  <span class="kw">&lt;result</span> property=<span class="str">"categoryId"</span>
+          column=<span class="str">"category_id"</span><span class="kw">/&gt;</span>
+  <span class="comment">&lt;!-- ↓ 関連オブジェクト --&gt;</span>
+  <span class="ann">&lt;association</span> property=<span class="str">"category"</span>
+               javaType=<span class="str">"Category"</span><span class="ann">&gt;</span>
+    <span class="kw">&lt;id</span> property=<span class="str">"id"</span>
+        column=<span class="str">"category_id"</span><span class="kw">/&gt;</span>
+    <span class="kw">&lt;result</span> property=<span class="str">"name"</span>
+            column=<span class="str">"category_name"</span><span class="kw">/&gt;</span>
+    <span class="kw">&lt;result</span> property=<span class="str">"color"</span>
+            column=<span class="str">"category_color"</span><span class="kw">/&gt;</span>
+  <span class="ann">&lt;/association&gt;</span>
+<span class="kw">&lt;/resultMap&gt;</span>
+
+<span class="comment">// → JOIN1行が Memo(+Category) に ★★★</span>
+<span class="comment">// → 未分類は category=null（NULLなら作らない）</span>
+
+
+<span class="comment">// ─── 使う select ───</span>
+<span class="kw">&lt;select</span> id=<span class="str">"findAllWithCategory"</span>
+        resultMap=<span class="str">"MemoWithCategory"</span><span class="kw">&gt;</span>
+  SELECT m.*, c.name AS category_name,
+         c.color AS category_color
+    FROM memos m
+    LEFT JOIN categories c
+      ON m.category_id = c.id
+   ORDER BY m.updated_at DESC
+<span class="kw">&lt;/select&gt;</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — association は「多対1」、collection は「1対多」</div>
+    <p>MyBatis の関連マッピングは2種類。<b>association</b>＝1つの関連（メモは1つのカテゴリを持つ＝多対1）。<b>collection</b>＝複数の関連（メモは複数のタグを持つ＝1対多/多対多、Vol.5）。<b>「単数なら association、複数なら collection」</b>と覚えればOK。Vol.4 は単数なので association です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>実装</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">IMPLEMENTATION</span></div>
+  <p class="pattern-desc">設計に沿って実装。<b>Mapper（JOIN＋絞り込み）</b>、<b>Service（絞り込み分岐）</b>、<b>Controller（@RequestParam）</b>、<b>View（カテゴリ選択＋絞り込みドロップダウン）</b>。Vol.2,3 のコードに<b>差分を追加</b>する形です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Mapper と Service（絞り込み分岐）</span><span class="tag-desc">動的に WHERE を足す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Mapper の追加メソッド</div>
+        <ul>
+          <li><code>findAllWithCategory()</code>：全件（JOIN）</li>
+          <li><code>findByCategoryId(Long)</code>：絞り込み（JOIN＋WHERE）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// Service の絞り込み分岐</div>
+        <p><b>categoryId が null なら全件、あれば絞り込み</b>。この分岐が単体テストの対象（Section 07）。</p>
+      </div>
+      <div class="code"><span class="code-head">// CategoryMapper / Service の追加</span>
+<span class="comment">// ─── MemoMapper.java（追加）───</span>
+<span class="type">List</span>&lt;<span class="type">Memo</span>&gt; <span class="fn">findAllWithCategory</span>();
+<span class="type">List</span>&lt;<span class="type">Memo</span>&gt; <span class="fn">findByCategoryId</span>(
+    <span class="type">Long</span> categoryId);
+
+
+<span class="comment">// ─── MemoService（絞り込み分岐）───</span>
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Memo</span>&gt; <span class="fn">findForList</span>(
+        <span class="type">Long</span> categoryId) {
+    <span class="kw">if</span> (categoryId == <span class="kw">null</span>) {
+        <span class="comment">// 絞り込みなし → 全件</span>
+        <span class="kw">return</span> mapper.<span class="fn">findAllWithCategory</span>();
+    }
+    <span class="comment">// 絞り込みあり</span>
+    <span class="kw">return</span> mapper.<span class="fn">findByCategoryId</span>(categoryId);
+}
+<span class="comment">// → この分岐を単体テストで検証 ★</span>
+
+
+<span class="comment">// ─── findByCategoryId の XML ───</span>
+<span class="kw">&lt;select</span> id=<span class="str">"findByCategoryId"</span>
+        resultMap=<span class="str">"MemoWithCategory"</span><span class="kw">&gt;</span>
+  SELECT m.*, c.name AS category_name,
+         c.color AS category_color
+    FROM memos m
+    LEFT JOIN categories c
+      ON m.category_id = c.id
+   WHERE m.category_id = #{categoryId}
+   ORDER BY m.updated_at DESC
+<span class="kw">&lt;/select&gt;</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Controller と View（絞り込みUI）</span><span class="tag-desc">@RequestParam とドロップダウン</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Controller の絞り込み受け取り</div>
+        <p><code>@RequestParam(required=false) Long categoryId</code> で<b>絞り込み条件を受け取る</b>。必須でないので、なければ null＝全件。</p>
+
+        <div class="panel-head" style="margin-top:18px">// View の2要素</div>
+        <ul>
+          <li><b>絞り込みドロップダウン</b>：カテゴリ選択で再表示</li>
+          <li><b>メモ作成フォーム</b>：カテゴリ選択（select）追加</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// MemoController + View</span>
+<span class="ann">@GetMapping</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(
+    <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+    <span class="type">Long</span> categoryId,
+    <span class="type">Model</span> model) {
+
+    model.<span class="fn">addAttribute</span>(<span class="str">"memos"</span>,
+        service.<span class="fn">findForList</span>(categoryId));
+    <span class="comment">// 絞り込みドロップダウン用に</span>
+    <span class="comment">// 全カテゴリも渡す</span>
+    model.<span class="fn">addAttribute</span>(<span class="str">"categories"</span>,
+        categoryService.<span class="fn">findAll</span>());
+    model.<span class="fn">addAttribute</span>(<span class="str">"selectedId"</span>,
+        categoryId);
+    <span class="kw">return</span> <span class="str">"memos/list"</span>;
+}
+
+
+<span class="comment">// ─── list.html 絞り込みUI ───</span>
+<span class="kw">&lt;form</span> method=<span class="str">"get"</span>
+      action=<span class="str">"/memos"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;select</span> name=<span class="str">"categoryId"</span>
+          onchange=<span class="str">"this.form.submit()"</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;option</span> value=<span class="str">""</span><span class="kw">&gt;</span>すべて<span class="kw">&lt;/option&gt;</span>
+    <span class="kw">&lt;option</span> th:each=<span class="str">"c : ${categories}"</span>
+            th:value=<span class="str">"${c.id}"</span>
+            th:text=<span class="str">"${c.name}"</span>
+            th:selected=
+              <span class="str">"${c.id == selectedId}"</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;/option&gt;</span>
+  <span class="kw">&lt;/select&gt;</span>
+<span class="kw">&lt;/form&gt;</span>
+
+
+<span class="comment">// ─── 一覧でカテゴリ名表示（@AC6,7）───</span>
+<span class="kw">&lt;td</span> th:text=
+   <span class="str">"${memo.category != null</span>
+    <span class="str"> ? memo.category.name</span>
+    <span class="str"> : '未分類'}"</span><span class="kw">&gt;</span><span class="kw">&lt;/td&gt;</span>
+<span class="comment">// → category が null なら「未分類」★★★</span>
+<span class="comment">// → @AC7 をビューで実装</span>
+
+
+<span class="comment">// ─── new.html カテゴリ選択 ───</span>
+<span class="kw">&lt;select</span> th:field=<span class="str">"*{categoryId}"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;option</span> value=<span class="str">""</span><span class="kw">&gt;</span>（未分類）<span class="kw">&lt;/option&gt;</span>
+  <span class="kw">&lt;option</span> th:each=<span class="str">"c : ${categories}"</span>
+          th:value=<span class="str">"${c.id}"</span>
+          th:text=<span class="str">"${c.name}"</span><span class="kw">&gt;</span><span class="kw">&lt;/option&gt;</span>
+<span class="kw">&lt;/select&gt;</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 絞り込みは GET ＋ クエリパラメータ</div>
+    <p>絞り込みは<b>GET メソッド＋クエリパラメータ</b>（<code>/memos?categoryId=1</code>）が定石。理由：①<b>URLで状態が表せる</b>（ブックマーク・共有可能）、②<b>戻る・進むが効く</b>、③検索条件は「副作用のない取得」なので GET が適切。<b>POST は使わない</b>（POSTはデータ変更用）。<b>HTTPメソッドの意味に沿う</b>のが綺麗な設計です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>テスト（JOINは結合テストで）</h2><span class="phase-badge ph-test">PHASE: TEST</span><span class="en">TEST</span></div>
+  <p class="pattern-desc">JOIN・絞り込みの受入条件をテストに翻訳。<b>JOIN結果は結合テスト（H2）、分岐ロジックは単体（Mockito）</b>。別冊S3の「モック vs 実DB」の判断がそのまま実践になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">結合テスト — JOIN の検証</span><span class="tag-desc">@AC6,7,8 を実DBで</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 結合テストで確認すること</div>
+        <ul>
+          <li><b>@AC6</b>：カテゴリ付きメモで category.name が取れる</li>
+          <li><b>@AC7</b>：未分類メモで category が null</li>
+          <li><b>@AC8</b>：categoryId 絞り込みで該当のみ</li>
+        </ul>
+        <p style="margin-top:8px"><b>H2 で memos・categories 両方の DDL</b>を用意（schema.sql に追記）。</p>
+      </div>
+      <div class="code"><span class="code-head">// MemoMapperJoinTest.java（結合・H2）</span>
+<span class="ann">@MybatisTest</span>
+<span class="kw">class</span> <span class="type">MemoMapperJoinTest</span> {
+  <span class="ann">@Autowired</span> <span class="type">MemoMapper</span> memoMapper;
+  <span class="ann">@Autowired</span> <span class="type">CategoryMapper</span> catMapper;
+
+  <span class="comment">// @AC6: カテゴリ名が取れる</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">JOINでカテゴリ名が取得できる</span>() {
+    <span class="comment">// Arrange</span>
+    <span class="type">Category</span> c = <span class="fn">cat</span>(<span class="str">"仕事"</span>);
+    catMapper.<span class="fn">insert</span>(c);
+    memoMapper.<span class="fn">insert</span>(
+      <span class="fn">memo</span>(<span class="str">"会議"</span>, c.<span class="fn">getId</span>()));
+
+    <span class="comment">// Act</span>
+    <span class="kw">var</span> list =
+      memoMapper.<span class="fn">findAllWithCategory</span>();
+
+    <span class="comment">// Assert：category.name が取れる</span>
+    <span class="fn">assertThat</span>(list.<span class="fn">get</span>(<span class="num">0</span>)
+        .<span class="fn">getCategory</span>().<span class="fn">getName</span>())
+      .<span class="fn">isEqualTo</span>(<span class="str">"仕事"</span>);
+    <span class="comment">// → JOIN+association 成功 ★★★</span>
+  }
+
+  <span class="comment">// @AC7: 未分類は category=null</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">未分類メモはcategoryがnull</span>() {
+    memoMapper.<span class="fn">insert</span>(
+      <span class="fn">memo</span>(<span class="str">"買い物"</span>, <span class="kw">null</span>));
+
+    <span class="kw">var</span> list =
+      memoMapper.<span class="fn">findAllWithCategory</span>();
+
+    <span class="fn">assertThat</span>(list.<span class="fn">get</span>(<span class="num">0</span>)
+        .<span class="fn">getCategory</span>()).<span class="fn">isNull</span>();
+    <span class="comment">// → LEFT JOIN で消えずに残る ★★★</span>
+  }
+
+  <span class="comment">// @AC8: 絞り込み</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">カテゴリで絞り込める</span>() {
+    <span class="type">Category</span> work = <span class="fn">cat</span>(<span class="str">"仕事"</span>);
+    catMapper.<span class="fn">insert</span>(work);
+    memoMapper.<span class="fn">insert</span>(
+      <span class="fn">memo</span>(<span class="str">"会議"</span>, work.<span class="fn">getId</span>()));
+    memoMapper.<span class="fn">insert</span>(
+      <span class="fn">memo</span>(<span class="str">"買い物"</span>, <span class="kw">null</span>));
+
+    <span class="kw">var</span> list = memoMapper
+      .<span class="fn">findByCategoryId</span>(work.<span class="fn">getId</span>());
+
+    <span class="comment">// 「仕事」のメモだけ</span>
+    <span class="fn">assertThat</span>(list).<span class="fn">hasSize</span>(<span class="num">1</span>);
+    <span class="fn">assertThat</span>(list.<span class="fn">get</span>(<span class="num">0</span>).<span class="fn">getTitle</span>())
+      .<span class="fn">isEqualTo</span>(<span class="str">"会議"</span>);
+  }
+}
+
+<span class="comment">// → JOIN・LEFT・WHERE を実DBで検証 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">単体テスト — 絞り込み分岐（Mockito）</span><span class="tag-desc">正しいメソッドを呼ぶか</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Service の分岐を検証</div>
+        <p><b>categoryId が null なら findAllWithCategory、あれば findByCategoryId</b> を呼ぶ。この<b>分岐ロジック</b>はモックで検証。DBは不要。</p>
+      </div>
+      <div class="code"><span class="code-head">// MemoServiceFilterTest.java（単体）</span>
+<span class="ann">@ExtendWith</span>(<span class="type">MockitoExtension</span>.<span class="kw">class</span>)
+<span class="kw">class</span> <span class="type">MemoServiceFilterTest</span> {
+  <span class="ann">@Mock</span> <span class="type">MemoMapper</span> mapper;
+  <span class="ann">@InjectMocks</span> <span class="type">MemoService</span> service;
+
+  <span class="comment">// 絞り込みなし → findAll を呼ぶ</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">categoryIdがnullなら全件取得</span>() {
+    service.<span class="fn">findForList</span>(<span class="kw">null</span>);
+    <span class="fn">verify</span>(mapper)
+      .<span class="fn">findAllWithCategory</span>();
+    <span class="fn">verify</span>(mapper, <span class="fn">never</span>())
+      .<span class="fn">findByCategoryId</span>(<span class="fn">any</span>());
+    <span class="comment">// → 正しいメソッドを呼んだか ★</span>
+  }
+
+  <span class="comment">// 絞り込みあり → findByCategoryId</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">categoryId指定なら絞り込み</span>() {
+    service.<span class="fn">findForList</span>(<span class="num">1L</span>);
+    <span class="fn">verify</span>(mapper)
+      .<span class="fn">findByCategoryId</span>(<span class="num">1L</span>);
+    <span class="fn">verify</span>(mapper, <span class="fn">never</span>())
+      .<span class="fn">findAllWithCategory</span>();
+  }
+}
+
+<span class="comment">// → 分岐ロジックはモックで十分 ★★★</span>
+<span class="comment">// → DBの動作（JOIN）は結合テストで</span>
+<span class="comment">// → 別冊S3の使い分けを実践</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 同じ機能を「2つの層」でテストする意味</div>
+    <p>絞り込み機能を、<b>単体（分岐ロジック）</b>と<b>結合（SQL動作）</b>の両方でテストしました。一見二度手間ですが、<b>役割が違います</b>。単体は「<b>正しいメソッドを選ぶか</b>」、結合は「<b>そのSQLが正しい結果を返すか</b>」。<b>分業</b>することで、失敗時に<b>「ロジックの問題か、SQLの問題か」が即わかる</b>。これがテストピラミッドの実践です。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>ブラウザ確認＋ハマりどころ</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">VERIFY &amp; PITFALLS</span></div>
+  <p class="pattern-desc">テストが緑になったらブラウザで確認。<b>カテゴリ選択・名前表示・未分類表示・絞り込み</b>を目視。Vol.4 で踏みやすい JOIN 特有の地雷を5つ先回りします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.4 ハマりどころ 5選</span><span class="tag-desc">JOIN特有の地雷</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① カテゴリ名が表示されない（null）★★★</b></p>
+        <ul>
+          <li>原因：resultMap の column 名と SQL の別名が不一致</li>
+          <li>対処：<code>c.name AS category_name</code> と <code>column="category_name"</code> を一致させる</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② findAll が resultType のままで JOIN が効かない</b></p>
+        <ul>
+          <li>原因：select に resultType="Memo" を指定（resultMap でない）</li>
+          <li>対処：<code>resultMap="MemoWithCategory"</code> に変更</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ 未分類メモが一覧から消える ★★★</b></p>
+        <ul>
+          <li>原因：INNER JOIN で書いた（@AC7違反）</li>
+          <li>対処：<b>LEFT JOIN</b> に修正（結合テストで検知できる）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 絞り込みドロップダウンで全部消える</b></p>
+        <ul>
+          <li>原因：「すべて」の option の value が空でない／categoryId に空文字が渡る</li>
+          <li>対処：value="" を空に、Controller で空文字を null 扱い</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 編集時にカテゴリが選択済みにならない</b></p>
+        <ul>
+          <li>原因：th:field を使っていない／selected 未指定</li>
+          <li>対処：<code>th:field="*{categoryId}"</code> で自動選択</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// テスト＆ブラウザ確認</span>
+<span class="comment">// ─── テスト結果 ───</span>
+MemoMapperJoinTest
+  ✓ JOINでカテゴリ名が取得できる
+  ✓ 未分類メモはcategoryがnull
+  ✓ カテゴリで絞り込める
+MemoServiceFilterTest
+  ✓ categoryIdがnullなら全件取得
+  ✓ categoryId指定なら絞り込み
+
+<span class="kw">all green</span> ★★★
+
+
+<span class="comment">// ─── ①の正しい対応 ───</span>
+<span class="comment">// SQL の別名と resultMap の column を一致</span>
+SQL:       c.name <span class="kw">AS</span> <span class="str">category_name</span>
+resultMap: column=<span class="str">"category_name"</span>
+           ↑ ここが一致していないと null
+
+
+<span class="comment">// ─── ③ INNER vs LEFT を確認 ───</span>
+<span class="ann">NG:</span> FROM memos m
+       INNER JOIN categories c  ← 未分類が消える
+<span class="ann">OK:</span> FROM memos m
+       LEFT JOIN categories c   ← 未分類も残る ★★★
+
+
+<span class="comment">// ─── ブラウザ確認 ───</span>
+<span class="comment">// /memos で：</span>
+<span class="comment">// - カテゴリ名が色付きで表示（@AC6）</span>
+<span class="comment">// - 未分類メモも表示される（@AC7）</span>
+<span class="comment">// - ドロップダウンで絞り込み（@AC8）</span>
+<span class="comment">// - 新規作成でカテゴリ選択（@AC5）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — ③の「未分類が消える」は結合テストが守る</div>
+    <p>INNER JOIN で書くミスは<b>「カテゴリ付きメモだけで動作確認」すると気づけません</b>（未分類メモを作らないと露見しない）。でも<b>結合テスト @AC7「未分類はcategoryがnull」</b>を書いていれば、INNER JOIN だと<b>このテストが落ちて即検知</b>。<b>テストが要求違反を防ぐ</b>好例です。受入条件をテスト化する価値がここに出ます。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>レビュー・評価＆次巻へ</h2><span class="phase-badge ph-test">PHASE: REVIEW</span><span class="en">REVIEW &amp; NEXT</span></div>
+  <p class="pattern-desc">2テーブルを繋ぎました。<b>US-002 が完全に達成されたか、JOIN設計は要求に合うか、テスト層は適切か</b>を振り返ります。<b>「3テーブル設計らしさ」</b>が出てきたことを実感しましょう。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.4 卒業チェック</span><span class="tag-desc">JOIN初体験の評価</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 要求の達成</div>
+        <ul class="check-list">
+          <li>US-002 の @AC5〜@AC8 をテスト化した</li>
+          <li>各テストが緑になった</li>
+          <li>US-002 が完全に達成された（分類＋表示＋絞り込み）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 設計の評価</div>
+        <ul class="check-list">
+          <li>「未分類を許す」要求から LEFT JOIN を選んだ</li>
+          <li>categoryId（参照）と category（実体）を分けた</li>
+          <li>resultMap + association で関連をマッピングした</li>
+          <li>ON DELETE SET NULL の削除戦略を理解した</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// テストの評価</div>
+        <ul class="check-list">
+          <li>JOIN結果を結合テスト（H2）で検証した</li>
+          <li>分岐ロジックを単体テストで検証した</li>
+          <li>「同じ機能を2層で」の意味を理解した</li>
+          <li>結合テストが INNER/LEFT ミスを防ぐと分かった</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.4 で完成したフロー</span>
+<span class="comment">// ─── 要求（REQ）───</span>
+US-002 の後半（@AC5-8）
+@AC7「未分類も表示」が設計を決定
+  ↓
+<span class="comment">// ─── 設計（DESIGN）───</span>
+LEFT JOIN（要求から決まる）
++ resultMap + association
++ categoryId（参照）と category（実体）
+  ↓
+<span class="comment">// ─── 実装（IMPL）───</span>
+JOIN + 絞り込み + カテゴリ選択UI
+  ↓
+<span class="comment">// ─── テスト（TEST）───</span>
+結合（JOIN/LEFT/WHERE を実DB）
++ 単体（分岐ロジックをモック）
+
+
+<span class="comment">// ─── Vol.4 で得たもの ───</span>
+<span class="comment">// ・テーブルを JOIN で繋ぐ技術</span>
+<span class="comment">// ・resultMap + association</span>
+<span class="comment">// ・要求が JOIN の種類を決める感覚</span>
+<span class="comment">// ・JOIN は結合テストで守る</span>
+
+
+<span class="comment">// 次回 Vol.5：</span>
+<span class="comment">//   タグ機能（多対多）</span>
+<span class="comment">//   中間テーブル memo_tags</span>
+<span class="comment">//   collection 登場（association の複数版）</span>
+<span class="comment">//   US-003 のフロー ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.5 へ</div>
+    <p>Vol.4 で<b>1対多（多対1）の JOIN</b>と<b>resultMap + association</b>を習得しました。次は Vol.5「<b>タグ機能（多対多）</b>」。<b>US-003</b> を起点に、<b>memo_tags 中間テーブル</b>で多対多を実現します。association の複数版<b>collection</b> が登場し、<b>1つのメモに複数タグ</b>を持たせます。多対多は3テーブル設計の<b>最難関にして最重要</b>。並行して<b>別冊S4</b>、<b>GitHub版Vol.4「Issue・タスク管理」</b>を進めると効果的。<b>本編Vol.5 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>VOL.04 / 14 ── ONE-TO-MANY JOIN &amp; FILTER（本編）</span>
+</footer>
+
+</body>
+</html>

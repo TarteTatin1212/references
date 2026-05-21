@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕GitHub版 Vol.7 シークレット管理とテンプレート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2f38;
+  --paper:#f0ede4;
+  --paper-2:#e2ddc8;
+  --accent:#c95444;
+  --accent-2:#5a6270;
+  --accent-3:#2da44e;
+  --muted:#6a7080;
+  --line:#cac4b2;
+  --code-bg:#1c2026;
+  --code-text:#e8e4dc;
+  --panel-bg:#faf5e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"⎇";position:absolute;right:-10px;top:-30px;font-size:300px;color:var(--accent);opacity:0.17;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-2);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.prompt{color:#7eb87e}
+.gh-out{color:#a8b8c8}
+.del{color:#ff7b72}
+.add{color:#7ee787}
+.key{background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(201,84,68,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-2);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff;font-size:12.5px}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-2);font-family:'JetBrains Mono',monospace}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.gh-mock{background:#0d1117;color:#c9d1d9;border:1px solid #2a313a;border-radius:6px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.75;margin:8px 0}
+.gh-mock .gh-bar{color:#7d8590;border-bottom:1px solid #2a313a;padding-bottom:6px;margin-bottom:8px;font-size:11px}
+.gh-mock .gh-warn{color:#e3b341}
+.gh-mock .gh-x{color:#f85149}
+.gh-mock .gh-check{color:#3fb950}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.GH7</span>
+    <span class="kind-tag">GitHub版 ── SECRETS</span>
+    <span class="rdt-tag">SECURITY &amp; TEMPLATES</span>
+  </div>
+  <h1>シークレット管理と<br>テンプレート</h1>
+  <div class="subtitle">GH.07 ── SECRET MANAGEMENT &amp; TEMPLATES</div>
+  <p class="lead">リポジトリ運用で<b>最も事故が多いのが「機密情報の流出」</b>。DBパスワードやAPIキーを<b>うっかり Git に載せる</b>事故を防ぎます。<code>.gitignore</code>・環境変数・<code>application.properties</code> の扱いを整理。さらに <b>Issue/PRテンプレート</b>でチームの記述を統一。<b>「安全」と「統一」を仕組みで作る</b>回です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 GitHub版の赤線対策</div>
+    <p>Vol.GH7で詰まる場面：<code>.gitignore</code> に追加しても<b>既にコミット済みのファイルは追跡され続ける</b>（要 <code>git rm --cached</code>）、テンプレートのファイル名・置き場所（<code>.github/</code>）の誤り、YAML のインデント崩れ。<b>Section 07 で対処</b>。一度 push した機密は<b>履歴から消えない</b>ので予防が最重要です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 この巻のミッション</a></li>
+    <li><a href="#s02">02 機密情報が流出する事故</a></li>
+    <li><a href="#s03">03 .gitignore の設計</a></li>
+    <li><a href="#s04">04 機密を外に出す（環境変数）</a></li>
+    <li><a href="#s05">05 Issue テンプレート</a></li>
+    <li><a href="#s06">06 PR テンプレート</a></li>
+    <li><a href="#s07">07 ハマりどころ＋NEXT</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>この巻のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">Vol.GH7 のゴールは2つ。① <b>機密情報を Git に載せない仕組み</b>を作る（.gitignore・環境変数）、② <b>Issue/PR テンプレート</b>でチームの記述を統一する。<b>「事故を防ぐ」と「品質を揃える」</b>の両方を、仕組みで実現します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">2つのテーマ</span><span class="tag-desc">安全と統一</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テーマ① シークレット管理</div>
+        <p>DBパスワード・APIキーなどの<b>機密情報</b>を Git に載せない。本シリーズの <code>application.properties</code> には DB 接続情報があり、<b>これを安全に扱う</b>必要があります。</p>
+
+        <div class="panel-head" style="margin-top:18px">// テーマ② テンプレート</div>
+        <p>Issue や PR を作るとき、<b>毎回ゼロから書く</b>と記述がバラバラに。テンプレートで<b>「受入条件を必ず書く」</b>などを仕組み化。RDT版の品質を保ちます。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 共通する考え方</div>
+        <p>どちらも<b>「人の注意力でなく仕組みで」</b>（Vol.GH6 と同じ思想）。機密の流出も記述のばらつきも、<b>仕組みで防ぐ</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH7 で整備するもの</span>
+<span class="comment">// ─── ① シークレット管理 ───</span>
+memo-app/
+├ .gitignore          ← 機密を除外
+├ application.properties
+│   （機密を直書きしない）
+└ application.properties.example
+    （ダミー値の見本を共有）
+
+<span class="comment">// → DBパスワードは環境変数で注入</span>
+<span class="comment">// → Git には載せない ★★★</span>
+
+
+<span class="comment">// ─── ② テンプレート ───</span>
+.github/
+├ ISSUE_TEMPLATE/
+│   ├ user_story.md   ← US用
+│   └ bug_report.md   ← バグ用
+└ pull_request_template.md
+                       ← PR用
+
+<span class="comment">// → Issue/PR作成時に自動で雛形 ★★★</span>
+<span class="comment">// → 「受入条件を書く」を仕組み化</span>
+
+
+<span class="comment">// ─── 効果 ───</span>
+<span class="comment">// 安全：機密が流出しない</span>
+<span class="comment">// 統一：誰が書いても同じ品質</span>
+<span class="comment">// → チーム開発・公開リポジトリの土台</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 機密流出は「取り返しがつかない」事故</div>
+    <p>機密情報の流出は、他の事故と違って<b>取り返しがつきません</b>。一度 GitHub に push したパスワードは<b>履歴に永久に残り</b>、削除しても<b>誰かが見た・コピーした可能性</b>が消えない。だから<b>「流出してから対処」では遅く、「最初から載せない」</b>が唯一の正解。Vol.GH7 は<b>予防</b>がすべてです。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>機密情報が流出する事故</h2><span class="en">SECRET LEAK</span></div>
+  <p class="pattern-desc">まず<b>「どうやって流出するか」</b>を知ります。多くは<b>うっかり</b>。DBパスワードを書いた設定ファイルを、何気なく <code>git add .</code> して push——これだけで世界中に公開されます。仕組みを知れば防げます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">流出のパターンと被害</span><span class="tag-desc">うっかりが大半</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある流出パターン</div>
+        <ul>
+          <li><code>application.properties</code> に<b>本番DBパスワード</b>を直書き→ push</li>
+          <li><b>APIキー</b>をコードに埋め込み→ push</li>
+          <li><code>git add .</code> で<b>意図せず機密ファイル</b>を含める</li>
+          <li>公開リポジトリで<b>世界中に公開</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 被害</div>
+        <ul>
+          <li>DBへ<b>不正アクセス</b></li>
+          <li>APIキーの<b>不正利用（高額請求）</b></li>
+          <li><b>履歴に残り消せない</b>（削除しても痕跡）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// GitHub の検知</div>
+        <p>GitHub には<b>シークレットスキャン</b>があり、APIキー等を push すると<b>警告</b>が出ることも。でも<b>頼り切らず、最初から載せない</b>のが基本。</p>
+      </div>
+      <div class="code"><span class="code-head">// 流出が起きる瞬間</span>
+<span class="comment">// ─── 危険な application.properties ───</span>
+spring.datasource.url=
+  jdbc:mysql://localhost:3306/memo_app
+spring.datasource.username=root
+spring.datasource.password=<span class="del">MyR3alP@ss</span>
+                            <span class="comment">↑ 本物のパスワード ★</span>
+
+
+<span class="comment">// ─── うっかり push ───</span>
+<span class="prompt">$</span> <span class="kw">git add .</span>           <span class="comment"># 全部追加（危険）</span>
+<span class="prompt">$</span> <span class="kw">git commit -m</span> <span class="str">"設定追加"</span>
+<span class="prompt">$</span> <span class="kw">git push</span>
+<span class="comment">// → パスワードが GitHub に公開 ★★★</span>
+
+
+<span class="comment">// ─── GitHub の警告 ───</span>
+<div class="gh-mock">
+<span class="gh-warn">⚠</span> Secret scanning alert
+Possible database password detected
+in application.properties
+</div>
+
+
+<span class="comment">// ─── 履歴からは消えない ───</span>
+<span class="comment">// 後でパスワードを消してコミットしても…</span>
+<span class="prompt">$</span> <span class="kw">git log -p</span>  <span class="comment"># 過去の履歴を見ると</span>
+<span class="gh-out">- password=MyR3alP@ss  ← 履歴に残る！</span>
+<span class="comment">// → 一度 push したら漏れたと考える ★★★</span>
+<span class="comment">// → パスワードは即変更が必要</span>
+
+
+<span class="comment">// ─── だから「最初から載せない」───</span>
+<span class="comment">// .gitignore で除外（Section 03）</span>
+<span class="comment">// 環境変数で注入（Section 04）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — git add . は便利だが危険、中身を確認する習慣を</div>
+    <p>機密流出の多くは <code>git add .</code>（全部追加）が原因。便利ですが、<b>意図しないファイルまで含めてしまう</b>。対策は①<code>.gitignore</code> で機密を除外（Section 03）、②<code>git status</code> で<b>add する前に中身を確認</b>する習慣。「何をコミットするか」を意識する。Vol.GH6 の<b>「1コミット1目的」</b>とも通じる、<b>コミットを丁寧に</b>の精神です。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>.gitignore の設計</h2><span class="en">GITIGNORE</span></div>
+  <p class="pattern-desc"><code>.gitignore</code> は<b>「Git に追跡させないファイル」のリスト</b>。機密情報・ビルド成果物・IDE設定などを除外します。Spring Boot プロジェクトでは<b>定番の .gitignore</b> があります。Vol.GH1 で作った簡易版を本格化します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.gitignore に書くもの</span><span class="tag-desc">機密・成果物・IDE</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 除外すべき3カテゴリ</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">CAT 1</span>
+            <div class="name">機密情報</div>
+            <div class="desc">パスワード・APIキー・<code>.env</code> など。<b>絶対に載せない</b>。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">CAT 2</span>
+            <div class="name">ビルド成果物</div>
+            <div class="desc"><code>target/</code> <code>build/</code> <code>*.class</code>。ソースから再生成可能。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">CAT 3</span>
+            <div class="name">IDE設定</div>
+            <div class="desc"><code>.idea/</code> <code>.vscode/</code>。個人環境依存。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// 記法</div>
+        <ul>
+          <li>1行1パターン</li>
+          <li><code>/</code> 末尾はディレクトリ</li>
+          <li><code>*</code> はワイルドカード</li>
+          <li><code>#</code> はコメント</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// .gitignore（Spring Boot版）</span>
+<span class="comment"># ===== 機密情報（最重要）=====</span>
+application-local.properties
+application-secret.properties
+.env
+*.key
+*.pem
+<span class="comment"># → DBパスワード・APIキーを含むファイル ★★★</span>
+
+<span class="comment"># ===== ビルド成果物 =====</span>
+target/
+build/
+*.class
+*.jar
+!*.gradle/wrapper/*.jar
+<span class="comment"># → ソースから再生成できる</span>
+
+<span class="comment"># ===== IDE 設定 =====</span>
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+<span class="comment"># → 個人環境に依存</span>
+
+<span class="comment"># ===== OS 固有 =====</span>
+.DS_Store
+Thumbs.db
+
+
+<span class="comment">// ─── 動作確認 ───</span>
+<span class="prompt">$</span> <span class="kw">git status</span>
+<span class="gh-out">Untracked files:
+  README.md
+  src/...
+# application-local.properties は
+# 表示されない（無視されている）★</span>
+
+
+<span class="comment">// ─── gitignore.io が便利 ───</span>
+<span class="comment"># https://www.toptal.com/developers</span>
+<span class="comment">#        /gitignore</span>
+<span class="comment"># 「Java, Spring, IntelliJ」等を指定すると</span>
+<span class="comment"># 定番の .gitignore を生成してくれる ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — .gitignore は「最初に」作る</div>
+    <p><code>.gitignore</code> は<b>プロジェクトの最初（Vol.GH1）に作る</b>のが鉄則。後から追加すると、<b>既にコミット済みのファイルは追跡され続ける</b>（Section 07 のハマりどころ）。本シリーズは Vol.GH1 で簡易版を作りました。<b>「機密を含むファイルを作る前に、それを .gitignore に書く」</b>順序が安全。<code>gitignore.io</code> のような<b>定番テンプレート生成サービス</b>を使うと漏れがありません。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>機密を外に出す（環境変数）</h2><span class="en">ENVIRONMENT VARIABLES</span></div>
+  <p class="pattern-desc">機密を <code>.gitignore</code> で除外するだけでなく、<b>そもそもコードに書かない</b>。<b>環境変数</b>で外から注入します。Spring Boot は環境変数を自然に読めるので、<b>「設定の見本だけ Git に、実際の値は環境変数で」</b>が定石です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">環境変数で機密を注入</span><span class="tag-desc">見本と実値を分ける</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 考え方</div>
+        <p>機密を<b>コードや設定ファイルに直書きせず</b>、<b>環境変数から読む</b>。Git には<b>「見本（ダミー値）」</b>だけ載せ、実際の値は<b>各自の環境変数</b>で。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 2つのファイル</div>
+        <ul>
+          <li><code>application.properties</code>：<b>環境変数を参照</b>する形（Gitに載せる）</li>
+          <li><code>.properties.example</code>：<b>見本</b>（ダミー値・Gitに載せる）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// メリット</div>
+        <ul>
+          <li>機密が Git に載らない</li>
+          <li>環境ごとに値を変えられる（開発/本番）</li>
+          <li>新メンバーは見本を見て設定できる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 環境変数による機密管理</span>
+<span class="comment">// ─── application.properties（Gitに載せる）───</span>
+spring.datasource.url=
+  ${DB_URL:jdbc:mysql://localhost:3306/memo_app}
+spring.datasource.username=
+  ${DB_USER:root}
+spring.datasource.password=
+  ${DB_PASSWORD}
+  <span class="comment">// ↑ 環境変数 DB_PASSWORD から読む</span>
+  <span class="comment">// ${名前:デフォルト} で既定値も指定可 ★</span>
+
+
+<span class="comment">// ─── 環境変数を設定（各自の環境）───</span>
+<span class="comment"># Mac/Linux</span>
+<span class="prompt">$</span> <span class="kw">export</span> DB_PASSWORD=<span class="str">"MyR3alP@ss"</span>
+
+<span class="comment"># Windows (PowerShell)</span>
+<span class="prompt">&gt;</span> $env:DB_PASSWORD=<span class="str">"MyR3alP@ss"</span>
+
+<span class="comment">// → 実際のパスワードは環境変数に</span>
+<span class="comment">// → Git には載らない ★★★</span>
+
+
+<span class="comment">// ─── application.properties.example ───</span>
+<span class="comment"># 見本（Gitに載せる・ダミー値）</span>
+<span class="comment"># 各自 DB_PASSWORD 環境変数を設定すること</span>
+spring.datasource.password=${DB_PASSWORD}
+<span class="comment"># 例: export DB_PASSWORD="your_password"</span>
+
+
+<span class="comment">// ─── 新メンバーの手順 ───</span>
+<span class="num">1.</span> .example を見て必要な環境変数を知る
+<span class="num">2.</span> 自分の環境変数を設定
+<span class="num">3.</span> アプリ起動
+<span class="comment">// → 機密を共有せず、各自で設定 ★★★</span>
+<span class="comment">// → READMEにも手順を記載（GitHub版Vol.5）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「設定の構造」は共有、「秘密の値」は各自</div>
+    <p>環境変数方式の本質は<b>「設定の構造（どんな項目が要るか）は共有し、秘密の値だけ各自で持つ」</b>こと。<code>.example</code> ファイルで<b>「DB_PASSWORD が必要」</b>と伝えつつ、<b>実際の値は載せない</b>。新メンバーは見本を見て自分の値を設定。これは GitHub版Vol.5 の<b>README のセットアップ手順</b>とセットで機能します。<b>「動かし方は教える、秘密は渡さない」</b>のが安全な共有です。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>Issue テンプレート</h2><span class="en">ISSUE TEMPLATE</span></div>
+  <p class="pattern-desc">テーマ②に移ります。<b>Issue テンプレート</b>は、Issue 作成時に<b>自動で雛形を表示</b>する仕組み。RDT版では<b>「ユーザーストーリー用」「バグ報告用」</b>を用意し、<b>受入条件を必ず書く</b>ことを仕組み化します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Issue テンプレートで記述を統一</span><span class="tag-desc">.github/ISSUE_TEMPLATE/</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テンプレートの効果</div>
+        <ul>
+          <li>Issue 作成時に<b>雛形が自動表示</b></li>
+          <li>「受入条件を書く」を<b>忘れない</b></li>
+          <li>誰が書いても<b>同じ構造</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 置き場所</div>
+        <p><code>.github/ISSUE_TEMPLATE/</code> に Markdown ファイルを置く。複数置くと<b>「どのテンプレートを使うか」選択肢</b>が出る。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 本シリーズの2種</div>
+        <ul>
+          <li><b>user_story.md</b>：US用（WHO/WHAT/WHY＋受入条件）</li>
+          <li><b>bug_report.md</b>：バグ用（再現手順＋期待/実際）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Issue テンプレート（RDT版）</span>
+<span class="comment">// ─── .github/ISSUE_TEMPLATE/user_story.md ───</span>
+---
+name: ユーザーストーリー
+about: 新機能の要求（US）
+labels: user-story
+---
+
+<span class="kw">## ユーザーストーリー</span>
+- **As a** （誰が）
+- **I want** （何を）
+- **so that** （なぜ）
+
+<span class="kw">## 受入条件</span>
+- [ ] AC1:
+- [ ] AC2:
+- [ ] AC3:
+
+<span class="kw">## 優先度（MoSCoW）</span>
+- [ ] Must / Should / Could / Won't
+
+<span class="comment">// → 別冊S1の要求工学がそのまま雛形に ★★★</span>
+
+
+<span class="comment">// ─── .github/ISSUE_TEMPLATE/bug_report.md ───</span>
+---
+name: バグ報告
+about: 不具合の報告
+labels: bug
+---
+
+<span class="kw">## 概要</span>
+（何が起きているか）
+
+<span class="kw">## 再現手順</span>
+1.
+2.
+
+<span class="kw">## 期待する動作</span>
+
+<span class="kw">## 実際の動作</span>
+
+<span class="kw">## 環境</span>
+- OS / ブラウザ / バージョン
+
+<span class="comment">// → バグ報告に必要な情報を漏れなく ★</span>
+<span class="comment">// → 別冊S3「バグ修正は再現テストから」に繋がる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — テンプレートが「RDTの型」を強制する</div>
+    <p>Issue テンプレートの真価は<b>「RDT版の型を仕組みで強制」</b>すること。ユーザーストーリーの Issue を作れば、<b>必ず WHO/WHAT/WHY と受入条件の欄</b>が出る。「受入条件を書き忘れる」がなくなる。これは別冊S1の<b>要求工学</b>を、運用に落とし込んだもの。<b>良い習慣を、テンプレートで自動化</b>する。人の記憶に頼らない品質維持です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>PR テンプレート</h2><span class="en">PR TEMPLATE</span></div>
+  <p class="pattern-desc"><b>PR テンプレート</b>は、PR 作成時に<b>本文の雛形を自動表示</b>。Vol.GH3 で手書きした<b>「受入条件チェックリスト＋Closes」</b>を、テンプレート化して<b>毎回自動</b>に。RDT版のPRの型を仕組みにします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">PR テンプレートで品質を揃える</span><span class="tag-desc">.github/pull_request_template.md</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 置き場所</div>
+        <p><code>.github/pull_request_template.md</code>（1ファイル）。PR 作成時に<b>本文に自動挿入</b>される。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 含める項目（Vol.GH3の型）</div>
+        <ul>
+          <li><b>概要</b>：どのUSを実装したか</li>
+          <li><b>受入条件チェックリスト</b></li>
+          <li><b>テスト結果</b></li>
+          <li><b>Closes #</b>（Issue紐付け）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 効果</div>
+        <p>Vol.GH3 で<b>手書き</b>していた内容が<b>毎回自動</b>に。「受入条件チェックを忘れる」「Closesを書き忘れる」がなくなる。</p>
+      </div>
+      <div class="code"><span class="code-head">// PR テンプレート（RDT版）</span>
+<span class="comment">// ─── .github/pull_request_template.md ───</span>
+<span class="kw">## 概要</span>
+（どのUS/Issueを実装したか）
+
+<span class="kw">## 受入条件</span>
+- [ ] AC1:
+- [ ] AC2:
+- [ ] AC3:
+
+<span class="kw">## テスト</span>
+- [ ] 単体テスト追加
+- [ ] 結合テスト追加
+- [ ] 全テスト green
+
+<span class="kw">## セルフレビュー</span>
+- [ ] Files changed を確認した
+- [ ] 設計原則を満たす（SRP/命名）
+- [ ] 機密情報を含まない
+
+<span class="kw">## 関連 Issue</span>
+Closes #
+
+
+<span class="comment">// ─── 効果：PR作成画面 ───</span>
+<div class="gh-mock">
+<span class="gh-bar">Open a pull request</span>
+タイトル: feat(search): 検索を実装
+
+本文（テンプレートが自動挿入）:
+## 概要
+US-004 を実装...
+## 受入条件
+- [x] AC1: キーワード検索
+- [x] AC2: カテゴリ絞り込み
+...
+## セルフレビュー
+- [x] 機密情報を含まない ★
+Closes #4
+</div>
+
+<span class="comment">// → Vol.GH3 の手書きが自動に ★★★</span>
+<span class="comment">// → 受入条件・Closes・機密チェックを</span>
+<span class="comment">//   毎回忘れず実施できる</span>
+
+
+<span class="comment">// ─── 「機密チェック」を入れる意味 ───</span>
+<span class="comment">// PR時に「機密を含まないか」を</span>
+<span class="comment">// チェック項目に → 流出の最終防壁 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — PRテンプレートに「機密チェック」を入れる</div>
+    <p>PR テンプレートに<b>「機密情報を含まない」のチェック項目</b>を入れると、<b>マージ前の最終防壁</b>になります。Section 02 の流出事故を、<b>「PR で必ず確認する」仕組み</b>で防ぐ。これは Vol.GH3 のセルフレビュー＋Vol.GH7 のシークレット管理の<b>合わせ技</b>。テンプレートは<b>「チェックすべきこと」を毎回思い出させる仕組み</b>。RDT版の品質ゲートが、また一つ強化されます。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>ハマりどころ＋NEXT STEP</h2><span class="en">PITFALLS &amp; NEXT</span></div>
+  <p class="pattern-desc">シークレット管理・テンプレートで陥りやすい地雷を5つ。<b>★★★ 印は特に重大</b>。機密関連は事故が深刻なので要注意。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.GH7 ハマりどころ 5選</span><span class="tag-desc">機密事故は深刻</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① .gitignore 追加前にコミット済み ★★★</b></p>
+        <ul>
+          <li>既に追跡中のファイルは .gitignore で消えない</li>
+          <li>対処：<code>git rm --cached ファイル</code> で追跡解除</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② push 済み機密を「消せばOK」と思う ★★★</b></p>
+        <ul>
+          <li>履歴に残る＋既に見られた可能性</li>
+          <li>対処：<b>パスワード・キーを即変更（無効化）</b>。これが最優先</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ テンプレートが表示されない</b></p>
+        <ul>
+          <li>置き場所・ファイル名の誤り</li>
+          <li>対処：<code>.github/ISSUE_TEMPLATE/</code>、<code>.github/pull_request_template.md</code> を正確に</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ YAML フロントマターの崩れ</b></p>
+        <ul>
+          <li>Issue テンプレートの <code>---</code> 部分のインデントミス</li>
+          <li>対処：name/about/labels の記法を守る</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ .example を更新し忘れる</b></p>
+        <ul>
+          <li>設定項目が増えたのに見本が古い</li>
+          <li>対処：設定追加時に .example も更新（Doc as Code）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 主要な対処</span>
+<span class="comment">// ─── ① 既にコミット済みの除外 ───</span>
+<span class="comment"># .gitignore に追加しただけでは消えない</span>
+<span class="prompt">$</span> <span class="kw">git rm --cached</span>
+       application-local.properties
+<span class="comment"># → Git の追跡から外す（ローカルは残る）</span>
+<span class="prompt">$</span> <span class="kw">git commit -m</span>
+       <span class="str">"chore: 機密ファイルを追跡から除外"</span>
+<span class="comment">// → 以降は .gitignore で無視される ★</span>
+
+
+<span class="comment">// ─── ② push 済み機密の対応（最重要）───</span>
+<span class="comment"># もし機密を push してしまったら：</span>
+<span class="num">1.</span> <span class="kw">パスワード/キーを即変更（無効化）</span> ★★★
+   <span class="comment"># これが最優先。履歴削除より先</span>
+<span class="num">2.</span> .gitignore に追加＋追跡解除
+<span class="num">3.</span> 必要なら履歴クリーン（高度）
+
+<span class="comment"># 「消したから大丈夫」は通用しない</span>
+<span class="comment"># → 漏れた前提で、値そのものを変える ★★★</span>
+
+
+<span class="comment">// ─── テンプレート配置の確認 ───</span>
+.github/
+├ ISSUE_TEMPLATE/
+│   ├ user_story.md   ✓
+│   └ bug_report.md   ✓
+└ pull_request_template.md  ✓
+<span class="comment"># → 正確なパス・ファイル名が必須 ★</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">GH7 達成チェック</span><span class="tag-desc">安全と統一の仕組み</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェック</div>
+        <ul class="check-list">
+          <li>機密流出が取り返しのつかない事故と理解</li>
+          <li>.gitignore で機密・成果物・IDE設定を除外できる</li>
+          <li>環境変数で機密を注入できる</li>
+          <li>.example で設定構造だけ共有できる</li>
+          <li>Issue テンプレート（US/バグ）を作れる</li>
+          <li>PR テンプレートを作れる</li>
+          <li>テンプレートに機密チェックを入れた</li>
+          <li>push済み機密は「値を変える」が最優先と分かる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH7 で手に入れた力</span>
+✓ <span class="str">"機密を Git に載せない仕組み"</span>
+
+✓ <span class="str">".gitignore で除外"</span>
+
+✓ <span class="str">"環境変数で機密を注入"</span>
+
+✓ <span class="str">"Issue/PRテンプレートで記述統一"</span>
+
+✓ <span class="str">"RDTの型をテンプレートで強制"</span>
+
+✓ <span class="str">"流出時は値の変更が最優先"</span>
+
+
+<span class="comment">// → 安全と統一が仕組みで完成 ★★★</span>
+<span class="comment">// → 公開リポジトリ・チーム開発に耐える</span>
+
+<span class="comment">// 次回 Vol.GH8：</span>
+<span class="comment">//   GitHub Actions で CI（自動テスト）</span>
+<span class="comment">//   push/PR でテストを自動実行</span>
+<span class="comment">//   ブランチ保護にステータスチェック追加</span>
+<span class="comment">//   本編Vol.9 以降と連動</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.GH8 へ</div>
+    <p>Vol.GH7 で<b>「機密を守る・記述を統一する」</b>仕組みが整いました。リポジトリが公開・チーム開発に耐える状態です。次は Vol.GH8「<b>GitHub Actions で CI（継続的インテグレーション）編</b>」。<b>push や PR のたびにテストを自動実行</b>し、Vol.GH6 のブランチ保護に<b>「テスト通過必須」</b>を追加します。これでRDT版の<b>テスト（別冊S3）が自動化</b>され、品質ゲートが完成。本編Vol.8「全文検索」で増えたテストも自動で回ります。<b>本編Vol.8 → Vol.GH8 の順</b>がおすすめです。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>GH.07 / 14 ── SECRETS &amp; TEMPLATES（GitHub版）</span>
+</footer>
+
+</body>
+</html>

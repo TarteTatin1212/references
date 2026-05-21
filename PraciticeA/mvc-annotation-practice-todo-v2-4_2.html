@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.4 Service層を導入して責務を分けよう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3d2817;
+  --paper:#f4ecd8;
+  --paper-2:#e8dcc0;
+  --accent:#b67d3a;
+  --accent-2:#d4a460;
+  --accent-3:#6b4423;
+  --accent-4:#2d5f3f;
+  --muted:#7a6952;
+  --line:#c9b896;
+  --code-bg:#2a1f15;
+  --code-text:#f0e4cc;
+  --panel-bg:#faf3e0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✎';position:absolute;right:0px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid #c43;padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--accent-3);border-bottom-color:var(--accent-3)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}
+
+/* WHAT/HOW/WHY 3カラム */
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+
+/* 用語カード */
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+
+/* この巻で作るパッケージ・ファイル一覧 */
+.file-list{background:#fff;border:1px solid var(--line);padding:0;margin:14px 0;overflow:hidden}
+.file-list-header{background:var(--accent);color:var(--paper);font-family:'Shippori Mincho',serif;font-weight:700;padding:10px 18px;letter-spacing:0.05em;font-size:14px}
+.file-list-row{display:grid;grid-template-columns:80px 110px 1fr 110px;gap:14px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13.5px}
+.file-list-row:last-child{border-bottom:none}
+.file-list-row.is-new{background:rgba(45,95,63,0.06)}
+.file-list-row.is-edit{background:rgba(168,114,51,0.08)}
+.file-status{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;padding:3px 10px;border-radius:3px;text-align:center}
+.file-status.new{background:var(--accent-4);color:var(--paper)}
+.file-status.edit{background:var(--accent);color:var(--paper)}
+.file-type{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);letter-spacing:0.05em}
+.file-path{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink)}
+.file-section{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--accent-3);text-align:right}
+
+/* ハマりどころカード */
+.pitfall{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:12px 0}
+.pitfall-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:8px}
+.pitfall-block{font-size:13px;padding:8px 12px;margin:6px 0;border-left:3px solid}
+.pitfall-symptom{background:rgba(196,67,51,0.07);border-left-color:#c43}
+.pitfall-cause{background:rgba(168,114,51,0.10);border-left-color:var(--accent)}
+.pitfall-fix{background:rgba(45,95,63,0.08);border-left-color:var(--accent-4)}
+.pitfall-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;font-weight:700;margin-right:6px;display:inline-block;min-width:60px}
+
+.tip{margin:18px 0;padding:14px 20px;background:rgba(182,125,58,0.10);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+
+/* 手順ガイド */
+.step-guide{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0}
+.step-guide-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+.step-guide ol{list-style:none;counter-reset:s;margin:0}
+.step-guide li{counter-increment:s;padding:6px 0 6px 32px;position:relative;font-size:13.5px;line-height:1.7}
+.step-guide li::before{content:counter(s);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+/* チェックリスト */
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+
+/* 図解用 */
+.flow-diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;background:#fff;border:1px solid var(--line);padding:14px 18px;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+/* キーボードショートカット */
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 8px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600}
+.kbd{display:inline-block;background:var(--paper-2);border:1px solid var(--line);padding:0 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;border-radius:3px;color:var(--accent-3)}
+.menu{display:inline-block;background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--accent-3);border-radius:2px}
+
+/* NG/OK 対比 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.compare-box{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:13.5px}
+.compare-ng{border-top:3px solid #c43}
+.compare-ok{border-top:3px solid var(--accent-4)}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px}
+.compare-ng .compare-label{color:#c43}
+.compare-ok .compare-label{color:var(--accent-4)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .whw{grid-template-columns:1fr}
+  .compare{grid-template-columns:1fr}
+  .term-grid{grid-template-columns:1fr}
+  .file-list-row{grid-template-columns:1fr;gap:4px}
+  .file-section{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.04 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <h1>Service層を導入して<br>責務を分けよう</h1>
+  <p class="subtitle">INTRODUCE THE SERVICE LAYER</p>
+  <p class="lead">Vol.3で<b>2層構成</b>（Controller → Mapper）の一覧画面が動きました。Vol.4では間に<b>Service層</b>を挟み込み、業務開発の標準である<b>3層アーキテクチャ</b>へ進化させます。<b>機能は何も増えません</b>── 一覧画面の見た目も動きも同じ。けれど内部構造は業務コードと同じ形になります。今は「動きは同じなのに構造を変える意味」がピンと来なくても大丈夫。<b>Vol.5以降の登録・編集機能でService層が真価を発揮する</b>布石を打つ巻です。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">💡 Vol.4の前提</div>
+    <p style="font-size:13.5px">Vol.3を完走している前提で進めます。<code style="font-family:'JetBrains Mono'">/tasks</code>で表組みのTODO一覧が表示される状態がスタート地点。もしまだVol.3でつまずいているなら、Vol.3本編とエラーハンドリング編で先に解消してください。<b>「動く2層構成」</b>が手元にあって初めてVol.4の意味が見えます。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.04</div>
+  <ul>
+    <li><a href="#map">01 この巻の地図</a></li>
+    <li><a href="#file-list">02 この巻で作るパッケージ・ファイル一覧</a></li>
+    <li><a href="#term-service-layer">03 用語カード：Service層</a></li>
+    <li><a href="#term-service-anno">04 用語カード：@Service</a></li>
+    <li><a href="#term-transactional">05 用語カード：@Transactional</a></li>
+    <li><a href="#create-service">06 serviceパッケージとTaskServiceクラスを作る</a></li>
+    <li><a href="#rewrite-controller">07 TaskControllerを書き換える</a></li>
+    <li><a href="#flow">08 3層構成での処理フロー</a></li>
+    <li><a href="#runcheck">09 ブラウザで動かして確認</a></li>
+    <li><a href="#pitfalls">10 ハマりどころ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="map">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻の地図</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">手を動かす前に、<b>何を・どう・なぜ作るか</b>を整理します。深い「なぜ」は<b>別冊（Vol.4 ADD）</b>で扱うので、本編では<b>「実装の見取り図」</b>として読んでください。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を作るか</div>
+      <div class="whw-desc">
+        <b>Service層</b>（<code style="font-family:'JetBrains Mono'">TaskService</code>クラス）を新設。<br>
+        <b>Controller → Service → Mapper</b>の3層構成にリファクタリング。<br>
+        画面の見た目・動きは<b>Vol.3と同じ</b>。
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう作るか</div>
+      <div class="whw-desc">
+        ① <code style="font-family:'JetBrains Mono'">service</code>パッケージを作る<br>
+        ② <code style="font-family:'JetBrains Mono'">TaskService</code>クラスを作る（<b>@Service</b> + <b>@Transactional</b>）<br>
+        ③ <code style="font-family:'JetBrains Mono'">TaskController</code>を書き換え（<b>mapper直接 → service経由</b>）<br>
+        ④ ブラウザで<code style="font-family:'JetBrains Mono'">/tasks</code>を開いて<b>同じ結果</b>を確認
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜそうするか</div>
+      <div class="whw-desc">
+        <b>業務開発の標準形</b>は3層構成（Controller / Service / Mapper）。<br>
+        Vol.5以降で<b>登録・更新・削除・バリデーション・例外処理</b>を入れる時、<b>業務ロジックの置き場所</b>が必要になります。<br>
+        Vol.4は<b>その「置き場所」を先に用意</b>する巻。
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol-4-transformation</span>
+      <span class="tag-desc">Vol.3末 → Vol.4末への進化</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 構造の変化</div>
+<div class="flow-diagram" style="border:none;padding:0">【Vol.3末】 2層構成
+
+  [Browser]
+     ↓
+  TaskController
+     ↓ mapper.findAll()
+  TaskMapper
+     ↓ SQL
+  MySQL
+
+  Controller が Mapper を
+  直接呼んでいる
+
+
+【Vol.4末】 3層構成 ← ★今回★
+
+  [Browser]
+     ↓
+  TaskController
+     ↓ service.findAll()
+  TaskService           ← ★NEW★
+     ↓ mapper.findAll()
+  TaskMapper
+     ↓ SQL
+  MySQL
+
+  間に Service が入った
+  業務開発の標準形</div>
+      </div>
+      <div class="code"><span class="code-head">// この巻でやること（4ステップ）</span>
+
+<span class="comment">// ① serviceパッケージ作成</span>
+com.example.todo.service
+
+
+<span class="comment">// ② TaskService作成</span>
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>(readOnly = <span class="kw">true</span>)
+<span class="kw">public class</span> <span class="type">TaskService</span> {
+  <span class="kw">private final</span> <span class="type">TaskMapper</span> taskMapper;
+
+  <span class="kw">public</span> <span class="fn">TaskService</span>(...) {...}
+
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>() {
+    <span class="kw">return</span> taskMapper.<span class="fn">findAll</span>();
+  }
+}
+
+
+<span class="comment">// ③ TaskController書き換え</span>
+<span class="comment">// 変更前</span>
+<span class="kw">private final</span> <span class="type">TaskMapper</span> taskMapper;
+<span class="comment">// 変更後</span>
+<span class="kw">private final</span> <span class="type">TaskService</span> taskService;
+
+<span class="comment">// 呼び出しも変更</span>
+<span class="comment">// 変更前: taskMapper.findAll()</span>
+<span class="comment">// 変更後: taskService.findAll()</span>
+
+
+<span class="comment">// ④ ブラウザ確認</span>
+<span class="comment">// /tasks がVol.3と同じ表示</span>
+<span class="comment">// （内部だけ進化、見た目は同じ）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「動きは同じ、構造は違う」</div>
+    <p>Vol.4は<b>「リファクタリング」</b>の体験です。外から見れば何も変わらない（同じURL、同じ画面）── けれど中身は業務標準形に進化。<b>「動きを変えずに構造を改善する」</b>は実務でも頻出する作業で、Vol.4はその<b>最小サンプル</b>です。「<b>なぜわざわざ？</b>」の本格的な答えは別冊で。</p>
+  </div>
+</section>
+
+<section id="file-list">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>この巻で作るパッケージ・ファイル一覧</h2>
+    <span class="en">FILES TO CREATE / MODIFY</span>
+  </div>
+  <p class="pattern-desc">v2リニューアルの<b>新セクション</b>です。各巻の冒頭で<b>「何を作って」「何を直すか」</b>を一覧にします。手を動かす前に作業範囲が見えるので、迷子になりません。</p>
+
+  <div class="file-list">
+    <div class="file-list-header">📋 Vol.4 で扱うパッケージ・ファイル</div>
+
+    <div class="file-list-row is-new">
+      <span class="file-status new">🆕 NEW</span>
+      <span class="file-type">パッケージ</span>
+      <span class="file-path">com.example.todo.<b>service</b></span>
+      <span class="file-section">→ Section 06</span>
+    </div>
+
+    <div class="file-list-row is-new">
+      <span class="file-status new">🆕 NEW</span>
+      <span class="file-type">クラス</span>
+      <span class="file-path">com.example.todo.service.<b>TaskService.java</b></span>
+      <span class="file-section">→ Section 06</span>
+    </div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">クラス</span>
+      <span class="file-path">com.example.todo.controller.<b>TaskController.java</b></span>
+      <span class="file-section">→ Section 07</span>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">project-structure</span>
+      <span class="tag-desc">Vol.4完了時のプロジェクト構造</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 既存と新規の関係</div>
+        <p style="font-size:13.5px;line-height:1.85"><b>新規追加</b>はパッケージ1つとクラス1つ。<br>
+        <b>修正</b>はTaskController.javaの内部のみ（インポート文と内部の変数名が変わる）。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>触らないファイル</b>：</p>
+        <ul style="font-size:13px;padding-left:24px;margin-top:6px;line-height:1.85">
+          <li><code>TodoApplication.java</code> ── 起動クラス</li>
+          <li><code>Task.java</code> ── エンティティ</li>
+          <li><code>TaskMapper.java</code> ── Mapper（Vol.3で作成）</li>
+          <li><code>HelloController.java</code> ── 動作確認用</li>
+          <li><code>templates/tasks/list.html</code> ── Thymeleafテンプレート</li>
+          <li><code>application.properties</code> ── 設定</li>
+          <li><code>pom.xml</code> ── 依存関係</li>
+        </ul>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>：Service層導入は<b>1ファイル新規 + 1ファイル修正</b>で済む小さな作業です。Vol.5以降に出てくる<b>業務ロジック</b>がここに集まっていく形になります。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.4完了時のプロジェクト構造</span>
+
+todo/
+├ pom.xml
+├ src/main/java/com/example/todo/
+│  ├ TodoApplication.java
+│  ├ controller/
+│  │  ├ HelloController.java
+│  │  └ <b>TaskController.java</b>         <span class="comment">// ✏️修正</span>
+│  ├ entity/
+│  │  └ Task.java
+│  ├ mapper/
+│  │  └ TaskMapper.java
+│  └ <b>service/</b>                       <span class="comment">// 🆕新規</span>
+│     └ <b>TaskService.java</b>           <span class="comment">// 🆕新規</span>
+└ src/main/resources/
+   ├ application.properties
+   └ templates/
+      └ tasks/
+         └ list.html</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── このセクションの役割</div>
+    <p>v2リニューアルで<b>Vol.4から標準化</b>されたセクションです。<b>「何を作るか」</b>が冒頭で見えると、手順を進める時に<b>「今どこを作っているか」</b>を見失わずに済みます。学習量が増えるVol.5以降ほど、この一覧が頼りになります。</p>
+  </div>
+</section>
+
+<section id="term-service-layer">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>用語カード：Service層</h2>
+    <span class="en">TERM CARD — SERVICE LAYER</span>
+  </div>
+  <p class="pattern-desc">本日の主役<b>Service層</b>。深い「なぜ」は別冊に譲り、本編では<b>「役割と居場所」</b>を最小限に押さえます。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #01</span>
+    <div class="term-card-title">Service層</div>
+    <div class="term-card-sub">業務ロジックを置く層</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd><b>業務ロジック（ビジネスロジック）</b>を置くための層。Controllerと Mapper の間に位置し、両者を<b>仲介</b>する。</dd>
+      <dt>構造</dt>
+      <dd>普通のクラスに<code>@Service</code>を付ける。フィールドにMapperを持ち、コンストラクタで受け取る。メソッドで<b>「業務上の操作」</b>を提供する（例：<code>findAll()</code>、<code>register(Task)</code>等）。</dd>
+      <dt>対比</dt>
+      <dd><b>Controller</b> ── HTTPの世界（URL、HTTPメソッド、画面）<br>
+        <b>Service</b> ── <b>業務の世界</b>（タスクを取得する／登録する／検証する等）<br>
+        <b>Mapper</b> ── DBの世界（SQL、テーブル）<br>
+        Serviceは<b>「業務語彙でメソッドを並べる場所」</b>。
+      </dd>
+      <dt>嬉しさ</dt>
+      <dd>① <b>業務ロジックの居場所が明確</b>になる<br>
+        ② Vol.5以降の<b>登録・更新・バリデーション</b>を書く時にここに集まる<br>
+        ③ <b>テストしやすい</b>（Controllerを通さずService単体で検証可能）<br>
+        ④ <b>業界標準</b>の構造になる
+      </dd>
+    </dl>
+  </div>
+
+  <div class="compare">
+    <div class="compare-box compare-ng" style="border-top-color:var(--accent-2)">
+      <div class="compare-label" style="color:var(--accent-2)">◯ Vol.3まで：Service無し</div>
+      <pre style="font-family:'JetBrains Mono';font-size:12px;line-height:1.65;margin-top:6px">Controller → Mapper → DB
+
+・URLを受ける場所(Controller)が
+　Mapperを直接呼ぶ
+・業務ロジックを書く場所がない
+・登録機能を作る時、「重複チェック」
+　などのロジックを置く場所に困る</pre>
+    </div>
+    <div class="compare-box compare-ok">
+      <div class="compare-label">◎ Vol.4以降：Service有り</div>
+      <pre style="font-family:'JetBrains Mono';font-size:12px;line-height:1.65;margin-top:6px">Controller → Service → Mapper → DB
+
+・業務語彙でService.find(),
+　Service.register() のメソッドを並べる
+・複雑な処理(重複チェック等)も
+　Serviceに自然に書ける
+・業界標準の形になる</pre>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>今はService層が薄い（mapperを呼ぶだけ）</b>」と感じても問題ありません。Vol.5以降、登録機能や検証ロジックが入ると、Serviceの<b>中身が太っていく</b>のが体感できます。<b>「先に居場所を作っておく」</b>のが今巻の主旨です。深い理由は別冊で。</p>
+  </div>
+</section>
+
+<section id="term-service-anno">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>用語カード：@Service</h2>
+    <span class="en">TERM CARD — @SERVICE</span>
+  </div>
+  <p class="pattern-desc">Service層クラスに付ける<b>アノテーション</b>。<code style="font-family:'JetBrains Mono'">@Controller</code>や<code style="font-family:'JetBrains Mono'">@Mapper</code>と同じ仲間で、Springに<b>「これはService層のBeanです」</b>と伝える目印です。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #02</span>
+    <div class="term-card-title">@Service</div>
+    <div class="term-card-sub">「これはService層」をSpringに宣言</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>Springのアノテーション。クラスに付けると<b>「Service層のBeanとしてDIコンテナに登録せよ」</b>とSpringに命令する。</dd>
+      <dt>結果</dt>
+      <dd>起動時、Springが<code>@Service</code>を見つけて<b>インスタンスを生成</b>し<b>DIコンテナに登録</b>。他のクラス（Controller等）がコンストラクタで受け取れるようになる。</dd>
+      <dt>仲間</dt>
+      <dd><code>@Controller</code> ── Web受付<br>
+        <code>@RestController</code> ── REST API受付<br>
+        <code>@Service</code> ── 業務ロジック<br>
+        <code>@Repository</code> ── DBアクセス<br>
+        <code>@Component</code> ── その他のBean<br>
+        <b>全部同じ仲間</b>（DIコンテナに登録される）だが、<b>役割を明示する</b>ため使い分ける。
+      </dd>
+      <dt>嬉しさ</dt>
+      <dd>① クラスを見ただけで<b>役割が分かる</b><br>
+        ② 将来的に<b>役割別の処理</b>（ロギング・例外変換等）を一括で適用しやすい<br>
+        ③ 業務標準で<b>誰もがこのパターン</b>で書く
+      </dd>
+    </dl>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><code>@Service</code>と<code>@Component</code>は<b>機能的にはほぼ同じ</b>です。「<code>@Service</code>を使う＝Service層」という<b>意味的なラベル</b>として扱われます。Mapperの<code>@Mapper</code>は特殊（MyBatisが動的プロキシで実装を作る）ですが、<code>@Service</code>は<b>普通のクラスをDIコンテナに登録するだけ</b>。シンプルです。</p>
+  </div>
+</section>
+
+<section id="term-transactional">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>用語カード：@Transactional</h2>
+    <span class="en">TERM CARD — @TRANSACTIONAL</span>
+  </div>
+  <p class="pattern-desc"><b>トランザクション境界</b>を宣言するアノテーション。Vol.4の段階では<b>読み取り専用</b>なので「ありがたみ」は薄いですが、Vol.5以降の<b>登録・更新</b>で真価を発揮します。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #03</span>
+    <div class="term-card-title">@Transactional</div>
+    <div class="term-card-sub">トランザクション境界の宣言</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>メソッド（またはクラス）に付けると、その<b>処理全体を1つのトランザクション</b>として扱う。途中で例外が起きたら<b>自動的にロールバック</b>（DB変更を巻き戻し）。</dd>
+      <dt>構造</dt>
+      <dd>クラスに付けると<b>全メソッドに適用</b>。メソッドに付けると<b>そのメソッドだけ</b>。属性で挙動を変えられる：<br>
+        <code>readOnly = true</code> ── 読み取り専用（軽量モード）<br>
+        <code>readOnly = false</code>（デフォルト）── 読み書き両用
+      </dd>
+      <dt>嬉しさ</dt>
+      <dd>① <b>「途中で失敗したらDBは元の状態」</b>が保証される<br>
+        ② 複数のINSERT/UPDATEを<b>全部成功 or 全部失敗</b>にできる（原子性）<br>
+        ③ アノテーション1個で済む（自分でcommit/rollbackを書かなくて良い）
+      </dd>
+      <dt>Vol.4での使い方</dt>
+      <dd>クラスに<code>@Transactional(readOnly = true)</code>を付け、<b>クラス全体を読み取り専用トランザクション</b>にする。Vol.5で書き込みメソッドが増えた時、そのメソッドだけ<code>@Transactional</code>（書き込み有効）に上書きする<b>定番パターン</b>。</dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-readonly</span>
+      <span class="tag-desc">なぜ最初はreadOnly = true？</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// readOnly = true の意味</div>
+        <p style="font-size:13.5px;line-height:1.85"><code>readOnly = true</code>は<b>「このメソッドはDBを変更しません」</b>とフレームワークに伝える宣言です。これによりSpring/MyBatis/JDBCドライバが<b>軽量モード</b>で動き、<b>余計な書き込み準備をスキップ</b>します。</p>
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>業務開発の定番パターン</b>：</p>
+        <ol style="font-size:13.5px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li>クラスに<code>@Transactional(readOnly = true)</code>を付ける</li>
+          <li>書き込みメソッドだけ<code>@Transactional</code>（readOnly無し）で上書き</li>
+        </ol>
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px">この形なら<b>「うっかり読み取りメソッドからDBを書き換える」事故</b>を防げます。書き込みメソッドだけ明示的にreadOnly=falseになるので、開発者が<b>「ここは書き込み」</b>と意識できる。</p>
+      </div>
+      <div class="code"><span class="code-head">// Vol.4: 全メソッドが読み取り</span>
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>(readOnly = <span class="kw">true</span>)
+<span class="kw">public class</span> <span class="type">TaskService</span> {
+
+  <span class="comment">// 読み取り専用モード</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>() {
+    <span class="kw">return</span> taskMapper.<span class="fn">findAll</span>();
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// Vol.5以降のイメージ（先取り）</span>
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>(readOnly = <span class="kw">true</span>)
+<span class="kw">public class</span> <span class="type">TaskService</span> {
+
+  <span class="comment">// 読み取り（クラス指定が効く）</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>() { ... }
+
+  <span class="comment">// 書き込み（メソッド指定で上書き）</span>
+  <span class="ann">@Transactional</span>
+  <span class="kw">public void</span> <span class="fn">register</span>(<span class="type">Task</span> task) {
+    taskMapper.<span class="fn">insert</span>(task);
+  }
+}
+
+<span class="comment">// この「全体readOnly + 必要箇所書き込み」</span>
+<span class="comment">// が業務の鉄板パターン</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>Vol.4で<code>@Transactional</code>を付ける本当のメリットは<b>Vol.5以降に表れます</b>。今は「<b>とりあえずService層は@Transactionalを付けるもの</b>」と覚えれば十分です。深い動作原理（プロキシによる自動コミット/ロールバック）は別冊で扱います。</p>
+  </div>
+</section>
+
+<section id="create-service">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>serviceパッケージとTaskServiceクラスを作る</h2>
+    <span class="en">CREATE SERVICE PACKAGE &amp; CLASS</span>
+  </div>
+  <p class="pattern-desc">いよいよコードを書きます。新パッケージ作成 → クラス作成 → コード入力の<b>3ステップ</b>で進めます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">step-by-step</span>
+      <span class="tag-desc">具体手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">A. serviceパッケージを作る</div>
+          <ol>
+            <li><span class="menu">パッケージ・エクスプローラー</span>で <code>src/main/java</code> &gt; <code>com.example.todo</code> を右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">パッケージ</span></li>
+            <li>名前に <code>com.example.todo.service</code> と入力</li>
+            <li><span class="menu">完了(F)</span> をクリック</li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">B. TaskServiceクラスを作る</div>
+          <ol>
+            <li>作った <code>service</code> パッケージを右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">クラス</span>（<b>インターフェイスではない</b>）</li>
+            <li>名前に <code>TaskService</code> と入力</li>
+            <li><span class="menu">完了(F)</span> をクリック</li>
+            <li>右のコードをコピペ</li>
+            <li><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> でimport補完</li>
+            <li><b>★候補ダイアログが出たら必ずパッケージ名を確認</b>（Vol.3 ADDの教訓）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <div style="background:rgba(196,67,51,0.08);padding:10px 14px;margin-top:10px;font-size:13px;border-left:3px solid #c43">
+          <b>⚠ import確認ポイント</b>：<code>@Service</code>は<code>org.springframework.stereotype.Service</code>、<code>@Transactional</code>は<code>org.springframework.transaction.annotation.Transactional</code>を選ぶこと。<code>jakarta.transaction.Transactional</code>は<b>別物</b>なので選ばない。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// src/main/java/com/example/todo/service/TaskService.java</span>
+
+<span class="kw">package</span> com.example.todo.service;
+
+<span class="kw">import</span> java.util.List;
+
+<span class="kw">import</span> org.springframework.stereotype.Service;
+<span class="kw">import</span> org.springframework.transaction
+       .annotation.Transactional;
+
+<span class="kw">import</span> com.example.todo.entity.Task;
+<span class="kw">import</span> com.example.todo.mapper.TaskMapper;
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>(readOnly = <span class="kw">true</span>)
+<span class="kw">public class</span> <span class="type">TaskService</span> {
+
+  <span class="kw">private final</span> <span class="type">TaskMapper</span> taskMapper;
+
+  <span class="comment">// コンストラクタ注入（Vol.3と同じ作法）</span>
+  <span class="kw">public</span> <span class="fn">TaskService</span>(<span class="type">TaskMapper</span> taskMapper) {
+    <span class="kw">this</span>.taskMapper = taskMapper;
+  }
+
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>() {
+    <span class="kw">return</span> taskMapper.<span class="fn">findAll</span>();
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// 構造を読み解く</span>
+
+<span class="comment">// ① クラス宣言</span>
+<span class="ann">@Service</span>             <span class="comment">// DI登録 = Service層</span>
+<span class="ann">@Transactional</span>(...) <span class="comment">// 全メソッドが読み取り</span>
+<span class="kw">public class</span> <span class="type">TaskService</span> { ... }
+
+<span class="comment">// ② 依存（Mapper）の保持</span>
+<span class="kw">private final</span> <span class="type">TaskMapper</span> taskMapper;
+<span class="comment">// final ＝ 後から差し替え不可</span>
+
+<span class="comment">// ③ コンストラクタで受け取り</span>
+<span class="kw">public</span> <span class="fn">TaskService</span>(<span class="type">TaskMapper</span> tm) {
+  <span class="kw">this</span>.taskMapper = tm;
+}
+<span class="comment">// Vol.3のControllerと全く同じ作法</span>
+
+<span class="comment">// ④ 業務メソッド</span>
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>() {
+  <span class="kw">return</span> taskMapper.<span class="fn">findAll</span>();
+}
+<span class="comment">// 今は単に委譲するだけ</span>
+<span class="comment">// Vol.5以降で「業務ロジック」が入る</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「Vol.3と同じ作法」</div>
+    <p>TaskServiceの構造（<b>final フィールド + コンストラクタ注入</b>）は、Vol.3のTaskControllerと<b>全く同じ作法</b>です。これがSpringの<b>DI（依存注入）の基本テンプレート</b>── 一度覚えれば、Controller、Service、Mapper、その他あらゆるBean間の依存関係が同じ書き方で組めます。<b>パターンの繰り返し</b>こそが業務開発の基礎体力です。</p>
+  </div>
+</section>
+
+<section id="rewrite-controller">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>TaskControllerを書き換える</h2>
+    <span class="en">REWRITE TASKCONTROLLER</span>
+  </div>
+  <p class="pattern-desc">Service層ができたので、Controllerを<b>「mapper直接呼び出し」から「service経由」</b>に切り替えます。変更点は<b>4箇所</b>だけ。新規ファイル作成は不要です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">before-after</span>
+      <span class="tag-desc">Vol.3 と Vol.4 の比較</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4箇所の変更点</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">変更内容</div>
+          <ol>
+            <li><b>import文</b>：<code>TaskMapper</code> → <code>TaskService</code></li>
+            <li><b>フィールドの型</b>：<code>TaskMapper</code> → <code>TaskService</code></li>
+            <li><b>コンストラクタの引数</b>：<code>TaskMapper</code> → <code>TaskService</code></li>
+            <li><b>メソッド内の呼び出し</b>：<code>taskMapper.findAll()</code> → <code>taskService.findAll()</code></li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>変更しない箇所</b>：</p>
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><code>@Controller</code> ← そのまま</li>
+          <li><code>@GetMapping("/tasks")</code> ← そのまま</li>
+          <li><code>model.addAttribute()</code> ← そのまま</li>
+          <li><code>return "tasks/list"</code> ← そのまま</li>
+        </ul>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>：URLや返すテンプレートは何も変えません。<b>「内部で誰を呼んでいるか」だけ</b>を差し替える、まさに<b>リファクタリング</b>の典型例です。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 修正前（Vol.3のTaskController.java）</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.springframework.stereotype
+       .Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind
+       .annotation.GetMapping;
+<span class="kw">import</span> com.example.todo.entity.Task;
+<span class="kw">import</span> com.example.todo.mapper.<span class="type">TaskMapper</span>;  <span class="comment">// ←</span>
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">TaskController</span> {
+
+  <span class="kw">private final</span> <span class="type">TaskMapper</span> taskMapper;  <span class="comment">// ←</span>
+
+  <span class="kw">public</span> <span class="fn">TaskController</span>(
+      <span class="type">TaskMapper</span> taskMapper) {  <span class="comment">// ←</span>
+    <span class="kw">this</span>.taskMapper = taskMapper;
+  }
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> model) {
+    <span class="type">List</span>&lt;<span class="type">Task</span>&gt; tasks =
+      taskMapper.<span class="fn">findAll</span>();  <span class="comment">// ←</span>
+    model.<span class="fn">addAttribute</span>(<span class="str">"tasks"</span>, tasks);
+    <span class="kw">return</span> <span class="str">"tasks/list"</span>;
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// 修正後（Vol.4のTaskController.java）</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.springframework.stereotype
+       .Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind
+       .annotation.GetMapping;
+<span class="kw">import</span> com.example.todo.entity.Task;
+<span class="kw">import</span> com.example.todo.service.<span class="type">TaskService</span>; <span class="comment">// ★変更</span>
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">TaskController</span> {
+
+  <span class="kw">private final</span> <span class="type">TaskService</span> taskService; <span class="comment">// ★変更</span>
+
+  <span class="kw">public</span> <span class="fn">TaskController</span>(
+      <span class="type">TaskService</span> taskService) { <span class="comment">// ★変更</span>
+    <span class="kw">this</span>.taskService = taskService;
+  }
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> model) {
+    <span class="type">List</span>&lt;<span class="type">Task</span>&gt; tasks =
+      taskService.<span class="fn">findAll</span>();  <span class="comment">// ★変更</span>
+    model.<span class="fn">addAttribute</span>(<span class="str">"tasks"</span>, tasks);
+    <span class="kw">return</span> <span class="str">"tasks/list"</span>;
+  }
+}
+
+<span class="comment">// 残りは全部Vol.3と同じ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── Controllerは「Mapperを知らない」</div>
+    <p>修正後のTaskControllerには<b><code style="font-family:'JetBrains Mono'">TaskMapper</code>のimport文がありません</b>。Controllerは<b>「ServiceがDBを扱う詳細を知らない」</b>状態になりました。これが<b>「責務の分離」</b>の具体的な形── Controllerは「HTTPの世界」、Serviceが「業務の世界」、Mapperが「DBの世界」と、<b>知識の領域が分かれた</b>のです。</p>
+  </div>
+</section>
+
+<section id="flow">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>3層構成での処理フロー</h2>
+    <span class="en">3-LAYER FLOW</span>
+  </div>
+  <p class="pattern-desc">変更後の<code style="font-family:'JetBrains Mono'">/tasks</code>へのアクセスは、Controller → Service → Mapper → DB → 戻り、と<b>3層を往復</b>します。流れを図と時系列で押さえます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">request-flow</span>
+      <span class="tag-desc">リクエストから画面表示まで</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 処理の流れ</div>
+<div class="flow-diagram" style="border:none;padding:0">[ブラウザ]
+   ↓ GET /tasks
+
+【Controller層】
+TaskController.list(model)
+   ↓ taskService.findAll()
+   ↓
+【Service層】 ← ★Vol.4で追加★
+TaskService.findAll()
+   ↓ taskMapper.findAll()
+   ↓ (@Transactional 開始)
+   ↓
+【Mapper層】
+TaskMapper.findAll()
+   ↓ @Select の SQL を発行
+   ↓
+【MySQL】
+SELECT ... FROM tasks ...
+   ↑ 結果3行
+【Mapper層】
+   ↑ List&lt;Task&gt; に変換
+【Service層】
+   ↑ そのまま返す
+   ↑ (@Transactional コミット)
+【Controller層】
+   ↑ Model.addAttribute
+   ↑ return "tasks/list"
+
+[Thymeleaf]
+   ↓ list.html を描画
+[ブラウザ]
+表組み表示</div>
+      </div>
+      <div class="code"><span class="code-head">// 各層の責務（あなたが書いたコード）</span>
+
+<span class="comment">// ① Controller層</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> model) {
+  <span class="type">List</span>&lt;<span class="type">Task</span>&gt; tasks =
+    taskService.<span class="fn">findAll</span>();    <span class="comment">// 依頼</span>
+  model.<span class="fn">addAttribute</span>(<span class="str">"tasks"</span>, tasks);
+  <span class="kw">return</span> <span class="str">"tasks/list"</span>;     <span class="comment">// 画面指定</span>
+}
+<span class="comment">// HTTPの世界に専念</span>
+
+
+<span class="comment">// ② Service層</span>
+<span class="ann">@Transactional</span>(readOnly = <span class="kw">true</span>)
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>() {
+  <span class="kw">return</span> taskMapper.<span class="fn">findAll</span>();
+}
+<span class="comment">// 業務の世界（今はシンプル）</span>
+
+
+<span class="comment">// ③ Mapper層</span>
+<span class="ann">@Select</span>(<span class="str">"SELECT id, title, done, "</span> +
+        <span class="str">"created_at FROM tasks "</span> +
+        <span class="str">"ORDER BY id"</span>)
+<span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>();
+<span class="comment">// DBの世界（SQL）</span>
+
+
+<span class="code-head" style="margin-top:18px">// 各層が知っていること</span>
+
+<span class="comment">// Controller</span>
+<span class="comment">//   知る: TaskService, Model, URL</span>
+<span class="comment">//   知らない: SQL, TaskMapper</span>
+
+<span class="comment">// Service</span>
+<span class="comment">//   知る: TaskMapper, トランザクション</span>
+<span class="comment">//   知らない: HTTP, Model</span>
+
+<span class="comment">// Mapper</span>
+<span class="comment">//   知る: SQL, テーブル構造</span>
+<span class="comment">//   知らない: HTTP, 業務ロジック</span>
+
+
+<span class="comment">// ★これが「責務の分離」の具体形</span>
+<span class="comment">// 各層が必要なものだけを知っている</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>3層構成の本質は<b>「各層が知らなくていいことを知らないでいい」</b>こと。ControllerはSQLを知らない、ServiceはHTTPを知らない、MapperはModelを知らない。<b>知識が局所化</b>することで、修正が他層に波及しにくくなり、テストもしやすくなります。この感覚は<b>別冊</b>でさらに深掘りします。</p>
+  </div>
+</section>
+
+<section id="runcheck">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>🚀 ブラウザで動かして確認</h2>
+    <span class="en">RUN AND VERIFY</span>
+  </div>
+  <p class="pattern-desc">Vol.4の集大成。<b>3層構成</b>でも一覧画面が<b>Vol.3と同じように</b>動くことを確認します。「<b>動きは変わらない</b>」が今巻のゴール。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol-4-complete</span>
+      <span class="tag-desc">動作確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動作確認の流れ</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">A. アプリの再起動を確認</div>
+          <ol>
+            <li>TaskService.java と TaskController.java を保存した時点で、DevToolsが自動再起動</li>
+            <li>コンソールに <code>Restarting due to ...</code> → <code>Started TodoApplication</code> が出るのを待つ</li>
+            <li><b>赤いERRORログが出ていないか</b>確認</li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">B. ブラウザで再アクセス</div>
+          <ol>
+            <li>ブラウザで <code>http://localhost:8080/tasks</code> を再読み込み（<span class="key">F5</span>）</li>
+            <li><b>Vol.3と同じ表組み</b>が表示されればOK</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13px;margin-top:14px;line-height:1.85"><b>確認チェックリスト：</b></p>
+        <ul class="checklist">
+          <li>表組み（テーブル）が表示される</li>
+          <li>3件のタスクが行として並んでいる</li>
+          <li>Vol.3と<b>見た目・動きが同じ</b></li>
+          <li>コンソールに赤いERRORログが出ていない</li>
+          <li>コンソールに <code>==&gt; Preparing: SELECT ...</code> のSQLログが出ている</li>
+          <li>新パッケージ <code>com.example.todo.service</code> がプロジェクト内に作られている</li>
+          <li><code>TaskService.java</code> ファイルが存在する</li>
+          <li><code>TaskController.java</code> のimport文に <code>com.example.todo.service.TaskService</code> が含まれている</li>
+        </ul>
+
+        <div style="background:#fff;border-left:3px solid var(--accent-4);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.4完了！</b> 「動きは同じ、構造は3層」を体感できました。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 期待されるブラウザ表示</span>
+
+http://localhost:8080/tasks
+
+╔════════════════════════════════╗
+║         TODO 一覧               ║
+╠════╦═══════╦═════╦═══════════╣
+║ ID ║ タイトル║ 完了║ 作成日時  ║
+╠════╬═══════╬═════╬═══════════╣
+║  1 ║ 牛乳   ║  -  ║ 2026-...  ║
+║  2 ║ パン   ║  ✓  ║ 2026-...  ║
+║  3 ║ 卵     ║  -  ║ 2026-...  ║
+╚════╩═══════╩═════╩═══════════╝
+
+<span class="comment">// Vol.3と全く同じ画面</span>
+<span class="comment">// しかし裏側は3層構成に進化済み</span>
+
+
+<span class="code-head" style="margin-top:18px">// 期待されるコンソールログ</span>
+
+INFO Restarting due to 2 class
+     path changes
+
+INFO Started TodoApplication
+     in X.XXX seconds
+
+DEBUG c.e.todo.mapper.TaskMapper.findAll
+  ==&gt; Preparing: SELECT id, title,
+      done, created_at FROM tasks
+      ORDER BY id
+  ==&gt; Parameters:
+  &lt;==      Total: 3
+
+
+<span class="code-head" style="margin-top:18px">// Vol.4完成プロジェクト構造</span>
+
+todo/
+└ src/main/java/com/example/todo/
+   ├ TodoApplication.java
+   ├ controller/
+   │  ├ HelloController.java
+   │  └ TaskController.java      <span class="comment">// ✏️修正済</span>
+   ├ entity/
+   │  └ Task.java
+   ├ mapper/
+   │  └ TaskMapper.java
+   └ service/                     <span class="comment">// 🆕新規</span>
+      └ TaskService.java          <span class="comment">// 🆕新規</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「同じだった」ことの意味</div>
+    <p>Vol.4で<b>「画面が変わらない」</b>のは<b>正しい結果</b>です。リファクタリングの定義は「<b>外部から見た振る舞いを変えずに内部構造を改善する作業</b>」。あなたは今、人生で初めて「業務開発の標準的なリファクタリング」を完遂しました。<b>これは小さいけれど、重要な達成</b>です。</p>
+  </div>
+</section>
+
+<section id="pitfalls">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>ハマりどころ（因果で説明）</h2>
+    <span class="en">PITFALLS — CAUSE &amp; EFFECT</span>
+  </div>
+  <p class="pattern-desc">Vol.4で起きやすいエラーを<b>「症状→原因→対処」</b>の因果で整理します。Vol.3 ADDで身につけた<b>3点読み＋9ステップ思考フロー</b>を使う場面です。</p>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 1 ── No qualifying bean of type 'TaskService'</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      アプリ起動時、コンソールに <code>UnsatisfiedDependencyException</code> や <code>No qualifying bean of type 'com.example.todo.service.TaskService' available</code> が出て起動失敗
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      TaskServiceクラスに<b><code>@Service</code>を付け忘れ</b>ている。Springは<code>@Service</code>を見つけてBean登録するので、付いていないとTaskControllerが<code>TaskService</code>を要求しても見つからない。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      <code>TaskService</code>クラス宣言の直前に <code>@Service</code> を追加。<code>import org.springframework.stereotype.Service;</code> も忘れずに。保存すれば自動再起動して復旧。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 2 ── パッケージが com.example.todo の下に無い</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      <code>@Service</code>は付けているのに、ハマり1と同じ <code>No qualifying bean</code> エラーが出る
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      パッケージを <code>com.example.todoservice</code>（todoとserviceがくっつく）や <code>com.example.service</code>（todoが抜ける）のように作ってしまった。<b><code>@ComponentScan</code>の探索範囲は<code>com.example.todo</code>の下</b>なので、範囲外のクラスは見つからない。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      パッケージ名を確認し、<b><code>com.example.todo.service</code></b>（ピリオド区切り、todoの下にservice）になっていることを確認。違う場合は正しい場所に作り直す。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 3 ── @Transactionalのimportが違う</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      コンパイルは通るが、トランザクション機能が効かない／<b>Vol.5以降で書き込み処理を入れた時に</b>巻き戻しが効かない
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <code>import jakarta.transaction.Transactional;</code> を選んでしまった（Vol.3 ADDで学んだ「<b>同名異クラスの罠</b>」）。Springの<code>@Transactional</code>とは<b>別物</b>で、Spring経由のトランザクション管理は機能しない。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      <code>import org.springframework.transaction.annotation.Transactional;</code> に修正。<b>パッケージ名が <code>org.springframework</code> で始まっているか</b>を必ず確認する。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 4 ── TaskControllerでTaskMapperのimportが残る</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      動作はするが、TaskControllerに使われていないimport文（<code>TaskMapper</code>）が残っており、エディタに<b>黄色の警告</b>が出る
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      Vol.3でControllerに書いた<code>import com.example.todo.mapper.TaskMapper;</code> を消し忘れた。コードは動くが<b>無駄な依存</b>が残った状態。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      該当のimport行を手動で削除するか、<span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> で<b>未使用importを自動削除</b>。クリーンに整える。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 5 ── 「動かないのに見た目は同じ」と勘違い</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      ブラウザを再読み込みしても変化なし。「動いてる」と勘違い。
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <b>DevToolsが再起動していない</b>（保存ミスや、再起動完了前に再読み込み）。古いコードで動いているだけで、新Service層は動いていない。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      コンソールで<code>Started TodoApplication</code>のログを必ず確認してから、ブラウザを<span class="key">F5</span>で再読み込み。<b>再起動完了の証拠</b>を見届ける癖をつける。
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── Vol.3 ADDの「9ステップ思考フロー」が活きる</div>
+    <p>上記のどのハマりも、Vol.3 ADDで学んだ<b>9ステップ思考フロー</b>（症状確認→種別判定→3点読み→精読→真犯人→仮説→修正→確認→再発防止）で解けます。ハマったら、まず<b>「症状を事実として書き出す」</b>から始めてください。<b>感情ではなく事実</b>から推理を始めるのが鉄則です。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+  <div class="tip-label">NEXT STEP ── VOL.5</div>
+  <p>お疲れさまでした。Vol.4で<b>3層アーキテクチャ</b>の入口に到達しました。「動きは同じ、構造は違う」を体感できたなら本巻の役割は果たせています。<b>でも「なぜわざわざService層？」という疑問が残った方は、続けて<u>Vol.4 別冊（ADD）</u>を読んでください</b>。Service層の存在意義・@Transactionalの本当の役目・「責務の分離」の哲学を深掘りしています。<br><br>
+  次のVol.5では<b>新規登録機能</b>を作ります。フォーム入力 → POST → DB登録の流れ。ここで初めて<b>Service層が「業務ロジック」を持つ</b>瞬間が訪れます。Vol.4で作っておいた「居場所」が役立ち始めます。タイトルは「<b>新規登録機能を作ろう</b>」── お楽しみに。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.04 / 10 ── SERVICE LAYER</span>
+</footer>
+
+</body>
+</html>

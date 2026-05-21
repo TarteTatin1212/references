@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト編 結合・統合テスト編 Vol.6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;--paper:#e8eaee;--paper-2:#d4d7df;
+  --accent:#3d4f7c;--accent-2:#5a6b94;--accent-3:#8a98b8;
+  --muted:#5a6480;--line:#b8bccc;
+  --code-bg:#1c2138;--code-text:#e8eaee;--panel-bg:#f4f5f8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"✓";position:absolute;top:-30px;right:-10px;font-size:280px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:640px;margin-top:20px;color:var(--ink);font-size:15px}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em}
+.pattern-desc{max-width:680px;font-size:14px;margin-bottom:20px;color:var(--ink)}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:16px}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+.panel{background:var(--panel-bg);padding:20px 24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:20px 24px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}.code .type{color:#c2a3ff}.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}.code .ann{color:#f7c08a}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.08);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+/* 統合範囲図 */
+.range-box{background:#fff;border:1px solid var(--line);padding:16px;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.8}
+.range-box .layer{padding:8px 12px;margin:4px 0;color:#fff;text-align:center;font-weight:600;letter-spacing:0.05em}
+.range-box .l-ui{background:var(--accent)}
+.range-box .l-ctrl{background:var(--accent-2)}
+.range-box .l-svc{background:var(--accent-3);color:var(--ink)}
+.range-box .l-repo{background:#5b6a8a;color:#fff}
+.range-box .l-db{background:#386a3d;color:#fff}
+.range-box .range-bracket{position:relative;border:2px dashed var(--accent);padding:8px;margin:4px 0}
+.range-box .range-bracket .lab{position:absolute;top:-12px;right:8px;background:var(--paper);padding:0 6px;font-size:10px;color:var(--accent);font-weight:700}
+/* テーブル */
+.cmp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+.cmp-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:left;padding:8px 10px;letter-spacing:0.1em;border-bottom:1px solid var(--line)}
+.cmp-table td{padding:7px 10px;border-bottom:1px dashed var(--line);vertical-align:top}
+.cmp-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;width:120px}
+/* 構造図 */
+.layered{display:flex;flex-direction:column;gap:4px;font-family:'JetBrains Mono',monospace;font-size:11.5px}
+.layered .l{padding:10px 14px;color:#fff;text-align:center;font-weight:600;letter-spacing:0.05em}
+.flow-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;font-family:'JetBrains Mono',monospace;margin:10px 0}
+.flow-h .step{background:#fff;border:1px solid var(--accent-2);padding:8px 12px;color:var(--ink)}
+.flow-h .arrow{color:var(--accent);font-weight:700}
+.flow-h .step.highlight{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.flow-h .step.fake{background:var(--accent-3);color:var(--ink);border-color:var(--accent-3)}
+.page-footer{border-top:2px solid var(--ink);margin-top:80px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:180px}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="vol-tag">VOL.06 / 10</span>
+  <h1>結合・統合テスト編</h1>
+  <div class="subtitle">エンジニアリングテスト編 — INTEGRATION TESTING</div>
+  <p class="lead">
+    複数の部品が組み合わさる領域を扱う巻です。<b>サービス層 + リポジトリ + DB、コントローラ + サービス、外部API連携</b>。単体テストでは見えない「境目で起きるバグ」を捕まえる方法、<b>Testcontainers</b>などの現代的な仕組みを身につけます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 結合テストとは</a></li>
+    <li><a href="#sec02">02 統合範囲の決め方</a></li>
+    <li><a href="#sec03">03 DBとの結合テスト</a></li>
+    <li><a href="#sec04">04 Testcontainers</a></li>
+    <li><a href="#sec05">05 外部APIとの結合</a></li>
+    <li><a href="#sec06">06 結合テストの独立性</a></li>
+    <li><a href="#sec07">07 トランザクション戦略</a></li>
+    <li><a href="#sec08">08 結合テストの落とし穴</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>結合テストとは</h2>
+    <span class="en">WHAT IS INTEGRATION TEST</span>
+  </div>
+  <p class="pattern-desc">
+    結合テスト（integration test）とは、<b>複数のクラス・モジュール・サービスを組み合わせた状態で動作を検証する</b>テストです。単体テストでは個々の部品の正しさを確かめましたが、組み合わせた時の振る舞いはまた別問題です。<b>「境目で起きるバグ」</b>を捕まえる層です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">integration test</span>
+      <span class="tag-desc">複数部品の境目を検証する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 単体 vs 結合</div>
+        <table class="cmp-table">
+          <tr><th>観点</th><th>単体</th><th>結合</th></tr>
+          <tr><td>対象</td><td>1部品</td><td>複数部品</td></tr>
+          <tr><td>外部</td><td>切り離す</td><td>本物を含むことも</td></tr>
+          <tr><td>速度</td><td>ミリ秒</td><td>0.1〜数秒</td></tr>
+          <tr><td>見つけるもの</td><td>ロジックバグ</td><td>境目のバグ</td></tr>
+          <tr><td>典型対象</td><td>関数</td><td>サービス+DB</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          単体は<b style="color:var(--ink)">「ロジックの正しさ」</b>、結合は<b style="color:var(--ink)">「組み合わさった時の正しさ」</b>を見る。役割が違います。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 結合テストで初めて見つかる例</span>
+
+<span class="comment">// 単体テストでは全部 ✓</span>
+service.<span class="fn">create</span>() ✓ <span class="comment">// 単体OK</span>
+repo.<span class="fn">save</span>() ✓     <span class="comment">// 単体OK</span>
+mailer.<span class="fn">send</span>() ✓   <span class="comment">// 単体OK</span>
+
+<span class="comment">// ところが結合させてみると…</span>
+
+<span class="fn">test</span>(<span class="str">"ユーザー登録の一連の流れ"</span>, () =&gt; {
+  service.<span class="fn">register</span>(<span class="str">"佐藤"</span>, <span class="str">"x@y.z"</span>);
+
+  <span class="comment">// 期待: DBに保存されている</span>
+  <span class="kw">const</span> u = repo.<span class="fn">findByEmail</span>(<span class="str">"x@y.z"</span>);
+  <span class="fn">expect</span>(u).<span class="fn">toBeDefined</span>();
+});
+<span class="comment">// ✗ FAIL</span>
+<span class="comment">// 原因: service内でemailを小文字化</span>
+<span class="comment">// しているが、repo側は大文字保存</span>
+
+<span class="ann">単体ではどちらも通っていた</span>
+<span class="ann">結合で初めて発覚するタイプのバグ</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    結合テストは<b>「境目（インターフェース）の整合性」</b>を確かめる層。データ形式の取り違え、null許容性のずれ、文字コードの違いなど、<b>個別では正しい部品が組合せると壊れる</b>典型バグはここで捕まえます。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>統合範囲の決め方</h2>
+    <span class="en">SCOPE OF INTEGRATION</span>
+  </div>
+  <p class="pattern-desc">
+    「結合」と一口に言っても範囲は様々です。<b>2クラスの結合〜全システムの結合</b>まで、どこをどう組み合わせるかで性質が変わります。範囲の選び方に正解はなく、目的に応じた使い分けが必要です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">scope</span>
+      <span class="tag-desc">どこまでを「結合」と呼ぶか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 範囲のパターン</div>
+        <div class="range-box">
+          <div class="layer l-ui">UI / 画面</div>
+          <div class="range-bracket" style="border-color:#386">
+            <span class="lab" style="color:#386">A. 狭い結合</span>
+            <div class="layer l-ctrl">Controller</div>
+            <div class="layer l-svc">Service</div>
+          </div>
+          <div class="range-bracket" style="border-color:var(--accent-3)">
+            <span class="lab" style="color:var(--accent-3)">B. 中程度</span>
+            <div class="layer l-repo">Repository</div>
+            <div class="layer l-db">DB</div>
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          範囲を<b style="color:var(--ink)">広くするほど現実に近い</b>が、<b style="color:var(--ink)">遅くて壊れやすく</b>なる。目的に合わせて選ぶ。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 範囲別の典型</span>
+
+<span class="kw">A. 2クラス結合</span>
+  Service + Repository(モック)
+  <span class="comment">// 高速 / 限定的</span>
+
+<span class="kw">B. サービス+DB</span>
+  Service + 本物DB(テスト用)
+  <span class="comment">// よく使う / 中速</span>
+
+<span class="kw">C. API層〜DB</span>
+  Controller + Service + Repo + DB
+  <span class="comment">// 広い / リクエスト単位</span>
+
+<span class="kw">D. 外部含む</span>
+  + 外部API (実 or 模擬)
+  + メール
+  + ストレージ
+  <span class="comment">// E2Eに近い</span>
+
+<span class="comment">// 現場で最多はB</span>
+<span class="comment">// 「サービス〜DB」</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    結合テストは<b>「範囲を欲張ると遅く・脆くなる」</b>のが鉄則。範囲を絞った小さな結合テストを多めに書き、E2Eに近い広いものは最小限に。これがピラミッドの「結合層」のあり方です。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>DBとの結合テスト</h2>
+    <span class="en">DB INTEGRATION</span>
+  </div>
+  <p class="pattern-desc">
+    現場で最も書かれる結合テストが<b>「サービス + 本物のDB」</b>の組み合わせです。SQLが正しいか、トランザクションが効くか、制約に引っかからないか。これらは本物のDBを使わないと検証できません。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">DB integration</span>
+      <span class="tag-desc">本物のDBを使った検証</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ本物のDBが必要か</div>
+        <table class="cmp-table">
+          <tr><th>確かめたいこと</th><th>モックでは無理</th></tr>
+          <tr><td>SQL構文の正しさ</td><td>本物が解釈しないとわからない</td></tr>
+          <tr><td>制約 (FK, UNIQUE)</td><td>DBエンジン依存</td></tr>
+          <tr><td>トランザクション</td><td>ACID挙動の検証</td></tr>
+          <tr><td>性能・索引</td><td>実データでないと意味なし</td></tr>
+          <tr><td>方言差</td><td>PostgreSQL vs MySQLの違い</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// 結合テストの典型 (Java)</span>
+
+<span class="ann">@SpringBootTest</span>
+<span class="ann">@Transactional</span>  <span class="comment">// 各テストで自動ロールバック</span>
+<span class="kw">class</span> <span class="type">OrderServiceTest</span> {
+
+  <span class="ann">@Autowired</span> <span class="type">OrderService</span> service;
+  <span class="ann">@Autowired</span> <span class="type">OrderRepository</span> repo;
+
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">注文すると履歴に保存される</span>() {
+    <span class="comment">// Arrange</span>
+    <span class="kw">var</span> userId = <span class="str">"u1"</span>;
+    <span class="kw">var</span> itemId = <span class="str">"i1"</span>;
+
+    <span class="comment">// Act — 本物のDBに書く</span>
+    service.<span class="fn">place</span>(userId, itemId);
+
+    <span class="comment">// Assert — 本物のDBから読む</span>
+    <span class="kw">var</span> orders = repo.<span class="fn">findByUser</span>(userId);
+    <span class="type">assertThat</span>(orders).<span class="fn">hasSize</span>(<span class="num">1</span>);
+    <span class="type">assertThat</span>(orders.<span class="fn">get</span>(<span class="num">0</span>).itemId)
+      .<span class="fn">isEqualTo</span>(itemId);
+  }
+}</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    DB結合テストの<b>絶対鉄則</b>は「<b>本番と同じDBエンジンを使う</b>」こと。「テストはSQLite、本番はPostgreSQL」のような構成は、方言差で動作が変わるので避けます。次に紹介するTestcontainersがこの問題を解決します。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>Testcontainers</h2>
+    <span class="en">TESTCONTAINERS</span>
+  </div>
+  <p class="pattern-desc">
+    Testcontainersは<b>「テストのたびにDockerでDBコンテナを立ち上げる」</b>ライブラリです。本番と同じPostgreSQL/MySQLをテスト時に瞬時に起動し、終了時に破棄。<b>環境差分の悩みを完全に消す</b>現代的な解決策です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">Testcontainers</span>
+      <span class="tag-desc">本物DBを使い捨てで起動</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 仕組みの全体像</div>
+        <div class="flow-h">
+          <div class="step">テスト開始</div>
+          <div class="arrow">▶</div>
+          <div class="step highlight">DockerでDB起動</div>
+        </div>
+        <div class="flow-h">
+          <div class="step">スキーマ初期化</div>
+          <div class="arrow">▶</div>
+          <div class="step">テスト実行</div>
+        </div>
+        <div class="flow-h">
+          <div class="step">テスト終了</div>
+          <div class="arrow">▶</div>
+          <div class="step fake">コンテナ破棄</div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          実行のたび<b style="color:var(--ink)">クリーンな本物DB</b>が手に入る。共有DBでの汚染やローカル環境差の悩みから解放される。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// Testcontainers (Java)</span>
+
+<span class="ann">@Testcontainers</span>
+<span class="ann">@SpringBootTest</span>
+<span class="kw">class</span> <span class="type">DbIntegrationTest</span> {
+
+  <span class="ann">@Container</span>
+  <span class="kw">static</span> <span class="type">PostgreSQLContainer</span>&lt;?&gt; db =
+    <span class="kw">new</span> <span class="type">PostgreSQLContainer</span>&lt;&gt;(<span class="str">"postgres:16"</span>)
+      .<span class="fn">withDatabaseName</span>(<span class="str">"test"</span>)
+      .<span class="fn">withUsername</span>(<span class="str">"u"</span>)
+      .<span class="fn">withPassword</span>(<span class="str">"p"</span>);
+
+  <span class="ann">@DynamicPropertySource</span>
+  <span class="kw">static void</span> <span class="fn">props</span>(<span class="type">DynamicPropertyRegistry</span> r) {
+    r.<span class="fn">add</span>(<span class="str">"spring.datasource.url"</span>, db::<span class="fn">getJdbcUrl</span>);
+    r.<span class="fn">add</span>(<span class="str">"spring.datasource.username"</span>, db::<span class="fn">getUsername</span>);
+    r.<span class="fn">add</span>(<span class="str">"spring.datasource.password"</span>, db::<span class="fn">getPassword</span>);
+  }
+
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">本物のPostgresで動く</span>() { ... }
+}
+
+<span class="comment">// 実行時に毎回 docker run postgres:16</span>
+<span class="comment">// → 本番と同じ環境で検証</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">超便利</div>
+    Testcontainersは<b>DB以外にも</b>使えます。Redis、Kafka、Elasticsearch、Selenium、果ては独自のDockerイメージまで。「外部依存があるならとりあえずTestcontainers」が今や定番。Java/Python/JS等多言語に対応しています。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>外部APIとの結合</h2>
+    <span class="en">EXTERNAL API</span>
+  </div>
+  <p class="pattern-desc">
+    外部API（決済・地図・SaaS）との結合は<b>本物を使えない</b>のが普通です。本物にアクセスすると料金がかかったり、レート制限に当たったり、安定しなかったり。代わりに<b>「擬似サーバ」</b>を立てる手法が使われます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">external API</span>
+      <span class="tag-desc">擬似サーバで本物のHTTPやり取りを再現</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4つのアプローチ</div>
+        <table class="cmp-table">
+          <tr><th>手法</th><th>性質</th></tr>
+          <tr><td>WireMock</td><td>Javaで人気の擬似HTTPサーバ</td></tr>
+          <tr><td>MSW</td><td>JS界の擬似HTTP (Mock Service Worker)</td></tr>
+          <tr><td>nock</td><td>Node.js用のHTTPインターセプト</td></tr>
+          <tr><td>Sandbox環境</td><td>外部サービス提供のテスト用環境</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          ポイントは<b style="color:var(--ink)">「HTTPの往復までは本物に近い」</b>こと。クライアント側のシリアライズ・エラーハンドリングを実際に走らせて検証できる。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// WireMock (Java) の例</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">外部APIから情報を取得する</span>() {
+  <span class="comment">// 擬似応答を仕込む</span>
+  <span class="fn">stubFor</span>(<span class="fn">get</span>(<span class="fn">urlEqualTo</span>(<span class="str">"/users/1"</span>))
+    .<span class="fn">willReturn</span>(<span class="fn">aResponse</span>()
+      .<span class="fn">withStatus</span>(<span class="num">200</span>)
+      .<span class="fn">withBody</span>(<span class="str">"{\"name\":\"佐藤\"}"</span>)));
+
+  <span class="comment">// 本物のHTTPクライアントを使う</span>
+  <span class="kw">var</span> result = client.<span class="fn">fetchUser</span>(<span class="num">1</span>);
+
+  <span class="type">assertThat</span>(result.name).<span class="fn">isEqualTo</span>(<span class="str">"佐藤"</span>);
+}
+
+<span class="comment">// MSW (JavaScript)</span>
+<span class="kw">const</span> server = <span class="fn">setupServer</span>(
+  <span class="fn">http.get</span>(<span class="str">"/users/1"</span>, () =&gt;
+    <span class="type">HttpResponse</span>.<span class="fn">json</span>({ name: <span class="str">"佐藤"</span> })
+  )
+);
+
+<span class="comment">// テスト側のコードは本物のfetch()</span>
+<span class="comment">// → HTTPの動作全体が検証される</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    擬似サーバを使うと<b>「エラー応答」「タイムアウト」「不正なJSON」</b>といった異常系も自由に再現できます。本物のサンドボックスでは困難な状況を作れるのが擬似サーバの利点。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>結合テストの独立性</h2>
+    <span class="en">INDEPENDENCE</span>
+  </div>
+  <p class="pattern-desc">
+    結合テストは<b>外部状態（DB等）を持つ</b>ため、独立性の確保が単体テストより難しくなります。テストAで書き込んだデータがテストBに影響しないように、<b>明確な戦略</b>が必要です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">independence</span>
+      <span class="tag-desc">DB状態の汚染を防ぐ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 独立性確保の戦略</div>
+        <table class="cmp-table">
+          <tr><th>戦略</th><th>説明</th></tr>
+          <tr><td>ロールバック</td><td>各テスト後にトランザクション巻戻し ★定番</td></tr>
+          <tr><td>テーブルtruncate</td><td>各テスト前後で全テーブル空に</td></tr>
+          <tr><td>DBごと再作成</td><td>Testcontainersで新規起動</td></tr>
+          <tr><td>名前空間分離</td><td>テストごとにユーザー/スキーマを分ける</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          現場で多用されるのは<b style="color:var(--ink)">「ロールバック」</b>。@Transactionalで囲むだけで実現できる手軽さが魅力。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 戦略1: ロールバック (推奨)</span>
+<span class="ann">@SpringBootTest</span>
+<span class="ann">@Transactional</span>  <span class="comment">// テスト後にロールバック</span>
+<span class="kw">class</span> <span class="type">OrderServiceTest</span> { ... }
+
+<span class="comment">// 戦略2: truncate</span>
+<span class="ann">@BeforeEach</span>
+<span class="kw">void</span> <span class="fn">cleanDb</span>() {
+  jdbc.<span class="fn">execute</span>(<span class="str">"TRUNCATE orders, users CASCADE"</span>);
+}
+
+<span class="comment">// 戦略3: Testcontainersで毎回起動</span>
+<span class="comment">// 一番安全だが時間がかかる</span>
+<span class="comment">// テスト数が多いと辛い</span>
+
+<span class="comment">// アンチパターン</span>
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">前のテストの結果を前提に</span>() {
+  <span class="comment">// "test1で作ったuserを使う" 等</span>
+  <span class="comment">// → テスト順序に依存</span>
+  <span class="comment">// → 並列実行で壊れる</span>
+  <span class="comment">// → 絶対NG</span>
+}</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">鉄則</div>
+    結合テストでも<b>「各テストは単独で完結」</b>が大原則。前のテストの状態を引き継いではいけません。独立性を犠牲にしてテストを速くするのは<b>本末転倒</b>です。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>トランザクション戦略</h2>
+    <span class="en">TRANSACTION STRATEGY</span>
+  </div>
+  <p class="pattern-desc">
+    結合テストでDBを使う時、<b>トランザクション境界の扱い方</b>がしばしば問題になります。テスト用のトランザクションと、業務コード内のトランザクションが干渉して予期せぬ挙動を引き起こすことがあります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">transactions</span>
+      <span class="tag-desc">テストとビジネスのトランザクション境界</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある落とし穴</div>
+        <table class="cmp-table">
+          <tr><th>パターン</th><th>問題</th></tr>
+          <tr><td>テスト全体を1Tx</td><td>本番のコミット挙動が再現できない</td></tr>
+          <tr><td>commit済を見る</td><td>テスト後にデータが残る</td></tr>
+          <tr><td>Tx伝播の誤解</td><td>REQUIRES_NEWで意図と違う挙動</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          特に「<b style="color:var(--ink)">非同期コミット後の状態を検証</b>」したい時は、@Transactionalでは見られないので別アプローチが必要。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// パターンA: 簡単・推奨</span>
+<span class="ann">@Transactional</span>
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">test1</span>() {
+  service.<span class="fn">create</span>(...);
+  <span class="comment">// 同じTx内で検証</span>
+  <span class="kw">var</span> u = repo.<span class="fn">find</span>(...);
+  <span class="type">assertThat</span>(u).<span class="fn">isNotNull</span>();
+}
+<span class="comment">// テスト終了でロールバック</span>
+
+<span class="comment">// パターンB: コミット動作も含める</span>
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">test2</span>() {
+  <span class="comment">// テストにはTransactionalを付けない</span>
+  service.<span class="fn">create</span>(...);
+
+  <span class="comment">// 別Txで検証 (実コミット後を見る)</span>
+  <span class="kw">var</span> u = repo.<span class="fn">find</span>(...);
+  <span class="type">assertThat</span>(u).<span class="fn">isNotNull</span>();
+
+  <span class="comment">// 手動でクリーンアップが必要</span>
+  repo.<span class="fn">deleteById</span>(u.id);
+}
+
+<span class="comment">// → 場面に応じて使い分け</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    多くの場合は<b>パターンA（@Transactional付与）で十分</b>です。ただし「実コミット後のイベント発火」「非同期処理の結果」を検証したい時はパターンBが必要。<b>使い分けの判断力</b>が現場で問われます。
+  </div>
+</section>
+
+<section id="sec08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>結合テストの落とし穴</h2>
+    <span class="en">PITFALLS</span>
+  </div>
+  <p class="pattern-desc">
+    結合テストは強力ですが、<b>使い方を誤ると単体テストの代わりにしてしまう</b>失敗が頻発します。よくある落とし穴と、それを避けるための原則を押さえましょう。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pitfalls</span>
+      <span class="tag-desc">陥りがちな失敗パターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4つの落とし穴</div>
+        <table class="cmp-table">
+          <tr><th>落とし穴</th><th>処方箋</th></tr>
+          <tr><td>単体の代わり</td><td>単体テストを十分書いた上で結合を追加</td></tr>
+          <tr><td>過剰な結合</td><td>範囲を最小限に保つ</td></tr>
+          <tr><td>テスト時間爆発</td><td>結合は数を絞る、並列実行</td></tr>
+          <tr><td>共有DB汚染</td><td>Testcontainersで分離</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// 結合テストを書く前のチェック</span>
+
+<span class="kw">①</span> 同じことを単体で検証できるか?
+   → できるなら単体で書く
+
+<span class="kw">②</span> 結合でしか見つからないバグか?
+   → 「DBの制約」「SQL構文」「Tx」
+   → これらが対象なら結合が適切
+
+<span class="kw">③</span> 結合範囲は最小か?
+   → 余分な部品を含めない
+
+<span class="kw">④</span> 独立性は保たれているか?
+   → ロールバックや初期化を仕込む
+
+<span class="comment">// 結合テストは「結合でしか</span>
+<span class="comment">// 見つからないもの」だけに使う</span>
+
+<span class="comment">// ピラミッドの「中間層」として</span>
+<span class="comment">// 適切な分量を保つ</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">結論</div>
+    結合テストは<b>「単体では見えないものを見る」</b>ための専用ツール。万能薬ではありません。<b>地図編Vol.6で「部品から製品への組み上がり」</b>という構造視点から、結合テストがピラミッドの中間に位置する理由を読み解きます。
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  次は<b>本編Vol.7「E2E・UIテスト編」</b>へ。ピラミッドの頂上、システム全体を端から端まで貫くテストの世界に踏み込みます。<b>地図編Vol.6「部品から製品への流れ編」</b>では、ソフトウェアがどう組み上がっていくか、その層構造を上下軸と時間軸で読み解きます。Vol.6で身につけた<b>「境目を意識する視点」</b>がさらに広がります。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST REFERENCE — VOL.06</span>
+  <span>INTEGRATION TESTING</span>
+</footer>
+
+</body>
+</html>

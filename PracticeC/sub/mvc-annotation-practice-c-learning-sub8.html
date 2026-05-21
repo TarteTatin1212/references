@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.8 別冊 動的SQLの世界</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a302a;
+  --paper:#e8eae3;
+  --paper-2:#d4d8ce;
+  --accent:#9caa88;
+  --accent-2:#aeba9c;
+  --accent-3:#5e6650;
+  --muted:#737a72;
+  --line:#b8c0b1;
+  --code-bg:#1f231f;
+  --code-text:#e8eae3;
+  --panel-bg:#f0f2eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✧';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#9aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(156,170,136,0.09);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.tag-grid{display:grid;grid-template-columns:1fr;gap:10px;margin:14px 0}
+.tag-card{background:#fff;border:1px solid var(--line);padding:12px 16px;border-left:3px solid var(--accent)}
+.tag-card .tn{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600;margin-bottom:4px}
+.tag-card .td{font-size:13px}
+
+.bad-good{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.bad-good .b,.bad-good .g{background:#fff;border:1px solid var(--line);padding:12px 14px}
+.bad-good .b{border-left:3px solid #b05050}
+.bad-good .g{border-left:3px solid var(--accent)}
+.bad-good .ph{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.15em;margin-bottom:6px}
+.bad-good .b .ph{color:#b05050}
+.bad-good .g .ph{color:var(--accent)}
+.bad-good .ttl{font-family:'Shippori Mincho',serif;font-size:14px;font-weight:700;color:var(--accent-3);margin-bottom:6px}
+.bad-good p{font-size:13px}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .bad-good{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.08 / 15</span>
+    <span class="kind-tag">別冊</span>
+  </div>
+  <h1>動的SQLの<br>世界</h1>
+  <div class="subtitle">DYNAMIC SQL ── COMPLETE GUIDE</div>
+  <p class="lead">
+    本編Vol.8で <code style="font-family:'JetBrains Mono'">&lt;if&gt;</code> と <code style="font-family:'JetBrains Mono'">&lt;where&gt;</code> の基本を学びました。MyBatis の動的SQLには<b>他にも多くのタグ</b>があり、業務開発では場面ごとに使い分けます。<br>
+    別冊S8では、<b>全動的SQLタグの完全網羅・SQL生成の透明性・SQLログの読み方・LEFT JOIN ON句 vs WHERE句の深掘り・動的SQLのアンチパターン</b>を扱います。<br>
+    Vol.8 で残した<b>「ON句に移動すれば記録なし科目も残せる」</b>の話の決着もここで。<br>
+    Cの中で<b>動的SQL を「使える道具」から「設計できる武器」に</b>変える別冊。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#theme">01 この別冊のテーマ</a></li>
+    <li><a href="#tags">02 動的SQLタグの完全網羅</a></li>
+    <li><a href="#foreach">03 &lt;foreach&gt; で IN 句を組み立てる</a></li>
+    <li><a href="#choose">04 &lt;choose&gt; / &lt;set&gt; / &lt;trim&gt;</a></li>
+    <li><a href="#transparency">05 SQL生成の透明性とログの読み方</a></li>
+    <li><a href="#on-vs-where">06 ON句 vs WHERE句（伏線回収）</a></li>
+    <li><a href="#anti">07 動的SQLのアンチパターン</a></li>
+    <li><a href="#perf">08 パフォーマンスとセキュリティ</a></li>
+    <li><a href="#next">09 次の本編へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="theme">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この別冊のテーマ</h2>
+    <span class="en">THEME</span>
+  </div>
+  <p class="pattern-desc">本編Vol.8 で「動的SQLの第一歩」を踏み出しました。別冊S8では<b>残り全タグの俯瞰</b>と<b>業務での使い分けの感性</b>を伝授します。動的SQLは<b>MyBatisの最大の魅力</b>のひとつ。これを使いこなせれば、JPAでは難しい「複雑検索画面」が<b>圧倒的に書きやすくなる</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-master</span>
+      <span class="tag-desc">なぜ動的SQLをマスターするか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動的SQL熟練度の段階</div>
+        <div class="role-card">
+          <span class="label">LV1</span>
+          <div class="name">&lt;if&gt; + &lt;where&gt; だけ書ける</div>
+          <div class="desc">本編Vol.8 までの到達点。簡単な絞り込み検索は対応可。<b>業界の8割の業務はこれで済む</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">LV2</span>
+          <div class="name">&lt;foreach&gt; で IN 句を扱える</div>
+          <div class="desc">「複数の科目で絞り込み」「複数IDで一括取得」など、<b>配列パラメータ</b>を扱える。N+1問題の IN句対策で必須。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">LV3</span>
+          <div class="name">&lt;choose&gt; / &lt;set&gt; / &lt;trim&gt; を使い分け</div>
+          <div class="desc">UPDATE/INSERT の動的化、複雑な分岐ロジックの実装。<b>業務管理系システムでは必須</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">LV4</span>
+          <div class="name">SQL生成の透明性を保ちつつ設計</div>
+          <div class="desc">「動的SQLがどんなSQLを生むか」を読みながら書ける。ログ・p6spyとの組み合わせ。<b>ベテラン領域</b>。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で答える4つの問い</span>
+
+<span class="comment">// 問1: 動的SQLのタグは他に何があるか？</span>
+<span class="comment">//   → choose, set, trim, foreach, bind</span>
+
+<span class="comment">// 問2: 複数値を扱うには？</span>
+<span class="comment">//   → &lt;foreach&gt; で IN 句を組み立てる</span>
+
+<span class="comment">// 問3: 動的SQLがどんなSQLを生んでいる？</span>
+<span class="comment">//   → SQLログ＋p6spyで透明化できる</span>
+
+<span class="comment">// 問4: ON句とWHERE句どう使い分ける？</span>
+<span class="comment">//   → 「親を残したい時」はON句</span>
+
+
+<span class="comment">// 結論を先に：</span>
+<span class="comment">// ・タグは6個（基本2＋応用4）</span>
+<span class="comment">// ・コレクションは foreach 必須</span>
+<span class="comment">// ・ログを「読む目」が育つと無敵</span>
+<span class="comment">// ・ON vs WHERE は「親残すか」で判断</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="tags">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>動的SQLタグの完全網羅</h2>
+    <span class="en">ALL DYNAMIC SQL TAGS</span>
+  </div>
+  <p class="pattern-desc">MyBatis の動的SQLタグは<b>主要6種類</b>。本編Vol.8 では <code>&lt;if&gt;</code> と <code>&lt;where&gt;</code> を扱いました。残り4つも整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">all-tags</span>
+      <span class="tag-desc">主要6タグ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主要6タグ</div>
+        <div class="tag-grid">
+          <div class="tag-card">
+            <div class="tn">&lt;if test="..."&gt;</div>
+            <div class="td">条件式が真ならタグ内容を出力（Vol.8で習得済）</div>
+          </div>
+          <div class="tag-card">
+            <div class="tn">&lt;where&gt;</div>
+            <div class="td">WHERE句を動的に組み立て・先頭のAND/OR自動除去（Vol.8で習得済）</div>
+          </div>
+          <div class="tag-card">
+            <div class="tn">&lt;choose&gt; / &lt;when&gt; / &lt;otherwise&gt;</div>
+            <div class="td">複数条件の排他的分岐。Javaの switch-case 相当</div>
+          </div>
+          <div class="tag-card">
+            <div class="tn">&lt;set&gt;</div>
+            <div class="td">UPDATE文用。SET句の末尾カンマを自動除去</div>
+          </div>
+          <div class="tag-card">
+            <div class="tn">&lt;foreach&gt;</div>
+            <div class="td">コレクションをループ展開。IN句や VALUES複数行に使う</div>
+          </div>
+          <div class="tag-card">
+            <div class="tn">&lt;trim prefixOverrides="..." suffix=...&gt;</div>
+            <div class="td">&lt;where&gt; や &lt;set&gt; の汎用版。任意の文字を前後で除去・追加</div>
+          </div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px">業務では <code>&lt;if&gt;</code>・<code>&lt;where&gt;</code>・<code>&lt;foreach&gt;</code>・<code>&lt;set&gt;</code> の4つで95%カバーできます。</p>
+      </div>
+      <div class="code"><span class="code-head">// 6タグの使用頻度（業務目線）</span>
+
+<span class="comment">// ★★★★★ よく使う</span>
+&lt;<span class="kw">if</span>&gt;                   <span class="comment">// 条件分岐</span>
+&lt;<span class="kw">where</span>&gt;                <span class="comment">// WHERE 動的化</span>
+&lt;<span class="kw">foreach</span>&gt;              <span class="comment">// IN句・複数値処理</span>
+
+
+<span class="comment">// ★★★★ しばしば使う</span>
+&lt;<span class="kw">set</span>&gt;                  <span class="comment">// UPDATE文用</span>
+
+
+<span class="comment">// ★★ たまに使う</span>
+&lt;<span class="kw">choose</span>&gt;
+&lt;<span class="kw">when</span>&gt;
+&lt;<span class="kw">otherwise</span>&gt;            <span class="comment">// 排他的分岐</span>
+
+
+<span class="comment">// ★ あまり直接使わない</span>
+&lt;<span class="kw">trim</span>&gt;                 <span class="comment">// &lt;where&gt;の汎用版</span>
+
+
+<span class="comment">// ─── 番外編 ───</span>
+&lt;<span class="kw">bind</span>&gt;                 <span class="comment">// 変数定義（LIKE検索で活躍）</span>
+&lt;<span class="kw">sql</span>&gt;                  <span class="comment">// SQL断片を共有化</span>
+&lt;<span class="kw">include</span>&gt;              <span class="comment">// &lt;sql&gt;を参照</span>
+
+
+<span class="comment">// → Cの15巻で扱うのは主要6タグまで</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="foreach">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>&lt;foreach&gt; で IN 句を組み立てる</h2>
+    <span class="en">FOREACH FOR IN-CLAUSE</span>
+  </div>
+  <p class="pattern-desc"><b>業務でよく使う動的SQL第3位</b>が <code>&lt;foreach&gt;</code>。配列やリストから <code>IN (1,2,3)</code> のような句を組み立てます。<b>S5別冊で予告したN+1対策のIN句一括取得</b>でも必須。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">foreach-usage</span>
+      <span class="tag-desc">&lt;foreach&gt; の基本</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4つの属性</div>
+        <table class="compare-tbl">
+          <tr><th>属性</th><th>意味</th></tr>
+          <tr><td><code>collection</code></td><td>反復対象（引数名 or "list"/"array"）</td></tr>
+          <tr><td><code>item</code></td><td>各要素の参照名</td></tr>
+          <tr><td><code>separator</code></td><td>要素間の区切り文字</td></tr>
+          <tr><td><code>open</code> / <code>close</code></td><td>全体の囲み文字</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>IN句の定型</b>：<code>open="(" close=")" separator=","</code> のセット。</p>
+      </div>
+      <div class="code"><span class="code-head">// &lt;foreach&gt; の典型例</span>
+
+<span class="comment">// ─── 複数科目で絞り込み ───</span>
+
+<span class="comment">// Mapper interface</span>
+<span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findByIds</span>(
+    <span class="ann">@Param</span>(<span class="str">"ids"</span>) <span class="type">List</span>&lt;<span class="type">Integer</span>&gt; ids);
+
+
+<span class="comment">// XML</span>
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findByIds"</span>
+        <span class="ann">resultType</span>=<span class="str">"Subject"</span>&gt;
+  SELECT * FROM subjects
+  WHERE id IN
+  &lt;<span class="kw">foreach</span>
+    <span class="ann">item</span>=<span class="str">"id"</span>
+    <span class="ann">collection</span>=<span class="str">"ids"</span>
+    <span class="ann">open</span>=<span class="str">"("</span> <span class="ann">close</span>=<span class="str">")"</span>
+    <span class="ann">separator</span>=<span class="str">","</span>&gt;
+    #{id}
+  &lt;/<span class="kw">foreach</span>&gt;
+&lt;/<span class="kw">select</span>&gt;
+
+
+<span class="comment">// ─── 呼び出し ───</span>
+<span class="type">List</span>&lt;<span class="type">Integer</span>&gt; ids = <span class="type">List</span>.<span class="fn">of</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">5</span>);
+mapper.<span class="fn">findByIds</span>(ids);
+
+
+<span class="comment">// ─── 生成されるSQL ───</span>
+SELECT * FROM subjects
+WHERE id IN (?, ?, ?)
+<span class="comment">// Parameters: 1, 2, 5</span>
+
+
+<span class="comment">// ─── 注意：collection が空のとき ───</span>
+<span class="comment">// ids が空リスト → IN () になる</span>
+<span class="comment">// → MySQLでは構文エラー</span>
+<span class="comment">// → 呼び出し側で「空なら呼ばない」</span>
+<span class="comment">//   または &lt;if&gt; で囲んで防ぐ</span>
+
+
+<span class="code-head" style="margin-top:14px">// IN句でN+1対策（S5予告の実装）</span>
+
+<span class="comment">// 親を取得</span>
+<span class="type">List</span>&lt;<span class="type">Subject</span>&gt; subjects = mapper.<span class="fn">findAll</span>();
+
+<span class="comment">// id を集める</span>
+<span class="type">List</span>&lt;<span class="type">Integer</span>&gt; ids = subjects.<span class="fn">stream</span>()
+    .<span class="fn">map</span>(<span class="type">Subject</span>::<span class="fn">getId</span>)
+    .<span class="fn">toList</span>();
+
+<span class="comment">// 子を一括取得（SQL 1回）</span>
+<span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt; allRecords =
+    studyRecordMapper.<span class="fn">findBySubjectIds</span>(ids);
+
+<span class="comment">// → 親1回 + 子1回 = 計2回</span>
+<span class="comment">// → JOIN方式と並ぶ N+1 対策の王道</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="choose">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>&lt;choose&gt; / &lt;set&gt; / &lt;trim&gt;</h2>
+    <span class="en">CHOOSE / SET / TRIM</span>
+  </div>
+  <p class="pattern-desc">残り3つのタグを紹介。<b>業務では特定の場面で力を発揮</b>します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">choose-tag</span>
+      <span class="tag-desc">&lt;choose&gt; ── 排他的分岐</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// choose / when / otherwise</div>
+        <p>複数の条件を<b>排他的に評価</b>。Javaの <code>switch-case</code> または <code>if/else if/else</code> 相当。</p>
+        <p style="margin-top:8px"><b>使い所</b>：「ソート順を切り替え」「ステータス別の絞り込み」など。</p>
+      </div>
+      <div class="code"><span class="code-head">// &lt;choose&gt; の例：ソート切替</span>
+
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findSorted"</span> ...&gt;
+  SELECT * FROM study_records
+  &lt;<span class="kw">choose</span>&gt;
+    &lt;<span class="kw">when</span> test=<span class="str">"sortBy == 'date'"</span>&gt;
+      ORDER BY studied_on DESC
+    &lt;/<span class="kw">when</span>&gt;
+    &lt;<span class="kw">when</span> test=<span class="str">"sortBy == 'minutes'"</span>&gt;
+      ORDER BY minutes DESC
+    &lt;/<span class="kw">when</span>&gt;
+    &lt;<span class="kw">otherwise</span>&gt;
+      ORDER BY id
+    &lt;/<span class="kw">otherwise</span>&gt;
+  &lt;/<span class="kw">choose</span>&gt;
+&lt;/<span class="kw">select</span>&gt;
+
+
+<span class="comment">// ─── &lt;if&gt; の連続 vs &lt;choose&gt; ─── </span>
+
+<span class="comment">// ─── &lt;if&gt; の連続：複数条件を同時に評価 ─── </span>
+&lt;<span class="kw">if</span> test=<span class="str">"sortBy == 'date'"</span>&gt; ... &lt;/<span class="kw">if</span>&gt;
+&lt;<span class="kw">if</span> test=<span class="str">"sortBy == 'minutes'"</span>&gt; ... &lt;/<span class="kw">if</span>&gt;
+<span class="comment">// → 排他にならない、両方真なら両方出る</span>
+
+
+<span class="comment">// ─── &lt;choose&gt;：上から評価、最初に真の一つだけ ─── </span>
+<span class="comment">// → switch-case 的に安全</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">set-tag</span>
+      <span class="tag-desc">&lt;set&gt; ── UPDATE用</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// &lt;set&gt; の役割</div>
+        <p><code>UPDATE</code> 文の <code>SET</code> 句を動的化。<b>末尾の余分なカンマを自動除去</b>するのが嬉しい点。Vol.13 で本格的に使う予定。</p>
+        <p style="margin-top:8px"><b>業務での使用場面</b>：「変更があったフィールドだけ更新」のパッチ的UPDATE。</p>
+      </div>
+      <div class="code"><span class="code-head">// &lt;set&gt; の例：部分更新</span>
+
+&lt;<span class="kw">update</span> <span class="ann">id</span>=<span class="str">"updatePartial"</span>&gt;
+  UPDATE study_records
+  &lt;<span class="kw">set</span>&gt;
+    &lt;<span class="kw">if</span> test=<span class="str">"studiedOn != null"</span>&gt;
+      studied_on = #{studiedOn},
+    &lt;/<span class="kw">if</span>&gt;
+    &lt;<span class="kw">if</span> test=<span class="str">"minutes != null"</span>&gt;
+      minutes = #{minutes},
+    &lt;/<span class="kw">if</span>&gt;
+    &lt;<span class="kw">if</span> test=<span class="str">"memo != null"</span>&gt;
+      memo = #{memo},
+    &lt;/<span class="kw">if</span>&gt;
+  &lt;/<span class="kw">set</span>&gt;
+  WHERE id = #{id}
+&lt;/<span class="kw">update</span>&gt;
+
+
+<span class="comment">// ─── 生成されるSQL（メモだけ指定の場合）─── </span>
+UPDATE study_records
+SET memo = ?
+WHERE id = ?
+<span class="comment">// → 末尾の「,」を &lt;set&gt; が自動除去</span>
+
+
+<span class="comment">// 全フィールド更新する場合は</span>
+<span class="comment">// 普通の UPDATE SET ... で十分。</span>
+<span class="comment">// &lt;set&gt; は「部分更新」専用ツール。</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">trim-tag</span>
+      <span class="tag-desc">&lt;trim&gt; ── 万能版</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// &lt;trim&gt; とは</div>
+        <p><code>&lt;where&gt;</code> や <code>&lt;set&gt;</code> の<b>汎用版</b>。任意の文字列を前後で除去・追加できる。<b>「内部的には &lt;where&gt; も &lt;trim&gt; で実装されている」</b>。</p>
+        <p style="margin-top:8px"><b>使い所</b>：標準タグでは表現しきれない複雑なケース。<b>業務でも稀</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// &lt;trim&gt; の例</span>
+
+<span class="comment">// &lt;where&gt; を &lt;trim&gt; で実装すると</span>
+&lt;<span class="kw">trim</span>
+  <span class="ann">prefix</span>=<span class="str">"WHERE"</span>
+  <span class="ann">prefixOverrides</span>=<span class="str">"AND |OR "</span>&gt;
+  ...
+&lt;/<span class="kw">trim</span>&gt;
+<span class="comment">// → &lt;where&gt; と同じ動作</span>
+
+
+<span class="comment">// &lt;set&gt; を &lt;trim&gt; で実装すると</span>
+&lt;<span class="kw">trim</span>
+  <span class="ann">prefix</span>=<span class="str">"SET"</span>
+  <span class="ann">suffixOverrides</span>=<span class="str">","</span>&gt;
+  ...
+&lt;/<span class="kw">trim</span>&gt;
+<span class="comment">// → &lt;set&gt; と同じ動作</span>
+
+
+<span class="comment">// ─── 知識として知っておけば十分 ─── </span>
+<span class="comment">// 業務では &lt;where&gt; / &lt;set&gt; で大体足りる</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="transparency">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>SQL生成の透明性とログの読み方</h2>
+    <span class="en">TRANSPARENCY & LOG READING</span>
+  </div>
+  <p class="pattern-desc">動的SQLは便利な反面、<b>「実際にどんなSQLが生成されたか」</b>が見えにくいのが弱点。これを克服する<b>ログの読み方</b>を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">read-logs</span>
+      <span class="tag-desc">SQLログから生成SQLを読む</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 標準ログの読み方</div>
+        <p>MyBatis標準ログは<b>パラメータが <code>?</code> で表示</b>される。<b>Parameters の行</b>で値を確認し、頭の中で組み立てる。</p>
+        <p style="margin-top:8px"><b>p6spy</b>（S5で紹介）を使うと、<b>パラメータ展開済みのSQL</b>がそのまま出る。<b>業務での生産性向上手段</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 標準ログの読み方</span>
+
+<span class="comment">// ─── 動的SQLの実行ログ ─── </span>
+==&gt;  Preparing:
+  SELECT s.id AS subject_id ...
+  FROM subjects s
+  LEFT JOIN study_records r
+    ON s.id = r.subject_id
+  WHERE s.id = ?
+    AND r.studied_on &gt;= ?
+    AND r.studied_on &lt;= ?
+  ORDER BY s.id, r.studied_on
+
+==&gt; Parameters:
+  1(Integer),
+  2026-05-10(LocalDate),
+  2026-05-15(LocalDate)
+
+
+<span class="comment">// ─── 頭で組み立てたSQL ─── </span>
+SELECT ... FROM subjects s
+LEFT JOIN study_records r ON s.id = r.subject_id
+WHERE s.id = 1
+  AND r.studied_on &gt;= '2026-05-10'
+  AND r.studied_on &lt;= '2026-05-15'
+ORDER BY s.id, r.studied_on
+
+
+<span class="comment">// → これを DBツールにコピペして実行できる</span>
+
+
+<span class="code-head" style="margin-top:14px">// p6spy を使った場合</span>
+
+<span class="comment">// パラメータ展開済みで出力</span>
+
+#... | took 5ms | statement
+| SELECT ... FROM subjects s
+  LEFT JOIN study_records r
+    ON s.id = r.subject_id
+  WHERE s.id = ?
+    AND r.studied_on &gt;= ?
+    AND r.studied_on &lt;= ?
+| SELECT ... FROM subjects s
+  LEFT JOIN study_records r
+    ON s.id = r.subject_id
+  WHERE s.id = 1
+    AND r.studied_on &gt;= '2026-05-10'
+    AND r.studied_on &lt;= '2026-05-15'
+
+<span class="comment">// 1段目: パラメータ ? のSQL</span>
+<span class="comment">// 2段目: 値が展開されたSQL（実行できる形）</span>
+
+
+<span class="comment">// → 業務開発で重宝するのはこの形</span>
+<span class="comment">// → DBツールに即コピペ可能</span>
+
+
+<span class="code-head" style="margin-top:14px">// 動的SQLのデバッグ手順</span>
+
+<span class="comment">// ① Preparing の行から SQL 骨格を取得</span>
+<span class="comment">// ② Parameters の行から値を確認</span>
+<span class="comment">// ③ 頭の中で組み立てる or p6spy で確認</span>
+<span class="comment">// ④ DBツールで実行して結果を検証</span>
+
+
+<span class="comment">// この習慣が「読める目」を育てる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>動的SQLが複雑になると、<b>「自分が書いたXMLからどんなSQLが生まれるか」</b>を頭で組み立てるのが大変になります。p6spy のような<b>パラメータ展開ツール</b>を業務プロジェクトで導入する価値は大きい。<b>「動かない時のデバッグ時間」が圧倒的に短くなる</b>。</p>
+  </div>
+</section>
+
+<section id="on-vs-where">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ON句 vs WHERE句（伏線回収）</h2>
+    <span class="en">ON vs WHERE</span>
+  </div>
+  <p class="pattern-desc">本編Vol.8 で残した<b>「LEFT JOIN + WHERE の罠」</b>の決着。「<b>記録のない科目を残したい時</b>」と「<b>消したい時</b>」で、JOIN条件の<b>書く場所が変わる</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">on-vs-where</span>
+      <span class="tag-desc">ON句とWHERE句の違い</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 違いの本質</div>
+        <div class="role-card">
+          <span class="label">ON句</span>
+          <div class="name">JOIN 時の条件</div>
+          <div class="desc">「<b>どう繋ぐか</b>」を指定。LEFT JOIN なら「<b>右側にない時も左側は残す</b>」が保証される。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">WHERE句</span>
+          <div class="name">結合後のフィルタ</div>
+          <div class="desc">「<b>結合した結果から何を残すか</b>」を指定。<b>左側だろうと条件偽なら消える</b>。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>原則</b>：「<b>子テーブルの条件は ON 句」「親テーブルの条件は WHERE 句」</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 具体例で比較</span>
+
+<span class="comment">// ─── ① 子の条件を WHERE に置く（Vol.8 の方式）─── </span>
+
+SELECT s.name, r.studied_on
+<span class="kw">FROM</span> subjects s
+<span class="kw">LEFT JOIN</span> study_records r
+  <span class="kw">ON</span> s.id = r.subject_id
+<span class="kw">WHERE</span> r.studied_on &gt;= <span class="str">'2026-05-10'</span>
+  <span class="kw">AND</span> r.studied_on &lt;= <span class="str">'2026-05-15'</span>
+
+<span class="comment">// 結果：</span>
+<span class="comment">// Java     | 2026-05-10</span>
+<span class="comment">// Java     | 2026-05-12</span>
+<span class="comment">// Java     | 2026-05-14</span>
+<span class="comment">// Spring   | 2026-05-11</span>
+<span class="comment">// Spring   | 2026-05-13</span>
+<span class="comment">// Spring   | 2026-05-15</span>
+
+<span class="comment">// HTML/CSS や JavaScript は消える</span>
+<span class="comment">// なぜなら r.studied_on が NULL → 条件偽</span>
+
+
+<span class="comment">// ─── ② 子の条件を ON に移す ─── </span>
+
+SELECT s.name, r.studied_on
+<span class="kw">FROM</span> subjects s
+<span class="kw">LEFT JOIN</span> study_records r
+  <span class="kw">ON</span> s.id = r.subject_id
+ <span class="kw">AND</span> r.studied_on &gt;= <span class="str">'2026-05-10'</span>
+ <span class="kw">AND</span> r.studied_on &lt;= <span class="str">'2026-05-15'</span>
+
+<span class="comment">// 結果：</span>
+<span class="comment">// Java     | 2026-05-10</span>
+<span class="comment">// Java     | 2026-05-12</span>
+<span class="comment">// Java     | 2026-05-14</span>
+<span class="comment">// Spring   | 2026-05-11</span>
+<span class="comment">// Spring   | 2026-05-13</span>
+<span class="comment">// Spring   | 2026-05-15</span>
+<span class="comment">// SQL      | (NULL)        ← 範囲外で NULL</span>
+<span class="comment">// HTML/CSS | (NULL)        ← 元から記録なし</span>
+<span class="comment">// JS       | (NULL)        ← 元から記録なし</span>
+
+<span class="comment">// すべての科目が表示される（記録は NULL あり）</span>
+
+
+<span class="code-head" style="margin-top:14px">// どっちを選ぶか</span>
+
+<span class="comment">// ─── WHERE 句方式（Vol.8 の方式）─── </span>
+<span class="comment">// 「期間内に記録がある科目だけを見たい」</span>
+<span class="comment">// → 業務的に「実績フォーカス」</span>
+<span class="comment">// → 学習記録アプリでは妥当な動作</span>
+
+
+<span class="comment">// ─── ON 句方式 ─── </span>
+<span class="comment">// 「全科目を表示して、期間内記録だけ並べたい」</span>
+<span class="comment">// → 業務的に「俯瞰フォーカス」</span>
+<span class="comment">// → ダッシュボードでは好まれる</span>
+
+
+<span class="comment">// ─── どっちが「正解」？─── </span>
+<span class="comment">// 要件次第。両方とも有効な設計。</span>
+<span class="comment">// 「ユーザーがどう見たいか」で決める。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>ON句 vs WHERE句</b>」は <b>SQL の理解度を測る代表的な質問</b>です。技術面接でもよく聞かれます。<b>「両方説明できて、要件次第で選べる」</b>と答えられれば、<b>SQL 中級者</b>として認められる目安。本巻で押さえた感性は、転職活動でも武器になります。</p>
+  </div>
+</section>
+
+<section id="anti">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>動的SQLのアンチパターン</h2>
+    <span class="en">ANTI-PATTERNS</span>
+  </div>
+  <p class="pattern-desc">動的SQLは強力だが<b>使い方を誤ると保守不能</b>になります。<b>業務でやってはいけない4パターン</b>を整理。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">anti-patterns</span>
+      <span class="tag-desc">4つのアンチパターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// やってはいけない4つ</div>
+        <div class="role-card">
+          <span class="label">ANTI 1</span>
+          <div class="name">条件分岐が10個以上の巨大動的SQL</div>
+          <div class="desc">「とりあえず1つのSQLにすべて押し込む」型。<b>SQLの動作が予測不可能</b>になり、デバッグ不能化。<br><b>対処</b>：5条件を超えたら<b>用途別にメソッドを分ける</b>か、別の検索エンジン（Elasticsearch等）を検討。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">ANTI 2</span>
+          <div class="name">${...} で文字列を直接埋め込む</div>
+          <div class="desc"><b>SQLインジェクション</b>の温床。<code>${tableName}</code> 等で動的に表を切り替えるテクは便利だが、<b>ユーザー入力を絶対渡さない</b>。<br><b>対処</b>：必ず <code>#{...}</code>（バインドパラメータ）を使う。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">ANTI 3</span>
+          <div class="name">&lt;if&gt; ネストの深さ4階層以上</div>
+          <div class="desc">条件の中の条件の中の条件…が深くなると、もはや読めない。<b>動的SQLは「フラットに書く」</b>のが鉄則。<br><b>対処</b>：複雑な分岐は Service 層で <code>if</code> し、複数の Mapper を呼び分ける。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">ANTI 4</span>
+          <div class="name">SELECTカラムを動的に変える</div>
+          <div class="desc"><code>&lt;if&gt;</code> で SELECT 句を切り替える設計。<b>戻り値の型が変動</b>するので resultMap も壊れる。<br><b>対処</b>：必要なカラムは常に取得し、Java側で取捨選択。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// ANTI 2: ${} の罠</span>
+
+<span class="comment">// ─── ✗ NG: ユーザー入力を ${} で展開 ─── </span>
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"searchUnsafe"</span>&gt;
+  SELECT * FROM users
+  WHERE name = <span class="str">'${name}'</span>
+&lt;/<span class="kw">select</span>&gt;
+
+<span class="comment">// ユーザー入力 name に</span>
+<span class="comment">// "alice' OR '1'='1" を入れると…</span>
+
+<span class="comment">// 生成SQL:</span>
+SELECT * FROM users
+WHERE name = <span class="str">'alice' OR '1'='1'</span>
+
+<span class="comment">// → 全ユーザー情報が漏洩</span>
+<span class="comment">// → SQLインジェクション攻撃</span>
+
+
+<span class="comment">// ─── ✓ OK: #{} を使う ─── </span>
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"searchSafe"</span>&gt;
+  SELECT * FROM users
+  WHERE name = #{name}
+&lt;/<span class="kw">select</span>&gt;
+
+<span class="comment">// #{} は PreparedStatement のバインドパラメータ</span>
+<span class="comment">// 値はエスケープ＆型変換されて安全</span>
+
+
+<span class="code-head" style="margin-top:14px">// #{} vs ${} の使い分け</span>
+
+<span class="comment">// ─── #{} = バインドパラメータ ─── </span>
+<span class="comment">// ・通常はこちらを使う</span>
+<span class="comment">// ・値が安全にエスケープされる</span>
+<span class="comment">// ・WHERE id = #{id}</span>
+
+
+<span class="comment">// ─── ${} = 文字列直接置換 ─── </span>
+<span class="comment">// ・SQL構造を変える時のみ使う</span>
+<span class="comment">// ・絶対にユーザー入力を渡さない</span>
+<span class="comment">// ・ORDER BY ${sortColumn}  (列名)</span>
+<span class="comment">//   ↑ ホワイトリストで検証必須</span>
+
+
+<span class="comment">// ─── 鉄則 ─── </span>
+<span class="comment">// 「迷ったら #{}」</span>
+<span class="comment">// ${} を使う前に</span>
+<span class="comment">//   ・本当に必要か？</span>
+<span class="comment">//   ・入力源は安全か？</span>
+<span class="comment">//   ・列名/テーブル名なのか値なのか？</span>
+<span class="comment">// を必ず確認</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>SQLインジェクションは<b>業務システムで最も多いセキュリティ脆弱性</b>のひとつ。<code>#{}</code> を常用すれば<b>自動的に防げる</b>のがMyBatisの良いところ。<code>${}</code> を使うのは「<b>動的にテーブル名や列名を変える」「ORDER BYの列名指定</b>」など<b>SQL構造の動的化</b>でだけ、と覚えておくと安全です。</p>
+  </div>
+</section>
+
+<section id="perf">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>パフォーマンスとセキュリティ</h2>
+    <span class="en">PERFORMANCE & SECURITY</span>
+  </div>
+  <p class="pattern-desc">動的SQLは<b>「便利」と「安全/速度」の両立</b>が大事。最後に2つの観点で押さえます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">perf-sec</span>
+      <span class="tag-desc">業務での注意点</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// パフォーマンス観点</div>
+        <div class="role-card">
+          <span class="label">PERF 1</span>
+          <div class="name">プレースホルダ <code>?</code> でクエリキャッシュ活用</div>
+          <div class="desc">DB の<b>SQL実行プランキャッシュ</b>は「同じSQL構造（パラメータ部分が ?）」なら再利用する。<code>#{}</code> 使用なら<b>自動でこの恩恵</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PERF 2</span>
+          <div class="name">条件追加時の INDEX 設計</div>
+          <div class="desc">「期間絞り込み」を追加したら <code>studied_on</code> 列に<b>インデックス</b>が必要。<b>新しい検索条件＝新しい INDEX 検討</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PERF 3</span>
+          <div class="name">条件が全部偽の時の動作</div>
+          <div class="desc">全 <code>&lt;if&gt;</code> が偽だと <code>WHERE</code> なし＝<b>全件取得</b>。<b>件数次第で重い</b>。デフォルト条件を入れるか、件数制限する。</div>
+        </div>
+        <div class="panel-head" style="margin-top:18px">// セキュリティ観点</div>
+        <div class="role-card">
+          <span class="label">SEC 1</span>
+          <div class="name">#{} 厳守でSQLインジェクション防止</div>
+          <div class="desc">前セクションの通り <code>#{}</code> 使用が鉄則。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">SEC 2</span>
+          <div class="name">${} を使うならホワイトリスト検証</div>
+          <div class="desc">列名指定など <code>${}</code> がどうしても必要な時、<b>受け入れ可能な値のリストでチェック</b>。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// ホワイトリスト検証の例</span>
+
+<span class="comment">// ─── ✗ NG: そのまま埋め込み ─── </span>
+<span class="ann">@GetMapping</span>(<span class="str">"/list"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(
+    <span class="ann">@RequestParam</span> <span class="type">String</span> sortBy) {
+
+  <span class="comment">// sortBy をそのまま XML へ</span>
+  service.<span class="fn">findSorted</span>(sortBy);
+}
+
+<span class="comment">// XML</span>
+ORDER BY <span class="str">${sortBy}</span>
+
+<span class="comment">// → 攻撃者が「id; DROP TABLE users;」を送ると…</span>
+
+
+<span class="comment">// ─── ✓ OK: 許可リストで検証 ─── </span>
+<span class="ann">@GetMapping</span>(<span class="str">"/list"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(
+    <span class="ann">@RequestParam</span> <span class="type">String</span> sortBy) {
+
+  <span class="comment">// 許可された値のみ通す</span>
+  <span class="type">List</span>&lt;<span class="type">String</span>&gt; allowed =
+      <span class="type">List</span>.<span class="fn">of</span>(<span class="str">"id"</span>, <span class="str">"name"</span>, <span class="str">"createdAt"</span>);
+
+  <span class="kw">if</span> (!allowed.<span class="fn">contains</span>(sortBy)) {
+    sortBy = <span class="str">"id"</span>;  <span class="comment">// 既定値に</span>
+  }
+
+  service.<span class="fn">findSorted</span>(sortBy);
+}
+
+
+<span class="comment">// ─── パフォーマンス改善ヒント ─── </span>
+
+<span class="comment">// よく使う検索パターン:</span>
+<span class="comment">// 1. 期間 + 科目で絞り込み</span>
+<span class="comment">// 2. 1ヶ月分の一覧</span>
+
+<span class="comment">// → これらに対応する INDEX:</span>
+<span class="kw">CREATE INDEX</span> idx_studied_on
+  <span class="kw">ON</span> study_records(studied_on);
+
+<span class="kw">CREATE INDEX</span> idx_subject_id_studied_on
+  <span class="kw">ON</span> study_records(subject_id, studied_on);
+
+
+<span class="comment">// 業務システムでは：</span>
+<span class="comment">// 検索条件を増やすたびに</span>
+<span class="comment">// 「この条件で INDEX 効く？」を確認する習慣</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次の本編へ</h2>
+    <span class="en">TO THE NEXT VOLUME</span>
+  </div>
+  <p class="pattern-desc">別冊S8お疲れさまでした。<b>動的SQL を「設計できる武器」</b>として手に入れました。<b>Cの中盤戦が完了</b>し、次は「<b>集計の章</b>」に入ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">この別冊のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 持ち帰る5つの知見</div>
+        <div class="role-card">
+          <span class="label">知見1</span>
+          <div class="name">動的SQLタグは6個</div>
+          <div class="desc">if / where / choose / set / foreach / trim</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見2</span>
+          <div class="name">IN句は foreach で組み立てる</div>
+          <div class="desc">N+1対策（IN句一括）でも必須</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見3</span>
+          <div class="name">SQLログから生成SQLを読む目</div>
+          <div class="desc">p6spy でパラメータ展開した形が見える</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見4</span>
+          <div class="name">ON句 vs WHERE句</div>
+          <div class="desc">親を残したい時は ON、消したい時は WHERE</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見5</span>
+          <div class="name">#{} 厳守でインジェクション防止</div>
+          <div class="desc">${} は SQL構造の動的化のみ・ホワイトリスト検証</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.9 本編で起きること</span>
+
+<span class="comment">// タイトル：</span>
+<span class="comment">// 「GROUP BY で集計しよう」</span>
+
+<span class="comment">// やること：</span>
+<span class="comment">// 1. 科目別の合計時間を SQL で算出</span>
+<span class="comment">// 2. COUNT / SUM / AVG の使い方</span>
+<span class="comment">// 3. 集計結果用のDTO作成</span>
+<span class="comment">// 4. Service層に業務ロジック導入</span>
+<span class="comment">// 5. 統計画面の準備（Vol.10でUI化）</span>
+
+<span class="comment">// 獲得スキル：</span>
+<span class="comment">// → 集計クエリ獲得</span>
+
+
+<span class="comment">// Vol.8 までの「絞り込み検索」は</span>
+<span class="comment">// 「個別のデータを取り出す」だった。</span>
+
+<span class="comment">// Vol.9 からの「集計」は</span>
+<span class="comment">// 「全体傾向を取り出す」へ。</span>
+
+<span class="comment">// Cの「統計フェーズ」開始。</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(94,102,80,0.12)">
+    <div class="tip-label">NEXT STEP ── VOL.9 本編</div>
+    <p>別冊S8で<b>動的SQLを「武器」として完成</b>させました。次のVol.9 本編「<b>GROUP BY で集計しよう</b>」では、SQL の<b>もう一つの真骨頂「集計クエリ」</b>に踏み込みます。<br>「科目別の合計学習時間」「平均学習時間」をDBに計算させ、業務ロジック層が本格化します。Cの<b>統計フェーズ</b>のスタート。本編Vol.9 へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.08 / 15 ── DYNAMIC SQL DEEP DIVE（別冊）</span>
+</footer>
+
+</body>
+</html>

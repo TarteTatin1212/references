@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕別冊S4 データモデリングの理論</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a3540;
+  --paper:#ece8de;
+  --paper-2:#d8d4c6;
+  --accent:#6a8590;
+  --accent-2:#8aa0a8;
+  --accent-3:#a07050;
+  --muted:#707a82;
+  --line:#c2c0b4;
+  --code-bg:#252a32;
+  --code-text:#e6e2d6;
+  --panel-bg:#f3eee2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✧";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.18;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.tip{background:rgba(106,133,144,0.10);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.er-diagram{background:#fff;border:1px solid var(--line);padding:18px;margin:14px 0;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.9;color:var(--ink)}
+.er-diagram .ent{color:var(--accent);font-weight:700}
+.er-diagram .rel{color:var(--accent-3);font-weight:700}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.S4</span>
+    <span class="kind-tag">別冊 ── SUB</span>
+    <span class="rdt-tag">DATA MODELING</span>
+  </div>
+  <h1>データモデリングの理論<br>正規化と関連設計</h1>
+  <div class="subtitle">SUB.04 ── DATA MODELING &amp; NORMALIZATION</div>
+  <p class="lead">本編Vol.4 で<b>1対多（JOIN）</b>を実装しました。次の Vol.5 は<b>多対多（中間テーブル）</b>。別冊S4では、その土台となる<b>データモデリングの理論</b>を深掘りします。<b>正規化</b>、<b>3つの関連（1対1/1対多/多対多）</b>、<b>中間テーブルの正体</b>、<b>ER図の読み書き</b>。<b>「テーブル構成を語れる」</b>エンジニアになるための知識です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 別冊S4で腑に落とす3つの問い</div>
+    <p>① なぜ<b>1つのカラムにカンマ区切りで複数値</b>を入れてはいけないのか／② <b>多対多</b>はなぜ中間テーブルが要るのか／③ <b>正規化</b>はどこまでやるべきか — この3問に自分の言葉で答えられたらS4卒業です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 別冊S4のミッション</a></li>
+    <li><a href="#s02">02 データモデリングとは</a></li>
+    <li><a href="#s03">03 3つの関連</a></li>
+    <li><a href="#s04">04 正規化の基礎</a></li>
+    <li><a href="#s05">05 多対多と中間テーブル</a></li>
+    <li><a href="#s06">06 ER図の読み書き</a></li>
+    <li><a href="#s07">07 関連設計の判断</a></li>
+    <li><a href="#s08">08 モデリングあるある失敗</a></li>
+    <li><a href="#s09">09 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>別冊S4のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">別冊S4は<b>「データ構造を理論で理解する」</b>回。本編Vol.4 で 1対多を、Vol.5 で多対多を実装します。でも<b>「なぜそのテーブル構成か」</b>を理論で理解しないと、未知のデータ構造で迷います。<b>データ設計は「後から最も変更しにくい層」</b>。だからこそ理論が重要です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">なぜデータモデリングが最重要か</span><span class="tag-desc">後から変えにくい</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// データ構造は変更コストが最大</div>
+        <p>設計フロー文書の指摘：<b>「データ構造は後から最も変更しにくい層。保存形式を間違えると、リリース後に全機能を巻き込んで作り直し」</b>。</p>
+        <ul>
+          <li>コードは直せる、画面も直せる</li>
+          <li>でも<b>テーブル構成の変更は全機能に波及</b></li>
+          <li>既存データの<b>移行（マイグレーション）</b>も必要</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 別冊S4で得る視点</div>
+        <ul class="check-list">
+          <li>正規化の意味と「やりすぎ」の境界</li>
+          <li>3つの関連を見分けられる</li>
+          <li>多対多に中間テーブルが要る理由</li>
+          <li>ER図を読み書きできる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// データ設計ミスの代償</span>
+<span class="comment">// ─── 悪い設計でスタートすると… ───</span>
+
+<span class="comment">// 例：タグをカンマ区切りで保存</span>
+memos テーブル
+  tags VARCHAR: "重要,あとで,アイデア"
+       ↑ 1カラムに複数値
+
+<span class="comment">// 最初は動く。でも後で…</span>
+「タグで絞り込みたい」
+  → LIKE '%重要%' で無理やり検索
+  → "重要度" も引っかかる（誤検出）★
+
+「タグの名前を変更したい」
+  → 全メモの文字列を置換…
+
+「タグごとの件数を出したい」
+  → 文字列を分解して集計…地獄
+
+<span class="comment">// → リリース後に気づく</span>
+<span class="comment">// → 中間テーブルへの移行が必要</span>
+<span class="comment">// → 全機能を作り直し ★★★</span>
+
+
+<span class="comment">// → 最初に正しく設計していれば</span>
+<span class="comment">//   全部 SQL 一発で済んだ</span>
+<span class="comment">// → だからデータモデリングは最重要</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — データ設計は「1:10:100」が最も効く層</div>
+    <p>別冊S1の<b>1:10:100の法則</b>。データ設計はこれが<b>最も極端に効く</b>層です。要求段階でテーブル構成を正しく決めれば安い。リリース後に「カンマ区切りを中間テーブルに」と気づくと、<b>データ移行＋全機能改修＋全テスト</b>で100倍のコスト。<b>データ設計こそ、最初に丁寧に</b>。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>データモデリングとは</h2><span class="en">WHAT IS DATA MODELING</span></div>
+  <p class="pattern-desc"><b>データモデリング</b>とは、現実世界の情報を<b>テーブルと関連</b>で表現する設計作業。設計フロー文書の言葉では<b>「要求に出てくる名詞がデータの候補」</b>。メモ帳の「メモ・カテゴリ・タグ」がそれです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">名詞を見つけて関連を引く</span><span class="tag-desc">3ステップ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// モデリングの3ステップ</div>
+        <ol class="step-list">
+          <li><b>名詞を抽出</b>：要求文の名詞＝エンティティ候補</li>
+          <li><b>属性を決める</b>：各エンティティが持つデータ</li>
+          <li><b>関連を引く</b>：エンティティ間の関係（1対多など）</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// メモ帳での実践</div>
+        <ul>
+          <li>「<b>メモ</b>を作る」→ Memo</li>
+          <li>「<b>カテゴリ</b>で分類」→ Category</li>
+          <li>「<b>タグ</b>を付ける」→ Tag</li>
+        </ul>
+        <p style="margin-top:8px"><b>要求が自然にエンティティを導く</b>。これが本編Vol.1 でやったこと。</p>
+      </div>
+      <div class="code"><span class="code-head">// 要求 → エンティティ → 関連</span>
+<span class="comment">// ─── ① 名詞を抽出 ───</span>
+要求：「メモをカテゴリで分類し、
+        タグも付けて整理したい」
+
+名詞：メモ・カテゴリ・タグ
+  → 3エンティティ ★
+
+
+<span class="comment">// ─── ② 属性を決める ───</span>
+Memo:     id, title, content, 日時
+Category: id, name, color, sort_order
+Tag:      id, name
+
+
+<span class="comment">// ─── ③ 関連を引く ───</span>
+メモ ── 1つのカテゴリに属する
+       → メモ:カテゴリ = 多:1
+       → 1対多
+
+メモ ── 複数のタグを持つ
+タグ ── 複数のメモに付く
+       → メモ:タグ = 多:多
+       → 多対多 ★★★
+
+
+<span class="comment">// → 関連の種類は「両側の数」で決まる</span>
+<span class="comment">// → 次の Section 03 で詳説</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「動詞」は関連、「名詞」はエンティティ</div>
+    <p>要求文を分解するコツ：<b>名詞＝エンティティ（テーブル）</b>、<b>動詞＝関連や操作</b>。「メモ<b>を</b>カテゴリ<b>で</b>分類<b>する</b>」なら、名詞「メモ・カテゴリ」がテーブル、「分類する」が両者の関連。<b>要求の文法構造がデータ構造のヒント</b>になります。これは要求工学（別冊S1）とデータ設計の橋渡しです。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>3つの関連</h2><span class="en">3 RELATIONSHIPS</span></div>
+  <p class="pattern-desc">エンティティ間の関連は<b>3種類</b>。<b>1対1・1対多・多対多</b>。それぞれ<b>実装方法が違う</b>。「両側にいくつあるか」で見分けます。本編Vol.4 が 1対多、Vol.5 が多対多です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">3つの関連と実装方法</span><span class="tag-desc">両側の数で見分ける</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">TYPE 1</span>
+            <div class="name">1対1</div>
+            <div class="desc"><b>片方に1つずつ</b>。例：ユーザーとプロフィール。同じテーブルか、FK1つ。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">TYPE 2</span>
+            <div class="name">1対多</div>
+            <div class="desc"><b>片方が複数持つ</b>。例：カテゴリと複数のメモ。<b>多側にFK</b>。本編Vol.4。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">TYPE 3</span>
+            <div class="name">多対多</div>
+            <div class="desc"><b>両方が複数</b>。例：メモとタグ。<b>中間テーブル必須</b>。本編Vol.5。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// 見分け方の質問</div>
+        <p>2つのエンティティ A と B について：</p>
+        <ul>
+          <li>「1つの A は複数の B を持つ？」</li>
+          <li>「1つの B は複数の A を持つ？」</li>
+        </ul>
+        <p style="margin-top:8px">両方YES → <b>多対多</b>。片方だけYES → <b>1対多</b>。両方NO → <b>1対1</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 3つの関連の実装</span>
+<span class="comment">// ─── 1対多（メモ←→カテゴリ）───</span>
+<span class="comment">// 「多」側（memos）に FK を置く</span>
+memos
+  id, title, <span class="ann">category_id</span>(FK)
+categories
+  id, name
+
+<span class="comment">// 1カテゴリ → 複数メモ</span>
+<span class="comment">// 1メモ → 1カテゴリ</span>
+<span class="comment">// → 多側にFK 1本 ★（Vol.4）</span>
+
+
+<span class="comment">// ─── 多対多（メモ←→タグ）───</span>
+<span class="comment">// 中間テーブルが必要</span>
+memos          tags
+  id, title      id, name
+     \\          /
+      <span class="ann">memo_tags</span>（中間テーブル）
+        memo_id(FK), tag_id(FK)
+
+<span class="comment">// 1メモ → 複数タグ</span>
+<span class="comment">// 1タグ → 複数メモ</span>
+<span class="comment">// → FKだけでは表現できない</span>
+<span class="comment">// → 中間テーブルが要る ★★★（Vol.5）</span>
+
+
+<span class="comment">// ─── なぜ多対多はFKで無理か ───</span>
+<span class="comment">// memos に tag_id を置くと…</span>
+<span class="comment">// → 1メモ1タグしか持てない（NG）</span>
+<span class="comment">// tags に memo_id を置くと…</span>
+<span class="comment">// → 1タグ1メモしか付かない（NG）</span>
+<span class="comment">// → どちらも多対多を表現できない</span>
+<span class="comment">// → 中間テーブルが必然 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 1対多のFKは「多側」に置く</div>
+    <p>1対多で<b>FKをどちらに置くか</b>でよく迷います。答えは<b>「多側」</b>。メモ（多）とカテゴリ（1）なら、<b>memos に category_id</b>。逆に categories に memo_id を置くと「1カテゴリ1メモ」になってしまう。<b>「多が1を指す」</b>と覚えればOK。本編Vol.4 でこれを実践しました。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>正規化の基礎</h2><span class="en">NORMALIZATION</span></div>
+  <p class="pattern-desc"><b>正規化</b>とは、データの<b>重複と矛盾を防ぐ</b>テーブル設計の技法。「1つのカラムに複数値を入れない」「重複データを別テーブルに分ける」。<b>第1〜第3正規形</b>を、難しい用語抜きで実用的に理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">正規化の3段階（実用版）</span><span class="tag-desc">用語より「なぜ」</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 第1正規形（1NF）</div>
+        <p><b>1つのカラムに1つの値</b>。カンマ区切りで複数値はNG。</p>
+        <ul>
+          <li>NG：tags = "重要,あとで"</li>
+          <li>OK：1行1値に分解（中間テーブルへ）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 第2正規形（2NF）</div>
+        <p><b>主キーの一部だけで決まる項目を分離</b>。中間テーブルで特に重要。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 第3正規形（3NF）</div>
+        <p><b>他の列から決まる列を分離</b>。「カテゴリ名」をメモに直接持たず、categories に分けるのがこれ。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 実用的な目安</div>
+        <p>「<b>同じデータが2か所に重複していたら分ける</b>」。これだけ意識すれば、自然と第3正規形くらいになります。</p>
+      </div>
+      <div class="code"><span class="code-head">// 正規化の実例</span>
+<span class="comment">// ─── 非正規形（NG）───</span>
+memos
+ id│title │category_name│category_color│tags
+ 1 │会議  │仕事         │#d63131       │重要,急ぎ
+ 2 │買物  │仕事         │#d63131       │
+                ↑重複！      ↑重複！    ↑複数値！
+
+<span class="comment">// 問題：</span>
+<span class="comment">// ・カテゴリ色を変えたい→全メモ修正</span>
+<span class="comment">// ・「仕事」の名前変更→全メモ修正</span>
+<span class="comment">// ・タグで検索できない（文字列）</span>
+
+
+<span class="comment">// ─── 正規化後（OK）───</span>
+<span class="comment">// 第3正規形：カテゴリを分離</span>
+memos: id, title, category_id(FK)
+categories: id, name, color
+<span class="comment">// → カテゴリ色は1か所だけ ★</span>
+<span class="comment">// → 名前変更も1か所 ★</span>
+
+<span class="comment">// 第1正規形：タグを分解（中間テーブル）</span>
+tags: id, name
+memo_tags: memo_id, tag_id
+<span class="comment">// → タグで検索・集計できる ★★★</span>
+
+
+<span class="comment">// ─── 正規化の効果 ───</span>
+<span class="kw">更新の一貫性</span>：1か所直せば全部反映
+<span class="kw">検索の容易さ</span>：SQLで絞り込める
+<span class="kw">矛盾の防止</span>：重複がないから矛盾しない</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 正規化のやりすぎ＝過剰設計</div>
+    <p>正規化は重要ですが、<b>やりすぎると JOIN だらけで遅く・複雑</b>に。別冊S2の<b>YAGNI・KISS</b>と同じく、<b>「実用上必要な正規化」で止める</b>のが正解。一般に<b>第3正規形まで</b>で十分。性能が問題になったら、あえて重複を持つ<b>「非正規化」</b>を検討（測定してから＝別冊S2）。<b>正規化も判断、原理主義にならない</b>。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>多対多と中間テーブル</h2><span class="en">MANY-TO-MANY</span></div>
+  <p class="pattern-desc">本編Vol.5 の核心<b>「多対多」</b>を理論で先取り。<b>中間テーブル（memo_tags）</b>の正体、複合主キー、なぜこれが必要か。<b>多対多は3テーブル設計の最重要にして最難関</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">中間テーブルの正体</span><span class="tag-desc">多対多を「2つの1対多」に分解</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 多対多 = 2つの1対多</div>
+        <p>多対多は直接表現できません。<b>中間テーブルを挟んで「2つの1対多」に分解</b>します。</p>
+        <ul>
+          <li>memos ←1対多→ memo_tags</li>
+          <li>tags ←1対多→ memo_tags</li>
+        </ul>
+        <p style="margin-top:8px">中間テーブル <b>memo_tags</b> は「<b>どのメモにどのタグが付いたか</b>」の組み合わせを記録。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 中間テーブルの構造</div>
+        <ul>
+          <li><b>memo_id</b>（FK → memos）</li>
+          <li><b>tag_id</b>（FK → tags）</li>
+          <li><b>複合主キー</b>（memo_id, tag_id）＝同じ組み合わせの重複防止</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 中間テーブルの仕組み</span>
+<span class="comment">// ─── データのイメージ ───</span>
+memos        memo_tags        tags
+ 1 会議       memo_id│tag_id    1 重要
+ 2 買物         1   │  1        2 急ぎ
+ 3 学習         1   │  2        3 あとで
+                2   │  3
+                3   │  1
+                3   │  2
+
+<span class="comment">// 読み方：</span>
+<span class="comment">// メモ1（会議）→ タグ1(重要),2(急ぎ)</span>
+<span class="comment">// メモ2（買物）→ タグ3(あとで)</span>
+<span class="comment">// メモ3（学習）→ タグ1(重要),2(急ぎ)</span>
+<span class="comment">// → 1メモに複数タグ ★</span>
+<span class="comment">// → 1タグが複数メモに ★</span>
+<span class="comment">// → 多対多が表現できた ★★★</span>
+
+
+<span class="comment">// ─── DDL（Vol.1で設計済み）───</span>
+<span class="kw">CREATE TABLE</span> memo_tags (
+  memo_id <span class="type">BIGINT NOT NULL</span>,
+  tag_id  <span class="type">BIGINT NOT NULL</span>,
+  <span class="ann">PRIMARY KEY</span> (memo_id, tag_id),
+  <span class="comment">-- ↑ 複合主キー = 同じ組合せ重複防止</span>
+  <span class="kw">FOREIGN KEY</span> (memo_id)
+    <span class="kw">REFERENCES</span> memos(id)
+    <span class="kw">ON DELETE CASCADE</span>,
+  <span class="comment">-- ↑ メモ削除→紐付けも消す</span>
+  <span class="kw">FOREIGN KEY</span> (tag_id)
+    <span class="kw">REFERENCES</span> tags(id)
+    <span class="kw">ON DELETE CASCADE</span>
+);
+
+
+<span class="comment">// ─── 削除戦略の違い（Vol.1設計）───</span>
+カテゴリ（1対多）: ON DELETE SET NULL
+  → メモは残る、未分類になる
+中間テーブル（多対多）: ON DELETE CASCADE
+  → メモ削除で紐付けも消す（紐付けだけ）
+  → メモ本体・タグ本体は無関係 ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 中間テーブルの複合主キーが「重複」を防ぐ</div>
+    <p>中間テーブルの<b>主キー (memo_id, tag_id)</b> は重要。これにより<b>「同じメモに同じタグを2回付ける」が物理的に不可能</b>になります。別冊S3の<b>「正しさはDBに守らせる」</b>がここでも効く。アプリ側で重複チェックする必要がなく、<b>DBが整合性を保証</b>。本編Vol.6 でこの恩恵を実装で体験します。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>ER図の読み書き</h2><span class="en">ER DIAGRAM</span></div>
+  <p class="pattern-desc"><b>ER図</b>（Entity-Relationship図）は、テーブルと関連を<b>図で表現</b>する設計図。チームでの<b>共通言語</b>です。記号の意味と、メモ帳アプリのER図を読み書きできるようになります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ER図の記法とメモ帳のER図</span><span class="tag-desc">設計の共通言語</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 関連の記号（カラスの足記法）</div>
+        <table class="compare-tbl">
+          <thead><tr><th>記号</th><th>意味</th></tr></thead>
+          <tbody>
+            <tr><td>──┤</td><td>1（ちょうど1）</td></tr>
+            <tr><td>──&lt;</td><td>多（0以上）</td></tr>
+            <tr><td>1 ──&lt; 多</td><td>1対多</td></tr>
+            <tr><td>多 &gt;──&lt; 多</td><td>多対多</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// ER図を描く意味</div>
+        <ul>
+          <li><b>全体像が一目</b>：テーブル数・関連が見える</li>
+          <li><b>チームの共通言語</b>：認識を揃えられる</li>
+          <li><b>実装前の検証</b>：紙の上で矛盾に気づける</li>
+        </ul>
+        <p style="margin-top:8px">設計フロー文書の「<b>検証フェーズ</b>」＝紙のスケッチで確認、がこれ。</p>
+      </div>
+      <div class="code"><span class="code-head">// メモ帳アプリの ER 図</span>
+<div class="er-diagram">
+<span class="ent">┌─────────────┐</span>
+<span class="ent">│ categories  │</span>
+<span class="ent">│─────────────│</span>
+<span class="ent">│ id (PK)     │</span>
+<span class="ent">│ name        │</span>
+<span class="ent">│ color       │</span>
+<span class="ent">│ sort_order  │</span>
+<span class="ent">└──────┬──────┘</span>
+       │ 1
+       │
+       │ <span class="rel">多 (1対多)</span>
+<span class="ent">┌──────┴──────┐</span>
+<span class="ent">│ memos       │</span>
+<span class="ent">│─────────────│</span>
+<span class="ent">│ id (PK)     │</span>
+<span class="ent">│ title       │</span>
+<span class="ent">│ content     │</span>
+<span class="ent">│ category_id │</span>───FK
+<span class="ent">└──────┬──────┘</span>
+       │ 1
+       │ <span class="rel">多</span>
+<span class="ent">┌──────┴──────┐</span>
+<span class="ent">│ memo_tags   │</span>  ← 中間テーブル
+<span class="ent">│─────────────│</span>
+<span class="ent">│ memo_id(PK) │</span>
+<span class="ent">│ tag_id (PK) │</span>
+<span class="ent">└──────┬──────┘</span>
+       │ 多
+       │ 1
+<span class="ent">┌──────┴──────┐</span>
+<span class="ent">│ tags        │</span>
+<span class="ent">│─────────────│</span>
+<span class="ent">│ id (PK)     │</span>
+<span class="ent">│ name        │</span>
+<span class="ent">└─────────────┘</span>
+</div>
+
+<span class="comment">// memos ─1対多─ categories（Vol.4）</span>
+<span class="comment">// memos ─多対多─ tags（memo_tags経由・Vol.5）</span>
+<span class="comment">// → これがメモ帳アプリの全体像 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — ER図は「実装前」に描く</div>
+    <p>ER図の真価は<b>実装前</b>に発揮されます。紙やツールで<b>テーブルと関連を描いてみると、矛盾や抜けに気づける</b>（設計フロー文書の「検証」）。「あれ、タグの色はどこに持つ？」「未分類を許すなら category_id は NULL 可だな」——<b>図にすると考えが整理される</b>。コードを書く前の数分の投資が、大きな手戻りを防ぎます。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>関連設計の判断</h2><span class="en">DESIGN DECISIONS</span></div>
+  <p class="pattern-desc">関連設計には<b>判断が伴います</b>。「1対多か多対多か」「FKをどちらに」「削除時どうするか」。別冊S2の<b>トレードオフの判断軸</b>が、ここでも活きます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">関連設計の3つの判断</span><span class="tag-desc">要求から決める</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 判断① 1対多か多対多か</div>
+        <p><b>要求で決まる</b>。「メモは1カテゴリ」なら1対多、「メモは複数タグ」なら多対多。<b>将来の変化も考慮</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 判断② 削除時の挙動</div>
+        <table class="compare-tbl">
+          <thead><tr><th>戦略</th><th>意味</th><th>本シリーズ</th></tr></thead>
+          <tbody>
+            <tr><td>SET NULL</td><td>参照を空に</td><td>カテゴリ削除</td></tr>
+            <tr><td>CASCADE</td><td>連動削除</td><td>中間テーブル</td></tr>
+            <tr><td>RESTRICT</td><td>削除拒否</td><td>—</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 判断③ 中間テーブルに属性を持たせるか</div>
+        <p>多対多の中間テーブルに<b>「付けた日時」「並び順」</b>などを持たせることも。本シリーズはシンプルに<b>FKのみ</b>（YAGNI）。</p>
+      </div>
+      <div class="code"><span class="code-head">// 関連設計の判断例</span>
+<span class="comment">// ─── 判断① カテゴリは1対多で良いか ───</span>
+要求：「メモは1つのカテゴリに属する」
+  → 1対多で十分
+
+<span class="comment">// もし「メモを複数カテゴリに」なら？</span>
+  → 多対多に変更（中間テーブル）
+  → 要求次第で構造が変わる ★
+
+
+<span class="comment">// ─── 判断② 削除戦略（要求ベース）───</span>
+Q. カテゴリ「仕事」を消したら
+   「仕事」のメモはどうなる？
+
+A1. メモも消す → CASCADE
+    （でもメモは大事…却下）
+A2. 未分類にする → SET NULL ★採用
+    （メモは残る・本シリーズの方針）
+A3. 削除させない → RESTRICT
+    （メモがある限りカテゴリ削除不可）
+
+<span class="comment">// → 「メモは大事」という価値観が</span>
+<span class="comment">//   SET NULL を選ばせる ★★★</span>
+
+
+<span class="comment">// ─── 判断③ 中間テーブルの属性 ───</span>
+<span class="comment">// シンプル版（本シリーズ）：</span>
+memo_tags(memo_id, tag_id)
+
+<span class="comment">// 拡張版（必要なら）：</span>
+memo_tags(memo_id, tag_id,
+          created_at, sort_order)
+<span class="comment">// → 「タグを付けた順」を保持したいなら</span>
+<span class="comment">// → でも今は不要（YAGNI）★</span>
+<span class="comment">// → 必要になったら足す（別冊S2）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 削除戦略は「価値観」を反映する</div>
+    <p>FKの <code>ON DELETE</code> は単なる技術選択ではなく<b>「何を大事にするか」の表明</b>。本シリーズが<b>カテゴリ削除→メモは SET NULL（残す）</b>を選ぶのは、<b>「ユーザーのメモは絶対に失わせない」</b>という価値観。一方<b>中間テーブルは CASCADE（紐付けだけ消す）</b>。<b>「何を守り、何を消すか」を要求と価値観から決める</b>のが関連設計です。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>モデリングあるある失敗</h2><span class="en">MODELING PITFALLS</span></div>
+  <p class="pattern-desc">データモデリングで<b>初心者が必ず1つは踏む</b>失敗を5つ厳選。<b>知っていれば回避できる</b>ものばかり。特に<b>「カンマ区切り地獄」</b>は要注意です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">モデリングあるある 5選</span><span class="tag-desc">先人の轍を踏まない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① カンマ区切りで複数値 ★★★</b></p>
+        <ul>
+          <li>tags = "重要,急ぎ" のように1カラムに複数</li>
+          <li>検索・集計・名称変更が地獄に</li>
+          <li>→ 中間テーブルで第1正規形に</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② 同じデータを複数テーブルに重複 ★★★</b></p>
+        <ul>
+          <li>カテゴリ名をメモにも保存</li>
+          <li>名前変更時に全部直す羽目に</li>
+          <li>→ FKで参照、名前は1か所（第3正規形）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ 1対多のFKを「1側」に置く</b></p>
+        <ul>
+          <li>categories に memo_id を置く</li>
+          <li>→ 1カテゴリ1メモになる（NG）</li>
+          <li>→ FKは「多側」に</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 多対多をFK1本で表現しようとする</b></p>
+        <ul>
+          <li>memos に tag_id を1つ置く</li>
+          <li>→ 1メモ1タグしか持てない</li>
+          <li>→ 中間テーブルが必須</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 何でも1つの巨大テーブルに</b></p>
+        <ul>
+          <li>メモもカテゴリもタグも1テーブルに詰める</li>
+          <li>→ NULLだらけ・意味不明</li>
+          <li>→ エンティティごとに分ける</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// ①カンマ区切り地獄の詳細</span>
+<span class="comment">// ─── 一見動くが破綻する ───</span>
+memos
+  tags VARCHAR: "重要,急ぎ,あとで"
+
+<span class="comment">// 破綻ポイント：</span>
+
+<span class="comment">// 1. タグで絞り込めない</span>
+SELECT * FROM memos
+ WHERE tags LIKE '%重要%'
+<span class="comment">// → "重要度" も引っかかる（誤検出）★</span>
+<span class="comment">// → "最重要" も引っかかる</span>
+
+<span class="comment">// 2. タグ名を変更できない</span>
+<span class="comment">// "重要"→"高優先" にしたい</span>
+<span class="comment">// → 全メモの文字列を置換…</span>
+<span class="comment">// → "重要度" まで壊す危険 ★</span>
+
+<span class="comment">// 3. タグ別の件数が出せない</span>
+<span class="comment">// → 文字列を分解して集計…悪夢</span>
+
+
+<span class="comment">// ─── 正しい設計（中間テーブル）───</span>
+SELECT m.* FROM memos m
+  JOIN memo_tags mt ON m.id=mt.memo_id
+  JOIN tags t ON mt.tag_id=t.id
+ WHERE t.name = '重要'
+<span class="comment">// → 完全一致で正確 ★★★</span>
+<span class="comment">// → 名称変更は tags の1行だけ</span>
+<span class="comment">// → 件数も GROUP BY 一発</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「カンマ区切り」を見たら設計を疑う</div>
+    <p>1カラムに<b>カンマ区切りで複数値</b>を入れたくなったら、それは<b>多対多を中間テーブルで表現すべきサイン</b>。「最初は楽」ですが、<b>検索・集計・更新で必ず破綻</b>します（別冊S1の1:10:100）。本編Vol.5 で<b>正しく中間テーブル</b>を作るのは、この地獄を避けるため。<b>「複数値はカラムでなく行で」</b>が鉄則です。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">別冊S4 で<b>データモデリングの理論</b>が頭に入りました。本編Vol.5 で<b>多対多（タグ）</b>を実装するとき、中間テーブル・collection の「なぜ」が見えるはずです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">S4 達成チェック</span><span class="tag-desc">データ設計を語れる人になった</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>データ設計が「最も変更しにくい層」と分かる</li>
+          <li>要求の名詞からエンティティを導ける</li>
+          <li>3つの関連（1対1/1対多/多対多）を見分けられる</li>
+          <li>1対多のFKは多側に置くと言える</li>
+          <li>正規化の意味と「やりすぎ」を理解</li>
+          <li>多対多に中間テーブルが要る理由を説明できる</li>
+          <li>複合主キーが重複を防ぐと分かる</li>
+          <li>ER図を読み書きできる</li>
+          <li>カンマ区切り地獄を避けられる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 別冊S4 で手に入れたデータ理論</span>
+✓ <span class="str">"データ設計は最も変更しにくい。</span>
+   <span class="str"> だから最初に丁寧に"</span>
+
+✓ <span class="str">"関連は両側の数で決まる</span>
+   <span class="str"> （1対多/多対多）"</span>
+
+✓ <span class="str">"1対多のFKは多側に"</span>
+
+✓ <span class="str">"多対多は中間テーブルで</span>
+   <span class="str"> 2つの1対多に分解"</span>
+
+✓ <span class="str">"複合主キーが重複を防ぐ"</span>
+
+✓ <span class="str">"カンマ区切りは破綻のサイン"</span>
+
+✓ <span class="str">"正規化も判断、原理主義にならない"</span>
+
+
+<span class="comment">// あなたは「データ設計を語れる」</span>
+<span class="comment">// エンジニアに近づいた ★★★</span>
+
+<span class="comment">// 次回 本編Vol.5：</span>
+<span class="comment">//   タグ機能（多対多）を実装</span>
+<span class="comment">//   memo_tags 中間テーブル</span>
+<span class="comment">//   collection（association の複数版）</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── 本編 VOL.5 へ</div>
+    <p>別冊S4 で<b>「データモデリングの理論」</b>を獲得しました。次は本編Vol.5「<b>タグ機能（多対多）</b>」。<b>US-003</b> を起点に、<b>memo_tags 中間テーブル</b>で多対多を実装します。別冊S4で学んだ<b>「中間テーブル＝2つの1対多」「複合主キー」</b>が、実装で形になります。MyBatis の <b>collection</b>（association の複数版）も登場。多対多は最難関ですが、理論を頭に入れた今なら<b>「なぜこの構造か」</b>が見えるはず。<b>本編Vol.5 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>SUB.04 / 14 ── DATA MODELING &amp; NORMALIZATION（別冊）</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト編 E2E・UIテスト編 Vol.7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;--paper:#e8eaee;--paper-2:#d4d7df;
+  --accent:#3d4f7c;--accent-2:#5a6b94;--accent-3:#8a98b8;
+  --muted:#5a6480;--line:#b8bccc;
+  --code-bg:#1c2138;--code-text:#e8eaee;--panel-bg:#f4f5f8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"✓";position:absolute;top:-30px;right:-10px;font-size:280px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:640px;margin-top:20px;color:var(--ink);font-size:15px}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em}
+.pattern-desc{max-width:680px;font-size:14px;margin-bottom:20px;color:var(--ink)}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:16px}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+.panel{background:var(--panel-bg);padding:20px 24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:20px 24px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}.code .type{color:#c2a3ff}.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}.code .ann{color:#f7c08a}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.08);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+/* ブラウザ画面のモック */
+.browser{background:#fff;border:1px solid var(--line);border-radius:4px;overflow:hidden;font-family:'Noto Sans JP',sans-serif;font-size:11.5px}
+.browser .bar{background:#dcdee5;padding:5px 8px;border-bottom:1px solid var(--line);display:flex;gap:4px;align-items:center}
+.browser .bar .dot{width:9px;height:9px;border-radius:50%;background:#b8bccc}
+.browser .bar .url{background:#fff;border-radius:3px;padding:2px 8px;flex:1;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;margin-left:6px}
+.browser .body{padding:12px 14px}
+.browser h3{font-family:'Shippori Mincho',serif;margin-bottom:6px;font-size:14px}
+.browser .field{margin:6px 0}
+.browser .field label{display:block;font-size:10px;color:var(--muted)}
+.browser .field input{width:100%;border:1px solid var(--line);padding:3px 6px;font-size:11px}
+.browser .btn{background:var(--accent);color:#fff;border:0;padding:4px 12px;font-size:11px;border-radius:2px}
+/* 手順ステップ */
+.steps{list-style:none;font-size:13px}
+.steps li{padding:8px 12px;background:#fff;border-left:3px solid var(--accent-3);margin-bottom:4px;display:flex;gap:10px}
+.steps li .n{background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:2px;min-width:24px;text-align:center;height:18px}
+/* ツール比較 */
+.tool-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+.tool-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:left;padding:8px 10px;letter-spacing:0.1em;border-bottom:1px solid var(--line)}
+.tool-table td{padding:7px 10px;border-bottom:1px dashed var(--line);vertical-align:top}
+.tool-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;width:100px}
+/* 良し悪し */
+.bad{background:rgba(247,168,216,0.15);border:1px solid #d88;padding:10px 14px;margin:6px 0;font-size:12px;font-family:'JetBrains Mono',monospace}
+.good{background:rgba(181,232,176,0.18);border:1px solid #6a9;padding:10px 14px;margin:6px 0;font-size:12px;font-family:'JetBrains Mono',monospace}
+.bad-label,.good-label{font-size:10px;letter-spacing:0.2em;font-weight:700;display:block;margin-bottom:4px}
+.bad-label{color:#a44}.good-label{color:#386}
+.page-footer{border-top:2px solid var(--ink);margin-top:80px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:180px}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="vol-tag">VOL.07 / 10</span>
+  <h1>E2E・UIテスト編</h1>
+  <div class="subtitle">エンジニアリングテスト編 — END-TO-END & UI TESTING</div>
+  <p class="lead">
+    ピラミッドの頂上、システム全体を画面操作から検証する世界です。<b>Selenium・Playwright・Cypress</b>といったツール、Page Objectパターン、待機戦略、フレーキー対策まで。「動かしながら学べる」というシリーズの本領が一番発揮される巻でもあります。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 E2Eテストとは</a></li>
+    <li><a href="#sec02">02 主要ツールの比較</a></li>
+    <li><a href="#sec03">03 はじめてのE2E (Playwright)</a></li>
+    <li><a href="#sec04">04 要素の特定方法</a></li>
+    <li><a href="#sec05">05 待機戦略</a></li>
+    <li><a href="#sec06">06 Page Objectパターン</a></li>
+    <li><a href="#sec07">07 フレーキーテスト対策</a></li>
+    <li><a href="#sec08">08 E2Eを書く適量</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>E2Eテストとは</h2>
+    <span class="en">WHAT IS E2E</span>
+  </div>
+  <p class="pattern-desc">
+    E2Eテスト（End-to-End test、エンドツーエンド）とは、<b>ユーザーが画面を操作する流れを再現してシステム全体を検証する</b>テストです。ボタンをクリック・フォームに入力・画面遷移・結果表示まで、人が行う一連の操作をプログラムで自動再現します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">E2E test</span>
+      <span class="tag-desc">画面操作の一連の流れを自動化</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// E2Eが触れるもの</div>
+        <table class="tool-table">
+          <tr><th>領域</th><th>触れるか</th></tr>
+          <tr><td>画面 / DOM</td><td>○ 本物の画面を操作</td></tr>
+          <tr><td>JavaScript</td><td>○ 実ブラウザで動かす</td></tr>
+          <tr><td>API / サーバ</td><td>○ 通信が発生</td></tr>
+          <tr><td>DB</td><td>○ 実DBが更新される</td></tr>
+          <tr><td>外部サービス</td><td>場合による (擬似化が多い)</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">「ユーザーが操作する画面から、DBが更新されるまで」</b>を貫いて検証する。本物に最も近いテスト層。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// E2Eテストの典型構造</span>
+
+<span class="fn">test</span>(<span class="str">"ログインから商品購入まで"</span>, <span class="kw">async</span> () =&gt; {
+  <span class="comment">// 画面を開く</span>
+  <span class="kw">await</span> page.<span class="fn">goto</span>(<span class="str">"/login"</span>);
+
+  <span class="comment">// 入力 — 本物のフォームに入力</span>
+  <span class="kw">await</span> page.<span class="fn">fill</span>(<span class="str">"#email"</span>, <span class="str">"u@x.com"</span>);
+  <span class="kw">await</span> page.<span class="fn">fill</span>(<span class="str">"#pass"</span>,  <span class="str">"secret"</span>);
+
+  <span class="comment">// クリック — 本物のクリックイベント</span>
+  <span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"button[type=submit]"</span>);
+
+  <span class="comment">// 画面遷移を待つ</span>
+  <span class="kw">await</span> page.<span class="fn">waitForURL</span>(<span class="str">"/dashboard"</span>);
+
+  <span class="comment">// 表示の検証</span>
+  <span class="kw">await</span> <span class="fn">expect</span>(page.<span class="fn">getByText</span>(<span class="str">"ようこそ"</span>))
+    .<span class="fn">toBeVisible</span>();
+});
+
+<span class="comment">// 1つのテスト = 数秒〜数十秒</span>
+<span class="comment">// 画面・API・DB全部を貫通</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    E2Eテストの強みは<b>「ユーザー視点での確からしさ」</b>。実際にユーザーが行う操作で、システム全体が正しく動くかを確認できます。単体や結合では絶対に見つからない<b>「画面で見たら違和感」</b>系のバグを捕まえる層です。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>主要ツールの比較</h2>
+    <span class="en">E2E TOOLS</span>
+  </div>
+  <p class="pattern-desc">
+    E2Eツールはここ数年で大きく変わりました。<b>古参のSelenium・現代のPlaywright/Cypress</b>。それぞれ思想と得意分野が違います。新規プロジェクトでは2025年現在<b>Playwright</b>が人気の選択肢です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">tools</span>
+      <span class="tag-desc">代表ツールの特徴比較</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主要3ツール</div>
+        <table class="tool-table">
+          <tr><th>ツール</th><th>特徴</th></tr>
+          <tr><td>Selenium</td><td>★★ 老舗。多言語対応。動作が遅め</td></tr>
+          <tr><td>Cypress</td><td>★★★ JS界で人気。デバッグ体験が良い</td></tr>
+          <tr><td>Playwright</td><td>★★★ Microsoft製。多ブラウザ・速い・新しい</td></tr>
+          <tr><td>Puppeteer</td><td>★ Chrome専用。シンプル用途向き</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">2025年の新規採用ならPlaywright</b>が第一候補。多言語対応（JS/TS/Python/Java/C#）、自動待機、トレース機能など現代的な要素を備える。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 各ツールの書き味</span>
+
+<span class="comment">// === Selenium ===</span>
+<span class="type">WebDriver</span> driver = <span class="kw">new</span> <span class="type">ChromeDriver</span>();
+driver.<span class="fn">get</span>(<span class="str">"https://example.com"</span>);
+driver.<span class="fn">findElement</span>(<span class="type">By</span>.<span class="fn">id</span>(<span class="str">"email"</span>))
+  .<span class="fn">sendKeys</span>(<span class="str">"u@x.com"</span>);
+<span class="comment">// やや冗長</span>
+
+<span class="comment">// === Cypress ===</span>
+cy.<span class="fn">visit</span>(<span class="str">"/"</span>);
+cy.<span class="fn">get</span>(<span class="str">"#email"</span>).<span class="fn">type</span>(<span class="str">"u@x.com"</span>);
+cy.<span class="fn">contains</span>(<span class="str">"ログイン"</span>).<span class="fn">click</span>();
+<span class="comment">// チェーン記法が独特</span>
+
+<span class="comment">// === Playwright ===</span>
+<span class="kw">await</span> page.<span class="fn">goto</span>(<span class="str">"/"</span>);
+<span class="kw">await</span> page.<span class="fn">fill</span>(<span class="str">"#email"</span>, <span class="str">"u@x.com"</span>);
+<span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"text=ログイン"</span>);
+<span class="comment">// シンプル + 自動待機</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    既存プロジェクトはSeleniumベースが多いです。<b>「ある=Selenium、ない=Playwright」</b>くらいの感覚で選んでよいでしょう。本書では現代的な書き味のPlaywrightを中心に説明します。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>はじめてのE2E (Playwright)</h2>
+    <span class="en">FIRST E2E</span>
+  </div>
+  <p class="pattern-desc">
+    Playwrightで実際に1つE2Eテストを書いてみましょう。題材は<b>「ログイン → ダッシュボード表示」</b>。シンプルですが、E2Eテストの基本構造をすべて含んでいます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">first E2E</span>
+      <span class="tag-desc">ログイン→ダッシュボードの最小フロー</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 操作する画面のイメージ</div>
+        <div class="browser">
+          <div class="bar">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="url">https://app.example.com/login</span>
+          </div>
+          <div class="body">
+            <h3>ログイン</h3>
+            <div class="field"><label>Email</label><input value="u@x.com"></div>
+            <div class="field"><label>Password</label><input type="password" value="••••••"></div>
+            <button class="btn">ログイン</button>
+          </div>
+        </div>
+        <ol class="steps" style="margin-top:14px">
+          <li><span class="n">1</span>ログイン画面を開く</li>
+          <li><span class="n">2</span>メールとパスワードを入力</li>
+          <li><span class="n">3</span>ログインボタンをクリック</li>
+          <li><span class="n">4</span>ダッシュボードへ遷移するのを確認</li>
+          <li><span class="n">5</span>「ようこそ」が表示されている</li>
+        </ol>
+      </div>
+      <div class="code"><span class="comment">// tests/login.spec.ts</span>
+<span class="kw">import</span> { test, expect } <span class="kw">from</span> <span class="str">"@playwright/test"</span>;
+
+<span class="fn">test</span>(<span class="str">"ログイン成功"</span>, <span class="kw">async</span> ({ page }) =&gt; {
+
+  <span class="comment">// ① 画面を開く</span>
+  <span class="kw">await</span> page.<span class="fn">goto</span>(<span class="str">"/login"</span>);
+
+  <span class="comment">// ② フォームに入力</span>
+  <span class="kw">await</span> page.<span class="fn">getByLabel</span>(<span class="str">"Email"</span>)
+    .<span class="fn">fill</span>(<span class="str">"u@x.com"</span>);
+  <span class="kw">await</span> page.<span class="fn">getByLabel</span>(<span class="str">"Password"</span>)
+    .<span class="fn">fill</span>(<span class="str">"secret"</span>);
+
+  <span class="comment">// ③ ボタンクリック</span>
+  <span class="kw">await</span> page.<span class="fn">getByRole</span>(<span class="str">"button"</span>,
+    { name: <span class="str">"ログイン"</span> }).<span class="fn">click</span>();
+
+  <span class="comment">// ④ 画面遷移を待つ</span>
+  <span class="kw">await</span> page.<span class="fn">waitForURL</span>(<span class="str">"/dashboard"</span>);
+
+  <span class="comment">// ⑤ 表示の検証</span>
+  <span class="kw">await</span> <span class="fn">expect</span>(page.<span class="fn">getByText</span>(<span class="str">"ようこそ"</span>))
+    .<span class="fn">toBeVisible</span>();
+});
+
+<span class="comment">// 実行: npx playwright test</span>
+<span class="comment">// → ブラウザが起動して自動で操作</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">超便利</div>
+    Playwrightには<b>コード自動生成機能</b>があります。<code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 6px">npx playwright codegen</code>で実際に画面を操作すると、対応するテストコードが生成されます。最初の取っ掛かりに最適です。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>要素の特定方法</h2>
+    <span class="en">SELECTORS</span>
+  </div>
+  <p class="pattern-desc">
+    E2Eで最重要かつ最ハマりどころが<b>「要素の特定方法」</b>です。「クリックするボタン」「入力するフォーム」を、どうやってプログラムから指し示すか。<b>悪い特定方法</b>を使うと、デザイン変更のたびにテストが壊れます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">selectors</span>
+      <span class="tag-desc">要素を見つける方法と優先順位</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 優先順位 (Playwright推奨)</div>
+        <table class="tool-table">
+          <tr><th>方法</th><th>優先度</th></tr>
+          <tr><td>getByRole</td><td>★★★ アクセシビリティ視点</td></tr>
+          <tr><td>getByLabel</td><td>★★★ フォーム入力に最適</td></tr>
+          <tr><td>getByText</td><td>★★ 表示文字で検索</td></tr>
+          <tr><td>data-testid</td><td>★★ テスト専用属性</td></tr>
+          <tr><td>id / class</td><td>△ 変更されやすい</td></tr>
+          <tr><td>XPath</td><td>× DOM構造に依存。最悪</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">ユーザーが画面で識別する方法に近い順</b>に選ぶのが鉄則。スタイル変更に強くなる。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// === 良い例 ===</span>
+<span class="kw">await</span> page.<span class="fn">getByRole</span>(<span class="str">"button"</span>,
+  { name: <span class="str">"購入する"</span> }).<span class="fn">click</span>();
+
+<span class="kw">await</span> page.<span class="fn">getByLabel</span>(<span class="str">"メールアドレス"</span>)
+  .<span class="fn">fill</span>(<span class="str">"u@x.com"</span>);
+
+<span class="kw">await</span> page.<span class="fn">getByText</span>(<span class="str">"購入完了"</span>);
+
+<span class="kw">await</span> page.<span class="fn">getByTestId</span>(<span class="str">"checkout-btn"</span>).<span class="fn">click</span>();
+
+<span class="comment">// === 悪い例 ===</span>
+
+<span class="ann">// CSSのクラス頼り (デザイン変更で壊れる)</span>
+<span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">".btn-primary.large"</span>);
+
+<span class="ann">// XPath (DOM構造に密着)</span>
+<span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"/html/body/div[2]/form/button"</span>);
+
+<span class="ann">// 表示文字の部分一致 (曖昧)</span>
+<span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"text=する"</span>);
+
+<span class="comment">// → これらは「変更耐性」が低い</span>
+<span class="comment">// → リファクタの度に壊れる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">鉄則</div>
+    <b>「ユーザーが画面で識別する方法」</b>でセレクタを書くのが現代の正解。アクセシビリティ属性（role/label）を優先する習慣をつけると、テストもアクセシビリティも同時に良くなる。一石二鳥です。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>待機戦略</h2>
+    <span class="en">WAITING STRATEGY</span>
+  </div>
+  <p class="pattern-desc">
+    E2Eで<b>もっとも詰まりやすいのが「待ち」の問題</b>です。ページ読み込み、API応答、アニメーション。画面が「準備できる」までの待ち時間は予測できません。これを正しく扱わないとフレーキーテストの温床になります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">waiting</span>
+      <span class="tag-desc">非同期処理の待ち方</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3種類の待ち方</div>
+        <table class="tool-table">
+          <tr><th>方法</th><th>性質</th></tr>
+          <tr><td>固定待ち</td><td>× sleep(3000) 等。最悪</td></tr>
+          <tr><td>暗黙待ち</td><td>○ ツールが自動で待つ (Playwright標準)</td></tr>
+          <tr><td>明示待ち</td><td>○ 「特定条件まで待つ」を書く ★定番</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">固定待ちは絶対NG</b>。短すぎると失敗、長すぎると遅い。条件ベースの待機が正解。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// === NG: 固定待ち ===</span>
+<span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"button"</span>);
+<span class="kw">await</span> page.<span class="fn">waitForTimeout</span>(<span class="num">3000</span>);  <span class="ann">// NG</span>
+<span class="comment">// 3秒で終わる保証なし</span>
+<span class="comment">// 速くても3秒待つ</span>
+
+<span class="comment">// === OK: 暗黙待ち (Playwright) ===</span>
+<span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"button"</span>);
+<span class="kw">await</span> page.<span class="fn">getByText</span>(<span class="str">"完了"</span>).<span class="fn">click</span>();
+<span class="comment">// → 要素が表示されるまで自動で待つ</span>
+<span class="comment">// → デフォルト30秒のタイムアウト</span>
+
+<span class="comment">// === OK: 明示待ち ===</span>
+<span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"button"</span>);
+
+<span class="comment">// URL変化を待つ</span>
+<span class="kw">await</span> page.<span class="fn">waitForURL</span>(<span class="str">"/done"</span>);
+
+<span class="comment">// 特定の文言が出るまで待つ</span>
+<span class="kw">await</span> <span class="fn">expect</span>(page.<span class="fn">getByText</span>(<span class="str">"完了"</span>))
+  .<span class="fn">toBeVisible</span>({ timeout: <span class="num">10000</span> });
+
+<span class="comment">// APIの応答を待つ</span>
+<span class="kw">await</span> page.<span class="fn">waitForResponse</span>(<span class="str">"/api/orders"</span>);</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">鉄則</div>
+    <code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 6px">sleep()</code>や<code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 6px">setTimeout()</code>は<b>E2Eテスト最大の悪</b>です。これを書いた瞬間、テストは脆くなります。「何かが満たされるまで」という条件で待つのが、唯一の正解。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>Page Objectパターン</h2>
+    <span class="en">PAGE OBJECT</span>
+  </div>
+  <p class="pattern-desc">
+    E2Eテストが増えてくると<b>「同じ操作を書くのが煩雑」</b>になります。Page Objectパターンは、画面の操作を1つのクラスにまとめる定番手法。<b>テストコードと画面操作の知識を分離</b>することで、保守性が大きく上がります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">page object</span>
+      <span class="tag-desc">画面ごとに操作をクラス化する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 改善の効果</div>
+        <div class="bad">
+          <span class="bad-label">BEFORE — 直書き</span>
+          各テストで毎回<br>
+          await page.fill("#email", ...)<br>
+          await page.fill("#pass", ...)<br>
+          await page.click("button")<br>
+          ↓<br>
+          同じ操作の繰り返し<br>
+          画面変更時に全テスト修正
+        </div>
+        <div class="good">
+          <span class="good-label">AFTER — Page Object</span>
+          画面の操作を1クラスに集約<br>
+          await loginPage.login(email, pass)<br>
+          ↓<br>
+          1つのメソッド呼び出しで完結<br>
+          画面変更時はクラスだけ修正
+        </div>
+      </div>
+      <div class="code"><span class="comment">// pages/LoginPage.ts</span>
+<span class="kw">export class</span> <span class="type">LoginPage</span> {
+  <span class="kw">constructor</span>(<span class="kw">private</span> page: <span class="type">Page</span>) {}
+
+  <span class="kw">async</span> <span class="fn">goto</span>() {
+    <span class="kw">await this</span>.page.<span class="fn">goto</span>(<span class="str">"/login"</span>);
+  }
+
+  <span class="kw">async</span> <span class="fn">login</span>(email: <span class="kw">string</span>, pass: <span class="kw">string</span>) {
+    <span class="kw">await this</span>.page.<span class="fn">getByLabel</span>(<span class="str">"Email"</span>).<span class="fn">fill</span>(email);
+    <span class="kw">await this</span>.page.<span class="fn">getByLabel</span>(<span class="str">"Password"</span>).<span class="fn">fill</span>(pass);
+    <span class="kw">await this</span>.page.<span class="fn">getByRole</span>(<span class="str">"button"</span>,
+      { name: <span class="str">"ログイン"</span> }).<span class="fn">click</span>();
+  }
+}
+
+<span class="comment">// テスト側がすっきり</span>
+<span class="fn">test</span>(<span class="str">"ログイン成功"</span>, <span class="kw">async</span> ({ page }) =&gt; {
+  <span class="kw">const</span> login = <span class="kw">new</span> <span class="type">LoginPage</span>(page);
+  <span class="kw">await</span> login.<span class="fn">goto</span>();
+  <span class="kw">await</span> login.<span class="fn">login</span>(<span class="str">"u@x.com"</span>, <span class="str">"secret"</span>);
+
+  <span class="kw">await</span> <span class="fn">expect</span>(page).<span class="fn">toHaveURL</span>(<span class="str">"/dashboard"</span>);
+});
+
+<span class="comment">// 画面が変わった → LoginPageだけ修正</span>
+<span class="comment">// → 数十のテストは無修正で動く</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    Page Objectは<b>E2Eテストにおけるリファクタリングの基本形</b>。最初は直書きでよいですが、3つ以上のテストで同じ画面を触り始めたら導入を検討します。「保守性とテスト容易性」のために投資する価値があります。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>フレーキーテスト対策</h2>
+    <span class="en">FLAKY TESTS</span>
+  </div>
+  <p class="pattern-desc">
+    フレーキーテストとは<b>「同じコードでも実行のたびに成否が変わる」</b>不安定なテストのこと。E2Eで最も悩ましい現象です。原因を体系的に押さえ、それぞれの対策を知ることで、悪夢のフレーキー地獄を防げます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">flaky</span>
+      <span class="tag-desc">不安定なテストの原因と対策</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 不安定の典型原因</div>
+        <table class="tool-table">
+          <tr><th>原因</th><th>対策</th></tr>
+          <tr><td>固定待ちの不足</td><td>条件待ちに置き換える</td></tr>
+          <tr><td>テスト間の干渉</td><td>各テストでデータを準備・破棄</td></tr>
+          <tr><td>並列実行で衝突</td><td>テストごとに別ユーザー・別データ</td></tr>
+          <tr><td>外部APIの不安定</td><td>WireMockで擬似化</td></tr>
+          <tr><td>時刻依存</td><td>時刻を固定する</td></tr>
+          <tr><td>ランダムな順序</td><td>ソートしてから検証</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// フレーキー対策の実例</span>
+
+<span class="ann">// NG: テスト間で同じユーザー</span>
+<span class="fn">test</span>(<span class="str">"登録1"</span>, ()=&gt;<span class="fn">register</span>(<span class="str">"佐藤"</span>));
+<span class="fn">test</span>(<span class="str">"登録2"</span>, ()=&gt;<span class="fn">register</span>(<span class="str">"佐藤"</span>));
+<span class="comment">// → 並列実行で重複エラー</span>
+
+<span class="ann">// OK: 一意なデータを使う</span>
+<span class="fn">test</span>(<span class="str">"登録"</span>, ()=&gt;{
+  <span class="kw">const</span> name = <span class="str">"佐藤_"</span> + <span class="type">Date</span>.<span class="fn">now</span>();
+  <span class="fn">register</span>(name);
+});
+
+<span class="ann">// NG: テストの順序依存</span>
+<span class="fn">test</span>(<span class="str">"作成"</span>, ()=&gt;...);
+<span class="fn">test</span>(<span class="str">"上で作ったものを更新"</span>, ()=&gt;...);
+<span class="comment">// → 順序が変わると壊れる</span>
+
+<span class="ann">// OK: 各テストで完結</span>
+<span class="fn">test</span>(<span class="str">"更新"</span>, ()=&gt;{
+  <span class="comment">// テスト内で作成→更新→検証</span>
+});
+
+<span class="ann">// 再実行は最後の手段</span>
+<span class="comment">// 「失敗したら2回まで再実行」は</span>
+<span class="comment">// 根本解決を後回しにする悪習</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">注意</div>
+    フレーキーが放置されると<b>「失敗してもとりあえず再実行」</b>という文化が広まり、本当のバグも見落とされるようになります。フレーキーは見つけたら<b>すぐ直す</b>のが鉄則。「再実行3回まで許容」のような設定は、根本対策の代わりにしないこと。
+  </div>
+</section>
+
+<section id="sec08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>E2Eを書く適量</h2>
+    <span class="en">HOW MUCH E2E</span>
+  </div>
+  <p class="pattern-desc">
+    E2Eテストは<b>強力だがコストが高い</b>。すべての機能をE2Eで検証しようとすると、ピラミッドが崩れて遅く脆いテスト群が出来上がります。<b>何をE2Eで検証すべきか</b>の判断軸を押さえましょう。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">how much</span>
+      <span class="tag-desc">E2Eを書く・書かないの判断</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// E2Eで書くべきもの</div>
+        <table class="tool-table">
+          <tr><th>カテゴリ</th><th>例</th></tr>
+          <tr><td>クリティカルパス</td><td>ログイン・購入・支払い等</td></tr>
+          <tr><td>主要フロー</td><td>登録 → 利用開始までの導線</td></tr>
+          <tr><td>UI依存の検証</td><td>レイアウト・遷移・表示</td></tr>
+          <tr><td>結合の最終確認</td><td>本番に近い形で動くか</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          目安は<b style="color:var(--ink)">「失敗したら事業が止まるフロー」</b>を中心に。細かい分岐や境界値はE2Eには向かない（単体や結合に任せる）。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// E2Eで書かないもの</span>
+
+<span class="ann">×</span> 細かいバリデーション
+   → 「メール形式エラー」「文字数制限」
+   → 単体で書く方が速い
+
+<span class="ann">×</span> エッジケースの大量検証
+   → 同値分割・境界値は単体で
+
+<span class="ann">×</span> 個々のUIコンポーネント
+   → Storybook + コンポーネントテストで
+
+<span class="ann">×</span> 計算ロジック
+   → 純粋関数として切り出し単体で
+
+<span class="comment">// E2Eで書くもの</span>
+
+<span class="ann">○</span> 「ユーザーが一連のことを達成できる」
+<span class="ann">○</span> 「画面遷移が破綻していない」
+<span class="ann">○</span> 「主要なジャーニーが動く」
+
+<span class="comment">// 目安: 全体テストの 10%以下</span>
+<span class="comment">// 数件〜数十件くらい</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">結論</div>
+    E2Eは<b>「最後の砦」</b>として最小限に。<b>「すべての機能を画面操作で網羅する」のはアンチパターン</b>です。各機能のバリエーションは単体・結合で網羅し、E2Eは<b>「ユーザーが達成したい主要ゴール」</b>に絞るのが現場の知恵。地図編Vol.7で「視点の違い」を読み解くと、この棲み分けの理由がクリアになります。
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  次は<b>本編Vol.8「カバレッジ・品質測定編」</b>。テストの「数」だけでなく「質」を測る仕組みに踏み込みます。地図編Vol.5で予告したカバレッジ問題、その本格議論です。<b>地図編Vol.7「ユーザー視点と開発者視点編」</b>では、E2Eが他のテスト層と根本的に違う理由を、視点の左右軸で読み解きます。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST REFERENCE — VOL.07</span>
+  <span>END-TO-END & UI TESTING</span>
+</footer>
+
+</body>
+</html>

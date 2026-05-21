@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト編 CI/CD・テスト自動化編 Vol.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;--paper:#e8eaee;--paper-2:#d4d7df;
+  --accent:#3d4f7c;--accent-2:#5a6b94;--accent-3:#8a98b8;
+  --muted:#5a6480;--line:#b8bccc;
+  --code-bg:#1c2138;--code-text:#e8eaee;--panel-bg:#f4f5f8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"✓";position:absolute;top:-30px;right:-10px;font-size:280px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:640px;margin-top:20px;color:var(--ink);font-size:15px}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em}
+.pattern-desc{max-width:680px;font-size:14px;margin-bottom:20px;color:var(--ink)}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:16px}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+.panel{background:var(--panel-bg);padding:20px 24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:20px 24px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}.code .type{color:#c2a3ff}.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}.code .ann{color:#f7c08a}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.08);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+/* パイプライン図 */
+.pipe{display:flex;align-items:stretch;gap:0;font-family:'JetBrains Mono',monospace;font-size:11px;margin:8px 0;overflow-x:auto}
+.pipe .stage{background:#fff;border:1px solid var(--accent-2);padding:8px 10px;flex:1;text-align:center;min-width:80px}
+.pipe .stage .h{font-size:9.5px;color:var(--muted);letter-spacing:0.1em;display:block;margin-bottom:3px}
+.pipe .stage .n{font-weight:700;color:var(--accent);font-size:11.5px}
+.pipe .arrow{display:flex;align-items:center;color:var(--accent);font-weight:700;padding:0 4px}
+.pipe .stage.ok{background:#eef7ef;border-color:#386}
+.pipe .stage.fail{background:#fce0e0;border-color:#c43030}
+.pipe .stage.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pipe .stage.active .h{color:rgba(255,255,255,0.7)}
+.pipe .stage.active .n{color:#fff}
+/* テーブル */
+.cmp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+.cmp-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:left;padding:8px 10px;letter-spacing:0.1em;border-bottom:1px solid var(--line)}
+.cmp-table td{padding:7px 10px;border-bottom:1px dashed var(--line);vertical-align:top}
+.cmp-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;width:120px}
+/* YAML表示 */
+.yaml{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:18px 22px;line-height:1.6;overflow-x:auto;white-space:pre}
+.yaml .key{color:#a3c9ff}
+.yaml .val{color:#b5e8b0}
+.yaml .com{color:#998aaa;font-style:italic}
+/* バッジ */
+.badge{display:inline-block;background:#386a3d;color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;letter-spacing:0.05em}
+.badge.fail{background:#c43030}
+.badge.warn{background:#a47b30}
+/* タイムライン */
+.run-list{font-size:12px;font-family:'JetBrains Mono',monospace}
+.run-list .item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;padding:6px 8px;border-bottom:1px dashed var(--line);align-items:center}
+.run-list .item:last-child{border-bottom:none}
+.run-list .msg{color:var(--ink)}
+.run-list .time{color:var(--muted);font-size:10.5px}
+/* 並列実行図 */
+.parallel-graph{background:#fff;border:1px solid var(--line);padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px}
+.parallel-graph .lane{display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:center;margin:4px 0}
+.parallel-graph .name{color:var(--accent);font-weight:600;font-size:10px}
+.parallel-graph .bar-wrap{position:relative;height:14px;background:#f0f0f0;border-radius:2px}
+.parallel-graph .bar{position:absolute;top:0;height:100%;background:var(--accent);border-radius:2px}
+.page-footer{border-top:2px solid var(--ink);margin-top:80px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:180px}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="vol-tag">VOL.09 / 10</span>
+  <h1>CI/CD・テスト自動化編</h1>
+  <div class="subtitle">エンジニアリングテスト編 — CI/CD & AUTOMATION</div>
+  <p class="lead">
+    テストを<b>常に走らせ続ける仕組み</b>を扱う巻です。GitHub Actionsの基本、パイプライン設計、並列実行・シャーディング、テスト結果の通知、フレーキー対策。<b>「書いたテストが本当に価値を発揮する」</b>のは自動化に乗せた瞬間です。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 CI/CDとは</a></li>
+    <li><a href="#sec02">02 GitHub Actionsの基本</a></li>
+    <li><a href="#sec03">03 テストパイプラインの設計</a></li>
+    <li><a href="#sec04">04 並列実行とシャーディング</a></li>
+    <li><a href="#sec05">05 キャッシュとアーティファクト</a></li>
+    <li><a href="#sec06">06 失敗の通知と可視化</a></li>
+    <li><a href="#sec07">07 フレーキーへの対処</a></li>
+    <li><a href="#sec08">08 CI/CDの育て方</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>CI/CDとは</h2>
+    <span class="en">WHAT IS CI/CD</span>
+  </div>
+  <p class="pattern-desc">
+    CI（継続的インテグレーション）は<b>「変更があるたびに自動でビルド・テスト」</b>する仕組み、CD（継続的デリバリー／デプロイメント）は<b>「テスト合格したら自動で配布・公開」</b>する仕組みです。両者は連続した一つのパイプラインとして運用されます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">CI/CD</span>
+      <span class="tag-desc">変更から本番反映までの自動化</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 全体のパイプライン</div>
+        <div class="pipe">
+          <div class="stage"><span class="h">PUSH</span><span class="n">commit</span></div>
+          <div class="arrow">▶</div>
+          <div class="stage active"><span class="h">CI</span><span class="n">build + test</span></div>
+          <div class="arrow">▶</div>
+          <div class="stage"><span class="h">STAGING</span><span class="n">配備</span></div>
+          <div class="arrow">▶</div>
+          <div class="stage"><span class="h">CD</span><span class="n">本番</span></div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">人手はほぼ介在しない</b>。コミットからリリースまで自動化されている状態が現代の標準。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// CI/CDの意味</span>
+
+<span class="kw">CI</span> = Continuous Integration
+       継続的インテグレーション
+   小さな変更を頻繁に統合
+   毎回ビルド&テストを自動実行
+   壊れた所はすぐ通知
+
+<span class="kw">CD</span> = Continuous Delivery
+       継続的デリバリー
+   リリース可能な状態を保ち続ける
+   ボタン1つで本番反映できる
+
+<span class="kw">CD (alt)</span> = Continuous Deployment
+            継続的デプロイメント
+   さらに進めて、本番反映も自動
+   合格したら勝手にリリース
+
+<span class="comment">// 「テストが書かれている」は前提</span>
+<span class="comment">// 「テストが回り続ける」が次のレベル</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    地図編Vol.1で「テストの自動化」が現代の必然と読み解きました。CI/CDは<b>その実装形態</b>です。書いたテストはCI/CDに乗せて初めて、毎コミットの安心感を生む「生きた検証」になります。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>GitHub Actionsの基本</h2>
+    <span class="en">GITHUB ACTIONS</span>
+  </div>
+  <p class="pattern-desc">
+    現代のCI/CDサービスの代表が<b>GitHub Actions</b>です。GitHubリポジトリと統合され、設定ファイル1つで動き出します。他にもGitLab CI・CircleCI・Jenkinsなどありますが、考え方はほぼ共通。GitHub Actionsを押さえれば応用が利きます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">GitHub Actions</span>
+      <span class="tag-desc">事実上の標準CIサービス</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 用語と構造</div>
+        <table class="cmp-table">
+          <tr><th>用語</th><th>意味</th></tr>
+          <tr><td>Workflow</td><td>1つのYAMLファイル単位</td></tr>
+          <tr><td>Job</td><td>並列で動かせる単位</td></tr>
+          <tr><td>Step</td><td>Jobの中の1コマンド</td></tr>
+          <tr><td>Trigger</td><td>起動条件 (push, PR等)</td></tr>
+          <tr><td>Runner</td><td>実行するVM環境</td></tr>
+          <tr><td>Action</td><td>再利用可能な部品</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 6px">.github/workflows/ci.yml</code> に置けば<b style="color:var(--ink)">自動認識</b>。
+        </p>
+      </div>
+      <div class="yaml"><span class="com"># .github/workflows/ci.yml</span>
+<span class="key">name</span>: <span class="val">CI</span>
+
+<span class="key">on</span>:
+  <span class="key">push</span>:
+    <span class="key">branches</span>: [<span class="val">main</span>]
+  <span class="key">pull_request</span>:
+
+<span class="key">jobs</span>:
+  <span class="key">test</span>:
+    <span class="key">runs-on</span>: <span class="val">ubuntu-latest</span>
+    <span class="key">steps</span>:
+      - <span class="key">uses</span>: <span class="val">actions/checkout@v4</span>
+
+      - <span class="key">uses</span>: <span class="val">actions/setup-node@v4</span>
+        <span class="key">with</span>:
+          <span class="key">node-version</span>: <span class="val">"20"</span>
+
+      - <span class="key">run</span>: <span class="val">npm ci</span>
+      - <span class="key">run</span>: <span class="val">npm test</span>
+      - <span class="key">run</span>: <span class="val">npm run build</span>
+<span class="com"># これだけでCIが動く</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">超便利</div>
+    GitHub ActionsはPublicリポジトリなら<b>無料で使えます</b>（実行時間制限あり）。テストを書いたらすぐCIに乗せる習慣が、現場では当たり前。<b>OSS活動の入り口</b>としてもおすすめです。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>テストパイプラインの設計</h2>
+    <span class="en">PIPELINE DESIGN</span>
+  </div>
+  <p class="pattern-desc">
+    CIパイプラインは<b>「早く失敗する」</b>ように設計します。軽いチェックを先に、重いテストを後に。途中で失敗したら即停止。<b>無駄な実行を避けながら、問題を最速で見つける</b>のがコツです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pipeline design</span>
+      <span class="tag-desc">速く失敗するステージ構成</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 5ステージ構成の例</div>
+        <div class="pipe">
+          <div class="stage ok"><span class="h">1</span><span class="n">Lint</span></div>
+          <div class="arrow">▶</div>
+          <div class="stage ok"><span class="h">2</span><span class="n">Build</span></div>
+          <div class="arrow">▶</div>
+          <div class="stage ok"><span class="h">3</span><span class="n">Unit</span></div>
+        </div>
+        <div class="pipe">
+          <div class="stage ok"><span class="h">4</span><span class="n">Integ</span></div>
+          <div class="arrow">▶</div>
+          <div class="stage ok"><span class="h">5</span><span class="n">E2E</span></div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">速いものから順に</b>実行。Lint 数秒 → Unit 数十秒 → E2E 数分。途中で落ちたら後ろは実行されない。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 「速く失敗する」設計</span>
+
+<span class="kw">[1] Lint</span> (数秒)
+   構文・スタイル違反
+   ここで弾けば残り全部スキップ
+
+<span class="kw">[2] Build</span> (数十秒)
+   コンパイル・型チェック
+   ここで弾ければユニットも不要
+
+<span class="kw">[3] Unit Test</span> (数分)
+   論理的なバグを検出
+   ここで弾ければ統合は不要
+
+<span class="kw">[4] Integration</span> (数分)
+   境目のバグを検出
+
+<span class="kw">[5] E2E</span> (数十分)
+   最終確認
+
+       <span class="comment">↓</span>
+
+<span class="ann">全てが PASS → デプロイへ</span>
+
+<span class="comment">// なぜこの順か</span>
+<span class="comment">// 安いものから先に走らせれば</span>
+<span class="comment">// 失敗時の総待ち時間が最小</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">鉄則</div>
+    <b>「早く失敗する（fail fast）」</b>は CI設計の絶対原則。Lintで明らかな問題があるのに、わざわざE2Eまで走らせるのは時間の浪費。順序が品質と効率の両方を決めます。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>並列実行とシャーディング</h2>
+    <span class="en">PARALLELISM</span>
+  </div>
+  <p class="pattern-desc">
+    テストが増えるとCI時間が伸びていきます。<b>並列実行</b>でテストを分散させ、<b>シャーディング</b>で1つのジョブをさらに細分化することで、CI時間を劇的に短縮できます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">parallelism</span>
+      <span class="tag-desc">テストを分散して時間を短縮</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 並列実行のイメージ (4分散)</div>
+        <div class="parallel-graph">
+          <div class="lane">
+            <span class="name">直列</span>
+            <div class="bar-wrap"><div class="bar" style="width:100%"></div></div>
+          </div>
+          <div style="margin-top:10px;font-size:10.5px;color:var(--muted)">↓ 4並列に分散</div>
+          <div class="lane" style="margin-top:6px">
+            <span class="name">Shard 1</span>
+            <div class="bar-wrap"><div class="bar" style="width:25%"></div></div>
+          </div>
+          <div class="lane">
+            <span class="name">Shard 2</span>
+            <div class="bar-wrap"><div class="bar" style="width:25%"></div></div>
+          </div>
+          <div class="lane">
+            <span class="name">Shard 3</span>
+            <div class="bar-wrap"><div class="bar" style="width:25%"></div></div>
+          </div>
+          <div class="lane">
+            <span class="name">Shard 4</span>
+            <div class="bar-wrap"><div class="bar" style="width:25%"></div></div>
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">理論上は1/4の時間</b>。実際は分散の準備時間で 1/3 程度。
+        </p>
+      </div>
+      <div class="yaml"><span class="com"># シャーディング (Playwright)</span>
+<span class="key">jobs</span>:
+  <span class="key">test</span>:
+    <span class="key">strategy</span>:
+      <span class="key">matrix</span>:
+        <span class="key">shard</span>: [<span class="val">1, 2, 3, 4</span>]
+    <span class="key">runs-on</span>: <span class="val">ubuntu-latest</span>
+    <span class="key">steps</span>:
+      - <span class="key">run</span>: <span class="val">|</span>
+          npx playwright test \
+            --shard=${{ matrix.shard }}/4
+
+<span class="com"># 4つのVMで並列実行</span>
+<span class="com"># 1/4ずつのテストを担当</span>
+
+<span class="com"># Jestの場合</span>
+<span class="key">run</span>: <span class="val">|</span>
+  jest --shard=${{ matrix.shard }}/4
+
+<span class="com"># 結果は最後にマージ</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    並列化は<b>「テストの独立性」が前提</b>。互いに依存するテストは並列化できません。Vol.2で学んだ独立性が、ここで真価を発揮します。<b>「独立性を確保したからこそ並列化できる」</b>という連鎖です。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>キャッシュとアーティファクト</h2>
+    <span class="en">CACHE & ARTIFACTS</span>
+  </div>
+  <p class="pattern-desc">
+    CIは毎回まっさらな環境で実行されるため、<b>依存パッケージのダウンロードに時間を取られる</b>のが課題。<b>キャッシュ</b>で繰り返しを省き、<b>アーティファクト</b>で実行結果を保存・受け渡しすることで、効率と可視性が大幅に上がります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">cache & artifacts</span>
+      <span class="tag-desc">毎回の繰り返しを賢く省く</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// キャッシュ対象</div>
+        <table class="cmp-table">
+          <tr><th>対象</th><th>効果</th></tr>
+          <tr><td>node_modules</td><td>npm ci を高速化</td></tr>
+          <tr><td>~/.m2</td><td>Mavenの依存を保持</td></tr>
+          <tr><td>~/.gradle</td><td>Gradleの依存</td></tr>
+          <tr><td>~/.cache/pip</td><td>Pythonの依存</td></tr>
+          <tr><td>Docker layers</td><td>イメージビルド</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          キャッシュキーは<b style="color:var(--ink)">ロックファイルのハッシュ</b>を使うのが定石。package-lock.json が変わったらキャッシュ無効化。
+        </p>
+      </div>
+      <div class="yaml"><span class="com"># 依存パッケージのキャッシュ</span>
+- <span class="key">uses</span>: <span class="val">actions/cache@v4</span>
+  <span class="key">with</span>:
+    <span class="key">path</span>: <span class="val">node_modules</span>
+    <span class="key">key</span>: <span class="val">${{ hashFiles('package-lock.json') }}</span>
+
+<span class="com"># テスト結果をアーティファクトに</span>
+- <span class="key">uses</span>: <span class="val">actions/upload-artifact@v4</span>
+  <span class="key">if</span>: <span class="val">always()</span>
+  <span class="key">with</span>:
+    <span class="key">name</span>: <span class="val">test-results</span>
+    <span class="key">path</span>: <span class="val">|</span>
+      coverage/
+      test-results/
+      playwright-report/
+
+<span class="com"># 失敗時もアップロード</span>
+<span class="com"># → 後から確認できる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    アーティファクトには<b>テスト結果・カバレッジレポート・スクリーンショット・E2Eのトレース</b>などを残します。<b>失敗時こそ重要</b>なので、<code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 6px">if: always()</code>を必ず指定しましょう。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>失敗の通知と可視化</h2>
+    <span class="en">NOTIFICATIONS</span>
+  </div>
+  <p class="pattern-desc">
+    CIは<b>「失敗をすぐ伝える」</b>仕組みがあって初めて価値を発揮します。失敗が放置されると、誰も赤を見ても気にしなくなり、CIは形骸化します。<b>通知設計・バッジ・ダッシュボード</b>を組み合わせて、現状が常に見える状態を作りましょう。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">visibility</span>
+      <span class="tag-desc">失敗を可視化して放置を防ぐ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 通知と可視化の手段</div>
+        <table class="cmp-table">
+          <tr><th>手段</th><th>使い方</th></tr>
+          <tr><td>Slack通知</td><td>失敗時にチャンネルへ</td></tr>
+          <tr><td>メール</td><td>担当者個別に</td></tr>
+          <tr><td>READMEバッジ</td><td>常時ステータス表示</td></tr>
+          <tr><td>PR上の表示</td><td>マージ前にチェック</td></tr>
+          <tr><td>ダッシュボード</td><td>傾向の追跡</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:11.5px;color:var(--muted)">
+          <span class="badge">build passing</span> <span class="badge fail">build failing</span> <span class="badge warn">coverage 78%</span>
+          <br>README上にバッジで現状を一目で
+        </p>
+      </div>
+      <div class="yaml"><span class="com"># Slack通知 (失敗時のみ)</span>
+- <span class="key">name</span>: <span class="val">Notify on failure</span>
+  <span class="key">if</span>: <span class="val">failure()</span>
+  <span class="key">uses</span>: <span class="val">slackapi/slack-github-action@v1</span>
+  <span class="key">with</span>:
+    <span class="key">payload</span>: <span class="val">|</span>
+      {
+        "text": "🔴 CI失敗",
+        "branch": "${{ github.ref }}",
+        "url": "${{ github.run_url }}"
+      }
+
+<span class="com"># PR画面に表示するチェック</span>
+<span class="key">on</span>:
+  <span class="key">pull_request</span>:
+    <span class="key">branches</span>: [<span class="val">main</span>]
+
+<span class="com"># ブランチ保護ルールと組合せ</span>
+<span class="com"># → 「CIが緑じゃないとマージ不可」</span>
+<span class="com"># → 失敗放置を構造的に防ぐ</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">鉄則</div>
+    <b>「mainブランチは常に緑」</b>を守るのが現場の聖域。赤いまま放置されたCIは、もう誰も信用しません。「赤になったら即直す」文化を作り、「マージ前に緑」のブランチ保護ルールで構造的に強制します。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>フレーキーへの対処</h2>
+    <span class="en">FLAKY IN CI</span>
+  </div>
+  <p class="pattern-desc">
+    本編Vol.7でフレーキーテストの対策を学びました。CI環境では<b>本番サーバで初めて表面化</b>するフレーキー問題があります。リトライ戦略・検疫・モニタリング、それぞれの<b>使い分け</b>を押さえましょう。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">flaky handling</span>
+      <span class="tag-desc">CI上でのフレーキー対処</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの対処レベル</div>
+        <table class="cmp-table">
+          <tr><th>段階</th><th>方法</th></tr>
+          <tr><td>応急処置</td><td>リトライで一時凌ぎ</td></tr>
+          <tr><td>隔離</td><td>flakyタグで検疫 (quarantine)</td></tr>
+          <tr><td>根治</td><td>テスト/プロダクトコードを直す</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          リトライは<b style="color:var(--ink)">「最後の手段」</b>。常用するとCIの信頼性が崩壊する。本来は根治が王道。
+        </p>
+      </div>
+      <div class="yaml"><span class="com"># リトライ設定 (Playwright)</span>
+<span class="com"># playwright.config.ts</span>
+<span class="key">retries</span>: <span class="val">process.env.CI ? 2 : 0</span>
+
+<span class="com"># Jestの場合</span>
+<span class="com"># jest.config.js</span>
+<span class="key">testRunner</span>: <span class="val">"jest-circus/runner"</span>
+<span class="key">jest.retryTimes</span>(<span class="val">2</span>)
+
+<span class="com"># フレーキー検疫</span>
+<span class="key">test</span>.<span class="val">describe</span>.<span class="val">configure</span>({
+  <span class="key">tag</span>: <span class="val">'@flaky'</span>
+})
+
+<span class="com"># 普段はスキップ、別ジョブで監視</span>
+<span class="key">run</span>: <span class="val">|</span>
+  npx playwright test \
+    --grep-invert "@flaky"
+
+<span class="com"># → CIの安定性を保ちつつ</span>
+<span class="com"># → 問題は別管理で解決を目指す</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">注意</div>
+    リトライに頼ると<b>「再実行で消えたから無視」</b>という悪習が広まります。リトライ回数・再実行率は<b>必ずメトリクスとして可視化</b>し、増えてきたら根本対処に動く。これがCIを健全に保つ鉄則です。
+  </div>
+</section>
+
+<section id="sec08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>CI/CDの育て方</h2>
+    <span class="en">GROWING CI/CD</span>
+  </div>
+  <p class="pattern-desc">
+    CI/CDは<b>最初から完璧を目指さず、少しずつ育てる</b>もの。「とりあえずテストが動く」から始めて、徐々にステージを増やし、通知を整え、並列化を入れていく。<b>段階的成熟</b>のロードマップを持っておきましょう。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">growing</span>
+      <span class="tag-desc">段階的に成熟させていく</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 成熟度のロードマップ</div>
+        <div class="run-list">
+          <div class="item"><span class="badge">Lv.1</span><span class="msg">テストが動くだけ</span></div>
+          <div class="item"><span class="badge">Lv.2</span><span class="msg">PR毎に自動実行</span></div>
+          <div class="item"><span class="badge">Lv.3</span><span class="msg">ブランチ保護で強制</span></div>
+          <div class="item"><span class="badge">Lv.4</span><span class="msg">カバレッジ計測・閾値</span></div>
+          <div class="item"><span class="badge">Lv.5</span><span class="msg">並列化で高速化</span></div>
+          <div class="item"><span class="badge">Lv.6</span><span class="msg">通知・可視化</span></div>
+          <div class="item"><span class="badge">Lv.7</span><span class="msg">CDで自動デプロイ</span></div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          一度に全部やろうとせず、<b style="color:var(--ink)">下のレベルを固めてから次へ</b>。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 各レベルの判断基準</span>
+
+<span class="kw">Lv.1〜2</span>:
+  npm test が動く → 自動化へ
+  PRに連携 → これだけで価値大
+
+<span class="kw">Lv.3〜4</span>:
+  「赤でマージ禁止」を仕組み化
+  カバレッジ計測を始める
+
+<span class="kw">Lv.5</span>:
+  CIが5分超えたら並列化検討
+  シャーディング・キャッシュ
+
+<span class="kw">Lv.6</span>:
+  失敗の検知漏れがあれば通知強化
+  ダッシュボード導入
+
+<span class="kw">Lv.7</span>:
+  自動デプロイは
+  「即時ロールバック可能」が前提
+
+       <span class="comment">↓</span>
+
+<span class="ann">急いでLv.7に行こうとしない</span>
+<span class="ann">下が緩いと上が崩れる</span>
+
+<span class="comment">// 1段ずつ確実に</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">結論</div>
+    CI/CDは<b>「インフラ整備」</b>です。テストを書く労力と同じくらい、CI/CDの整備にも投資する価値があります。<b>「テストが書かれている」だけでなく「テストが走り続けている」</b>状態こそが、現代開発の到達点。地図編Vol.9で「自動化の流れ」を時間軸で読み解きます。
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  シリーズ最終巻、<b>本編Vol.10「困った時のテスト編」</b>へ進みます。10個のよくある「詰まりポイント」をQ&A形式で扱う、辞書として開ける巻です。<b>地図編Vol.9「手で動かす〜自動で動く編」</b>では、手作業から自動化へという長い時間軸を読み解きます。Vol.9のCI/CDが、ソフトウェア工学全体の流れの<b>到達点</b>として見えてきます。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST REFERENCE — VOL.09</span>
+  <span>CI/CD & AUTOMATION</span>
+</footer>
+
+</body>
+</html>

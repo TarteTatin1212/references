@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕別冊S6 動的SQLとクエリ設計の理論</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a3540;
+  --paper:#ece8de;
+  --paper-2:#d8d4c6;
+  --accent:#6a8590;
+  --accent-2:#8aa0a8;
+  --accent-3:#a07050;
+  --muted:#707a82;
+  --line:#c2c0b4;
+  --code-bg:#252a32;
+  --code-text:#e6e2d6;
+  --panel-bg:#f3eee2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✧";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.18;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.tip{background:rgba(106,133,144,0.10);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.S6</span>
+    <span class="kind-tag">別冊 ── SUB</span>
+    <span class="rdt-tag">QUERY THEORY</span>
+  </div>
+  <h1>動的SQLとクエリ設計<br>条件・安全・性能</h1>
+  <div class="subtitle">SUB.06 ── DYNAMIC SQL &amp; QUERY DESIGN</div>
+  <p class="lead">本編Vol.7 で<b>複合検索（動的SQL）</b>を実装します。別冊S6では、その土台となる<b>クエリ設計の理論</b>を深掘りします。<b>動的SQLの考え方</b>、<b>SQLインジェクション対策</b>、<b>N+1問題</b>、<b>インデックスの基礎</b>。「<b>安全で速いクエリ</b>」を書くための知識を、メモ帳の検索を例に身につけます。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 別冊S6で腑に落とす3つの問い</div>
+    <p>① <b>条件の有無で変わるSQL</b>をどう組み立てるか／② なぜ <code>#{}</code> は安全で文字列連結は危険なのか／③ <b>N+1問題</b>とは何で、どう防ぐか — この3問に自分の言葉で答えられたらS6卒業です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 別冊S6のミッション</a></li>
+    <li><a href="#s02">02 動的SQLとは</a></li>
+    <li><a href="#s03">03 MyBatisの動的SQL</a></li>
+    <li><a href="#s04">04 SQLインジェクション</a></li>
+    <li><a href="#s05">05 #{} と ${} の違い</a></li>
+    <li><a href="#s06">06 N+1問題</a></li>
+    <li><a href="#s07">07 インデックスの基礎</a></li>
+    <li><a href="#s08">08 クエリ設計あるある失敗</a></li>
+    <li><a href="#s09">09 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>別冊S6のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">別冊S6は<b>「安全で速いクエリの理論を理解する」</b>回。本編Vol.7 で<b>複合検索</b>を実装します。検索は<b>「条件が動的に変わる」「ユーザー入力を扱う」「件数が増える」</b>——動的SQL・セキュリティ・性能の3つが一度に絡む難所。理論を先に押さえます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">検索機能が抱える3つの課題</span><span class="tag-desc">動的・安全・速さ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 検索が難しい理由</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">課題1</span>
+            <div class="name">条件が動的</div>
+            <div class="desc"><b>キーワードあり/なし、カテゴリあり/なし</b>で SQL が変わる。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">課題2</span>
+            <div class="name">入力が危険</div>
+            <div class="desc">ユーザー入力をSQLに使う。<b>SQLインジェクション</b>の入口。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">課題3</span>
+            <div class="name">件数が増える</div>
+            <div class="desc">メモが増えると<b>遅くなる</b>。N+1・インデックスを意識。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// 別冊S6のゴール</div>
+        <ul class="check-list">
+          <li>動的SQLの組み立て方が分かる</li>
+          <li>SQLインジェクションを防げる</li>
+          <li>N+1問題を見抜ける</li>
+          <li>インデックスの効果を理解</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 検索の難しさを具体例で</span>
+<span class="comment">// ─── 課題1：条件で SQL が変わる ───</span>
+キーワードだけ →
+  WHERE title LIKE '%word%'
+カテゴリだけ →
+  WHERE category_id = 1
+両方 →
+  WHERE title LIKE '%word%'
+    AND category_id = 1
+何もなし →
+  （WHERE なし＝全件）
+
+<span class="comment">// → 条件の組み合わせで SQL が変化 ★★★</span>
+<span class="comment">// → 動的SQL（Section 02,03）</span>
+
+
+<span class="comment">// ─── 課題2：危険な入力 ───</span>
+<span class="comment">// もし文字列連結したら…</span>
+"WHERE title LIKE '%" + 入力 + "%'"
+<span class="comment">// 入力に「' OR '1'='1」が来たら？</span>
+<span class="comment">// → 全件漏洩・データ破壊 ★（Section 04）</span>
+
+
+<span class="comment">// ─── 課題3：遅くなる ───</span>
+メモ10件 → 一瞬
+メモ1万件 → LIKE が遅い
+  → インデックス・全文検索（Section 07）</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 検索は「3つの難所が同時に来る」</div>
+    <p>検索機能が初学者にとって難しいのは、<b>動的SQL・セキュリティ・性能</b>という3つの課題が<b>一度に</b>降りかかるから。1つずつなら難しくないのに、重なると混乱します。別冊S6で<b>理論を分けて理解</b>しておけば、本編Vol.7 で<b>「これは動的SQLの話、これは安全の話」</b>と切り分けられる。<b>難所は分解すれば怖くない</b>。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>動的SQLとは</h2><span class="en">WHAT IS DYNAMIC SQL</span></div>
+  <p class="pattern-desc"><b>動的SQL</b>とは、<b>条件によって組み立てが変わるSQL</b>。検索フォームで「キーワードだけ」「カテゴリだけ」「両方」と入力が変わると、<b>WHERE 句も変わる</b>必要があります。これを実現するのが動的SQLです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">静的SQL vs 動的SQL</span><span class="tag-desc">条件で変わる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 静的SQL（これまで）</div>
+        <p>Vol.2〜6 の SQL は<b>固定</b>。「全件取得」「IDで1件」など、<b>毎回同じ形</b>でした。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 動的SQL（検索で必要）</div>
+        <p>検索は<b>入力次第で WHERE 句が変わる</b>。条件があれば足す、なければ足さない。<b>SQL を実行時に組み立てる</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 素朴な実装（NG）の問題</div>
+        <p>Java で if 文を使って文字列連結すると、<b>SQLインジェクションの危険</b>＋<b>コードが汚くなる</b>。だから MyBatis の<b>動的SQL機能</b>を使います（Section 03）。</p>
+      </div>
+      <div class="code"><span class="code-head">// 静的 vs 動的</span>
+<span class="comment">// ─── 静的SQL（固定）───</span>
+SELECT * FROM memos
+ WHERE id = #{id}
+<span class="comment">// → 形が変わらない</span>
+
+
+<span class="comment">// ─── 動的SQL（条件で変化）───</span>
+<span class="comment">// 検索条件のパターン：</span>
+
+入力なし:
+  SELECT * FROM memos
+
+キーワードのみ:
+  SELECT * FROM memos
+   WHERE title LIKE '%keyword%'
+
+キーワード＋カテゴリ:
+  SELECT * FROM memos
+   WHERE title LIKE '%keyword%'
+     AND category_id = 1
+
+<span class="comment">// → 条件の有無で WHERE が伸び縮み ★★★</span>
+
+
+<span class="comment">// ─── 素朴な文字列連結（NG）───</span>
+<span class="type">String</span> sql = <span class="str">"SELECT * FROM memos WHERE 1=1"</span>;
+<span class="kw">if</span> (keyword != <span class="kw">null</span>) {
+  sql += <span class="str">" AND title LIKE '%"</span>
+       + keyword + <span class="str">"%'"</span>;  <span class="comment">// 危険！★</span>
+}
+<span class="comment">// → SQLインジェクション（Section 04）</span>
+<span class="comment">// → コードも読みにくい</span>
+<span class="comment">// → MyBatisの動的SQLを使うべき（Section 03）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「WHERE 1=1」ハックは使わない</div>
+    <p>動的SQLの素朴な実装で<b>「WHERE 1=1」</b>から始めて AND を足していくテクニックがあります。動きはしますが、<b>文字列連結＝SQLインジェクションの危険</b>。MyBatis には<b>専用の動的SQL機能（&lt;where&gt; &lt;if&gt;）</b>があり、安全かつ綺麗に書けます（Section 03）。<b>「動くけど危ない方法」より「安全な専用機能」</b>を使うのが鉄則です。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>MyBatisの動的SQL</h2><span class="en">MYBATIS DYNAMIC SQL</span></div>
+  <p class="pattern-desc">MyBatis は<b>動的SQL専用のタグ</b>を持ちます。<code>&lt;if&gt;</code>（条件分岐）、<code>&lt;where&gt;</code>（WHERE句の自動整形）、<code>&lt;foreach&gt;</code>（リスト展開）。これで<b>安全かつ綺麗に</b>動的SQLが書けます。本編Vol.7 で実際に使います。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">if / where / foreach</span><span class="tag-desc">動的SQLの3タグ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの主要タグ</div>
+        <table class="compare-tbl">
+          <thead><tr><th>タグ</th><th>役割</th></tr></thead>
+          <tbody>
+            <tr><td><code>&lt;if&gt;</code></td><td>条件が真なら含める</td></tr>
+            <tr><td><code>&lt;where&gt;</code></td><td>WHEREとAND/ORを自動整形</td></tr>
+            <tr><td><code>&lt;foreach&gt;</code></td><td>リストを展開（IN句など）</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// &lt;where&gt; の賢さ</div>
+        <p><code>&lt;where&gt;</code> は<b>「条件が1つもなければ WHERE を出さない」「先頭の AND/OR を消す」</b>を自動でやってくれる。手で書くと面倒な整形を肩代わり。</p>
+      </div>
+      <div class="code"><span class="code-head">// MyBatis 動的SQL（本編Vol.7で使用）</span>
+<span class="comment">// ─── if + where ───</span>
+<span class="kw">&lt;select</span> id=<span class="str">"search"</span> resultMap=<span class="str">"MemoFull"</span><span class="kw">&gt;</span>
+  SELECT * FROM memos m
+  <span class="ann">&lt;where&gt;</span>
+    <span class="ann">&lt;if</span> test=<span class="str">"keyword != null</span>
+              <span class="str">and keyword != ''"</span><span class="ann">&gt;</span>
+      AND m.title LIKE
+        CONCAT('%', #{keyword}, '%')
+    <span class="ann">&lt;/if&gt;</span>
+    <span class="ann">&lt;if</span> test=<span class="str">"categoryId != null"</span><span class="ann">&gt;</span>
+      AND m.category_id = #{categoryId}
+    <span class="ann">&lt;/if&gt;</span>
+  <span class="ann">&lt;/where&gt;</span>
+  ORDER BY m.updated_at DESC
+<span class="kw">&lt;/select&gt;</span>
+
+<span class="comment">// ─── &lt;where&gt; が自動でやること ───</span>
+<span class="comment">// 条件0個 → WHERE を出さない（全件）</span>
+<span class="comment">// 条件1個目の AND を消す</span>
+<span class="comment">// → 「WHERE AND ...」のミスを防ぐ ★★★</span>
+
+
+<span class="comment">// ─── foreach（IN句・タグ検索）───</span>
+<span class="ann">&lt;if</span> test=<span class="str">"tagIds != null"</span><span class="ann">&gt;</span>
+  AND m.id IN (
+    SELECT memo_id FROM memo_tags
+     WHERE tag_id IN
+    <span class="ann">&lt;foreach</span> item=<span class="str">"id"</span>
+             collection=<span class="str">"tagIds"</span>
+             open=<span class="str">"("</span> separator=<span class="str">","</span>
+             close=<span class="str">")"</span><span class="ann">&gt;</span>
+      #{id}
+    <span class="ann">&lt;/foreach&gt;</span>
+  )
+<span class="ann">&lt;/if&gt;</span>
+<span class="comment">// → tagIds=[1,2,3] を (1,2,3) に展開 ★</span>
+
+
+<span class="comment">// ─── 全部 #{} を使う（安全）───</span>
+<span class="comment">// 動的SQLでも値は #{} で渡す</span>
+<span class="comment">// → SQLインジェクション対策（Section 04,05）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — &lt;where&gt; が「WHERE AND」のミスを防ぐ</div>
+    <p>動的SQLで陥りやすいのが<b>「WHERE AND title...」</b>のような構文エラー（最初の条件の AND が余る）。<code>&lt;where&gt;</code> タグは<b>先頭の AND/OR を自動で削除</b>し、<b>条件が0個なら WHERE 自体を出さない</b>。手で文字列を組むと必ず踏むミスを、MyBatis が肩代わり。<b>専用機能を使えば、定番のバグを回避できる</b>のです。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>SQLインジェクション</h2><span class="en">SQL INJECTION</span></div>
+  <p class="pattern-desc">検索は<b>ユーザー入力をSQLに使う</b>ため、最も注意すべきセキュリティ問題が<b>SQLインジェクション</b>。悪意ある入力でDBを操作される攻撃です。仕組みと対策を理解すれば、確実に防げます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">SQLインジェクションの仕組み</span><span class="tag-desc">入力でSQLを乗っ取る</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 攻撃の仕組み</div>
+        <p><b>文字列連結</b>でSQLを組むと、入力に<b>SQLの一部を混ぜ込める</b>。これがインジェクション（注入）。</p>
+        <ul>
+          <li>入力欄に <code>' OR '1'='1</code> と入れる</li>
+          <li>SQLが <code>WHERE x='' OR '1'='1'</code> になる</li>
+          <li><b>常に真→全件漏洩</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// もっと危険な例</div>
+        <ul>
+          <li><code>'; DROP TABLE memos; --</code></li>
+          <li>→ <b>テーブルごと削除</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 対策：プレースホルダ</div>
+        <p><b>値を「データ」として渡す</b>（SQLの一部にしない）。MyBatis の <code>#{}</code> がこれ。<b>これだけで防げる</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// SQLインジェクションと対策</span>
+<span class="comment">// ─── 脆弱なコード（文字列連結）───</span>
+<span class="type">String</span> sql =
+  <span class="str">"SELECT * FROM users WHERE name = '"</span>
+  + 入力 + <span class="str">"'"</span>;
+
+<span class="comment">// 入力が普通なら：</span>
+<span class="comment">// "田中" → WHERE name = '田中' ✓</span>
+
+<span class="comment">// 入力が攻撃なら：</span>
+<span class="comment">// "' OR '1'='1"</span>
+<span class="comment">// → WHERE name = '' OR '1'='1'</span>
+<span class="comment">// → 条件が常に真 → 全件漏洩 ★★★</span>
+
+<span class="comment">// "'; DROP TABLE users; --"</span>
+<span class="comment">// → テーブル削除 ★★★（壊滅的）</span>
+
+
+<span class="comment">// ─── 安全なコード（プレースホルダ）───</span>
+<span class="comment">// MyBatis の #{} を使う</span>
+SELECT * FROM users
+ WHERE name = #{name}
+
+<span class="comment">// #{} は値を「パラメータ」として渡す</span>
+<span class="comment">// → 入力が「' OR '1'='1」でも</span>
+<span class="comment">//   「' OR '1'='1」という名前の検索になる</span>
+<span class="comment">//   （SQLとして解釈されない）★★★</span>
+<span class="comment">// → 安全</span>
+
+
+<span class="comment">// ─── プレースホルダの仕組み ───</span>
+SQL本体: SELECT ... WHERE name = ?
+パラメータ: ["' OR '1'='1"]
+<span class="comment">// → SQL構造とデータが分離</span>
+<span class="comment">// → データはSQLとして解釈されない</span>
+<span class="comment">// → これがインジェクション対策の本質 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「文字列連結でSQLを作らない」が絶対の鉄則</div>
+    <p>SQLインジェクション対策は実はシンプル：<b>「ユーザー入力を文字列連結でSQLに混ぜない」</b>。MyBatis なら <code>#{}</code> を使うだけ。これで<b>SQL構造とデータが分離</b>され、入力がSQLとして解釈されません。「自分のアプリは大丈夫」は禁物。<b>個人開発でも、検索を作る瞬間から #{} を徹底</b>する習慣が大事です。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>#{} と ${} の違い</h2><span class="en">HASH VS DOLLAR</span></div>
+  <p class="pattern-desc">MyBatis には<b>2つの埋め込み記法</b>があります。<code>#{}</code>（安全）と <code>${}</code>（危険）。この違いを知らないと、<b>うっかりSQLインジェクションの穴</b>を開けてしまいます。<b>原則 #{} だけを使う</b>のが鉄則です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">#{} と ${} の決定的な違い</span><span class="tag-desc">片方は危険</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの記法</div>
+        <table class="compare-tbl">
+          <thead><tr><th></th><th>#{}</th><th>${}</th></tr></thead>
+          <tbody>
+            <tr><td>方式</td><td>プレースホルダ</td><td>文字列置換</td></tr>
+            <tr><td>安全性</td><td><b>安全</b></td><td><b>危険</b></td></tr>
+            <tr><td>用途</td><td>値（ほぼ全部）</td><td>列名・ソート順（稀）</td></tr>
+            <tr><td>原則</td><td><b>これを使う</b></td><td>極力使わない</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 結論</div>
+        <p><b>原則 #{} だけ</b>。${} は「列名を動的に変える」など<b>値ではないものを埋める稀なケース</b>のみ、しかも<b>ユーザー入力は絶対に入れない</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// #{} と ${} の動作の違い</span>
+<span class="comment">// ─── #{} プレースホルダ（安全）───</span>
+WHERE title = #{keyword}
+
+<span class="comment">// 実際の動作：</span>
+SQL:   WHERE title = ?
+param: [入力値]
+<span class="comment">// → 入力はデータ扱い、SQLにならない ★</span>
+
+
+<span class="comment">// ─── ${} 文字列置換（危険）───</span>
+WHERE title = '${keyword}'
+
+<span class="comment">// 実際の動作：</span>
+<span class="comment">// keyword をそのまま文字列に埋め込む</span>
+<span class="comment">// 入力 "田中" → WHERE title = '田中'</span>
+<span class="comment">// 入力 "' OR '1'='1" →</span>
+<span class="comment">//   WHERE title = '' OR '1'='1' ★★★</span>
+<span class="comment">// → SQLインジェクション！</span>
+
+
+<span class="comment">// ─── ${} の正当な用途（稀）───</span>
+<span class="comment">// 列名やソート順を動的にしたいとき</span>
+ORDER BY ${sortColumn}
+<span class="comment">// ※ #{} は値専用なので列名には使えない</span>
+<span class="comment">// ※ ただし sortColumn にユーザー入力を</span>
+<span class="comment">//   直接渡すのは厳禁！</span>
+<span class="comment">// → ホワイトリストで検証してから使う</span>
+<span class="kw">if</span> (!<span class="type">List</span>.<span class="fn">of</span>(<span class="str">"title"</span>, <span class="str">"updated_at"</span>)
+      .<span class="fn">contains</span>(sortColumn)) {
+  <span class="kw">throw new</span> <span class="type">IllegalArgumentException</span>();
+}
+<span class="comment">// → 許可した列名だけ通す ★</span>
+
+
+<span class="comment">// ─── 本シリーズの方針 ───</span>
+<span class="comment">// 検索は全部 #{} で書く</span>
+<span class="comment">// ${} は使わない（必要なら厳重に検証）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 迷ったら #{}、${} は赤信号だと思う</div>
+    <p>実務での合言葉：<b>「#{} を使う、${} は見たら立ち止まる」</b>。${} は<b>文字列をそのまま埋め込む</b>ので、ユーザー入力が入ると即インジェクション。本シリーズの検索（本編Vol.7）は<b>全て #{}</b> で書きます。${} が必要になるのは「ソート列を動的に」など稀なケースだけで、その時も<b>ホワイトリスト検証</b>が必須。<b>${} は危険信号</b>と覚えましょう。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>N+1問題</h2><span class="en">N+1 PROBLEM</span></div>
+  <p class="pattern-desc">性能の代表的な落とし穴<b>N+1問題</b>。「<b>1回の検索の後、各行ごとに追加クエリが走る</b>」現象。メモ一覧で各メモのタグを取るとき、うっかり踏みやすい。本編Vol.4,5 で JOIN を使ったのは、実はこれを避けるためでした。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">N+1問題の仕組みと対策</span><span class="tag-desc">クエリが激増する</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// N+1問題とは</div>
+        <p>「<b>メモ一覧（1回）＋各メモのタグ取得（N回）</b>」＝合計 N+1 回のクエリ。メモが100件なら<b>101回</b>のDB往復。これが遅さの原因。</p>
+
+        <div class="panel-head" style="margin-top:18px">// なぜ起きるか</div>
+        <ul>
+          <li>メモ一覧を取る（1回）</li>
+          <li>各メモについて「このメモのタグは？」を個別に問い合わせ（N回）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 対策：JOIN でまとめて取る</div>
+        <p>本編Vol.4,5 の<b>JOIN ＋ resultMap（association/collection）</b>が対策。<b>1回のクエリで全部取る</b>。これがN+1を防ぐ。</p>
+      </div>
+      <div class="code"><span class="code-head">// N+1問題の発生と対策</span>
+<span class="comment">// ─── N+1 が起きる実装（NG）───</span>
+<span class="comment">// 1. メモ一覧を取る</span>
+List&lt;Memo&gt; memos = mapper.findAll();
+<span class="comment">// → SELECT * FROM memos （1回）</span>
+
+<span class="comment">// 2. 各メモのタグを個別に取る</span>
+<span class="kw">for</span> (Memo m : memos) {
+  m.setTags(
+    mapper.findTagsByMemoId(m.getId()));
+  <span class="comment">// → SELECT ... WHERE memo_id=?</span>
+  <span class="comment">//   （メモの数だけ＝N回）★★★</span>
+}
+
+<span class="comment">// メモ100件なら：</span>
+<span class="comment">// 1（一覧）＋100（各タグ）＝101クエリ ★</span>
+<span class="comment">// → DB往復が多すぎて遅い</span>
+
+
+<span class="comment">// ─── 対策：JOINで1回（本編Vol.5）───</span>
+SELECT m.*, t.id AS tag_id, t.name AS tag_name
+  FROM memos m
+  LEFT JOIN memo_tags mt ON m.id=mt.memo_id
+  LEFT JOIN tags t ON mt.tag_id=t.id
+<span class="comment">// → 1回のクエリで全メモ＋全タグ ★★★</span>
+<span class="comment">// → resultMap の collection で組み立て</span>
+<span class="comment">// → これが N+1 対策だった！</span>
+
+
+<span class="comment">// ─── 本編Vol.5 の伏線回収 ───</span>
+<span class="comment">// Vol.5 で collection を使って</span>
+<span class="comment">// JOINで一括取得したのは、</span>
+<span class="comment">// 実は N+1 を避けるためでもあった ★★★</span>
+<span class="comment">// 「1回のSQLでまとめて取る」</span>
+<span class="comment">// = 性能の基本</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 本編Vol.5 の JOIN は N+1 対策でもあった</div>
+    <p>本編Vol.5 で<b>collection を使って JOIN で一括取得</b>したことを覚えていますか。あれは「複数行を1オブジェクトにまとめる」だけでなく、<b>N+1問題を避ける</b>意味もありました。もし「メモ一覧→各メモのタグを個別取得」すると N+1。<b>JOIN で1回にまとめる</b>のが正解。<b>設計（Vol.5）が性能（N+1対策）を兼ねていた</b>——良い設計は複数の問題を同時に解きます。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>インデックスの基礎</h2><span class="en">INDEX BASICS</span></div>
+  <p class="pattern-desc">検索を速くする<b>インデックス</b>。本の「索引」と同じで、<b>探す列にあらかじめ目次を作る</b>。ただし<b>万能ではなく、トレードオフ</b>がある。別冊S2の<b>「測定してから最適化」</b>と合わせて理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">インデックスの効果とコスト</span><span class="tag-desc">読み速・書き遅</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// インデックスとは</div>
+        <p>本の<b>索引（目次）</b>と同じ。「タイトルで探す」が多いなら、title に索引を作ると<b>探すのが速くなる</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// トレードオフ（別冊S2）</div>
+        <table class="compare-tbl">
+          <thead><tr><th></th><th>効果</th></tr></thead>
+          <tbody>
+            <tr><td>読み（検索）</td><td><b>速くなる</b></td></tr>
+            <tr><td>書き（INSERT/UPDATE）</td><td>遅くなる（索引更新）</td></tr>
+            <tr><td>容量</td><td>増える</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// いつ貼るか</div>
+        <p><b>「測定してから」</b>（別冊S2）。最初から全列にインデックスは過剰。<b>遅い検索が判明してから</b>、その列に貼る。</p>
+      </div>
+      <div class="code"><span class="code-head">// インデックスの考え方</span>
+<span class="comment">// ─── 索引なし（フルスキャン）───</span>
+SELECT * FROM memos
+ WHERE title = '会議'
+<span class="comment">// → 全行を1つずつ確認（遅い）</span>
+<span class="comment">// メモ1万件なら1万回チェック ★</span>
+
+
+<span class="comment">// ─── 索引あり ───</span>
+CREATE INDEX idx_title
+  ON memos(title);
+<span class="comment">// → titleの「目次」ができる</span>
+<span class="comment">// → 目次から一発で見つける（速い）★★★</span>
+
+
+<span class="comment">// ─── PRIMARY KEY は自動で索引 ───</span>
+<span class="comment">// id（主キー）は自動でインデックス</span>
+<span class="comment">// → WHERE id=? が速いのはこのため</span>
+<span class="comment">// FK も多くの場合インデックス推奨</span>
+
+
+<span class="comment">// ─── LIKE '%word%' は索引が効かない ───</span>
+SELECT * FROM memos
+ WHERE title LIKE '%会議%'
+<span class="comment">// → 前方一致でない（先頭に%）</span>
+<span class="comment">// → 通常のインデックスが効かない ★</span>
+<span class="comment">// → 全文検索（FULLTEXT）が必要</span>
+<span class="comment">// → 本編Vol.8 で扱う</span>
+
+
+<span class="comment">// ─── 別冊S2の「測定してから最適化」───</span>
+<span class="comment">// 1. まず普通に LIKE で実装（Vol.7）</span>
+<span class="comment">// 2. 遅いと分かったら FULLTEXT（Vol.8）</span>
+<span class="comment">// → 推測で最初から最適化しない ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — LIKE '%...%' は普通のインデックスが効かない</div>
+    <p>重要な事実：<b><code>LIKE '%会議%'</code>（前後に%）は通常のインデックスが効きません</b>。索引は「先頭から探す」ので、途中一致には使えない。だから本編Vol.7 の LIKE 検索は<b>小規模なら問題ないが、大規模だと遅い</b>。その対策が本編Vol.8 の<b>全文検索（FULLTEXT）</b>。別冊S2の<b>「測定してから最適化」</b>通り、<b>まず LIKE で作り、遅ければ FULLTEXT へ</b>段階的に進めます。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>クエリ設計あるある失敗</h2><span class="en">QUERY PITFALLS</span></div>
+  <p class="pattern-desc">クエリ設計で<b>初心者が踏みやすい失敗</b>を5つ。<b>SQLインジェクション・N+1・SELECT *</b> など。知っていれば回避できるものばかりです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">クエリ設計あるある 5選</span><span class="tag-desc">先人の轍を踏まない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 文字列連結でSQLを作る ★★★</b></p>
+        <ul>
+          <li>SQLインジェクションの穴</li>
+          <li>対処：必ず #{} を使う（Section 04,05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② ${} にユーザー入力を入れる ★★★</b></p>
+        <ul>
+          <li>${} は文字列置換＝危険</li>
+          <li>対処：値は #{}、${} は使わない</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ N+1問題に気づかない ★★★</b></p>
+        <ul>
+          <li>ループ内で個別クエリ</li>
+          <li>対処：JOIN でまとめて取る（Section 06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 何でも SELECT *</b></p>
+        <ul>
+          <li>不要な列まで取得、JOINで列名衝突</li>
+          <li>対処：必要な列を明示（特にJOIN時）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 推測で早すぎる最適化</b></p>
+        <ul>
+          <li>遅くないのに複雑なインデックス・キャッシュ</li>
+          <li>対処：測定してから（別冊S2・Section 07）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// あるある失敗の対処</span>
+<span class="comment">// ─── ④ SELECT * の問題（JOIN時）───</span>
+<span class="ann">NG:</span>
+SELECT * FROM memos m
+  LEFT JOIN categories c ...
+<span class="comment">// → m.id と c.id が両方「id」で衝突 ★</span>
+<span class="comment">// → resultMap でマッピングできない</span>
+
+<span class="ann">OK:</span>
+SELECT m.id, m.title,
+       c.id AS category_id,
+       c.name AS category_name
+  FROM memos m
+  LEFT JOIN categories c ...
+<span class="comment">// → 必要な列を明示、別名で衝突回避 ★</span>
+<span class="comment">// → 本編Vol.4,5 で実践済み</span>
+
+
+<span class="comment">// ─── ⑤ 早すぎる最適化を避ける ───</span>
+<span class="comment">// 別冊S2の判断軸：</span>
+1. まず素直に実装（LIKE検索）
+2. 動かして測定
+3. 遅ければ最適化（FULLTEXT/INDEX）
+
+<span class="comment">// → 「遅くなりそう」で複雑にしない ★★★</span>
+<span class="comment">// → メモ帳v1は数百件想定</span>
+<span class="comment">//   → LIKE で十分（Vol.7）</span>
+<span class="comment">//   → 必要になったら FULLTEXT（Vol.8）</span>
+
+
+<span class="comment">// ─── 良いクエリの条件 ───</span>
+✓ #{} で安全
+✓ JOIN で N+1 回避
+✓ 必要な列を明示
+✓ 測定に基づく最適化 ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「安全→正しさ→速さ」の順で考える</div>
+    <p>クエリ設計の優先順位は<b>①安全（インジェクション対策）→②正しさ（正しい結果）→③速さ（性能）</b>。まず <code>#{}</code> で安全に、次に正しい結果を返し、最後に遅ければ最適化。<b>速さを最初に追って安全を疎かにする</b>のは本末転倒。別冊S2の<b>「測定してから最適化」</b>と合わせ、<b>安全と正しさを土台に、速さは必要に応じて</b>が鉄則です。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">別冊S6 で<b>クエリ設計の理論</b>が頭に入りました。本編Vol.7 で<b>複合検索</b>を実装するとき、動的SQL・安全・性能の「なぜ」が見えるはずです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">S6 達成チェック</span><span class="tag-desc">クエリを語れる人になった</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>動的SQL（条件で変わるSQL）を理解</li>
+          <li>MyBatis の if/where/foreach を知っている</li>
+          <li>SQLインジェクションの仕組みを説明できる</li>
+          <li>#{} と ${} の違いを言える</li>
+          <li>「#{} を使う」が鉄則と分かる</li>
+          <li>N+1問題を見抜ける</li>
+          <li>JOIN が N+1 対策になると理解</li>
+          <li>インデックスのトレードオフを知っている</li>
+          <li>LIKE '%%' は索引が効かないと分かる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 別冊S6 で手に入れたクエリ理論</span>
+✓ <span class="str">"条件で変わるSQLは動的SQLで組む"</span>
+
+✓ <span class="str">"&lt;where&gt;&lt;if&gt; で安全・綺麗に"</span>
+
+✓ <span class="str">"文字列連結は禁止、#{} を使う"</span>
+
+✓ <span class="str">"${} は危険信号"</span>
+
+✓ <span class="str">"N+1はJOINで防ぐ"</span>
+
+✓ <span class="str">"インデックスは読み速・書き遅"</span>
+
+✓ <span class="str">"安全→正しさ→速さの順で考える"</span>
+
+✓ <span class="str">"測定してから最適化（早すぎる最適化を避ける）"</span>
+
+
+<span class="comment">// あなたは「クエリを語れる」</span>
+<span class="comment">// エンジニアに近づいた ★★★</span>
+
+<span class="comment">// 次回 本編Vol.7：</span>
+<span class="comment">//   複合検索（動的SQL）を実装</span>
+<span class="comment">//   &lt;if&gt;&lt;where&gt;&lt;foreach&gt;</span>
+<span class="comment">//   キーワード＋カテゴリ＋タグの絞り込み</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── 本編 VOL.7 へ</div>
+    <p>別冊S6 で<b>「動的SQLとクエリ設計の理論」</b>を獲得しました。次は本編Vol.7「<b>複合検索（動的SQL）</b>」。<b>US-004</b> を起点に、<b>キーワード＋カテゴリ＋タグ</b>を組み合わせた検索を実装します。MyBatis の <code>&lt;if&gt;</code> <code>&lt;where&gt;</code> <code>&lt;foreach&gt;</code> が登場し、<b>条件の有無で SQL が変わる</b>動的SQLを書きます。もちろん全て <code>#{}</code> で<b>安全</b>に。別冊S6で学んだ理論が、実装で形になります。<b>本編Vol.7 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>SUB.06 / 14 ── DYNAMIC SQL &amp; QUERY DESIGN（別冊）</span>
+</footer>
+
+</body>
+</html>

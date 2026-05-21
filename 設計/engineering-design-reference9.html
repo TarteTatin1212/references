@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリング設計編 困った時の設計 Vol.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#160a02;
+    --paper:#d4b582;
+    --paper-2:#b58c55;
+    --accent:#3e1606;
+    --accent-2:#702e14;
+    --accent-3:#22080a;
+    --muted:#453322;
+    --line:#825a32;
+    --code-bg:#140702;
+    --code-text:#f0e4cf;
+    --panel-bg:#e8cea0;
+    --ng-bg:rgba(176,72,72,.1);
+    --ng-line:#a04040;
+    --ok-bg:rgba(74,120,72,.12);
+    --ok-line:#5c8a3c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;line-height:1.75;font-size:15px}
+  body{max-width:1180px;margin:0 auto;padding:0 28px 80px}
+
+  .page-header{position:relative;padding:48px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+  .page-header::before{content:"?";position:absolute;right:30px;top:-50px;font-size:320px;color:var(--accent);opacity:.16;font-family:"Shippori Mincho",serif;line-height:1;z-index:0;font-weight:700}
+  .page-header > *{position:relative;z-index:1}
+  .series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace;margin-right:8px}
+  .vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace}
+  h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin-top:18px;letter-spacing:.04em}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;font-family:"JetBrains Mono",monospace;letter-spacing:.08em}
+  .lead{max-width:640px;margin-top:22px;font-size:15px}
+  .lead b{color:var(--accent-3)}
+
+  .toc{background:var(--paper-2);padding:18px 22px;margin:32px 0 48px;border-left:3px solid var(--accent)}
+  .toc-title{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:.2em;color:var(--accent-3);margin-bottom:10px}
+  .toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px}
+  .toc li{font-size:13px}
+  .toc a{color:var(--ink);text-decoration:none;font-family:"JetBrains Mono",monospace}
+  .toc a::before{content:"— ";color:var(--accent)}
+  .toc a:hover{color:var(--accent)}
+
+  /* QA レイアウト */
+  .qa{margin:48px 0}
+  .qa-header{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:18px}
+  .qa-num{font-family:"JetBrains Mono",monospace;font-size:11px;background:var(--accent);color:var(--paper);padding:3px 10px;letter-spacing:.1em;font-weight:600}
+  .qa-question{font-family:"Shippori Mincho",serif;font-size:22px;font-weight:700;flex:1;letter-spacing:.02em}
+  .qa-en{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:.15em}
+
+  .answer-card{background:#fff;border:1px solid var(--line);margin:14px 0;padding:0}
+  .answer-head{background:var(--accent-3);color:var(--paper);padding:8px 16px;font-family:"JetBrains Mono",monospace;font-size:11.5px;letter-spacing:.16em;font-weight:600}
+  .answer-body{padding:18px 22px;font-size:14.5px}
+  .answer-body b{color:var(--accent-3)}
+  .answer-body p+p{margin-top:10px}
+
+  .ng-ok-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:14px 0}
+  .ng-box,.ok-box{padding:14px 18px;font-size:13.5px;border:1px solid var(--line)}
+  .ng-box{background:var(--ng-bg);border-left:3px solid var(--ng-line)}
+  .ok-box{background:var(--ok-bg);border-left:3px solid var(--ok-line)}
+  .ng-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ng-line);font-weight:600;letter-spacing:.12em;margin-bottom:6px}
+  .ok-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ok-line);font-weight:600;letter-spacing:.12em;margin-bottom:6px}
+  @media(max-width:720px){
+    .ng-ok-grid{grid-template-columns:1fr}
+  }
+
+  .code-mini{background:var(--code-bg);color:var(--code-text);padding:14px 18px;font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.7;overflow-x:auto;white-space:pre-wrap;margin:10px 0}
+
+  .kw{color:#ffc88a}
+  .type{color:#c2a3ff}
+  .fn{color:#a3c9ff}
+  .str{color:#b5e8b0}
+  .num{color:#f7a8d8}
+  .comment{color:#998aaa;font-style:italic}
+  .ann{color:#f7c08a}
+
+  .tip{background:rgba(62,22,6,.09);border-left:3px solid var(--accent);padding:14px 18px;margin:14px 0;font-size:14px}
+  .tip-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);letter-spacing:.18em;margin-bottom:6px;font-weight:600}
+  .tip b{color:var(--accent-3)}
+
+  .key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:11.5px}
+
+  .step-list{list-style:none;margin:10px 0}
+  .step-list li{padding:8px 0 8px 36px;position:relative;border-bottom:1px dashed var(--line);font-size:13.5px}
+  .step-list li:last-child{border-bottom:none}
+  .step-list li::before{content:counter(step);counter-increment:step;position:absolute;left:0;top:8px;background:var(--accent);color:var(--paper);font-family:"JetBrains Mono",monospace;font-size:11px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600}
+  .step-list{counter-reset:step}
+
+  /* エンディング */
+  .ending{margin:120px 0 40px;padding:60px 40px;background:linear-gradient(180deg,var(--paper-2) 0%,var(--paper) 100%);border:2px solid var(--ink);position:relative;overflow:hidden}
+  .ending::before{content:"△";position:absolute;left:-20px;top:-40px;font-size:240px;color:var(--accent);opacity:.1;font-family:"Shippori Mincho",serif;line-height:1}
+  .ending::after{content:"△";position:absolute;right:-20px;bottom:-50px;font-size:240px;color:var(--accent);opacity:.1;font-family:"Shippori Mincho",serif;line-height:1;transform:rotate(180deg)}
+  .ending > *{position:relative;z-index:1}
+  .ending h2{font-family:"Shippori Mincho",serif;font-size:36px;font-weight:700;text-align:center;letter-spacing:.05em}
+  .subtitle-end{text-align:center;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);letter-spacing:.3em;margin:10px 0 32px;font-weight:600}
+  .ending .message{max-width:680px;margin:0 auto;font-size:15px;line-height:2;text-align:left}
+  .ending .message b{color:var(--accent-3)}
+  .series-list{margin-top:40px;padding-top:30px;border-top:1px solid var(--line);max-width:700px;margin-left:auto;margin-right:auto}
+  .series-list-title{text-align:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:.25em;margin-bottom:18px}
+  .series-list-body{display:grid;grid-template-columns:1fr;gap:6px}
+  .series-list-body div{display:flex;align-items:baseline;gap:14px;font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--line)}
+  .series-list-body span:first-child{font-family:"JetBrains Mono",monospace;color:var(--accent);font-weight:600;flex-shrink:0;width:60px}
+  .series-list-body span:last-child{flex:1}
+  .closing{text-align:center;font-family:"Shippori Mincho",serif;font-size:16px;color:var(--accent-3);margin-top:40px;letter-spacing:.1em;font-weight:500}
+
+  .page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.1em}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">ENGINEERING DESIGN</span>
+  <span class="vol-tag">VOL.09 — FINAL</span>
+  <h1>困った時の設計</h1>
+  <div class="subtitle">DESIGN TROUBLESHOOTING — Q&A REFERENCE</div>
+  <p class="lead">設計の現場で<b>実際に迷う10の場面</b>を、Q&A形式で逆引きできるようにまとめました。「過剰設計を避けるには」「責務で迷ったら」「既存コードに介入する時」「チーム合意の取り方」など。<b>判断に詰まった時に開く辞書</b>として使ってください。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — 全10の詰まりポイント</div>
+  <ul>
+    <li><a href="#q1">Q.01 過剰設計の見分け方</a></li>
+    <li><a href="#q2">Q.02 責務分割で迷う</a></li>
+    <li><a href="#q3">Q.03 継承?委譲?</a></li>
+    <li><a href="#q4">Q.04 リファクタリングの判断</a></li>
+    <li><a href="#q5">Q.05 既存コードへの介入</a></li>
+    <li><a href="#q6">Q.06 命名で詰まる</a></li>
+    <li><a href="#q7">Q.07 例外設計で迷う</a></li>
+    <li><a href="#q8">Q.08 共通化のしすぎ</a></li>
+    <li><a href="#q9">Q.09 設計の合意が取れない</a></li>
+    <li><a href="#q10">Q.10 設計力を伸ばすには</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- Q.01 -->
+<div class="qa" id="q1">
+  <div class="qa-header">
+    <span class="qa-num">Q.01</span>
+    <div class="qa-question">過剰設計になっていないか不安です。どこで線引きすればいいですか?</div>
+    <span class="qa-en">OVER-ENGINEERING</span>
+  </div>
+
+  <div class="answer-card">
+    <div class="answer-head">A. ANSWER — 「3回ルール」で判断します</div>
+    <div class="answer-body">
+      <p>設計パターンや抽象化を入れるかどうかの定番ルールが<b>「3回ルール」</b>です。同じパターンが3回現れた時に初めて抽象化を検討します。1回目は素直に書き、2回目は気になりつつもまだ書き、3回目で<b>「これは型がある」</b>と判断します。</p>
+      <p>過剰設計の典型サイン:<b>「将来必要かも」「拡張性のために」</b>。これらの言葉が出てきたら一旦立ち止まりましょう。YAGNI原則（You Aren't Gonna Need It）の出番です。</p>
+    </div>
+  </div>
+
+  <div class="ng-ok-grid">
+    <div class="ng-box">
+      <div class="ng-head">▲ NG — 過剰設計の例</div>
+      まだ1種類しかないのに「将来増えるかも」と<b>Strategy</b>パターンを導入。インターフェース・抽象クラス・5つの空実装まで作って、結局1つしか使わない。<br><br>「DBを後から変えられるように」とリポジトリパターン+DIコンテナを完備。実際はSQLite以外使わない。
+    </div>
+    <div class="ok-box">
+      <div class="ok-head">○ OK — 必要十分の例</div>
+      まず<b>直接書く</b>。コードが汚くても動くものを作る。3回目の類似コードが出てきた時、リファクタリングで抽象化する。<b>「必要になってから入れる」</b>のが鉄則。<br><br>変更が必要になってから抽象を導入しても、テストがあれば安全に移行できる。
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">TIP — 過剰設計の代償</div>
+    過剰設計は<b>「動いてるけど誰も理解できないコード」</b>を生みます。後任者は理解に時間がかかり、結局書き直されます。<b>「シンプル&gt;賢い」</b>を常に意識しましょう。
+  </div>
+</div>
+
+<!-- Q.02 -->
+<div class="qa" id="q2">
+  <div class="qa-header">
+    <span class="qa-num">Q.02</span>
+    <div class="qa-question">クラスやメソッドの責務分割で毎回迷います。コツはありますか?</div>
+    <span class="qa-en">RESPONSIBILITY SPLIT</span>
+  </div>
+
+  <div class="answer-card">
+    <div class="answer-head">A. ANSWER — 「と」「または」で分けます</div>
+    <div class="answer-body">
+      <p>クラスやメソッドの説明文に<b>「〜と〜」</b>が入ったら、その時点で<b>SRP違反のサイン</b>です。「ユーザー登録<b>と</b>メール送信<b>と</b>課金処理を行うクラス」は3つに分けるべき。</p>
+      <p>判断基準は<b>「変更理由が同じか」</b>。<b>「メール仕様の変更で触る場所」</b>と<b>「課金仕様の変更で触る場所」</b>は別であるべき。同じクラスにあるなら分けるサインです。</p>
+    </div>
+  </div>
+
+  <ol class="step-list">
+    <li><b>クラスを1文で説明してみる</b>。「と」が入るなら分割候補。</li>
+    <li><b>そのクラスを変更させる人を考える</b>。経理チーム/マーケチーム/運用チームなど、複数の役割が出てきたら分ける。</li>
+    <li><b>importしている外部ライブラリを数える</b>。5つ以上なら怪しい（SMTP、Stripe、PDF、AWS S3...）。</li>
+    <li><b>テストを書こうとしてみる</b>。モックが10個必要なら確実に分割対象。</li>
+  </ol>
+
+  <div class="code-mini"><span class="comment">// 責務が混ざった典型</span>
+<span class="kw">class</span> <span class="type">UserManager</span> {
+  <span class="fn">register</span>()       { ... }   <span class="comment">// 認証</span>
+  <span class="fn">sendWelcomeMail</span>() { ... } <span class="comment">// 通知</span>
+  <span class="fn">chargeFee</span>()      { ... }  <span class="comment">// 課金</span>
+  <span class="fn">generateReport</span>() { ... } <span class="comment">// 集計</span>
+}
+
+<span class="comment">// 分割後</span>
+<span class="kw">class</span> <span class="type">UserRegistration</span> { <span class="fn">register</span>() { ... } }
+<span class="kw">class</span> <span class="type">WelcomeMailer</span>    { <span class="fn">send</span>() { ... } }
+<span class="kw">class</span> <span class="type">PaymentProcessor</span> { <span class="fn">charge</span>() { ... } }
+<span class="kw">class</span> <span class="type">UserReportService</span>{ <span class="fn">generate</span>() { ... } }</div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — Manager / Util / Helper は要注意</div>
+    クラス名に <b>Manager / Util / Helper / Service</b> が付いていたら、責務が曖昧になっている可能性大。<b>「何をするか」を具体的な名前で表現できないクラスは、責務が定まっていない証拠</b>です。
+  </div>
+</div>
+
+<!-- Q.03 -->
+<div class="qa" id="q3">
+  <div class="qa-header">
+    <span class="qa-num">Q.03</span>
+    <div class="qa-question">継承と委譲、どっちを使えばいいかいつも迷います。</div>
+    <span class="qa-en">INHERITANCE OR COMPOSITION</span>
+  </div>
+
+  <div class="answer-card">
+    <div class="answer-head">A. ANSWER — 迷ったら委譲を選びます</div>
+    <div class="answer-body">
+      <p>古典的な格言<b>「継承より委譲（コンポジション）」</b>が今も生きています。継承は強力ですが、<b>親クラスの変更が子クラス全てに波及する</b>という見えない結合を生みます。委譲なら必要な機能だけ持たせられて柔軟。</p>
+      <p>継承を使ってよいのは<b>「明確な is-a 関係 + LSP（リスコフ置換）を満たす」</b>場合のみ。「Penguin extends Bird」のような直感的でも振る舞いが置換不可能な関係は、継承ではなく構成で表現します。</p>
+    </div>
+  </div>
+
+  <div class="ng-ok-grid">
+    <div class="ng-box">
+      <div class="ng-head">▲ NG — 継承の濫用</div>
+      <code style="background:rgba(0,0,0,.1);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">UserController extends BaseController extends AbstractController</code><br><br>3階層も継承して、ベースクラスの仕様変更で全Controllerが壊れる。<b>継承の連鎖は最大2階層まで</b>に。
+    </div>
+    <div class="ok-box">
+      <div class="ok-head">○ OK — 委譲で機能を持つ</div>
+      <code style="background:rgba(0,0,0,.1);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">UserController</code> は <code style="background:rgba(0,0,0,.1);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">AuthService</code> と <code style="background:rgba(0,0,0,.1);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">Logger</code> を<b>コンストラクタで受け取って使う</b>。<br><br>必要な機能だけ、必要なだけ持つ。組み合わせ自由、テスト時の差し替えも簡単。
+    </div>
+  </div>
+
+  <div class="code-mini"><span class="comment">// 継承パターン (硬い)</span>
+<span class="kw">class</span> <span class="type">BaseController</span> {
+  <span class="kw">protected</span> <span class="fn">checkAuth</span>() { ... }
+  <span class="kw">protected</span> <span class="fn">log</span>(msg) { ... }
+}
+<span class="kw">class</span> <span class="type">UserController</span> <span class="kw">extends</span> <span class="type">BaseController</span> { ... }
+<span class="comment">// → BaseController変更が全子に波及</span>
+
+<span class="comment">// 委譲パターン (柔軟)</span>
+<span class="kw">class</span> <span class="type">UserController</span> {
+  <span class="kw">constructor</span>(
+    <span class="kw">private</span> auth: <span class="type">AuthService</span>,
+    <span class="kw">private</span> logger: <span class="type">Logger</span>,
+  ) {}
+  <span class="fn">handle</span>(req) {
+    <span class="kw">this</span>.auth.<span class="fn">check</span>(req);
+    <span class="kw">this</span>.logger.<span class="fn">log</span>(<span class="str">"..."</span>);
+  }
+}</div>
+</div>
+
+<!-- Q.04 -->
+<div class="qa" id="q4">
+  <div class="qa-header">
+    <span class="qa-num">Q.04</span>
+    <div class="qa-question">リファクタリングするべきかどうか判断できません。</div>
+    <span class="qa-en">REFACTORING DECISION</span>
+  </div>
+
+  <div class="answer-card">
+    <div class="answer-head">A. ANSWER — 「ボーイスカウト・ルール」が定番</div>
+    <div class="answer-body">
+      <p><b>「来た時より美しくして去れ」</b>。ボーイスカウトの教えがそのままプログラミングの格言になっています。<b>機能追加・バグ修正で触ったついでに、その周辺だけ少し綺麗に</b>するのが現代的アプローチ。「リファクタリング専用週間」より日常的な小さな改善のほうが効きます。</p>
+      <p>大規模リファクタリングが必要なのは、<b>「新機能追加に毎回4倍の時間がかかる」「同じバグが繰り返し出る」「新人が1ヶ月経っても全体を把握できない」</b>などの症状が出てから。それまでは小刻みな改善で十分です。</p>
+    </div>
+  </div>
+
+  <ol class="step-list">
+    <li><b>テストを先に書く</b>。リファクタリング前に「動作が変わらない」を保証する網を張る。</li>
+    <li><b>小さなステップで進める</b>。1コミット = 1リファクタリング。大きな書き換えは避ける。</li>
+    <li><b>動作確認をこまめに</b>。各ステップでテストを走らせて緑になることを確認。</li>
+    <li><b>機能追加と混ぜない</b>。リファクタコミットと機能追加コミットは絶対に分ける。</li>
+  </ol>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — 「変更しにくい」が信号</div>
+    バグ修正や機能追加で<b>「触りたくないコード」</b>に出会ったら、それがリファクタリング候補。<b>恐怖が判断基準</b>。「ここ触ると壊れそう」と感じる箇所こそ、テストを書いてリファクタすべき箇所です。
+  </div>
+</div>
+
+<!-- Q.05 -->
+<div class="qa" id="q5">
+  <div class="qa-header">
+    <span class="qa-num">Q.05</span>
+    <div class="qa-question">レガシーコードに介入するのが怖いです。どう手をつけたら?</div>
+    <span class="qa-en">LEGACY CODE INTERVENTION</span>
+  </div>
+
+  <div class="answer-card">
+    <div class="answer-head">A. ANSWER — 「Strangler Fig パターン」が王道</div>
+    <div class="answer-body">
+      <p>レガシーシステムを一気に書き換えるのは<b>失敗の典型例</b>。「Big Bang」リライトはまず破綻します。代わりに使うのが<b>Strangler Fig パターン</b>（イチジクの絞め殺し戦略）。<b>新機能を新システムで作り、既存機能を1つずつ移行</b>する。古いシステムを徐々に「絞め殺して」いきます。</p>
+      <p>具体的には、新旧の前にプロキシ層を置いて、どちらに振り分けるかを切り替えていきます。1つの機能が移行できたらルーティングを切り替え、旧コードは削除。これを繰り返します。</p>
+    </div>
+  </div>
+
+  <div class="code-mini"><span class="comment">// Strangler Fig の流れ</span>
+
+[フェーズ0] 旧システムのみ
+   Client → <span class="kw">LegacySystem</span>
+
+[フェーズ1] プロキシ層を追加
+   Client → <span class="kw">Proxy</span> → LegacySystem
+
+[フェーズ2] 新機能は新システムへ
+   Client → Proxy ┬→ LegacySystem (既存)
+                  └→ <span class="str">NewSystem (新規)</span>
+
+[フェーズ3] 既存機能を1つずつ移行
+   /users     → NewSystem  ✓ 移行済み
+   /orders    → NewSystem  ✓ 移行済み
+   /reports   → LegacySystem ← 残り
+
+[フェーズ最終] 旧システム停止
+   Client → Proxy → NewSystem
+   (LegacySystemをshutdown)
+
+<span class="comment">// メリット:</span>
+<span class="comment">// - 常に動いている (リスク分散)</span>
+<span class="comment">// - 小さく刻めるので問題発見しやすい</span>
+<span class="comment">// - 進捗が見える</span>
+<span class="comment">// - 失敗しても戻れる</span></div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — テストの網を張ってから</div>
+    レガシーに手を入れる前に<b>「動作の網」</b>を張ります。E2Eテスト、API契約テスト、ゴールデンマスターテスト（出力比較）など、<b>「変えても壊れていないこと」を機械的に確認できる仕組み</b>が必須。テストなしの介入は自殺行為です。
+  </div>
+</div>
+
+<!-- Q.06 -->
+<div class="qa" id="q6">
+  <div class="qa-header">
+    <span class="qa-num">Q.06</span>
+    <div class="qa-question">クラス名・関数名・変数名が思いつきません。命名のコツは?</div>
+    <span class="qa-en">NAMING THINGS</span>
+  </div>
+
+  <div class="answer-card">
+    <div class="answer-head">A. ANSWER — 「業務の言葉」をそのまま使います</div>
+    <div class="answer-body">
+      <p>命名で困ったら、まず<b>業務担当者が使っている言葉</b>を確認します。顧客が「注文確定」と呼ぶものを<b>「OrderFinalize」</b>と呼ぶか<b>「OrderConfirm」</b>と呼ぶか迷ったら、業務側に聞きます。これが<b>ユビキタス言語</b>の発想です。</p>
+      <p>名前付けで最もダメなのは<b>「Manager」「Helper」「Util」「Process」「Data」「Info」</b>などの<b>「中身を説明できない曖昧語」</b>。<b>「何をするものか」が名前から読み取れない</b>のは責務未定義の証拠です。</p>
+    </div>
+  </div>
+
+  <div class="ng-ok-grid">
+    <div class="ng-box">
+      <div class="ng-head">▲ NG — 曖昧な命名</div>
+      <code style="background:rgba(0,0,0,.1);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">UserUtil</code>, <code style="background:rgba(0,0,0,.1);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">DataHelper</code>, <code style="background:rgba(0,0,0,.1);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">processData()</code>, <code style="background:rgba(0,0,0,.1);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">handleInfo()</code><br><br>何をするか名前から読めない。<b>命名が曖昧 = 責務も曖昧</b>。
+    </div>
+    <div class="ok-box">
+      <div class="ok-head">○ OK — 意図が明確な命名</div>
+      <code style="background:rgba(0,0,0,.1);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">PasswordHasher</code>, <code style="background:rgba(0,0,0,.1);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">OrderConfirmationService</code>, <code style="background:rgba(0,0,0,.1);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">calculateTax(amount)</code><br><br><b>名前を読むだけで何をするか分かる</b>。コメントも要らないレベル。
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — 「英訳しないで日本語で考える」</div>
+    最初から英語で命名しようとすると詰まります。<b>まず日本語で「○○を△△する」と書き出し、それを直訳</b>。「顧客の与信を判定する」→ <code style="background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">judgeCustomerCredit</code>。<b>業務語が先、英語名は後</b>。
+  </div>
+</div>
+
+<!-- Q.07 -->
+<div class="qa" id="q7">
+  <div class="qa-header">
+    <span class="qa-num">Q.07</span>
+    <div class="qa-question">例外をどこで捕まえて、どう投げるべきか分かりません。</div>
+    <span class="qa-en">EXCEPTION DESIGN</span>
+  </div>
+
+  <div class="answer-card">
+    <div class="answer-head">A. ANSWER — 「例外は境界で捕まえる」</div>
+    <div class="answer-body">
+      <p>例外処理の基本ルール:<b>「奥で投げて、外で捕まえる」</b>。ドメイン層で例外を投げ、<b>プレゼンテーション層（Controller / グローバルエラーハンドラ）でまとめてキャッチ</b>するのが定石。途中の層で try-catch を散らかすと、見通しが悪くなりエラー情報も失われます。</p>
+      <p>もう一つの鉄則:<b>「予想できるエラーは例外にしない」</b>。バリデーション失敗のような<b>「業務上ありえる結果」</b>は<b>Result型</b>や<b>戻り値</b>で表現するのが現代的。例外は<b>「ありえない事態」</b>のために予約しておきます。</p>
+    </div>
+  </div>
+
+  <div class="code-mini"><span class="comment">// 例外設計のレイヤ別役割</span>
+
+<span class="ann">[Domain層]</span>
+  ビジネスルール違反を例外で投げる
+  <span class="kw">throw new</span> <span class="type">InsufficientStockError</span>(...);
+
+<span class="ann">[Application層]</span>
+  <span class="kw">try-catch</span> しない (基本)
+  ドメイン例外をそのまま伝播させる
+
+<span class="ann">[Presentation層]</span>
+  グローバルエラーハンドラでキャッチ
+  → ステータスコードとレスポンス変換
+
+  <span class="kw">if</span> (err <span class="kw">instanceof</span> <span class="type">InsufficientStockError</span>)
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">409</span>).<span class="fn">json</span>({...});
+  <span class="kw">if</span> (err <span class="kw">instanceof</span> <span class="type">ValidationError</span>)
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">422</span>).<span class="fn">json</span>({...});
+
+<span class="comment">// 予測可能なエラーは Result 型</span>
+<span class="kw">type</span> <span class="type">Result</span>&lt;T, E&gt; =
+  | { ok: <span class="kw">true</span>;  value: T }
+  | { ok: <span class="kw">false</span>; error: E };
+
+<span class="fn">findUser</span>(id): <span class="type">Result</span>&lt;<span class="type">User</span>, <span class="type">NotFound</span>&gt; {
+  <span class="comment">// 見つからないは「例外」ではなく</span>
+  <span class="comment">// 「ありえる結果」</span>
+}</div>
+</div>
+
+<!-- Q.08 -->
+<div class="qa" id="q8">
+  <div class="qa-header">
+    <span class="qa-num">Q.08</span>
+    <div class="qa-question">DRYを意識しすぎて、強引な共通化をしてしまいます。</div>
+    <span class="qa-en">PREMATURE ABSTRACTION</span>
+  </div>
+
+  <div class="answer-card">
+    <div class="answer-head">A. ANSWER — 「形が似てるだけ」は共通化しません</div>
+    <div class="answer-body">
+      <p>DRY原則は強力ですが、<b>「ちょっと似てる」だけで共通化すると地獄</b>を見ます。判断基準は<b>「変更理由が同じか」</b>。コードは似ているが、片方は「税法改正で変わる」、もう片方は「商品マスタの仕様で変わる」なら、共通化してはいけません。</p>
+      <p>「<b>偶然の重複</b>」と「<b>本質的な重複</b>」の見極めが肝。前者を共通化すると、片方の都合に合わせて変更したら、もう片方が壊れる。<b>「2つのコードが同じ理由で変わる時、初めて共通化する」</b>のが鉄則です。</p>
+    </div>
+  </div>
+
+  <div class="ng-ok-grid">
+    <div class="ng-box">
+      <div class="ng-head">▲ NG — 形が似てるだけで共通化</div>
+      購入金額の計算と給与計算が、たまたま「数字×数字+調整」の形が似てるからと共通化。<br><br>後で消費税法が変わって購入計算だけ修正したいのに、給与にも影響が出てバグ発生。
+    </div>
+    <div class="ok-box">
+      <div class="ok-head">○ OK — 文脈別に独立</div>
+      購入金額計算と給与計算は<b>業務文脈が違う</b>ので別関数。一見コードが重複していても、それぞれ独立して進化できる。<br><br><b>"ちょっとした重複は、間違った抽象化よりずっと安い"</b> — Sandi Metz
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 「Rule of Three」も併用</div>
+    Q.01の「3回ルール」がここでも有効。<b>1回目: 単に書く / 2回目: 重複を許容 / 3回目: 初めて共通化を検討</b>。共通化は<b>「変更理由が同じ」と確信できてから</b>。早すぎる抽象化は、遅すぎる抽象化より高くつきます。
+  </div>
+</div>
+
+<!-- Q.09 -->
+<div class="qa" id="q9">
+  <div class="qa-header">
+    <span class="qa-num">Q.09</span>
+    <div class="qa-question">チーム内で設計の意見が割れて、決まりません。</div>
+    <span class="qa-en">CONSENSUS BUILDING</span>
+  </div>
+
+  <div class="answer-card">
+    <div class="answer-head">A. ANSWER — 「トレードオフ表」で議論します</div>
+    <div class="answer-body">
+      <p>設計の議論が空転する最大の原因は<b>「軸を共有していないこと」</b>。Aさんは「性能優先」、Bさんは「保守性優先」、Cさんは「開発速度優先」と<b>それぞれ別の評価軸</b>で話していると、永遠に合意できません。</p>
+      <p>解決策は<b>「選択肢×評価軸のトレードオフ表」</b>を作ること。性能/保守性/コスト/学習コスト/拡張性などの軸を立て、各選択肢を点数化します。これで議論が「好み」から「事実」に変わります。</p>
+    </div>
+  </div>
+
+  <div class="code-mini"><span class="comment">// トレードオフ表の例: キャッシュ層の選定</span>
+
+|             | Redis  | Memcached | アプリ内 |
+|-------------|--------|-----------|----------|
+| 性能        |   ◎    |    ◎      |    ◎     |
+| 永続性      |   ○    |    ×      |    ×     |
+| 機能数      |   ◎    |    △      |    △     |
+| 運用コスト  |   △    |    △      |    ◎     |
+| 学習コスト  |   △    |    ○      |    ◎     |
+| 分散対応    |   ○    |    ○      |    ×     |
+| 既存スキル  |   ○    |    △      |    ◎     |
+|-------------|--------|-----------|----------|
+| <span class="ann">合計</span>      | <span class="num">16</span> pt  | <span class="num">12</span> pt    | <span class="num">14</span> pt    |
+
+<span class="comment">// → 「なんとなく」ではなく</span>
+<span class="comment">//   軸ごとの判断で議論できる</span>
+
+<span class="comment">// 決まらない時の最終手段:</span>
+<span class="ann">[1]</span> 一番経験ある人が決める (Tech Lead)
+<span class="ann">[2]</span> 戻せる選択肢を選ぶ
+<span class="ann">[3]</span> ADRで「なぜ選んだか」を残す
+
+<span class="comment">// 「Disagree and commit」</span>
+<span class="comment">// 反対意見でも一旦合意したら全力で実行</span>
+<span class="comment">// が大人のプロのやり方</span></div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — タイムボックスを区切る</div>
+    議論が長引く時は<b>「30分で結論を出す」「決まらなければデフォルト案で進む」</b>と最初に宣言。永遠に議論しても答えは出ません。<b>進めながら調整するほうが、止まって考えるより速い</b>のがソフトウェア開発の鉄則です。
+  </div>
+</div>
+
+<!-- Q.10 -->
+<div class="qa" id="q10">
+  <div class="qa-header">
+    <span class="qa-num">Q.10</span>
+    <div class="qa-question">設計力を伸ばすにはどう学べばいいですか?</div>
+    <span class="qa-en">HOW TO GROW</span>
+  </div>
+
+  <div class="answer-card">
+    <div class="answer-head">A. ANSWER — 「書く・読む・直す」の3つ</div>
+    <div class="answer-body">
+      <p>設計力は<b>知識を増やすだけ</b>では伸びません。実装の中で<b>判断を繰り返した経験</b>からしか身につきません。「<b>たくさん書く</b>」「<b>他人のコードを読む</b>」「<b>自分のコードを直す</b>」の3軸を継続することが最短ルートです。</p>
+      <p>本も大事ですが、<b>読んだ知識は実コードで試さない限り定着しません</b>。「SOLIDを学んだ」より「先週の自分のコードをSOLIDで書き直してみた」のほうが10倍学べます。<b>手と頭の両方を動かす</b>のが鉄則です。</p>
+    </div>
+  </div>
+
+  <ol class="step-list">
+    <li><b>個人プロジェクトで自由に書く</b>。仕事のコードでは試せないアーキテクチャを試す場所を持つ。</li>
+    <li><b>OSSのコードを読む</b>。有名プロダクトのリポジトリは設計の宝庫。最初は分からなくてもOK。</li>
+    <li><b>過去の自分のコードをリファクタする</b>。半年前のコードを読むと粗が見える。それが成長。</li>
+    <li><b>レビューで「なぜ?」を聞く</b>。先輩の指摘から学ぶより、自分が「なぜそう書いた?」と問われて答える経験が一番伸びる。</li>
+    <li><b>定番書を3冊読む</b>。『リーダブルコード』『リファクタリング』『達人プログラマー』。読んで「実装」して、また読み返す。</li>
+  </ol>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 設計に「正解」はない</div>
+    どんなベテランも<b>「これが完璧な設計だ」</b>とは断言できません。文脈、制約、チーム、寿命で最適解は変わります。だから<b>「これが今のベスト」</b>を見つけ続けるしかない。それが設計という営みの面白さでもあります。
+  </div>
+</div>
+
+<!-- エンディング -->
+<div class="ending">
+  <h2>エンジニアリング設計編 全9巻 完結</h2>
+  <div class="subtitle-end">△ SERIES — COMPLETE △</div>
+
+  <div class="message">
+    <p>ここまで読み進めていただき、ありがとうございました。</p>
+
+    <p>本シリーズは「<b>設計とは何か</b>」から始まり、要件、原則、パターン、アーキテクチャ、データ、API、ドキュメント、そして<b>困った時の判断基準</b>まで、設計という営みを9つの巻で旅してきました。</p>
+
+    <p>大事なことを最後にもう一度。<b>設計に唯一絶対の正解はありません</b>。プロジェクトの文脈、チームの習熟度、ビジネスの寿命によって、最適解は変わり続けます。本シリーズで紹介した原則・パターン・手法は、あくまで<b>判断の手掛かり</b>です。</p>
+
+    <p>大事なのは「<b>原則を知っていること</b>」と「<b>場面に応じて使い分けられること</b>」。SOLIDを完璧に守る必要はないし、デザインパターンを全部覚える必要もありません。<b>判断に詰まった時、何を手掛かりにすればよいかを知っている</b>こと。それだけで十分です。</p>
+
+    <p>設計は<b>「動くコードを書く前に、どう組み立てるかを決める行為」</b>。最初に時間をかけたぶん、後から数倍の労力で報われます。逆に最初をサボったコードは、半年後に必ず破綻します。</p>
+
+    <p>これからの皆さんの設計が、<b>変更に強く、読みやすく、テストしやすく、長く愛される</b>コードでありますように。困った時はまた本シリーズに戻ってきてください。<b>辞書として使い倒していただける</b>のが、私たちの願いです。</p>
+
+    <p style="text-align:right;margin-top:24px"><b>— エンジニアリング設計編 編集部</b></p>
+  </div>
+
+  <div class="series-list">
+    <div class="series-list-title">— SERIES INDEX —</div>
+    <div class="series-list-body">
+      <div><span>Vol.01</span><span>設計入門・全体像</span></div>
+      <div><span>Vol.02</span><span>要件から設計への橋渡し</span></div>
+      <div><span>Vol.03</span><span>設計原則 — SOLID & 鉄則</span></div>
+      <div><span>Vol.04</span><span>クラス設計とデザインパターン</span></div>
+      <div><span>Vol.05</span><span>アーキテクチャパターン</span></div>
+      <div><span>Vol.06</span><span>データベース・データ設計</span></div>
+      <div><span>Vol.07</span><span>API設計</span></div>
+      <div><span>Vol.08</span><span>設計ドキュメントと図解</span></div>
+      <div><span>Vol.09</span><span>困った時の設計 — 本巻</span></div>
+    </div>
+  </div>
+
+  <div class="closing">— 良い設計を、これからの皆様に —</div>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING DESIGN SERIES — VOL.09 — FINAL</span>
+  <span>△ COMPLETE</span>
+</footer>
+
+</body>
+</html>

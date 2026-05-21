@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.9 本編 GROUP BY で集計しよう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2c25;
+  --paper:#e6ece2;
+  --paper-2:#cddccc;
+  --accent:#789a80;
+  --accent-2:#90b098;
+  --accent-3:#1d4030;
+  --muted:#697867;
+  --line:#b1c1ac;
+  --code-bg:#14211a;
+  --code-text:#e6ece2;
+  --panel-bg:#eef3ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(120,154,128,0.08);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.aggr-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:12.5px;font-family:'JetBrains Mono',monospace}
+.aggr-tbl th,.aggr-tbl td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+.aggr-tbl th{background:var(--paper-2);color:var(--accent-3);font-size:11px}
+.aggr-tbl tr.sum td{background:#fafdf8;font-weight:700;color:var(--accent-3)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.09 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>GROUP BY で<br>集計しよう</h1>
+  <div class="subtitle">AGGREGATION ── COUNT, SUM, AVG, GROUP BY</div>
+  <p class="lead">
+    Vol.9は<b>「集計クエリ獲得」</b>のマイルストーン。Cの<b>「統計フェーズ」</b>の幕開けです。<br>
+    Vol.8 までの<b>「個別のデータを取り出す」検索</b>から、Vol.9 では<b>「全体の傾向を取り出す」集計</b>へと視点が変わります。<br>
+    技術的には：SQL の <code style="font-family:'JetBrains Mono'">COUNT / SUM / AVG</code> 関数と <code style="font-family:'JetBrains Mono'">GROUP BY</code> 句。Java側では<b>集計結果用のDTO</b>を新しく作ります。<br>
+    実装する画面は<b>「科目別の合計学習時間ランキング」</b>。業務システムらしい<b>統計感</b>がついに出てきます。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>Vol.9で新しく登場するのは<b>DTOクラス</b>。<code>com.example.todo.dto.SubjectStat</code> のような新パッケージ・新クラスを作ります。<br>
+    Entity と DTO は<b>別物</b>。Entity は<b>DBのテーブル1対1</b>、DTO は<b>画面に届ける任意の形</b>です。混同しないよう、<b>パッケージで明確に分離</b>します。<br>
+    <code>Ctrl + Shift + O</code> で import 解決時、Entity と DTO で同名クラスがあると候補が複数出るので、必ず <code>dto.SubjectStat</code> 側を選ぶこと。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#agg-basics">04 集計関数とGROUP BYの基本</a></li>
+    <li><a href="#dto">05 DTO の役割と作り方</a></li>
+    <li><a href="#create">06 ファイル作成と改修</a></li>
+    <li><a href="#run">07 ブラウザで動かして確認</a></li>
+    <li><a href="#trouble">08 ハマりどころと対処</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.9 では<b>「科目別の合計学習時間」を SQL で集計</b>する API を作ります。画面は最小限のシンプルな表示（Vol.10 で本格的にUI化）。<b>集計の感覚を体に入れる</b>のがゴール。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.9-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">集計結果用 DTO「SubjectStat」を作る</div>
+          <div class="desc">「科目ID／科目名／件数／合計時間／平均時間」を持つDTOクラス。Entity とは別物。<b>新しい <code>dto</code> パッケージ</b>に置く。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">集計SQL を XML Mapper に追加</div>
+          <div class="desc"><code>GROUP BY s.id</code> で科目ごとに集計。<code>COUNT</code> で件数、<code>SUM</code> で合計分、<code>AVG</code> で平均分。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">/stats でシンプルな集計表示</div>
+          <div class="desc"><code>/stats</code> URLで、科目別の集計結果を<b>表形式</b>で表示。本格的なUIはVol.10 で。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 完成後の動作</span>
+
+GET /stats
+  ↓
+
+[ 科目別 学習統計 ]
+
+科目名       | 件数 | 合計 | 平均
+─────────────────────────────
+Java         |  5  | 375 | 75.0
+Spring Boot  |  3  | 255 | 85.0
+SQL          |  1  |  30 | 30.0
+HTML/CSS     |  0  |   0 | 0.0
+JavaScript   |  0  |   0 | 0.0
+
+
+<span class="comment">// 内部で起きていること:</span>
+
+SELECT
+  s.id          AS subjectId,
+  s.name        AS subjectName,
+  COUNT(r.id)   AS recordCount,
+  COALESCE(SUM(r.minutes), 0) AS totalMinutes,
+  COALESCE(AVG(r.minutes), 0) AS avgMinutes
+FROM subjects s
+LEFT JOIN study_records r ON s.id = r.subject_id
+GROUP BY s.id, s.name
+ORDER BY totalMinutes DESC
+
+
+<span class="comment">// → 1回のSQLで全科目の集計が取れる</span>
+<span class="comment">// → DBに計算させるのが業務の鉄則</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><b>「集計は DBにやらせる」</b>のが鉄則です。Java側でループで合計するのではなく、<b>SQL の <code>SUM</code> で一発計算</b>。理由は2つ：(1) DBは集計に最適化されており速い、(2) ネットワーク転送量が激減（全件取らずに集計結果だけ送る）。Vol.4 の「JOIN で 1回SQL」と同じ思想です。</p>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── ブラウザで見える画面</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.9 のゴール画面は<b>シンプルな集計表</b>。Vol.10 でこれをカード化・グラフ化していく予定。今巻は<b>「数字が正しく出る」</b>ことが第一目標。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-screen</span>
+      <span class="tag-desc">完成画面のモック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// /stats の画面</div>
+        <div style="background:#fff;border:1px solid var(--line);font-family:'Noto Sans JP'">
+          <div style="background:#e0e0e0;padding:4px 12px;font-family:'JetBrains Mono';font-size:11px">▮ http://localhost:8080/stats</div>
+          <div style="padding:16px">
+            <div style="font-family:'Shippori Mincho',serif;font-size:18px;color:var(--accent-3);border-bottom:2px solid var(--accent);padding-bottom:6px;display:inline-block;margin-bottom:12px">科目別 学習統計</div>
+            <table class="aggr-tbl">
+              <tr><th>科目</th><th>件数</th><th>合計（分）</th><th>平均（分）</th></tr>
+              <tr><td>Java</td><td>5</td><td>375</td><td>75.0</td></tr>
+              <tr><td>Spring Boot</td><td>3</td><td>255</td><td>85.0</td></tr>
+              <tr><td>SQL</td><td>1</td><td>30</td><td>30.0</td></tr>
+              <tr><td>HTML/CSS</td><td>0</td><td>0</td><td>0.0</td></tr>
+              <tr><td>JavaScript</td><td>0</td><td>0</td><td>0.0</td></tr>
+            </table>
+            <div style="font-size:12px;color:var(--muted);margin-top:8px">※ 合計時間の降順で表示</div>
+          </div>
+        </div>
+        <p style="margin-top:14px;font-size:13px"><b>記録のない科目（HTML/CSS, JavaScript）</b>も「0件・0分」として並ぶ。これは <b>LEFT JOIN + COALESCE</b> の効果。</p>
+      </div>
+      <div class="code"><span class="code-head">// プロジェクト構造の変化</span>
+
+todo/
+├ src/main/java/com/example/todo/
+│  ├ dto/                       <span class="comment">// ★ 新規パッケージ</span>
+│  │  └ <span class="kw">SubjectStat.java</span>        <span class="comment">// ★ 新規</span>
+│  ├ mapper/
+│  │  └ SubjectMapper.java     <span class="comment">// 改修</span>
+│  │      <span class="kw">// + findSubjectStats()</span>
+│  ├ service/
+│  │  └ SubjectService.java    <span class="comment">// 改修</span>
+│  │      <span class="kw">// + findSubjectStats()</span>
+│  └ controller/
+│     └ <span class="kw">StatsController.java</span>    <span class="comment">// ★ 新規</span>
+└ src/main/resources/
+   ├ mybatis/
+   │  └ SubjectMapper.xml      <span class="comment">// 改修</span>
+   │      <span class="kw">// + &lt;select id="findSubjectStats"&gt;</span>
+   └ templates/
+      └ <span class="kw">stats/</span>                   <span class="comment">// ★ 新規フォルダ</span>
+         └ <span class="kw">index.html</span>            <span class="comment">// ★ 新規</span>
+
+
+<span class="comment">// 新規 3ファイル＋改修 3ファイル</span>
+<span class="comment">// 新パッケージ dto を導入</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.9 は<b>Cで初の集計クエリ</b>。SQL の集計関数は A v2 でも扱っていないので<b>本巻が初登場</b>。XML Mapper・LEFT JOIN・resultMap の知識を組み合わせて使います。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">前提知識</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前提知識</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>該当箇所</th></tr>
+          <tr><td>Entity の作り方</td><td>本編 M1 / A v2 全体</td></tr>
+          <tr><td>XML Mapper の基本構造</td><td>本編 M3</td></tr>
+          <tr><td>resultType と resultMap</td><td>本編 M4</td></tr>
+          <tr><td>LEFT JOIN</td><td>本編 M4</td></tr>
+          <tr><td>取得戦略 ── 集計クエリは別 (S2予告)</td><td>別冊 S2</td></tr>
+        </table>
+        <div style="margin-top:16px;font-size:13.5px"><b>新しく学ぶこと</b>：</div>
+        <ol class="step-list" style="margin-top:6px">
+          <li>SQL の集計関数 <code>COUNT / SUM / AVG / MAX / MIN</code></li>
+          <li><code>GROUP BY</code> 句の役割</li>
+          <li><code>COALESCE</code> で NULL を 0 に</li>
+          <li><b>DTO</b>（Data Transfer Object）と Entity の違い</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// 集計と通常SELECTの違い</span>
+
+<span class="comment">// ─── 通常の SELECT ───</span>
+<span class="comment">// 「行を1つずつ取り出す」</span>
+SELECT * FROM study_records
+WHERE subject_id = <span class="num">1</span>;
+
+<span class="comment">// 結果:</span>
+<span class="comment">// id | subject_id | studied_on | minutes | memo</span>
+<span class="comment">//  1 |     1      | 2026-05-08 |   60    | 文法復習</span>
+<span class="comment">//  2 |     1      | 2026-05-10 |   60    | 基礎構文</span>
+<span class="comment">//  3 |     1      | 2026-05-12 |   90    | コレクション</span>
+<span class="comment">//  4 |     1      | 2026-05-14 |  120    | 例外処理</span>
+<span class="comment">//  5 |     1      | 2026-05-16 |   45    | ジェネリクス</span>
+
+<span class="comment">// → 5行が返る</span>
+<span class="comment">// → 「個別データ」</span>
+
+
+<span class="comment">// ─── 集計の SELECT ───</span>
+<span class="comment">// 「複数行をまとめて1つの値に」</span>
+SELECT
+  COUNT(*) AS cnt,
+  SUM(minutes) AS total
+FROM study_records
+WHERE subject_id = <span class="num">1</span>;
+
+<span class="comment">// 結果:</span>
+<span class="comment">// cnt | total</span>
+<span class="comment">//  5  |  375</span>
+
+<span class="comment">// → 1行に集約される</span>
+<span class="comment">// → 「全体傾向」</span>
+
+
+<span class="comment">// 視点が全く変わる</span>
+<span class="comment">// = Cの統計フェーズの幕開け</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="agg-basics">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>集計関数とGROUP BYの基本</h2>
+    <span class="en">AGGREGATE FUNCTIONS</span>
+  </div>
+  <p class="pattern-desc"><b>集計関数</b>と <code>GROUP BY</code> 句は<b>セット</b>で覚えます。「<b>何をグループ化し、何を集計するか</b>」を意識すれば必ず書ける。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">aggr-functions</span>
+      <span class="tag-desc">5つの基本集計関数</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主要集計関数</div>
+        <table class="compare-tbl">
+          <tr><th>関数</th><th>意味</th><th>NULL の扱い</th></tr>
+          <tr><td><code>COUNT(*)</code></td><td>行数を数える</td><td>NULL も数える</td></tr>
+          <tr><td><code>COUNT(col)</code></td><td>NULLでない値の数</td><td>NULLは除外</td></tr>
+          <tr><td><code>SUM(col)</code></td><td>合計</td><td>NULLは無視</td></tr>
+          <tr><td><code>AVG(col)</code></td><td>平均</td><td>NULLは分母にも入らない</td></tr>
+          <tr><td><code>MAX(col) / MIN(col)</code></td><td>最大／最小</td><td>NULL以外で判定</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>業務でよく使う</b>：<code>COUNT(*)</code>（件数）、<code>SUM(amount)</code>（合計金額）、<code>AVG(score)</code>（平均点）など。</p>
+      </div>
+      <div class="code"><span class="code-head">// 集計関数の具体例</span>
+
+<span class="comment">// 単純な集計（全体の合計）</span>
+SELECT
+  COUNT(*) AS total_count,
+  SUM(minutes) AS total_minutes,
+  AVG(minutes) AS avg_minutes,
+  MAX(minutes) AS max_minutes,
+  MIN(minutes) AS min_minutes
+FROM study_records;
+
+<span class="comment">// 結果（全体）:</span>
+<span class="comment">// total_count | total_minutes | avg | max | min</span>
+<span class="comment">//     9       |     615       | 68.3| 120 | 30</span>
+
+
+<span class="comment">// ─── GROUP BY で「科目ごとに」集計 ───</span>
+SELECT
+  subject_id,
+  COUNT(*) AS cnt,
+  SUM(minutes) AS total,
+  AVG(minutes) AS avg
+FROM study_records
+GROUP BY subject_id;
+
+<span class="comment">// 結果（科目別）:</span>
+<span class="comment">// subject_id | cnt | total | avg</span>
+<span class="comment">//      1     |  5  |  375  | 75.0</span>
+<span class="comment">//      2     |  3  |  255  | 85.0</span>
+<span class="comment">//      3     |  1  |   30  | 30.0</span>
+
+
+<span class="comment">// → HTML/CSS と JavaScript (subject_id=4,5)</span>
+<span class="comment">// が消える！</span>
+<span class="comment">// （study_records に記録がないため）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><code>GROUP BY</code> は「<b>同じ値の行をひとまとめにする</b>」働き。集計関数と組み合わせて<b>「グループごとの集計値」</b>を得ます。SELECT に書ける列は<b>「GROUP BYに含まれる列」か「集計関数」</b>のみ ── これは集計クエリの<b>絶対ルール</b>です。</p>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">left-join-aggr</span>
+      <span class="tag-desc">LEFT JOIN で「記録なし科目」も残す</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// LEFT JOIN + COALESCE</div>
+        <p>記録なし科目（HTML/CSS, JavaScript）も<b>「0件・0分」</b>として並べたい。Vol.4 で学んだ <b>LEFT JOIN</b> と、新しい関数 <b>COALESCE</b> を組み合わせる。</p>
+        <p style="margin-top:8px"><b>COALESCE(値, 代替値)</b>：NULL の時に代替値を返す関数。<code>SUM</code> が NULL になる時に <code>0</code> へ。</p>
+      </div>
+      <div class="code"><span class="code-head">// LEFT JOIN + GROUP BY + COALESCE</span>
+
+SELECT
+  s.id    AS subjectId,
+  s.name  AS subjectName,
+  COUNT(r.id) AS recordCount,
+  COALESCE(SUM(r.minutes), 0) AS totalMinutes,
+  COALESCE(AVG(r.minutes), 0) AS avgMinutes
+FROM subjects s
+<span class="kw">LEFT JOIN</span> study_records r
+  <span class="kw">ON</span> s.id = r.subject_id
+GROUP BY s.id, s.name
+ORDER BY totalMinutes DESC
+
+
+<span class="comment">// ─── 結果 ───</span>
+<span class="comment">// subjectId | subjectName | recordCount | total | avg</span>
+<span class="comment">//     1     |   Java      |     5       |  375  | 75.0</span>
+<span class="comment">//     2     | Spring Boot |     3       |  255  | 85.0</span>
+<span class="comment">//     3     |   SQL       |     1       |   30  | 30.0</span>
+<span class="comment">//     4     |  HTML/CSS   |     0       |    0  |  0.0</span>
+<span class="comment">//     5     | JavaScript  |     0       |    0  |  0.0</span>
+
+
+<span class="comment">// ─── 仕組み ───</span>
+
+<span class="comment">// 1. LEFT JOIN で全科目を残す</span>
+<span class="comment">//    → HTML/CSS の r.id, r.minutes は NULL</span>
+
+<span class="comment">// 2. COUNT(r.id) は NULL を数えない</span>
+<span class="comment">//    → HTML/CSS は recordCount = 0</span>
+
+<span class="comment">// 3. SUM(r.minutes) は NULL のみだと NULL</span>
+<span class="comment">//    → COALESCE で 0 に置き換え</span>
+
+<span class="comment">// 4. AVG も同様</span>
+
+
+<span class="comment">// LEFT JOIN + 集計 + COALESCE = 業務の鉄板</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="dto">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>DTO の役割と作り方</h2>
+    <span class="en">DTO INTRODUCTION</span>
+  </div>
+  <p class="pattern-desc">集計結果は<b>「テーブル1対1」ではない</b>──Entity では表現できません。新しく <b>DTO（Data Transfer Object）</b>クラスを作ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">dto-vs-entity</span>
+      <span class="tag-desc">DTO と Entity の違い</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 役割の違い</div>
+        <div class="role-card">
+          <span class="label">Entity</span>
+          <div class="name">DBのテーブル1対1のクラス</div>
+          <div class="desc">「<code>Subject</code> ↔ subjects テーブル」「<code>StudyRecord</code> ↔ study_records テーブル」。<b>DBの実体を表現</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">DTO</span>
+          <div class="name">画面や API のための任意の形のクラス</div>
+          <div class="desc">「<code>SubjectStat</code> = 科目名+件数+合計+平均」など、<b>「画面に出したい形」</b>。Entity と直接対応しない。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>使い分けの原則</b>：<b>「テーブルそのまま」なら Entity、「集計や複数テーブル組合せ」なら DTO</b>。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">パッケージで明確に分離</div>
+          <p>本巻で初めて <code>com.example.todo.<b>dto</b></code> パッケージを作成します。Entity は <code>entity</code>、DTOは <code>dto</code>。<b>パッケージ名で「役割が違う」</b>と一目で分かる設計です。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectStat DTOの例</span>
+
+<span class="kw">package</span> com.example.todo.dto;
+
+<span class="kw">import</span> java.math.BigDecimal;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">SubjectStat</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> subjectId;
+  <span class="kw">private</span> <span class="type">String</span> subjectName;
+  <span class="kw">private</span> <span class="type">Integer</span> recordCount;
+  <span class="kw">private</span> <span class="type">Integer</span> totalMinutes;
+  <span class="kw">private</span> <span class="type">BigDecimal</span> avgMinutes;
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+
+<span class="comment">// ・テーブル「subject_stats」は存在しない</span>
+<span class="comment">//   = 画面用に作ったクラス</span>
+
+<span class="comment">// ・avgMinutes は BigDecimal</span>
+<span class="comment">//   SQLの AVG は小数返すので Integer不可</span>
+<span class="comment">//   実務では BigDecimal が安全</span>
+
+<span class="comment">// ・@Data で getter/setter 自動生成</span>
+
+
+<span class="comment">// ─── DTO の数だけ画面の自由度が広がる ───</span>
+
+<span class="comment">// ・ランキング画面 → RankingDto</span>
+<span class="comment">// ・日別集計画面 → DailyStatDto</span>
+<span class="comment">// ・概要ダッシュボード → DashboardDto</span>
+<span class="comment">// ...</span>
+
+<span class="comment">// → Vol.10〜12で複数のDTOが登場予定</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ファイル作成と改修</h2>
+    <span class="en">CREATE & MODIFY</span>
+  </div>
+  <p class="pattern-desc"><b>3ファイル新規＋3ファイル改修</b>。順序は<b>DTO → XML → Mapper.java → Service → Controller → HTML</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-dto</span>
+      <span class="tag-desc">① SubjectStat DTO（新規）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>com.example.todo</code> パッケージを右クリック → <span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Package</span> → <code>com.example.todo.dto</code> 作成</li>
+          <li><code>dto</code> を右クリック → <span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Class</span></li>
+          <li>Name欄に <code>SubjectStat</code></li>
+          <li>右のコードを書く</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">BigDecimal を選んだ理由</div>
+          <p>SQLの <code>AVG</code> は<b>小数を返す</b>ので、Java の <code>Integer</code> では受けられません。<code>Double</code> でも動くが、<b>金銭計算や統計値では誤差が出ない BigDecimal が安全</b>。業務開発のお作法。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectStat.java（新規）</span>
+
+<span class="kw">package</span> com.example.todo.dto;
+
+<span class="kw">import</span> java.math.BigDecimal;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">SubjectStat</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> subjectId;
+  <span class="kw">private</span> <span class="type">String</span> subjectName;
+  <span class="kw">private</span> <span class="type">Integer</span> recordCount;
+  <span class="kw">private</span> <span class="type">Integer</span> totalMinutes;
+  <span class="kw">private</span> <span class="type">BigDecimal</span> avgMinutes;
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・com.example.todo.dto パッケージ</span>
+<span class="comment">// ・@Data で getter/setter 自動</span>
+<span class="comment">// ・avgMinutes は BigDecimal</span>
+<span class="comment">// ・全フィールドはSQL列の AS と対応</span>
+<span class="comment">//   subjectId ↔ subjectId</span>
+<span class="comment">//   subjectName ↔ subjectName</span>
+<span class="comment">//   recordCount ↔ recordCount</span>
+<span class="comment">//   totalMinutes ↔ totalMinutes</span>
+<span class="comment">//   avgMinutes ↔ avgMinutes</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-xml</span>
+      <span class="tag-desc">② SubjectMapper.xml に集計SELECT追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectMapper.xml</code> を開く</li>
+          <li>新しい <code>&lt;select id="findSubjectStats"&gt;</code> を追加</li>
+          <li><code>resultType="com.example.todo.dto.SubjectStat"</code> を指定</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">resultType と resultMap の使い分け</div>
+          <p>集計クエリは<b>「1行＝1DTO」</b>の対応で十分。<code>resultMap</code> ではなく <b><code>resultType</code></b> を使う。<code>resultMap</code> は子のリスト構築に必要だった（Vol.4）が、集計では不要。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.xml に追加</span>
+
+<span class="comment">&lt;!-- ★ Vol.9で追加 --&gt;</span>
+
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findSubjectStats"</span>
+        <span class="ann">resultType</span>=
+        <span class="str">"com.example.todo.dto.SubjectStat"</span>&gt;
+  SELECT
+    s.id    AS subjectId,
+    s.name  AS subjectName,
+    COUNT(r.id) AS recordCount,
+    COALESCE(SUM(r.minutes), 0) AS totalMinutes,
+    COALESCE(AVG(r.minutes), 0) AS avgMinutes
+  FROM subjects s
+  LEFT JOIN study_records r
+    ON s.id = r.subject_id
+  GROUP BY s.id, s.name
+  ORDER BY totalMinutes DESC
+&lt;/<span class="kw">select</span>&gt;
+
+
+<span class="comment">// ─── ポイント ───</span>
+
+<span class="comment">// ・resultType = DTO のフルパス</span>
+
+<span class="comment">// ・AS で列名を DTO のプロパティ名と一致</span>
+<span class="comment">//   subjectId, subjectName, recordCount,</span>
+<span class="comment">//   totalMinutes, avgMinutes</span>
+
+<span class="comment">// ・MyBatis の自動マッピング</span>
+<span class="comment">//   （map-underscore-to-camel-case）</span>
+<span class="comment">//   で snake_case ↔ camelCase 対応も可能</span>
+<span class="comment">//   だが、ここでは AS で明示するのが安全</span>
+
+<span class="comment">// ・GROUP BY には s.id と s.name 両方</span>
+<span class="comment">//   （SELECT に書く非集計列は全部GROUP BYに）</span>
+
+<span class="comment">// ・ORDER BY totalMinutes DESC で</span>
+<span class="comment">//   学習時間が多い科目順に表示</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-mapper-java</span>
+      <span class="tag-desc">③ SubjectMapper.java にメソッド追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectMapper.java</code> を開く</li>
+          <li><code>findSubjectStats()</code> メソッドを追加</li>
+          <li>import に <code>SubjectStat</code> を追加</li>
+          <li>保存</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.java（追加部分）</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.time.LocalDate;
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> org.apache.ibatis.annotations.Param;
+<span class="kw">import</span> com.example.todo.entity.Subject;
+<span class="kw">import</span> com.example.todo.dto.SubjectStat;  <span class="comment">// ★ 追加</span>
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+
+  <span class="comment">// 既存メソッド省略...</span>
+
+  <span class="comment">// ★ Vol.9で追加</span>
+  <span class="type">List</span>&lt;<span class="type">SubjectStat</span>&gt; <span class="fn">findSubjectStats</span>();
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・引数なし</span>
+<span class="comment">// ・戻り値は List&lt;SubjectStat&gt;</span>
+<span class="comment">// ・DTO の import を忘れない</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-service</span>
+      <span class="tag-desc">④ SubjectService に集計メソッド追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectService.java</code> を開く</li>
+          <li><code>findSubjectStats()</code> を追加</li>
+          <li>import に <code>SubjectStat</code> を追加</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">Service層に業務ロジック導入</div>
+          <p>これまで Service は<b>Mapper素通し</b>のことが多かった。Vol.9 で<b>集計</b>を扱うようになると、<b>「データの加工」</b>が Service の本領になります。Vol.10 以降、<b>合計時間→時間表記変換</b>、<b>達成率の計算</b>などが Service に入ってきます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectService.java（関連部分のみ）</span>
+
+<span class="kw">import</span> com.example.todo.dto.SubjectStat;
+<span class="comment">// 他のimportは省略</span>
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public class</span> <span class="type">SubjectService</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectMapper</span> subjectMapper;
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">StudyRecordMapper</span> studyRecordMapper;
+
+  <span class="comment">// 既存メソッド省略 ...</span>
+
+  <span class="comment">// ★ Vol.9で追加</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">SubjectStat</span>&gt; <span class="fn">findSubjectStats</span>() {
+    <span class="kw">return</span> subjectMapper.<span class="fn">findSubjectStats</span>();
+  }
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・薄い実装（Mapper素通し）</span>
+<span class="comment">// ・Vol.10以降で加工ロジックが入る</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-controller</span>
+      <span class="tag-desc">⑤ StatsController（新規）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>com.example.todo.controller</code> を右クリック → <span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Class</span></li>
+          <li>Name欄に <code>StatsController</code></li>
+          <li>右のコードを書く</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">Controller を分けるか1つに集約するか</div>
+          <p>「集計画面」が増えていくので、<b>StatsController を専用</b>にします。<code>SubjectController</code> に詰め込む手もあるが、<b>「画面の集合体」で分ける</b>のが業界の主流。Cの最終形では <code>SubjectController</code>、<code>StudyRecordController</code>、<code>StatsController</code> の3つが共存します。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// StatsController.java（新規）</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind.annotation.GetMapping;
+<span class="kw">import</span> com.example.todo.service.SubjectService;
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">StatsController</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectService</span> subjectService;
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/stats"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">index</span>(<span class="type">Model</span> model) {
+    model.<span class="fn">addAttribute</span>(<span class="str">"stats"</span>,
+        subjectService.<span class="fn">findSubjectStats</span>());
+    <span class="kw">return</span> <span class="str">"stats/index"</span>;
+  }
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・URL は /stats</span>
+<span class="comment">// ・templates のパスは "stats/index"</span>
+<span class="comment">// ・model 属性名は "stats"</span>
+<span class="comment">// ・Vol.10 でこの Controller をさらに拡張</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-template</span>
+      <span class="tag-desc">⑥ templates/stats/index.html（新規）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>templates</code> を右クリック → <span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Folder</span> → <code>stats</code></li>
+          <li><code>stats</code> を右クリック → <span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">File</span> → <code>index.html</code></li>
+          <li>右のコードを書く</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">th:text で BigDecimal の表示</div>
+          <p><code>BigDecimal</code> は Thymeleaf で <code>th:text="${row.avgMinutes}"</code> と書けばそのまま表示されます。小数点以下の桁数を整形したい場合は <code>#numbers.formatDecimal(...)</code> を使うが、Vol.9 ではそのまま表示。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// templates/stats/index.html（新規）</span>
+
+&lt;!<span class="type">DOCTYPE</span> html&gt;
+&lt;<span class="kw">html</span> <span class="ann">xmlns:th</span>=<span class="str">"http://www.thymeleaf.org"</span>&gt;
+&lt;<span class="kw">head</span>&gt;
+  &lt;<span class="kw">meta</span> <span class="ann">charset</span>=<span class="str">"UTF-8"</span>&gt;
+  &lt;<span class="kw">title</span>&gt;科目別 学習統計&lt;/<span class="kw">title</span>&gt;
+  &lt;<span class="kw">style</span>&gt;
+    table { border-collapse: collapse; }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px 12px;
+      text-align: left;
+    }
+    th { background: #f0f0f0; }
+  &lt;/<span class="kw">style</span>&gt;
+&lt;/<span class="kw">head</span>&gt;
+&lt;<span class="kw">body</span>&gt;
+  &lt;<span class="kw">h1</span>&gt;科目別 学習統計&lt;/<span class="kw">h1</span>&gt;
+
+  &lt;<span class="kw">table</span>&gt;
+    &lt;<span class="kw">thead</span>&gt;
+      &lt;<span class="kw">tr</span>&gt;
+        &lt;<span class="kw">th</span>&gt;科目&lt;/<span class="kw">th</span>&gt;
+        &lt;<span class="kw">th</span>&gt;件数&lt;/<span class="kw">th</span>&gt;
+        &lt;<span class="kw">th</span>&gt;合計（分）&lt;/<span class="kw">th</span>&gt;
+        &lt;<span class="kw">th</span>&gt;平均（分）&lt;/<span class="kw">th</span>&gt;
+      &lt;/<span class="kw">tr</span>&gt;
+    &lt;/<span class="kw">thead</span>&gt;
+    &lt;<span class="kw">tbody</span>&gt;
+      &lt;<span class="kw">tr</span> <span class="ann">th:each</span>=<span class="str">"row : ${stats}"</span>&gt;
+        &lt;<span class="kw">td</span> <span class="ann">th:text</span>=<span class="str">"${row.subjectName}"</span>&gt;&lt;/<span class="kw">td</span>&gt;
+        &lt;<span class="kw">td</span> <span class="ann">th:text</span>=<span class="str">"${row.recordCount}"</span>&gt;&lt;/<span class="kw">td</span>&gt;
+        &lt;<span class="kw">td</span> <span class="ann">th:text</span>=<span class="str">"${row.totalMinutes}"</span>&gt;&lt;/<span class="kw">td</span>&gt;
+        &lt;<span class="kw">td</span> <span class="ann">th:text</span>=<span class="str">"${row.avgMinutes}"</span>&gt;&lt;/<span class="kw">td</span>&gt;
+      &lt;/<span class="kw">tr</span>&gt;
+    &lt;/<span class="kw">tbody</span>&gt;
+  &lt;/<span class="kw">table</span>&gt;
+
+  &lt;<span class="kw">p</span> <span class="ann">style</span>=<span class="str">"font-size:12px;color:#666"</span>&gt;
+    ※ 合計時間の降順で表示
+  &lt;/<span class="kw">p</span>&gt;
+
+  &lt;<span class="kw">p</span>&gt;
+    &lt;<span class="kw">a</span> <span class="ann">th:href</span>=<span class="str">"@{/subjects}"</span>&gt;
+      ← 一覧に戻る
+    &lt;/<span class="kw">a</span>&gt;
+  &lt;/<span class="kw">p</span>&gt;
+
+&lt;/<span class="kw">body</span>&gt;
+&lt;/<span class="kw">html</span>&gt;</div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かして確認</h2>
+    <span class="en">RUN IN BROWSER</span>
+  </div>
+  <p class="pattern-desc">起動して<code>/stats</code> を開き、<b>集計結果の表</b>を確認。コンソールでSQLログも見ましょう。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">browser-check</span>
+      <span class="tag-desc">動作確認の手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>アプリ起動中なら停止、再起動</li>
+          <li>ブラウザで <code>http://localhost:8080/stats</code> を開く</li>
+          <li>5科目すべてが表に並ぶ</li>
+          <li>Java の合計が大きく上に来る（降順）</li>
+          <li>HTML/CSS と JavaScript が「0件・0分」で表示</li>
+          <li>コンソールに GROUP BY を含むSQLが1回流れる</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ ここまで動けばVol.9クリア！</p>
+        <p style="margin-top:6px;font-size:13px">「集計はDBにやらせる」の<b>気持ちよさ</b>を体験できたでしょうか。</p>
+      </div>
+      <div class="code"><span class="code-head">// 期待されるSQLログ</span>
+
+<span class="comment">// ─── /stats のSQL ───</span>
+==&gt;  Preparing:
+  SELECT
+    s.id    AS subjectId,
+    s.name  AS subjectName,
+    COUNT(r.id) AS recordCount,
+    COALESCE(SUM(r.minutes), 0) AS totalMinutes,
+    COALESCE(AVG(r.minutes), 0) AS avgMinutes
+  FROM subjects s
+  LEFT JOIN study_records r
+    ON s.id = r.subject_id
+  GROUP BY s.id, s.name
+  ORDER BY totalMinutes DESC
+==&gt; Parameters:
+&lt;==      Total: 5
+
+
+<span class="comment">// → SQL 1回で 5行（科目分）が返る</span>
+
+
+<span class="comment">// ─── 比較：Java側で集計するとしたら ───</span>
+
+<span class="comment">// SQL 1回で全 study_records を取得</span>
+<span class="comment">// 9行を Java で forループ → Map で集計</span>
+<span class="comment">// 5科目に分配</span>
+
+<span class="comment">// → コード量が多い・遅い・読みづらい</span>
+
+
+<span class="comment">// → SQL で集計するのが圧勝</span>
+<span class="comment">// → 「DBに計算させる」の鉄則</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">業務での感動ポイント</div>
+    <p>「<b>SQL 1行追加すれば、新しい集計指標が増える</b>」── これが業務開発での感動。「分散」「最大」「中央値」など、必要な指標は<b>SQL 関数の世界</b>にすべてあります。<b>「DBは強い味方」</b>と感じられたら、Cの大きな到達点です。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">集計クエリ初登場の巻なので、<b>SQL 構文のハマりどころ</b>が多めです。よくあるトラブル6選。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">troubles</span>
+      <span class="tag-desc">起きやすいトラブル6選</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card">
+          <span class="label">TROUBLE 1</span>
+          <div class="name">「Column 's.name' must appear in the GROUP BY clause」</div>
+          <div class="desc"><b>原因</b>：SELECTに <code>s.name</code> を書いたが <code>GROUP BY</code> に入れてない。<br><b>対処</b>：<code>GROUP BY s.id, s.name</code> のように<b>SELECTの非集計列を全部</b>書く。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 2</span>
+          <div class="name">記録なし科目が出てこない</div>
+          <div class="desc"><b>原因</b>：<code>INNER JOIN</code> にしてしまった、または LEFT JOIN したのに <code>WHERE r.id IS NOT NULL</code> 等を書いてしまった。<br><b>対処</b>：<code>LEFT JOIN</code> を使い、子側の条件は ON句に置く（Vol.8 別冊S8の話）。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 3</span>
+          <div class="name">SUM の結果が null になる</div>
+          <div class="desc"><b>原因</b>：記録なし科目で SUM(NULL) = NULL になる。<br><b>対処</b>：<code>COALESCE(SUM(r.minutes), 0)</code> でNULLを0に置換。Java側で <code>Integer</code> として安全に受けられる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 4</span>
+          <div class="name">avgMinutes が null や変な値</div>
+          <div class="desc"><b>原因</b>：DTOの型を <code>Integer</code> にしているが、AVG は小数を返すので変換失敗。<br><b>対処</b>：DTOの <code>avgMinutes</code> は <code>BigDecimal</code> または <code>Double</code> に。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 5</span>
+          <div class="name">マッピング不一致</div>
+          <div class="desc"><b>原因</b>：SQL の AS と DTO のフィールド名がズレている。<br><b>対処</b>：両方を完全に同じにする。<code>AS totalMinutes</code> ↔ <code>private Integer totalMinutes</code> など。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 6</span>
+          <div class="name">「/stats」を開くと 404</div>
+          <div class="desc"><b>原因</b>：StatsController を作成済みでもアプリ再起動を忘れた／パッケージ違い／<code>@Controller</code> 忘れ。<br><b>対処</b>：再起動し、コンソールに「Mapped GET /stats」のログが出るか確認。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// TROUBLE 1 の典型出力</span>
+
+<span class="comment">// MySQL のエラー（sql_mode=ONLY_FULL_GROUP_BY 時）</span>
+
+ERROR <span class="num">1055</span> (<span class="num">42000</span>):
+Expression #2 of SELECT list is not in
+GROUP BY clause and contains nonaggregated
+column 'todo_db.s.name' which is not
+functionally dependent on columns in
+GROUP BY clause; this is incompatible
+with sql_mode=only_full_group_by
+
+
+<span class="comment">// ─── ✗ NG ───</span>
+SELECT s.id, s.name, COUNT(*)
+FROM subjects s
+GROUP BY s.id;
+<span class="comment">//                       ↑ s.name が無い</span>
+
+
+<span class="comment">// ─── ✓ OK ───</span>
+SELECT s.id, s.name, COUNT(*)
+FROM subjects s
+GROUP BY s.id, s.name;
+<span class="comment">//                       ↑ s.name を追加</span>
+
+
+<span class="comment">// ─── ルール ───</span>
+<span class="comment">// SELECT に書ける列は：</span>
+<span class="comment">// (a) GROUP BY に含まれる列</span>
+<span class="comment">// (b) 集計関数の中の列</span>
+
+
+<span class="code-head" style="margin-top:14px">// TROUBLE 3 / 4 の解決</span>
+
+<span class="comment">// ─── ✗ NG ───</span>
+<span class="kw">private</span> <span class="type">Integer</span> totalMinutes;
+<span class="kw">private</span> <span class="type">Integer</span> avgMinutes;
+<span class="comment">// → SUM が NULL を返すと NPE</span>
+<span class="comment">// → AVG が小数なら変換失敗</span>
+
+
+<span class="comment">// ─── ✓ OK ───</span>
+<span class="kw">private</span> <span class="type">Integer</span> totalMinutes;     <span class="comment">// 整数集計</span>
+<span class="kw">private</span> <span class="type">BigDecimal</span> avgMinutes;   <span class="comment">// 小数集計</span>
+
+<span class="comment">// + SQLで COALESCE(SUM(...), 0) を使う</span>
+<span class="comment">// + AVG はそのまま BigDecimal で受ける</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.9本編の<b>完了チェックリスト</b>。Cの統計フェーズの幕開けです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol9-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li><code>com.example.todo.dto</code> パッケージ作成</li>
+          <li><code>SubjectStat.java</code> 作成（5フィールド・<code>avgMinutes</code>はBigDecimal）</li>
+          <li><code>SubjectMapper.xml</code> に <code>findSubjectStats</code> select 追加</li>
+          <li>resultType に DTO のフルパス指定</li>
+          <li>SELECT 句に AS で DTO プロパティ名と一致した別名</li>
+          <li><code>COALESCE(SUM(...), 0)</code> を使用</li>
+          <li><code>GROUP BY s.id, s.name</code> に両方の列</li>
+          <li><code>ORDER BY totalMinutes DESC</code></li>
+          <li><code>SubjectMapper.java</code> にメソッド宣言追加</li>
+          <li><code>SubjectService.java</code> に <code>findSubjectStats</code> 追加</li>
+          <li><code>StatsController.java</code> 新規作成</li>
+          <li><code>templates/stats/index.html</code> 作成</li>
+          <li>アプリ起動時にエラーが出ない</li>
+          <li><code>/stats</code> で 5科目の集計表が表示</li>
+          <li>記録なし科目も「0件・0分」で表示</li>
+          <li>合計時間の降順で並ぶ</li>
+          <li>コンソールにGROUP BY入りのSQLが1回流れる</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.9本編完了！</b><br>
+          <b>集計クエリ獲得</b>のスキル達成です。Cの統計フェーズ開始。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で獲得したスキル</span>
+
+★ <span class="kw">集計クエリ獲得</span> ── 達成！
+
+  <span class="comment">// できるようになったこと:</span>
+  <span class="comment">// ・COUNT / SUM / AVG の使い方</span>
+  <span class="comment">// ・GROUP BY の役割</span>
+  <span class="comment">// ・COALESCE で NULL を 0 に置換</span>
+  <span class="comment">// ・LEFT JOIN + 集計 + COALESCE の鉄板</span>
+  <span class="comment">// ・DTO の役割と Entity との違い</span>
+  <span class="comment">// ・dto パッケージの導入</span>
+  <span class="comment">// ・専用Controller の分離</span>
+
+
+<span class="code-head" style="margin-top:14px">// 次にやること</span>
+
+<span class="comment">// ① 別冊 S9 を読む</span>
+<span class="comment">//   タイトル: 「集計クエリの設計」</span>
+<span class="comment">//   内容: 集計関数の網羅 / WHERE と HAVING /</span>
+<span class="comment">//        パフォーマンス / NULL の扱い /</span>
+<span class="comment">//        DTO設計のお作法</span>
+
+
+<span class="comment">// ② Vol.10 本編：</span>
+<span class="comment">//   タイトル: 「統計画面・第1段（科目別合計）」</span>
+<span class="comment">//   獲得スキル: 統計画面の素</span>
+<span class="comment">//   内容:</span>
+<span class="comment">//   ・Vol.9の表示を「カード型UI」に進化</span>
+<span class="comment">//   ・合計時間を時:分形式に変換</span>
+<span class="comment">//   ・パーセンテージ表示</span>
+<span class="comment">//   ・進捗バーUI</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(31,64,48,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S9</div>
+    <p>本編Vol.9お疲れさまでした。<b>集計クエリ</b>のスキルが手に入りました。別冊S9「<b>集計クエリの設計</b>」では、<b>「集計関数の網羅」「WHERE と HAVING の使い分け」「集計パフォーマンス（インデックス）」「NULL の取扱い」「DTO設計の業務お作法」</b>を扱います。Vol.11 で扱う <code>HAVING</code> の予告も。<b>続けて別冊S9へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.09 / 15 ── AGGREGATION（本編）</span>
+</footer>
+
+</body>
+</html>

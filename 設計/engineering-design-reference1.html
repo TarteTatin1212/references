@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリング設計編 設計入門・全体像 Vol.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#3a2e22;
+    --paper:#f4ecdf;
+    --paper-2:#ebdfc8;
+    --accent:#a06848;
+    --accent-2:#c89968;
+    --accent-3:#7a5238;
+    --muted:#8a7762;
+    --line:#c8b89a;
+    --code-bg:#2a2218;
+    --code-text:#f0e4cf;
+    --panel-bg:#fbf6ec;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;line-height:1.75;font-size:15px}
+  body{max-width:1180px;margin:0 auto;padding:0 28px 80px}
+
+  /* ===== HEADER ===== */
+  .page-header{position:relative;padding:48px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+  .page-header::before{content:"△";position:absolute;right:-10px;top:-30px;font-size:280px;color:var(--accent);opacity:.18;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+  .page-header > *{position:relative;z-index:1}
+  .series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace;margin-right:8px}
+  .vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace}
+  h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin-top:18px;letter-spacing:.04em}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;font-family:"JetBrains Mono",monospace;letter-spacing:.08em}
+  .lead{max-width:640px;margin-top:22px;font-size:15px;color:var(--ink)}
+  .lead b{color:var(--accent-3)}
+
+  /* ===== TOC ===== */
+  .toc{background:var(--paper-2);padding:18px 22px;margin:32px 0 48px;border-left:3px solid var(--accent)}
+  .toc-title{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:.2em;color:var(--accent-3);margin-bottom:10px}
+  .toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px}
+  .toc li{font-size:13px}
+  .toc a{color:var(--ink);text-decoration:none;font-family:"JetBrains Mono",monospace}
+  .toc a::before{content:"— ";color:var(--accent)}
+  .toc a:hover{color:var(--accent)}
+
+  /* ===== SECTION ===== */
+  section{margin:64px 0}
+  .section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .section-num{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent);font-weight:600}
+  .section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;letter-spacing:.04em;flex:1}
+  .section-header .en{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:.15em}
+  .pattern-desc{max-width:680px;color:var(--ink);margin-bottom:20px;font-size:14.5px}
+  .pattern-desc b{color:var(--accent-3)}
+
+  /* ===== DEMO CARD ===== */
+  .demo-card{border:1px solid var(--line);background:#fff;margin:18px 0}
+  .demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .tag-name{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+  .tag-desc{font-size:12px;color:var(--muted)}
+  .demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+  .panel{background:var(--panel-bg);padding:20px;border-right:1px solid var(--line);font-size:14px}
+  .panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:.1em}
+  .code{background:var(--code-bg);color:var(--code-text);padding:20px;font-family:"JetBrains Mono",monospace;font-size:12.5px;line-height:1.85;overflow-x:auto;white-space:pre-wrap}
+  @media(max-width:720px){
+    .demo-body{grid-template-columns:1fr}
+    .panel{border-right:none;border-bottom:1px solid var(--line)}
+  }
+
+  /* ===== CODE TOKENS ===== */
+  .kw{color:#ffc88a}
+  .type{color:#c2a3ff}
+  .fn{color:#a3c9ff}
+  .str{color:#b5e8b0}
+  .num{color:#f7a8d8}
+  .comment{color:#998aaa;font-style:italic}
+  .ann{color:#f7c08a}
+  .menu-code{color:#f7c08a;font-weight:600}
+  .step{color:#ffc88a;font-weight:600}
+
+  /* ===== TIP ===== */
+  .tip{background:rgba(160,104,72,.08);border-left:3px solid var(--accent);padding:14px 18px;margin:18px 0;font-size:14px}
+  .tip-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);letter-spacing:.18em;margin-bottom:6px;font-weight:600}
+  .tip b{color:var(--accent-3)}
+
+  /* ===== KEY ===== */
+  .key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:11.5px}
+
+  /* ===== PANEL contents ===== */
+  .panel ul{list-style:none;margin:8px 0}
+  .panel li{padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .panel li:last-child{border-bottom:none}
+  .panel .label{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-right:6px}
+  .panel strong{color:var(--accent-3);font-weight:600}
+
+  /* ===== DIAGRAM ===== */
+  .diagram{padding:14px;background:#fff;border:1px dashed var(--line);font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.6;white-space:pre;overflow-x:auto;color:var(--ink)}
+  .box{display:inline-block;border:1.5px solid var(--accent-3);padding:6px 10px;margin:4px;background:#fff;font-size:12px;font-family:"Noto Sans JP",sans-serif}
+  .arrow{font-family:"JetBrains Mono",monospace;color:var(--accent);font-weight:600;font-size:14px}
+  .flow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;padding:10px 0}
+
+  /* ===== TABLE ===== */
+  .compare{width:100%;font-size:13px;margin:10px 0}
+  .compare th{background:var(--paper-2);text-align:left;padding:8px;border-bottom:1px solid var(--line);font-family:"Shippori Mincho",serif;font-size:13px}
+  .compare td{padding:8px;border-bottom:1px dashed var(--line);vertical-align:top}
+  .compare .ng{color:#b04848}
+  .compare .ok{color:#4a7848}
+
+  /* ===== STARS ===== */
+  .stars{color:var(--accent);font-weight:700;letter-spacing:.05em}
+
+  /* ===== FOOTER ===== */
+  .page-footer{margin-top:80px;padding-top:24px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.1em}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">ENGINEERING DESIGN</span>
+  <span class="vol-tag">VOL.01</span>
+  <h1>設計入門・全体像編</h1>
+  <div class="subtitle">INTRODUCTION TO SOFTWARE DESIGN — THE BIG PICTURE</div>
+  <p class="lead">設計とは「動くコードを書く前に、どう組み立てるかを決める行為」です。<b>設計を飛ばして書き始めると、規模が大きくなった瞬間に破綻します</b>。本巻ではシリーズ全体の地図として、設計の役割・種類・プロセスを俯瞰します。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — 本巻の目次</div>
+  <ul>
+    <li><a href="#s1">01 なぜ設計が必要か</a></li>
+    <li><a href="#s2">02 設計の3つのレイヤ</a></li>
+    <li><a href="#s3">03 設計プロセスの全体像</a></li>
+    <li><a href="#s4">04 良い設計の特徴</a></li>
+    <li><a href="#s5">05 悪い設計の兆候</a></li>
+    <li><a href="#s6">06 設計とコードの関係</a></li>
+    <li><a href="#s7">07 シリーズ全9巻の地図</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>なぜ設計が必要か</h2>
+    <span class="en">WHY DESIGN MATTERS</span>
+  </div>
+  <p class="pattern-desc">設計を飛ばして書き始めたコードは、<b>最初の1週間は速い</b>です。問題は1ヶ月後から始まります。修正のたびに別の箇所が壊れ、機能追加に途方もない時間がかかるようになります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">design-or-not</span>
+      <span class="tag-desc">設計あり vs 設計なし</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 開発速度の推移イメージ</div>
+        <div class="diagram">設計なし
+速 ━━━━━━━╲
+            ╲___ぐにゃり
+                  ╲____
+                       ╲___
+                            ╲____
+
+設計あり
+普通 ━━━━━━━━━━━━━━━━━━━━
+（同じペースで進む）</div>
+        <p style="margin-top:14px;font-size:13px">最初は<b>設計なし</b>のほうが速い。しかし変更コストが指数関数的に増えていき、ある時点で逆転します。<b>そして二度と追いつけません。</b></p>
+      </div>
+      <div class="code"><span class="comment">// 設計なしで書いたコードのなれの果て</span>
+<span class="kw">function</span> <span class="fn">processOrder</span>(order) {
+  <span class="comment">// 注文処理…のはずが</span>
+  <span class="kw">if</span> (order.type == <span class="str">"A"</span>) {
+    <span class="comment">// 在庫チェックも</span>
+    <span class="kw">if</span> (stock[order.item] &lt; 1) {
+      sendEmail(...);  <span class="comment">// メール送信も</span>
+      log(...);        <span class="comment">// ログも</span>
+      updateDB(...);   <span class="comment">// DB更新も</span>
+      <span class="comment">// 全部この関数の中</span>
+    }
+  } <span class="kw">else if</span> (order.type == <span class="str">"B"</span>) {
+    <span class="comment">// 同じような処理がコピペで…</span>
+  }
+  <span class="comment">// 800行続く</span>
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 設計の目的は3つ</div>
+    ①<b>変更容易性</b>（後から直しやすい）、②<b>理解容易性</b>（他人が読める）、③<b>正しさの保証</b>（意図した通りに動く）。この3つを満たすために設計を行います。コードを速く書くためではありません。
+  </div>
+</section>
+
+<section id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>設計の3つのレイヤ</h2>
+    <span class="en">THREE LAYERS OF DESIGN</span>
+  </div>
+  <p class="pattern-desc">設計と一口に言っても<b>抽象度が3段階</b>あります。それぞれ扱う粒度・道具・成果物が違います。混同すると会話が噛み合いません。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">design-layers</span>
+      <span class="tag-desc">要件 → 基本 → 詳細</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 抽象度の高い順</div>
+        <ul>
+          <li><span class="label">L1</span><strong>要件設計</strong><br>何を作るか / 誰のためか<br><span style="color:var(--muted);font-size:12px">→ ユースケース、要件定義書</span></li>
+          <li><span class="label">L2</span><strong>基本設計（アーキテクチャ）</strong><br>どう組み立てるか / 何で作るか<br><span style="color:var(--muted);font-size:12px">→ アーキ図、画面遷移、API一覧</span></li>
+          <li><span class="label">L3</span><strong>詳細設計</strong><br>どう書くか / クラス/関数の中身<br><span style="color:var(--muted);font-size:12px">→ クラス図、ER図、シーケンス図</span></li>
+        </ul>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)">上から決めて下に降りるのが基本。<b>下から上は決めない</b>のが鉄則。</p>
+      </div>
+      <div class="code"><span class="comment">// 同じ「ログイン機能」を3レイヤで設計</span>
+
+<span class="ann">[L1 要件設計]</span>
+<span class="kw">ユーザーは</span> メールとパスワードで
+<span class="kw">ログインできる</span>。
+連続失敗5回で<span class="kw">ロックされる</span>。
+
+<span class="ann">[L2 基本設計]</span>
+画面: /login (POST)
+API: POST /api/auth/login
+DB:  users, login_attempts
+認証方式: JWT (24h有効)
+
+<span class="ann">[L3 詳細設計]</span>
+<span class="kw">class</span> <span class="type">LoginUseCase</span> {
+  <span class="fn">execute</span>(email, password) {
+    <span class="comment">// 1. ユーザー検索</span>
+    <span class="comment">// 2. パスワード照合</span>
+    <span class="comment">// 3. 試行回数チェック</span>
+    <span class="comment">// 4. JWT発行</span>
+  }
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">TIP — 役割と巻の対応</div>
+    本シリーズでは<b>Vol.2が要件設計</b>、<b>Vol.3〜5が基本設計</b>、<b>Vol.6〜7が詳細設計のうちデータとAPI</b>、Vol.8が成果物（ドキュメント）を担当します。
+  </div>
+</section>
+
+<section id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>設計プロセスの全体像</h2>
+    <span class="en">THE DESIGN PROCESS</span>
+  </div>
+  <p class="pattern-desc">設計は一直線ではなく<b>往復運動</b>です。要件から実装まで一気に降りるのではなく、<b>下のレイヤで気付いたことを上に戻して修正する</b>のが現実的なやり方です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">design-process</span>
+      <span class="tag-desc">V字モデル + フィードバック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 上から下へ、そして戻る</div>
+        <div class="diagram">  要件定義
+     ↓ ↑
+  基本設計  ← レビューで戻る
+     ↓ ↑
+  詳細設計  ← 実装中に矛盾発覚
+     ↓ ↑
+  実装
+     ↓ ↑
+  テスト    ← 仕様の穴が見つかる</div>
+        <p style="margin-top:14px;font-size:13px"><b>下のフェーズで気づいた問題は、上のフェーズに戻して直す</b>のが正攻法。「もう要件は決まったから」と無視すると、辻褄合わせの汚いコードが量産されます。</p>
+      </div>
+      <div class="code"><span class="comment">// 現実によく起きる手戻り例</span>
+
+<span class="ann">[実装中の発覚]</span>
+「<span class="str">DBの設計だとN+1問題が出る</span>」
+        ↓
+<span class="ann">[詳細設計へ戻す]</span>
+ER図の関連を見直し
+        ↓
+<span class="ann">[基本設計へ戻す]</span>
+画面の一覧表示方式を変更
+        ↓
+<span class="ann">[要件へ戻す]</span>
+「<span class="str">そもそも1画面に全部要る?</span>」
+を顧客に確認
+        ↓
+<span class="ann">[再設計]</span>
+ページネーション導入で解決
+
+<span class="comment">// この往復を恐れないこと。</span>
+<span class="comment">// 早く戻るほど傷は浅い。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 設計の鉄則</div>
+    <b>「実装で気づいた問題を、実装の中だけで解決しない」</b>。原因が要件にあるなら要件に戻る。これができるチームの設計は強くなります。
+  </div>
+</section>
+
+<section id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>良い設計の特徴</h2>
+    <span class="en">CHARACTERISTICS OF GOOD DESIGN</span>
+  </div>
+  <p class="pattern-desc">良い設計の判断基準は感性ではなく<b>客観的な指標</b>で測れます。以下の4つを満たしているかチェックしてみてください。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">good-design-check</span>
+      <span class="tag-desc">4つの評価軸</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 良い設計のチェックリスト</div>
+        <ul>
+          <li><span class="stars">★★★</span> <strong>変更容易性</strong><br>新機能追加で<b>触る箇所が少ない</b></li>
+          <li><span class="stars">★★★</span> <strong>理解容易性</strong><br>新メンバーが<b>1日で全体像を掴める</b></li>
+          <li><span class="stars">★★</span> <strong>テスト容易性</strong><br><b>単体テストが書きやすい</b>構造</li>
+          <li><span class="stars">★★</span> <strong>再利用性</strong><br>同じ部品を<b>別の場面でも使える</b></li>
+        </ul>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)">最重要は「変更容易性」。<b>ソフトウェアは変わり続けるもの</b>だからです。</p>
+      </div>
+      <div class="code"><span class="comment">// 良い設計の例: 決済方法の追加</span>
+
+<span class="kw">interface</span> <span class="type">PaymentMethod</span> {
+  <span class="fn">pay</span>(amount: <span class="type">number</span>): <span class="type">Result</span>;
+}
+
+<span class="kw">class</span> <span class="type">CreditCard</span> <span class="kw">implements</span> <span class="type">PaymentMethod</span> { ... }
+<span class="kw">class</span> <span class="type">BankTransfer</span> <span class="kw">implements</span> <span class="type">PaymentMethod</span> { ... }
+
+<span class="comment">// 新しい決済方法を追加するときは…</span>
+<span class="kw">class</span> <span class="type">PayPay</span> <span class="kw">implements</span> <span class="type">PaymentMethod</span> {
+  <span class="fn">pay</span>(amount) { <span class="comment">// 実装するだけ</span> }
+}
+
+<span class="comment">// 既存コードは1行も触らない。</span>
+<span class="comment">// これが「変更容易」の意味。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — 設計品質の自己診断</div>
+    迷ったら<b>「この設計、半年後の自分が読んで5分で理解できるか?」</b>と問うてください。NoならVol.3の設計原則を見直す合図です。
+  </div>
+</section>
+
+<section id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>悪い設計の兆候</h2>
+    <span class="en">CODE SMELLS</span>
+  </div>
+  <p class="pattern-desc">設計が崩れているコードには<b>共通の症状</b>があります。これらを「コードの臭い（Code Smell）」と呼びます。早めに嗅ぎ取れるようになると、リファクタリングのタイミングを逃しません。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">code-smells</span>
+      <span class="tag-desc">代表的な7つの兆候</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よく見るコード臭</div>
+        <table class="compare">
+          <tr><th>症状</th><th>意味</th></tr>
+          <tr><td><b>God Class</b></td><td>1クラスが何でもやる</td></tr>
+          <tr><td><b>Long Method</b></td><td>1メソッド100行超</td></tr>
+          <tr><td><b>Magic Number</b></td><td>数字直書き</td></tr>
+          <tr><td><b>Duplicate Code</b></td><td>コピペの群れ</td></tr>
+          <tr><td><b>Shotgun Surgery</b></td><td>1機能直すのに10箇所触る</td></tr>
+          <tr><td><b>Feature Envy</b></td><td>他クラスの中身ばかり触る</td></tr>
+          <tr><td><b>Dead Code</b></td><td>使われていないコード</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// God Class の典型例</span>
+<span class="kw">class</span> <span class="type">UserManager</span> {
+  <span class="fn">register</span>() {...}
+  <span class="fn">login</span>() {...}
+  <span class="fn">sendMail</span>() {...}        <span class="comment">// メール?</span>
+  <span class="fn">generatePDF</span>() {...}     <span class="comment">// PDF?</span>
+  <span class="fn">calculateTax</span>() {...}    <span class="comment">// 税金?</span>
+  <span class="fn">backupDatabase</span>() {...}  <span class="comment">// DB?</span>
+  <span class="comment">// …Userだけじゃないよね?</span>
+}
+
+<span class="comment">// Magic Number の例</span>
+<span class="kw">if</span> (user.age &gt;= <span class="num">20</span>) { ... }
+<span class="comment">// この 20 は何?</span>
+<span class="comment">// → 成人年齢? 投票年齢?</span>
+
+<span class="comment">// 改善: 名前を付ける</span>
+<span class="kw">const</span> <span class="type">ADULT_AGE</span> = <span class="num">20</span>;
+<span class="kw">if</span> (user.age &gt;= <span class="type">ADULT_AGE</span>) { ... }</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">TIP — 詰まりポイント</div>
+    「<b>動いてるから直さなくていい</b>」と放置すると、半年後に倍の労力で直すハメになります。コードの臭いに気づいた時が、リファクタリングのベストタイミングです。
+  </div>
+</section>
+
+<section id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>設計とコードの関係</h2>
+    <span class="en">DESIGN AS CODE</span>
+  </div>
+  <p class="pattern-desc">設計とコードは別物ではありません。<b>設計は「書くべきコードの形」を決める行為</b>で、コードはその実体です。クラス名・メソッド名・パッケージ構成、これら全てが設計の表現です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">design-in-code</span>
+      <span class="tag-desc">命名と構造が設計</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// パッケージ構成は設計そのもの</div>
+        <div class="diagram">src/
+├─ domain/         ← ビジネスルール
+│   ├─ user/
+│   └─ order/
+├─ application/    ← ユースケース
+│   ├─ register/
+│   └─ checkout/
+├─ infrastructure/ ← DB/外部API
+│   ├─ repository/
+│   └─ client/
+└─ presentation/   ← UI/Controller
+    ├─ web/
+    └─ api/</div>
+        <p style="margin-top:14px;font-size:13px">フォルダ構成を見ただけで<b>「このシステムは何をしているか」</b>が分かるのが理想。これが「設計がコードに現れている」状態です。</p>
+      </div>
+      <div class="code"><span class="comment">// 名前で意図が伝わる例</span>
+
+<span class="ann">[NG: 意図が伝わらない]</span>
+<span class="kw">class</span> <span class="type">Manager</span> {
+  <span class="fn">do</span>(d) { ... }
+  <span class="fn">proc</span>(x) { ... }
+}
+
+<span class="ann">[OK: 名前が説明になっている]</span>
+<span class="kw">class</span> <span class="type">OrderConfirmationService</span> {
+  <span class="fn">confirmOrder</span>(order: <span class="type">Order</span>) { ... }
+  <span class="fn">notifyCustomer</span>(c: <span class="type">Customer</span>) { ... }
+}
+
+<span class="comment">// クラス名・メソッド名を見るだけで</span>
+<span class="comment">// 何をする部品か分かる。</span>
+<span class="comment">// これが設計の「コード上の現れ」。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 設計書は紙の上だけにあらず</div>
+    <b>クラス名・パッケージ名・関数名が、最も読まれる設計ドキュメント</b>です。Word文書よりコードのほうが正確で最新です。命名に時間をかけることは、設計に時間をかけることと同義です。
+  </div>
+</section>
+
+<section id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>シリーズ全9巻の地図</h2>
+    <span class="en">MAP OF THIS SERIES</span>
+  </div>
+  <p class="pattern-desc">本シリーズは<b>抽象度の高い設計テーマから具体的な技術領域へ</b>と段階的に降りていく構成です。どこから読んでも単独で機能しますが、Vol.1→Vol.9の順が標準的な学習ルートになります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">series-map</span>
+      <span class="tag-desc">全9巻の役割と関連</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 抽象 → 具体</div>
+        <ul>
+          <li><span class="label">Vol.1</span><strong>設計入門・全体像</strong>（本巻）</li>
+          <li><span class="label">Vol.2</span><strong>要件から設計への橋渡し</strong></li>
+          <li><span class="label">Vol.3</span><strong>設計原則</strong>（SOLID等）</li>
+          <li><span class="label">Vol.4</span><strong>クラス設計とデザインパターン</strong></li>
+          <li><span class="label">Vol.5</span><strong>アーキテクチャパターン</strong></li>
+          <li><span class="label">Vol.6</span><strong>データベース・データ設計</strong></li>
+          <li><span class="label">Vol.7</span><strong>API設計</strong></li>
+          <li><span class="label">Vol.8</span><strong>設計ドキュメントと図解</strong></li>
+          <li><span class="label">Vol.9</span><strong>困った時の設計</strong>（Q&A）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="comment">// おすすめの読み方パターン</span>
+
+<span class="ann">[初学者ルート]</span>
+Vol.1 → Vol.2 → Vol.3 → Vol.4
+<span class="comment">// 設計の考え方を順に習得</span>
+
+<span class="ann">[現場で困ってる人ルート]</span>
+Vol.9 → 該当する巻
+<span class="comment">// 詰まりポイントから逆引き</span>
+
+<span class="ann">[アーキテクト志望ルート]</span>
+Vol.3 → Vol.5 → Vol.8
+<span class="comment">// 原則 → 全体構造 → 伝え方</span>
+
+<span class="ann">[実装者ルート]</span>
+Vol.4 → Vol.6 → Vol.7
+<span class="comment">// クラス → DB → API の実装寄り</span>
+
+<span class="comment">// どの順でもOK。</span>
+<span class="comment">// 各巻は単独で完結します。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">NEXT STEP — Vol.2 へ</div>
+    Vol.2では「<b>要件をどう読み取り、設計にどう変換するか</b>」を扱います。良い設計は良い要件理解から始まります。お客さんの「あれ作って」を、エンジニアが扱える形に翻訳する技術を身につけましょう。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING DESIGN SERIES — VOL.01</span>
+  <span>△ INTRODUCTION</span>
+</footer>
+
+</body>
+</html>

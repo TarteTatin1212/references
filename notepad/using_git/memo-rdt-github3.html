@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕GitHub版 Vol.3 Pull Requestとトレーサビリティの完結</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2f38;
+  --paper:#f0ede4;
+  --paper-2:#e2ddc8;
+  --accent:#c95444;
+  --accent-2:#5a6270;
+  --accent-3:#2da44e;
+  --muted:#6a7080;
+  --line:#cac4b2;
+  --code-bg:#1c2026;
+  --code-text:#e8e4dc;
+  --panel-bg:#faf5e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"⎇";position:absolute;right:-10px;top:-30px;font-size:300px;color:var(--accent);opacity:0.17;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-2);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.prompt{color:#7eb87e}
+.gh-out{color:#a8b8c8}
+.key{background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(201,84,68,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-2);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff;font-size:12.5px}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-2);font-family:'JetBrains Mono',monospace}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.gh-mock{background:#0d1117;color:#c9d1d9;border:1px solid #2a313a;border-radius:6px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.75;margin:8px 0}
+.gh-mock .gh-bar{color:#7d8590;border-bottom:1px solid #2a313a;padding-bottom:6px;margin-bottom:8px;font-size:11px}
+.gh-mock .gh-purple{color:#bc8cff}
+.gh-mock .gh-green{color:#3fb950}
+.gh-mock .gh-coral{color:#f78166}
+.gh-mock .gh-blue{color:#58a6ff}
+.gh-mock .gh-tab{display:inline-block;background:#21262d;color:#c9d1d9;padding:2px 10px;border-radius:3px;font-size:11px;margin-right:4px}
+.gh-mock .gh-tab-active{background:#1f6feb;color:#fff}
+.gh-mock .gh-btn{display:inline-block;background:#238636;color:#fff;padding:2px 10px;border-radius:4px;font-size:11px;margin:2px 0}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.GH3</span>
+    <span class="kind-tag">GitHub版 ── PULL REQUEST</span>
+    <span class="rdt-tag">TRACE COMPLETE</span>
+  </div>
+  <h1>Pull Request と<br>トレーサビリティの完結</h1>
+  <div class="subtitle">GH.03 ── PULL REQUEST &amp; CLOSING THE TRACE</div>
+  <p class="lead">Vol.GH2 で<b>feature ブランチと Refs #1</b>を繋ぎました。今回は<b>PR を作り、Closes #1 でマージ</b>します。これで Issue #1 が自動Closeされ、<b>「US-001 完成」が GitHub に記録</b>される。要求→Issue→ブランチ→コミット→PR→クローズの<b>トレーサビリティが完結</b>する回です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 GitHub版の赤線対策</div>
+    <p>Vol.GH3で出るもの：<code>This branch has conflicts that must be resolved</code>（コンフリクト）、Merge ボタンが押せない（CI失敗/レビュー未承認設定）、<code>Closes #1</code> を書いたのにCloseされない（PR本文ではなくコメントに書いた等）。<b>Section 07 で対処</b>します。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 この巻のミッション</a></li>
+    <li><a href="#s02">02 完成イメージ</a></li>
+    <li><a href="#s03">03 PRとは何か</a></li>
+    <li><a href="#s04">04 ハンズオン — PRを作る</a></li>
+    <li><a href="#s05">05 セルフレビューと受入条件確認</a></li>
+    <li><a href="#s06">06 Closes でトレース完結</a></li>
+    <li><a href="#s07">07 ハマりどころ＋NEXT</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>この巻のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">Vol.GH3 のゴールは<b>「PR を作って、受入条件を最終確認して、Closes #1 でマージする」</b>。RDT版ならではの観点は<b>「PR の場で受入条件のチェックを完了させる」</b>こと。PR が<b>要求の最終ゲート</b>になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">PRが「要求の最終ゲート」になる</span><span class="tag-desc">RDT版のPR観</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 一般的なPR vs RDT版のPR</div>
+        <p>一般的なPRは「コードレビューの場」。RDT版では、それに加えて<b>「受入条件が全部満たされたかの最終確認の場」</b>です。</p>
+        <ul>
+          <li>PR本文に<b>受入条件チェックリスト</b>を載せる</li>
+          <li>マージ前に<b>@AC1〜@AC4 が全部 [x]</b> か確認</li>
+          <li>テストが全部緑か確認（後の Vol.GH8 で CI 自動化）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// トレーサビリティの「最後のピース」</div>
+        <p>Vol.GH1〜2 で繋いだ線の<b>終点</b>がここ。<code>Closes #1</code> で Issue を閉じ、<b>「US-001 が完成した」という事実</b>が GitHub に永久に記録されます。</p>
+      </div>
+      <div class="code"><span class="code-head">// トレーサビリティ完結までの道のり</span>
+<span class="comment">// ─── これまで繋いだ線 ───</span>
+本編Vol.1：US-001 を定義
+GitHub版Vol.1：Issue #1 起票
+本編Vol.2：実装＋テスト
+GitHub版Vol.2：feature/memo-crud
+              + Refs #1 コミット
+       ↓
+<span class="kw">GitHub版Vol.3（今ここ）</span>
+  PR 作成
+  受入条件 @AC1-4 を最終確認
+  <span class="kw">Closes #1</span> でマージ
+       ↓
+  Issue #1 が自動 Close
+  = <span class="kw">US-001 完成が記録される</span> ★★★
+
+
+<span class="comment">// ─── 完成する「一本の線」───</span>
+要求(US-001)
+  → Issue #1
+    → feature/memo-crud
+      → Refs #1 コミット群
+        → PR #5
+          → Closes #1
+            → Issue Close
+              = 完成 ★★★
+
+<span class="comment">// 「誰が・いつ・なぜ・どう」作ったかが</span>
+<span class="comment">// GitHub上で完全に追跡可能になる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — PR は「変更提案＝議論の場」</div>
+    <p>PR（Pull Request）は<b>「このブランチを取り込んでほしい」という提案</b>。提案だから<b>レビューがあり、議論でき、却下もできる</b>。RDT版では、ここで<b>「要求を満たしたか」の最終ジャッジ</b>をします。1人開発でも<b>セルフレビュー</b>として価値があります。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>完成イメージ</h2><span class="en">FINAL STATE</span></div>
+  <p class="pattern-desc">Vol.GH3 終了時、<b>「マージ済みPR」と「Close された Issue #1」</b>が残ります。Issue を開くと<b>「Closed by PR #5」</b>と表示され、要求が完成した記録になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">完成したPRとClose済みIssue</span><span class="tag-desc">これが見えたら成功</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// PR画面に出るもの</div>
+        <ul>
+          <li>ステータス：<span style="color:#8957e5">●</span> Merged（紫）</li>
+          <li>タイトル：feat(memo): メモCRUD実装（US-001）</li>
+          <li>本文：受入条件チェックリスト（全部 [x]）</li>
+          <li>Files changed：変更ファイルと diff</li>
+          <li><b>Closes #1</b> によるリンク</li>
+        </ul>
+        <p style="margin-top:10px"><b>Issue #1 側</b>には「<b>yourname closed this in #5</b>」と表示され、要求完成が記録されます。</p>
+      </div>
+      <div class="code"><span class="code-head">// マージ済みPRの画面</span>
+<div class="gh-mock">
+<div class="gh-bar">github.com / .../memo-app / pull / 5</div>
+<span class="gh-purple">●</span> Merged  PR #5
+
+feat(memo): メモCRUD実装（US-001）
+
+<span class="gh-blue">yourname</span> merged 6 commits into
+<span class="gh-green">main</span> from <span class="gh-coral">feature/memo-crud</span>
+
+──────────────────────────
+<span class="gh-tab gh-tab-active">Conversation</span>
+<span class="gh-tab">Commits 6</span>
+<span class="gh-tab">Files changed +210</span>
+──────────────────────────
+
+## 概要
+US-001（メモ作成）を実装。
+memos の CRUD が動作。
+
+## 受入条件
+- [x] AC1 保存→一覧表示
+- [x] AC2 空タイトルエラー
+- [x] AC3 200文字OK
+- [x] AC4 201文字エラー
+
+## テスト
+- 6 tests, all green
+  （単体4 + MockMvc2）
+
+Closes #1
+──────────────────────────
+<span class="gh-purple">●</span> yourname closed Issue #1
+   via this PR
+</div>
+
+<span class="comment">// → 受入条件が全部 [x] ★★★</span>
+<span class="comment">// → Closes #1 で Issue 自動Close</span>
+<span class="comment">// → US-001 完成が記録された</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">TIP — PR本文に受入条件を必ず載せる</div>
+    <p>RDT版のPRは<b>受入条件チェックリストが主役</b>。Issue #1 から受入条件をコピーし、<b>全部 [x] になっているか</b>を最終確認。これがあると<b>「何をもって完成とするか」が明確</b>で、レビュアー（or 未来の自分）が判断しやすい。<b>PRが要求達成の証拠</b>になります。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>PRとは何か</h2><span class="en">WHAT IS PR</span></div>
+  <p class="pattern-desc"><b>Pull Request</b>（PR・通称プルリク）は<b>「私のブランチを main に取り込んでください」という提案</b>。提案だから<b>差分が見え、議論でき、承認・却下できる</b>。GitHub の最重要機能です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">PRの本質と構成要素</span><span class="tag-desc">変更提案＝議論の場</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">CONCEPT 1</span>
+            <div class="name">変更の提案書</div>
+            <div class="desc"><b>base へ compare を取り込む</b>提案。何を・なぜを明示。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">CONCEPT 2</span>
+            <div class="name">レビューの場</div>
+            <div class="desc">マージ前に<b>他人（or自分）の目</b>を通す。コメントで議論。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">CONCEPT 3</span>
+            <div class="name">CIのトリガー</div>
+            <div class="desc">PR作成・更新で<b>自動テスト</b>が走る（Vol.GH8で実装）。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">CONCEPT 4</span>
+            <div class="name">要求達成の記録</div>
+            <div class="desc">RDT版では<b>受入条件チェックの場</b>。Closesで要求完成を記録。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// PR が扱うのは「ブランチ間の差分」</div>
+        <ul>
+          <li><b>base</b>：取り込み先（main）</li>
+          <li><b>compare</b>：取り込むブランチ（feature/memo-crud）</li>
+          <li>その差分（diff）が PR の中身</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// PR の4タブ</span>
+<span class="comment">// ─── Conversation ───</span>
+PR本文・コメント・議論
+受入条件チェックリスト
+（RDT版の主役）
+
+<span class="comment">// ─── Commits ───</span>
+PR内のコミット一覧
+Refs #1 付きコミットが並ぶ
+（Vol.GH2 で作ったもの）
+
+<span class="comment">// ─── Files changed ───</span>
+変更ファイルの diff
+緑(+)＝追加、赤(-)＝削除
+セルフレビューはここで
+
+<span class="comment">// ─── Checks ───</span>
+CI（自動テスト）の結果
+Vol.GH8 で GitHub Actions を設定
+→ テストが緑じゃないとマージ不可
+  に設定できる ★★★
+
+
+<span class="comment">// ─── PR と git merge の違い ───</span>
+git merge（Vol.GH2まで）：
+  レビューなし・履歴のみ
+PR（今回）：
+  レビュー・議論・差分可視化
+  ・受入条件確認・CI連携
+  → 業務はPRが標準 ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 1人開発でも「自分PR」で練習する</div>
+    <p>「1人なのにPR？」と思うかもですが、<b>1人だからこそ練習</b>。①変更が整理される、②受入条件を最終確認できる、③<b>業務に入った時に慣れている</b>。RDT版では特に<b>「受入条件チェックの場」</b>として価値があります。<b>自分でレビューして自分でマージ</b>は変ではなく標準練習です。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>ハンズオン — PRを作る</h2><span class="en">HANDS-ON</span></div>
+  <p class="pattern-desc">Vol.GH2 で push した <code>feature/memo-crud</code> から PR を作ります。<b>受入条件チェックリストを本文に</b>、最後に <code>Closes #1</code> を書く。これが RDT版のPRの型です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">PR作成 — 6ステップ</span><span class="tag-desc">受入条件付き</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <ol class="step-list">
+          <li>feature/memo-crud を push 済みであることを確認</li>
+          <li>GitHub で黄色いバナー <b>Compare &amp; pull request</b> をクリック</li>
+          <li>base=main / compare=feature/memo-crud を確認</li>
+          <li>タイトル：<code>feat(memo): メモCRUD実装（US-001）</code></li>
+          <li>本文に<b>受入条件チェックリスト＋Closes #1</b></li>
+          <li><b>Create pull request</b></li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// PR本文テンプレート（RDT版）</div>
+        <ul>
+          <li><b>## 概要</b>：どのUSを実装したか</li>
+          <li><b>## 受入条件</b>：チェックボックス（Issueからコピー）</li>
+          <li><b>## テスト</b>：テスト結果</li>
+          <li><b>Closes #1</b>：Issue 紐付け＆自動Close</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// PR作成手順</span>
+<span class="comment">// Step 1: push 確認</span>
+<span class="prompt">$</span> <span class="kw">git push -u</span> origin feature/memo-crud
+<span class="gh-out">remote: Create a pull request for
+  'feature/memo-crud' on GitHub:
+remote: https://github.com/.../pull/new/
+        feature/memo-crud</span>
+
+
+<span class="comment">// Step 2-6: GitHub Web で PR 作成</span>
+<span class="comment">// 本文に貼る内容：</span>
+
+## 概要
+US-001（メモ作成）を実装しました。
+memos の CRUD が動作します。
+
+## 受入条件
+- [x] AC1 保存→一覧表示
+- [x] AC2 空タイトルはエラー
+- [x] AC3 200文字は登録できる
+- [x] AC4 201文字はエラー
+
+## テスト
+- MemoValidationTest（AC2-4）
+- MemoServiceTest（日時セット）
+- MemoControllerTest（AC1 MockMvc）
+- 6 tests, all green
+
+## 設計メモ
+- 3層構造（Controller/Service/Mapper）
+- @NotBlank/@Size で受入条件を実装
+
+<span class="kw">Closes #1</span>
+       <span class="comment">// ↑ これでマージ時にIssue#1が</span>
+       <span class="comment">//   自動Close ★★★</span>
+
+
+<span class="comment">// → Create pull request クリック</span>
+<span class="comment">// → PR #5 が誕生</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Closes は「PR本文」か「マージされるコミット」に</div>
+    <p><code>Closes #1</code> が効くのは<b>PR本文</b>か<b>マージされるコミットメッセージ</b>に書いた時。<b>PRのコメント欄に書いても効きません</b>（よくある失敗）。本文に書けば、<b>マージした瞬間に Issue #1 が自動Close</b>。途中のコミットは <code>Refs #1</code>、完成PRの本文に <code>Closes #1</code>——この使い分けが Vol.GH2 からの一貫した方針です。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>セルフレビューと受入条件確認</h2><span class="en">SELF REVIEW</span></div>
+  <p class="pattern-desc">マージ前に<b>Files changed で diff を読み</b>、<b>受入条件が全部満たされたか</b>を確認します。RDT版では<b>「コードの質」と「要求の達成」の両方</b>をチェックします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">2軸のセルフレビュー</span><span class="tag-desc">コードと要求</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ① コードのレビュー（Files changed）</div>
+        <p>別冊S2の設計原則で自問：</p>
+        <ul>
+          <li>SRP：説明に「と」が入るクラスは無いか</li>
+          <li>命名：Manager/Util/Helper が残っていないか</li>
+          <li>層：Mapper が Controller を触っていないか</li>
+          <li>テスト：書ける構造か（DIされているか）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// ② 要求のレビュー（受入条件）</div>
+        <p>本編の受入条件で自問：</p>
+        <ul>
+          <li>@AC1〜@AC4 が全部テストされているか</li>
+          <li>異常系（空・超過）も書いたか</li>
+          <li>テストが全部緑か</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// レビューコメントの残し方</div>
+        <p>気づきは<b>行コメント</b>で残す。「なぜこう書いたか」を未来の自分へ。</p>
+      </div>
+      <div class="code"><span class="code-head">// Files changed でのセルフレビュー</span>
+<div class="gh-mock">
+<div class="gh-bar">Files changed (8)</div>
+📄 .../entity/Memo.java          +18
+📄 .../mapper/MemoMapper.java    +10
+📄 .../mapper/MemoMapper.xml     +30
+📄 .../service/MemoService.java  +28
+📄 .../controller/MemoController.java +45
+📄 .../templates/memos/*.html    +50 ×3
+📄 .../test/MemoValidationTest   +35
+📄 .../test/MemoControllerTest   +24
+</div>
+
+<span class="comment">// ─── セルフレビューコメント例 ───</span>
+<span class="comment">// MemoService.create() の行に：</span>
+"createdAtとupdatedAtを同時にセット。
+ 別冊S2の『事実は時点で確定』に従い、
+ 作成時は両方同じ now() でOK。
+ 更新時は updatedAt のみ更新する設計"
+
+<span class="comment">// → 未来の自分への申し送り ★★★</span>
+
+
+<span class="comment">// ─── 受入条件の最終確認 ───</span>
+PR本文のチェックリストを確認：
+- [x] AC1 ← MemoControllerTest で緑
+- [x] AC2 ← MemoValidationTest で緑
+- [x] AC3 ← MemoValidationTest で緑
+- [x] AC4 ← MemoValidationTest で緑
+
+<span class="comment">// 全部 [x] → マージしてOK ★★★</span>
+<span class="comment">// 1つでも [ ] → まだマージしない</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Files changed を必ず1回見てからマージ</div>
+    <p>作成して数秒で即マージは<b>セルフレビューゼロ</b>。意識的に<b>「Files changed を1回見る」</b>習慣を。自分のコードでも<b>「他人のつもりで読む」</b>と粗が見える。これは業務で<b>レビュアーの視点</b>を養う練習にもなります。<b>急がば回れ</b>。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>Closes でトレース完結</h2><span class="en">CLOSING THE TRACE</span></div>
+  <p class="pattern-desc"><b>RDT版の集大成</b>。PR をマージすると <code>Closes #1</code> が発動し、Issue #1 が自動Close。<b>要求→実装→完了の一本の線が完結</b>します。3つのマージ戦略も合わせて学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">3つのマージ戦略</span><span class="tag-desc">本シリーズは Merge commit</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <table class="compare-tbl">
+          <thead><tr><th>戦略</th><th>履歴</th><th>本シリーズ</th></tr></thead>
+          <tbody>
+            <tr><td>Merge commit</td><td>全コミット保持＋マージコミット</td><td><b>採用</b></td></tr>
+            <tr><td>Squash</td><td>1コミットに圧縮</td><td>—</td></tr>
+            <tr><td>Rebase</td><td>線形に並べる</td><td>—</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>本シリーズは Merge commit</b>。理由：<b>Refs #1 付きの層ごとコミット</b>を履歴に残したいから（トレーサビリティ重視）。Squash すると個々のコミットが消え、層ごとの記録が失われます。</p>
+
+        <div class="panel-head" style="margin-top:18px">// マージ手順</div>
+        <ol style="margin-left:20px">
+          <li>受入条件が全部 [x] を確認</li>
+          <li><b>Merge pull request</b> ボタン</li>
+          <li><b>Confirm merge</b></li>
+          <li>Issue #1 が自動Close されたか確認</li>
+          <li><b>Delete branch</b> でブランチ削除</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// マージ後に起きること</span>
+<span class="comment">// ─── Merge ボタンを押すと… ───</span>
+PR #5 が main にマージ
+  ↓
+本文の "Closes #1" が発動
+  ↓
+Issue #1 が自動的に Closed
+  ↓
+Issue #1 に記録：
+  "yourname closed this in #5"
+  ↓
+<span class="kw">US-001 完成が永久に記録される</span> ★★★
+
+
+<span class="comment">// ─── 完結したトレーサビリティ ───</span>
+<div class="gh-mock">
+<div class="gh-bar">Issue #1 — US-001（Closed）</div>
+<span class="gh-purple">●</span> Closed
+
+## ユーザーストーリー
+As a ... I want ... so that ...
+
+## 受入条件
+- [x] AC1 〜 [x] AC4（全部完了）
+
+──────────────
+<span class="gh-coral">●</span> referenced in commits:
+   feat(entity)... feat(mapper)...
+   (Refs #1 のコミット群)
+<span class="gh-purple">●</span> closed via PR #5
+   (Closes #1)
+</div>
+
+<span class="comment">// → Issue を見れば全部分かる：</span>
+<span class="comment">//   何を作るはずだったか（US）</span>
+<span class="comment">//   どう実装されたか（コミット）</span>
+<span class="comment">//   いつ完成したか（PR #5）★★★</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">要求工学「管理」フェーズの完成形</span><span class="tag-desc">理論が完全に実体化</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p>別冊S1で学んだ要求工学の5活動。その<b>最後の「管理」</b>が、GitHub の Issue/PR で<b>完全に実体化</b>しました。</p>
+        <table class="compare-tbl">
+          <thead><tr><th>要求工学5活動</th><th>本シリーズでの実体</th></tr></thead>
+          <tbody>
+            <tr><td>獲得</td><td>本編Vol.1（WHO/WHAT/WHY）</td></tr>
+            <tr><td>分析</td><td>本編Vol.1（MoSCoW）</td></tr>
+            <tr><td>仕様化</td><td>US＋受入条件</td></tr>
+            <tr><td>検証</td><td>テスト＋セルフレビュー</td></tr>
+            <tr><td><b>管理</b></td><td><b>Issue→Refs→Closes</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// 次の要求へ — 同じサイクルを回す</span>
+<span class="comment">// US-001 が完成したら…</span>
+
+<span class="comment">// 次は US-002（カテゴリ）で同じ流れ：</span>
+本編Vol.3 で実装＋テスト
+  ↓
+feature/category-crud
+  + Refs #2 コミット
+  ↓
+PR 作成 → Closes #2
+  ↓
+Issue #2 Close
+= US-002 完成
+
+
+<span class="comment">// ─── このサイクルの繰り返し ───</span>
+<span class="kw">for</span> (各ユーザーストーリー) {
+  Issue 起票（管理）
+    → feature ブランチ
+    → Refs #N コミット
+    → PR ＋ 受入条件確認
+    → Closes #N
+    → 完成記録
+}
+
+<span class="comment">// → 全14巻でこのサイクルを回す ★★★</span>
+<span class="comment">// → 要求が1つずつ確実に完成していく</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Squash か Merge commit かは「何を残したいか」</div>
+    <p>本シリーズが<b>Merge commit</b>を選ぶのは、<b>Refs #1 付きの層ごとコミットを履歴に残したい</b>から。「entity追加→mapper追加→…→test追加」の<b>開発の物語</b>が残ります。Squash すると物語が1行に圧縮される。<b>トレーサビリティ重視なら Merge commit、main の見た目重視なら Squash</b>。プロジェクトの方針で選びます。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>ハマりどころ＋NEXT STEP</h2><span class="en">PITFALLS &amp; NEXT</span></div>
+  <p class="pattern-desc">PR操作で踏みやすい地雷を5つ。<b>★★★ 印は特に頻発</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.GH3 ハマりどころ 5選</span><span class="tag-desc">先に知れば回避できる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① Closes #1 を書いたのにCloseされない ★★★</b></p>
+        <ul>
+          <li>原因A：PRの<b>コメント欄</b>に書いた（本文でないと効かない）</li>
+          <li>原因B：マージしていない（マージ時に発動）</li>
+          <li>対処：PR本文に <code>Closes #1</code>、マージで発動</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② base ブランチを間違える</b></p>
+        <ul>
+          <li>原因：base が main 以外になっている</li>
+          <li>対処：PR作成画面で base=main を目視確認</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ Merge ボタンが押せない（コンフリクト）★★★</b></p>
+        <ul>
+          <li>原因：main が進んで feature と競合</li>
+          <li>対処：ローカルで <code>git merge origin/main</code> → コンフリクト解決 → push</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ マージ後にブランチが残る</b></p>
+        <ul>
+          <li>対処：PR下部の <b>Delete branch</b> をクリック</li>
+          <li>予防：Settings で「マージ後自動削除」をON</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 受入条件が [ ] のままマージ</b></p>
+        <ul>
+          <li>問題：要求が未達なのに完成扱いに</li>
+          <li>対処：<b>マージ前に全部 [x] を確認</b>する習慣を</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// コンフリクト解決（③）</span>
+<span class="comment">// PR画面で「This branch has conflicts」</span>
+
+<span class="prompt">$</span> <span class="kw">git switch</span> feature/memo-crud
+<span class="prompt">$</span> <span class="kw">git fetch</span> origin
+<span class="prompt">$</span> <span class="kw">git merge</span> origin/main
+<span class="gh-out">CONFLICT (content): Merge conflict in
+  src/.../templates/memos/list.html</span>
+
+<span class="comment">// エディタで該当ファイルを開くと：</span>
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+  &lt;h1&gt;メモ一覧&lt;/h1&gt;
+=======
+  &lt;h1&gt;メモ帳&lt;/h1&gt;
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; origin/main
+
+<span class="comment">// → どちらを残すか決め、マーカーを削除</span>
+
+<span class="prompt">$</span> <span class="kw">git add</span> .
+<span class="prompt">$</span> <span class="kw">git commit -m</span>
+       <span class="str">"merge: mainを取り込みコンフリクト解決"</span>
+<span class="prompt">$</span> <span class="kw">git push</span>
+<span class="comment">// → PR が自動更新、マージ可能に ★★★</span>
+
+
+<span class="comment">// ─── ① Closes が効く場所 ───</span>
+<span class="ann">効く:</span>  PR本文に Closes #1
+       マージされるコミットに Closes #1
+<span class="ann">効かない:</span> PRのコメント欄に Closes #1 ★★★
+         （よくある失敗）</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">GH3 達成チェック</span><span class="tag-desc">トレーサビリティ完結</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェック</div>
+        <ul class="check-list">
+          <li>feature ブランチから PR を作成できた</li>
+          <li>PR本文に受入条件チェックリストを載せた</li>
+          <li>Files changed で diff を読んだ</li>
+          <li>受入条件が全部 [x] を確認した</li>
+          <li>3つのマージ戦略の違いを言える</li>
+          <li>Merge commit を選んだ理由を説明できる</li>
+          <li><code>Closes #1</code> で Issue を自動Closeできた</li>
+          <li>Issue #1 が Closed になった</li>
+          <li>マージ後にブランチを削除した</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH3 で完結したもの</span>
+✓ <span class="str">"PR を作って受入条件を確認できる"</span>
+
+✓ <span class="str">"Closes で要求完成を記録できる"</span>
+
+✓ <span class="str">"要求→Issue→ブランチ→コミット→PR→</span>
+   <span class="str"> クローズの線が完結した"</span>
+
+✓ <span class="str">"要求工学の『管理』フェーズを</span>
+   <span class="str"> GitHub で完全に回せる"</span>
+
+
+<span class="comment">// → トレーサビリティ完全マスター ★★★</span>
+
+<span class="comment">// 次回 Vol.GH4：</span>
+<span class="comment">//   Issue とタスク管理</span>
+<span class="comment">//   ラベル・マイルストーン・</span>
+<span class="comment">//   Project ボードで複数USを管理</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.GH4 へ</div>
+    <p>Vol.GH3 で<b>「PR→Closes でトレーサビリティ完結」</b>を達成しました。1つの要求（US-001）が、定義から完成記録まで一本の線で繋がりました。次は Vol.GH4「<b>Issue とタスク管理編</b>」。<b>複数の US（Issue）をラベル・マイルストーン・Project ボード</b>で管理し、<b>「次に何を作るか」を可視化</b>します。本編Vol.4「1対多の表示・絞り込み」で発見する改善点も Issue 化。<b>本編Vol.4 → Vol.GH4 の順</b>で進めるとスムーズです。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>GH.03 / 14 ── PULL REQUEST &amp; TRACE COMPLETE（GitHub版）</span>
+</footer>
+
+</body>
+</html>

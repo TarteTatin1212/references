@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.11 本編 HAVING で集計に絞り込み</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2c25;
+  --paper:#e4ece1;
+  --paper-2:#cbdcca;
+  --accent:#88a98e;
+  --accent-2:#9dbca4;
+  --accent-3:#1f4231;
+  --muted:#697867;
+  --line:#afc0ab;
+  --code-bg:#13211a;
+  --code-text:#e4ece1;
+  --panel-bg:#edf3e9;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(136,169,142,0.08);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.mock-screen{background:#fff;border:1px solid var(--line);margin:12px 0;font-family:'Noto Sans JP'}
+.mock-bar{background:#e0e0e0;padding:4px 12px;font-family:'JetBrains Mono';font-size:11px;color:#444}
+.mock-body{padding:16px}
+.mock-h{font-family:'Shippori Mincho',serif;font-size:18px;color:var(--accent-3);border-bottom:2px solid var(--accent);padding-bottom:6px;display:inline-block;margin-bottom:12px}
+.mock-form{background:#fafdf8;border:1px solid var(--line);padding:10px 14px;margin-bottom:14px;font-size:13px}
+.mock-form input{padding:4px 8px;border:1px solid #aaa;width:70px}
+.mock-form button{padding:4px 14px;background:var(--accent);color:#fff;border:none;font-size:13px;cursor:pointer;margin-left:8px}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.11 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>HAVING で<br>集計に絞り込み</h1>
+  <div class="subtitle">HAVING ── FILTER AFTER AGGREGATION</div>
+  <p class="lead">
+    Vol.11は<b>「集計の応用」</b>のマイルストーン。S9 で予告した <code style="font-family:'JetBrains Mono'">HAVING</code> 句を本格活用します。<br>
+    実装するのは<b>「合計学習時間が N分以上の科目だけ」</b>を表示する閾値フィルタ。「集計した<b>後</b>の結果に対する絞り込み」が <code style="font-family:'JetBrains Mono'">HAVING</code> の役割です。<br>
+    さらに Vol.8 で学んだ<b>動的SQL（<code>&lt;if&gt;</code>）</b>と組み合わせ、<code style="font-family:'JetBrains Mono'">@RequestParam</code> で閾値を受け取る検索機能を作ります。Cで身につけた技術が<b>結集</b>する巻。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>Vol.11では新しい Java import はほぼなし。<b>XMLが主舞台</b>です。<br>
+    <code>&lt;having&gt;</code> という専用タグは MyBatis にはありません。<code>HAVING</code> は<b>素の SQL として書く</b>か、<code>&lt;if&gt;</code> で囲みます。<br>
+    Mapper メソッドの引数が増えるので <code>@Param</code> 必須。「Parameter 'minMinutes' not found」が出たら <code>@Param</code> 不足です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#having-basics">04 HAVING の基本</a></li>
+    <li><a href="#sql-vs-java">05 SQLで絞るか・Javaで絞るか</a></li>
+    <li><a href="#create">06 ファイル改修</a></li>
+    <li><a href="#run">07 ブラウザで動かして確認</a></li>
+    <li><a href="#trouble">08 ハマりどころと対処</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.11では<b>HAVING</b>で「集計後の絞り込み」を実装し、<b>動的SQL</b>と組み合わせて閾値検索を作ります。Cで学んだ技術が結集します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.11-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">HAVING で集計結果を絞り込む</div>
+          <div class="desc"><code>HAVING SUM(r.minutes) &gt;= #{minMinutes}</code> で「合計時間が閾値以上の科目だけ」表示。集計<b>後</b>のフィルタ。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">動的SQLで閾値を任意化</div>
+          <div class="desc"><code>&lt;if test="minMinutes != null"&gt;</code> で、閾値が指定された時だけ <code>HAVING</code> を付ける。Vol.8 の動的SQL の応用。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">統計画面に閾値入力欄を追加</div>
+          <div class="desc">「○分以上の科目を表示」の入力欄。<code>@RequestParam</code> で受け取り、HAVING に渡す。Cの集大成的なUI。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻でできるようになる検索</span>
+
+<span class="comment">// 全件（閾値なし）</span>
+GET /stats
+  → 全5科目の統計
+
+
+<span class="comment">// 60分以上の科目だけ</span>
+GET /stats?minMinutes=<span class="num">60</span>
+  → Java (375分) と Spring Boot (255分)
+    のみ表示
+
+
+<span class="comment">// 300分以上の科目だけ</span>
+GET /stats?minMinutes=<span class="num">300</span>
+  → Java (375分) のみ表示
+
+
+<span class="comment">// 内部のSQL（閾値あり）</span>
+SELECT
+  s.id, s.name,
+  COUNT(r.id) AS recordCount,
+  COALESCE(SUM(r.minutes), 0) AS totalMinutes,
+  ...
+FROM subjects s
+LEFT JOIN study_records r ON s.id = r.subject_id
+GROUP BY s.id, s.name
+<span class="kw">HAVING COALESCE(SUM(r.minutes), 0) &gt;= 60</span>
+ORDER BY totalMinutes DESC
+
+
+<span class="comment">// → 「集計してから絞り込む」</span>
+<span class="comment">// → これが HAVING の真骨頂</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>集計結果を条件にしたい</b>」── これは <code>WHERE</code> ではできません。<code>WHERE SUM(...) &gt;= 60</code> は SQL エラーになる。なぜなら <code>WHERE</code> は<b>集計前</b>に評価されるから。集計値（<code>SUM</code>、<code>COUNT</code> 等）を条件にするのが <code>HAVING</code> です。<b>「集計関数を条件に使うなら HAVING」</b>と覚えてください。</p>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── ブラウザで見える画面</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.11 のゴール画面は<b>Vol.10 のダッシュボード＋閾値フィルタ</b>。入力した分数以上の科目だけが残る。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-screen</span>
+      <span class="tag-desc">完成画面のモック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// /stats?minMinutes=60 の画面</div>
+        <div class="mock-screen">
+          <div class="mock-bar">▮ http://localhost:8080/stats?minMinutes=60</div>
+          <div class="mock-body">
+            <div class="mock-h">科目別 学習統計</div>
+            <div class="mock-form">
+              <input type="number" value="60"> 分以上の科目を表示
+              <button>絞り込む</button>
+            </div>
+            <div style="background:#fafdf8;border:1px solid #ddd;border-left:4px solid var(--accent);padding:8px 12px;margin:6px 0">
+              <div style="display:flex;justify-content:space-between"><b style="color:var(--accent-3)">Java</b><span style="font-family:monospace;font-weight:700">6時間 15分</span></div>
+            </div>
+            <div style="background:#fafdf8;border:1px solid #ddd;border-left:4px solid var(--accent);padding:8px 12px;margin:6px 0">
+              <div style="display:flex;justify-content:space-between"><b style="color:var(--accent-3)">Spring Boot</b><span style="font-family:monospace;font-weight:700">4時間 15分</span></div>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-top:8px">※ SQL（30分）・HTML/CSS（0分）・JavaScript（0分）は非表示</div>
+          </div>
+        </div>
+        <p style="margin-top:12px;font-size:13px"><b>閾値以上の科目だけ</b>に絞られる。「重点的に学習している科目だけ見たい」というニーズに応える。</p>
+      </div>
+      <div class="code"><span class="code-head">// プロジェクト構造の変化</span>
+
+todo/
+├ src/main/java/com/example/todo/
+│  ├ mapper/
+│  │  └ SubjectMapper.java     <span class="comment">// 改修</span>
+│  │      <span class="kw">// findSubjectStats に引数追加</span>
+│  ├ service/
+│  │  └ SubjectService.java    <span class="comment">// 改修</span>
+│  │      <span class="kw">// findSubjectStatViews に引数追加</span>
+│  └ controller/
+│     └ StatsController.java   <span class="comment">// 改修</span>
+│         <span class="kw">// @RequestParam minMinutes 追加</span>
+└ src/main/resources/
+   ├ mybatis/
+   │  └ SubjectMapper.xml      <span class="comment">// 改修</span>
+   │      <span class="kw">// findSubjectStats に</span>
+   │      <span class="kw">// &lt;if&gt; + HAVING 追加</span>
+   └ templates/
+      └ stats/index.html       <span class="comment">// 改修</span>
+          <span class="kw">// 閾値入力フォーム追加</span>
+
+
+<span class="comment">// 4ファイル改修・新規ファイルなし</span>
+<span class="comment">// 既存の集計SQLに HAVING を足すだけ</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.11 は<b>Vol.8（動的SQL）とVol.9（集計）の合わせ技</b>。Cで学んだ技術がここで結集します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">前提知識</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前提知識</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>該当箇所</th></tr>
+          <tr><td>集計クエリ（GROUP BY）</td><td>本編 M9</td></tr>
+          <tr><td>WHERE と HAVING の概要</td><td>別冊 S9</td></tr>
+          <tr><td>動的SQL（&lt;if&gt;）</td><td>本編 M8</td></tr>
+          <tr><td>@RequestParam（任意化）</td><td>本編 M6</td></tr>
+          <tr><td>@Param 複数引数</td><td>本編 M8</td></tr>
+          <tr><td>画面用DTO・Service変換</td><td>本編 M10</td></tr>
+        </table>
+        <div style="margin-top:16px;font-size:13.5px"><b>新しく学ぶこと</b>：</div>
+        <ol class="step-list" style="margin-top:6px">
+          <li>HAVING 句の実用</li>
+          <li>HAVING と動的SQL（&lt;if&gt;）の組み合わせ</li>
+          <li>「SQLで絞るか・Javaで絞るか」の判断</li>
+          <li>集計結果へのフィルタリング</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// Cの技術がここで結集する</span>
+
+<span class="comment">// ─── Vol.8 の動的SQL ───</span>
+&lt;<span class="kw">if</span> test=<span class="str">"minMinutes != null"</span>&gt;
+  ...
+&lt;/<span class="kw">if</span>&gt;
+
+
+<span class="comment">// ─── Vol.9 の集計 ───</span>
+GROUP BY s.id, s.name
+COALESCE(SUM(r.minutes), 0)
+
+
+<span class="comment">// ─── S9 で予告した HAVING ───</span>
+HAVING COALESCE(SUM(r.minutes), 0)
+       &gt;= #{minMinutes}
+
+
+<span class="comment">// ─── Vol.6 の @RequestParam ───</span>
+<span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+<span class="type">Integer</span> minMinutes
+
+
+<span class="comment">// ─── Vol.10 の画面用DTO ───</span>
+findSubjectStatViews(minMinutes)
+
+
+<span class="comment">// → 5つの巻の技術が1つの機能に集約</span>
+<span class="comment">// → Cの「総合力」が試される巻</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="having-basics">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>HAVING の基本</h2>
+    <span class="en">HAVING BASICS</span>
+  </div>
+  <p class="pattern-desc"><code>HAVING</code> は<b>「GROUP BY で集計した結果に対する絞り込み」</b>。WHERE が「集計前」なら、HAVING は「集計後」。SQL の実行順序を理解すると腑に落ちます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">having-mechanism</span>
+      <span class="tag-desc">HAVING の動き</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// SQL の実行順序（再掲・重要）</div>
+        <ol class="step-list">
+          <li><code>FROM / JOIN</code> ── テーブル結合</li>
+          <li><code>WHERE</code> ── <b>個別行</b>のフィルタ</li>
+          <li><code>GROUP BY</code> ── グループ化</li>
+          <li><code>HAVING</code> ── <b>集計値</b>のフィルタ</li>
+          <li><code>SELECT</code> ── 列の選択</li>
+          <li><code>ORDER BY</code> ── 並び替え</li>
+        </ol>
+        <p style="margin-top:14px;font-size:13.5px"><b>WHERE は GROUP BY の前、HAVING は後</b>。だから HAVING では <code>SUM</code> や <code>COUNT</code> の結果を条件にできる。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">覚え方</div>
+          <p>「WHERE → グループ化 → HAVING」。<b>WHERE は「材料を選ぶ」、HAVING は「料理を選ぶ」</b>。材料の段階ではまだ料理（集計値）が存在しないので、料理を条件にできるのは HAVING だけ。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// HAVING の基本構文</span>
+
+<span class="comment">// ─── 例1: 合計時間で絞る ───</span>
+SELECT
+  subject_id,
+  SUM(minutes) AS total
+FROM study_records
+GROUP BY subject_id
+HAVING SUM(minutes) &gt;= <span class="num">60</span>;
+
+<span class="comment">// → 合計60分以上の科目だけ</span>
+
+
+<span class="comment">// ─── 例2: 件数で絞る ───</span>
+SELECT
+  subject_id,
+  COUNT(*) AS cnt
+FROM study_records
+GROUP BY subject_id
+HAVING COUNT(*) &gt;= <span class="num">3</span>;
+
+<span class="comment">// → 3件以上記録がある科目だけ</span>
+
+
+<span class="comment">// ─── 例3: WHERE と HAVING 併用 ───</span>
+SELECT
+  subject_id,
+  SUM(minutes) AS total
+FROM study_records
+WHERE studied_on &gt;= <span class="str">'2026-05-01'</span>  <span class="comment">// 集計前</span>
+GROUP BY subject_id
+HAVING SUM(minutes) &gt;= <span class="num">120</span>;        <span class="comment">// 集計後</span>
+
+<span class="comment">// → 「5月の記録で集計し、120分以上の科目」</span>
+
+
+<span class="comment">// ─── ✗ NG: WHERE で集計関数 ───</span>
+SELECT subject_id, SUM(minutes)
+FROM study_records
+WHERE SUM(minutes) &gt;= <span class="num">60</span>   <span class="comment">// ← エラー！</span>
+GROUP BY subject_id;
+
+<span class="comment">// ERROR: Invalid use of group function</span>
+<span class="comment">// → WHERE は集計前なので SUM がまだない</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">having-coalesce</span>
+      <span class="tag-desc">LEFT JOIN + HAVING の注意点</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// LEFT JOIN との組み合わせ</div>
+        <p>Vol.9 で学んだ通り、LEFT JOIN すると記録なし科目は <code>SUM</code> が NULL になります。<code>HAVING SUM(...) &gt;= 60</code> だと<b>NULL は条件偽</b>なので、記録なし科目は自動的に消えます。</p>
+        <p style="margin-top:8px">閾値0以上の時に記録なし科目（0分）を含めたい場合は <code>COALESCE</code> を使う。Vol.11 では<b>閾値1以上が前提</b>なので、記録なし科目は自然に除外されます。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">NULL と比較の落とし穴</div>
+          <p><code>NULL &gt;= 60</code> は <b>true でも false でもなく NULL（=偽扱い）</b>。これは S9 で学んだ「NULL の三値論理」。<code>COALESCE(SUM(...), 0) &gt;= 60</code> と書けば、NULL を 0 に変換してから比較するので安全です。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// LEFT JOIN + HAVING の挙動</span>
+
+<span class="comment">// ─── COALESCE なし ───</span>
+SELECT s.id, s.name,
+       SUM(r.minutes) AS total
+FROM subjects s
+LEFT JOIN study_records r
+  ON s.id = r.subject_id
+GROUP BY s.id, s.name
+HAVING SUM(r.minutes) &gt;= <span class="num">60</span>;
+
+<span class="comment">// 結果：</span>
+<span class="comment">// Java   375  ✓</span>
+<span class="comment">// Spring 255  ✓</span>
+<span class="comment">// （SQL 30 は &lt; 60 で除外）</span>
+<span class="comment">// （HTML/CSS は SUM=NULL → 条件偽で除外）</span>
+<span class="comment">// （JavaScript も同様に除外）</span>
+
+
+<span class="comment">// ─── COALESCE あり（Vol.11採用）───</span>
+SELECT s.id, s.name,
+       COALESCE(SUM(r.minutes), 0) AS total
+FROM subjects s
+LEFT JOIN study_records r
+  ON s.id = r.subject_id
+GROUP BY s.id, s.name
+HAVING COALESCE(SUM(r.minutes), 0)
+       &gt;= #{minMinutes};
+
+<span class="comment">// minMinutes = 60 の結果：</span>
+<span class="comment">// Java   375  ✓</span>
+<span class="comment">// Spring 255  ✓</span>
+<span class="comment">// SQL     30  ✗ (60未満)</span>
+<span class="comment">// HTML/CSS 0  ✗ (60未満)</span>
+<span class="comment">// JS       0  ✗ (60未満)</span>
+
+
+<span class="comment">// minMinutes = 0 の結果（全件表示と同じ）：</span>
+<span class="comment">// 全科目が 0 以上 → 全部表示</span>
+
+
+<span class="comment">// → COALESCE で予測可能な動作に</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="sql-vs-java">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>SQLで絞るか・Javaで絞るか</h2>
+    <span class="en">FILTER IN SQL OR JAVA</span>
+  </div>
+  <p class="pattern-desc">「集計結果の絞り込み」は<b>SQLの HAVING でも、Java側の filter でもできる</b>。どちらを選ぶか、業務での判断軸を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">sql-vs-java</span>
+      <span class="tag-desc">2つのアプローチの比較</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つのアプローチ</div>
+        <div class="role-card">
+          <span class="label">アプローチA</span>
+          <div class="name">SQL の HAVING で絞る（Vol.11採用）</div>
+          <div class="desc"><b>DBが絞り込んでから返す</b>。「不要なデータをそもそも取得しない」ので<b>転送量が少ない</b>。大量データで有利。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">アプローチB</span>
+          <div class="name">Java の Stream.filter で絞る</div>
+          <div class="desc">全件取得後、Java側で <code>.filter(s -&gt; s.getTotal() &gt;= 60)</code>。<b>柔軟だが全件取得する</b>。複雑な条件には向く。</div>
+        </div>
+        <table class="compare-tbl" style="margin-top:12px">
+          <tr><th>観点</th><th>SQL(HAVING)</th><th>Java(filter)</th></tr>
+          <tr><td>転送量</td><td>少ない</td><td>多い</td></tr>
+          <tr><td>速度（大量）</td><td>速い</td><td>遅い</td></tr>
+          <tr><td>条件の柔軟性</td><td>SQLの範囲</td><td>何でも書ける</td></tr>
+          <tr><td>可読性</td><td>SQLに慣れが必要</td><td>Javaで分かりやすい</td></tr>
+        </table>
+        <p style="margin-top:12px;font-size:13.5px"><b>原則</b>：<b>「DBでできることはDBで」</b>。シンプルな閾値なら HAVING。</p>
+      </div>
+      <div class="code"><span class="code-head">// 2つのアプローチのコード</span>
+
+<span class="comment">// ─── アプローチA: SQL HAVING（採用）───</span>
+
+<span class="comment">// XML</span>
+GROUP BY s.id, s.name
+&lt;<span class="kw">if</span> test=<span class="str">"minMinutes != null"</span>&gt;
+  HAVING COALESCE(SUM(r.minutes), 0)
+         &gt;= #{minMinutes}
+&lt;/<span class="kw">if</span>&gt;
+
+<span class="comment">// Service</span>
+<span class="kw">return</span> subjectMapper
+    .<span class="fn">findSubjectStats</span>(minMinutes);
+<span class="comment">// → DBが絞り込んだ結果が返る</span>
+
+
+<span class="comment">// ─── アプローチB: Java filter ───</span>
+
+<span class="comment">// Service</span>
+<span class="type">List</span>&lt;<span class="type">SubjectStat</span>&gt; all =
+    subjectMapper.<span class="fn">findSubjectStats</span>();
+
+<span class="kw">if</span> (minMinutes != <span class="kw">null</span>) {
+  all = all.<span class="fn">stream</span>()
+    .<span class="fn">filter</span>(s -&gt;
+       s.<span class="fn">getTotalMinutes</span>() &gt;= minMinutes)
+    .<span class="fn">toList</span>();
+}
+<span class="comment">// → 全件取得後にJavaで絞る</span>
+
+
+<span class="comment">// ─── どちらを選ぶか ───</span>
+
+<span class="comment">// 学習記録アプリは小規模</span>
+<span class="comment">// → どちらでも性能差はほぼない</span>
+
+<span class="comment">// 教育的には HAVING を学ぶ価値が高い</span>
+<span class="comment">// → Vol.11 では HAVING を採用</span>
+
+<span class="comment">// 業務の大規模システムでは</span>
+<span class="comment">// → 「DBで絞る」が基本</span>
+<span class="comment">// → 全件取得は避ける</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>DBでできることはDBで</b>」は業務開発の重要な原則。理由は<b>「DBは絞り込み・集計に最適化されている」</b>から。Java側で全件取得してから filter すると、<b>大量の不要データを転送＋メモリに展開</b>することになる。Vol.5 の N+1 と同じく、<b>「無駄な転送を避ける」</b>のがパフォーマンスの鍵です。</p>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ファイル改修</h2>
+    <span class="en">MODIFY FILES</span>
+  </div>
+  <p class="pattern-desc"><b>4ファイルを順次改修</b>。XML → Mapper.java → Service → Controller → HTML の流れ。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-xml</span>
+      <span class="tag-desc">① SubjectMapper.xml に HAVING + &lt;if&gt; 追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectMapper.xml</code> を開く</li>
+          <li>既存の <code>findSubjectStats</code> の <code>GROUP BY</code> の後に <code>&lt;if&gt;</code> + <code>HAVING</code> を追加</li>
+          <li><code>ORDER BY</code> は <code>HAVING</code> の後ろ（SQL順序）</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">HAVING の位置</div>
+          <p>SQLの構文順序は <code>GROUP BY → HAVING → ORDER BY</code>。<code>&lt;if&gt;</code> で囲んだ HAVING を<b>この位置に</b>入れます。順序を間違えると構文エラー。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.xml（findSubjectStats改修）</span>
+
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findSubjectStats"</span>
+        <span class="ann">resultType</span>=
+        <span class="str">"com.example.todo.dto.SubjectStat"</span>&gt;
+  SELECT
+    s.id    AS subjectId,
+    s.name  AS subjectName,
+    COUNT(r.id) AS recordCount,
+    COALESCE(SUM(r.minutes), 0) AS totalMinutes,
+    COALESCE(AVG(r.minutes), 0) AS avgMinutes
+  FROM subjects s
+  LEFT JOIN study_records r
+    ON s.id = r.subject_id
+  GROUP BY s.id, s.name
+  <span class="comment">&lt;!-- ★ Vol.11で追加 --&gt;</span>
+  &lt;<span class="kw">if</span> test=<span class="str">"minMinutes != null"</span>&gt;
+    HAVING COALESCE(SUM(r.minutes), 0)
+           &gt;= #{minMinutes}
+  &lt;/<span class="kw">if</span>&gt;
+  ORDER BY totalMinutes DESC
+&lt;/<span class="kw">select</span>&gt;
+
+
+<span class="comment">// ─── ポイント ───</span>
+
+<span class="comment">// ・&lt;if&gt; で minMinutes が指定された時だけ</span>
+<span class="comment">//   HAVING を出力</span>
+
+<span class="comment">// ・HAVING の位置は GROUP BY と ORDER BY の間</span>
+
+<span class="comment">// ・COALESCE で NULL を 0 にしてから比較</span>
+
+<span class="comment">// ・&lt;where&gt; は WHERE 用なので</span>
+<span class="comment">//   HAVING には使わない（素の &lt;if&gt;）</span>
+
+
+<span class="comment">// ─── 生成SQL（minMinutes=60）───</span>
+<span class="comment">// ... GROUP BY s.id, s.name</span>
+<span class="comment">//     HAVING COALESCE(SUM(r.minutes),0) &gt;= 60</span>
+<span class="comment">//     ORDER BY totalMinutes DESC</span>
+
+<span class="comment">// ─── 生成SQL（minMinutes=null）───</span>
+<span class="comment">// ... GROUP BY s.id, s.name</span>
+<span class="comment">//     ORDER BY totalMinutes DESC</span>
+<span class="comment">// → HAVING なし（全件）</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-mapper-java</span>
+      <span class="tag-desc">② SubjectMapper.java に引数追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectMapper.java</code> を開く</li>
+          <li><code>findSubjectStats()</code> に <code>@Param("minMinutes") Integer minMinutes</code> を追加</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">引数1個でも @Param を付ける理由</div>
+          <p>引数1個なら <code>@Param</code> は省略可ですが、<b>XML の <code>&lt;if test="minMinutes != null"&gt;</code> で名前を参照する</b>ので、<code>@Param("minMinutes")</code> を<b>明示する</b>のが確実。<code>&lt;if&gt;</code> の test 式は引数名で評価されるため。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.java（改修部分）</span>
+
+<span class="kw">import</span> com.example.todo.dto.SubjectStat;
+<span class="kw">import</span> org.apache.ibatis.annotations.Param;
+<span class="comment">// 他のimportは省略</span>
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+
+  <span class="comment">// 既存メソッド省略 ...</span>
+
+  <span class="comment">// ★ Vol.11で改修：引数追加</span>
+  <span class="type">List</span>&lt;<span class="type">SubjectStat</span>&gt; <span class="fn">findSubjectStats</span>(
+      <span class="ann">@Param</span>(<span class="str">"minMinutes"</span>) <span class="type">Integer</span> minMinutes);
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・@Param で名前を明示</span>
+<span class="comment">// ・XML の test="minMinutes != null" と一致</span>
+<span class="comment">// ・null を渡すと HAVING なし（全件）</span>
+<span class="comment">// ・値を渡すと HAVING で絞り込み</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-service</span>
+      <span class="tag-desc">③ SubjectService に引数を通す</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectService.java</code> を開く</li>
+          <li><code>findSubjectStatViews()</code> に <code>Integer minMinutes</code> 引数を追加</li>
+          <li>Mapper呼び出しに <code>minMinutes</code> を渡す</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">パーセンテージ計算の基準に注意</div>
+          <p>HAVING で絞り込むと、<b>残った科目だけの合計</b>になります。「全体に対する割合」を出すなら、<b>絞り込み前の全体合計</b>を別途取得する設計も考えられます。Vol.11 では<b>シンプルに「絞り込み後の合計」を基準</b>にします（割合の意味が変わる点はハマりどころで補足）。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectService.java（改修部分）</span>
+
+<span class="comment">// ★ Vol.11で改修：引数追加</span>
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">SubjectStatView</span>&gt;
+     <span class="fn">findSubjectStatViews</span>(<span class="type">Integer</span> minMinutes) {
+
+  <span class="type">List</span>&lt;<span class="type">SubjectStat</span>&gt; stats =
+      subjectMapper.<span class="fn">findSubjectStats</span>(minMinutes);
+
+  <span class="comment">// 全体合計（絞り込み後の合計）</span>
+  <span class="kw">int</span> total = stats.<span class="fn">stream</span>()
+      .<span class="fn">mapToInt</span>(<span class="type">SubjectStat</span>::<span class="fn">getTotalMinutes</span>)
+      .<span class="fn">sum</span>();
+
+  <span class="comment">// 以下、Vol.10と同じ変換ロジック</span>
+  <span class="type">List</span>&lt;<span class="type">SubjectStatView</span>&gt; views =
+      <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+  <span class="kw">for</span> (<span class="type">SubjectStat</span> s : stats) {
+    <span class="type">SubjectStatView</span> v = <span class="kw">new</span> <span class="type">SubjectStatView</span>();
+    v.<span class="fn">setSubjectId</span>(s.<span class="fn">getSubjectId</span>());
+    v.<span class="fn">setSubjectName</span>(s.<span class="fn">getSubjectName</span>());
+    v.<span class="fn">setRecordCount</span>(s.<span class="fn">getRecordCount</span>());
+    v.<span class="fn">setTotalMinutes</span>(s.<span class="fn">getTotalMinutes</span>());
+    v.<span class="fn">setAvgMinutes</span>(s.<span class="fn">getAvgMinutes</span>());
+    v.<span class="fn">setTotalTimeText</span>(
+        <span class="fn">formatMinutes</span>(s.<span class="fn">getTotalMinutes</span>()));
+    v.<span class="fn">setAvgTimeText</span>(
+        <span class="fn">formatMinutes</span>(
+            s.<span class="fn">getAvgMinutes</span>().<span class="fn">intValue</span>()));
+    <span class="kw">if</span> (total &gt; <span class="num">0</span>) {
+      <span class="kw">int</span> pct = (<span class="kw">int</span>) <span class="type">Math</span>.<span class="fn">round</span>(
+          (<span class="kw">double</span>) s.<span class="fn">getTotalMinutes</span>()
+          / total * <span class="num">100</span>);
+      v.<span class="fn">setPercentage</span>(pct);
+    } <span class="kw">else</span> {
+      v.<span class="fn">setPercentage</span>(<span class="num">0</span>);
+    }
+    views.<span class="fn">add</span>(v);
+  }
+  <span class="kw">return</span> views;
+}
+
+<span class="comment">// formatMinutes() は Vol.10 のまま</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-controller</span>
+      <span class="tag-desc">④ StatsController に @RequestParam 追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>StatsController.java</code> を開く</li>
+          <li><code>index()</code> に <code>@RequestParam(required = false) Integer minMinutes</code> を追加</li>
+          <li>Service呼び出しに <code>minMinutes</code> を渡す</li>
+          <li>選択中の閾値を <code>model</code> に追加（フォーム保持用）</li>
+          <li>保存</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// StatsController.java（改修後）</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind.annotation.GetMapping;
+<span class="kw">import</span> org.springframework.web.bind.annotation.RequestParam;
+<span class="kw">import</span> com.example.todo.dto.SubjectStatView;
+<span class="kw">import</span> com.example.todo.service.SubjectService;
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">StatsController</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectService</span> subjectService;
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/stats"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">index</span>(
+      <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+      <span class="type">Integer</span> minMinutes,
+      <span class="type">Model</span> model) {
+
+    <span class="type">List</span>&lt;<span class="type">SubjectStatView</span>&gt; views =
+        subjectService
+            .<span class="fn">findSubjectStatViews</span>(minMinutes);
+
+    <span class="kw">int</span> grandTotal = views.<span class="fn">stream</span>()
+        .<span class="fn">mapToInt</span>(
+            <span class="type">SubjectStatView</span>::<span class="fn">getTotalMinutes</span>)
+        .<span class="fn">sum</span>();
+
+    model.<span class="fn">addAttribute</span>(<span class="str">"stats"</span>, views);
+    model.<span class="fn">addAttribute</span>(<span class="str">"grandTotalText"</span>,
+        <span class="fn">formatGrandTotal</span>(grandTotal));
+    model.<span class="fn">addAttribute</span>(<span class="str">"minMinutes"</span>,
+        minMinutes);
+
+    <span class="kw">return</span> <span class="str">"stats/index"</span>;
+  }
+
+  <span class="comment">// formatGrandTotal() は Vol.10 のまま</span>
+}</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-template</span>
+      <span class="tag-desc">⑤ stats/index.html に閾値フォーム追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>templates/stats/index.html</code> を開く</li>
+          <li><code>&lt;h1&gt;</code> の下に閾値入力フォームを追加</li>
+          <li><code>method="get"</code> で <code>th:action="@{/stats}"</code></li>
+          <li><code>th:value="${minMinutes}"</code> で選択値を保持</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">GET フォームでブックマーカブル</div>
+          <p>Vol.6 別冊S6 で学んだ通り、<b>検索フォームは GET</b>。「60分以上の科目」の画面をブックマーク・共有できる。<code>?minMinutes=60</code> が URL に残る。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// stats/index.html（フォーム追加部分）</span>
+
+&lt;<span class="kw">h1</span>&gt;科目別 学習統計&lt;/<span class="kw">h1</span>&gt;
+
+<span class="comment">&lt;!-- ★ Vol.11で追加：閾値フォーム --&gt;</span>
+&lt;<span class="kw">form</span> <span class="ann">method</span>=<span class="str">"get"</span>
+      <span class="ann">th:action</span>=<span class="str">"@{/stats}"</span>
+      <span class="ann">style</span>=<span class="str">"margin: 16px 0;
+             padding: 10px 14px;
+             background: #fafdf8;
+             border: 1px solid #ddd;"</span>&gt;
+  &lt;<span class="kw">input</span> <span class="ann">type</span>=<span class="str">"number"</span>
+         <span class="ann">name</span>=<span class="str">"minMinutes"</span>
+         <span class="ann">th:value</span>=<span class="str">"${minMinutes}"</span>
+         <span class="ann">style</span>=<span class="str">"width: 70px;"</span>&gt;
+  分以上の科目を表示
+  &lt;<span class="kw">button</span> <span class="ann">type</span>=<span class="str">"submit"</span>&gt;絞り込む&lt;/<span class="kw">button</span>&gt;
+  &lt;<span class="kw">a</span> <span class="ann">th:href</span>=<span class="str">"@{/stats}"</span>
+     <span class="ann">style</span>=<span class="str">"margin-left:10px;
+            font-size:12px;"</span>&gt;条件クリア&lt;/<span class="kw">a</span>&gt;
+&lt;/<span class="kw">form</span>&gt;
+
+&lt;<span class="kw">div</span> <span class="ann">class</span>=<span class="str">"total"</span>&gt;
+  &lt;<span class="kw">span</span>&gt;全体合計&lt;/<span class="kw">span</span>&gt;
+  &lt;<span class="kw">span</span> <span class="ann">th:text</span>=<span class="str">"${grandTotalText}"</span>&gt;&lt;/<span class="kw">span</span>&gt;
+&lt;/<span class="kw">div</span>&gt;
+
+<span class="comment">&lt;!-- カード部分は Vol.10 のまま --&gt;</span>
+&lt;<span class="kw">div</span> <span class="ann">th:each</span>=<span class="str">"row : ${stats}"</span> ...&gt;
+  ...
+&lt;/<span class="kw">div</span>&gt;
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・name="minMinutes" がパラメータ名</span>
+<span class="comment">// ・th:value で選択値を保持</span>
+<span class="comment">// ・条件クリアは ?minMinutes なしのリンク</span>
+<span class="comment">// ・カード表示部分は Vol.10 を流用</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かして確認</h2>
+    <span class="en">RUN IN BROWSER</span>
+  </div>
+  <p class="pattern-desc">起動して<b>閾値フィルタ</b>を試します。閾値を変えると表示される科目が変わるのを確認。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">browser-check</span>
+      <span class="tag-desc">動作確認の手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>アプリ起動中なら停止、再起動</li>
+          <li><code>/stats</code>（閾値なし）→ 全5科目表示</li>
+          <li>閾値欄に「60」を入れて「絞り込む」</li>
+          <li>URLが <code>?minMinutes=60</code>、Java と Spring Boot のみ表示</li>
+          <li>閾値「300」→ Java のみ表示</li>
+          <li>「条件クリア」→ 全件に戻る</li>
+          <li>コンソールでSQLに HAVING が出たり消えたりするのを確認</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ ここまで動けばVol.11クリア！</p>
+      </div>
+      <div class="code"><span class="code-head">// SQLログの確認</span>
+
+<span class="comment">// ─── /stats （閾値なし）───</span>
+==&gt;  Preparing:
+  SELECT ... FROM subjects s
+  LEFT JOIN study_records r ...
+  GROUP BY s.id, s.name
+  ORDER BY totalMinutes DESC
+==&gt; Parameters:
+&lt;==      Total: 5
+<span class="comment">// → HAVING なし、5科目全部</span>
+
+
+<span class="comment">// ─── /stats?minMinutes=60 ───</span>
+==&gt;  Preparing:
+  SELECT ... FROM subjects s
+  LEFT JOIN study_records r ...
+  GROUP BY s.id, s.name
+  HAVING COALESCE(SUM(r.minutes), 0) &gt;= ?
+  ORDER BY totalMinutes DESC
+==&gt; Parameters: 60(Integer)
+&lt;==      Total: 2
+<span class="comment">// → HAVING あり、2科目だけ</span>
+
+
+<span class="comment">// ─── /stats?minMinutes=300 ───</span>
+==&gt;  Preparing:
+  ... HAVING COALESCE(SUM(r.minutes), 0) &gt;= ?
+==&gt; Parameters: 300(Integer)
+&lt;==      Total: 1
+<span class="comment">// → Java のみ</span>
+
+
+<span class="comment">// ─── 観察ポイント ───</span>
+<span class="comment">// ・閾値なし → HAVING が SQL に出ない</span>
+<span class="comment">// ・閾値あり → HAVING が出る</span>
+<span class="comment">// ・動的SQL（&lt;if&gt;）が効いている証拠</span>
+<span class="comment">// ・Total の数が閾値で変わる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">業務での感動ポイント</div>
+    <p>「閾値を入れると、DBが絞り込んで<b>必要な分だけ</b>返してくる」── これが <b>HAVING + 動的SQL</b> の威力。「全件取ってJavaで捨てる」のではなく「<b>DBで絞ってから取る</b>」。Cで学んだ<b>動的SQL・集計・@RequestParam</b> が1つの機能に結実しました。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">Vol.11 でよくある<b>5つのハマりどころ</b>。HAVING の位置・WHERE との混同・割合の意味が中心。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">troubles</span>
+      <span class="tag-desc">起きやすいトラブル</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card">
+          <span class="label">TROUBLE 1</span>
+          <div class="name">Invalid use of group function</div>
+          <div class="desc"><b>原因</b>：<code>WHERE SUM(...) &gt;= 60</code> と書いた。WHERE は集計前なので集計関数を使えない。<br><b>対処</b>：<code>HAVING</code> に書く。「集計関数を条件にするなら HAVING」。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 2</span>
+          <div class="name">HAVING の位置がおかしくて構文エラー</div>
+          <div class="desc"><b>原因</b>：<code>HAVING</code> を <code>ORDER BY</code> の後ろや <code>GROUP BY</code> の前に書いた。<br><b>対処</b>：順序は <code>GROUP BY → HAVING → ORDER BY</code>。この位置を守る。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 3</span>
+          <div class="name">Parameter 'minMinutes' not found</div>
+          <div class="desc"><b>原因</b>：Mapperメソッドの引数に <code>@Param("minMinutes")</code> がない。XMLの <code>&lt;if test="minMinutes != null"&gt;</code> で名前を解決できない。<br><b>対処</b>：<code>@Param("minMinutes")</code> を付ける。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 4</span>
+          <div class="name">割合の合計が100%にならない（絞り込み後）</div>
+          <div class="desc"><b>原因</b>：HAVING で絞ると、残った科目だけで割合計算するため、「全体に対する割合」ではなくなる。<br><b>対処</b>：仕様として許容するか、絞り込み前の全体合計を別途取得。Vol.11 では<b>「絞り込み後の合計が基準」</b>と割り切る。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 5</span>
+          <div class="name">空文字の閾値で 400 エラー</div>
+          <div class="desc"><b>原因</b>：閾値欄を空のまま送信すると <code>?minMinutes=</code> となり、Integer 変換に失敗することがある。<br><b>対処</b>：<code>required = false</code> に加え、空文字を null とみなす処理。または条件クリアリンクで対応。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// TROUBLE 1 の対処</span>
+
+<span class="comment">// ─── ✗ NG ───</span>
+SELECT subject_id, SUM(minutes) AS total
+FROM study_records
+WHERE SUM(minutes) &gt;= <span class="num">60</span>   <span class="comment">// エラー</span>
+GROUP BY subject_id;
+
+<span class="comment">// ERROR 1111 (HY000):</span>
+<span class="comment">// Invalid use of group function</span>
+
+
+<span class="comment">// ─── ✓ OK ───</span>
+SELECT subject_id, SUM(minutes) AS total
+FROM study_records
+GROUP BY subject_id
+HAVING SUM(minutes) &gt;= <span class="num">60</span>;  <span class="comment">// OK</span>
+
+
+<span class="code-head" style="margin-top:14px">// TROUBLE 2 の正しい順序</span>
+
+<span class="comment">// ─── ✗ NG（順序ミス）───</span>
+SELECT ...
+FROM ...
+GROUP BY ...
+ORDER BY ...
+HAVING ...      <span class="comment">// ← 位置が違う</span>
+
+
+<span class="comment">// ─── ✓ OK ───</span>
+SELECT ...
+FROM ...
+WHERE ...        <span class="comment">// 集計前フィルタ</span>
+GROUP BY ...     <span class="comment">// グループ化</span>
+HAVING ...       <span class="comment">// 集計後フィルタ</span>
+ORDER BY ...     <span class="comment">// 並び替え</span>
+
+
+<span class="code-head" style="margin-top:14px">// TROUBLE 4 の理解</span>
+
+<span class="comment">// 全件（閾値なし）：</span>
+<span class="comment">// Java 59% + Spring 40% + SQL 5% ≒ 100%</span>
+
+
+<span class="comment">// 60分以上で絞った後：</span>
+<span class="comment">// 残ったのは Java と Spring のみ</span>
+<span class="comment">// 全体合計 = 375 + 255 = 630</span>
+<span class="comment">// Java   375/630 = 60%</span>
+<span class="comment">// Spring 255/630 = 40%</span>
+<span class="comment">// → 「絞り込み後の中での割合」</span>
+
+
+<span class="comment">// 仕様の選択：</span>
+<span class="comment">// A) 絞り込み後の割合（Vol.11採用・シンプル）</span>
+<span class="comment">// B) 絞り込み前の全体に対する割合</span>
+<span class="comment">//    → grandTotal を別途取得する必要</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.11本編の<b>完了チェックリスト</b>。Cの技術が結集した応用巻。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol11-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li><code>SubjectMapper.xml</code> の <code>findSubjectStats</code> に <code>&lt;if&gt;</code> + <code>HAVING</code> 追加</li>
+          <li>HAVING の位置が <code>GROUP BY</code> と <code>ORDER BY</code> の間</li>
+          <li><code>COALESCE(SUM(...), 0) &gt;= #{minMinutes}</code> の形</li>
+          <li><code>SubjectMapper.java</code> に <code>@Param("minMinutes")</code> 追加</li>
+          <li><code>SubjectService.findSubjectStatViews(Integer)</code> に引数追加</li>
+          <li><code>StatsController</code> に <code>@RequestParam minMinutes</code> 追加</li>
+          <li>選択中の閾値を model に渡す（フォーム保持）</li>
+          <li><code>stats/index.html</code> に閾値入力フォーム追加</li>
+          <li>条件クリアリンクが動く</li>
+          <li>アプリ起動時にエラーが出ない</li>
+          <li>閾値なし → 全5科目表示</li>
+          <li>閾値60 → Java と Spring Boot のみ</li>
+          <li>閾値300 → Java のみ</li>
+          <li>SQLログで HAVING が動的に出入りする</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.11本編完了！</b><br>
+          <b>集計の応用</b>のスキル達成。HAVING ＋ 動的SQL の合わせ技。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で獲得したスキル</span>
+
+★ <span class="kw">集計の応用</span> ── 達成！
+
+  <span class="comment">// できるようになったこと:</span>
+  <span class="comment">// ・HAVING で集計後の絞り込み</span>
+  <span class="comment">// ・WHERE と HAVING の使い分け</span>
+  <span class="comment">// ・SQL実行順序の理解</span>
+  <span class="comment">// ・HAVING と動的SQL の組み合わせ</span>
+  <span class="comment">// ・「SQLで絞るかJavaで絞るか」の判断</span>
+  <span class="comment">// ・Cの技術の総合運用</span>
+
+
+<span class="code-head" style="margin-top:14px">// 次にやること</span>
+
+<span class="comment">// ① 別冊 S11 を読む</span>
+<span class="comment">//   タイトル: 「HAVING vs WHERE」</span>
+<span class="comment">//   内容: SQL実行順序の完全理解 /</span>
+<span class="comment">//        パフォーマンス比較 /</span>
+<span class="comment">//        サブクエリとの関係</span>
+
+
+<span class="comment">// ② Vol.12 本編：</span>
+<span class="comment">//   タイトル: 「統計画面・第2段（日別＋達成率）」</span>
+<span class="comment">//   獲得スキル: 時系列集計</span>
+<span class="comment">//   内容:</span>
+<span class="comment">//   ・日別の学習時間集計</span>
+<span class="comment">//   ・GROUP BY studied_on</span>
+<span class="comment">//   ・日別の推移を視覚化</span>
+<span class="comment">//   ・達成率の計算</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(31,66,49,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S11</div>
+    <p>本編Vol.11お疲れさまでした。<b>HAVING ＋ 動的SQL</b>の合わせ技を手に入れました。別冊S11「<b>HAVING vs WHERE</b>」では、<b>「SQL実行順序の完全理解」「パフォーマンス比較」「サブクエリとの関係」「複雑な集計条件の書き方」</b>を扱います。「<b>なぜ WHERE では集計関数が使えないのか</b>」を原理から理解する巻。<b>続けて別冊S11へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.11 / 15 ── HAVING（本編）</span>
+</footer>
+
+</body>
+</html>

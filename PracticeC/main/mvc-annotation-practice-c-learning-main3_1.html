@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.3 本編 XML Mapper初登場・SELECTを移そう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1f2d26;
+  --paper:#e6ece3;
+  --paper-2:#d0dbcd;
+  --accent:#3d6249;
+  --accent-2:#5a8062;
+  --accent-3:#1f3729;
+  --muted:#697968;
+  --line:#b4c2af;
+  --code-bg:#15201a;
+  --code-text:#e6ece3;
+  --panel-bg:#eef3ec;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(61,98,73,0.08);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.before-after{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.before-after .b,.before-after .a{background:#fff;border:1px solid var(--line);padding:12px 14px}
+.before-after .b{border-left:3px solid #b07050}
+.before-after .a{border-left:3px solid var(--accent)}
+.before-after .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.15em;margin-bottom:6px}
+.before-after .b .lbl{color:#b07050}
+.before-after .a .lbl{color:var(--accent)}
+.before-after .ttl{font-family:'Shippori Mincho',serif;font-size:14px;font-weight:700;color:var(--accent-3);margin-bottom:6px}
+.before-after p{font-size:13px;margin:4px 0}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .before-after{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.03 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>XML Mapper初登場<br>SELECTを移そう</h1>
+  <div class="subtitle">INTRODUCING XML MAPPER ── MIGRATE THE SELECT</div>
+  <p class="lead">
+    Vol.3は<b>「XML Mapper 導入」</b>の獲得です。<br>
+    A v2 と本編Vol.1・Vol.2 では、SQLは<b>すべてアノテーション</b>（<code style="font-family:'JetBrains Mono'">@Select(&quot;...&quot;)</code>）で書いてきました。Vol.3では、その<b>SQLを「XMLファイル」に移し替える</b>体験をします。<br>
+    <b>「動くものを保ちながら書き場所を変える」</b>──これがいわゆる<b>リファクタリング</b>。同じ画面が動き続ければ成功です。Vol.4で <code style="font-family:'JetBrains Mono'">resultMap</code> + <code style="font-family:'JetBrains Mono'">collection</code> を書くための<b>「箱」の準備</b>がこの巻の役割。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>XMLファイルでの赤線は <code>Ctrl + Shift + O</code> では消えません。<b>XMLは構文エラーが地雷の主犯</b>。<br>
+    <b>typo・閉じタグ抜け・属性の引用符抜け</b>がよくある原因。エディタの赤線・コンソールのエラーログ両方を見ましょう。Eclipseの <code>Problems</code> ビュー（<span style="font-family:'JetBrains Mono',monospace">Window → Show View → Problems</span>）が便利。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#config">04 application.properties を設定する</a></li>
+    <li><a href="#xml">05 SubjectMapper.xml を作る</a></li>
+    <li><a href="#create">06 ファイル作成の手順と Mapperから @Select 削除</a></li>
+    <li><a href="#run">07 ブラウザで動かして確認</a></li>
+    <li><a href="#trouble">08 ハマりどころと対処</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.3の主役は<b>「XML Mapper」</b>。SQLを<b>Javaのアノテーション内（文字列）</b>から、<b>専用のXMLファイル</b>に移します。動作は変わらず、画面も同じ──しかしこの<b>「箱」を用意することで Vol.4 以降のJOINや動的SQLが書ける</b>ようになります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.3-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">XML Mapper が起動できる環境を作る</div>
+          <div class="desc"><code>application.properties</code> に <code>mybatis.mapper-locations</code> を追加して、Spring Boot に XML の在りかを教える。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">SubjectMapper.xml にSELECTを移す</div>
+          <div class="desc">これまで <code>@Select("SELECT * FROM subjects ORDER BY id")</code> だったSQLを、XMLの <code>&lt;select id="findAll"&gt;</code> に書き直す。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">同じ画面が動くことを確認する</div>
+          <div class="desc"><code>/subjects</code> を開いて、Vol.2 と<b>全く同じ画面</b>が表示されればOK。「動くまま中身を変える」リファクタリングの成功。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻の Before / After</span>
+
+<span class="comment">// ─── Before ───</span>
+<span class="comment">// SubjectMapper.java</span>
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+  <span class="ann">@Select</span>(<span class="str">"SELECT * FROM subjects "</span>
+        + <span class="str">"ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>();
+}
+
+
+<span class="comment">// ─── After ───</span>
+<span class="comment">// SubjectMapper.java</span>
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>();
+  <span class="comment">// ↑ アノテーション削除！</span>
+}
+
+<span class="comment">// SubjectMapper.xml（新規）</span>
+&lt;<span class="kw">mapper</span> <span class="ann">namespace</span>=<span class="str">"...SubjectMapper"</span>&gt;
+  &lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findAll"</span>
+          <span class="ann">resultType</span>=<span class="str">"Subject"</span>&gt;
+    SELECT * FROM subjects ORDER BY id
+  &lt;/<span class="kw">select</span>&gt;
+&lt;/<span class="kw">mapper</span>&gt;</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><b>「動くまま中身を変える」のがリファクタリングの神髄</b>です。Vol.3 で大事なのは「<b>機能を増やさない・新しいことをしない</b>」という制約を守ること。新機能を増やすと、動かなくなった時の原因切り分けが難しくなります。<b>1度に1つの変更</b>──これが現場の鉄則。</p>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── 画面は何も変わらない</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.3の<b>「完成画面」はVol.2と同じ</b>です。違うのは「<b>SQLがどこに書かれているか</b>」だけ。<b>変わらないことを確認する</b>のが今回のゴール。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-screen</span>
+      <span class="tag-desc">変わらないことの確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 画面と挙動</div>
+        <ul class="check-list">
+          <li><code>http://localhost:8080/subjects</code> で<b>Vol.2と同じ画面</b>が出る</li>
+          <li>5科目（Java/Spring Boot/SQL/HTML-CSS/JS）が並ぶ</li>
+          <li>各科目に学習記録が入れ子で出る</li>
+          <li>記録なしの科目には「（記録なし）」が出る</li>
+          <li><b>コンソールに同じSQLログが流れる</b></li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          画面は全く同じ。だからこそ<b>「内部だけが進化した」</b>とも言える。<br>Vol.4 で <code>resultMap</code> + <code>collection</code> を書く準備が整います。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// プロジェクト構造の変化</span>
+
+todo/
+├ src/main/java/com/example/todo/
+│  └ mapper/
+│     ├ SubjectMapper.java     <span class="comment">// 改修：@Select削除</span>
+│     └ StudyRecordMapper.java <span class="comment">// 変更なし</span>
+└ src/main/resources/
+   ├ application.properties    <span class="comment">// 改修：1行追加</span>
+   ├ <span class="kw">mybatis/</span>                  <span class="comment">// ★ 新規フォルダ</span>
+   │  └ <span class="kw">SubjectMapper.xml</span>      <span class="comment">// ★ 新規ファイル</span>
+   └ templates/
+      └ subjects/list.html     <span class="comment">// 変更なし</span>
+
+
+<span class="comment">// 触るのは「Mapper」周辺だけ</span>
+<span class="comment">// Service / Controller / Entity / HTML は</span>
+<span class="comment">// 一切変更しない</span>
+<span class="comment">// → これがリファクタリングの</span>
+<span class="comment">//   「外から見たら同じ」の意味</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.3は<b>「MyBatisの2つの書き方を切り替える」</b>が中心。XML自体は中学校レベルの構文知識で読めますが、<b>MyBatis特有のルール</b>が3つあります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">前提となる知識と新しい3ルール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前提知識</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>該当箇所</th></tr>
+          <tr><td>Mapper interface / @Select の動き</td><td>A v2 Vol.3</td></tr>
+          <tr><td>application.properties の役割</td><td>A v2 Vol.2</td></tr>
+          <tr><td>1対多取得（基礎）</td><td>本編 M2</td></tr>
+          <tr><td>3つの取得戦略</td><td>別冊 S2</td></tr>
+        </table>
+        <div style="margin-top:16px;font-size:13.5px"><b>新しく覚える3つのルール</b>：</div>
+        <ol class="step-list" style="margin-top:6px">
+          <li><b>namespace</b>：XMLとJavaのMapperインターフェイスを<b>フルパスで紐付ける</b></li>
+          <li><b>id</b>：<code>&lt;select id="..."&gt;</code> はインターフェイスの<b>メソッド名と完全一致</b></li>
+          <li><b>resultType</b>：1行が<b>何のクラスに対応するか</b>を指定</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// 3つのルールの紐付け関係</span>
+
+<span class="comment">// ── Java側 ──</span>
+package <span class="kw">com.example.todo.mapper</span>;
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+  <span class="comment">// メソッド名</span>
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>();
+                <span class="comment">// 戻り値の中身の型</span>
+}
+
+
+<span class="comment">// ── XML側 ──</span>
+&lt;<span class="kw">mapper</span>
+  <span class="ann">namespace</span>=<span class="str">"<span class="kw">com.example.todo.mapper</span>.<span class="type">SubjectMapper</span>"</span>&gt;
+                  <span class="comment">// ↑ Javaのフルパス</span>
+
+  &lt;<span class="kw">select</span>
+    <span class="ann">id</span>=<span class="str">"<span class="fn">findAll</span>"</span>
+        <span class="comment">// ↑ Javaのメソッド名と完全一致</span>
+    <span class="ann">resultType</span>=<span class="str">"<span class="kw">com.example.todo.entity</span>.<span class="type">Subject</span>"</span>&gt;
+                  <span class="comment">// ↑ List&lt;Subject&gt; の中身の型のフルパス</span>
+    SELECT * FROM subjects ORDER BY id
+  &lt;/<span class="kw">select</span>&gt;
+&lt;/<span class="kw">mapper</span>&gt;
+
+
+<span class="comment">// → 3点が揃って初めて</span>
+<span class="comment">//   MyBatis が「これは findAll() の実装だ」</span>
+<span class="comment">//   と認識できる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>XML Mapper の<b>「namespace = JavaのMapperインターフェイスのフルパス」</b>は最も間違えやすいルールです。<b>typoでもダメ、パッケージ違いでもダメ</b>。後でハマりどころでも触れますが、ここを最初に意識しておくと事故を防げます。</p>
+  </div>
+</section>
+
+<section id="config">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>application.properties を設定する</h2>
+    <span class="en">CONFIGURE PROPERTIES</span>
+  </div>
+  <p class="pattern-desc">XMLファイルをSpring Bootに認識させるために、<code>application.properties</code> に<b>1行追加</b>します。これだけ。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">configure-properties</span>
+      <span class="tag-desc">設定の追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>src/main/resources/application.properties</code> を開く</li>
+          <li><b>末尾に1行追加</b>：<code>mybatis.mapper-locations=classpath:mybatis/*.xml</code></li>
+          <li>保存（<code>Ctrl + S</code>）</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">この1行の意味</div>
+          <p><code>classpath:mybatis/*.xml</code> = <b>「クラスパス上の <code>mybatis</code> フォルダの中にある <code>.xml</code> ファイル全て」</b>を MyBatis に読み込ませる指定。<br>Spring Boot は <code>src/main/resources</code> 配下を「クラスパス」として扱うので、<code>resources/mybatis/SubjectMapper.xml</code> が対象になります。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// application.properties（改修後・全体）</span>
+
+<span class="comment"># DB接続（Aで設定済み）</span>
+spring.datasource.url=jdbc:mysql://localhost:3306/todo_db
+spring.datasource.username=root
+spring.datasource.password=パスワード
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+<span class="comment"># MyBatis（Aで設定済み）</span>
+mybatis.configuration.map-underscore-to-camel-case=true
+logging.level.com.example.todo.mapper=DEBUG
+
+<span class="comment"># ★ Vol.3で追加：XML Mapper の場所</span>
+<span class="kw">mybatis.mapper-locations=classpath:mybatis/*.xml</span>
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・1行追加するだけ</span>
+<span class="comment">// ・classpath:はSpring Bootの「リソース」を指す</span>
+<span class="comment">// ・*.xml はワイルドカード（全XMLファイル）</span>
+<span class="comment">// ・複数フォルダなら ; で区切る or 別行で書く</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="xml">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>SubjectMapper.xml を作る</h2>
+    <span class="en">CREATE THE XML</span>
+  </div>
+  <p class="pattern-desc">いよいよ<b>初のXML Mapper</b>を書きます。Vol.1で書いた <code>@Select</code> のSQLを、そのまま XML に移すだけ。SQL自体は1文字も変えません。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-xml</span>
+      <span class="tag-desc">SubjectMapper.xml の中身</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// XML Mapper の3つの要素</div>
+        <div class="role-card">
+          <span class="label">PART 1</span>
+          <div class="name">DOCTYPE 宣言</div>
+          <div class="desc">XML自体の文法ルールを示す<b>「魔法のおまじない」</b>。<b>毎回コピペでOK</b>。覚える必要なし。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PART 2</span>
+          <div class="name">&lt;mapper namespace="..."&gt;</div>
+          <div class="desc"><b>JavaのMapperインターフェイスのフルパス</b>を書く。これでXMLとJavaがリンクされる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PART 3</span>
+          <div class="name">&lt;select id="..." resultType="..."&gt;</div>
+          <div class="desc"><code>id</code>はメソッド名、<code>resultType</code>は1行を詰めるクラス。<b>本体にSQLを書く</b>。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.xml（全体）</span>
+
+&lt;?xml version=<span class="str">"1.0"</span> encoding=<span class="str">"UTF-8"</span>?&gt;
+
+<span class="comment">&lt;!-- ★ PART 1: DOCTYPE 宣言（コピペ）--&gt;</span>
+&lt;!DOCTYPE mapper
+  PUBLIC <span class="str">"-//mybatis.org//DTD Mapper 3.0//EN"</span>
+  <span class="str">"http://mybatis.org/dtd/mybatis-3-mapper.dtd"</span>&gt;
+
+<span class="comment">&lt;!-- ★ PART 2: namespace --&gt;</span>
+&lt;<span class="kw">mapper</span>
+  <span class="ann">namespace</span>=<span class="str">"com.example.todo.mapper.SubjectMapper"</span>&gt;
+
+  <span class="comment">&lt;!-- ★ PART 3: select 要素 --&gt;</span>
+  &lt;<span class="kw">select</span>
+    <span class="ann">id</span>=<span class="str">"findAll"</span>
+    <span class="ann">resultType</span>=<span class="str">"com.example.todo.entity.Subject"</span>&gt;
+    SELECT * FROM subjects ORDER BY id
+  &lt;/<span class="kw">select</span>&gt;
+
+&lt;/<span class="kw">mapper</span>&gt;
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・SQL自体は @Select の中身と同じ</span>
+<span class="comment">// ・namespace と id で Java と繋がる</span>
+<span class="comment">// ・resultType = List&lt;Subject&gt; の中身</span>
+<span class="comment">// ・DOCTYPE は1文字でも変えると動かない</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">TIP ──</div>
+    <p><b>「resultType と resultMap」は別物</b>です。<code>resultType</code>は「単純に1行を1クラスに詰める」シンプル指定。<code>resultMap</code>は「列とプロパティの対応を細かく書く」高度な指定。Vol.4で <code>resultMap</code> を使ってJOINを表現します。<b>今のVol.3では <code>resultType</code> で十分</b>。</p>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ファイル作成の手順と Mapperから @Select 削除</h2>
+    <span class="en">CREATE & MODIFY</span>
+  </div>
+  <p class="pattern-desc">Eclipseで<b>2つの操作</b>をします。<b>XMLファイルの新規作成</b>と、<b>SubjectMapper.javaの <code>@Select</code> を削除</b>。順番は<b>「XMLを先に作る」</b>のが鉄則──逆だと一瞬アプリが壊れます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-mybatis-folder</span>
+      <span class="tag-desc">① mybatis フォルダを作る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順（Eclipse操作）</div>
+        <ol class="step-list">
+          <li>Package Explorer で <code>src/main/resources</code> を<b>右クリック</b></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Folder</span></li>
+          <li>Folder name 欄に <code>mybatis</code> と入力</li>
+          <li><span class="menu-code" style="color:var(--accent-3)">Finish</span></li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">なぜ「mybatis」フォルダ？</div>
+          <p>これは<b>慣習的な命名</b>です。<code>application.properties</code> の <code>mybatis.mapper-locations</code> の指定と一致していれば、<b>名前は何でもOK</b>（<code>sql</code> でも <code>mapper</code> でも）。ただし業界的に <code>mybatis</code> が一番見かけます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 作業前後のフォルダ構造</span>
+
+<span class="comment">// ─── 作業前 ───</span>
+src/main/resources/
+├ application.properties
+├ static/
+└ templates/
+   └ subjects/
+      └ list.html
+
+
+<span class="comment">// ─── 作業後 ───</span>
+src/main/resources/
+├ application.properties
+├ <span class="kw">mybatis/</span>                  <span class="comment">// ★ 新規フォルダ</span>
+├ static/
+└ templates/
+   └ subjects/
+      └ list.html
+
+
+<span class="comment">// 次の手順でこの mybatis/ の中に</span>
+<span class="comment">// SubjectMapper.xml を作る</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-xml-file</span>
+      <span class="tag-desc">② SubjectMapper.xml を新規作成</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順（Eclipse操作）</div>
+        <ol class="step-list">
+          <li>作成した <code>mybatis</code> フォルダを<b>右クリック</b></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">File</span>（★Folderじゃない）</li>
+          <li>File name 欄に <code>SubjectMapper.xml</code> と入力</li>
+          <li><span class="menu-code" style="color:var(--accent-3)">Finish</span></li>
+          <li>開いたファイルに、前のセクション「PART 1〜3」のXMLを書く</li>
+          <li>保存（<code>Ctrl + S</code>）</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">なぜ「SubjectMapper.xml」？</div>
+          <p>慣習的に<b>「Javaのインターフェイス名と完全一致させる」</b>のが業界相場。<code>SubjectMapper.java</code> ↔ <code>SubjectMapper.xml</code>。<br>こうすると<b>「どのXMLがどのインターフェイスのSQLか」一目で分かる</b>──保守性が爆上がりします。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 完成した SubjectMapper.xml（再掲）</span>
+
+&lt;?xml version=<span class="str">"1.0"</span> encoding=<span class="str">"UTF-8"</span>?&gt;
+&lt;!DOCTYPE mapper
+  PUBLIC <span class="str">"-//mybatis.org//DTD Mapper 3.0//EN"</span>
+  <span class="str">"http://mybatis.org/dtd/mybatis-3-mapper.dtd"</span>&gt;
+
+&lt;<span class="kw">mapper</span>
+  <span class="ann">namespace</span>=<span class="str">"com.example.todo.mapper.SubjectMapper"</span>&gt;
+
+  &lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findAll"</span>
+          <span class="ann">resultType</span>=<span class="str">"com.example.todo.entity.Subject"</span>&gt;
+    SELECT * FROM subjects ORDER BY id
+  &lt;/<span class="kw">select</span>&gt;
+
+&lt;/<span class="kw">mapper</span>&gt;
+
+
+<span class="comment">// 注意：</span>
+<span class="comment">// この時点ではまだ SubjectMapper.java の</span>
+<span class="comment">// @Select も生きている</span>
+<span class="comment">// → 起動すると</span>
+<span class="comment">//   「同じ findAll が二重定義」エラー！</span>
+<span class="comment">// → 次のステップで @Select を削除</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-mapper-java</span>
+      <span class="tag-desc">③ SubjectMapper.java から @Select を削除</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectMapper.java</code> を開く</li>
+          <li><code>@Select(...)</code> 行を<b>削除</b>（メソッド宣言だけ残す）</li>
+          <li>不要になった <code>import org.apache.ibatis.annotations.Select;</code> を <code>Ctrl + Shift + O</code> で整理</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">重要：SQLは2箇所にあってはダメ</div>
+          <p>XMLとアノテーション両方に同じ <code>findAll</code> のSQLを書くと、MyBatis が<b>「どっち使えばいいの？」</b>と起動エラーを出します。<b>移したらアノテーション側を消す</b>のがリファクタリングの作法。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.java（改修後）</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="comment">// import @Select 不要なので削除</span>
+<span class="kw">import</span> com.example.todo.entity.Subject;
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+
+  <span class="comment">// @Select は削除した</span>
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>();
+  <span class="comment">// メソッド宣言だけ残す</span>
+}
+
+
+<span class="comment">// ─── Before / After 比較 ───</span>
+
+<span class="comment">// Before</span>
+<span class="ann">@Select</span>(<span class="str">"SELECT * FROM subjects ORDER BY id"</span>)
+<span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>();
+
+<span class="comment">// After</span>
+<span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>();
+<span class="comment">// ↑ SQL の実体は XML に移動</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">other-mappers</span>
+      <span class="tag-desc">StudyRecordMapper は今回は触らない</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ポイント</div>
+        <p>Vol.3 では<b>SubjectMapper だけ</b>をXMLに移します。<code>StudyRecordMapper</code> はアノテーションのまま放置。これでも問題なく動きます。</p>
+        <p style="margin-top:8px">理由は2つ：</p>
+        <ul style="margin-left:18px;font-size:13px;margin-top:4px">
+          <li>1度に1つだけ変える（リファクタリングの鉄則）</li>
+          <li>「<b>アノテーションとXMLの混在</b>」が現場でも普通にあると体験</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.3 完了後の Mapper の状態</span>
+
+<span class="comment">// SubjectMapper.java + SubjectMapper.xml</span>
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>();  <span class="comment">// XML側で実装</span>
+}
+
+
+<span class="comment">// StudyRecordMapper.java（アノテーションのまま）</span>
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">StudyRecordMapper</span> {
+  <span class="ann">@Select</span>(<span class="str">"SELECT * FROM study_records "</span>
+        + <span class="str">"WHERE subject_id = #{subjectId} "</span>
+        + <span class="str">"ORDER BY studied_on"</span>)
+  <span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt; <span class="fn">findBySubjectId</span>(
+        <span class="ann">@Param</span>(<span class="str">"subjectId"</span>) <span class="type">Integer</span> subjectId);
+}
+
+
+<span class="comment">// → アノテーション+XML の混在は問題なし</span>
+<span class="comment">// → 現場でもこういう状態は普通</span>
+<span class="comment">// → 「使い分け」の話は別冊S3で深掘り</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かして確認</h2>
+    <span class="en">RUN IN BROWSER</span>
+  </div>
+  <p class="pattern-desc">作業後、起動して<b>「Vol.2と同じ画面」</b>が出ることを確認します。<b>変わらないこと</b>が成功の証。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">browser-check</span>
+      <span class="tag-desc">起動と動作確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>アプリ起動中なら<b>停止</b>（赤い四角ボタン）</li>
+          <li><code>TodoApplication.java</code> を右クリック → <span class="menu-code" style="color:var(--accent-3)">Run As</span> → <span class="menu-code" style="color:var(--accent-3)">Spring Boot App</span></li>
+          <li><code>Started TodoApplication</code> を確認</li>
+          <li>ブラウザで <code>http://localhost:8080/subjects</code> を開く</li>
+          <li><b>Vol.2と同じ入れ子表示</b>が出る</li>
+          <li>コンソールに SELECT文 が流れる（先頭が「subjects」用のSQL）</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ ここまで動けばVol.3クリア！</p>
+        <p style="margin-top:6px;font-size:13px"><b>変わらないことを確認</b>──これが地味だが確実な進歩。</p>
+      </div>
+      <div class="code"><span class="code-head">// コンソールに出るSQLログ</span>
+
+<span class="comment">// ── 最初の1回（XML側のSQL）──</span>
+==&gt;  Preparing:
+        SELECT * FROM subjects ORDER BY id
+==&gt; Parameters:
+&lt;==      Total: 5
+
+<span class="comment">// ── ループ内のN回（アノテ側のSQL）──</span>
+==&gt;  Preparing:
+        SELECT * FROM study_records
+        WHERE subject_id = ? ORDER BY studied_on
+==&gt; Parameters: 1(Integer)
+&lt;==      Total: 5
+... 以下 4回続く ...
+
+
+<span class="comment">// 注目：</span>
+<span class="comment">// 1個目のSQLは XML から</span>
+<span class="comment">// 残り5個のSQLは @Select から</span>
+<span class="comment">// → アノテーション+XML が共存して動く</span>
+<span class="comment">// → 別冊S3でこの「混在の哲学」を深掘り</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>動いて当たり前</b>」と思うかもしれませんが、リファクタリングで<b>動かない事故が起きる</b>のがプロでもよくあります。<b>「変わらないことを確認する」習慣</b>は重要。Vol.3 は<b>その筋肉を鍛える巻</b>でもあります。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">XML Mapper 初登場の巻だけあって、<b>地雷が多め</b>です。よくあるトラブル6選をまとめます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">troubles</span>
+      <span class="tag-desc">起きやすいトラブル6選</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card">
+          <span class="label">TROUBLE 1</span>
+          <div class="name">Invalid bound statement (not found)</div>
+          <div class="desc"><b>原因</b>：XMLとJavaが繋がっていない。<br><b>対処</b>：以下4点を確認。<br>① <code>application.properties</code> の <code>mybatis.mapper-locations</code> の指定<br>② XML の <code>namespace</code> が <code>com.example.todo.mapper.SubjectMapper</code> と<b>完全一致</b><br>③ <code>&lt;select id="findAll"&gt;</code> がメソッド名と完全一致<br>④ XMLファイルが <code>src/main/resources/mybatis/</code> 直下にある</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 2</span>
+          <div class="name">Type 'Subject' is ambiguous</div>
+          <div class="desc"><b>原因</b>：<code>resultType="Subject"</code> と<b>短く書いた</b>が、MyBatisが見つけられない。<br><b>対処</b>：<b>フルパス</b>で書く：<code>resultType="com.example.todo.entity.Subject"</code>。<br>または別冊S3で扱う <code>type-aliases</code> 機能を使う。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 3</span>
+          <div class="name">Method 'findAll' is defined twice</div>
+          <div class="desc"><b>原因</b>：Java側に <code>@Select</code>、XML側に <code>&lt;select id="findAll"&gt;</code> が<b>両方</b>残っている。<br><b>対処</b>：<code>SubjectMapper.java</code> の <code>@Select(...)</code> 行と、不要な import を削除する。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 4</span>
+          <div class="name">XML構文エラー（Premature end of file 等）</div>
+          <div class="desc"><b>原因</b>：閉じタグ抜け／引用符抜け／DOCTYPE typo。<br><b>対処</b>：Eclipseの <code>Problems</code> ビューを開く。XMLファイルにマウスを置くと該当行が示される。<b>DOCTYPE は1文字も変えずコピペ</b>が鉄則。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 5</span>
+          <div class="name">XMLを修正しても反映されない</div>
+          <div class="desc"><b>原因</b>：起動中のアプリは XML を読み直さない（コンパイル時の値で固定）。<br><b>対処</b>：<b>アプリを停止→再起動</b>。または DevTools を有効にして<b>自動リスタート</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 6</span>
+          <div class="name">XML を作ったが空のフォルダになる</div>
+          <div class="desc"><b>原因</b>：<code>New → File</code> ではなく <code>New → Class</code> を選んでしまった等。<br><b>対処</b>：拡張子 <code>.xml</code> のファイルが <code>resources/mybatis/</code> 直下にあるか Package Explorer で確認。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// TROUBLE 1 の典型出力</span>
+
+org.apache.ibatis.binding
+.BindingException:
+Invalid bound statement (not found):
+com.example.todo.mapper
+.SubjectMapper.findAll
+
+
+<span class="comment">// ─── 原因チェックの定型 ───</span>
+
+<span class="comment">// ① XMLは読み込まれているか？</span>
+<span class="comment">//    Spring Bootの起動ログに「Parsed mapper file」</span>
+<span class="comment">//    の行があるか探す（DEBUGログ要有効）</span>
+
+<span class="comment">// ② namespaceは正確か？</span>
+&lt;<span class="kw">mapper</span> <span class="ann">namespace</span>=
+  <span class="str">"com.example.todo.mapper.SubjectMapper"</span>&gt;
+<span class="comment">//   ↑ メソッド名「findAll」までは入れない</span>
+<span class="comment">//   ↑ クラス名で終わる</span>
+
+<span class="comment">// ③ id はメソッド名と完全一致？</span>
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findAll"</span>&gt;
+<span class="comment">//   ↑ <span class="fn">findAll</span>() と完全一致</span>
+<span class="comment">//   ↑ FindAll, find_all はダメ</span>
+
+
+<span class="code-head" style="margin-top:14px">// TROUBLE 5 への根本対策</span>
+
+<span class="comment"># application.properties に追加すれば</span>
+<span class="comment"># XML編集時に自動でリスタート</span>
+spring.devtools.restart.enabled=true
+<span class="comment"># Aで設定済みのはず</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.3本編の<b>完了チェックリスト</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol3-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li><code>application.properties</code> に <code>mybatis.mapper-locations</code> が追加されている</li>
+          <li><code>src/main/resources/mybatis/</code> フォルダが存在する</li>
+          <li><code>SubjectMapper.xml</code> が作成済み（mybatis フォルダ直下）</li>
+          <li>XMLの <code>namespace</code> が <code>com.example.todo.mapper.SubjectMapper</code> である</li>
+          <li>XMLに <code>&lt;select id="findAll" resultType="...Subject"&gt;</code> がある</li>
+          <li><code>SubjectMapper.java</code> から <code>@Select</code> が削除されている</li>
+          <li>不要な <code>import @Select</code> も整理されている</li>
+          <li>アプリ起動時にエラーが出ない</li>
+          <li><code>http://localhost:8080/subjects</code> でVol.2と同じ画面が出る</li>
+          <li>コンソールにSQLログが流れる</li>
+          <li>StudyRecordMapper は<b>変更していない</b>（混在状態でOK）</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.3本編完了！</b><br>
+          <b>XML Mapper導入</b>のスキル獲得です。Vol.4で<code>resultMap</code>を書くための<b>「箱」</b>が整いました。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で獲得したスキル</span>
+
+★ <span class="kw">XML Mapper 導入</span> ── 獲得！
+
+  <span class="comment">// できるようになったこと:</span>
+  <span class="comment">// ・mybatis.mapper-locations の設定</span>
+  <span class="comment">// ・XMLファイルの DOCTYPE / namespace / id</span>
+  <span class="comment">// ・resultType でクラスマッピング</span>
+  <span class="comment">// ・アノテーションSQLからXMLへの移行</span>
+  <span class="comment">// ・「動くまま中身を変える」</span>
+  <span class="comment">//   リファクタリングの実体験</span>
+
+
+<span class="code-head" style="margin-top:14px">// 次にやること</span>
+
+<span class="comment">// ① 別冊 S3 を読む</span>
+<span class="comment">//   タイトル: 「アノテーション vs XML Mapper」</span>
+<span class="comment">//   内容: 使い分け / 業界トレンド / 規約</span>
+
+
+<span class="comment">// ② Vol.4 本編：</span>
+<span class="comment">//   タイトル: 「resultMapで関連を取得しよう」</span>
+<span class="comment">//   獲得スキル: resultMap + collection</span>
+<span class="comment">//   内容:</span>
+<span class="comment">//   ・SubjectMapper.xml に新メソッド追加</span>
+<span class="comment">//   ・JOIN で subjects ⨝ study_records</span>
+<span class="comment">//   ・&lt;resultMap&gt; + &lt;collection&gt; で組み立て</span>
+<span class="comment">//   ・findAllWithRecords() を「2回SQL」から</span>
+<span class="comment">//    「1回JOIN」へ進化</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(31,55,41,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S3</div>
+    <p>本編Vol.3お疲れさまでした。アノテーションSQLとXML Mapperの<b>2つの書き方</b>を体験したあなたに、別冊S3「<b>アノテーション vs XML Mapper</b>」では、<b>「いつどっちを使うべきか」「業界のトレンドは？」「プロジェクト規約はどう決める？」</b>という<b>使い分けの判断軸</b>を伝授します。<br>Cの全15巻で大事な<b>「実装の道具を選ぶセンス」</b>の第一歩です。<b>続けて別冊S3へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.03 / 15 ── XML MAPPER INTRO（本編）</span>
+</footer>
+
+</body>
+</html>

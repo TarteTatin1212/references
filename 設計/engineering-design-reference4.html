@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリング設計編 クラス設計とデザインパターン Vol.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2c1f12;
+    --paper:#ecdfc4;
+    --paper-2:#dcc69e;
+    --accent:#824826;
+    --accent-2:#b07644;
+    --accent-3:#5d2f17;
+    --muted:#75614d;
+    --line:#b59872;
+    --code-bg:#251a0c;
+    --code-text:#f0e4cf;
+    --panel-bg:#f8efd9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;line-height:1.75;font-size:15px}
+  body{max-width:1180px;margin:0 auto;padding:0 28px 80px}
+
+  .page-header{position:relative;padding:48px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+  .page-header::before{content:"△";position:absolute;right:-10px;top:-30px;font-size:280px;color:var(--accent);opacity:.18;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+  .page-header > *{position:relative;z-index:1}
+  .series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace;margin-right:8px}
+  .vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace}
+  h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin-top:18px;letter-spacing:.04em}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;font-family:"JetBrains Mono",monospace;letter-spacing:.08em}
+  .lead{max-width:640px;margin-top:22px;font-size:15px}
+  .lead b{color:var(--accent-3)}
+
+  .toc{background:var(--paper-2);padding:18px 22px;margin:32px 0 48px;border-left:3px solid var(--accent)}
+  .toc-title{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:.2em;color:var(--accent-3);margin-bottom:10px}
+  .toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px}
+  .toc li{font-size:13px}
+  .toc a{color:var(--ink);text-decoration:none;font-family:"JetBrains Mono",monospace}
+  .toc a::before{content:"— ";color:var(--accent)}
+  .toc a:hover{color:var(--accent)}
+
+  section{margin:64px 0}
+  .section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .section-num{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent);font-weight:600}
+  .section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;letter-spacing:.04em;flex:1}
+  .section-header .en{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:.15em}
+  .pattern-desc{max-width:680px;margin-bottom:20px;font-size:14.5px}
+  .pattern-desc b{color:var(--accent-3)}
+
+  .demo-card{border:1px solid var(--line);background:#fff;margin:18px 0}
+  .demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .tag-name{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+  .tag-desc{font-size:12px;color:var(--muted)}
+  .demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+  .panel{background:var(--panel-bg);padding:20px;border-right:1px solid var(--line);font-size:14px}
+  .panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:.1em}
+  .code{background:var(--code-bg);color:var(--code-text);padding:20px;font-family:"JetBrains Mono",monospace;font-size:12.5px;line-height:1.85;overflow-x:auto;white-space:pre-wrap}
+  @media(max-width:720px){
+    .demo-body{grid-template-columns:1fr}
+    .panel{border-right:none;border-bottom:1px solid var(--line)}
+  }
+
+  .kw{color:#ffc88a}
+  .type{color:#c2a3ff}
+  .fn{color:#a3c9ff}
+  .str{color:#b5e8b0}
+  .num{color:#f7a8d8}
+  .comment{color:#998aaa;font-style:italic}
+  .ann{color:#f7c08a}
+  .menu-code{color:#f7c08a;font-weight:600}
+  .step{color:#ffc88a;font-weight:600}
+
+  .tip{background:rgba(130,72,38,.09);border-left:3px solid var(--accent);padding:14px 18px;margin:18px 0;font-size:14px}
+  .tip-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);letter-spacing:.18em;margin-bottom:6px;font-weight:600}
+  .tip b{color:var(--accent-3)}
+
+  .key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:11.5px}
+
+  .panel ul{list-style:none;margin:8px 0}
+  .panel li{padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .panel li:last-child{border-bottom:none}
+  .panel .label{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-right:6px}
+  .panel strong{color:var(--accent-3);font-weight:600}
+
+  .diagram{padding:14px;background:#fff;border:1px dashed var(--line);font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.6;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+  .compare{width:100%;font-size:13px;margin:10px 0}
+  .compare th{background:var(--paper-2);text-align:left;padding:8px;border-bottom:1px solid var(--line);font-family:"Shippori Mincho",serif;font-size:13px}
+  .compare td{padding:8px;border-bottom:1px dashed var(--line);vertical-align:top}
+  .compare .ng{color:#b04848}
+  .compare .ok{color:#4a7848}
+
+  .stars{color:var(--accent);font-weight:700;letter-spacing:.05em}
+  .pattern-badge{display:inline-block;background:var(--accent-3);color:var(--paper);padding:3px 10px;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.1em;margin-right:8px;border-radius:2px}
+
+  .page-footer{margin-top:80px;padding-top:24px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.1em}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">ENGINEERING DESIGN</span>
+  <span class="vol-tag">VOL.04</span>
+  <h1>クラス設計とデザインパターン</h1>
+  <div class="subtitle">CLASS DESIGN AND DESIGN PATTERNS — GOF ESSENTIALS</div>
+  <p class="lead">デザインパターンは<b>「先人が見つけた定番の解き方」</b>のカタログです。同じような問題は何度も現れるので、毎回ゼロから設計する必要はありません。本巻では現場頻出のGoFパターン9種を、実用文脈とコードで解説します。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — 本巻の目次</div>
+  <ul>
+    <li><a href="#s1">01 デザインパターンとは</a></li>
+    <li><a href="#s2">02 Strategy — 振る舞いを差し替える</a></li>
+    <li><a href="#s3">03 Factory — 生成を任せる</a></li>
+    <li><a href="#s4">04 Singleton — 唯一の存在</a></li>
+    <li><a href="#s5">05 Observer — 通知の仕組み</a></li>
+    <li><a href="#s6">06 Decorator — 装飾で機能追加</a></li>
+    <li><a href="#s7">07 Adapter — 形を合わせる</a></li>
+    <li><a href="#s8">08 Template Method — 流れを固定</a></li>
+    <li><a href="#s9">09 現場で頻出のパターン早見表</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>デザインパターンとは</h2>
+    <span class="en">WHAT ARE DESIGN PATTERNS</span>
+  </div>
+  <p class="pattern-desc">デザインパターンは<b>「コードのコピペ」ではなく「設計のコピペ」</b>です。「この問題ならこういう構造で解く」という型を共有することで、設計の議論が早くなり、コードの可読性も上がります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">gof-23-patterns</span>
+      <span class="tag-desc">GoF 23パターンの分類</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// GoFパターンの3カテゴリ</div>
+        <ul>
+          <li><span class="label">生成</span><strong>Creational（5種）</strong><br>オブジェクト生成の工夫<br><span style="font-size:12px;color:var(--muted)">Factory / Singleton / Builder / Prototype / Abstract Factory</span></li>
+          <li><span class="label">構造</span><strong>Structural（7種）</strong><br>クラスの組み合わせ方<br><span style="font-size:12px;color:var(--muted)">Adapter / Decorator / Facade / Proxy / Composite ほか</span></li>
+          <li><span class="label">振舞</span><strong>Behavioral（11種）</strong><br>オブジェクト間の通信<br><span style="font-size:12px;color:var(--muted)">Strategy / Observer / Template / Command / Iterator ほか</span></li>
+        </ul>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)">全23種ありますが、<b>現場で本当に使うのは10種類くらい</b>。まずはそれだけ覚えれば十分です。</p>
+      </div>
+      <div class="code"><span class="comment">// パターンを知ると会話が早くなる</span>
+
+<span class="ann">[パターン語彙なし]</span>
+A: 「決済方法を後から増やせるように、
+    共通のインターフェースを作って、
+    各方式のクラスを実装で、
+    呼び出し側で差し替えられるように…」
+B: 「えーっと、つまり?」
+
+<span class="ann">[パターン語彙あり]</span>
+A: 「<span class="str">Strategyパターン</span>で行こう」
+B: 「了解、PaymentStrategy作るね」
+
+<span class="comment">// パターン名 = 設計の共通語</span>
+<span class="comment">// 知ってる人同士なら一瞬で伝わる</span>
+
+<span class="comment">// ただし!</span>
+<span class="comment">// パターン名を振り回すのは初心者の証拠。</span>
+<span class="comment">// 本当の達人は「これStrategyっぽいね」</span>
+<span class="comment">// くらいの距離感で扱う。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — パターンは万能薬じゃない</div>
+    パターンを<b>「適用すること」</b>を目的にしてはいけません。「シンプルなif文で済むのにStrategyで書く」は典型的な過剰設計です。<b>同じパターンが3回以上現れた時に、はじめてパターンとして抽出する</b>くらいでちょうどいいです。
+  </div>
+</section>
+
+<section id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>Strategy — 振る舞いを差し替える</h2>
+    <span class="en">STRATEGY PATTERN</span>
+  </div>
+  <p class="pattern-desc"><span class="pattern-badge">Strategy</span>アルゴリズム（戦略）をオブジェクトとして取り出し、<b>差し替え可能にする</b>パターン。GoFパターンで<b>最も使用頻度が高い</b>と言ってもよい定番中の定番です。OCPの実現手段でもあります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">strategy-pattern</span>
+      <span class="tag-desc">if/switchの分岐をクラスに変換</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 適用場面</div>
+        <ul>
+          <li><strong>決済方法の選択</strong><br>クレカ / 銀行 / コンビニ / PayPay</li>
+          <li><strong>送料計算</strong><br>ヤマト / 佐川 / 自社便</li>
+          <li><strong>ソートアルゴリズム</strong><br>クイックソート / マージ / バブル</li>
+          <li><strong>圧縮形式</strong><br>zip / gzip / tar</li>
+        </ul>
+        <p style="margin-top:10px;font-size:13px"><b>「複数のやり方がある処理」</b>を見たら反射的にStrategy。これだけ覚えれば中級者の入口です。</p>
+      </div>
+      <div class="code"><span class="comment">// Strategy パターンの基本形</span>
+
+<span class="comment">// ① 戦略のインターフェース</span>
+<span class="kw">interface</span> <span class="type">PaymentStrategy</span> {
+  <span class="fn">pay</span>(amount: <span class="type">number</span>): <span class="type">Result</span>;
+}
+
+<span class="comment">// ② 具体的な戦略を複数実装</span>
+<span class="kw">class</span> <span class="type">CreditCardPayment</span>
+  <span class="kw">implements</span> <span class="type">PaymentStrategy</span> {
+  <span class="fn">pay</span>(amount) {
+    <span class="comment">// Stripeでクレカ決済</span>
+    <span class="kw">return</span> stripe.<span class="fn">charge</span>(amount);
+  }
+}
+
+<span class="kw">class</span> <span class="type">PayPayPayment</span>
+  <span class="kw">implements</span> <span class="type">PaymentStrategy</span> {
+  <span class="fn">pay</span>(amount) {
+    <span class="kw">return</span> paypay.<span class="fn">request</span>(amount);
+  }
+}
+
+<span class="comment">// ③ 戦略を持つコンテキスト</span>
+<span class="kw">class</span> <span class="type">Checkout</span> {
+  <span class="kw">constructor</span>(
+    <span class="kw">private</span> strategy: <span class="type">PaymentStrategy</span>
+  ) {}
+
+  <span class="fn">execute</span>(amount) {
+    <span class="kw">return</span> <span class="kw">this</span>.strategy.<span class="fn">pay</span>(amount);
+  }
+}
+
+<span class="comment">// ④ 利用側で戦略を選んで注入</span>
+<span class="kw">const</span> checkout = <span class="kw">new</span> <span class="type">Checkout</span>(
+  <span class="kw">new</span> <span class="type">CreditCardPayment</span>()
+);
+checkout.<span class="fn">execute</span>(<span class="num">5000</span>);</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">TIP — 現場では「Policy」とも呼ぶ</div>
+    Strategyパターンは<b>「Policy（方針）」</b>という別名でも呼ばれます。「割引ポリシー」「課金ポリシー」など、ビジネスルールを差し替える文脈ではPolicyのほうが自然です。同じ構造でも、命名で意図が伝わりやすくなります。
+  </div>
+</section>
+
+<section id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>Factory — 生成を任せる</h2>
+    <span class="en">FACTORY PATTERN</span>
+  </div>
+  <p class="pattern-desc"><span class="pattern-badge">Factory</span><b>オブジェクトの生成手順を専用クラスに任せる</b>パターン。<code style="background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px">new</code>を散らかさず1箇所に集めることで、生成ロジックの変更が楽になります。条件分岐で型を選ぶ場面で頻出。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">factory-pattern</span>
+      <span class="tag-desc">生成の責務を集約</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Factoryが解決する問題</div>
+        <ul>
+          <li><strong>newが各所に散らかる</strong><br>後から生成手順を変えたい時、全箇所修正…</li>
+          <li><strong>生成に複雑な手順</strong><br>引数の組み立て、依存の解決、初期化処理</li>
+          <li><strong>条件で型が変わる</strong><br>「設定によってA or Bのインスタンスを返す」</li>
+        </ul>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)">DIコンテナ（Spring、NestJSなど）は<b>巨大なFactoryの集合体</b>と捉えてもOK。</p>
+      </div>
+      <div class="code"><span class="comment">// Factory パターンの基本形</span>
+
+<span class="comment">// ① 生成対象（共通型）</span>
+<span class="kw">interface</span> <span class="type">Logger</span> {
+  <span class="fn">log</span>(msg: <span class="type">string</span>): <span class="type">void</span>;
+}
+
+<span class="kw">class</span> <span class="type">ConsoleLogger</span> <span class="kw">implements</span> <span class="type">Logger</span> { ... }
+<span class="kw">class</span> <span class="type">FileLogger</span> <span class="kw">implements</span> <span class="type">Logger</span> { ... }
+<span class="kw">class</span> <span class="type">CloudLogger</span> <span class="kw">implements</span> <span class="type">Logger</span> { ... }
+
+<span class="comment">// ② Factory が選んで生成</span>
+<span class="kw">class</span> <span class="type">LoggerFactory</span> {
+  <span class="kw">static</span> <span class="fn">create</span>(env: <span class="type">string</span>): <span class="type">Logger</span> {
+    <span class="kw">if</span> (env === <span class="str">"local"</span>) {
+      <span class="kw">return</span> <span class="kw">new</span> <span class="type">ConsoleLogger</span>();
+    }
+    <span class="kw">if</span> (env === <span class="str">"prod"</span>) {
+      <span class="kw">return</span> <span class="kw">new</span> <span class="type">CloudLogger</span>({
+        endpoint: process.env.LOG_URL,
+        apiKey:   process.env.LOG_KEY,
+      });
+    }
+    <span class="kw">return</span> <span class="kw">new</span> <span class="type">FileLogger</span>(<span class="str">"/var/log/app.log"</span>);
+  }
+}
+
+<span class="comment">// ③ 利用側</span>
+<span class="kw">const</span> logger = <span class="type">LoggerFactory</span>.<span class="fn">create</span>(
+  process.env.NODE_ENV
+);
+logger.<span class="fn">log</span>(<span class="str">"hello"</span>);
+
+<span class="comment">// 利用側は ConsoleLogger なのか</span>
+<span class="comment">// CloudLogger なのか知らなくていい</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — Builderと使い分け</div>
+    Factoryは<b>「型を選んで生成」</b>、Builderは<b>「複雑な引数を組み立てて生成」</b>。同じ「生成系」でも目的が違います。引数が10個ある巨大オブジェクトはFactoryよりBuilderの出番。<code style="background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">User.builder().name(...).age(...).build()</code> の形が代表例。
+  </div>
+</section>
+
+<section id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>Singleton — 唯一の存在</h2>
+    <span class="en">SINGLETON PATTERN</span>
+  </div>
+  <p class="pattern-desc"><span class="pattern-badge">Singleton</span><b>システム全体で1つしか存在しないことを保証する</b>パターン。便利な反面、<b>アンチパターン扱いされることも多い</b>クセモノです。テスタビリティを下げる副作用があり、使用は慎重に。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">singleton-pattern</span>
+      <span class="tag-desc">便利だが諸刃の剣</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 適切なSingleton</div>
+        <ul>
+          <li><strong>設定オブジェクト</strong><br>環境変数を読み込んだ結果</li>
+          <li><strong>DBコネクションプール</strong><br>1接続あたりコスト高</li>
+          <li><strong>ロガー</strong><br>全体で1つあれば十分</li>
+          <li><strong>キャッシュ</strong><br>共有が前提</li>
+        </ul>
+        <p style="margin-top:10px;font-size:13px"><b>避けたい使い方</b>: 状態を持つビジネスロジックをSingletonにする → グローバル変数と同じ罠にハマる</p>
+      </div>
+      <div class="code"><span class="comment">// Singleton の基本形</span>
+
+<span class="kw">class</span> <span class="type">AppConfig</span> {
+  <span class="kw">private static</span> instance: <span class="type">AppConfig</span>;
+  <span class="kw">private</span> settings: <span class="type">Record</span>&lt;<span class="type">string</span>, <span class="type">any</span>&gt;;
+
+  <span class="comment">// ② コンストラクタを隠す</span>
+  <span class="kw">private constructor</span>() {
+    <span class="kw">this</span>.settings = loadFromEnv();
+  }
+
+  <span class="comment">// ③ 唯一の取得口</span>
+  <span class="kw">static</span> <span class="fn">getInstance</span>(): <span class="type">AppConfig</span> {
+    <span class="kw">if</span> (!<span class="type">AppConfig</span>.instance) {
+      <span class="type">AppConfig</span>.instance = <span class="kw">new</span> <span class="type">AppConfig</span>();
+    }
+    <span class="kw">return</span> <span class="type">AppConfig</span>.instance;
+  }
+
+  <span class="fn">get</span>(key: <span class="type">string</span>) {
+    <span class="kw">return</span> <span class="kw">this</span>.settings[key];
+  }
+}
+
+<span class="comment">// 利用</span>
+<span class="kw">const</span> cfg = <span class="type">AppConfig</span>.<span class="fn">getInstance</span>();
+<span class="kw">const</span> port = cfg.<span class="fn">get</span>(<span class="str">"PORT"</span>);
+
+<span class="comment">// ⚠ よくある罠</span>
+<span class="comment">// テストで設定を差し替えにくい</span>
+<span class="comment">// → DI（依存性注入）のほうが現代的</span>
+<span class="comment">// → SpringやNestJSの@Singletonは別物</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">TIP — Singletonの代わりにDI</div>
+    現代的なコードでは<b>「コンテナ管理のシングルトン」</b>が主流。Springの <code style="background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">@Component</code> や NestJS の <code style="background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">@Injectable</code> は<b>事実上のSingleton</b>ですが、テスト時に差し替え可能。クラス側でグローバル状態を持つ素のSingletonは避けるのが無難です。
+  </div>
+</section>
+
+<section id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>Observer — 通知の仕組み</h2>
+    <span class="en">OBSERVER PATTERN</span>
+  </div>
+  <p class="pattern-desc"><span class="pattern-badge">Observer</span><b>あるオブジェクトの状態変化を、複数の関心ある側に自動通知する</b>パターン。<b>イベント駆動の根幹</b>。UIフレームワーク、メッセージング、Pub/Subなど、現代の至るところで使われています。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">observer-pattern</span>
+      <span class="tag-desc">発行側と購読側を疎結合に</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 適用場面</div>
+        <ul>
+          <li><strong>UIの再描画</strong><br>Reactのstate変更で再レンダー</li>
+          <li><strong>イベントバス</strong><br>ボタンクリック → 複数のリスナー</li>
+          <li><strong>メール送信トリガー</strong><br>「注文確定」イベントに複数の購読者</li>
+          <li><strong>Pub/Sub</strong><br>Kafka、Redis、RabbitMQ等</li>
+        </ul>
+        <p style="margin-top:10px;font-size:13px"><b>「○○が起きた時に△△する」</b>という構造があれば、それはObserver。</p>
+      </div>
+      <div class="code"><span class="comment">// Observer の基本形</span>
+
+<span class="kw">interface</span> <span class="type">Observer</span>&lt;T&gt; {
+  <span class="fn">update</span>(event: T): <span class="type">void</span>;
+}
+
+<span class="kw">class</span> <span class="type">EventEmitter</span>&lt;T&gt; {
+  <span class="kw">private</span> observers: <span class="type">Observer</span>&lt;T&gt;[] = [];
+
+  <span class="fn">subscribe</span>(o: <span class="type">Observer</span>&lt;T&gt;) {
+    <span class="kw">this</span>.observers.<span class="fn">push</span>(o);
+  }
+
+  <span class="fn">unsubscribe</span>(o: <span class="type">Observer</span>&lt;T&gt;) {
+    <span class="kw">this</span>.observers =
+      <span class="kw">this</span>.observers.<span class="fn">filter</span>(x =&gt; x !== o);
+  }
+
+  <span class="fn">emit</span>(event: T) {
+    <span class="kw">this</span>.observers.<span class="fn">forEach</span>(o =&gt; o.<span class="fn">update</span>(event));
+  }
+}
+
+<span class="comment">// 注文確定イベントを発行する側</span>
+<span class="kw">const</span> orderEvents = <span class="kw">new</span> <span class="type">EventEmitter</span>&lt;<span class="type">Order</span>&gt;();
+
+<span class="comment">// 各購読者を登録</span>
+orderEvents.<span class="fn">subscribe</span>({
+  <span class="fn">update</span>: (order) =&gt; sendConfirmationMail(order)
+});
+orderEvents.<span class="fn">subscribe</span>({
+  <span class="fn">update</span>: (order) =&gt; updateInventory(order)
+});
+orderEvents.<span class="fn">subscribe</span>({
+  <span class="fn">update</span>: (order) =&gt; analytics.<span class="fn">track</span>(order)
+});
+
+<span class="comment">// 発行</span>
+orderEvents.<span class="fn">emit</span>(newOrder);
+<span class="comment">// → 3つの処理が自動的に走る</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 関心の分離の極致</div>
+    Observerの本当の威力は<b>「発行側は誰が受け取るか知らなくていい」</b>こと。新しい購読者を追加しても発行側のコードは1行も変わりません。これがOCPの理想形です。
+  </div>
+</section>
+
+<section id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>Decorator — 装飾で機能追加</h2>
+    <span class="en">DECORATOR PATTERN</span>
+  </div>
+  <p class="pattern-desc"><span class="pattern-badge">Decorator</span><b>既存クラスを変更せず、機能を後付けする</b>パターン。継承の代わりに「ラップ」で機能追加するため、組み合わせが自由。HTTPミドルウェア、ストリーム処理、ログ・キャッシュの追加などで活躍します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">decorator-pattern</span>
+      <span class="tag-desc">機能を重ね掛けする</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 直感的なイメージ</div>
+        <div class="diagram">[元のオブジェクト]
+   Coffee (300円)
+       │
+   ＋ Milk装飾 (50円)
+       │
+   ＋ Sugar装飾 (30円)
+       │
+   ＋ Cinnamon装飾 (40円)
+       ↓
+   合計 420円</div>
+        <p style="margin-top:14px;font-size:13px">同じインターフェースを保ったまま、<b>機能をどんどん重ねていける</b>のが特徴。<br><br>HTTPで言えば「<b>認証 → ログ → キャッシュ → 本処理</b>」のミドルウェアチェーンが完全にこれ。</p>
+      </div>
+      <div class="code"><span class="comment">// Decorator の基本形</span>
+
+<span class="kw">interface</span> <span class="type">DataSource</span> {
+  <span class="fn">read</span>(): <span class="type">string</span>;
+  <span class="fn">write</span>(data: <span class="type">string</span>): <span class="type">void</span>;
+}
+
+<span class="comment">// ① 基本実装</span>
+<span class="kw">class</span> <span class="type">FileDataSource</span> <span class="kw">implements</span> <span class="type">DataSource</span> {
+  <span class="fn">read</span>() { <span class="kw">return</span> fs.<span class="fn">read</span>(<span class="str">"data.txt"</span>); }
+  <span class="fn">write</span>(d) { fs.<span class="fn">write</span>(<span class="str">"data.txt"</span>, d); }
+}
+
+<span class="comment">// ② 装飾の基底</span>
+<span class="kw">abstract class</span> <span class="type">Decorator</span> <span class="kw">implements</span> <span class="type">DataSource</span> {
+  <span class="kw">constructor</span>(<span class="kw">protected</span> source: <span class="type">DataSource</span>) {}
+  <span class="fn">read</span>()  { <span class="kw">return</span> <span class="kw">this</span>.source.<span class="fn">read</span>(); }
+  <span class="fn">write</span>(d) { <span class="kw">this</span>.source.<span class="fn">write</span>(d); }
+}
+
+<span class="comment">// ③ 暗号化を追加</span>
+<span class="kw">class</span> <span class="type">Encrypted</span> <span class="kw">extends</span> <span class="type">Decorator</span> {
+  <span class="fn">read</span>()  { <span class="kw">return</span> <span class="fn">decrypt</span>(<span class="kw">super</span>.<span class="fn">read</span>()); }
+  <span class="fn">write</span>(d) { <span class="kw">super</span>.<span class="fn">write</span>(<span class="fn">encrypt</span>(d)); }
+}
+
+<span class="comment">// ④ 圧縮を追加</span>
+<span class="kw">class</span> <span class="type">Compressed</span> <span class="kw">extends</span> <span class="type">Decorator</span> {
+  <span class="fn">read</span>()  { <span class="kw">return</span> <span class="fn">unzip</span>(<span class="kw">super</span>.<span class="fn">read</span>()); }
+  <span class="fn">write</span>(d) { <span class="kw">super</span>.<span class="fn">write</span>(<span class="fn">zip</span>(d)); }
+}
+
+<span class="comment">// ⑤ 重ね掛け</span>
+<span class="kw">const</span> source = <span class="kw">new</span> <span class="type">Encrypted</span>(
+  <span class="kw">new</span> <span class="type">Compressed</span>(
+    <span class="kw">new</span> <span class="type">FileDataSource</span>()
+  )
+);
+<span class="comment">// → 書き込み: zip → encrypt → file</span>
+<span class="comment">// → 読み込み: file → decrypt → unzip</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — TypeScriptの@デコレータ</div>
+    TypeScriptやPython、Javaの<b>「@アノテーション」</b>は、このDecoratorパターンの構文糖衣です。<code style="background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">@Log @Cache</code> のように複数積み重ねできるのは、まさにこのパターン由来。
+  </div>
+</section>
+
+<section id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>Adapter — 形を合わせる</h2>
+    <span class="en">ADAPTER PATTERN</span>
+  </div>
+  <p class="pattern-desc"><span class="pattern-badge">Adapter</span><b>インターフェースの違うクラス同士をつなぐ</b>パターン。海外旅行のコンセント変換アダプタと同じ発想。<b>既存ライブラリやレガシーAPIをラップする</b>場面で大活躍します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">adapter-pattern</span>
+      <span class="tag-desc">外部の形を内部の形に変換</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある適用場面</div>
+        <ul>
+          <li><strong>外部APIラッパー</strong><br>Stripe / Twilio / Slack 等の差を吸収</li>
+          <li><strong>レガシー連携</strong><br>古いシステムのSOAPをREST風に</li>
+          <li><strong>ライブラリ差し替え</strong><br>moment → dayjs 移行時のクッション</li>
+          <li><strong>テスト用ダブル</strong><br>本物の代わりにモックを噛ませる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="comment">// Adapter の基本形</span>
+
+<span class="comment">// 内側で使いたい統一インターフェース</span>
+<span class="kw">interface</span> <span class="type">SmsClient</span> {
+  <span class="fn">send</span>(to: <span class="type">string</span>, body: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
+}
+
+<span class="comment">// Twilioを使うアダプタ</span>
+<span class="kw">class</span> <span class="type">TwilioAdapter</span> <span class="kw">implements</span> <span class="type">SmsClient</span> {
+  <span class="kw">constructor</span>(<span class="kw">private</span> client: <span class="type">TwilioSDK</span>) {}
+
+  <span class="kw">async</span> <span class="fn">send</span>(to: <span class="type">string</span>, body: <span class="type">string</span>) {
+    <span class="comment">// TwilioのAPI形式に変換</span>
+    <span class="kw">await</span> <span class="kw">this</span>.client.messages.<span class="fn">create</span>({
+      from: process.env.TWILIO_FROM,
+      to: to,
+      body: body,
+    });
+  }
+}
+
+<span class="comment">// AWS SNSを使うアダプタ</span>
+<span class="kw">class</span> <span class="type">SnsAdapter</span> <span class="kw">implements</span> <span class="type">SmsClient</span> {
+  <span class="kw">constructor</span>(<span class="kw">private</span> sns: <span class="type">AWS.SNS</span>) {}
+
+  <span class="kw">async</span> <span class="fn">send</span>(to: <span class="type">string</span>, body: <span class="type">string</span>) {
+    <span class="kw">await</span> <span class="kw">this</span>.sns.<span class="fn">publish</span>({
+      PhoneNumber: to,
+      Message: body,
+    }).<span class="fn">promise</span>();
+  }
+}
+
+<span class="comment">// 使う側は SmsClient だけを知っていればOK</span>
+<span class="kw">function</span> <span class="fn">notify</span>(sms: <span class="type">SmsClient</span>, user) {
+  <span class="kw">return</span> sms.<span class="fn">send</span>(user.phone, <span class="str">"ご注文確定"</span>);
+}
+
+<span class="comment">// 後でTwilio→SNSに乗り換えても</span>
+<span class="comment">// 利用側のコードは一切変わらない</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 「腐敗防止層」の正体</div>
+    DDDで出てくる<b>「腐敗防止層（Anti-Corruption Layer）」</b>は、要するにAdapterの集合です。外部システムの汚い形がドメイン層に染み込まないよう、境界に防壁を立てる。これだけで設計の品が一段上がります。
+  </div>
+</section>
+
+<section id="s8">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>Template Method — 流れを固定</h2>
+    <span class="en">TEMPLATE METHOD PATTERN</span>
+  </div>
+  <p class="pattern-desc"><span class="pattern-badge">TemplateMethod</span><b>処理の大枠は固定し、細部だけサブクラスに任せる</b>パターン。「<b>同じ流れだけど、一部だけ違う</b>」処理を統一する時に有効。フレームワーク内部でよく使われる構造です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">template-method-pattern</span>
+      <span class="tag-desc">骨格 + 差分実装</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 構造のイメージ</div>
+        <div class="diagram">基底クラスに「流れ」を書く
+
+  process() {
+    step1();  ← 共通
+    step2();  ← サブクラス毎
+    step3();  ← 共通
+    step4();  ← サブクラス毎
+  }
+
+サブクラスはstep2/4だけ実装</div>
+        <p style="margin-top:14px;font-size:13px"><b>「順番は決まってるけど内容が違う処理」</b>の典型。<br>例: <b>レポート生成</b>（読込→加工→出力で形は同じ、ファイル形式だけ違う）<br><b>ETL処理</b>（抽出→変換→保存）<br><b>テスト</b>（setup→exec→teardown）</p>
+      </div>
+      <div class="code"><span class="comment">// Template Method の基本形</span>
+
+<span class="kw">abstract class</span> <span class="type">ReportGenerator</span> {
+
+  <span class="comment">// テンプレート: 流れを固定</span>
+  <span class="fn">generate</span>(): <span class="type">Buffer</span> {
+    <span class="kw">const</span> data = <span class="kw">this</span>.<span class="fn">fetchData</span>();
+    <span class="kw">const</span> formatted = <span class="kw">this</span>.<span class="fn">format</span>(data);
+    <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">render</span>(formatted);
+  }
+
+  <span class="comment">// 共通処理</span>
+  <span class="kw">protected</span> <span class="fn">fetchData</span>() {
+    <span class="kw">return</span> db.<span class="fn">query</span>(<span class="str">"SELECT ..."</span>);
+  }
+
+  <span class="comment">// サブクラスで実装</span>
+  <span class="kw">protected abstract</span> <span class="fn">format</span>(d: <span class="type">any</span>): <span class="type">any</span>;
+  <span class="kw">protected abstract</span> <span class="fn">render</span>(d: <span class="type">any</span>): <span class="type">Buffer</span>;
+}
+
+<span class="kw">class</span> <span class="type">PdfReport</span> <span class="kw">extends</span> <span class="type">ReportGenerator</span> {
+  <span class="kw">protected</span> <span class="fn">format</span>(d) { <span class="kw">return</span> toPdfLayout(d); }
+  <span class="kw">protected</span> <span class="fn">render</span>(d) { <span class="kw">return</span> pdfLib.<span class="fn">make</span>(d); }
+}
+
+<span class="kw">class</span> <span class="type">CsvReport</span> <span class="kw">extends</span> <span class="type">ReportGenerator</span> {
+  <span class="kw">protected</span> <span class="fn">format</span>(d) { <span class="kw">return</span> toRows(d); }
+  <span class="kw">protected</span> <span class="fn">render</span>(d) { <span class="kw">return</span> <span class="type">Buffer</span>.<span class="fn">from</span>(d.<span class="fn">join</span>(<span class="str">"\n"</span>)); }
+}
+
+<span class="comment">// 利用側</span>
+<span class="kw">new</span> <span class="type">PdfReport</span>().<span class="fn">generate</span>();
+<span class="kw">new</span> <span class="type">CsvReport</span>().<span class="fn">generate</span>();</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">TIP — Strategy との違い</div>
+    Template Methodは<b>継承</b>で差分を埋め、Strategyは<b>委譲</b>で差分を埋めます。最近は<b>「継承より委譲」</b>の流れがあるので、迷ったらStrategyのほうが現代的。ただし「流れが固定で部品だけ差し替えたい」ケースではTemplate Methodがピタリとハマります。
+  </div>
+</section>
+
+<section id="s9">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>現場で頻出のパターン早見表</h2>
+    <span class="en">CHEAT SHEET</span>
+  </div>
+  <p class="pattern-desc">本巻で扱った以外にも頻出パターンがあります。<b>「どんな問題に効くか」を一目で引ける早見表</b>を載せておきます。GoF 23パターン全部覚える必要はありません。<b>必要になった時にここに戻ってくる</b>使い方が現実的です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pattern-cheatsheet</span>
+      <span class="tag-desc">問題 → パターン 逆引き</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある問題と定石</div>
+        <table class="compare">
+          <tr><th>困りごと</th><th>パターン</th></tr>
+          <tr><td>処理を差し替えたい</td><td><b>Strategy</b></td></tr>
+          <tr><td>生成が複雑</td><td><b>Factory</b></td></tr>
+          <tr><td>引数が多すぎる</td><td><b>Builder</b></td></tr>
+          <tr><td>1個だけ存在させたい</td><td><b>Singleton</b></td></tr>
+          <tr><td>イベント通知したい</td><td><b>Observer</b></td></tr>
+          <tr><td>機能を後付け</td><td><b>Decorator</b></td></tr>
+          <tr><td>外部APIをラップ</td><td><b>Adapter</b></td></tr>
+          <tr><td>流れを固定したい</td><td><b>Template Method</b></td></tr>
+          <tr><td>複雑な集約を1窓口に</td><td><b>Facade</b></td></tr>
+          <tr><td>操作を記録/取消し</td><td><b>Command</b></td></tr>
+          <tr><td>状態で振る舞い変化</td><td><b>State</b></td></tr>
+          <tr><td>木構造を扱う</td><td><b>Composite</b></td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// パターンを学ぶ正しい順序</span>
+
+<span class="ann">[Step 1]</span> まず汚いコードを書く
+  <span class="comment">// 動くまで何も考えない</span>
+
+<span class="ann">[Step 2]</span> 同じ問題が3回現れる
+  <span class="comment">// 「あれ、これ前にも書いた」</span>
+
+<span class="ann">[Step 3]</span> 共通点を抽出してリファクタ
+  <span class="comment">// 自分で「型」を見つける</span>
+
+<span class="ann">[Step 4]</span> 「これってXパターンだ!」と気付く
+  <span class="comment">// 先人と同じ結論にたどり着く</span>
+
+<span class="ann">[Step 5]</span> パターン名を共通語として使える
+  <span class="comment">// チームで議論が早くなる</span>
+
+<span class="comment">// 逆順は危険:</span>
+<span class="comment">// 「パターンを学んだから使う」</span>
+<span class="comment">// → 過剰設計でコードが複雑化</span>
+
+<span class="comment">// 道具は道具。</span>
+<span class="comment">// 問題のない場所で振り回さないこと。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">NEXT STEP — Vol.5 へ</div>
+    クラス単位の設計（ミクロ）が終わったら、次は<b>システム全体の構造</b>（マクロ）です。Vol.5では<b>アーキテクチャパターン</b>を扱います。レイヤード、ヘキサゴナル、クリーンアーキテクチャ…。<b>クラスレベルとは別の世界の地図</b>が広がっています。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING DESIGN SERIES — VOL.04</span>
+  <span>△ PATTERNS</span>
+</footer>
+
+</body>
+</html>

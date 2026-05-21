@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト 地図編 本物と偽物の地図編 Vol.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;--paper:#f0ebe0;--paper-2:#e3dcc8;
+  --accent:#3d4f7c;--accent-2:#6b7a96;--accent-3:#b89968;
+  --muted:#6a6457;--line:#c8c0a8;
+  --code-bg:#1c2138;--code-text:#f0ebe0;--panel-bg:#f7f3e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"⊙";position:absolute;top:-50px;right:-20px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.12;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.map-tag{display:inline-block;background:var(--accent-3);color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:660px;margin-top:20px;color:var(--ink);font-size:15px}
+.axis-banner{display:inline-block;margin-top:18px;background:var(--paper-2);border-left:3px solid var(--accent-3);padding:8px 16px;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--ink);letter-spacing:0.1em}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em}
+.pattern-desc{max-width:700px;font-size:14px;margin-bottom:20px;color:var(--ink)}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:16px}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:22px 26px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:22px 26px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}.code .type{color:#c2a3ff}.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}.code .ann{color:#f7c08a}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.07);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+.tip.copper{border-left-color:var(--accent-3);background:rgba(184,153,104,0.12)}
+.tip.copper .tip-head{color:var(--accent-3)}
+.term-map{display:grid;grid-template-columns:160px 1fr;gap:8px 16px;font-size:13px}
+.term-map dt{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;padding:4px 0;border-bottom:1px dashed var(--line)}
+.term-map dd{padding:4px 0;border-bottom:1px dashed var(--line)}
+/* 依存図 */
+.dep-diagram{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:#fff;padding:16px;border:1px solid var(--line);line-height:1.8}
+.dep-node{display:inline-block;padding:5px 12px;color:#fff;font-size:11px;font-weight:600;letter-spacing:0.05em}
+.dep-node.target{background:#c43030}
+.dep-node.dep{background:var(--accent)}
+.dep-node.fake{background:var(--accent-3);color:var(--ink)}
+.dep-node.pure{background:#386a3d}
+.dep-arrow{color:var(--accent);font-weight:700;padding:0 6px}
+/* 左右対比 */
+.lr-compare{display:grid;grid-template-columns:1fr auto 1fr;gap:0;font-size:13px;margin:10px 0;align-items:stretch}
+.lr-compare .col{padding:14px 16px;border:1px solid var(--line);background:#fff}
+.lr-compare .col.left{border-right:none;background:#fbf6e9}
+.lr-compare .col.right{border-left:none;background:#eef2f9}
+.lr-compare .vs{display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:0 14px;letter-spacing:0.15em}
+.lr-compare .h{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:700;margin-bottom:6px}
+.lr-compare .col.left .h{color:#a47b30}
+/* 5種類の表 */
+.kind-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+.kind-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:left;padding:8px 10px;letter-spacing:0.1em;border-bottom:1px solid var(--line)}
+.kind-table td{padding:8px 10px;border-bottom:1px dashed var(--line);vertical-align:top}
+.kind-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;width:80px}
+/* 図 (純粋/不純) */
+.purity-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;font-size:12.5px;margin:10px 0;border:1px solid var(--line)}
+.purity-grid > div{padding:14px;background:#fff;border-bottom:1px solid var(--line)}
+.purity-grid > div:nth-child(2n){border-left:1px solid var(--line)}
+.purity-grid > div:nth-last-child(-n+2){border-bottom:none}
+.purity-grid .h{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.1em}
+.purity-grid .h.left{color:#386}
+.purity-grid .h.right{color:#a47b30}
+/* 因果ボックス */
+.cause-flow{padding-left:0;list-style:none;font-size:13px}
+.cause-flow li{padding:8px 14px;background:#fff;border-left:3px solid var(--accent-3);margin-bottom:8px;position:relative}
+.cause-flow li::after{content:"↓";display:block;text-align:center;color:var(--accent-3);font-size:14px;margin-top:6px;margin-bottom:-12px}
+.cause-flow li:last-child::after{content:""}
+.cause-flow li b{color:var(--accent)}
+.page-footer{border-top:2px solid var(--ink);margin-top:80px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:200px}.lr-compare{grid-template-columns:1fr}.lr-compare .col.left,.lr-compare .col.right{border:1px solid var(--line)}.lr-compare .vs{padding:8px 0}.purity-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="map-tag">MAP</span>
+  <span class="vol-tag">MAP VOL.04 / 10</span>
+  <h1>本物と偽物の地図編</h1>
+  <div class="subtitle">地図編 Vol.4 — REAL OR FAKE</div>
+  <p class="lead">
+    本編Vol.4では「ダブル（偽物）」の使い方を学びました。地図編Vol.4ではその一歩手前、<b>「そもそも、なぜ偽物が必要になるのか」</b>を読み解きます。<b>依存</b>という概念、<b>純粋／不純</b>の対比、独立性のための構造設計。「いつ偽物を使うべきか」の判断基準が見えてきます。
+  </p>
+  <span class="axis-banner">主な軸 / LEFT-RIGHT — 左右軸で読み解く</span>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 依存という概念</a></li>
+    <li><a href="#sec02">02 純粋な関数 vs 不純な関数</a></li>
+    <li><a href="#sec03">03 なぜ不純が問題か</a></li>
+    <li><a href="#sec04">04 偽物に置き換えるという発想</a></li>
+    <li><a href="#sec05">05 5種類のダブルの位置関係</a></li>
+    <li><a href="#sec06">06 DIは「置き換え可能性」</a></li>
+    <li><a href="#sec07">07 偽物を使う・使わないの判断軸</a></li>
+    <li><a href="#term">用語の地図</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>依存という概念</h2>
+    <span class="en">DEPENDENCY</span>
+  </div>
+  <p class="pattern-desc">
+    依存（dependency）とは、<b>「あるコードが、別の何かに頼って動いている」</b>状態のことです。ある関数がDBの存在に頼っている、あるクラスが現在時刻に頼っている、など。依存があると、その「頼り先」が変わるとコードも影響を受けます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">dependency</span>
+      <span class="tag-desc">何に頼って動いているか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 依存の可視化</div>
+        <div class="dep-diagram">
+          <div><span class="dep-node target">注文サービス</span></div>
+          <div style="margin-left:30px"><span class="dep-arrow">↓ 依存</span></div>
+          <div style="margin-left:30px"><span class="dep-node dep">在庫リポジトリ</span></div>
+          <div style="margin-left:60px"><span class="dep-arrow">↓ 依存</span></div>
+          <div style="margin-left:60px"><span class="dep-node dep">DBドライバ</span></div>
+          <div style="margin-left:90px"><span class="dep-arrow">↓ 依存</span></div>
+          <div style="margin-left:90px"><span class="dep-node dep">本物のデータベース</span></div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">「注文サービス」をテストしたい</b>のに、その下に積み重なった依存をすべて用意しないと動かない。これがテストの壁。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// コードでの依存の表れ方</span>
+
+<span class="kw">class</span> <span class="type">OrderService</span> {
+  <span class="fn">place</span>(itemId) {
+    <span class="comment">// ↓ 依存: 在庫リポジトリ</span>
+    <span class="kw">const</span> stock = repo.<span class="fn">find</span>(itemId);
+
+    <span class="comment">// ↓ 依存: 現在時刻</span>
+    <span class="kw">const</span> now = <span class="kw">new</span> <span class="type">Date</span>();
+
+    <span class="comment">// ↓ 依存: メール送信</span>
+    mailer.<span class="fn">send</span>(<span class="str">"完了"</span>);
+
+    <span class="comment">// ↓ 依存: ランダム値</span>
+    <span class="kw">const</span> id = <span class="type">Math</span>.<span class="fn">random</span>();
+  }
+}
+
+<span class="comment">// この関数は </span>
+<span class="comment">//   ・repo</span>
+<span class="comment">//   ・Date</span>
+<span class="comment">//   ・mailer</span>
+<span class="comment">//   ・Math.random</span>
+<span class="comment">// に依存している</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>依存（dependency）</b>＝あるコードが、その動作のために別の何かを必要としている関係。<b>依存先（dependee）</b>＝頼られている側。<b>依存元（depender）</b>＝頼っている側。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>純粋な関数 vs 不純な関数</h2>
+    <span class="en">PURE vs IMPURE</span>
+  </div>
+  <p class="pattern-desc">
+    依存の有無で関数は2種類に分けられます。<b>純粋関数（pure function）</b>と<b>不純な関数（impure function）</b>です。純粋関数は外の影響を受けず、引数だけから結果を決めます。不純な関数は外に頼ったり、外に影響を残します。この区別がテストの容易さを大きく変えます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">purity</span>
+      <span class="tag-desc">純粋／不純という重要な分類</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 純粋 vs 不純</div>
+        <div class="purity-grid">
+          <div class="h left">PURE — 純粋</div>
+          <div class="h right">IMPURE — 不純</div>
+          <div>同じ入力 → 必ず同じ出力</div>
+          <div>同じ入力 → 出力が変わりうる</div>
+          <div>外の世界に影響しない</div>
+          <div>外の世界に影響を残す</div>
+          <div>例: add(1,2)=3</div>
+          <div>例: new Date().now()</div>
+          <div>テスト超容易</div>
+          <div>テストに工夫が必要</div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">純粋関数はテストの天国</b>。引数を渡して結果を見るだけで完結する。不純な関数は事情によって結果が変わるので、その「事情」を制御する必要がある。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// === 純粋関数 ===</span>
+<span class="kw">function</span> <span class="fn">add</span>(a, b) {
+  <span class="kw">return</span> a + b;
+}
+<span class="comment">// add(1, 2) は 何度呼んでも 3</span>
+<span class="comment">// 外の世界とは無関係</span>
+
+<span class="kw">function</span> <span class="fn">discount</span>(price, rate) {
+  <span class="kw">return</span> price * (<span class="num">1</span> - rate);
+}
+<span class="comment">// 引数 → 結果 のみ。純粋</span>
+
+<span class="comment">// === 不純な関数 ===</span>
+<span class="kw">function</span> <span class="fn">greet</span>() {
+  <span class="kw">const</span> h = <span class="kw">new</span> <span class="type">Date</span>().<span class="fn">getHours</span>();
+  <span class="kw">return</span> h &lt; <span class="num">12</span> ? <span class="str">"おはよう"</span> : <span class="str">"こんにちは"</span>;
+}
+<span class="comment">// 結果が時間帯で変わる</span>
+<span class="comment">// 同じ引数(なし)でも結果が違う</span>
+
+<span class="kw">function</span> <span class="fn">save</span>(user) {
+  db.<span class="fn">write</span>(user);  <span class="comment">// 外に影響</span>
+}
+<span class="comment">// 副作用 = 外の世界の変更</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>純粋関数（pure function）</b>＝入力だけで出力が決まり、外に影響を残さない関数。
+    <br><b>副作用（side effect）</b>＝関数が、戻り値を返すこと以外に外の世界に与える影響。DB書き込み、ファイル出力、画面表示、メール送信などすべて副作用。
+    <br><b>参照透過性（referential transparency）</b>＝同じ引数なら同じ結果を返す性質。純粋関数の数学的な性質を指す。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>なぜ不純が問題か</h2>
+    <span class="en">PROBLEM OF IMPURITY</span>
+  </div>
+  <p class="pattern-desc">
+    不純な関数は<b>「テスト可能性」を3つの側面で損なう</b>からです。再現性・速度・独立性。この3つが揃わないと、自動テストの本来の価値は得られません。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why impurity hurts</span>
+      <span class="tag-desc">3つの損なわれる性質</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 不純が損なう3つの性質</div>
+        <ol class="cause-flow">
+          <li><b>再現性</b> 同じテストを再度走らせても結果が違うかもしれない</li>
+          <li><b>速度</b> DB・ネット越しの呼び出しが遅くする</li>
+          <li><b>独立性</b> 外部の状態に左右されるため、他テストや環境と干渉</li>
+        </ol>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          地図編Vol.2の<b style="color:var(--ink)">「速い・安定・独立」</b>という単体テストの3条件を、不純性は丸ごと崩します。だから工夫が必要になる。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 不純が引き起こす具体的問題</span>
+
+<span class="ann">[A] 時刻依存</span>
+<span class="fn">test</span>(<span class="str">"朝の挨拶"</span>, () =&gt; {
+  <span class="fn">expect</span>(<span class="fn">greet</span>()).<span class="fn">toBe</span>(<span class="str">"おはよう"</span>);
+});
+<span class="comment">// 夜に実行 → ✗ FAIL</span>
+<span class="comment">// テストが時刻次第で結果が変わる</span>
+
+<span class="ann">[B] DB依存</span>
+<span class="fn">test</span>(<span class="str">"ユーザー取得"</span>, () =&gt; {
+  <span class="kw">const</span> u = <span class="fn">findUser</span>(<span class="num">1</span>);
+  <span class="fn">expect</span>(u.name).<span class="fn">toBe</span>(<span class="str">"佐藤"</span>);
+});
+<span class="comment">// DBの中身次第で結果が変わる</span>
+<span class="comment">// 他テストが書き換えると壊れる</span>
+
+<span class="ann">[C] ネットワーク依存</span>
+<span class="fn">test</span>(<span class="str">"API応答"</span>, () =&gt; {
+  <span class="fn">expect</span>(<span class="fn">fetchUser</span>()).<span class="fn">toMatchObject</span>(...);
+});
+<span class="comment">// API停止中 → ✗ FAIL</span>
+<span class="comment">// ネット不通 → ✗ FAIL</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この対立軸の重要性</div>
+    <b>「純粋ならテスト容易、不純ならテスト困難」</b>。この対立軸はソフトウェア設計の至るところで顔を出します。関数型プログラミング、ヘキサゴナルアーキテクチャ、クリーンアーキテクチャ、いずれも「純粋なロジック」を中心に置く設計を志向しています。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>偽物に置き換えるという発想</h2>
+    <span class="en">SUBSTITUTION</span>
+  </div>
+  <p class="pattern-desc">
+    「不純な依存があるからテストできない」を解決する発想が、<b>「依存先を偽物に置き換える」</b>です。これがテストダブルの存在理由です。本物の代わりに「制御可能な偽物」を差し込めば、不純さの問題がそっくり消えます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">substitution</span>
+      <span class="tag-desc">不純な依存を、制御可能な偽物に置き換える</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 置き換えの構造</div>
+        <div class="dep-diagram">
+          <div style="margin-bottom:8px;color:var(--muted)">// 本番</div>
+          <div><span class="dep-node target">対象</span><span class="dep-arrow">→</span><span class="dep-node dep">本物のDB</span></div>
+          <div style="margin:14px 0 8px;color:var(--muted)">// テスト時</div>
+          <div><span class="dep-node target">対象</span><span class="dep-arrow">→</span><span class="dep-node fake">偽物のDB</span></div>
+          <div style="margin-top:14px;color:var(--muted);font-size:11px">対象から見ると「同じインターフェース」なので、置き換えても気付かず動く</div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">対象側のコードは変えない</b>。差し込まれる依存先だけを偽物に切り替える。これが「置き換え」の発想です。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 置き換えで失われる性質と</span>
+<span class="comment">// 取り戻される性質</span>
+
+<span class="kw">本物のDB依存</span>:
+  ✗ 遅い
+  ✗ 不安定
+  ✗ 副作用
+  ✗ 不可制御
+
+       <span class="comment">↓ 偽物に置換</span>
+
+<span class="kw">偽物のDB依存</span>:
+  ✓ 速い (メモリ内)
+  ✓ 安定 (外部影響なし)
+  ✓ 副作用なし
+  ✓ 制御可能 (好きな結果を仕込める)
+
+<span class="comment">// 対象は「DB呼び出し」を</span>
+<span class="comment">// しているつもりで動く</span>
+<span class="comment">// 偽物が代わりに応答する</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    <b>「ダブルを使う」は手法であって目的ではない</b>のがポイント。目的は<b>「対象を不純な依存から切り離して、純粋な関数のように扱えるようにする」</b>こと。本編Vol.4でMock/Stubの種類を学んだのは、この目的を達成する手段です。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>5種類のダブルの位置関係</h2>
+    <span class="en">FIVE DOUBLES MAP</span>
+  </div>
+  <p class="pattern-desc">
+    本編Vol.4で出てきた<b>5種類のダブル</b>を、軸の上に並べると関係が見えてきます。「実装の本格度」と「検証の関心」という2軸で位置づけることで、なぜ5種類あるのかが分かります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">five on axes</span>
+      <span class="tag-desc">2軸で見る5種類の位置関係</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 位置関係</div>
+        <table class="kind-table">
+          <tr><th>種類</th><th>実装の本格度</th><th>主な関心</th></tr>
+          <tr><td>Dummy</td><td>ほぼゼロ</td><td>形を埋める</td></tr>
+          <tr><td>Stub</td><td>小 (固定値返すだけ)</td><td>返り値を制御</td></tr>
+          <tr><td>Spy</td><td>本物に近い</td><td>呼ばれたか記録</td></tr>
+          <tr><td>Mock</td><td>小〜中</td><td>呼ばれ方を検証</td></tr>
+          <tr><td>Fake</td><td>大 (動く軽量実装)</td><td>本物の振る舞い</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">本格度の左右軸</b>: Dummy/Stub/Mock が「最小限の偽物」、Fakeが「動く実装」。Spyはその間。<b style="color:var(--ink)">関心の上下軸</b>: 状態検証(Stub/Fake)系か、振る舞い検証(Mock/Spy)系か。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 軸での位置関係</span>
+
+   実装ゼロ ────────── 本格実装
+     ↑                    ↑
+   Dummy   Stub     Spy   Fake
+            ↑              ↑
+          状態を         本物に近い
+          仕込む          動き
+
+         Mock
+         ↓
+        振る舞いを
+        検証
+
+
+<span class="comment">// 縦軸: 何を関心にするか</span>
+   状態検証 (State)
+     ↑
+     Stub / Fake
+     ↓
+   振る舞い検証 (Behavior)
+     ↑
+     Mock / Spy</div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>状態検証（state verification）</b>＝処理が終わった後の「状態」（変数の値・DBの中身など）を見て検証する方式。Stub/Fakeと相性が良い。
+    <br><b>振る舞い検証（behavior verification）</b>＝処理中に「どう呼ばれたか」「何回呼ばれたか」を見て検証する方式。Mock/Spyと相性が良い。
+    <br><b>クラシシスト派</b>＝状態検証重視の流派。<b>モッキスト派</b>＝振る舞い検証重視の流派。テスト界の宗教論争として知られる。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>DIは「置き換え可能性」</h2>
+    <span class="en">DI = SWAPPABILITY</span>
+  </div>
+  <p class="pattern-desc">
+    依存性注入（DI）とは、技術的には<b>「依存先を、外から差し込めるようにする」</b>設計のことです。これを「置き換え可能性」という視点で捉えると、その意義がクリアになります。本物も偽物も、同じ場所に差し込めるからこそテストが書けます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">DI as swappability</span>
+      <span class="tag-desc">置き換え可能性こそDIの本質</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// DIなし vs DIあり</div>
+        <div class="lr-compare">
+          <div class="col left">
+            <div class="h">DIなし</div>
+            内部で new<br>
+            ↓<br>
+            <b>固定の依存</b><br>
+            ↓<br>
+            置き換え不可<br>
+            ↓<br>
+            <span style="color:#a44">テスト困難</span>
+          </div>
+          <div class="vs">VS</div>
+          <div class="col right">
+            <div class="h">DIあり</div>
+            外から受け取る<br>
+            ↓<br>
+            <b>差し替え可能</b><br>
+            ↓<br>
+            本物⇔偽物 OK<br>
+            ↓<br>
+            <span style="color:#386">テスト容易</span>
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          DIは<b style="color:var(--ink)">「テストのためだけ」ではない</b>。設計の柔軟性そのものが向上する。本番/開発/テストで違う実装を差し込めるのは、運用上も大きな価値。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// DIが実現する3つの世界</span>
+
+<span class="kw">本番環境</span>:
+  <span class="kw">new</span> <span class="type">OrderService</span>(
+    <span class="kw">new</span> <span class="type">PostgresRepo</span>(),
+    <span class="kw">new</span> <span class="type">SmtpMailer</span>()
+  );
+
+<span class="kw">開発環境</span>:
+  <span class="kw">new</span> <span class="type">OrderService</span>(
+    <span class="kw">new</span> <span class="type">SqliteRepo</span>(),
+    <span class="kw">new</span> <span class="type">ConsoleMailer</span>()  <span class="ann">// 画面に出すだけ</span>
+  );
+
+<span class="kw">テスト</span>:
+  <span class="kw">new</span> <span class="type">OrderService</span>(
+    <span class="kw">new</span> <span class="type">InMemoryRepo</span>(),  <span class="ann">// Fake</span>
+    { <span class="fn">send</span>: <span class="fn">jest.fn</span>() }   <span class="ann">// Mock</span>
+  );
+
+<span class="comment">// 同じ「OrderService」が</span>
+<span class="comment">// 3つの世界で適切に動く</span>
+<span class="comment">// → これがDIの本当の価値</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この見方の価値</div>
+    DIを<b>「テストのための仕組み」</b>と捉えると小さく見えるが、<b>「置き換え可能性を設計に組み込む」</b>と捉えると大きく見える。後者の視点でコードを書けると、自然とテスト容易性も上がります。「テストのために」ではなく「柔軟性のために」DIを使う、というのが現場の感覚に近いです。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>偽物を使う・使わないの判断軸</h2>
+    <span class="en">WHEN TO FAKE</span>
+  </div>
+  <p class="pattern-desc">
+    どんな場面でも偽物を使うべき、ではありません。<b>偽物を使うコストと、本物を使うコスト</b>を秤にかけて決めます。判断軸を整理しておくと、本編Vol.4の「やりすぎ問題」を避けられます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">when to use</span>
+      <span class="tag-desc">本物 vs 偽物の判断基準</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 偽物を使うべきケース</div>
+        <ol class="cause-flow">
+          <li><b>遅い</b> DB・HTTP・ファイルI/O</li>
+          <li><b>副作用が困る</b> 本物のメール・本物の決済</li>
+          <li><b>再現したい</b> エラー応答・タイムアウト</li>
+          <li><b>準備が大変</b> 認証・初期データ作成</li>
+        </ol>
+      </div>
+      <div class="code"><span class="comment">// 本物を使うべきケース</span>
+
+<span class="ann">①</span> 同じプロセス内のクラス
+   → DIで切れる程度なら本物で良い
+
+<span class="ann">②</span> 純粋な計算ロジック
+   → 偽物にする意味がない
+
+<span class="ann">③</span> 結合テスト・E2Eテスト
+   → そもそも本物を組合せて試す層
+
+<span class="ann">④</span> 価値ある検証になるとき
+   → DB制約・SQL構文・索引性能など
+
+<span class="comment">// 判断の原則</span>
+
+<span class="kw">偽物コスト</span> &gt; <span class="kw">本物コスト</span>
+   → 本物を使う
+
+<span class="kw">偽物コスト</span> &lt; <span class="kw">本物コスト</span>
+   → 偽物を使う
+
+<span class="comment">// 単純な経済原理で考える</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この巻の結論</div>
+    <b>偽物は「不純さからの避難場所」</b>です。本物が遅い・不安定・副作用ありの時に逃げ込む場所。逆に言えば、本物に問題がなければ偽物に逃げる必要はない。<b>「全てを偽物に」も「全てを本物で」も極端</b>で、現場では境目を見極める判断力が求められます。
+  </div>
+</section>
+
+<section id="term">
+  <div class="section-header">
+    <span class="section-num">★</span>
+    <h2>用語の地図</h2>
+    <span class="en">GLOSSARY</span>
+  </div>
+  <p class="pattern-desc">
+    この巻で登場した用語を<b>関係が分かる形で並べて</b>整理します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">glossary</span>
+      <span class="tag-desc">本巻で扱った用語の一覧</span>
+    </div>
+    <div class="demo-body" style="grid-template-columns:1fr">
+      <div class="panel" style="border-right:none">
+        <div class="panel-head">// 並べて見ると関係が分かる</div>
+        <dl class="term-map">
+          <dt>依存</dt><dd>あるコードが別の何かに頼って動いている関係</dd>
+          <dt>依存先 / dependee</dt><dd>頼られている側 (例: DB, API)</dd>
+          <dt>依存元 / depender</dt><dd>頼っている側 (テスト対象)</dd>
+          <dt>純粋関数</dt><dd>同じ入力で必ず同じ出力、副作用なし。テスト超容易</dd>
+          <dt>不純な関数</dt><dd>外部状態に依存または副作用を起こす関数</dd>
+          <dt>副作用</dt><dd>戻り値以外で外の世界に与える影響。DB書込み・I/O等</dd>
+          <dt>参照透過性</dt><dd>純粋関数の数学的性質。「同じ入力なら同じ出力」</dd>
+          <dt>テストダブル</dt><dd>本物の代わりに使う偽物の総称。Meszaros命名</dd>
+          <dt>Dummy</dt><dd>引数を埋めるだけの空オブジェクト</dd>
+          <dt>Stub</dt><dd>決まった値を返す。問い合わせ系</dd>
+          <dt>Spy</dt><dd>本物の動き + 呼び出し記録</dd>
+          <dt>Mock</dt><dd>呼び出しのされ方を事前定義して検証</dd>
+          <dt>Fake</dt><dd>軽量な動く実装。例: メモリ内DB</dd>
+          <dt>DI / 依存性注入</dt><dd>依存を外から差し込めるようにする設計</dd>
+          <dt>置き換え可能性</dt><dd>同じ場所に違う実装を差し込める性質</dd>
+          <dt>状態検証</dt><dd>処理後の状態で検証 (Stub/Fake向き)</dd>
+          <dt>振る舞い検証</dt><dd>呼び出され方で検証 (Mock/Spy向き)</dd>
+          <dt>クラシシスト派</dt><dd>状態検証重視の流派</dd>
+          <dt>モッキスト派</dt><dd>振る舞い検証重視の流派</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tip copper" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  本編Vol.5「テスト設計技法編」では、<b>「どんなテストケースを書くべきか」</b>を体系的に考える技法に進みます。地図編Vol.5「全部試せない問題編」では、なぜテスト設計が必要なのか、入力の組み合わせは無限である、という前提から構造を読み解きます。Vol.4で学んだ<b>「ダブルでテストを書けるようにする」</b>の次は、<b>「書いたテストでどこまで網羅するか」</b>の話に移ります。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST MAP — VOL.04</span>
+  <span>REAL OR FAKE</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト編 テスト設計技法編 Vol.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;--paper:#e8eaee;--paper-2:#d4d7df;
+  --accent:#3d4f7c;--accent-2:#5a6b94;--accent-3:#8a98b8;
+  --muted:#5a6480;--line:#b8bccc;
+  --code-bg:#1c2138;--code-text:#e8eaee;--panel-bg:#f4f5f8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"✓";position:absolute;top:-30px;right:-10px;font-size:280px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:640px;margin-top:20px;color:var(--ink);font-size:15px}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em}
+.pattern-desc{max-width:680px;font-size:14px;margin-bottom:20px;color:var(--ink)}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:16px}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+.panel{background:var(--panel-bg);padding:20px 24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:20px 24px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}.code .type{color:#c2a3ff}.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}.code .ann{color:#f7c08a}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.08);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+/* 数直線 (境界値) */
+.numline{background:#fff;padding:14px;border:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:11px;margin:8px 0}
+.numline .line{position:relative;height:40px;border-top:2px solid var(--ink);margin:20px 10px}
+.numline .marker{position:absolute;top:-7px;width:12px;height:12px;border-radius:50%}
+.numline .m-low{background:#a44;left:8%}
+.numline .m-mid{background:var(--accent-3);left:50%}
+.numline .m-high{background:#a44;left:92%}
+.numline .label-row{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:8px}
+/* 同値クラス */
+.eq-zone{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid var(--line);font-size:12px;margin:8px 0}
+.eq-zone > div{padding:14px 12px;text-align:center;background:#fff;border-right:1px solid var(--line)}
+.eq-zone > div:last-child{border-right:none}
+.eq-zone .zone-invalid{background:#fdf0f0;color:#a44}
+.eq-zone .zone-valid{background:#eef7ef;color:#386}
+.eq-zone .h{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.1em;margin-bottom:6px;display:block}
+.eq-zone .v{font-weight:700;font-size:13px}
+/* デシジョンテーブル */
+.dtable{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0}
+.dtable th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:10.5px;text-align:center;padding:8px 6px;letter-spacing:0.1em;border:1px solid var(--line)}
+.dtable td{padding:6px;border:1px solid var(--line);text-align:center;background:#fff;font-family:'JetBrains Mono',monospace;font-size:11.5px}
+.dtable td.cond{text-align:left;font-family:'Noto Sans JP',sans-serif;background:#f7f8fb}
+.dtable td.y{background:#eef7ef;color:#386;font-weight:700}
+.dtable td.n{background:#fdf0f0;color:#a44;font-weight:700}
+/* テクニック比較 */
+.tech-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+.tech-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:left;padding:8px 10px;letter-spacing:0.1em;border-bottom:1px solid var(--line)}
+.tech-table td{padding:8px 10px;border-bottom:1px dashed var(--line);vertical-align:top}
+.tech-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;width:110px}
+.page-footer{border-top:2px solid var(--ink);margin-top:80px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:180px}.eq-zone{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="vol-tag">VOL.05 / 10</span>
+  <h1>テスト設計技法編</h1>
+  <div class="subtitle">エンジニアリングテスト編 — TEST DESIGN TECHNIQUES</div>
+  <p class="lead">
+    「どんなテストケースを書くべきか」を体系的に考える巻です。<b>同値分割・境界値分析・デシジョンテーブル・ペアワイズ</b>。テストを思いつきで書くのではなく、技法に基づいて<b>少ない数で多くを網羅する</b>力を身につけます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 設計技法が必要な理由</a></li>
+    <li><a href="#sec02">02 同値分割法</a></li>
+    <li><a href="#sec03">03 境界値分析</a></li>
+    <li><a href="#sec04">04 デシジョンテーブル</a></li>
+    <li><a href="#sec05">05 状態遷移テスト</a></li>
+    <li><a href="#sec06">06 ペアワイズ法</a></li>
+    <li><a href="#sec07">07 異常系・例外パスの洗い出し</a></li>
+    <li><a href="#sec08">08 技法の組み合わせ方</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>設計技法が必要な理由</h2>
+    <span class="en">WHY DESIGN MATTERS</span>
+  </div>
+  <p class="pattern-desc">
+    プログラムの入力の組み合わせは事実上<b>無限</b>です。年齢を受け取る関数なら整数だけで数十億通り、文字列なら無限大。すべて試すのは不可能なので、<b>「少数の代表ケースで多くを網羅する」</b>技法が必要になります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why design</span>
+      <span class="tag-desc">全部試せない、だから設計する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 全部試そうとすると…</div>
+        <table class="tech-table">
+          <tr><th>入力</th><th>組合せ数</th></tr>
+          <tr><td>boolean</td><td>2通り</td></tr>
+          <tr><td>1〜100の整数</td><td>100通り</td></tr>
+          <tr><td>int型 全体</td><td>約42億通り</td></tr>
+          <tr><td>文字列</td><td>事実上 無限</td></tr>
+          <tr><td>2引数の組合せ</td><td>掛け算で爆発</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          1回のテストが1ミリ秒でも、<b style="color:var(--ink)">42億通りで約49日</b>。組合せが増えればさらに不可能になる。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 全部試すは無理 → どうする?</span>
+
+<span class="kw">考え方の転換</span>:
+  全部試そうとしない
+       <span class="comment">↓</span>
+  「同じグループに属する入力は
+   同じ振る舞いをするはず」
+       <span class="comment">↓</span>
+  各グループの代表者だけ試す
+       <span class="comment">↓</span>
+  これがテスト設計技法
+
+<span class="comment">// 設計技法の役割</span>
+
+<span class="ann">①</span> 入力空間を意味あるグループに分ける
+<span class="ann">②</span> 各グループの代表を選ぶ
+<span class="ann">③</span> バグが集中しやすい場所を狙う
+<span class="ann">④</span> 結果として少数で多くを網羅</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    テスト設計は「全網羅」ではなく<b>「賢い絞り込み」</b>。これがVol.5全体の通奏低音です。地図編Vol.5で「全部試せない」という前提から構造を読み解きますので、合わせて読むと技法の意義が腑に落ちます。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>同値分割法</h2>
+    <span class="en">EQUIVALENCE PARTITIONING</span>
+  </div>
+  <p class="pattern-desc">
+    同値分割法（equivalence partitioning）は<b>テスト設計の基本中の基本</b>。入力空間を「同じように振る舞うであろう」グループ（同値クラス）に分けて、各グループから1つだけ代表を選びます。これだけで膨大な入力を1〜数件のテストに圧縮できます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">equivalence partitioning</span>
+      <span class="tag-desc">入力空間を仕分けて代表で試す</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 例: 年齢の同値分割</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">仕様: 0〜17歳=NG、18〜64歳=OK、65歳以上=シニア</p>
+        <div class="eq-zone">
+          <div class="zone-invalid"><span class="h">クラス A</span><span class="v">0 〜 17</span><div style="font-size:10px">NG</div></div>
+          <div class="zone-valid"><span class="h">クラス B</span><span class="v">18 〜 64</span><div style="font-size:10px">OK</div></div>
+          <div class="zone-valid"><span class="h">クラス C</span><span class="v">65 〜</span><div style="font-size:10px">シニア</div></div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          3クラスなので<b style="color:var(--ink)">3ケース</b>で代表検証。「12歳・35歳・75歳」を選べば全クラス網羅。実際にはマイナス値・小数・文字列等の<b style="color:var(--ink)">不正値クラス</b>もカバーする。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 同値分割で書くテスト</span>
+
+<span class="fn">describe</span>(<span class="str">"年齢区分"</span>, () =&gt; {
+
+  <span class="comment">// クラスA: 0〜17歳 (NG)</span>
+  <span class="fn">test</span>(<span class="str">"15歳はNG"</span>, () =&gt; {
+    <span class="fn">expect</span>(<span class="fn">classify</span>(<span class="num">15</span>)).<span class="fn">toBe</span>(<span class="str">"NG"</span>);
+  });
+
+  <span class="comment">// クラスB: 18〜64歳 (OK)</span>
+  <span class="fn">test</span>(<span class="str">"35歳はOK"</span>, () =&gt; {
+    <span class="fn">expect</span>(<span class="fn">classify</span>(<span class="num">35</span>)).<span class="fn">toBe</span>(<span class="str">"OK"</span>);
+  });
+
+  <span class="comment">// クラスC: 65歳以上</span>
+  <span class="fn">test</span>(<span class="str">"75歳はシニア"</span>, () =&gt; {
+    <span class="fn">expect</span>(<span class="fn">classify</span>(<span class="num">75</span>)).<span class="fn">toBe</span>(<span class="str">"シニア"</span>);
+  });
+
+  <span class="comment">// 不正値クラス</span>
+  <span class="fn">test</span>(<span class="str">"-1は例外"</span>, () =&gt; {
+    <span class="fn">expect</span>(()=&gt;<span class="fn">classify</span>(-<span class="num">1</span>)).<span class="fn">toThrow</span>();
+  });
+});</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    同値分割の<b>絶対鉄則</b>は「<b>有効同値クラスだけでなく無効同値クラスも分ける</b>」こと。正常系だけでなく、マイナス値・null・型違い等もクラスとして洗い出します。これを怠ると異常系の検証が抜け落ちます。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>境界値分析</h2>
+    <span class="en">BOUNDARY VALUE ANALYSIS</span>
+  </div>
+  <p class="pattern-desc">
+    境界値分析は<b>「クラスとクラスの境界」に着目</b>する技法です。バグは境界に潜む、というのが鉄則。17歳と18歳、64歳と65歳のような<b>境目で切り替わる値</b>を狙い撃ちで検証します。同値分割と組み合わせるのが定番です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">boundary values</span>
+      <span class="tag-desc">境目の値を狙い撃ちする</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 境界値の見つけ方</div>
+        <div class="numline">
+          <div class="line">
+            <div class="marker m-low"></div>
+            <div class="marker m-mid"></div>
+            <div class="marker m-high"></div>
+          </div>
+          <div class="label-row">
+            <span>17<br>(NG)</span>
+            <span style="color:#386">18<br>(OK)</span>
+            <span style="color:#386">64<br>(OK)</span>
+            <span>65<br>(シニア)</span>
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          各境目で<b style="color:var(--ink)">「境界の前後2点」</b>を試す。17/18, 64/65。これだけで境界バグの大半を捕まえられる。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 境界値テストの定番</span>
+
+<span class="comment">// 仕様: 18歳以上64歳以下がOK</span>
+
+<span class="fn">test.each</span>([
+  <span class="comment">// 下限境界</span>
+  [<span class="num">17</span>, <span class="str">"NG"</span>],    <span class="ann">// 境界の外</span>
+  [<span class="num">18</span>, <span class="str">"OK"</span>],    <span class="ann">// 境界そのもの</span>
+
+  <span class="comment">// 上限境界</span>
+  [<span class="num">64</span>, <span class="str">"OK"</span>],    <span class="ann">// 境界そのもの</span>
+  [<span class="num">65</span>, <span class="str">"シニア"</span>], <span class="ann">// 境界の外</span>
+
+  <span class="comment">// 極端な境界</span>
+  [<span class="num">0</span>,  <span class="str">"NG"</span>],    <span class="ann">// 最小値</span>
+  [-<span class="num">1</span>, <span class="kw">null</span>],   <span class="ann">// 最小値の外</span>
+])(<span class="str">"年齢 %i → %s"</span>, (age, expected) =&gt; {
+  <span class="fn">expect</span>(<span class="fn">classify</span>(age)).<span class="fn">toBe</span>(expected);
+});
+
+<span class="comment">// 境界バグの典型</span>
+<span class="comment">// if (age &gt; 18) → 18歳がNGになる</span>
+<span class="comment">// if (age &gt;= 18) → 正しい</span>
+<span class="comment">// この差を捕まえるのが境界値</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">なぜ境界にバグが集中するか</div>
+    <code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 6px">&gt;</code> と <code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 6px">&gt;=</code> の取り違え、<code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 6px">-1</code> や <code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 6px">+1</code> のずれ、<b>off-by-one</b>と呼ばれる古典的バグが境界で起きるからです。境界値テストは費用対効果が抜群です。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>デシジョンテーブル</h2>
+    <span class="en">DECISION TABLE</span>
+  </div>
+  <p class="pattern-desc">
+    複数の条件が組み合わさって結果が決まるロジックには<b>デシジョンテーブル</b>が向いています。条件と結果を表形式で網羅し、抜けや矛盾を視覚的に発見します。仕様レビューにも使える強力な技法です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">decision table</span>
+      <span class="tag-desc">複合条件を表で網羅する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 例: 送料判定 (会員 × 金額)</div>
+        <table class="dtable">
+          <tr><th>条件 / ケース</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+          <tr><td class="cond">会員である</td><td class="y">Y</td><td class="y">Y</td><td class="n">N</td><td class="n">N</td></tr>
+          <tr><td class="cond">5,000円以上</td><td class="y">Y</td><td class="n">N</td><td class="y">Y</td><td class="n">N</td></tr>
+          <tr><th>結果</th><th>送料無料</th><th>送料500</th><th>送料500</th><th>送料800</th></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          条件2つ → <b style="color:var(--ink)">2² = 4ケース</b>。すべての組み合わせを表に並べて、結果が抜けなく定義されているか確認。<b style="color:var(--ink)">仕様の穴も見つかる</b>。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// テーブルからテストへ</span>
+
+<span class="fn">test.each</span>([
+  <span class="comment">// 会員, 金額,  期待</span>
+  [<span class="kw">true</span>,  <span class="num">6000</span>, <span class="num">0</span>],    <span class="ann">// case1</span>
+  [<span class="kw">true</span>,  <span class="num">3000</span>, <span class="num">500</span>],  <span class="ann">// case2</span>
+  [<span class="kw">false</span>, <span class="num">6000</span>, <span class="num">500</span>],  <span class="ann">// case3</span>
+  [<span class="kw">false</span>, <span class="num">3000</span>, <span class="num">800</span>],  <span class="ann">// case4</span>
+])(<span class="str">"会員%s/%i円 → %i円"</span>,
+  (member, amount, expected) =&gt; {
+    <span class="fn">expect</span>(<span class="fn">shipping</span>(member, amount))
+      .<span class="fn">toBe</span>(expected);
+  }
+);
+
+<span class="comment">// デシジョンテーブルの利点</span>
+<span class="comment">// ① 仕様の網羅性が一目で分かる</span>
+<span class="comment">// ② 抜けがあれば表で気づく</span>
+<span class="comment">// ③ 矛盾も発見しやすい</span>
+<span class="comment">// ④ テストにそのまま落とせる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">注意</div>
+    条件が増えると<b>2のN乗で爆発</b>します。条件5つ=32ケース、条件10個=1024ケース。実用上は、関連の薄い条件は別テーブルに分けるか、後述のペアワイズ法と組み合わせます。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>状態遷移テスト</h2>
+    <span class="en">STATE TRANSITION</span>
+  </div>
+  <p class="pattern-desc">
+    オブジェクトが<b>状態を持つ場合</b>に向く技法です。ATM・申請ワークフロー・ゲームのキャラクター等、「今の状態と入力で次の状態が決まる」もの全てに使えます。<b>状態と遷移を図にして網羅</b>します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">state transition</span>
+      <span class="tag-desc">状態と遷移を表・図で網羅</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 例: 注文のステータス遷移</div>
+        <table class="dtable">
+          <tr><th>現状態</th><th>操作</th><th>次状態</th></tr>
+          <tr><td>新規</td><td>支払</td><td>支払済</td></tr>
+          <tr><td>新規</td><td>キャンセル</td><td>取消</td></tr>
+          <tr><td>支払済</td><td>発送</td><td>発送済</td></tr>
+          <tr><td>支払済</td><td>返金</td><td>取消</td></tr>
+          <tr><td>発送済</td><td>受取</td><td>完了</td></tr>
+          <tr><td>取消</td><td>—</td><td>(終了)</td></tr>
+          <tr><td>完了</td><td>—</td><td>(終了)</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          表にすると<b style="color:var(--ink)">不正遷移</b>も発見しやすい。「発送済から取消可能?」「完了から再支払?」など、仕様に明記されていない遷移を洗い出せる。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 正常遷移のテスト</span>
+<span class="fn">test</span>(<span class="str">"新規→支払→発送→完了"</span>, () =&gt; {
+  <span class="kw">const</span> o = <span class="kw">new</span> <span class="type">Order</span>();
+  <span class="fn">expect</span>(o.status).<span class="fn">toBe</span>(<span class="str">"新規"</span>);
+
+  o.<span class="fn">pay</span>();
+  <span class="fn">expect</span>(o.status).<span class="fn">toBe</span>(<span class="str">"支払済"</span>);
+
+  o.<span class="fn">ship</span>();
+  <span class="fn">expect</span>(o.status).<span class="fn">toBe</span>(<span class="str">"発送済"</span>);
+
+  o.<span class="fn">receive</span>();
+  <span class="fn">expect</span>(o.status).<span class="fn">toBe</span>(<span class="str">"完了"</span>);
+});
+
+<span class="comment">// 不正遷移のテスト (これも重要!)</span>
+<span class="fn">test</span>(<span class="str">"完了から再支払は不可"</span>, () =&gt; {
+  <span class="kw">const</span> o = ...; <span class="comment">// 完了状態</span>
+  <span class="fn">expect</span>(() =&gt; o.<span class="fn">pay</span>()).<span class="fn">toThrow</span>();
+});
+
+<span class="comment">// 状態を持つコードは</span>
+<span class="comment">// 「許される遷移」と「許されない遷移」</span>
+<span class="comment">// 両方を必ずテストする</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    状態遷移は<b>「不正な操作で壊れない」</b>ことの検証が最重要。「完了済を返金」「キャンセル済を再支払」など、ユーザーが想定外の操作をしても安全か、ここで確かめます。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ペアワイズ法</h2>
+    <span class="en">PAIRWISE TESTING</span>
+  </div>
+  <p class="pattern-desc">
+    条件・パラメータが多すぎて<b>全網羅が現実的でない</b>時に使う、賢い絞り込み技法です。「すべてのペアの組合せだけは網羅する」という発想で、ケース数を爆発的に減らせます。経験的にバグの大半が<b>2つのパラメータの相互作用</b>で起きることから生まれました。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pairwise / all-pairs</span>
+      <span class="tag-desc">2因子の組合せだけを網羅する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 圧縮の威力</div>
+        <table class="tech-table">
+          <tr><th>条件</th><th>値の数</th></tr>
+          <tr><td>OS</td><td>3 (Win, Mac, Linux)</td></tr>
+          <tr><td>ブラウザ</td><td>4 (Chrome, FF, Safari, Edge)</td></tr>
+          <tr><td>言語</td><td>3 (ja, en, zh)</td></tr>
+          <tr><td>ユーザー種別</td><td>3 (Free, Pro, Admin)</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          全網羅 = 3×4×3×3 = <b style="color:var(--ink)">108通り</b>。<br>
+          ペアワイズ = 約 <b style="color:var(--ink)">12通り</b>に圧縮可能 (約9割削減)。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// ペアワイズの原理</span>
+
+<span class="kw">前提</span>:
+  バグの多くは2つの因子の組合せで発生
+  3つ以上の組合せが原因のバグは
+  経験的に稀
+
+       <span class="comment">↓</span>
+
+<span class="kw">戦略</span>:
+  すべての「2因子の組合せ」を
+  少なくとも1度はカバーする
+
+<span class="comment">// ツール</span>
+<span class="comment">// 手で組むのは無理</span>
+<span class="comment">// 専用ツールで自動生成</span>
+
+<span class="comment">// Microsoft PICT</span>
+<span class="comment">// AllPairs (Python等)</span>
+<span class="comment">// PictMaster (Excel)</span>
+
+<span class="comment">// 入力: 因子と水準</span>
+<span class="comment">// 出力: 必要最小のケース表</span>
+
+<span class="comment">// これをテストに流すだけ</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">超便利</div>
+    ペアワイズはツールで自動生成するのが定番です。手作業は非現実的。<b>「組合せ爆発」の救世主</b>として、Webテスト・設定パターンの多いミドルウェアテスト等で愛用されます。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>異常系・例外パスの洗い出し</h2>
+    <span class="en">ERROR PATHS</span>
+  </div>
+  <p class="pattern-desc">
+    初学者がよく忘れるのが<b>異常系</b>のテスト。バグは正常系より異常系に潜むことが多いです。<b>「想定外の入力」「想定外のタイミング」</b>を意図的に洗い出す視点を持ちましょう。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">error paths</span>
+      <span class="tag-desc">異常系の体系的な洗い出し</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 異常系のチェック観点</div>
+        <table class="tech-table">
+          <tr><th>カテゴリ</th><th>例</th></tr>
+          <tr><td>null/未定義</td><td>null, undefined, 空文字, 空配列</td></tr>
+          <tr><td>型違い</td><td>数値期待に文字列、文字列期待に数値</td></tr>
+          <tr><td>範囲外</td><td>負数、0、最大値超過</td></tr>
+          <tr><td>大量データ</td><td>100万件、10MBの文字列</td></tr>
+          <tr><td>並行</td><td>同時更新、競合</td></tr>
+          <tr><td>外部失敗</td><td>API停止、タイムアウト、500エラー</td></tr>
+          <tr><td>重複</td><td>同じIDで2回作成、二重送信</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// 異常系テストの定番セット</span>
+
+<span class="fn">describe</span>(<span class="str">"ユーザー登録 異常系"</span>, () =&gt; {
+
+  <span class="fn">test</span>(<span class="str">"名前がnullで例外"</span>, () =&gt; {
+    <span class="fn">expect</span>(()=&gt;<span class="fn">register</span>(<span class="kw">null</span>)).<span class="fn">toThrow</span>();
+  });
+
+  <span class="fn">test</span>(<span class="str">"名前が空文字で例外"</span>, () =&gt; {
+    <span class="fn">expect</span>(()=&gt;<span class="fn">register</span>(<span class="str">""</span>)).<span class="fn">toThrow</span>();
+  });
+
+  <span class="fn">test</span>(<span class="str">"名前が長すぎて例外"</span>, () =&gt; {
+    <span class="kw">const</span> long = <span class="str">"a"</span>.<span class="fn">repeat</span>(<span class="num">10000</span>);
+    <span class="fn">expect</span>(()=&gt;<span class="fn">register</span>(long)).<span class="fn">toThrow</span>();
+  });
+
+  <span class="fn">test</span>(<span class="str">"重複登録で例外"</span>, () =&gt; {
+    <span class="fn">register</span>(<span class="str">"佐藤"</span>);
+    <span class="fn">expect</span>(()=&gt;<span class="fn">register</span>(<span class="str">"佐藤"</span>))
+      .<span class="fn">toThrow</span>(<span class="str">"duplicate"</span>);
+  });
+
+  <span class="fn">test</span>(<span class="str">"DB接続失敗時の挙動"</span>, () =&gt; {
+    repo.save = ()=&gt;{<span class="kw">throw new</span> <span class="type">Error</span>()};
+    <span class="fn">expect</span>(()=&gt;<span class="fn">register</span>(<span class="str">"X"</span>)).<span class="fn">toThrow</span>();
+  });
+});</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">鉄則</div>
+    1機能につき<b>「正常系1〜2件 + 異常系3〜5件」</b>が目安。異常系の方が多くなるのが普通です。「とにかく動く」だけのテストは不十分。<b>「壊れない」「壊れた時の振る舞い」も検証する</b>のが現場の品質基準です。
+  </div>
+</section>
+
+<section id="sec08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>技法の組み合わせ方</h2>
+    <span class="en">COMBINING TECHNIQUES</span>
+  </div>
+  <p class="pattern-desc">
+    技法は<b>単独で使うより組み合わせるのが定番</b>です。現場では「同値分割で大枠 → 境界値で狙い撃ち → 異常系を追加」という流れがほぼ毎回使われます。場面ごとの最適解を覚えましょう。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">combining</span>
+      <span class="tag-desc">技法の使い分けと組合せ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 場面別の最適技法</div>
+        <table class="tech-table">
+          <tr><th>場面</th><th>使う技法</th></tr>
+          <tr><td>入力1つ</td><td>同値分割 + 境界値</td></tr>
+          <tr><td>複合条件</td><td>デシジョンテーブル</td></tr>
+          <tr><td>状態あり</td><td>状態遷移</td></tr>
+          <tr><td>多因子</td><td>ペアワイズ</td></tr>
+          <tr><td>全領域</td><td>+ 異常系の洗い出し</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">同値分割+境界値</b>はほぼ全ての関数に効く<b style="color:var(--ink)">基本セット</b>。これだけマスターしても現場の8割は対応できる。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 典型的な組合せの実例</span>
+
+<span class="comment">// 仕様: 商品割引</span>
+<span class="comment">//   会員 & 5000円以上 → 20%引</span>
+<span class="comment">//   会員              → 10%引</span>
+<span class="comment">//   非会員 & 10000円〜→ 5%引</span>
+<span class="comment">//   それ以外          → 割引なし</span>
+
+<span class="comment">// STEP 1: デシジョンテーブル</span>
+<span class="comment">// (会員Y/N) × (金額帯3つ) = 6ケース</span>
+
+<span class="comment">// STEP 2: 境界値を追加</span>
+<span class="comment">// 4999/5000, 9999/10000</span>
+
+<span class="comment">// STEP 3: 異常系</span>
+<span class="comment">// マイナス金額・null会員</span>
+
+<span class="comment">// 合計 6 + 4 + 3 = 13ケース</span>
+<span class="comment">// 全網羅(無限)を13ケースに圧縮</span>
+
+<span class="comment">// これが「賢い絞り込み」の威力</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">結論</div>
+    テスト設計技法は<b>「全部覚える必要はない」</b>。同値分割と境界値だけ徹底できれば、現場の大半は戦えます。残りは必要に応じて引き出します。技法はあくまで道具、目的は「少ない数で品質を守る」ことです。
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  次は<b>本編Vol.6「結合・統合テスト編」</b>へ。単体テストの世界から一歩外に出て、複数部品が組み合わさる領域に踏み込みます。<b>地図編Vol.5「全部試せない問題編」</b>では、なぜテスト設計が必要なのかを「入力空間の無限性」という構造から読み解きます。Vol.5で学んだ技法の<b>根本にある世界観</b>がそこで明らかになります。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST REFERENCE — VOL.05</span>
+  <span>TEST DESIGN TECHNIQUES</span>
+</footer>
+
+</body>
+</html>

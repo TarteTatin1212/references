@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリング設計編 要件から設計への橋渡し Vol.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#3a2e22;
+    --paper:#f2e8d8;
+    --paper-2:#e8d9bd;
+    --accent:#9a5e3e;
+    --accent-2:#c08e5c;
+    --accent-3:#724a30;
+    --muted:#867260;
+    --line:#c4b292;
+    --code-bg:#2a2018;
+    --code-text:#f0e4cf;
+    --panel-bg:#fbf5ea;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;line-height:1.75;font-size:15px}
+  body{max-width:1180px;margin:0 auto;padding:0 28px 80px}
+
+  .page-header{position:relative;padding:48px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+  .page-header::before{content:"△";position:absolute;right:-10px;top:-30px;font-size:280px;color:var(--accent);opacity:.18;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+  .page-header > *{position:relative;z-index:1}
+  .series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace;margin-right:8px}
+  .vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace}
+  h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin-top:18px;letter-spacing:.04em}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;font-family:"JetBrains Mono",monospace;letter-spacing:.08em}
+  .lead{max-width:640px;margin-top:22px;font-size:15px}
+  .lead b{color:var(--accent-3)}
+
+  .toc{background:var(--paper-2);padding:18px 22px;margin:32px 0 48px;border-left:3px solid var(--accent)}
+  .toc-title{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:.2em;color:var(--accent-3);margin-bottom:10px}
+  .toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px}
+  .toc li{font-size:13px}
+  .toc a{color:var(--ink);text-decoration:none;font-family:"JetBrains Mono",monospace}
+  .toc a::before{content:"— ";color:var(--accent)}
+  .toc a:hover{color:var(--accent)}
+
+  section{margin:64px 0}
+  .section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .section-num{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent);font-weight:600}
+  .section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;letter-spacing:.04em;flex:1}
+  .section-header .en{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:.15em}
+  .pattern-desc{max-width:680px;margin-bottom:20px;font-size:14.5px}
+  .pattern-desc b{color:var(--accent-3)}
+
+  .demo-card{border:1px solid var(--line);background:#fff;margin:18px 0}
+  .demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .tag-name{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+  .tag-desc{font-size:12px;color:var(--muted)}
+  .demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+  .panel{background:var(--panel-bg);padding:20px;border-right:1px solid var(--line);font-size:14px}
+  .panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:.1em}
+  .code{background:var(--code-bg);color:var(--code-text);padding:20px;font-family:"JetBrains Mono",monospace;font-size:12.5px;line-height:1.85;overflow-x:auto;white-space:pre-wrap}
+  @media(max-width:720px){
+    .demo-body{grid-template-columns:1fr}
+    .panel{border-right:none;border-bottom:1px solid var(--line)}
+  }
+
+  .kw{color:#ffc88a}
+  .type{color:#c2a3ff}
+  .fn{color:#a3c9ff}
+  .str{color:#b5e8b0}
+  .num{color:#f7a8d8}
+  .comment{color:#998aaa;font-style:italic}
+  .ann{color:#f7c08a}
+  .menu-code{color:#f7c08a;font-weight:600}
+  .step{color:#ffc88a;font-weight:600}
+
+  .tip{background:rgba(154,94,62,.09);border-left:3px solid var(--accent);padding:14px 18px;margin:18px 0;font-size:14px}
+  .tip-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);letter-spacing:.18em;margin-bottom:6px;font-weight:600}
+  .tip b{color:var(--accent-3)}
+
+  .key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:11.5px}
+
+  .panel ul{list-style:none;margin:8px 0}
+  .panel li{padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .panel li:last-child{border-bottom:none}
+  .panel .label{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-right:6px}
+  .panel strong{color:var(--accent-3);font-weight:600}
+
+  .diagram{padding:14px;background:#fff;border:1px dashed var(--line);font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.6;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+  .compare{width:100%;font-size:13px;margin:10px 0}
+  .compare th{background:var(--paper-2);text-align:left;padding:8px;border-bottom:1px solid var(--line);font-family:"Shippori Mincho",serif;font-size:13px}
+  .compare td{padding:8px;border-bottom:1px dashed var(--line);vertical-align:top}
+  .compare .ng{color:#b04848}
+  .compare .ok{color:#4a7848}
+
+  .stars{color:var(--accent);font-weight:700;letter-spacing:.05em}
+
+  .page-footer{margin-top:80px;padding-top:24px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.1em}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">ENGINEERING DESIGN</span>
+  <span class="vol-tag">VOL.02</span>
+  <h1>要件から設計への橋渡し</h1>
+  <div class="subtitle">FROM REQUIREMENTS TO DESIGN — THE BRIDGE</div>
+  <p class="lead">「お客さんが言ったことをそのまま作る」は最悪の設計です。<b>言葉の裏にある本当のニーズを掘り当て、エンジニアが扱える形に翻訳する</b>のが要件設計の仕事。本巻では曖昧な要望を堅牢な設計入力に変える技を身につけます。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — 本巻の目次</div>
+  <ul>
+    <li><a href="#s1">01 要件とは何か</a></li>
+    <li><a href="#s2">02 機能要件と非機能要件</a></li>
+    <li><a href="#s3">03 ユースケースの書き方</a></li>
+    <li><a href="#s4">04 ユーザーストーリー</a></li>
+    <li><a href="#s5">05 制約の見極め</a></li>
+    <li><a href="#s6">06 要件から設計への変換</a></li>
+    <li><a href="#s7">07 優先順位付け（MoSCoW）</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>要件とは何か</h2>
+    <span class="en">WHAT IS A REQUIREMENT</span>
+  </div>
+  <p class="pattern-desc">要件は「お客さんの口から出た言葉」ではありません。<b>顧客が表現した「Want（欲しいもの）」の奥にある「Need（本当に必要なこと）」</b>こそが本物の要件です。ここを取り違えると、動くけど誰も使わないシステムができあがります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">want-vs-need</span>
+      <span class="tag-desc">表面の要望 vs 本当の課題</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 表層と深層</div>
+        <div class="diagram">[Want] お客さんが言ったこと
+   ↓ なぜそれが欲しい?
+[Need] 本当に解決したい課題
+   ↓ どう実現するか
+[Solution] 設計</div>
+        <p style="margin-top:14px;font-size:13px">古典的な例:<br>「もっと速い馬が欲しい」<br>→ 速く移動したい（Need）<br>→ <b>自動車</b>という設計解</p>
+        <p style="margin-top:8px;font-size:13px"><b>言われたまま「速い馬」を作ってはいけません。</b></p>
+      </div>
+      <div class="code"><span class="comment">// 現場でよくある誤訳の例</span>
+
+<span class="ann">[Want] 顧客の言葉]</span>
+「<span class="str">注文画面に検索機能つけて</span>」
+
+<span class="ann">[NG: 言われたまま作る]</span>
+注文画面にキーワード検索ボックスを設置
+→ 使われない
+→ 「結局、商品IDで探したかった」
+
+<span class="ann">[OK: なぜ?を3回問う]</span>
+Q1: なぜ検索が欲しい?
+A1: 注文時に商品を素早く特定したい
+Q2: なぜ素早く?
+A2: 電話注文中に待たせたくない
+Q3: 普段どう特定してる?
+A3: <span class="str">紙のカタログでID見て入力してる</span>
+
+<span class="ann">[Need: 本当の要件]</span>
+電話応対中に商品IDで即座に
+商品を呼び出せる手段が欲しい
+
+<span class="ann">[Solution: 設計]</span>
+IDサジェスト + バーコード入力対応</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — トヨタの「なぜを5回」</div>
+    顧客の最初の発言は<b>氷山の一角</b>です。「なぜ?」「具体的には?」「今はどうしてる?」を繰り返し、表面下の本当の課題を掘り起こすのが要件定義の鉄則です。
+  </div>
+</section>
+
+<section id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>機能要件と非機能要件</h2>
+    <span class="en">FUNCTIONAL & NON-FUNCTIONAL</span>
+  </div>
+  <p class="pattern-desc">要件には2種類あります。<b>機能要件</b>は「何ができるか」、<b>非機能要件</b>は「どう動くか」です。後者を疎かにすると、機能は揃っているのに使い物にならないシステムが出来上がります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">functional-vs-nfr</span>
+      <span class="tag-desc">2種類の要件を見分ける</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 非機能要件の代表的カテゴリ</div>
+        <ul>
+          <li><span class="label">性能</span><strong>レスポンス3秒以内</strong></li>
+          <li><span class="label">可用性</span><strong>99.9% / 月</strong></li>
+          <li><span class="label">セキュリティ</span><strong>個人情報暗号化</strong></li>
+          <li><span class="label">拡張性</span><strong>同時1万接続</strong></li>
+          <li><span class="label">運用性</span><strong>ログ保管90日</strong></li>
+          <li><span class="label">保守性</span><strong>新人が1週間で改修可能</strong></li>
+        </ul>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)">非機能要件は<b>数値で書く</b>のが鉄則。「速い」「安全」では設計できません。</p>
+      </div>
+      <div class="code"><span class="comment">// 機能要件 vs 非機能要件</span>
+
+<span class="ann">[機能要件 — 何ができるか]</span>
+- ユーザーは商品を検索できる
+- ユーザーはカートに追加できる
+- ユーザーはクレジットカードで決済できる
+- 管理者は売上レポートを出力できる
+
+<span class="ann">[非機能要件 — どう動くか]</span>
+性能:
+  検索: <span class="num">95%</span>のリクエストが<span class="num">1秒</span>以内
+  決済: <span class="num">3秒</span>以内に確定通知
+
+可用性:
+  稼働率 <span class="num">99.95%</span>（月間ダウン <span class="num">22分</span>以内）
+
+セキュリティ:
+  カード情報は<span class="kw">非保持</span>（PCI DSS準拠）
+  パスワードは<span class="kw">bcrypt</span>でハッシュ化
+
+拡張性:
+  同時ユーザー <span class="num">5,000</span>人
+  ピーク時 <span class="num">200 req/sec</span>
+
+<span class="comment">// 非機能要件が決まらないと</span>
+<span class="comment">// アーキテクチャは絶対に決まらない</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — ハマりどころ</div>
+    顧客は機能要件は熱心に語りますが、<b>非機能要件は「当たり前でしょ」と言って明示しません</b>。こちらから「<b>ピーク時のアクセス数は?</b>」「<b>許容できる停止時間は?</b>」と数値で聞き出すのがプロの仕事です。
+  </div>
+</section>
+
+<section id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>ユースケースの書き方</h2>
+    <span class="en">USE CASE WRITING</span>
+  </div>
+  <p class="pattern-desc">ユースケースは<b>「誰が、何をして、何を得るか」</b>を1シナリオとして書き出したものです。機能を箇条書きで並べる代わりに、<b>利用者の動きとして書く</b>のがポイントです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">use-case-template</span>
+      <span class="tag-desc">標準的なユースケース記述</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ユースケースの構成要素</div>
+        <table class="compare">
+          <tr><th>項目</th><th>内容</th></tr>
+          <tr><td><b>ID</b></td><td>UC-001 等</td></tr>
+          <tr><td><b>名前</b></td><td>「商品を購入する」</td></tr>
+          <tr><td><b>主アクター</b></td><td>誰が使うか</td></tr>
+          <tr><td><b>事前条件</b></td><td>ログイン済み等</td></tr>
+          <tr><td><b>基本フロー</b></td><td>正常時の手順</td></tr>
+          <tr><td><b>代替フロー</b></td><td>異常・分岐</td></tr>
+          <tr><td><b>事後条件</b></td><td>完了時の状態</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// ユースケース記述例</span>
+
+<span class="ann">[UC-007] 商品を購入する</span>
+
+<span class="kw">主アクター</span>: 会員ユーザー
+<span class="kw">事前条件</span>: ログイン済み / カートに商品1点以上
+
+<span class="kw">基本フロー</span>:
+  <span class="step">1.</span> ユーザーが「購入する」を押す
+  <span class="step">2.</span> システムが配送先一覧を表示
+  <span class="step">3.</span> ユーザーが配送先を選択
+  <span class="step">4.</span> システムが決済方法を表示
+  <span class="step">5.</span> ユーザーがクレカ情報を入力
+  <span class="step">6.</span> システムが決済確定 → 注文番号発行
+  <span class="step">7.</span> システムがメールで注文確認を送信
+
+<span class="kw">代替フロー</span>:
+  <span class="ann">5a.</span> カード認証失敗
+    → エラー表示、5に戻る
+  <span class="ann">6a.</span> 在庫切れ
+    → 1に戻る、該当商品をカートから除去
+
+<span class="kw">事後条件</span>:
+  - 注文レコードが <span class="str">PAID</span> 状態で作成される
+  - 在庫が減算される
+  - ユーザーにメール送信される</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 代替フローこそ宝</div>
+    基本フローを書くのは誰でもできます。<b>代替フロー（異常系・例外系）をどれだけ洗い出せるか</b>が要件定義の腕の見せどころ。「在庫切れ」「カード失敗」「セッション切れ」を網羅すると、後の手戻りが激減します。
+  </div>
+</section>
+
+<section id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>ユーザーストーリー</h2>
+    <span class="en">USER STORIES</span>
+  </div>
+  <p class="pattern-desc">ユースケースより<b>もっと軽量・アジャイル向き</b>の表現がユーザーストーリーです。「<b>As a 〜, I want 〜, so that 〜</b>」の定型文で、誰が何のために何をしたいかを1行で表します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">user-story</span>
+      <span class="tag-desc">3部構成の定型文</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ストーリーの公式</div>
+        <div class="diagram">As a   〔誰として〕
+I want 〔何をしたい〕
+so that〔何を得たい〕</div>
+        <p style="margin-top:14px;font-size:13px"><b>so that</b>（目的）を必ず書くのがコツ。これがあると「<b>本当にその機能が要るか</b>」を判断できます。</p>
+        <p style="margin-top:10px;font-size:13px"><strong>受け入れ基準（Acceptance Criteria）</strong>とセットで管理：</p>
+        <ul style="font-size:12.5px;margin-top:6px">
+          <li>Given 〔前提〕</li>
+          <li>When 〔操作〕</li>
+          <li>Then 〔期待結果〕</li>
+        </ul>
+      </div>
+      <div class="code"><span class="comment">// ユーザーストーリー実例</span>
+
+<span class="ann">[Story]</span>
+<span class="kw">As a</span>   通販サイトの会員として
+<span class="kw">I want</span> 過去の注文履歴を見たい
+<span class="kw">so that</span> 同じ商品を再注文しやすくするため
+
+<span class="ann">[Acceptance Criteria]</span>
+
+<span class="kw">Given</span> ユーザーがログイン済みで
+       過去に3件以上の注文がある
+<span class="kw">When</span>  マイページの「注文履歴」を開く
+<span class="kw">Then</span>  注文日の新しい順に表示される
+       各注文に「再注文」ボタンがある
+
+<span class="kw">Given</span> 注文履歴が0件の場合
+<span class="kw">When</span>  注文履歴を開く
+<span class="kw">Then</span>  「<span class="str">まだ注文がありません</span>」と表示
+       おすすめ商品を表示する
+
+<span class="comment">// この粒度なら開発者は迷わない。</span>
+<span class="comment">// QAはそのままテストケースに使える。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">TIP — INVEST原則</div>
+    良いユーザーストーリーは <b>Independent</b>（独立）/ <b>Negotiable</b>（交渉可能）/ <b>Valuable</b>（価値あり）/ <b>Estimable</b>（見積れる）/ <b>Small</b>（小さい）/ <b>Testable</b>（テスト可能）。頭文字でINVEST。これを満たさないストーリーは分割しましょう。
+  </div>
+</section>
+
+<section id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>制約の見極め</h2>
+    <span class="en">IDENTIFYING CONSTRAINTS</span>
+  </div>
+  <p class="pattern-desc">設計の自由度を縛るのが<b>制約</b>です。技術的制約、ビジネス制約、法的制約。これらを把握せずに設計を始めると、後で「<b>その方式じゃダメだった</b>」とちゃぶ台返しを食らいます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">constraints</span>
+      <span class="tag-desc">4種類の制約を洗い出す</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 制約のカテゴリ</div>
+        <ul>
+          <li><span class="label">技術</span><strong>言語/FW指定、既存DB</strong><br><span style="font-size:12px;color:var(--muted)">「Javaで作って」「Oracleがある」</span></li>
+          <li><span class="label">ビジネス</span><strong>予算/納期/体制</strong><br><span style="font-size:12px;color:var(--muted)">「3ヶ月で」「メンバー3人」</span></li>
+          <li><span class="label">法的</span><strong>個人情報保護法、業界規制</strong><br><span style="font-size:12px;color:var(--muted)">「医療系/金融系の規制」</span></li>
+          <li><span class="label">運用</span><strong>既存運用ルール</strong><br><span style="font-size:12px;color:var(--muted)">「夜間バッチ枠2時間まで」</span></li>
+        </ul>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)"><b>制約は早い段階で全部書き出す</b>。後から出てくると致命傷。</p>
+      </div>
+      <div class="code"><span class="comment">// 制約のヒアリング例</span>
+
+<span class="ann">[技術制約]</span>
+- 開発言語: <span class="str">Java 21 必須</span>（社内標準）
+- DB: <span class="str">既存 PostgreSQL 14 を流用</span>
+- インフラ: <span class="str">AWS のみ可</span>（Azure不可）
+- フロント: <span class="str">React + TypeScript</span>
+
+<span class="ann">[ビジネス制約]</span>
+- 予算: <span class="num">2,000</span>万円
+- 期限: <span class="num">2026/09/30</span> リリース
+- 体制: <span class="kw">PG</span> <span class="num">3</span>名 + <span class="kw">PL</span> <span class="num">1</span>名
+
+<span class="ann">[法的制約]</span>
+- <span class="kw">個人情報保護法</span> 準拠
+- カード番号は <span class="kw">PCI DSS</span> 準拠で非保持
+- アクセスログ保管 <span class="num">5</span>年
+
+<span class="ann">[運用制約]</span>
+- メンテ枠: 毎週 <span class="kw">日曜 2:00-4:00</span>
+- 監視: 既存 <span class="kw">Datadog</span> に統合
+- デプロイ: <span class="kw">月2回</span>まで
+
+<span class="comment">// この一覧が無いと設計は始まらない</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 制約は敵ではなく味方</div>
+    制約があるからこそ<b>選択肢が絞られて、設計が早く決まる</b>のです。「何でも自由に作っていいよ」が一番難しい。制約を恐れず、むしろ積極的にヒアリングしましょう。
+  </div>
+</section>
+
+<section id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>要件から設計への変換</h2>
+    <span class="en">TRANSLATION TECHNIQUE</span>
+  </div>
+  <p class="pattern-desc">要件定義書から設計書へは、<b>機械的な翻訳</b>でかなりの部分が進められます。「名詞」「動詞」「数値」をそれぞれ設計のどの要素に変換するか、定型パターンを覚えておくと作業が早くなります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">translate-pattern</span>
+      <span class="tag-desc">要件文の品詞 → 設計要素</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 翻訳ルール</div>
+        <table class="compare">
+          <tr><th>要件文の要素</th><th>設計の何になるか</th></tr>
+          <tr><td><b>名詞</b><br>（ユーザー、注文、商品）</td><td>エンティティ<br>クラス / テーブル</td></tr>
+          <tr><td><b>動詞</b><br>（注文する、確定する）</td><td>メソッド / API<br>ユースケース</td></tr>
+          <tr><td><b>形容詞</b><br>（有効な、未払いの）</td><td>状態 / フラグ<br>列の値</td></tr>
+          <tr><td><b>数値</b><br>（3秒以内、月10万件）</td><td>非機能要件<br>制約値</td></tr>
+          <tr><td><b>「〜の」</b><br>（注文の明細）</td><td>関連<br>外部キー</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// 要件文を機械的に分解</span>
+
+<span class="ann">[要件文]</span>
+「<span class="str">会員は</span>、<span class="str">有効な</span><span class="str">クーポン</span>を使って
+<span class="str">商品の購入</span>を<span class="str">割引できる</span>」
+
+<span class="ann">[品詞分解]</span>
+名詞: 会員 / クーポン / 商品 / 購入
+形容詞: 有効な
+動詞: 使う / 割引する
+関連: 商品<span class="kw">の</span>購入
+
+<span class="ann">[設計に変換]</span>
+<span class="kw">class</span> <span class="type">Member</span> { }
+<span class="kw">class</span> <span class="type">Coupon</span> {
+  status: <span class="type">CouponStatus</span>;  <span class="comment">// ACTIVE/EXPIRED</span>
+}
+<span class="kw">class</span> <span class="type">Product</span> { }
+<span class="kw">class</span> <span class="type">Purchase</span> {
+  product: <span class="type">Product</span>;
+  member: <span class="type">Member</span>;
+
+  <span class="fn">applyCoupon</span>(coupon: <span class="type">Coupon</span>) {
+    <span class="kw">if</span> (coupon.status !== <span class="str">"ACTIVE"</span>) <span class="kw">throw</span>;
+    <span class="comment">// 割引適用</span>
+  }
+}
+
+<span class="comment">// 要件文の言葉が、そのまま</span>
+<span class="comment">// クラス名・メソッド名に現れている。</span>
+<span class="comment">// これが「ユビキタス言語」の原型。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — ユビキタス言語</div>
+    要件文に出てくる単語と、コードに出てくる単語を<b>完全に一致させる</b>のがDDD（ドメイン駆動設計）の核心。「顧客が『クーポン』と呼ぶものを、コードでは『Voucher』と呼ぶ」のはNGです。
+  </div>
+</section>
+
+<section id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>優先順位付け（MoSCoW）</h2>
+    <span class="en">MOSCOW PRIORITIZATION</span>
+  </div>
+  <p class="pattern-desc">要件を全部実装しようとすると間に合いません。<b>「絶対必要」と「あったらいい」を分ける</b>ことが重要です。これを定型化したのが<b>MoSCoW法</b>（Must / Should / Could / Won't）です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">moscow</span>
+      <span class="tag-desc">4段階の優先度</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// MoSCoWの定義</div>
+        <ul>
+          <li><span class="label">M</span><strong>Must have</strong><br>これが無いとリリース不可<span style="color:var(--muted);font-size:12px"> / 全体の60%以下</span></li>
+          <li><span class="label">S</span><strong>Should have</strong><br>重要だが無くても動く<span style="color:var(--muted);font-size:12px"> / 20%</span></li>
+          <li><span class="label">C</span><strong>Could have</strong><br>あれば嬉しい<span style="color:var(--muted);font-size:12px"> / 20%</span></li>
+          <li><span class="label">W</span><strong>Won't have</strong><br>今回はやらない（次回検討）</li>
+        </ul>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)">特に重要なのが <b>Won't</b>。「やらないこと」を明示するとスコープが守れます。</p>
+      </div>
+      <div class="code"><span class="comment">// ECサイト リリース初版の優先付け</span>
+
+<span class="ann">[Must — 必須]</span>
+- 会員登録 / ログイン
+- 商品一覧 / 詳細
+- カート機能
+- クレジット決済
+- 注文確認メール送信
+
+<span class="ann">[Should — 重要]</span>
+- 検索機能
+- 注文履歴
+- パスワードリセット
+- 在庫管理（管理者画面）
+
+<span class="ann">[Could — あれば嬉しい]</span>
+- レビュー投稿
+- お気に入り
+- レコメンド表示
+- クーポン適用
+
+<span class="ann">[Won't — 今回やらない]</span>
+- 多言語対応
+- ポイント制度
+- サブスクリプション
+- モバイルアプリ
+
+<span class="comment">// このリストを顧客と握っておくと、</span>
+<span class="comment">// 途中で「これ追加して」と言われた時に</span>
+<span class="comment">// 「Won'tに分類されてます」と返せる。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">NEXT STEP — Vol.3 へ</div>
+    要件が決まったらいよいよ実装の設計です。Vol.3では<b>SOLIDをはじめとする設計原則</b>を扱います。原則を知らずに書いたクラスは半年後に必ず崩れます。<b>「変更に強いコード」を支える土台</b>を学びましょう。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING DESIGN SERIES — VOL.02</span>
+  <span>△ REQUIREMENTS</span>
+</footer>
+
+</body>
+</html>

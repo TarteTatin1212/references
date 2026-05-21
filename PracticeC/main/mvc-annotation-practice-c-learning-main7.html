@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.7 本編 日付入力を完全攻略しよう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1d2e26;
+  --paper:#e6ece2;
+  --paper-2:#cfdccb;
+  --accent:#648b6e;
+  --accent-2:#7fa388;
+  --accent-3:#1b3d2c;
+  --muted:#697867;
+  --line:#b2c1ac;
+  --code-bg:#14211a;
+  --code-text:#e6ece2;
+  --panel-bg:#eef3ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.warn-mine{margin:32px 0 0;padding:18px 22px;background:#fff0f0;border:1px solid #c45a5a;border-left:5px solid #a03030}
+.warn-mine .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#702020;margin-bottom:8px}
+.warn-mine p{font-size:14px;color:#502020;line-height:1.75}
+.warn-mine code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #c45a5a;color:#702020}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(100,139,110,0.08);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.mock-screen{background:#fff;border:1px solid var(--line);margin:12px 0;font-family:'Noto Sans JP',sans-serif}
+.mock-bar{background:#e0e0e0;padding:4px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#444;border-bottom:1px solid #c0c0c0}
+.mock-body{padding:16px}
+.mock-h{font-family:'Shippori Mincho',serif;font-size:18px;margin-bottom:12px;color:var(--accent-3);border-bottom:2px solid var(--accent);padding-bottom:6px;display:inline-block}
+.mock-form-block{background:#fafdf8;border:1px solid var(--line);padding:14px 16px;margin:8px 0}
+.mock-form-block .row{display:flex;align-items:center;margin:6px 0;font-size:13px}
+.mock-form-block .row label{width:120px;font-family:'Shippori Mincho',serif;color:var(--accent-3)}
+.mock-form-block .row input,.mock-form-block .row select,.mock-form-block .row textarea{padding:4px 8px;font-size:13px;border:1px solid #aaa;flex:1}
+.mock-form-block .btn-row{margin-top:12px}
+.mock-form-block button{padding:6px 18px;background:var(--accent);color:#fff;border:none;font-size:13px;cursor:pointer}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.mine-card{background:#fff7f7;border:1px solid #c45a5a;border-left:5px solid #a03030;padding:14px 18px;margin:14px 0}
+.mine-card .mh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#702020;margin-bottom:6px}
+.mine-card .my{font-size:13.5px;line-height:1.75;color:#3c2020}
+.mine-card .ans{margin-top:10px;padding-top:8px;border-top:1px dashed #c45a5a;font-size:13px;color:#552020}
+.mine-card .ans b{color:#702020}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.07 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>日付入力を<br>完全攻略しよう</h1>
+  <div class="subtitle">DATE INPUT MASTERY ── LOCALDATE & DATETIMEFORMAT</div>
+  <p class="lead">
+    Vol.7は<b>「LocalDate + @DateTimeFormat」</b>の獲得です。<br>
+    学習記録の<b>新規登録機能</b>を作りますが、その中核が<b>「日付入力」</b>。<b>業務開発の地雷No.1</b>と言われる日付処理を、<b>冒頭で「ハマり3選」を先回り提示</b>することで、つまずく前に対策します。<br>
+    技術的には：HTMLの <code style="font-family:'JetBrains Mono'">&lt;input type="date"&gt;</code>、Javaの <code style="font-family:'JetBrains Mono'">LocalDate</code>、Springの <code style="font-family:'JetBrains Mono'">@DateTimeFormat</code> ── この3点の<b>正しい組み合わせ</b>を体験。<br>
+    Cの中で<b>「業務システムらしい品質感」</b>に到達する重要巻。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>Vol.7で新しく登場する import：<code>java.time.LocalDate</code>、<code>org.springframework.format.annotation.DateTimeFormat</code>。<br>
+    <code>Ctrl + Shift + O</code> で一括解決。<br>
+    特に <code>DateTimeFormat</code> は<b>2種類の同名クラス</b>が存在し（Springのと Joda-Time の）、<b>Spring側を選ぶ</b>のがポイント。「Import 'DateTimeFormat' (org.springframework.format.annotation)」を選択してください。</p>
+  </div>
+
+  <div class="warn-mine">
+    <div class="wh">⚠ 業務開発の地雷No.1 ── 日付処理</div>
+    <p>日付処理は<b>「動かない原因の8割が型の不一致」</b>と言われるくらいハマりやすい領域です。本巻ではこの罠を<b>セクション04で先回り全部見せます</b>。<br>
+    <b>「やってから学ぶ」</b>のではなく<b>「学んでからやる」</b>方針。最初に地雷マップを共有することで、つまずきを最小化します。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#mines">04 ★日付ハマり3選★（先回り）</a></li>
+    <li><a href="#combo">05 LocalDate × type=date × @DateTimeFormat</a></li>
+    <li><a href="#create">06 ファイル作成と改修</a></li>
+    <li><a href="#run">07 ブラウザで動かして確認</a></li>
+    <li><a href="#trouble">08 ハマりどころと対処</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.7では<b>「学習記録の新規登録機能」</b>を作ります。「<b>科目を選んで・日付を入れて・時間とメモを書いて・登録</b>」の流れ。中核は<b>日付入力</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.7-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">登録フォーム画面を作る</div>
+          <div class="desc"><code>/records/new</code> で「科目・日付・時間・メモ」の入力フォームを表示。<b>日付入力は <code>type="date"</code></b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">POST処理で登録できる</div>
+          <div class="desc"><code>POST /records</code> でDBに登録 → リダイレクトで <code>/subjects</code> に戻る（PRGパターン）。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">日付がDBに正しく入る</div>
+          <div class="desc">入力した「2026-05-20」が、DBの <code>study_records.studied_on</code> に <code>DATE</code> 型で<b>正しく</b>保存される。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 完成後の動作</span>
+
+<span class="comment">// ① 登録画面へ</span>
+GET /records/new
+  → フォーム表示
+
+
+<span class="comment">// ② 入力して送信</span>
+科目:   Java
+日付:   2026-05-20
+時間:   60
+メモ:   ジェネリクスの復習
+[登録ボタン]
+
+
+<span class="comment">// ③ POSTリクエスト</span>
+POST /records
+  ↓
+DBに INSERT
+  ↓
+<span class="comment">// ④ リダイレクト</span>
+GET /subjects
+  ↓
+一覧に新記録が表示される
+
+
+<span class="comment">// この一連の流れを「PRGパターン」と呼ぶ：</span>
+<span class="comment">// POST → Redirect → GET</span>
+<span class="comment">// （A v2 Vol.5 で学んだ）</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── ブラウザで見える画面</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.7のゴール画面は<b>新規登録フォーム</b>。各入力項目を意識的に並べたシンプルな構造。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-screen</span>
+      <span class="tag-desc">完成画面のモック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 登録フォーム画面</div>
+        <div class="mock-screen">
+          <div class="mock-bar">▮ http://localhost:8080/records/new</div>
+          <div class="mock-body">
+            <div class="mock-h">学習記録の登録</div>
+            <div class="mock-form-block">
+              <div class="row"><label>科目：</label><select><option>Java</option></select></div>
+              <div class="row"><label>学習日：</label><input type="date" value="2026-05-20"></div>
+              <div class="row"><label>時間（分）：</label><input type="number" value="60"></div>
+              <div class="row"><label>メモ：</label><input type="text"></div>
+              <div class="btn-row"><button>登録する</button></div>
+            </div>
+          </div>
+        </div>
+        <p style="margin-top:12px;font-size:13px"><b>登録後の流れ</b>：「登録する」ボタンを押すと、<code>/subjects</code> 一覧画面にリダイレクトされ、新しい記録が反映される。</p>
+      </div>
+      <div class="code"><span class="code-head">// プロジェクト構造の変化</span>
+
+todo/
+├ src/main/java/com/example/todo/
+│  ├ form/                       <span class="comment">// ★ 新規パッケージ</span>
+│  │  └ <span class="kw">StudyRecordForm.java</span>    <span class="comment">// ★ 新規</span>
+│  ├ mapper/
+│  │  └ StudyRecordMapper.java   <span class="comment">// 改修</span>
+│  │      <span class="kw">// + insert()</span>
+│  ├ service/
+│  │  ├ SubjectService.java     <span class="comment">// 変更なし</span>
+│  │  └ <span class="kw">StudyRecordService.java</span> <span class="comment">// ★ 新規</span>
+│  └ controller/
+│     ├ SubjectController.java   <span class="comment">// 変更なし</span>
+│     └ <span class="kw">StudyRecordController.java</span> <span class="comment">// ★ 新規</span>
+└ src/main/resources/templates/
+   └ <span class="kw">records/</span>                    <span class="comment">// ★ 新規フォルダ</span>
+      └ <span class="kw">new.html</span>                  <span class="comment">// ★ 新規</span>
+
+
+<span class="comment">// 新規 5ファイル＋改修 1ファイル</span>
+<span class="comment">// 新パッケージ form を導入</span>
+<span class="comment">// （A v2 Vol.5 で習った Form と同じ思想）</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.7は<b>A v2 Vol.5（新規登録）の応用</b>です。Aで習った「Form / @PostMapping / PRGパターン」がそのまま使えます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">前提知識</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前提知識</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>該当箇所</th></tr>
+          <tr><td>Form クラスの作り方</td><td>A v2 Vol.5</td></tr>
+          <tr><td>@PostMapping / @ModelAttribute</td><td>A v2 Vol.5</td></tr>
+          <tr><td>PRG パターン（POST→Redirect→GET）</td><td>A v2 Vol.5 別冊</td></tr>
+          <tr><td>th:object / th:field</td><td>A v2 Vol.5 別冊</td></tr>
+          <tr><td>@Insert アノテーション</td><td>A v2 Vol.5</td></tr>
+          <tr><td>@RequestParam（任意化）</td><td>本編 M6</td></tr>
+          <tr><td>1対多のテーブル設計</td><td>本編 M2 / 別冊 S1</td></tr>
+        </table>
+        <div style="margin-top:16px;font-size:13.5px"><b>新しく学ぶこと</b>：</div>
+        <ol class="step-list" style="margin-top:6px">
+          <li><code>LocalDate</code> を Form のフィールドに使う</li>
+          <li><code>@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)</code> の役割</li>
+          <li>HTML の <code>&lt;input type="date"&gt;</code> と Java の連携</li>
+          <li>Thymeleaf で日付を画面に出す書き方</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// 復習：A v2 Vol.5 の TaskForm</span>
+
+<span class="kw">package</span> com.example.todo.form;
+
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+}
+
+
+<span class="comment">// Vol.7 で作る StudyRecordForm はほぼ同じ構造</span>
+<span class="comment">// + LocalDate のフィールドが入る</span>
+
+
+<span class="comment">// ─── PRGパターン再掲 ───</span>
+<span class="comment">// Aで学んだ流れ</span>
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">register</span>(
+    <span class="ann">@ModelAttribute</span> <span class="type">TaskForm</span> form) {
+  taskService.<span class="fn">register</span>(form);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+  <span class="comment">// ↑ "redirect:" 接頭辞でリダイレクト</span>
+}
+
+
+<span class="comment">// Vol.7 でも同じパターン</span>
+<span class="comment">// register → "redirect:/subjects"</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="mines">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>★日付ハマり3選★（先回り）</h2>
+    <span class="en">3 DATE PITFALLS ── PREVIEW</span>
+  </div>
+  <p class="pattern-desc">本巻の<b>最重要セクション</b>。コードを書く前に、<b>業務でよくある日付のハマりどころ3つ</b>を先に見ます。「<b>これを知らずに書いて詰まる」のと「知ってから書く」</b>のは、雲泥の差です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">date-mines</span>
+      <span class="tag-desc">日付3大地雷</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの地雷</div>
+        <div class="mine-card">
+          <div class="mh">⚠ 地雷1 ── 古い型 <code>java.util.Date</code> を使う</div>
+          <div class="my"><b>症状</b>：<code>java.util.Date</code> を Form のフィールドに使うと、フォーマット指定が複雑になり、TypeHandler が混乱、表示が壊れる。<br><b>原因</b>：Javaには<b>「古い日付型（Date, Calendar）」</b>と<b>「新しい日付型（LocalDate, LocalDateTime）」</b>が併存。古い方は混乱の元。</div>
+          <div class="ans"><b>対策</b>：必ず <b><code>java.time.LocalDate</code></b>（日付のみ）または <code>java.time.LocalDateTime</code>（日時）を使う。<code>java.util.Date</code> は<b>Cの15巻で一切使わない</b>。</div>
+        </div>
+        <div class="mine-card">
+          <div class="mh">⚠ 地雷2 ── @DateTimeFormat を付け忘れる</div>
+          <div class="my"><b>症状</b>：フォーム送信時に「<b>Failed to convert value of type String to LocalDate</b>」エラー。HTMLから来た文字列 "2026-05-20" を Java の LocalDate にうまく変換できない。<br><b>原因</b>：Springは<b>「どのフォーマットで来るか」を明示されていないと変換できない</b>。</div>
+          <div class="ans"><b>対策</b>：Form のフィールドに <code>@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)</code> を付ける。これで「ISO形式（YYYY-MM-DD）でやり取りする」と Spring に伝わる。</div>
+        </div>
+        <div class="mine-card">
+          <div class="mh">⚠ 地雷3 ── Thymeleafで日付の初期値表示が崩れる</div>
+          <div class="my"><b>症状</b>：編集画面で既存の日付を表示しようとすると <code>"2026-05-20T00:00:00"</code> のような変な形式で出る、または空欄になる。<br><b>原因</b>：Thymeleafは <code>LocalDate</code> を自動的に良い形式で出してくれるが、<code>th:value</code> を使う時の書き方に注意が必要。</div>
+          <div class="ans"><b>対策</b>：<code>th:value="${form.studiedOn}"</code> で <code>LocalDate</code> をそのまま渡せばOK。<b>Vol.7では新規登録なので空欄でOK</b>。編集機能は将来作る時に注意。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 3つの地雷を回避する型・記述</span>
+
+<span class="comment">// ─── 地雷1: 型の選択 ───</span>
+
+<span class="comment">// ✗ NG</span>
+<span class="kw">private</span> <span class="type">java.util.Date</span> studiedOn;
+<span class="kw">private</span> <span class="type">java.sql.Date</span> studiedOn;
+<span class="kw">private</span> <span class="type">String</span> studiedOn;
+
+<span class="comment">// ✓ OK</span>
+<span class="kw">private</span> <span class="type">java.time.LocalDate</span> studiedOn;
+<span class="comment">// ↑ DBが DATE 型なら LocalDate</span>
+<span class="comment">// ↑ DBが DATETIME 型なら LocalDateTime</span>
+
+
+<span class="comment">// ─── 地雷2: @DateTimeFormat の付与 ───</span>
+
+<span class="comment">// ✗ NG</span>
+<span class="kw">public class</span> <span class="type">StudyRecordForm</span> {
+  <span class="kw">private</span> <span class="type">LocalDate</span> studiedOn;
+  <span class="comment">// → 「Failed to convert」エラー！</span>
+}
+
+
+<span class="comment">// ✓ OK</span>
+<span class="kw">public class</span> <span class="type">StudyRecordForm</span> {
+  <span class="ann">@DateTimeFormat</span>(iso = <span class="type">DateTimeFormat</span>.ISO.DATE)
+  <span class="kw">private</span> <span class="type">LocalDate</span> studiedOn;
+}
+
+
+<span class="comment">// ─── 地雷3: Thymeleaf の書き方 ───</span>
+
+<span class="comment">// 新規登録（値なし） → そのままでOK</span>
+&lt;<span class="kw">input</span> <span class="ann">type</span>=<span class="str">"date"</span>
+       <span class="ann">th:field</span>=<span class="str">"*{studiedOn}"</span>&gt;
+
+
+<span class="comment">// 編集（値あり）の時の注意 → 将来課題</span>
+<span class="comment">// LocalDate なら自動で YYYY-MM-DD 形式で出る</span>
+<span class="comment">// LocalDateTime だと注意が必要</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>この3つの地雷を<b>「最初に知っている」</b>と知らないでハマる人と比べて、<b>圧倒的に学習効率が違います</b>。本編Vol.7のコードでは、3つすべてを<b>自然にクリアしている形</b>で書きます。読みながら「あ、あの地雷を踏まないように書いてあるな」と気付けたら、あなたのレベルは1段上です。</p>
+  </div>
+</section>
+
+<section id="combo">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>LocalDate × type=date × @DateTimeFormat</h2>
+    <span class="en">THE GOLDEN COMBO</span>
+  </div>
+  <p class="pattern-desc">日付処理の<b>「黄金の組み合わせ」</b>は、HTML側の <code>&lt;input type="date"&gt;</code>、Java側の <code>LocalDate</code>、Spring側の <code>@DateTimeFormat</code> の3点セット。<b>この3点が揃って初めて、すべてが噛み合います</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">golden-combo</span>
+      <span class="tag-desc">3つの役割</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3点セットの役割</div>
+        <div class="role-card">
+          <span class="label">役割1</span>
+          <div class="name">&lt;input type="date"&gt; ── HTML側</div>
+          <div class="desc">ブラウザが<b>日付ピッカー（カレンダー）</b>を出してくれる。送信時の値の形式は<b>必ず YYYY-MM-DD</b>（ISO 8601形式）。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">役割2</span>
+          <div class="name">LocalDate ── Java側</div>
+          <div class="desc">「<b>時刻なし・日付のみ</b>」を表す Java 標準クラス。<b>java.time パッケージ</b>。比較・計算・フォーマットが全て揃っている。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">役割3</span>
+          <div class="name">@DateTimeFormat ── Spring側</div>
+          <div class="desc">HTMLから来た文字列 "2026-05-20" を <b>LocalDate に自動変換</b>するための指示。<code>iso = ISO.DATE</code> で「ISO形式」を指定。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>これ全部が「ISO 8601形式 YYYY-MM-DD」で統一されている</b>のが美しい。3点共通の言語として ISO形式が活躍します。</p>
+      </div>
+      <div class="code"><span class="code-head">// 黄金の組み合わせの動き</span>
+
+<span class="comment">// ① ブラウザで日付を選択</span>
+&lt;<span class="kw">input</span> <span class="ann">type</span>=<span class="str">"date"</span>
+       <span class="ann">name</span>=<span class="str">"studiedOn"</span>&gt;
+
+<span class="comment">// → ユーザーがカレンダーで「2026年5月20日」を選ぶ</span>
+
+
+<span class="comment">// ② フォーム送信</span>
+POST /records
+Content-Type: application/x-www-form-urlencoded
+
+studiedOn=2026-05-20&minutes=60&...
+
+<span class="comment">// → 値は YYYY-MM-DD 形式で送られる</span>
+
+
+<span class="comment">// ③ Springが文字列 → LocalDate に変換</span>
+<span class="kw">public class</span> <span class="type">StudyRecordForm</span> {
+
+  <span class="ann">@DateTimeFormat</span>(iso = <span class="type">DateTimeFormat</span>.ISO.DATE)
+  <span class="kw">private</span> <span class="type">LocalDate</span> studiedOn;
+  <span class="comment">// ↑ ここで "2026-05-20" → LocalDate.of(2026,5,20)</span>
+}
+
+
+<span class="comment">// ④ Service → Mapper → DB</span>
+<span class="ann">@Insert</span>(<span class="str">"INSERT INTO study_records "</span>
+       + <span class="str">"(subject_id, studied_on, minutes, memo) "</span>
+       + <span class="str">"VALUES (#{subjectId}, #{studiedOn}, "</span>
+       + <span class="str">"#{minutes}, #{memo})"</span>)
+<span class="kw">void</span> <span class="fn">insert</span>(<span class="type">StudyRecord</span> record);
+
+<span class="comment">// MyBatis の TypeHandler が LocalDate → DATE 変換</span>
+<span class="comment">// （S4で学んだ通り）</span>
+
+
+<span class="comment">// ⑤ DBに保存される</span>
+study_records.studied_on = <span class="str">'2026-05-20'</span>
+
+
+<span class="comment">// → 4段階で型が変換されながら受け渡されている</span>
+<span class="comment">// → 各段階の「設定」がきちんとあれば全部自動</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ファイル作成と改修</h2>
+    <span class="en">CREATE & MODIFY</span>
+  </div>
+  <p class="pattern-desc"><b>5ファイルの新規作成＋1ファイル改修</b>。順序は<b>Form → Mapper → Service → Controller → HTML</b>の下流方向。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-form</span>
+      <span class="tag-desc">① StudyRecordForm（新規）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>Package Explorer で <code>com.example.todo</code> を右クリック</li>
+          <li><span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Package</span> → <code>com.example.todo.form</code> を作成</li>
+          <li><code>form</code> パッケージを右クリック → <span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Class</span></li>
+          <li>Name欄に <code>StudyRecordForm</code></li>
+          <li>右のコードを書く</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">なぜEntityと別物</div>
+          <p>A v2 Vol.5別冊で学んだ通り、<b>FormとEntityは別の関心</b>です。Formは「画面から来る入力」を表現し、Entityは「DBに対応するデータ」を表現。フィールドは似ていますが、<b>役割が異なる</b>ので別クラスにします。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// StudyRecordForm.java（新規）</span>
+
+<span class="kw">package</span> com.example.todo.form;
+
+<span class="kw">import</span> java.time.LocalDate;
+<span class="kw">import</span> org.springframework.format.annotation.DateTimeFormat;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">StudyRecordForm</span> {
+
+  <span class="kw">private</span> <span class="type">Integer</span> subjectId;
+
+  <span class="ann">@DateTimeFormat</span>(iso = <span class="type">DateTimeFormat</span>.ISO.DATE)
+  <span class="kw">private</span> <span class="type">LocalDate</span> studiedOn;
+
+  <span class="kw">private</span> <span class="type">Integer</span> minutes;
+
+  <span class="kw">private</span> <span class="type">String</span> memo;
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・LocalDate（java.util.Date ではない）</span>
+<span class="comment">// ・@DateTimeFormat で形式指定</span>
+<span class="comment">// ・@Data で getter/setter 自動生成</span>
+<span class="comment">// ・地雷1・2 を回避済み</span>
+
+
+<span class="comment">// 全フィールドの型：</span>
+<span class="comment">// subjectId : Integer（科目ID）</span>
+<span class="comment">// studiedOn : LocalDate（学習日）</span>
+<span class="comment">// minutes   : Integer（学習時間 分）</span>
+<span class="comment">// memo      : String（任意メモ）</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-mapper</span>
+      <span class="tag-desc">② StudyRecordMapper に insert を追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>StudyRecordMapper.java</code> を開く</li>
+          <li>既存の <code>findBySubjectId</code> の下に <code>insert</code> を追加</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">引数は Entity</div>
+          <p>insert/update では<b>Entity をそのまま渡す</b>のがMyBatisの定石。Form を Entity に変換してから渡します。<b>「ServiceでForm→Entity変換」</b>がレイヤー分離の基本。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// StudyRecordMapper.java（改修後）</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.apache.ibatis.annotations.Insert;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> org.apache.ibatis.annotations.Param;
+<span class="kw">import</span> org.apache.ibatis.annotations.Select;
+<span class="kw">import</span> com.example.todo.entity.StudyRecord;
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">StudyRecordMapper</span> {
+
+  <span class="ann">@Select</span>(<span class="str">"SELECT * FROM study_records "</span>
+        + <span class="str">"WHERE subject_id = #{subjectId} "</span>
+        + <span class="str">"ORDER BY studied_on"</span>)
+  <span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt; <span class="fn">findBySubjectId</span>(
+        <span class="ann">@Param</span>(<span class="str">"subjectId"</span>) <span class="type">Integer</span> subjectId);
+
+  <span class="comment">// ★ Vol.7で追加</span>
+  <span class="ann">@Insert</span>(<span class="str">"INSERT INTO study_records "</span>
+        + <span class="str">"(subject_id, studied_on, minutes, memo) "</span>
+        + <span class="str">"VALUES (#{subjectId}, #{studiedOn}, "</span>
+        + <span class="str">"#{minutes}, #{memo})"</span>)
+  <span class="kw">void</span> <span class="fn">insert</span>(<span class="type">StudyRecord</span> record);
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・@Insert アノテーションSQL</span>
+<span class="comment">// ・引数は StudyRecord Entity</span>
+<span class="comment">// ・#{subjectId} は record.getSubjectId()</span>
+<span class="comment">// ・LocalDate → DATE は TypeHandler が自動変換</span>
+<span class="comment">// ・id, created_at は AUTO/DEFAULT で省略</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-service</span>
+      <span class="tag-desc">③ StudyRecordService（新規）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>com.example.todo.service</code> を右クリック → <span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Class</span></li>
+          <li>Name欄に <code>StudyRecordService</code></li>
+          <li>右のコードを書く</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">Service の役割：Form → Entity 変換</div>
+          <p>Service で <b>FormをEntityに詰め替え</b>します。「Mapperに渡すのはEntity」の鉄則を守るため。今回は単純な詰め替えですが、業務ではここに<b>業務ロジック</b>が入ってきます（Vol.13で深掘り）。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// StudyRecordService.java（新規）</span>
+
+<span class="kw">package</span> com.example.todo.service;
+
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Service;
+<span class="kw">import</span> org.springframework.transaction.annotation.Transactional;
+<span class="kw">import</span> com.example.todo.entity.StudyRecord;
+<span class="kw">import</span> com.example.todo.form.StudyRecordForm;
+<span class="kw">import</span> com.example.todo.mapper.StudyRecordMapper;
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public class</span> <span class="type">StudyRecordService</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">StudyRecordMapper</span> studyRecordMapper;
+
+  <span class="kw">public void</span> <span class="fn">register</span>(<span class="type">StudyRecordForm</span> form) {
+    <span class="type">StudyRecord</span> record = <span class="kw">new</span> <span class="type">StudyRecord</span>();
+    record.<span class="fn">setSubjectId</span>(form.<span class="fn">getSubjectId</span>());
+    record.<span class="fn">setStudiedOn</span>(form.<span class="fn">getStudiedOn</span>());
+    record.<span class="fn">setMinutes</span>(form.<span class="fn">getMinutes</span>());
+    record.<span class="fn">setMemo</span>(form.<span class="fn">getMemo</span>());
+    studyRecordMapper.<span class="fn">insert</span>(record);
+  }
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・Form → Entity の詰め替え</span>
+<span class="comment">// ・Mapper には Entity を渡す</span>
+<span class="comment">// ・@Transactional でロールバック保証</span>
+<span class="comment">// ・id/created_at は DB側で自動付与</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-controller</span>
+      <span class="tag-desc">④ StudyRecordController（新規）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>com.example.todo.controller</code> を右クリック → <span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Class</span></li>
+          <li>Name欄に <code>StudyRecordController</code></li>
+          <li>右のコードを書く</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">2つのメソッド</div>
+          <p><code>GET /records/new</code>（フォーム表示）と <code>POST /records</code>（登録処理）の2メソッド構成。<b>これがPRGパターンの典型形</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// StudyRecordController.java（新規）</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind.annotation.GetMapping;
+<span class="kw">import</span> org.springframework.web.bind.annotation.ModelAttribute;
+<span class="kw">import</span> org.springframework.web.bind.annotation.PostMapping;
+<span class="kw">import</span> com.example.todo.form.StudyRecordForm;
+<span class="kw">import</span> com.example.todo.service.StudyRecordService;
+<span class="kw">import</span> com.example.todo.service.SubjectService;
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">StudyRecordController</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">StudyRecordService</span> studyRecordService;
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectService</span> subjectService;
+
+  <span class="comment">// 新規登録フォーム表示</span>
+  <span class="ann">@GetMapping</span>(<span class="str">"/records/new"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">newForm</span>(<span class="type">Model</span> model) {
+    model.<span class="fn">addAttribute</span>(<span class="str">"form"</span>,
+        <span class="kw">new</span> <span class="type">StudyRecordForm</span>());
+    model.<span class="fn">addAttribute</span>(<span class="str">"allSubjects"</span>,
+        subjectService.<span class="fn">findAll</span>());
+    <span class="kw">return</span> <span class="str">"records/new"</span>;
+  }
+
+  <span class="comment">// 登録処理（POST）</span>
+  <span class="ann">@PostMapping</span>(<span class="str">"/records"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">register</span>(
+      <span class="ann">@ModelAttribute</span>(<span class="str">"form"</span>) <span class="type">StudyRecordForm</span> form) {
+    studyRecordService.<span class="fn">register</span>(form);
+    <span class="kw">return</span> <span class="str">"redirect:/subjects"</span>;
+  }
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・newForm() で空のForm を model に渡す</span>
+<span class="comment">// ・allSubjects はセレクトボックス用</span>
+<span class="comment">// ・register() で登録 → リダイレクト</span>
+<span class="comment">// ・"redirect:/subjects" で一覧へ</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-html</span>
+      <span class="tag-desc">⑤ templates/records/new.html（新規）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>src/main/resources/templates</code> を右クリック → <span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Folder</span> → 名前 <code>records</code></li>
+          <li><code>records</code> を右クリック → <span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">File</span> → 名前 <code>new.html</code></li>
+          <li>右のコードを書く</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">th:object と th:field</div>
+          <p>A v2 Vol.5別冊で学んだ通り、<code>th:object</code> でフォーム全体に対象オブジェクトを設定し、<code>th:field</code> で各入力欄をオブジェクトのプロパティにバインド。<b>「フォームをオブジェクトとして扱う」</b>のがThymeleaf流。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// templates/records/new.html（新規）</span>
+
+&lt;!<span class="type">DOCTYPE</span> html&gt;
+&lt;<span class="kw">html</span> <span class="ann">xmlns:th</span>=<span class="str">"http://www.thymeleaf.org"</span>&gt;
+&lt;<span class="kw">head</span>&gt;
+  &lt;<span class="kw">meta</span> <span class="ann">charset</span>=<span class="str">"UTF-8"</span>&gt;
+  &lt;<span class="kw">title</span>&gt;学習記録の登録&lt;/<span class="kw">title</span>&gt;
+&lt;/<span class="kw">head</span>&gt;
+&lt;<span class="kw">body</span>&gt;
+  &lt;<span class="kw">h1</span>&gt;学習記録の登録&lt;/<span class="kw">h1</span>&gt;
+
+  &lt;<span class="kw">form</span> <span class="ann">th:action</span>=<span class="str">"@{/records}"</span>
+        <span class="ann">th:object</span>=<span class="str">"${form}"</span>
+        <span class="ann">method</span>=<span class="str">"post"</span>&gt;
+
+    &lt;<span class="kw">div</span>&gt;
+      &lt;<span class="kw">label</span>&gt;科目：&lt;/<span class="kw">label</span>&gt;
+      &lt;<span class="kw">select</span> <span class="ann">th:field</span>=<span class="str">"*{subjectId}"</span>&gt;
+        &lt;<span class="kw">option</span> <span class="ann">th:each</span>=<span class="str">"s : ${allSubjects}"</span>
+                <span class="ann">th:value</span>=<span class="str">"${s.id}"</span>
+                <span class="ann">th:text</span>=<span class="str">"${s.name}"</span>&gt;
+        &lt;/<span class="kw">option</span>&gt;
+      &lt;/<span class="kw">select</span>&gt;
+    &lt;/<span class="kw">div</span>&gt;
+
+    &lt;<span class="kw">div</span>&gt;
+      &lt;<span class="kw">label</span>&gt;学習日：&lt;/<span class="kw">label</span>&gt;
+      &lt;<span class="kw">input</span> <span class="ann">type</span>=<span class="str">"date"</span>
+             <span class="ann">th:field</span>=<span class="str">"*{studiedOn}"</span>&gt;
+    &lt;/<span class="kw">div</span>&gt;
+
+    &lt;<span class="kw">div</span>&gt;
+      &lt;<span class="kw">label</span>&gt;時間（分）：&lt;/<span class="kw">label</span>&gt;
+      &lt;<span class="kw">input</span> <span class="ann">type</span>=<span class="str">"number"</span>
+             <span class="ann">th:field</span>=<span class="str">"*{minutes}"</span>&gt;
+    &lt;/<span class="kw">div</span>&gt;
+
+    &lt;<span class="kw">div</span>&gt;
+      &lt;<span class="kw">label</span>&gt;メモ：&lt;/<span class="kw">label</span>&gt;
+      &lt;<span class="kw">input</span> <span class="ann">type</span>=<span class="str">"text"</span>
+             <span class="ann">th:field</span>=<span class="str">"*{memo}"</span>&gt;
+    &lt;/<span class="kw">div</span>&gt;
+
+    &lt;<span class="kw">div</span>&gt;
+      &lt;<span class="kw">button</span> <span class="ann">type</span>=<span class="str">"submit"</span>&gt;登録する&lt;/<span class="kw">button</span>&gt;
+    &lt;/<span class="kw">div</span>&gt;
+
+  &lt;/<span class="kw">form</span>&gt;
+
+  &lt;<span class="kw">p</span>&gt;&lt;<span class="kw">a</span> <span class="ann">th:href</span>=<span class="str">"@{/subjects}"</span>&gt;
+    一覧に戻る&lt;/<span class="kw">a</span>&gt;&lt;/<span class="kw">p</span>&gt;
+
+&lt;/<span class="kw">body</span>&gt;
+&lt;/<span class="kw">html</span>&gt;</div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かして確認</h2>
+    <span class="en">RUN IN BROWSER</span>
+  </div>
+  <p class="pattern-desc">作業後、起動して<b>登録の動作</b>を確認。<b>日付選択 → 登録 → 一覧表示</b>の流れが繋がる。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">browser-check</span>
+      <span class="tag-desc">動作確認の手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>アプリ起動中なら停止、再起動</li>
+          <li>ブラウザで <code>http://localhost:8080/records/new</code> を開く</li>
+          <li>フォームが表示されることを確認</li>
+          <li>科目セレクトボックスに5科目が出ているか</li>
+          <li>日付欄でカレンダーが開けるか</li>
+          <li>科目「JavaScript」、日付「明日」、時間「30」、メモ「テスト登録」で送信</li>
+          <li>URLが <code>/subjects</code> に切り替わる（リダイレクト成功）</li>
+          <li>JavaScriptの下に「（記録なし）」が消え、新しい記録が表示される</li>
+          <li>コンソールに INSERT のSQLログが流れる</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ ここまで動けばVol.7クリア！</p>
+      </div>
+      <div class="code"><span class="code-head">// 期待されるSQLログ</span>
+
+<span class="comment">// ─── GET /records/new ───</span>
+==&gt;  Preparing:
+  SELECT * FROM subjects ORDER BY id
+==&gt; Parameters:
+&lt;==      Total: 5
+
+<span class="comment">// セレクトボックス描画用</span>
+
+
+<span class="comment">// ─── POST /records ───</span>
+==&gt;  Preparing:
+  INSERT INTO study_records
+  (subject_id, studied_on, minutes, memo)
+  VALUES (?, ?, ?, ?)
+==&gt; Parameters: 5(Integer),
+                2026-05-19(LocalDate),
+                30(Integer),
+                テスト登録(String)
+&lt;==    Updates: 1
+
+<span class="comment">// 注目：</span>
+<span class="comment">// ・Parameters の studied_on が LocalDate</span>
+<span class="comment">// ・「(LocalDate)」と型が出る</span>
+<span class="comment">// ・地雷1・2を回避できているサイン</span>
+
+
+<span class="comment">// ─── リダイレクト後 GET /subjects ───</span>
+==&gt;  Preparing:
+  SELECT s.id AS subject_id ...
+  FROM subjects s
+  LEFT JOIN study_records r ...
+==&gt; Parameters:
+&lt;==      Total: 12 <span class="comment">// 元の11行 + 新規1行</span>
+
+
+<span class="comment">// PRGパターンの3段階全部がログで追える</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>日付欄のカレンダーは<b>ブラウザによって見た目が違います</b>（Chrome／Firefox／Edgeで微妙に違う）。<b>これはHTML標準の動作</b>であり、こちら側でコントロールできるのは「<b>type="date"</b> を指定する」だけ。詳しい仕様や互換性は別冊S7で。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">Vol.7の<b>地雷地帯</b>。セクション04の「3大地雷」以外にも、<b>細かな罠</b>がいくつかあります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">troubles</span>
+      <span class="tag-desc">起きやすいトラブル6選</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card">
+          <span class="label">TROUBLE 1</span>
+          <div class="name">Failed to convert value of type 'String' to LocalDate</div>
+          <div class="desc"><b>原因</b>：<code>@DateTimeFormat</code> 付け忘れ（地雷2）。<br><b>対処</b>：Form の <code>studiedOn</code> フィールドに <code>@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)</code> を付ける。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 2</span>
+          <div class="name">DateTimeFormat の import が間違い</div>
+          <div class="desc"><b>原因</b>：Eclipse の自動 import で <code>org.joda.time.format.DateTimeFormat</code>（古い Joda-Time）を選んでしまった。<br><b>対処</b>：<code>org.springframework.format.annotation.DateTimeFormat</code> に書き換える。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 3</span>
+          <div class="name">submit すると 400 エラー</div>
+          <div class="desc"><b>原因</b>：必須項目が空のまま送信／日付欄に何も入っていない。<br><b>対処</b>：日付欄に値を入れる。Vol.10でバリデーションを学べば、適切なエラーメッセージを出せるようになる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 4</span>
+          <div class="name">INSERT は走るが画面に出ない</div>
+          <div class="desc"><b>原因</b>：DBには登録されているが、リダイレクト先 <code>/subjects</code> のJOIN取得でN+1の比較画面（<code>/subjects/legacy</code>）に行ってしまった等のミス。<br><b>対処</b>：URLを直接 <code>/subjects</code> にアクセスして確認。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 5</span>
+          <div class="name">th:object と form をネストし忘れ</div>
+          <div class="desc"><b>原因</b>：<code>th:field</code> を <code>th:object</code> の外で使うとエラー。<br><b>対処</b>：<code>&lt;form th:object="${form}"&gt;...&lt;/form&gt;</code> の中に <code>th:field</code> 入りの input を入れる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 6</span>
+          <div class="name">セレクトボックスが空</div>
+          <div class="desc"><b>原因</b>：Controllerで <code>allSubjects</code> を model 追加し忘れ。<br><b>対処</b>：<code>newForm()</code> メソッドに <code>model.addAttribute("allSubjects", subjectService.findAll())</code> を入れる。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// TROUBLE 2 の典型</span>
+
+<span class="comment">// ─── ✗ NG（自動 import が間違い） ───</span>
+<span class="kw">import</span> org.joda.time.format.DateTimeFormat;
+<span class="comment">// → 古いJoda-Time。Spring Bootでは使わない。</span>
+
+
+<span class="comment">// ─── ✓ OK ───</span>
+<span class="kw">import</span> org.springframework
+        .format.annotation.DateTimeFormat;
+<span class="comment">// → Spring標準のアノテーション</span>
+
+
+<span class="comment">// Eclipseで Ctrl+Shift+O 後に</span>
+<span class="comment">// 候補が出てきたら必ず springframework を選ぶ</span>
+
+
+<span class="code-head" style="margin-top:14px">// TROUBLE 1 の出力例</span>
+
+org.springframework.validation.BindException:
+Failed to convert property value
+of type 'java.lang.String' to required type
+'java.time.LocalDate' for property 'studiedOn'
+
+<span class="comment">// → 「String を LocalDate に変換できない」</span>
+<span class="comment">// → @DateTimeFormat 不足のサイン</span>
+
+
+<span class="code-head" style="margin-top:14px">// TROUBLE 5 の対処</span>
+
+<span class="comment">// ─── ✗ NG ───</span>
+&lt;<span class="kw">form</span> <span class="ann">action</span>=<span class="str">"/records"</span> <span class="ann">method</span>=<span class="str">"post"</span>&gt;
+  &lt;<span class="kw">input</span> <span class="ann">th:field</span>=<span class="str">"*{studiedOn}"</span>&gt;
+  <span class="comment">// → th:object がないので解決できない</span>
+&lt;/<span class="kw">form</span>&gt;
+
+
+<span class="comment">// ─── ✓ OK ───</span>
+&lt;<span class="kw">form</span> <span class="ann">th:action</span>=<span class="str">"@{/records}"</span>
+      <span class="ann">th:object</span>=<span class="str">"${form}"</span>
+      <span class="ann">method</span>=<span class="str">"post"</span>&gt;
+  &lt;<span class="kw">input</span> <span class="ann">th:field</span>=<span class="str">"*{studiedOn}"</span>&gt;
+&lt;/<span class="kw">form</span>&gt;</div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.7本編の<b>完了チェックリスト</b>です。<b>業務開発の地雷No.1</b>を越えた達成感を味わってください。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol7-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li><code>com.example.todo.form</code> パッケージが作成済み</li>
+          <li><code>StudyRecordForm.java</code> が作成済み（@DateTimeFormat付き）</li>
+          <li><code>StudyRecordMapper.java</code> に <code>insert</code> メソッド追加</li>
+          <li><code>StudyRecordService.java</code> が作成済み</li>
+          <li><code>StudyRecordController.java</code> が作成済み（2メソッド）</li>
+          <li><code>templates/records/new.html</code> が作成済み</li>
+          <li>アプリ起動時にエラーが出ない</li>
+          <li><code>/records/new</code> でフォームが表示される</li>
+          <li>科目セレクトボックスに5科目が出ている</li>
+          <li><code>type="date"</code> でカレンダーが開ける</li>
+          <li>送信後 <code>/subjects</code> にリダイレクトされる</li>
+          <li>登録した記録が一覧に反映される</li>
+          <li>コンソールに INSERT の SQL ログが流れる</li>
+          <li>Parameters の studied_on に「(LocalDate)」と表示</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.7本編完了！</b><br>
+          <b>LocalDate + @DateTimeFormat</b> の獲得です。地雷No.1の日付処理を制覇しました。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で獲得したスキル</span>
+
+★ <span class="kw">LocalDate + @DateTimeFormat</span> ── 獲得！
+
+  <span class="comment">// できるようになったこと:</span>
+  <span class="comment">// ・LocalDate を Form に使う</span>
+  <span class="comment">// ・@DateTimeFormat で文字列→LocalDate変換</span>
+  <span class="comment">// ・&lt;input type="date"&gt; との連携</span>
+  <span class="comment">// ・PRGパターンの応用</span>
+  <span class="comment">// ・Form → Service → Mapper の流れ</span>
+  <span class="comment">// ・@Insert で新規レコード追加</span>
+
+
+<span class="code-head" style="margin-top:14px">// 次にやること</span>
+
+<span class="comment">// ① 別冊 S7 を読む</span>
+<span class="comment">//   タイトル: 「日付・時刻の業務設計」</span>
+<span class="comment">//   内容: UTC vs JST / タイムゾーン /</span>
+<span class="comment">//        DB型選択 / 業務での落とし穴3選</span>
+
+
+<span class="comment">// ② Vol.8 本編：</span>
+<span class="comment">//   タイトル: 「動的SQL（if, where）を使おう」</span>
+<span class="comment">//   獲得スキル: 動的SQL獲得</span>
+<span class="comment">//   内容:</span>
+<span class="comment">//   ・Vol.6 の検索を「期間絞り込み」も含めて統合</span>
+<span class="comment">//   ・&lt;if&gt; &lt;where&gt; &lt;foreach&gt; を使う</span>
+<span class="comment">//   ・Vol.6で分けた2メソッドを1つに統合</span>
+<span class="comment">//   ・「シンプルに作って後で統合」の完成</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(27,61,44,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S7</div>
+    <p>本編Vol.7お疲れさまでした。<b>日付処理という業務開発の地雷No.1</b>を越えました。別冊S7「<b>日付・時刻の業務設計</b>」では、<b>「UTC vs JST」「タイムゾーン問題」「DB型の選択（DATE / DATETIME / TIMESTAMP）」「業務での落とし穴3選」</b>を多角的に深掘ります。<br>「<b>動かす日付」</b>から「<b>業務で安全に運用できる日付」</b>へとレベルアップする巻。<b>続けて別冊S7へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.07 / 15 ── DATE INPUT MASTERY（本編）</span>
+</footer>
+
+</body>
+</html>

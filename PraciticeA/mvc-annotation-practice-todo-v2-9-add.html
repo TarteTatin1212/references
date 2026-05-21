@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.9 補足 ── 例外設計の哲学</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#3d2817;--paper:#f4ecd8;--paper-2:#e8dcc0;--accent:#e3b070;--accent-2:#f0c896;--accent-3:#6b4423;--accent-4:#2d5f3f;--muted:#7a6952;--line:#c9b896;--code-bg:#2a1f15;--code-text:#f0e4cc;--panel-bg:#faf3e0}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'?';position:absolute;right:0px;top:-30px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+.add-tag{display:inline-block;background:#c43;color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:40px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid #c43;padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--accent-3);border-bottom-color:var(--accent-3)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}.ann{color:#f7c08a}.tag{color:#a3c9ff}.attr{color:#ffc88a}
+.bad{color:#ff8a7a;font-weight:600}.good{color:#b5e8b0;font-weight:600}
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+.think-step{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;position:relative;padding-left:60px;min-height:60px}
+.think-step::before{content:attr(data-step);position:absolute;left:14px;top:14px;background:var(--accent);color:var(--paper);width:36px;height:36px;line-height:36px;text-align:center;border-radius:50%;font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700}
+.think-step-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.think-step-body{font-size:13.5px;line-height:1.8}
+.analogy{background:#fffdf6;border:1px dashed var(--accent);border-left:4px solid var(--accent);padding:14px 18px;margin:12px 0}
+.analogy-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px}
+.analogy-title::before{content:'🎭 ';margin-right:4px}
+.analogy p{font-size:13.5px;line-height:1.85}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.compare-box{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:13.5px}
+.compare-ng{border-top:3px solid #c43}
+.compare-ok{border-top:3px solid var(--accent-4)}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px}
+.compare-ng .compare-label{color:#c43}
+.compare-ok .compare-label{color:var(--accent-4)}
+.tip{margin:18px 0;padding:14px 20px;background:rgba(227,176,112,0.10);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+.flow-v2{background:#fff;border:1px solid var(--line);padding:14px 16px;margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;color:var(--ink)}
+.flow-v2 .flow-step{display:block;background:var(--panel-bg);border-left:3px solid var(--line);padding:10px 14px;margin:8px 0;border-radius:3px;line-height:2.0}
+.flow-v2 .flow-step:has(.flow-label-call){border-left-color:var(--accent);background:rgba(227,176,112,0.10)}
+.flow-v2 .flow-step:has(.flow-label-return){border-left-color:var(--accent-4);background:rgba(45,95,63,0.07)}
+.flow-v2 .flow-step:has(.flow-label-throw){border-left-color:#c43;background:rgba(196,67,51,0.07)}
+.flow-v2 .flow-actor{display:inline-block;background:#fff;color:var(--accent-3);padding:2px 10px;border:1px solid var(--line);border-radius:3px;font-weight:700;font-size:11.5px;margin:1px 2px;white-space:nowrap}
+.flow-v2 .flow-call{color:var(--accent);font-weight:700}
+.flow-v2 .flow-return{color:var(--accent-4);font-weight:700}
+.flow-v2 .flow-throw{color:#c43;font-weight:700}
+.flow-v2 .flow-arg{color:var(--muted);font-size:11.5px;padding:4px 0 4px 14px;display:block;margin-top:6px;line-height:1.6;border-left:2px dashed var(--accent-2);margin-left:4px}
+.flow-v2 .flow-divider{border-top:1px dashed var(--line);margin:14px 0}
+.flow-v2 .flow-label-call,.flow-v2 .flow-label-return,.flow-v2 .flow-label-throw{display:inline-block;color:var(--paper);font-size:10px;padding:2px 8px;border-radius:2px;letter-spacing:0.05em;margin-left:6px;font-weight:700;vertical-align:1px}
+.flow-v2 .flow-label-call{background:var(--accent)}
+.flow-v2 .flow-label-return{background:var(--accent-4)}
+.flow-v2 .flow-label-throw{background:#c43}
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){body{padding:0 20px 60px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.page-header::before{font-size:220px}h1{font-size:28px}.toc ul{flex-direction:column;gap:8px}.whw{grid-template-columns:1fr}.compare{grid-template-columns:1fr}.term-grid{grid-template-columns:1fr}.flow-v2 .flow-step{padding:12px 14px;line-height:2.2;font-size:13px}.flow-v2 .flow-actor{font-size:12px;padding:3px 10px;margin:2px 3px}.flow-v2 .flow-arg{font-size:12px}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.09 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <span class="add-tag">+ ADD</span>
+  <h1>例外設計の<br>哲学</h1>
+  <p class="subtitle">VOL.9 SUPPLEMENT — PHILOSOPHY OF EXCEPTION DESIGN</p>
+  <p class="lead">Vol.9本編で<b>例外処理</b>が動くようになりました。<code style="font-family:'JetBrains Mono'">TaskNotFoundException</code>を投げ、<code style="font-family:'JetBrains Mono'">GlobalExceptionHandler</code>で受け止め、エラー画面を表示── 一連の流れは体感できました。でも本当の難しさは<b>「どこに例外を置くか」「何を例外で表現するか」「どんなメッセージを設計するか」</b>── つまり<b>「設計判断」</b>にあります。本補足では、Vol.9本編の裏側にある<b>「例外設計の哲学」</b>を解明し、業務開発者として通用する設計感覚を育てます。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">💡 この補足の位置づけ</div>
+    <p style="font-size:13.5px">本編は「<b>動かす手順書</b>」、本補足は「<b>設計の地図</b>」。新しいコードは書きませんが、<b>「検査例外 vs 非検査例外」「業務例外 vs システム例外」「メッセージ設計」「try-catch の使い所」</b>── こうした<b>業務開発で必ず迫られる設計判断</b>を解明します。<b>新ルール</b>（フロー図の「誰が・誰に・何を」「行き・帰り・throw」）を本格適用。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.09 ADD</div>
+  <ul>
+    <li><a href="#purpose">01 この補足の目的</a></li>
+    <li><a href="#what-is-exception">02 そもそも例外とは何を表すのか</a></li>
+    <li><a href="#term-checked-unchecked">03 用語カード：検査例外 vs 非検査例外</a></li>
+    <li><a href="#term-business-system">04 用語カード：業務例外 vs システム例外</a></li>
+    <li><a href="#responsibility">05 例外の責任の所在（誰が投げて誰が掴む?）</a></li>
+    <li><a href="#message-design">06 例外メッセージの設計（ユーザー向けと開発者向け）</a></li>
+    <li><a href="#try-catch-when">07 try-catch を使うべき場面と使わないべき場面</a></li>
+    <li><a href="#log-integration">08 ログとの連携（例外の記録）</a></li>
+    <li><a href="#exception-lifecycle">09 例外のライフサイクル</a></li>
+    <li><a href="#user-perspective">10 ユーザー視点のエラー表示の設計</a></li>
+    <li><a href="#checklist">11 自分で例外設計するためのチェックリスト</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="purpose">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この補足の目的</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">Vol.9本編で<b>「動く」</b>を達成。本補足は<b>「設計判断」</b>を解明します。<b>例外は『業務』と『技術』の両面に関わる難しい話題</b>です。業務開発で<b>「同じパターン」で例外を扱える</b>ようにします。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を解説するか</div>
+      <div class="whw-desc">
+        例外の<b>本質・分類・責任・メッセージ・ライフサイクル・UX</b>。「検査 vs 非検査」「業務 vs システム」「ユーザー向け vs 開発者向け」── <b>業務開発で必ず迫られる選択</b>に答えるガイド。
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう解説するか</div>
+      <div class="whw-desc">
+        ① <b>例外の本質</b>から始める<br>
+        ② <b>分類で整理</b>して判断軸を提供<br>
+        ③ <b>新ルール</b>でフロー図を描く<br>
+        ④ <b>業界の事例</b>を示す<br>
+        ⑤ <b>明日から使えるチェックリスト</b>を提供
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜ別冊で深掘るか</div>
+      <div class="whw-desc">
+        本編で「動く」だけだと、<b>「次にどんな例外を作るか」</b>の判断ができない。新人エンジニアが業務で困るのは<b>例外設計の判断</b>。本補足はその<b>判断基準の地図</b>を提供します。
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>例外設計は<b>「動くコード」</b>を書くことより、<b>「どこにどんな例外を置くか」</b>の判断が遥かに重要です。本補足を読んだ後、<b>「業務システム全体の例外設計」</b>が自分の頭で考えられるようになります。これは中級〜上級エンジニアの<b>差別化スキル</b>です。</p>
+  </div>
+</section>
+
+<section id="what-is-exception">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>そもそも例外とは何を表すのか</h2>
+    <span class="en">WHAT EXCEPTION REPRESENTS</span>
+  </div>
+  <p class="pattern-desc">「例外」という言葉は<b>多義的</b>です。プログラミング用語、業務用語、自然言語── それぞれ違う意味を持ちます。<b>業務開発で扱う「例外」</b>を正確に定義するところから始めます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">what-exception-represents</span>
+      <span class="tag-desc">例外の3つの側面</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 例外が表す3つのもの</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">「想定外」の状態</div>
+          <div class="think-step-body">
+            通常のフローでは<b>起きないはず</b>の状態。例えば「ファイルが見つからない」「ネットワーク切断」「DBアクセス失敗」── システムの<b>正常な動作の外側</b>で起きる事態。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">「処理の続行不可」状態</div>
+          <div class="think-step-body">
+            今のメソッドが<b>これ以上処理を続けられない</b>状態。「<b>呼んだ側に判断を委ねる</b>」必要がある時に例外を投げる。「<b>続けられない</b>からあなたに返します」というメッセージ。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">「業務ルール違反」の表現</div>
+          <div class="think-step-body">
+            業務的に<b>許容できない事象</b>。「在庫がないのに注文を受け付けようとした」「権限のないユーザーが操作した」── これらは<b>技術的</b>には可能でも、<b>業務的</b>に弾く必要がある。例外で<b>「これは業務違反です」</b>と表現する。
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>Vol.9で作った <code>TaskNotFoundException</code></b> は、3番（業務ルール違反）と1番（想定外）が混じった例。「<b>存在するはずのIDだが、実際には存在しなかった</b>」という業務的な不整合を表現しています。</p>
+      </div>
+      <div class="code"><span class="code-head">// 例外が表すもの：3パターン</span>
+
+<span class="comment">// === パターン1: 想定外の状態 ===</span>
+
+<span class="kw">try</span> {
+  <span class="type">FileReader</span> reader = <span class="kw">new</span> <span class="type">FileReader</span>(<span class="str">"data.txt"</span>);
+} <span class="kw">catch</span> (<span class="type">FileNotFoundException</span> e) {
+  <span class="comment">// 「ファイルがあるはず」だったのに無い</span>
+  <span class="comment">// → 想定外</span>
+}
+
+<span class="comment">// IOException, SQLException 等の</span>
+<span class="comment">// 「環境起因」の例外もここ</span>
+
+
+<span class="code-head" style="margin-top:18px">// === パターン2: 続行不可 ===</span>
+
+<span class="kw">public</span> <span class="type">Task</span> <span class="fn">findById</span>(<span class="type">Long</span> id) {
+  <span class="type">Task</span> task = mapper.<span class="fn">findById</span>(id);
+  <span class="kw">if</span> (task == <span class="kw">null</span>) {
+    <span class="comment">// 「Task を返す」契約を満たせない</span>
+    <span class="comment">// → 呼び出し側に判断を委ねる</span>
+    <span class="kw">throw new</span> <span class="type">TaskNotFoundException</span>(id);
+  }
+  <span class="kw">return</span> task;
+}
+
+<span class="comment">// Vol.9の TaskNotFoundException はこれ</span>
+
+
+<span class="code-head" style="margin-top:18px">// === パターン3: 業務ルール違反 ===</span>
+
+<span class="kw">public void</span> <span class="fn">placeOrder</span>(<span class="type">Long</span> productId, <span class="kw">int</span> qty) {
+  <span class="type">Product</span> p = mapper.<span class="fn">findById</span>(productId);
+
+  <span class="kw">if</span> (p.<span class="fn">getStock</span>() &lt; qty) {
+    <span class="comment">// 業務的に弾く必要あり</span>
+    <span class="kw">throw new</span> <span class="type">InsufficientStockException</span>(
+      p.<span class="fn">getName</span>(), qty, p.<span class="fn">getStock</span>());
+  }
+
+  <span class="kw">if</span> (!user.<span class="fn">hasRole</span>(<span class="str">"BUYER"</span>)) {
+    <span class="comment">// 権限不足</span>
+    <span class="kw">throw new</span> <span class="type">UnauthorizedException</span>();
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// 3パターンの共通点</span>
+
+<span class="comment">// いずれも:</span>
+<span class="comment">// ・「通常のフローでは処理できない」</span>
+<span class="comment">// ・「上の階層に判断を委ねる」</span>
+
+<span class="comment">// → 例外という仕組みは</span>
+<span class="comment">//   「コミュニケーション手段」</span>
+<span class="comment">//   下位レイヤーから上位レイヤーへ</span>
+<span class="comment">//   「困った」を伝える</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── 部下から上司への報告</div>
+    <p>例外は<b>「部下が上司に困りごとを報告する」</b>ような仕組み。<br>
+    <b>通常業務</b>：部下が仕事を完遂して結果を上司に渡す（戻り値）<br>
+    <b>困った時</b>：「<b>自分では判断できない事態が起きました</b>」と上司に報告（例外）<br><br>
+    上司は判断します── 別の方法を試すか、自分の上司に相談するか、お客様に謝るか。<b>「判断できない事態を上に上げる」</b>のがシステムの健全な動き。<br><br>
+    Vol.9で作った仕組みは、Service（部下）が「<b>タスクが見つかりません</b>」と Controller（上司）に報告し、Controller も判断できないので Spring（さらに上の上司）に上げ、最終的に <code>GlobalExceptionHandler</code>（経営層）が<b>会社の方針</b>として「<b>404画面を出す</b>」と決める── そういう構造です。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「例外は通信手段」</div>
+    <p>例外を<b>「エラー」</b>と訳すと誤解しやすい。例外は<b>「上のレイヤーへの通信手段」</b>です。「ここでは判断できないから、判断できる上の人に渡す」── これが例外の本質。<b>「下位の責任」を「上位の責任」に切り替える</b>瞬間に例外を投げます。この見方ができると、例外設計の判断が一気にしやすくなります。</p>
+  </div>
+</section>
+
+<section id="term-checked-unchecked">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>用語カード：検査例外 vs 非検査例外</h2>
+    <span class="en">TERM — CHECKED VS UNCHECKED</span>
+  </div>
+  <p class="pattern-desc">Javaの<b>例外を2種類に分ける</b>言語仕様。これを理解しないと、業務コードで<b>何度もコンパイルエラー</b>に苦しみます。<b>業界の主流は非検査例外</b>── その理由も含めて整理します。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #01</span>
+    <div class="term-card-title">検査例外 vs 非検査例外</div>
+    <div class="term-card-sub">Java言語仕様による例外の2分類</div>
+    <dl class="term-grid">
+      <dt>検査例外（Checked Exception）</dt>
+      <dd><code>Exception</code> の<b>直接の子クラス</b>（<code>RuntimeException</code>を除く）。<b>呼び出し側で必ず</b> try-catch または throws 宣言<b>が必要</b>。コンパイラがチェックする。<br>
+        例：<code>IOException</code>、<code>SQLException</code>、<code>InterruptedException</code>
+      </dd>
+      <dt>非検査例外（Unchecked Exception）</dt>
+      <dd><code>RuntimeException</code> とその子クラス、または <code>Error</code> 系。<b>try-catch も throws も強制されない</b>。コンパイラはチェックしない。<br>
+        例：<code>NullPointerException</code>、<code>IllegalArgumentException</code>、<code>TaskNotFoundException</code>（Vol.9で作成）
+      </dd>
+      <dt>違い</dt>
+      <dd><b>検査例外</b>：「<b>呼び出し側は対応必須</b>」と言語が強制<br>
+        <b>非検査例外</b>：「<b>呼び出し側の判断に委ねる</b>」（強制しない）
+      </dd>
+      <dt>業界の主流</dt>
+      <dd>業務アプリでは<b>非検査例外（RuntimeException系）が圧倒的多数派</b>。<br>
+        理由：<br>
+        ① コードがシンプルになる（throws宣言不要）<br>
+        ② Spring / Spring Boot が非検査例外を前提に設計されている<br>
+        ③ <code>@Transactional</code> は<b>デフォルトで非検査例外のみロールバック</b>
+      </dd>
+      <dt>本書での方針</dt>
+      <dd>業務例外は<b>すべて <code>RuntimeException</code> 継承</b>。シンプルで実用的。
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">checked-vs-unchecked</span>
+      <span class="tag-desc">2種類の例外の対比</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Java の例外階層図</div>
+
+<pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:12px;border-radius:2px;margin:6px 0;line-height:1.6">Throwable
+├── Error             ← 致命的、扱わない（JVMが死ぬ系）
+│   ├── OutOfMemoryError
+│   └── StackOverflowError
+└── Exception          ← アプリで扱う例外
+    ├── 検査例外（Checked）
+    │   ├── IOException
+    │   ├── SQLException
+    │   └── ClassNotFoundException
+    └── RuntimeException ← 非検査例外
+        ├── NullPointerException
+        ├── IllegalArgumentException
+        ├── IndexOutOfBoundsException
+        └── TaskNotFoundException  ★Vol.9</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>検査例外の不便さ</b>：</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:6px">検査例外を投げるメソッドを呼ぶには、<b>必ず</b>try-catchまたは throws 宣言が必要。これが<b>すべての呼び出しに伝播</b>するので、コードが汚くなります。</p>
+
+        <div class="compare">
+          <div class="compare-box compare-ng">
+            <div class="compare-label">検査例外（強制が辛い）</div>
+            <p style="font-size:12px;margin-top:6px;line-height:1.55">あらゆる中間メソッドが <code>throws SQLException</code> を書く羽目に。<br>SQLException が漏れ出ると、上位の業務メソッドの<b>シグネチャが醜くなる</b>。</p>
+          </div>
+          <div class="compare-box compare-ok">
+            <div class="compare-label">非検査例外（業界の選択）</div>
+            <p style="font-size:12px;margin-top:6px;line-height:1.55">呼び出し側は<b>判断できる時だけ</b>catchすれば良い。中間メソッドが何も書かない（暗黙の透過）。<br>業務メソッドのシグネチャが<b>すっきり</b>。</p>
+          </div>
+        </div>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>：<b>Spring の <code>JdbcTemplate</code> や MyBatis</b> は内部的にSQLExceptionを<b>非検査例外でラップ</b>します。だから業務コードに <code>throws SQLException</code> が出ません。フレームワークレベルで「<b>非検査例外への変換</b>」が行われています。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 検査例外の例（不便さ）</span>
+
+<span class="comment">// === IOException は検査例外 ===</span>
+
+<span class="comment">// メソッドAが投げると…</span>
+<span class="kw">public void</span> <span class="fn">readFile</span>() <span class="kw">throws</span> <span class="type">IOException</span> {
+  <span class="kw">new</span> <span class="type">FileReader</span>(<span class="str">"x.txt"</span>);  <span class="comment">// IOException可能性</span>
+}
+
+<span class="comment">// メソッドAを呼ぶBも throws 必須</span>
+<span class="kw">public void</span> <span class="fn">B</span>() <span class="kw">throws</span> <span class="type">IOException</span> {
+  <span class="fn">readFile</span>();
+}
+
+<span class="comment">// Bを呼ぶCも throws 必須</span>
+<span class="kw">public void</span> <span class="fn">C</span>() <span class="kw">throws</span> <span class="type">IOException</span> {
+  <span class="fn">B</span>();
+}
+
+<span class="comment">// → throws SQLException がコード中に</span>
+<span class="comment">//   ずっと付いて回る</span>
+<span class="comment">// → 業務メソッドが「技術的な詳細」</span>
+<span class="comment">//   で汚れる</span>
+
+
+<span class="code-head" style="margin-top:18px">// 非検査例外の例（シンプル）</span>
+
+<span class="comment">// === TaskNotFoundException は非検査 ===</span>
+
+<span class="kw">public</span> <span class="type">Task</span> <span class="fn">findById</span>(<span class="type">Long</span> id) {
+  <span class="type">Task</span> task = mapper.<span class="fn">findById</span>(id);
+  <span class="kw">if</span> (task == <span class="kw">null</span>) {
+    <span class="kw">throw new</span> <span class="type">TaskNotFoundException</span>(id);
+  }
+  <span class="kw">return</span> task;
+}
+<span class="comment">// ↑ throws 宣言なし</span>
+
+
+<span class="comment">// 呼ぶ側も追加で何もしない</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(...) {
+  <span class="type">Task</span> task = service.<span class="fn">findById</span>(id);
+  <span class="comment">// throws 不要</span>
+  <span class="comment">// try-catch 不要</span>
+  <span class="comment">// 例外は勝手に伝播する</span>
+}
+<span class="comment">// ↑ シンプル！</span>
+
+
+<span class="code-head" style="margin-top:18px">// 結論：業務開発の選択</span>
+
+<span class="comment">// 業務例外 → 非検査例外（RuntimeException）</span>
+
+<span class="kw">public class</span> <span class="type">業務例外</span> <span class="kw">extends</span> <span class="type">RuntimeException</span> {
+  ...
+}
+
+<span class="comment">// メリット:</span>
+<span class="comment">// ・コードがシンプル</span>
+<span class="comment">// ・@Transactional が自動ロールバック</span>
+<span class="comment">// ・Spring エコシステムと整合</span>
+
+<span class="comment">// 検査例外は…</span>
+<span class="comment">// 入出力・通信などの</span>
+<span class="comment">// 「外部リソース起因」の例外でのみ使う</span>
+<span class="comment">// （IOException, SQLException）</span>
+
+<span class="comment">// 業務ロジックには非検査例外を使う</span>
+<span class="comment">// ← Vol.9の方針</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「非検査例外がデフォルト」</div>
+    <p>業務開発では<b>「迷ったら非検査例外（RuntimeException 継承）」</b>と覚えてください。検査例外を使うのは<b>「呼び出し側に絶対対処させたい例外」</b>のみ── これは実務では稀です。<b>Spring が前提とする世界観</b>に合わせるのが、業務コードを書く上での最短ルートです。</p>
+  </div>
+</section>
+
+<section id="term-business-system">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>用語カード：業務例外 vs システム例外</h2>
+    <span class="en">TERM — BUSINESS VS SYSTEM EXCEPTION</span>
+  </div>
+  <p class="pattern-desc">もう1つの<b>例外の分類軸</b>。「<b>業務的に起こりうる事象</b>」と「<b>システム的なトラブル</b>」── これを意識すると、エラー画面の出し分けやログ出力の判断がしやすくなります。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #02</span>
+    <div class="term-card-title">業務例外 vs システム例外</div>
+    <div class="term-card-sub">例外の「種類」による2分類</div>
+    <dl class="term-grid">
+      <dt>業務例外（Business Exception）</dt>
+      <dd><b>業務ルール違反</b>を表す例外。「<b>想定範囲内</b>」のエラー。<br>
+        例：在庫不足、権限不足、重複登録、必須項目未入力、業務上の不整合<br>
+        <b>ユーザー操作に起因する</b>ことが多い。
+      </dd>
+      <dt>システム例外（System Exception）</dt>
+      <dd><b>システム的なトラブル</b>を表す例外。「<b>想定外</b>」のエラー。<br>
+        例：DBダウン、ネットワーク切断、ファイルアクセス失敗、メモリ不足<br>
+        <b>環境・インフラに起因する</b>ことが多い。
+      </dd>
+      <dt>扱い方の違い</dt>
+      <dd><b>業務例外</b>：<br>
+        ・<b>ユーザーに分かりやすいメッセージ</b>を見せる<br>
+        ・「<b>あなたの操作を見直してください</b>」と促す<br>
+        ・ログレベル：WARN または INFO<br>
+        <br>
+        <b>システム例外</b>：<br>
+        ・「<b>システムエラーが発生しました</b>」と<b>詳細を隠す</b>（セキュリティ）<br>
+        ・<b>管理者・運用チーム</b>に通知する<br>
+        ・ログレベル：ERROR（詳細スタックトレース付き）
+      </dd>
+      <dt>Vol.9 での例</dt>
+      <dd><b>業務例外</b>：<code>TaskNotFoundException</code>（存在しないタスクへのアクセス）<br>
+        <b>システム例外</b>：<code>NullPointerException</code>、<code>SQLException</code>（DB接続失敗）等<br>
+        → GlobalExceptionHandler で<b>404と500に振り分け</b>
+      </dd>
+      <dt>本書のフォールバック</dt>
+      <dd><code>@ExceptionHandler(Exception.class)</code> が<b>未分類の全例外</b>を捕まえる。これは<b>「最後の砦」</b>であり、業務的に分類できなかった想定外を全部システム例外扱いにする発想。
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">business-vs-system</span>
+      <span class="tag-desc">2つの例外の振り分け方</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 業界での扱い方の差</div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:6px">業務例外への対応</p>
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b>ユーザーに丁寧にメッセージ</b>：「<b>在庫が不足しています</b>」</li>
+          <li><b>具体的な解決策を示す</b>：「<b>数量を減らしてください</b>」</li>
+          <li><b>該当画面に戻す</b>：操作を訂正できるように</li>
+          <li><b>ログレベルは WARN</b>：頻発するけど致命的ではない</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">システム例外への対応</p>
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b>抽象的なメッセージ</b>：「<b>システムエラーが発生しました</b>」</li>
+          <li><b>内部情報を隠す</b>：スタックトレース等は<b>絶対にユーザーに見せない</b>（セキュリティ）</li>
+          <li><b>管理者に通知</b>：メール、Slack、監視システム経由</li>
+          <li><b>ログレベルは ERROR</b>：詳細スタックトレース全部記録</li>
+        </ul>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>振り分けの実装</b>：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">@ControllerAdvice
+public class GlobalExceptionHandler {
+
+  // 業務例外
+  @ExceptionHandler(BusinessException.class)
+  public String handleBusiness(...) {
+    return "error/business";  // 業務向けメッセージ
+  }
+
+  // システム例外（フォールバック）
+  @ExceptionHandler(Exception.class)
+  public String handleSystem(...) {
+    log.error(...);  // 詳細記録
+    return "error/500";  // 抽象的メッセージ
+  }
+}</pre>
+      </div>
+      <div class="code"><span class="code-head">// 業務例外の典型</span>
+
+<span class="comment">// === 在庫不足 ===</span>
+<span class="kw">public class</span> <span class="type">InsufficientStockException</span>
+    <span class="kw">extends</span> <span class="type">RuntimeException</span> {
+  ...
+}
+
+<span class="comment">// 投げる場所:</span>
+<span class="kw">if</span> (stock &lt; quantity) {
+  <span class="kw">throw new</span> <span class="type">InsufficientStockException</span>(...);
+}
+
+<span class="comment">// ユーザーへの表示:</span>
+<span class="comment">// 「在庫が不足しています」</span>
+<span class="comment">// 「数量を減らしてください」</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 権限不足 ===</span>
+<span class="kw">public class</span> <span class="type">UnauthorizedException</span>
+    <span class="kw">extends</span> <span class="type">RuntimeException</span> {}
+
+<span class="kw">if</span> (!user.<span class="fn">hasRole</span>(<span class="str">"ADMIN"</span>)) {
+  <span class="kw">throw new</span> <span class="type">UnauthorizedException</span>();
+}
+
+<span class="comment">// ユーザーへの表示:</span>
+<span class="comment">// 「この操作には権限が必要です」</span>
+
+
+<span class="code-head" style="margin-top:18px">// システム例外の典型</span>
+
+<span class="comment">// === DB接続失敗 ===</span>
+<span class="comment">// Spring が DataAccessException として</span>
+<span class="comment">// 包んで投げる（自動）</span>
+
+<span class="comment">// この例外は…</span>
+<span class="comment">// ・特定のハンドラーで受けない</span>
+<span class="comment">// ・@ExceptionHandler(Exception.class) が受ける</span>
+<span class="comment">// → 500画面</span>
+
+<span class="comment">// ユーザーへの表示:</span>
+<span class="comment">// 「システムエラーが発生しました」</span>
+<span class="comment">// （DB接続失敗とは絶対に書かない）</span>
+
+
+<span class="code-head" style="margin-top:18px">// === NullPointerException ===</span>
+<span class="comment">// 開発者のミス由来</span>
+
+<span class="comment">// 同じく 500 画面に</span>
+<span class="comment">// 「予期しないエラー」と表示</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業務例外の判断基準</span>
+
+<span class="comment">// 「これは業務的に起こりうる?」</span>
+<span class="comment">// ・YES → 業務例外</span>
+<span class="comment">// ・NO  → システム例外</span>
+
+<span class="comment">// 例:</span>
+<span class="comment">// ・「在庫切れ」→ 起こりうる → 業務例外</span>
+<span class="comment">// ・「DB接続不可」→ 起こらないはず</span>
+<span class="comment">//   → システム例外</span>
+<span class="comment">// ・「存在しないIDアクセス」→ 起こりうる</span>
+<span class="comment">//   → 業務例外（Vol.9）</span>
+
+
+<span class="code-head" style="margin-top:18px">// 例外クラスの分け方（業務的）</span>
+
+com.example.todo.exception/
+├── BusinessException        ← 抽象親
+│   ├── TaskNotFoundException  ★Vol.9
+│   ├── InsufficientStockException
+│   └── UnauthorizedException
+└── (システム例外は標準のものを使う)
+
+<span class="comment">// 共通の親クラスを作っておくと</span>
+<span class="comment">// @ExceptionHandler(BusinessException.class)</span>
+<span class="comment">// で一括処理できる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「振る舞いで分類する」</div>
+    <p>業務例外とシステム例外の<b>区別の意義</b>は<b>「振る舞い」</b>にあります。<b>業務例外</b>はユーザーの操作で起きるので<b>丁寧に説明</b>。<b>システム例外</b>はインフラ起因なので<b>詳細を隠して管理者に通知</b>。同じ「例外」でも<b>扱い方が180度違う</b>。Vol.9のGlobalExceptionHandlerの<b>2つのメソッド</b>はこの分類を実装したものです。</p>
+  </div>
+</section>
+
+<section id="responsibility">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>例外の責任の所在（誰が投げて誰が掴む?）</h2>
+    <span class="en">RESPONSIBILITY — WHO THROWS, WHO CATCHES</span>
+  </div>
+  <p class="pattern-desc">例外設計の<b>核心問題</b>。「<b>どの層で投げて、どの層で受けるか?</b>」── これを間違えると、3層アーキテクチャの<b>分離が崩壊</b>します。正しい場所を把握しましょう。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">throw-catch-layers</span>
+      <span class="tag-desc">層ごとの責任分担</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 各層の責任</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">Mapper層：投げる側（業務例外は<b>投げない</b>）</div>
+          <div class="think-step-body">
+            DBアクセスでの<b>技術的</b>な例外は投げるが（自動）、<b>業務的</b>な例外は投げない。「<b>レコードが0件</b>」は事実をそのまま返す（null や 空Listを返す）。<br>
+            業務判断は Service層に委ねる。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">Service層：業務例外を<b>投げる</b>場所</div>
+          <div class="think-step-body">
+            業務ルール違反・業務的な不整合を見つけたら、<b>独自例外を投げる</b>。「<b>業務として続行できない</b>」という判断はここで下す。<br>
+            Vol.9で <code>findById</code> に null チェック + throw を追加したのはこれ。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">Controller層：基本的に<b>素通り</b></div>
+          <div class="think-step-body">
+            try-catch は<b>普通書かない</b>。Service が投げた例外を<b>そのまま上位へ伝搬</b>させる。Controllerは「<b>業務知識</b>」を持たないので、例外を扱う立場でもない。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">GlobalExceptionHandler層：<b>最終的に掴む</b>場所</div>
+          <div class="think-step-body">
+            <code>@ControllerAdvice</code> + <code>@ExceptionHandler</code> で<b>すべての例外を集約</b>。ここで「<b>どの画面を出すか</b>」「<b>どうログに残すか</b>」を決める。
+          </div>
+        </div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">特殊：Service層内でcatchするケース</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:6px">業務的にリカバーできる例外なら、Service内でcatchして処理を続行することもある。「<b>例外を上に投げるのではなく、代替の値を使う</b>」── これは<b>例外を例外として扱わない</b>判断。</p>
+      </div>
+      <div class="code"><span class="code-head">// 各層の典型的な書き方</span>
+
+<span class="comment">// === Mapper層（業務例外は投げない） ===</span>
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">TaskMapper</span> {
+
+  <span class="ann">@Select</span>(<span class="str">"SELECT ... WHERE id = #{id}"</span>)
+  <span class="type">Task</span> <span class="fn">findById</span>(<span class="type">Long</span> id);
+  <span class="comment">// 該当なし → null を返す</span>
+  <span class="comment">// 例外は投げない</span>
+  <span class="comment">// 「DBの事実」を伝えるだけ</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// === Service層（業務例外を投げる） ===</span>
+
+<span class="ann">@Service</span>
+<span class="kw">public class</span> <span class="type">TaskService</span> {
+
+  <span class="kw">public</span> <span class="type">Task</span> <span class="fn">findById</span>(<span class="type">Long</span> id) {
+    <span class="type">Task</span> task = mapper.<span class="fn">findById</span>(id);
+
+    <span class="kw">if</span> (task == <span class="kw">null</span>) {
+      <span class="comment">// 業務判断：これは業務的に問題</span>
+      <span class="kw">throw new</span> <span class="type">TaskNotFoundException</span>(id);
+    }
+
+    <span class="kw">return</span> task;
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// === Controller層（基本素通り） ===</span>
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">TaskController</span> {
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(
+      <span class="ann">@PathVariable</span> <span class="type">Long</span> id, ...) {
+    <span class="type">Task</span> task = service.<span class="fn">findById</span>(id);
+    <span class="comment">// try-catch しない</span>
+    <span class="comment">// 例外は GlobalExceptionHandler が掴む</span>
+    ...
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// === GlobalExceptionHandler ===</span>
+
+<span class="ann">@ControllerAdvice</span>
+<span class="kw">public class</span> <span class="type">GlobalExceptionHandler</span> {
+
+  <span class="ann">@ExceptionHandler</span>(<span class="type">TaskNotFoundException</span>.<span class="kw">class</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">handleTaskNotFound</span>(...) {
+    <span class="comment">// 例外をここで掴む</span>
+    <span class="comment">// 404画面に振り分け</span>
+    <span class="kw">return</span> <span class="str">"error/404"</span>;
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// 特殊：Service内でcatchするケース</span>
+
+<span class="ann">@Service</span>
+<span class="kw">public class</span> <span class="type">NotificationService</span> {
+
+  <span class="kw">public void</span> <span class="fn">sendNotification</span>(<span class="type">Task</span> task) {
+    <span class="kw">try</span> {
+      emailSender.<span class="fn">send</span>(task);
+    } <span class="kw">catch</span> (<span class="type">MailException</span> e) {
+      <span class="comment">// メール送信失敗</span>
+      <span class="comment">// → 例外を投げない</span>
+      <span class="comment">// → ログだけ残す</span>
+      <span class="comment">// → 本処理は続行</span>
+      log.<span class="fn">error</span>(<span class="str">"通知送信失敗"</span>, e);
+    }
+  }
+}
+
+<span class="comment">// メール送信失敗で全体を止めない</span>
+<span class="comment">// 例外を「飲み込んで」処理続行</span>
+
+<span class="comment">// ※ 適切に使えば有用</span>
+<span class="comment">// ※ 安易に飲み込むと事故の元</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「責任の所在を明確に」</div>
+    <p>例外設計の鉄則は<b>「責任の所在の明確化」</b>。Mapperは事実を返すだけ、Serviceが業務判断、Controllerは素通り、Handlerが最終処理── この<b>4層の責任</b>を意識すれば、コードがすっきり書けます。「<b>どこに try-catch を書くべきか?</b>」と迷ったら、<b>「この層がこの例外を掴むのは妥当か?</b>」と問い直しましょう。</p>
+  </div>
+</section>
+
+<section id="message-design">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>例外メッセージの設計（ユーザー向けと開発者向け）</h2>
+    <span class="en">MESSAGE DESIGN</span>
+  </div>
+  <p class="pattern-desc">例外には<b>メッセージ</b>が付きます。Vol.9で <code>"Task not found: id = 9999"</code> としたメッセージ── 実はこれ、<b>ユーザー向け</b>と<b>開発者向け</b>の<b>両方</b>を兼ねていて、本来は<b>分けるべき</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">message-design</span>
+      <span class="tag-desc">2種類のメッセージを分離する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// メッセージの2つの読み手</div>
+
+        <div class="compare">
+          <div class="compare-box compare-ok">
+            <div class="compare-label">ユーザー向けメッセージ</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65">画面に表示する。<br>
+            <b>業務的</b>に分かりやすく。<br>
+            <b>専門用語を避ける</b>。<br>
+            <b>解決策を示す</b>のが理想。<br><br>
+            例：「<b>指定されたタスクが見つかりません。一覧から選び直してください。</b>」</p>
+          </div>
+          <div class="compare-box compare-ng" style="border-top-color:var(--accent-2)">
+            <div class="compare-label" style="color:var(--accent-2)">開発者向けメッセージ</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65">ログに残す。<br>
+            <b>技術的</b>に正確に。<br>
+            <b>具体的なID・値</b>を含める。<br>
+            <b>調査のヒント</b>になる情報。<br><br>
+            例：<code>"Task not found: id = 9999, attempted by userId=42"</code></p>
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>Vol.9 の現状</b>：例外メッセージ <code>"Task not found: id = 9999"</code> を<b>そのまま画面に表示</b>しているので、開発者向けメッセージがユーザーに見えています。これは<b>本来はNG</b>。学習用なのでシンプルにしているだけ。</p>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">改善版の設計</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:6px">例外クラスに<b>「ユーザー向け」「開発者向け」両方のメッセージ</b>を持たせる：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">public class TaskNotFoundException
+    extends RuntimeException {
+
+  private final Long taskId;
+
+  public TaskNotFoundException(Long id) {
+    super("Task not found: id = " + id);  // 開発者向け
+    this.taskId = id;
+  }
+
+  // ユーザー向けは別途定義
+  public String getUserMessage() {
+    return "指定されたタスクが見つかりません";
+  }
+}</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px">ハンドラーで<b>使い分け</b>：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">log.warn(e.getMessage());  // ログには技術的メッセージ
+model.addAttribute("message",
+  e.getUserMessage());     // 画面には業務的メッセージ</pre>
+      </div>
+      <div class="code"><span class="code-head">// メッセージ設計のパターン</span>
+
+<span class="comment">// === パターン1: 単純（Vol.9で採用） ===</span>
+
+<span class="kw">public class</span> <span class="type">TaskNotFoundException</span>
+    <span class="kw">extends</span> <span class="type">RuntimeException</span> {
+  <span class="kw">public</span> <span class="fn">TaskNotFoundException</span>(<span class="type">Long</span> id) {
+    <span class="kw">super</span>(<span class="str">"Task not found: id = "</span> + id);
+  }
+}
+
+<span class="comment">// メッセージは1つだけ</span>
+<span class="comment">// 学習用にシンプル</span>
+<span class="comment">// 実務では情報不足</span>
+
+
+<span class="code-head" style="margin-top:18px">// === パターン2: 分離型（業務系） ===</span>
+
+<span class="kw">public class</span> <span class="type">TaskNotFoundException</span>
+    <span class="kw">extends</span> <span class="type">RuntimeException</span> {
+
+  <span class="kw">private final</span> <span class="type">Long</span> taskId;
+
+  <span class="kw">public</span> <span class="fn">TaskNotFoundException</span>(<span class="type">Long</span> id) {
+    <span class="kw">super</span>(<span class="str">"Task not found: id = "</span> + id);
+    <span class="kw">this</span>.taskId = id;
+  }
+
+  <span class="kw">public</span> <span class="type">Long</span> <span class="fn">getTaskId</span>() {
+    <span class="kw">return</span> taskId;
+  }
+
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">getUserMessage</span>() {
+    <span class="kw">return</span> <span class="str">"指定されたタスクが見つかりません"</span>;
+  }
+}
+
+<span class="comment">// メッセージを分離</span>
+<span class="comment">// → ログ用と画面用を使い分け</span>
+
+
+<span class="code-head" style="margin-top:18px">// === パターン3: メッセージコード ===</span>
+
+<span class="kw">public class</span> <span class="type">BusinessException</span>
+    <span class="kw">extends</span> <span class="type">RuntimeException</span> {
+
+  <span class="kw">private final</span> <span class="type">String</span> code;
+  <span class="kw">private final</span> <span class="type">Object</span>[] args;
+
+  <span class="kw">public</span> <span class="fn">BusinessException</span>(
+      <span class="type">String</span> code, <span class="type">Object</span>... args) {
+    <span class="kw">this</span>.code = code;
+    <span class="kw">this</span>.args = args;
+  }
+
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">getCode</span>() {
+    <span class="kw">return</span> code;
+  }
+}
+
+<span class="comment">// 使い方:</span>
+<span class="kw">throw new</span> <span class="type">BusinessException</span>(<span class="str">"task.notFound"</span>, id);
+
+<span class="comment">// messages.properties で:</span>
+<span class="comment">// task.notFound=タスク ID {0} が見つかりません</span>
+
+<span class="comment">// → Vol.8 のバリデーションと同じパターン</span>
+<span class="comment">// → 多言語対応も簡単</span>
+
+
+<span class="code-head" style="margin-top:18px">// 実務でよくあるメッセージ例</span>
+
+<span class="comment">// ユーザー向け（業務的）</span>
+<span class="str">"指定されたタスクが見つかりません"</span>
+<span class="str">"在庫が不足しています"</span>
+<span class="str">"権限が不足しています"</span>
+<span class="str">"既に登録済みです"</span>
+
+
+<span class="comment">// 開発者向け（技術的）</span>
+<span class="str">"Task not found: id=9999"</span>
+<span class="str">"Insufficient stock: required=100, available=50"</span>
+<span class="str">"User not authorized: userId=42, role=GUEST"</span>
+<span class="str">"Duplicate email: foo@example.com"</span>
+
+
+<span class="code-head" style="margin-top:18px">// メッセージ設計の3原則</span>
+
+<span class="comment">// 1. ユーザーには「業務」を伝える</span>
+<span class="comment">//    技術用語禁止、解決策を示す</span>
+
+<span class="comment">// 2. ログには「技術」を残す</span>
+<span class="comment">//    具体的な値、ID、状態を含める</span>
+
+<span class="comment">// 3. 両者を「分離」する</span>
+<span class="comment">//    例外クラスに別フィールド</span>
+<span class="comment">//    または messages.properties</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「読み手によって変える」</div>
+    <p>同じ例外でも、<b>ユーザー</b>と<b>開発者</b>では<b>必要な情報が違う</b>。ユーザーは「<b>何を直せばよいか</b>」、開発者は「<b>何が起きたか正確に</b>」を知りたい。<b>1つのメッセージで両方を満たそうとすると、どちらにも中途半端</b>になります。業務開発では<b>メッセージを2系統に分ける</b>のが理想です。</p>
+  </div>
+</section>
+
+<section id="try-catch-when">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>try-catch を使うべき場面と使わないべき場面</h2>
+    <span class="en">WHEN TO USE TRY-CATCH</span>
+  </div>
+  <p class="pattern-desc">「<b>try-catchはどこに書くべきか?</b>」── 新人が最も悩む例外設計の問い。<b>使うべき場面</b>と<b>使わないべき場面</b>を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">try-catch-when</span>
+      <span class="tag-desc">使う場面と使わない場面</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// try-catchを使うべき4つの場面</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">例外から<b>本当に復帰できる</b>場面</div>
+          <div class="think-step-body">
+            「<b>失敗してもリカバーできる</b>」場合のみ catch。<br>
+            例：3回までリトライする、別の経路を試す、デフォルト値で続行<br>
+            <b>意味のあるリカバリーロジック</b>を書ける時だけ catch する価値あり。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">例外を<b>意図的に飲み込む</b>場面</div>
+          <div class="think-step-body">
+            「<b>例外が起きても本処理は続行したい</b>」場合。<br>
+            例：通知メール送信失敗 → 本処理（注文受付）は成功扱い、ログだけ残す<br>
+            ★ <b>慎重に使う</b>。安易に飲み込むと事故の元。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">例外を<b>変換する</b>場面</div>
+          <div class="think-step-body">
+            低レベル例外を<b>業務例外に包んで再スロー</b>。<br>
+            例：<code>IOException</code> を <code>DocumentReadException</code> でラップ<br>
+            ★ <b>呼び出し側に「業務的な意味」を伝える</b>ためにラップする。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">例外を<b>ログに残す前提</b>で再スローする場面</div>
+          <div class="think-step-body">
+            catch → <code>log.error(...)</code> → 再スロー。<br>
+            <b>「ここを通った記録を残したい」</b>が、処理は止める時。<br>
+            ※ GlobalExceptionHandler でログを書くなら不要。
+          </div>
+        </div>
+
+        <p style="font-size:14px;font-weight:700;color:#c43;margin-top:18px">try-catchを使わないべき場面</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b>意味なく catch する</b>：「コンパイラに言われたから書く」程度の catch は害悪</li>
+          <li><b>catch して何もしない</b>（例外を握りつぶす）：バグの元凶</li>
+          <li><b>catch して同じメッセージで投げ直す</b>：何の付加価値もない</li>
+          <li><b>Controllerで業務例外を全部 catch する</b>：GlobalExceptionHandler の役割を奪う</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 使うべき場面の例</span>
+
+<span class="comment">// === 場面1: リトライ ===</span>
+
+<span class="kw">public void</span> <span class="fn">callExternalApi</span>() {
+  <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">3</span>; i++) {
+    <span class="kw">try</span> {
+      api.<span class="fn">call</span>();
+      <span class="kw">return</span>;  <span class="comment">// 成功</span>
+    } <span class="kw">catch</span> (<span class="type">ApiException</span> e) {
+      log.<span class="fn">warn</span>(<span class="str">"Retry {}"</span>, i);
+      <span class="type">Thread</span>.<span class="fn">sleep</span>(<span class="num">1000</span>);
+    }
+  }
+  <span class="kw">throw new</span> <span class="type">ApiException</span>(<span class="str">"3回失敗"</span>);
+}
+
+
+<span class="code-head" style="margin-top:18px">// === 場面2: 意図的に飲み込む ===</span>
+
+<span class="kw">public void</span> <span class="fn">registerUser</span>(<span class="type">UserForm</span> form) {
+  <span class="type">User</span> user = userService.<span class="fn">save</span>(form);
+
+  <span class="comment">// 通知メール送信</span>
+  <span class="kw">try</span> {
+    mailService.<span class="fn">sendWelcome</span>(user);
+  } <span class="kw">catch</span> (<span class="type">MailException</span> e) {
+    <span class="comment">// メール失敗でも登録は成功扱い</span>
+    log.<span class="fn">error</span>(<span class="str">"メール失敗"</span>, e);
+    <span class="comment">// 飲み込む</span>
+  }
+
+  <span class="kw">return</span>;  <span class="comment">// 登録成功</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// === 場面3: 例外の変換 ===</span>
+
+<span class="kw">public</span> <span class="type">Document</span> <span class="fn">readDocument</span>(<span class="type">Path</span> p) {
+  <span class="kw">try</span> {
+    <span class="kw">return</span> reader.<span class="fn">read</span>(p);
+  } <span class="kw">catch</span> (<span class="type">IOException</span> e) {
+    <span class="comment">// 低レベル → 業務的な例外に変換</span>
+    <span class="kw">throw new</span> <span class="type">DocumentReadException</span>(
+      <span class="str">"文書を読めません: "</span> + p, e);
+    <span class="comment">// 元の例外を cause に保持（重要）</span>
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// === 使わないべき例 ===</span>
+
+<span class="comment">// ✗ NG: 握りつぶす</span>
+<span class="kw">try</span> {
+  doSomething();
+} <span class="kw">catch</span> (<span class="type">Exception</span> e) {
+  <span class="comment">// 何もしない</span>
+}
+<span class="comment">// → エラーが見えなくなる</span>
+<span class="comment">// → 最悪のアンチパターン</span>
+
+
+<span class="comment">// ✗ NG: 意味なく投げ直す</span>
+<span class="kw">try</span> {
+  doSomething();
+} <span class="kw">catch</span> (<span class="type">Exception</span> e) {
+  <span class="kw">throw new</span> <span class="type">Exception</span>(e.<span class="fn">getMessage</span>());
+}
+<span class="comment">// → 元の cause を失う</span>
+<span class="comment">// → スタックトレースが切れる</span>
+
+
+<span class="comment">// ✗ NG: Controllerで全catch</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(...) {
+  <span class="kw">try</span> {
+    service.<span class="fn">create</span>(form);
+  } <span class="kw">catch</span> (<span class="type">Exception</span> e) {
+    <span class="kw">return</span> <span class="str">"error"</span>;
+  }
+}
+<span class="comment">// → GlobalExceptionHandlerの役割を奪う</span>
+<span class="comment">// → 例外処理の集約が崩れる</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業務開発の経験則</span>
+
+<span class="comment">// try-catchを書く前に問う:</span>
+<span class="comment">// 1. 本当に対応すべきか?</span>
+<span class="comment">// 2. ここで対応する権限/知識があるか?</span>
+<span class="comment">// 3. もっと上位で扱う方が良くないか?</span>
+
+<span class="comment">// 多くの場合、答えは「上に投げる」</span>
+<span class="comment">// → GlobalExceptionHandlerに任せる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「try-catch は最後の手段」</div>
+    <p>新人エンジニアは「<b>例外＝try-catch</b>」と思いがちですが、業務開発では<b>try-catch を書かない</b>方が圧倒的に多い。<b>例外を上に投げる方が美しい</b>のが Spring 開発の世界観です。「<b>本当に try-catch が必要か?</b>」と問い直して、不要なら書かないのが上達のコツ。<b>Vol.9 で実装した「Service で投げる、Controller は素通り、Handler で受ける」</b>パターンは、この思想の体現です。</p>
+  </div>
+</section>
+
+<section id="log-integration">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ログとの連携（例外の記録）</h2>
+    <span class="en">LOG INTEGRATION</span>
+  </div>
+  <p class="pattern-desc">例外は<b>「起きた事実」を記録</b>する必要があります。<b>ログ</b>がその役目。Vol.10で本格的に扱う<b>ログ出力</b>と例外処理は<b>密接にリンク</b>しています。先取りで「例外×ログ」の関係を見ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">log-integration</span>
+      <span class="tag-desc">例外をどうログに残すか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 例外ログの作法</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>例外が起きたら、必ずログに残す</b>のが鉄則。Vol.9のGlobalExceptionHandlerには未追加ですが、本来は<b>ログ出力コードを入れる</b>べきです。Vol.10で本格的に追加します。</p>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">業務例外 vs システム例外でログレベルを変える</p>
+
+        <div class="compare">
+          <div class="compare-box">
+            <div class="compare-label" style="color:var(--accent-3)">業務例外 → WARN レベル</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65"><b>「起こりうるエラー」</b>なので、警告レベル。<br>
+            ・スタックトレースは不要（または簡潔）<br>
+            ・「<b>何が」「誰が」</b>に絞った情報</p>
+          </div>
+          <div class="compare-box">
+            <div class="compare-label" style="color:var(--accent-3)">システム例外 → ERROR レベル</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65"><b>「想定外」</b>なので、エラーレベル。<br>
+            ・<b>スタックトレース全部</b>記録<br>
+            ・調査に必要な情報を全部残す</p>
+          </div>
+        </div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">ログに含めるべき情報</p>
+
+        <ol style="padding-left:24px;font-size:13px;line-height:1.85;margin-top:6px">
+          <li><b>例外の種類</b>（クラス名）</li>
+          <li><b>例外メッセージ</b>（開発者向けの詳細版）</li>
+          <li><b>スタックトレース</b>（システム例外の場合）</li>
+          <li><b>発生時刻</b>（自動付与される）</li>
+          <li><b>リクエスト情報</b>（URL、ユーザーID等）</li>
+        </ol>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>注意：</b>ログには<b>個人情報・機密情報を含めない</b>。「パスワード」「クレジットカード番号」等は<b>マスク</b>してから出す。</p>
+      </div>
+      <div class="code"><span class="code-head">// 改善版 GlobalExceptionHandler（Vol.10予告）</span>
+
+<span class="ann">@ControllerAdvice</span>
+<span class="ann">@Slf4j</span>  <span class="comment">// Lombok のログ自動生成</span>
+<span class="kw">public class</span> <span class="type">GlobalExceptionHandler</span> {
+
+  <span class="comment">// 業務例外 → WARNレベル</span>
+  <span class="ann">@ExceptionHandler</span>(<span class="type">TaskNotFoundException</span>.<span class="kw">class</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">handleTaskNotFound</span>(
+      <span class="type">TaskNotFoundException</span> e,
+      <span class="type">Model</span> model) {
+
+    <span class="comment">// スタックトレースなしで簡潔に</span>
+    log.<span class="fn">warn</span>(<span class="str">"Business exception: {}"</span>,
+            e.<span class="fn">getMessage</span>());
+
+    model.<span class="fn">addAttribute</span>(<span class="str">"message"</span>,
+      <span class="str">"指定されたタスクが見つかりません"</span>);
+    <span class="kw">return</span> <span class="str">"error/404"</span>;
+  }
+
+  <span class="comment">// システム例外 → ERRORレベル</span>
+  <span class="ann">@ExceptionHandler</span>(<span class="type">Exception</span>.<span class="kw">class</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">handleException</span>(
+      <span class="type">Exception</span> e,
+      <span class="type">Model</span> model) {
+
+    <span class="comment">// スタックトレース付きで詳細に</span>
+    log.<span class="fn">error</span>(<span class="str">"System exception"</span>, e);
+    <span class="comment">// ↑ 第2引数に例外を渡すと</span>
+    <span class="comment">//   スタックトレースが自動で出る</span>
+
+    model.<span class="fn">addAttribute</span>(<span class="str">"message"</span>,
+      <span class="str">"予期しないエラーが発生しました"</span>);
+    <span class="kw">return</span> <span class="str">"error/500"</span>;
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// ログ出力の典型</span>
+
+<span class="comment">// 業務例外（WARN）の例</span>
+WARN  Business exception:
+      Task not found: id = 9999
+
+<span class="comment">// 1行で済む</span>
+
+
+<span class="code-head" style="margin-top:18px">// システム例外（ERROR）の例</span>
+
+ERROR System exception
+java.lang.NullPointerException: ...
+  at com.example.todo.service
+    .TaskService.findById(TaskService.java:42)
+  at com.example.todo.controller
+    .TaskController.editForm(TaskController.java:35)
+  at ... (略)
+
+<span class="comment">// スタックトレース全部</span>
+<span class="comment">// 調査に使う</span>
+
+
+<span class="code-head" style="margin-top:18px">// 個人情報のマスキング</span>
+
+<span class="ann">@ExceptionHandler</span>(<span class="type">LoginFailedException</span>.<span class="kw">class</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">handleLoginFailed</span>(
+    <span class="type">LoginFailedException</span> e, ...) {
+
+  <span class="comment">// パスワードはログに残さない！</span>
+  log.<span class="fn">warn</span>(<span class="str">"Login failed: userId={}"</span>,
+           e.<span class="fn">getUserId</span>());
+  <span class="comment">// e.getPassword() は絶対NG</span>
+
+  ...
+}
+
+
+<span class="code-head" style="margin-top:18px">// 詳細はVol.10で</span>
+
+<span class="comment">// SLF4J、Logger、ログレベル、</span>
+<span class="comment">// 構造化ログ、ログローテーション</span>
+<span class="comment">// → Vol.10「ログ出力と完結」で本格的に</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「ログなき例外は意味なし」</div>
+    <p>例外が起きても<b>ログに残らなければ、運用時に問題が起きていることに誰も気付けない</b>。本番システムでは、「<b>例外が起きた → ログに残った → 監視システムが検知 → 通知 → 対応</b>」というフローが回って初めて<b>「壊れたら綺麗に転ぶ」</b>が完成します。Vol.9 ではログ出力を省略していますが、Vol.10 で必ず追加します。「<b>例外とログは表裏一体</b>」と覚えてください。</p>
+  </div>
+</section>
+
+<section id="exception-lifecycle">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>例外のライフサイクル</h2>
+    <span class="en">EXCEPTION LIFECYCLE</span>
+  </div>
+  <p class="pattern-desc">例外が<b>「生まれて、伝搬し、捕捉され、消える」</b>までの全ライフサイクル。新ルール（誰が・誰に・何を・throw）で<b>完全フロー図</b>を描きます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">exception-lifecycle-flow</span>
+      <span class="tag-desc">例外の完全ライフサイクル（新ルール適用）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// シナリオ：/tasks/9999/edit にアクセス</div>
+
+<div class="flow-v2"><span class="flow-step">★ ステップ1: リクエスト到着</span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">Spring</span> に <span class="flow-call">GETリクエストを送る</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">送信: GET /tasks/9999/edit</span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">Controller</span> の <span class="flow-call">editForm(id=9999) を呼ぶ</span><span class="flow-label-call">行き</span></span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ステップ2: 業務層でDB照会</span>
+
+<span class="flow-step"><span class="flow-actor">Controller</span> が <span class="flow-actor">Service</span> の <span class="flow-call">findById(9999) を呼ぶ</span><span class="flow-label-call">行き</span></span>
+
+<span class="flow-step"><span class="flow-actor">Service</span> が <span class="flow-actor">Mapper</span> の <span class="flow-call">findById(9999) を呼ぶ</span><span class="flow-label-call">行き</span></span>
+
+<span class="flow-step"><span class="flow-actor">Mapper</span> が <span class="flow-actor">MySQL</span> に <span class="flow-call">SELECTを発行</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">SQL: SELECT * FROM tasks WHERE id = 9999</span>
+
+<span class="flow-step"><span class="flow-actor">MySQL</span> が <span class="flow-actor">Mapper</span> に <span class="flow-return">0件の結果を返す</span><span class="flow-label-return">帰り</span></span>
+
+<span class="flow-step"><span class="flow-actor">Mapper</span> が <span class="flow-actor">Service</span> に <span class="flow-return">null を返す</span><span class="flow-label-return">帰り</span></span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ステップ3: 例外の発生</span>
+
+<span class="flow-step"><span class="flow-actor">Service</span> が <span class="flow-call">null チェックを実行</span></span>
+<span class="flow-arg">task == null → true</span>
+
+<span class="flow-step"><span class="flow-actor">Service</span> が <span class="flow-actor">TaskNotFoundException</span> を <span class="flow-throw">throw する</span><span class="flow-label-throw">例外</span></span>
+<span class="flow-arg">throw new TaskNotFoundException(9999L)</span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ステップ4: 例外の伝搬</span>
+
+<span class="flow-step"><span class="flow-actor">例外</span> が <span class="flow-actor">Service.findById</span> を <span class="flow-throw">突き抜ける</span><span class="flow-label-throw">伝搬</span></span>
+<span class="flow-arg">「正常終了せず例外で抜ける」</span>
+
+<span class="flow-step"><span class="flow-actor">例外</span> が <span class="flow-actor">Controller.editForm</span> を <span class="flow-throw">突き抜ける</span><span class="flow-label-throw">伝搬</span></span>
+<span class="flow-arg">try-catch なしのため素通り</span>
+
+<span class="flow-step"><span class="flow-actor">例外</span> が <span class="flow-actor">Spring DispatcherServlet</span> まで <span class="flow-throw">到達</span><span class="flow-label-throw">伝搬</span></span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ステップ5: 例外の捕捉</span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">@ControllerAdvice</span> から <span class="flow-call">マッチするハンドラーを探す</span></span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">GlobalExceptionHandler</span> の <span class="flow-call">handleTaskNotFound() を呼ぶ</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">引数: e = TaskNotFoundException(9999), model = Model</span>
+
+<span class="flow-step"><span class="flow-actor">handleTaskNotFound</span> が <span class="flow-actor">Model</span> に <span class="flow-call">message を設定</span></span>
+
+<span class="flow-step"><span class="flow-actor">handleTaskNotFound</span> が <span class="flow-actor">Spring</span> に <span class="flow-return">"error/404" を返す</span><span class="flow-label-return">帰り</span></span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ステップ6: テンプレートの描画</span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">Thymeleaf</span> の <span class="flow-call">error/404.html を解決</span></span>
+
+<span class="flow-step"><span class="flow-actor">Thymeleaf</span> が <span class="flow-actor">Model</span> から <span class="flow-call">${message} を取得して埋め込み</span></span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">ブラウザ</span> に <span class="flow-return">HTML を返す</span><span class="flow-label-return">帰り</span></span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ステップ7: ユーザーの認識</span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">ユーザー</span> に <span class="flow-call">エラー画面を表示</span></span>
+<span class="flow-arg">表示: 「404 - お探しのページが見つかりません」</span>
+<span class="flow-arg">表示: 「Task not found: id = 9999」</span>
+<span class="flow-arg">「タスク一覧に戻る」リンク提示</span>
+
+<span class="flow-step">★ 例外のライフサイクル完了</span></div>
+      </div>
+      <div class="code"><span class="code-head">// ライフサイクルのコード対応</span>
+
+<span class="comment">// ステップ1: リクエスト到着</span>
+GET /tasks/9999/edit
+   ↓ Spring DispatcherServlet
+   ↓
+[Controller]
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id, ...) {
+
+
+<span class="comment">// ステップ2: 業務層でDB照会</span>
+  <span class="type">Task</span> task = service.<span class="fn">findById</span>(<span class="num">9999L</span>);
+                <span class="comment">// ↓ 内部で…</span>
+                <span class="comment">// service.findById(9999)</span>
+                <span class="comment">//   ↓ mapper.findById(9999)</span>
+                <span class="comment">//   ↓ SELECT ... WHERE id=9999</span>
+                <span class="comment">//   ↓ → 0 件</span>
+                <span class="comment">//   ↓ → null</span>
+
+
+<span class="comment">// ステップ3: 例外の発生</span>
+                <span class="comment">// if (task == null) {</span>
+                <span class="bad">//   throw new TaskNotFoundException(9999);</span>
+                <span class="comment">// }</span>
+
+
+<span class="comment">// ステップ4: 例外の伝搬</span>
+  <span class="bad">// この行に到達しない</span>
+  <span class="bad">// editForm() メソッドを突き抜ける</span>
+  model.<span class="fn">addAttribute</span>(<span class="str">"task"</span>, task);
+  <span class="kw">return</span> <span class="str">"tasks/edit"</span>;
+}
+
+
+<span class="comment">// ステップ5: 例外の捕捉</span>
+[GlobalExceptionHandler]
+<span class="ann">@ExceptionHandler</span>(<span class="type">TaskNotFoundException</span>.<span class="kw">class</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">handleTaskNotFound</span>(
+    <span class="type">TaskNotFoundException</span> e,
+    <span class="type">Model</span> model) {
+
+  model.<span class="fn">addAttribute</span>(<span class="str">"message"</span>,
+    e.<span class="fn">getMessage</span>());
+
+
+<span class="comment">// ステップ6: テンプレートの描画</span>
+  <span class="kw">return</span> <span class="str">"error/404"</span>;
+}
+   ↓ Thymeleaf レンダリング
+   ↓
+
+
+<span class="comment">// ステップ7: ユーザーの認識</span>
+[ブラウザに HTML 到達]
+   ↓
+ユーザーが画面を見る
+
+
+<span class="code-head" style="margin-top:18px">// 重要な観察</span>
+
+<span class="comment">// 1. Service で「投げる」</span>
+<span class="comment">// 2. Controller を「素通り」</span>
+<span class="comment">// 3. Handler で「掴む」</span>
+<span class="comment">// 4. テンプレートに「託す」</span>
+
+<span class="comment">// この4段階が業務開発の例外処理</span>
+<span class="comment">// テンプレート的なフロー</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「例外も『行き帰り』」</div>
+    <p>例外も<b>「行き・帰り・throw」</b>のフロー図で全部表現できます。「<b>普通のメソッド呼び出し</b>」と<b>「例外伝搬」</b>を<b>色分け</b>すると、コードの動きが完全に見える。<b>例外は『throw（赤）→ 上のレイヤーまで伝搬 → ハンドラーで掴む』</b>と覚えれば、複雑な処理フローも整理できます。新ルールの威力です。</p>
+  </div>
+</section>
+
+<section id="user-perspective">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>ユーザー視点のエラー表示の設計</h2>
+    <span class="en">USER-PERSPECTIVE ERROR DESIGN</span>
+  </div>
+  <p class="pattern-desc">技術的な例外処理は完成。最後の仕上げは<b>ユーザー視点でのエラー画面設計</b>。<b>「ユーザーが詰まない」</b>UI設計の原則をまとめます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">user-perspective-error</span>
+      <span class="tag-desc">エラー画面のUX 5原則</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// エラー画面のUX設計5原則</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">「何が起きたか」を伝える</div>
+          <div class="think-step-body">
+            ユーザーは「<b>何が起きたか</b>」を知りたい。<br>
+            ○ <b>「指定されたタスクが見つかりません」</b><br>
+            ✗ <b>「エラーが発生しました」</b>（情報不足）
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">「何をすれば良いか」を示す</div>
+          <div class="think-step-body">
+            <b>次のアクション</b>を提示。<br>
+            ○ <b>「一覧から選び直してください」</b>＋ 一覧へのリンク<br>
+            ○ <b>「再読み込みしてください」</b>＋ ブラウザ操作の案内<br>
+            ✗ <b>リンクなしの行き止まり画面</b>
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">技術詳細は隠す</div>
+          <div class="think-step-body">
+            <b>スタックトレース、SQL文、内部構造</b>を絶対に見せない。<br>
+            ✗ <code>NullPointerException at com.example...</code><br>
+            ○ <b>「予期しないエラーが発生しました」</b><br>
+            セキュリティ的にも重要。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">トーンを業務に合わせる</div>
+          <div class="think-step-body">
+            業務システムでは<b>丁寧で簡潔</b>に。カジュアルすぎる絵文字も場面による。<br>
+            ○ 業務向け：<b>「申し訳ございません。ただいま処理できません。」</b><br>
+            ○ コンシューマー向け：<b>「Oops! ちょっと問題が起きたみたい 😅」</b>
+          </div>
+        </div>
+
+        <div class="think-step" data-step="5">
+          <div class="think-step-title">サポートへの導線を用意</div>
+          <div class="think-step-body">
+            500画面（システム例外）には<b>サポート連絡先</b>を入れる。<br>
+            「<b>解決しない場合は[サポート]までご連絡ください</b>」<br>
+            業務システムでは<b>問い合わせ番号</b>を表示するパターンも。
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>Vol.9 のエラー画面の改善余地</b>：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li>404画面に「<b>一覧に戻る</b>」がある → 原則2をクリア</li>
+          <li>500画面に「<b>予期しないエラー</b>」と書く → 原則3をクリア</li>
+          <li>メッセージ <code>"Task not found: id = 9999"</code> はやや技術的 → 改善余地あり</li>
+          <li>サポート連絡先が無い → 業務開発では追加すべき</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 改善版 404.html</span>
+
+<span class="tag">&lt;body&gt;</span>
+  <span class="tag">&lt;h1&gt;</span>お探しのページが見つかりません<span class="tag">&lt;/h1&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    指定されたタスクが見つかりません。<br>
+    削除されたか、URLが間違っている可能性があります。
+  <span class="tag">&lt;/p&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    お手数ですが、以下のリンクから
+    <span class="tag">&lt;a</span> <span class="attr">th:href</span>=<span class="str">"@{/tasks}"</span><span class="tag">&gt;</span>
+      タスク一覧
+    <span class="tag">&lt;/a&gt;</span>
+    に戻り、再度お試しください。
+  <span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/body&gt;</span>
+
+<span class="comment">// 改善ポイント:</span>
+<span class="comment">// ・「タスク」という業務用語</span>
+<span class="comment">// ・原因の説明</span>
+<span class="comment">// ・次のアクションを明示</span>
+<span class="comment">// ・丁寧な敬語</span>
+
+
+<span class="code-head" style="margin-top:18px">// 改善版 500.html</span>
+
+<span class="tag">&lt;body&gt;</span>
+  <span class="tag">&lt;h1&gt;</span>システムエラーが発生しました<span class="tag">&lt;/h1&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    申し訳ございません。<br>
+    ただいま処理を完了できません。
+  <span class="tag">&lt;/p&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    お手数ですが、しばらく時間をおいて
+    再度お試しください。
+  <span class="tag">&lt;/p&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    問題が解決しない場合は、
+    <span class="tag">&lt;br&gt;</span>
+    システム管理者（<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="str">"mailto:admin@..."</span><span class="tag">&gt;</span>
+      admin@example.com
+    <span class="tag">&lt;/a&gt;</span>）にお問い合わせください。
+  <span class="tag">&lt;/p&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    <span class="tag">&lt;a</span> <span class="attr">th:href</span>=<span class="str">"@{/tasks}"</span><span class="tag">&gt;</span>
+      タスク一覧に戻る
+    <span class="tag">&lt;/a&gt;</span>
+  <span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/body&gt;</span>
+
+<span class="comment">// 業務システムらしい:</span>
+<span class="comment">// ・丁寧な謝罪</span>
+<span class="comment">// ・ユーザーが次にすべきこと</span>
+<span class="comment">// ・サポート連絡先</span>
+<span class="comment">// ・代替動線（一覧へ）</span>
+
+
+<span class="code-head" style="margin-top:18px">// エラー画面の質 = アプリの質</span>
+
+<span class="comment">// エラー画面は「滅多に見ない」ページ</span>
+<span class="comment">// だからこそ手を抜きがち</span>
+
+<span class="comment">// でも逆に:</span>
+<span class="comment">// 「問題が起きた時にどんな対応が</span>
+<span class="comment">//  あるか」がエンジニアの質を示す</span>
+
+<span class="comment">// 業務開発では:</span>
+<span class="comment">// 「エラー画面まで作り込めているか」</span>
+<span class="comment">// が評価ポイント</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「エラー画面はアプリの顔」</div>
+    <p>エラー画面は<b>「アプリの顔」</b>の一部です。ユーザーが<b>困ったとき</b>に表示される画面── ここで<b>「丁寧で分かりやすい」</b>と感じれば、アプリへの信頼が深まる。逆に<b>Whitelabel Error Page</b> や雑なエラー画面は、<b>「このアプリ大丈夫?」</b>と思わせる。Vol.9 で<b>独自エラー画面</b>を作る価値は、技術的だけでなく<b>「ユーザー体験」</b>の品質向上にあります。</p>
+  </div>
+</section>
+
+<section id="checklist">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>自分で例外設計するためのチェックリスト</h2>
+    <span class="en">CHECKLIST</span>
+  </div>
+  <p class="pattern-desc">本補足の集大成。<b>新しい業務例外を設計する時</b>のチェックリスト。明日から使える実務テンプレートです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">exception-checklist</span>
+      <span class="tag-desc">例外設計チェックリスト</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 設計時の判断項目</div>
+
+        <p style="font-size:14px;font-weight:700;margin-bottom:8px;color:var(--accent-3)">事前判断（設計）</p>
+        <ul class="checklist">
+          <li>この異常は<b>業務例外</b>か<b>システム例外</b>か（業務的に起こりうるか）</li>
+          <li><b>非検査例外</b>（RuntimeException）にする予定か（業界推奨）</li>
+          <li>例外名は<b>業務的に分かりやすい名前</b>か（〜Exception で終わる）</li>
+          <li>例外に<b>どの情報</b>を持たせるか（ID、コード、現状値等）</li>
+          <li><b>ユーザー向けメッセージ</b>と<b>開発者向けメッセージ</b>は分離するか</li>
+          <li><b>どの層で投げる</b>か（基本は Service層）</li>
+          <li><b>どの層で受ける</b>か（基本は GlobalExceptionHandler）</li>
+          <li><b>どのエラー画面</b>に対応させるか</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;margin:14px 0 8px;color:var(--accent-3)">実装</p>
+        <ul class="checklist">
+          <li><b>com.example.todo.exception</b> パッケージに例外クラスを作る</li>
+          <li><b>RuntimeException を継承</b>する</li>
+          <li>コンストラクタで<b>必要な情報</b>を受け取る</li>
+          <li><b>super()</b> でメッセージを設定する</li>
+          <li>Service層で<b>適切なタイミング</b>で throw する</li>
+          <li>Controller には<b>try-catch を書かない</b>（GlobalExceptionHandler に任せる）</li>
+          <li>GlobalExceptionHandler に<b>@ExceptionHandler メソッド</b>を追加する</li>
+          <li>対応する<b>エラー画面テンプレート</b>を作成する</li>
+          <li><b>ログ出力</b>を入れる（業務例外=WARN、システム例外=ERROR）</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;margin:14px 0 8px;color:var(--accent-3)">動作確認</p>
+        <ul class="checklist">
+          <li>該当する<b>異常ケース</b>で例外が発生する</li>
+          <li>例外が<b>正しいハンドラー</b>に届く（マッチング確認）</li>
+          <li><b>対応するエラー画面</b>が表示される</li>
+          <li>画面に<b>業務的なメッセージ</b>が表示される（技術詳細は隠す）</li>
+          <li><b>「次のアクション」</b>が画面に提示される</li>
+          <li>コンソールに<b>適切なログ</b>が出力される</li>
+          <li>Whitelabel Error Page が<b>出ない</b></li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 例外スターターテンプレート</span>
+
+<span class="comment">// === 1. 例外クラス ===</span>
+
+<span class="kw">package</span> com.example.app.exception;
+
+<span class="kw">public class</span> <span class="type">XxxException</span>
+    <span class="kw">extends</span> <span class="type">RuntimeException</span> {
+
+  <span class="kw">private final</span> <span class="type">Long</span> targetId;
+
+  <span class="kw">public</span> <span class="fn">XxxException</span>(<span class="type">Long</span> id) {
+    <span class="kw">super</span>(<span class="str">"Xxx not found: id = "</span> + id);
+    <span class="kw">this</span>.targetId = id;
+  }
+
+  <span class="kw">public</span> <span class="type">Long</span> <span class="fn">getTargetId</span>() {
+    <span class="kw">return</span> targetId;
+  }
+}
+
+
+<span class="comment">// === 2. Service で投げる ===</span>
+
+<span class="ann">@Service</span>
+<span class="kw">public class</span> <span class="type">XxxService</span> {
+
+  <span class="kw">public</span> <span class="type">Xxx</span> <span class="fn">findById</span>(<span class="type">Long</span> id) {
+    <span class="type">Xxx</span> xxx = mapper.<span class="fn">findById</span>(id);
+    <span class="kw">if</span> (xxx == <span class="kw">null</span>) {
+      <span class="kw">throw new</span> <span class="type">XxxException</span>(id);
+    }
+    <span class="kw">return</span> xxx;
+  }
+}
+
+
+<span class="comment">// === 3. ハンドラーに追加 ===</span>
+
+<span class="ann">@ControllerAdvice</span>
+<span class="kw">public class</span> <span class="type">GlobalExceptionHandler</span> {
+
+  <span class="ann">@ExceptionHandler</span>(<span class="type">XxxException</span>.<span class="kw">class</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">handleXxx</span>(
+      <span class="type">XxxException</span> e,
+      <span class="type">Model</span> model) {
+
+    log.<span class="fn">warn</span>(<span class="str">"Business: {}"</span>,
+             e.<span class="fn">getMessage</span>());
+
+    model.<span class="fn">addAttribute</span>(<span class="str">"message"</span>,
+      <span class="str">"〜が見つかりません"</span>);
+    <span class="kw">return</span> <span class="str">"error/404"</span>;
+  }
+}
+
+
+<span class="comment">// === 4. エラー画面（追加なら） ===</span>
+
+<span class="comment">// templates/error/xxx-not-found.html</span>
+<span class="comment">// 業務に応じた専用画面</span>
+
+
+<span class="good">// このパターンで業務の80%は対応可能</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「明日からの実務テンプレート」</div>
+    <p>このチェックリストとスターターテンプレートを<b>「実務のおまもり」</b>として手元に置いてください。新しい業務例外が必要になった時、項目を1つずつチェック・コピペすれば、<b>業務品質の例外処理</b>が短時間で組めます。<b>「壊れたら綺麗に転ぶ」</b>アプリを<b>毎回ゼロから考えずに済む</b>── これがチェックリストの価値です。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+  <div class="tip-label">この補足を読み終えたあなたへ</div>
+  <p>お疲れさまでした。<b>例外設計の哲学</b>を一通り解明しました。<b>例外の本質、検査 vs 非検査、業務 vs システム、責任の所在、メッセージ設計、try-catch の使い所、ログとの連携、ライフサイクル、UX設計、チェックリスト</b>── <b>業務開発者として必要な例外設計の地図</b>が手に入りました。<br><br>
+  <b>「動く」と「業務に出せる」の境界</b>を渡る2歩目を踏み出したあなたは、Vol.1から始まった旅で<b>本当に多くのこと</b>を学んできました。例外処理は<b>「業務品質の3本柱（バリデーション・例外処理・ログ）」</b>の2本目。残り1本もVol.10で揃えます。<br><br>
+  次のVol.10では<b>業務品質3本柱の最後「ログ出力」</b>を整え、<b>シリーズ完結</b>を迎えます。「<b>何が起きたか後から追える</b>」── 例外処理と<b>表裏一体</b>のスキルです。本補足で予告したログ出力の<b>本格的な実装</b>と、Vol.1〜Vol.10の<b>長い旅の終着点</b>が待っています。お楽しみに。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.09 ADD ── PHILOSOPHY OF EXCEPTION DESIGN</span>
+</footer>
+
+</body>
+</html>

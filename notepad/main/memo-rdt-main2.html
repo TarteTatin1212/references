@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕Vol.2 メモCRUD 要求→設計→テスト一周目</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2940;
+  --paper:#f3f0e6;
+  --paper-2:#e4dfcd;
+  --accent:#2d5485;
+  --accent-2:#507aa8;
+  --accent-3:#8a6a3a;
+  --muted:#6a7484;
+  --line:#c6c1b0;
+  --code-bg:#1a2236;
+  --code-text:#e8e4d4;
+  --panel-bg:#ede7d3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✦";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.phase-badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700;letter-spacing:0.05em}
+.ph-req{background:#e8eef6;color:#2d5485;border:1px solid #2d5485}
+.ph-des{background:#f0ebe0;color:#8a6a3a;border:1px solid #8a6a3a}
+.ph-imp{background:#e6efe8;color:#3a6a4a;border:1px solid #3a6a4a}
+.ph-test{background:#f3e8e8;color:#9a4040;border:1px solid #9a4040}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.key{background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(45,84,133,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.screen-mock{background:#fff;border:2px solid var(--ink);padding:16px;margin:8px 0;font-family:'Noto Sans JP',sans-serif;font-size:13px;line-height:1.75}
+.screen-mock .sm-head{background:var(--accent);color:#fff;margin:-16px -16px 12px;padding:8px 14px;font-weight:700;font-size:13px}
+.screen-mock table{width:100%;border-collapse:collapse;margin-top:6px}
+.screen-mock th{background:var(--paper-2);padding:6px 10px;text-align:left;font-size:12px;border:1px solid var(--line)}
+.screen-mock td{padding:6px 10px;font-size:12px;border:1px solid var(--line)}
+.screen-mock .btn{display:inline-block;background:var(--accent);color:#fff;padding:3px 10px;font-size:11px;font-weight:700;margin:0 2px}
+.screen-mock .btn-sub{display:inline-block;background:var(--paper-2);color:var(--ink);padding:3px 10px;font-size:11px;font-weight:700;margin:0 2px;border:1px solid var(--line)}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.2</span>
+    <span class="kind-tag">本編 ── MAIN</span>
+    <span class="rdt-tag">REQ · DESIGN · TEST</span>
+  </div>
+  <h1>メモCRUD<br>要求→設計→テスト一周目</h1>
+  <div class="subtitle">VOL.02 ── MEMO CRUD ── FIRST FULL CYCLE</div>
+  <p class="lead">本シリーズ最重要回。<b>US-001（メモ作成）の受入条件を JUnit テストに翻訳</b>しながら、memos の CRUD を実装します。<b>要求→設計→実装→テスト</b>のフローを<b>初めて1周まるごと</b>回します。「<b>受入条件がそのままテストになる</b>」体験が、このシリーズの核心です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら — Vol.2 で初登場するimport</div>
+    <p>実装側：<code>org.apache.ibatis.annotations.Mapper</code> / <code>org.springframework.stereotype.Service</code> / <code>org.springframework.ui.Model</code> / <code>java.time.LocalDateTime</code>。テスト側：<code>org.junit.jupiter.api.Test</code> / <code>org.mockito.*</code> / <code>static org.assertj.core.api.Assertions.*</code>。<code>Ctrl + Shift + O</code> で一括整理、<code>Ctrl + 1</code> でクイック修正。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 要求の確認（US-001）</a></li>
+    <li><a href="#s02">02 受入条件をテストケース化</a></li>
+    <li><a href="#s03">03 仕様化：CRUDのエンドポイント</a></li>
+    <li><a href="#s04">04 設計①：データと層</a></li>
+    <li><a href="#s05">05 設計②：クラスと責務</a></li>
+    <li><a href="#s06">06 実装</a></li>
+    <li><a href="#s07">07 テスト（単体→結合→MockMvc）</a></li>
+    <li><a href="#s08">08 ブラウザ確認＋ハマりどころ</a></li>
+    <li><a href="#s09">09 レビュー・評価＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>要求の確認（US-001）</h2><span class="phase-badge ph-req">PHASE: REQ</span><span class="en">REVISIT REQUIREMENT</span></div>
+  <p class="pattern-desc">実装の前に<b>必ず要求に戻る</b>。Vol.1 で書いた<b>US-001（メモ作成）</b>を確認します。「<b>何を作るか</b>」を再確認してから手を動かす。これが RDT の流儀。要求を見ずにコードを書き始めるのは<b>禁止</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">US-001 と受入条件</span><span class="tag-desc">Vol.1 で定義済み</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// この巻のスコープ</div>
+        <p>Vol.2 では <b>US-001（メモ作成）</b>を中心に、memos単体の<b>CRUD全体</b>を実装します。カテゴリ・タグは<b>後回し</b>（Vol.3以降）。<b>1個ずつ積む</b>のが鉄則。</p>
+
+        <div class="panel-head" style="margin-top:18px">// US-001 の再掲</div>
+        <div class="role-card" style="margin-top:8px">
+          <span class="label">US-001 / MUST</span>
+          <div class="name">メモを作成したい</div>
+          <div class="desc"><b>As a</b> 思いつきを記録したいユーザー<br><b>I want</b> すぐにメモを作成・保存したい<br><b>so that</b> アイデアを忘れる前に書き留められる</div>
+        </div>
+
+        <p style="margin-top:12px"><b>関連する Issue</b>：GitHub版Vol.1 で作成した <code>#1 US-001</code>。実装後に <code>Closes #1</code> でクローズします。</p>
+      </div>
+      <div class="code"><span class="code-head">// US-001 の受入条件（Vol.1 より）</span>
+<span class="ann">@AC1</span> 正常系
+Given: タイトル「買い物」を入力
+When : 保存ボタンを押す
+Then : メモが保存され、一覧に表示される
+
+<span class="ann">@AC2</span> 異常系（空タイトル）
+Given: タイトルが空
+When : 保存する
+Then : エラーが表示され、保存されない
+
+<span class="ann">@AC3</span> 境界値（200文字）
+Given: タイトルがちょうど200文字
+When : 保存する
+Then : 正常に保存される
+
+<span class="ann">@AC4</span> 境界値の外（201文字）
+Given: タイトルが201文字
+When : 保存する
+Then : エラーが表示される
+
+
+<span class="comment">// ─── この4つが… ───</span>
+<span class="comment">// Section 02 でテストケースになり</span>
+<span class="comment">// Section 07 で JUnit コードになる ★★★</span>
+<span class="comment">// 要求とテストは地続き</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 実装前に必ず要求を音読する</div>
+    <p>慣れてくると<b>要求を見ずにコードを書き始めたくなる</b>。でもそれが<b>「作ったけど要求と違う」</b>の元凶。<b>US と受入条件を1回読んでから</b>手を動かす。たった1分の習慣が、数時間の手戻りを防ぎます。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>受入条件をテストケース化</h2><span class="phase-badge ph-req">PHASE: REQ→TEST</span><span class="en">AC TO TEST CASES</span></div>
+  <p class="pattern-desc"><b>RDT版の心臓部</b>。受入条件（Given/When/Then）を<b>テストケースの一覧</b>に変換します。<b>「テストを先に設計する」</b>。実装より先にテスト設計をすると、「何ができれば完成か」が明確になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">受入条件 → テストケース表</span><span class="tag-desc">テスト設計技法を適用</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// バリデーションのテストケース</div>
+        <p>タイトル：<b>1〜200文字必須</b>という要件から、<b>代表値・境界値・異常系</b>を選びます。</p>
+        <table class="compare-tbl">
+          <thead><tr><th>入力</th><th>期待</th><th>技法</th></tr></thead>
+          <tbody>
+            <tr><td>空文字</td><td>エラー</td><td>異常系</td></tr>
+            <tr><td>1文字</td><td>OK</td><td>下限境界</td></tr>
+            <tr><td>200文字</td><td>OK</td><td>上限境界</td></tr>
+            <tr><td>201文字</td><td>エラー</td><td>境界の外</td></tr>
+            <tr><td>通常文字列</td><td>OK</td><td>代表値</td></tr>
+            <tr><td>null</td><td>エラー</td><td>異常系</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>1機能につき正常系1〜2＋異常系3〜5</b>が目安。異常系は意識しないと抜けます。</p>
+      </div>
+      <div class="code"><span class="code-head">// Given/When/Then → AAA への変換</span>
+<span class="comment">// 受入条件の構造が…</span>
+Given（前提）  <span class="ar">→</span>  Arrange（準備）
+When （行動）  <span class="ar">→</span>  Act（実行）
+Then （結果）  <span class="ar">→</span>  Assert（検証）
+
+<span class="comment">// → そのまま JUnit の3ブロックに ★★★</span>
+
+
+<span class="comment">// ─── @AC2 を例に変換してみる ───</span>
+<span class="comment">// 受入条件：</span>
+<span class="comment">// Given: タイトルが空</span>
+<span class="comment">// When : 保存する</span>
+<span class="comment">// Then : エラー、保存されない</span>
+
+<span class="comment">// ↓ テストケースに</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">空タイトルはバリデーションエラー</span>() {
+    <span class="comment">// Arrange（Given）</span>
+    <span class="type">Memo</span> memo = <span class="kw">new</span> <span class="type">Memo</span>();
+    memo.<span class="fn">setTitle</span>(<span class="str">""</span>);
+
+    <span class="comment">// Act + Assert（When + Then）</span>
+    <span class="comment">// → バリデーションが効くか検証</span>
+    <span class="comment">// → 詳細は Section 07</span>
+}
+
+<span class="comment">// → テスト名は「何を検証するか」を</span>
+<span class="comment">//   日本語で書く（@AC2 がそのまま名前に）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — テストを先に設計する＝完成の定義</div>
+    <p>テストケース表を先に作ると<b>「これが全部通れば完成」</b>という<b>ゴールが明確</b>になります。実装中に「あとどれだけ？」と迷わない。<b>受入条件＝テストケース＝完成の定義</b>。この3つが一致するのが RDT の美しさです。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>仕様化：CRUDのエンドポイント</h2><span class="phase-badge ph-req">PHASE: SPEC</span><span class="en">SPECIFICATION</span></div>
+  <p class="pattern-desc">要求を<b>技術的な仕様</b>に落とします。CRUD を<b>URLとHTTPメソッドの設計</b>に変換。<b>「何を」（要件）から「どう」（仕様）へ</b>の橋渡しです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">URL設計（RESTful）</span><span class="tag-desc">要件→仕様の変換</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 6つのエンドポイント</div>
+        <table class="compare-tbl">
+          <thead><tr><th>操作</th><th>メソッド</th><th>URL</th></tr></thead>
+          <tbody>
+            <tr><td>一覧(R)</td><td>GET</td><td>/memos</td></tr>
+            <tr><td>新規フォーム</td><td>GET</td><td>/memos/new</td></tr>
+            <tr><td>登録(C)</td><td>POST</td><td>/memos</td></tr>
+            <tr><td>編集フォーム</td><td>GET</td><td>/memos/{id}/edit</td></tr>
+            <tr><td>更新(U)</td><td>POST</td><td>/memos/{id}</td></tr>
+            <tr><td>削除(D)</td><td>POST</td><td>/memos/{id}/delete</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// HTML の制約と PRG</div>
+        <ul>
+          <li>HTML標準は <b>GET と POST のみ</b>（PUT/DELETE不可）</li>
+          <li>更新・削除も <b>POST</b> で実現、URL末尾の動詞で識別</li>
+          <li><b>POST後は必ず redirect</b>（PRGパターン）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 仕様：完成画面イメージ</span>
+<span class="comment">// http://localhost:8080/memos</span>
+
+┌──────────────────────────┐
+│ メモ一覧        [+ 新規]  │
+├──────────────────────────┤
+│ID│ タイトル   │更新   │操作│
+├──────────────────────────┤
+│ 1│買い物リスト│11:23 │編 削│
+│ 2│Java学習    │10:05 │編 削│
+└──────────────────────────┘
+
+
+<span class="comment">// ─── PRG パターンの流れ ───</span>
+[保存ボタン] POST /memos
+      ↓ 処理
+      ↓ <span class="kw">redirect:/memos</span>  <span class="comment">← 重要</span>
+[GET /memos] 一覧表示
+      ↓
+F5リロードしても二重登録なし ★★★
+
+
+<span class="comment">// ─── @AC1 がここに対応 ───</span>
+<span class="comment">// "保存→一覧に表示"</span>
+<span class="comment">// = POST /memos → redirect → GET /memos</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 仕様は「要件を裏切らない」範囲で自由</div>
+    <p>URL設計やHTTPメソッドの選択は<b>仕様（どう作るか）</b>。要件（何を満たすか）を満たす限り<b>実装者の裁量</b>です。ただし<b>RESTfulな慣習</b>に従うと、他人が読みやすく業務でも通用する。<b>「自由だが、定石に乗る」</b>のが賢い仕様化です。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>設計①：データと層</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">DATA &amp; LAYER</span></div>
+  <p class="pattern-desc">Vol.1 で決めた<b>3層構造</b>と<b>memosテーブル</b>に沿って、Memo の<b>データ構造</b>を確定します。<b>テスト容易性</b>を意識した設計をします。「<b>純粋ロジックと外部依存を分ける</b>」のが鍵。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Memo エンティティとテスト容易性</span><span class="tag-desc">分離が単体テストを楽にする</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Memo の5フィールド</div>
+        <ul>
+          <li><b>id</b>：Long・主キー</li>
+          <li><b>title</b>：String・必須・200字</li>
+          <li><b>content</b>：String・任意</li>
+          <li><b>createdAt</b>：LocalDateTime・不変</li>
+          <li><b>updatedAt</b>：LocalDateTime・毎回更新</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// テスト容易性のための分離</div>
+        <p>フロー文書の指針：<b>「保存・現在時刻などの外部依存」と「純粋ロジック」を分離</b>。</p>
+        <ul>
+          <li><b>外部依存</b>：DB保存（Mapper）、現在時刻（now()）</li>
+          <li><b>純粋ロジック</b>：バリデーション（タイトル文字数チェック）</li>
+        </ul>
+        <p style="margin-top:8px">バリデーションを<b>純粋に切り出す</b>と、DBなしで単体テストできます。</p>
+      </div>
+      <div class="code"><span class="code-head">// Memo.java + バリデーション設計</span>
+<span class="kw">package</span> com.example.memo.entity;
+
+<span class="kw">import</span> java.time.LocalDateTime;
+<span class="kw">import</span> jakarta.validation.constraints.*;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Memo</span> {
+
+    <span class="kw">private</span> <span class="type">Long</span> id;
+
+    <span class="ann">@NotBlank</span>(message = <span class="str">"タイトルは必須です"</span>)
+    <span class="ann">@Size</span>(max = <span class="num">200</span>,
+          message = <span class="str">"200文字以内"</span>)
+    <span class="kw">private</span> <span class="type">String</span> title;
+
+    <span class="kw">private</span> <span class="type">String</span> content;
+    <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+    <span class="kw">private</span> <span class="type">LocalDateTime</span> updatedAt;
+}
+
+<span class="comment">// ─── @NotBlank / @Size は ───</span>
+<span class="comment">// Bean Validation（jakarta.validation）</span>
+<span class="comment">// → @AC2(空) と @AC3,4(文字数) に対応 ★★★</span>
+<span class="comment">// → 受入条件が「アノテーション」になった</span>
+
+
+<span class="comment">// ─── 外部依存と純粋ロジックの分離 ───</span>
+純粋ロジック（テスト楽）：
+  - @NotBlank / @Size のバリデーション
+
+外部依存（モックで差し替え）：
+  - mapper.insert()    ← DB保存
+  - LocalDateTime.now() ← 現在時刻
+  <span class="comment">// → Service が現在時刻をセットし</span>
+  <span class="comment">//   Mapper はモック化できる ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Bean Validation で受入条件をコードに埋める</div>
+    <p><code>@NotBlank</code>（空チェック）と<code>@Size(max=200)</code>（文字数）は、<b>受入条件 @AC2〜@AC4 をそのままアノテーション化</b>したもの。<b>要求が宣言的にコードへ刻まれる</b>。後の Section 07 で、このアノテーションが効くかをテストします。<b>要求・コード・テストが三位一体</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>設計②：クラスと責務</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">CLASS &amp; RESPONSIBILITY</span></div>
+  <p class="pattern-desc">3層それぞれの<b>クラスと責務</b>を設計します。<b>単一責任（SRP）</b>を守る。「<b>変更理由は1つだけ</b>」。説明に「と」が入ったら分割のサインです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">クラス設計と責務分割</span><span class="tag-desc">SRP を守る</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 各クラスの単一責任</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">CONTROLLER</span>
+            <div class="name">MemoController</div>
+            <div class="desc"><b>HTTPの世話だけ</b>。URL対応・Model詰め・redirect。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">SERVICE</span>
+            <div class="name">MemoService</div>
+            <div class="desc"><b>業務ロジックだけ</b>。日時セット・Mapper呼び出し。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">MAPPER</span>
+            <div class="name">MemoMapper</div>
+            <div class="desc"><b>SQLだけ</b>。データ取得・保存。ロジック無し。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// 命名は「業務の言葉」で</div>
+        <ul>
+          <li><b>NG</b>：<code>processData()</code>（何をする？）</li>
+          <li><b>OK</b>：<code>findAll()</code> <code>create()</code>（読めば分かる）</li>
+          <li>Manager/Util/Helper が付いたら<b>責務が曖昧</b>のサイン</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 責務分割の検証（SRP）</span>
+<span class="comment">// ─── 「と」が入ったら分割 ───</span>
+
+<span class="ann">悪い設計</span>：
+  MemoManager
+    「メモを保存し、<span class="kw">かつ</span>画面を更新し、
+     <span class="kw">かつ</span>検索する」
+  → 変更理由が3つ → SRP違反
+
+<span class="ann">良い設計</span>：
+  MemoMapper     「保存する」だけ
+  MemoController 「画面を扱う」だけ
+  MemoService    「ロジックを束ねる」だけ
+  → 各クラス変更理由は1つ ★★★
+
+
+<span class="comment">// ─── 依存方向（上から下）───</span>
+MemoController
+    ↓ 呼ぶ（OK）
+MemoService
+    ↓ 呼ぶ（OK）
+MemoMapper
+
+<span class="comment">// MapperがControllerを呼ぶ ← 禁止</span>
+<span class="comment">// 下が上を知ってはいけない ★★★</span>
+
+
+<span class="comment">// ─── テスト容易性とDI ───</span>
+<span class="comment">// @RequiredArgsConstructor で</span>
+<span class="comment">// 依存を外から注入 →</span>
+<span class="comment">// テストでモックに差し替え可能</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「テストが書きにくい＝設計が悪い」</div>
+    <p>フロー文書の重要な指針：<b>テストが書きにくいと感じたら、それは設計を見直すサイン</b>。責務がごちゃ混ぜだとモック化できず、テストが書けません。<b>SRPを守る＝テストしやすい</b>。設計品質とテスト容易性は<b>表裏一体</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>実装</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">IMPLEMENTATION</span></div>
+  <p class="pattern-desc">設計が固まったので<b>実装</b>。Entity→Mapper→Service→Controller→View の順に。クラス作成は毎回<b>「右クリック → New」</b>を明示します。<b>設計に沿って書く</b>のが基本。迷ったら設計（前のPhase）に戻ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Mapper（インターフェース＋XML）</span><span class="tag-desc">SQLだけの層</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 作成手順</div>
+        <ol class="step-list">
+          <li><code>com.example.memo</code> 右クリック → <span class="menu-code">New → Package</span> → <code>...mapper</code></li>
+          <li>mapper 右クリック → <span class="menu-code">New → Interface</span> → <b>MemoMapper</b></li>
+          <li><code>resources</code> に <b>mapper</b> フォルダ → <b>MemoMapper.xml</b></li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// MemoMapper.java</span>
+<span class="kw">package</span> com.example.memo.mapper;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> com.example.memo.entity.Memo;
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">MemoMapper</span> {
+    <span class="type">List</span>&lt;<span class="type">Memo</span>&gt; <span class="fn">findAll</span>();
+    <span class="type">Memo</span> <span class="fn">findById</span>(<span class="type">Long</span> id);
+    <span class="kw">void</span> <span class="fn">insert</span>(<span class="type">Memo</span> memo);
+    <span class="kw">void</span> <span class="fn">update</span>(<span class="type">Memo</span> memo);
+    <span class="kw">void</span> <span class="fn">deleteById</span>(<span class="type">Long</span> id);
+}
+
+
+<span class="comment">// MemoMapper.xml（抜粋）</span>
+<span class="kw">&lt;mapper</span> namespace=<span class="str">"...mapper.MemoMapper"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;select</span> id=<span class="str">"findAll"</span> resultType=<span class="str">"Memo"</span><span class="kw">&gt;</span>
+    SELECT id, title, content,
+           created_at, updated_at
+      FROM memos ORDER BY updated_at DESC
+  <span class="kw">&lt;/select&gt;</span>
+  <span class="kw">&lt;insert</span> id=<span class="str">"insert"</span>
+          useGeneratedKeys=<span class="str">"true"</span>
+          keyProperty=<span class="str">"id"</span><span class="kw">&gt;</span>
+    INSERT INTO memos
+      (title, content, created_at, updated_at)
+    VALUES (#{title}, #{content},
+            #{createdAt}, #{updatedAt})
+  <span class="kw">&lt;/insert&gt;</span>
+  <span class="comment">&lt;!-- findById/update/deleteById も同様 --&gt;</span>
+<span class="kw">&lt;/mapper&gt;</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Service と Controller</span><span class="tag-desc">ロジック層とHTTP層</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 作成手順</div>
+        <ol class="step-list">
+          <li><code>service</code> パッケージ作成 → <b>MemoService</b> クラス</li>
+          <li><code>controller</code> パッケージ作成 → <b>MemoController</b> クラス</li>
+          <li>Vol.1 で作った <code>HealthController</code> は削除してOK</li>
+        </ol>
+        <p style="margin-top:10px"><b>Service</b> が日時セットの業務ロジックを担当。<b>Controller</b> は HTTP の世話に専念。</p>
+      </div>
+      <div class="code"><span class="code-head">// MemoService.java</span>
+<span class="ann">@Service</span>
+<span class="ann">@RequiredArgsConstructor</span>
+<span class="kw">public class</span> <span class="type">MemoService</span> {
+    <span class="kw">private final</span> <span class="type">MemoMapper</span> mapper;
+
+    <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Memo</span>&gt; <span class="fn">findAll</span>() {
+        <span class="kw">return</span> mapper.<span class="fn">findAll</span>();
+    }
+    <span class="kw">public</span> <span class="type">Memo</span> <span class="fn">findById</span>(<span class="type">Long</span> id) {
+        <span class="kw">return</span> mapper.<span class="fn">findById</span>(id);
+    }
+    <span class="kw">public void</span> <span class="fn">create</span>(<span class="type">Memo</span> memo) {
+        <span class="type">LocalDateTime</span> now =
+          <span class="type">LocalDateTime</span>.<span class="fn">now</span>();
+        memo.<span class="fn">setCreatedAt</span>(now);
+        memo.<span class="fn">setUpdatedAt</span>(now);
+        mapper.<span class="fn">insert</span>(memo);
+    }
+    <span class="kw">public void</span> <span class="fn">update</span>(<span class="type">Memo</span> memo) {
+        memo.<span class="fn">setUpdatedAt</span>(
+          <span class="type">LocalDateTime</span>.<span class="fn">now</span>());
+        mapper.<span class="fn">update</span>(memo);
+    }
+    <span class="kw">public void</span> <span class="fn">delete</span>(<span class="type">Long</span> id) {
+        mapper.<span class="fn">deleteById</span>(id);
+    }
+}
+
+
+<span class="comment">// MemoController.java（要点）</span>
+<span class="ann">@Controller</span>
+<span class="ann">@RequestMapping</span>(<span class="str">"/memos"</span>)
+<span class="ann">@RequiredArgsConstructor</span>
+<span class="kw">public class</span> <span class="type">MemoController</span> {
+    <span class="kw">private final</span> <span class="type">MemoService</span> service;
+
+    <span class="ann">@GetMapping</span>
+    <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> m) {
+        m.<span class="fn">addAttribute</span>(<span class="str">"memos"</span>,
+          service.<span class="fn">findAll</span>());
+        <span class="kw">return</span> <span class="str">"memos/list"</span>;
+    }
+
+    <span class="ann">@PostMapping</span>
+    <span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+        <span class="ann">@Validated</span> <span class="ann">@ModelAttribute</span> <span class="type">Memo</span> memo,
+        <span class="type">BindingResult</span> br) {
+        <span class="kw">if</span> (br.<span class="fn">hasErrors</span>()) {
+            <span class="kw">return</span> <span class="str">"memos/new"</span>;
+            <span class="comment">// @AC2,3,4: バリデーションエラー時</span>
+            <span class="comment">// は保存せずフォームに戻る ★★★</span>
+        }
+        service.<span class="fn">create</span>(memo);
+        <span class="kw">return</span> <span class="str">"redirect:/memos"</span>;  <span class="comment">// PRG</span>
+    }
+    <span class="comment">// new/edit/update/delete は省略（同型）</span>
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — @Validated + BindingResult が受入条件を守る</div>
+    <p>Controller の <code>@Validated @ModelAttribute Memo</code> ＋ <code>BindingResult</code> が、Entity の <code>@NotBlank/@Size</code> を発動させます。<b>エラーがあれば保存せずフォームに戻る</b>＝受入条件 @AC2〜@AC4 の動作。<b>要求がコードの分岐として実装された</b>瞬間です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>テスト（単体→結合→MockMvc）</h2><span class="phase-badge ph-test">PHASE: TEST</span><span class="en">TEST</span></div>
+  <p class="pattern-desc"><b>受入条件をテストコードに翻訳</b>します。テストピラミッドに従い<b>単体→結合→MockMvc</b>の順で。<b>@AC1〜@AC4 がそのまま JUnit テスト</b>になる瞬間。要求とテストが完全に繋がります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">単体テスト — バリデーション</span><span class="tag-desc">@AC2〜@AC4 を JUnit に</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テスト作成手順</div>
+        <ol class="step-list">
+          <li><code>src/test/java/.../entity</code> に <b>MemoValidationTest</b></li>
+          <li>Bean Validation の Validator で title を検証</li>
+          <li>受入条件の表（Section 02）を1ケースずつテスト化</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// テスト名は受入条件そのまま</div>
+        <ul>
+          <li><code>空タイトルはエラーになる()</code> ← @AC2</li>
+          <li><code>_200文字は登録できる()</code> ← @AC3</li>
+          <li><code>_201文字はエラーになる()</code> ← @AC4</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// MemoValidationTest.java（単体）</span>
+<span class="kw">import</span> static org.assertj.core.api
+         .Assertions.*;
+<span class="kw">import</span> jakarta.validation.*;
+<span class="kw">import</span> org.junit.jupiter.api.*;
+
+<span class="kw">class</span> <span class="type">MemoValidationTest</span> {
+
+  <span class="kw">static</span> <span class="type">Validator</span> validator;
+
+  <span class="ann">@BeforeAll</span>
+  <span class="kw">static void</span> <span class="fn">setup</span>() {
+    validator = <span class="type">Validation</span>
+      .<span class="fn">buildDefaultValidatorFactory</span>()
+      .<span class="fn">getValidator</span>();
+  }
+
+  <span class="comment">// @AC2: 異常系</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">空タイトルはエラーになる</span>() {
+    <span class="comment">// Arrange</span>
+    <span class="type">Memo</span> m = <span class="kw">new</span> <span class="type">Memo</span>();
+    m.<span class="fn">setTitle</span>(<span class="str">""</span>);
+    <span class="comment">// Act</span>
+    <span class="kw">var</span> errors = validator.<span class="fn">validate</span>(m);
+    <span class="comment">// Assert</span>
+    <span class="fn">assertThat</span>(errors).<span class="fn">isNotEmpty</span>();
+  }
+
+  <span class="comment">// @AC3: 上限境界</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">_200文字は登録できる</span>() {
+    <span class="type">Memo</span> m = <span class="kw">new</span> <span class="type">Memo</span>();
+    m.<span class="fn">setTitle</span>(<span class="str">"あ"</span>.<span class="fn">repeat</span>(<span class="num">200</span>));
+    <span class="kw">var</span> errors = validator.<span class="fn">validate</span>(m);
+    <span class="fn">assertThat</span>(errors).<span class="fn">isEmpty</span>();
+  }
+
+  <span class="comment">// @AC4: 境界の外</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">_201文字はエラーになる</span>() {
+    <span class="type">Memo</span> m = <span class="kw">new</span> <span class="type">Memo</span>();
+    m.<span class="fn">setTitle</span>(<span class="str">"あ"</span>.<span class="fn">repeat</span>(<span class="num">201</span>));
+    <span class="kw">var</span> errors = validator.<span class="fn">validate</span>(m);
+    <span class="fn">assertThat</span>(errors).<span class="fn">isNotEmpty</span>();
+  }
+}
+
+<span class="comment">// → 受入条件が JUnit テストに ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Service の単体テスト（Mockito）</span><span class="tag-desc">Mapper をモック化</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Mockito で外部依存を差し替え</div>
+        <p>Service の業務ロジック（<b>create時に日時をセット</b>）を、<b>DBなしで</b>テストします。Mapper をモック化（差し替え）。</p>
+        <ul>
+          <li><code>@Mock</code>：Mapper のニセモノを作る</li>
+          <li><code>@InjectMocks</code>：Service にモックを注入</li>
+          <li><code>verify()</code>：Mapper が呼ばれたか検証</li>
+        </ul>
+        <p style="margin-top:8px"><b>DI（依存性注入）のおかげ</b>でこれが可能。設計（Section 05）の成果です。</p>
+      </div>
+      <div class="code"><span class="code-head">// MemoServiceTest.java（単体・Mockito）</span>
+<span class="kw">import</span> static org.mockito.Mockito.*;
+<span class="kw">import</span> static org.assertj.core.api
+         .Assertions.*;
+<span class="kw">import</span> org.junit.jupiter.api.*;
+<span class="kw">import</span> org.mockito.*;
+<span class="kw">import</span> org.junit.jupiter.api.extension.*;
+
+<span class="ann">@ExtendWith</span>(<span class="type">MockitoExtension</span>.<span class="kw">class</span>)
+<span class="kw">class</span> <span class="type">MemoServiceTest</span> {
+
+  <span class="ann">@Mock</span>
+  <span class="type">MemoMapper</span> mapper;       <span class="comment">// ニセMapper</span>
+
+  <span class="ann">@InjectMocks</span>
+  <span class="type">MemoService</span> service;     <span class="comment">// モック注入済</span>
+
+  <span class="comment">// 業務ロジック：作成時に日時セット</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">作成時にcreatedAtとupdatedAtが入る</span>() {
+    <span class="comment">// Arrange</span>
+    <span class="type">Memo</span> m = <span class="kw">new</span> <span class="type">Memo</span>();
+    m.<span class="fn">setTitle</span>(<span class="str">"テスト"</span>);
+
+    <span class="comment">// Act</span>
+    service.<span class="fn">create</span>(m);
+
+    <span class="comment">// Assert</span>
+    <span class="fn">assertThat</span>(m.<span class="fn">getCreatedAt</span>())
+      .<span class="fn">isNotNull</span>();
+    <span class="fn">assertThat</span>(m.<span class="fn">getUpdatedAt</span>())
+      .<span class="fn">isNotNull</span>();
+    <span class="comment">// Mapper.insert が1回呼ばれたか</span>
+    <span class="fn">verify</span>(mapper, <span class="fn">times</span>(<span class="num">1</span>))
+      .<span class="fn">insert</span>(m);
+  }
+}
+
+<span class="comment">// → 本物のDBなしでロジック検証 ★★★</span>
+<span class="comment">// → 速い・安定・どこでも動く</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">MockMvc — 通しテスト（E2E相当）</span><span class="tag-desc">@AC1 の通し動作</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主要フロー1本だけ</div>
+        <p>テストピラミッドの上層（薄く）。<b>@AC1（保存→一覧に表示）</b>の通し動作を MockMvc で。細かいバリデーションは単体に任せ、<b>ここは主要フローだけ</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 避けること</div>
+        <ul>
+          <li>E2Eで全バリデーション網羅（遅い・脆い）→ 単体でやる</li>
+          <li>固定待ち（sleep）→ MockMvcは不要</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// MemoControllerTest.java（MockMvc）</span>
+<span class="ann">@SpringBootTest</span>
+<span class="ann">@AutoConfigureMockMvc</span>
+<span class="kw">class</span> <span class="type">MemoControllerTest</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="type">MockMvc</span> mvc;
+
+  <span class="comment">// @AC1: 保存→一覧表示の通し</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">メモ作成すると一覧にリダイレクト</span>()
+      <span class="kw">throws</span> <span class="type">Exception</span> {
+    mvc.<span class="fn">perform</span>(<span class="fn">post</span>(<span class="str">"/memos"</span>)
+        .<span class="fn">param</span>(<span class="str">"title"</span>, <span class="str">"買い物"</span>)
+        .<span class="fn">param</span>(<span class="str">"content"</span>, <span class="str">"卵牛乳"</span>))
+       .<span class="fn">andExpect</span>(<span class="fn">status</span>()
+          .<span class="fn">is3xxRedirection</span>())
+       .<span class="fn">andExpect</span>(<span class="fn">redirectedUrl</span>(
+          <span class="str">"/memos"</span>));
+    <span class="comment">// → POST後/memosへredirect（PRG）★★★</span>
+  }
+
+  <span class="comment">// @AC2: 空タイトルはフォームに戻る</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">空タイトルはフォームに戻る</span>()
+      <span class="kw">throws</span> <span class="type">Exception</span> {
+    mvc.<span class="fn">perform</span>(<span class="fn">post</span>(<span class="str">"/memos"</span>)
+        .<span class="fn">param</span>(<span class="str">"title"</span>, <span class="str">""</span>))
+       .<span class="fn">andExpect</span>(<span class="fn">status</span>().<span class="fn">isOk</span>())
+       .<span class="fn">andExpect</span>(<span class="fn">view</span>().<span class="fn">name</span>(
+          <span class="str">"memos/new"</span>));
+    <span class="comment">// → エラー時はフォーム再表示</span>
+  }
+}
+
+<span class="comment">// ─── テストピラミッドの実践 ───</span>
+<span class="comment">// 単体（バリデーション・ロジック）= 多</span>
+<span class="comment">// MockMvc（通し）= 少（主要フローのみ）</span>
+<span class="comment">// → 下を厚く、上を薄く ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Red-Green-Refactor サイクル</div>
+    <p>理想は<b>テストファースト</b>。①失敗するテストを書く（Red）→②通す最小実装（Green）→③整える（Refactor）。特に<b>純粋ロジック（バリデーション）はテストを先に</b>書けます。本Vol.2 では実装を先に見せましたが、慣れたら<b>「受入条件→テスト→実装」</b>の順を試してください。<b>バグ修正は必ず再現テストを先に</b>。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>ブラウザ確認＋ハマりどころ</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">VERIFY &amp; PITFALLS</span></div>
+  <p class="pattern-desc">テストが緑になったら<b>ブラウザでも確認</b>。テストは内部品質、ブラウザ確認は<b>体験の確認</b>。両方やります。Vol.2 で踏みやすい地雷を5つ先回りします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.2 ハマりどころ 5選</span><span class="tag-desc">CRUD＋テストの地雷</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① BindingException: findById not found ★★★</b></p>
+        <ul>
+          <li>原因：Mapper.xml の namespace/id ミス</li>
+          <li>対処：namespace を完全修飾名に、id をメソッド名と一致</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② @Validated を付けてもバリデーションが効かない ★★★</b></p>
+        <ul>
+          <li>原因：Controller の引数に <code>@Validated</code> が無い／BindingResult の位置が違う</li>
+          <li>対処：<code>@Validated @ModelAttribute Memo memo, BindingResult br</code> の順（BindingResultは検証対象の直後）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ MockMvc テストで 404 / テンプレートエラー</b></p>
+        <ul>
+          <li>原因：Thymeleaf テンプレート（memos/new.html）未作成</li>
+          <li>対処：list/new/edit.html を作成してから MockMvc テスト実行</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ Mockito の verify が「0 interactions」</b></p>
+        <ul>
+          <li>原因：@InjectMocks より先に @Mock が初期化されていない／@ExtendWith 忘れ</li>
+          <li>対処：<code>@ExtendWith(MockitoExtension.class)</code> を付ける</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ created_at が NULL で入る</b></p>
+        <ul>
+          <li>原因：Service の create() で setCreatedAt を呼んでいない</li>
+          <li>対処：Service で <code>LocalDateTime.now()</code> をセット（テストで検知できる）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// テスト実行と確認</span>
+<span class="comment">// ─── テストを全部走らせる ───</span>
+<span class="comment">// プロジェクト右クリック</span>
+<span class="comment">// → Run As → JUnit Test</span>
+
+実行結果：
+  MemoValidationTest
+    ✓ 空タイトルはエラーになる
+    ✓ _200文字は登録できる
+    ✓ _201文字はエラーになる
+  MemoServiceTest
+    ✓ 作成時にcreatedAtとupdatedAtが入る
+  MemoControllerTest
+    ✓ メモ作成すると一覧にリダイレクト
+    ✓ 空タイトルはフォームに戻る
+
+  <span class="kw">6 tests, 0 failures</span> ★★★
+
+
+<span class="comment">// ─── ②の正しい引数順 ───</span>
+<span class="ann">@PostMapping</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+    <span class="ann">@Validated</span> <span class="ann">@ModelAttribute</span> <span class="type">Memo</span> memo,
+    <span class="type">BindingResult</span> br) {  <span class="comment">// ←直後に置く</span>
+    ...
+}
+<span class="comment">// BindingResult が検証対象の</span>
+<span class="comment">// 直後にないと例外になる ★★★</span>
+
+
+<span class="comment">// ─── ブラウザ確認 ───</span>
+<span class="comment">// http://localhost:8080/memos</span>
+<span class="comment">// → 一覧 → 新規 → 保存 → 編集 → 削除</span>
+<span class="comment">// → 空タイトルでエラーが出るか</span>
+<span class="comment">//   （受入条件@AC2を目視確認）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — テストとブラウザ確認は役割が違う</div>
+    <p><b>テスト</b>は「ロジックが正しいか」を高速・自動で。<b>ブラウザ確認</b>は「ユーザー体験として成立するか」を目視で。<b>どちらも必要</b>。テストが緑でも、画面が崩れていればユーザーは困る。逆に画面が動いても、エッジケースはテストでしか守れません。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>レビュー・評価＆次巻へ</h2><span class="phase-badge ph-test">PHASE: REVIEW</span><span class="en">REVIEW &amp; NEXT</span></div>
+  <p class="pattern-desc">フローを1周回しました。<b>要求を満たしたか、設計は妥当か、テストは十分か</b>を振り返ります。<b>「動いた」で終わらせず「妥当だったか」を問う</b>のが本シリーズの締めです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.2 卒業チェック</span><span class="tag-desc">フロー1周の評価</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 要求の達成（トレーサビリティ）</div>
+        <ul class="check-list">
+          <li>US-001 の受入条件 @AC1〜@AC4 をテスト化した</li>
+          <li>各テストが緑になった</li>
+          <li>GitHub の Issue #1 をクローズできる状態</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 設計の評価</div>
+        <ul class="check-list">
+          <li>3層（Controller/Service/Mapper）の責務分離ができた</li>
+          <li>説明に「と」が入るクラスが無い（SRP）</li>
+          <li>命名から意図が読める（Manager/Util無し）</li>
+          <li>DIでモック差し替え可能な構造になっている</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// テストの評価</div>
+        <ul class="check-list">
+          <li>テストピラミッド（単体厚く・通し薄く）に従った</li>
+          <li>正常系＋異常系＋境界値を書いた</li>
+          <li>各テストが独立して動く</li>
+          <li>テスト名で「何を検証するか」分かる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.2 で完成したフロー1周</span>
+<span class="comment">// ─── 要求（REQ）───</span>
+US-001 + 受入条件 @AC1〜4
+  ↓
+<span class="comment">// ─── 設計（DESIGN）───</span>
+3層構造 + Memo 5フィールド
++ @NotBlank/@Size（受入条件→アノテーション）
+  ↓
+<span class="comment">// ─── 実装（IMPL）───</span>
+Entity/Mapper/Service/Controller/View
+  ↓
+<span class="comment">// ─── テスト（TEST）───</span>
+単体（バリデーション・ロジック）
++ MockMvc（通し）
+= 受入条件が全部テストになった ★★★
+
+
+<span class="comment">// ─── トレーサビリティ完成 ───</span>
+US-001 → Issue #1 → コミット(Refs #1)
+       → テスト → Closes #1
+<span class="comment">// 「要求→実装→完了」が1本の線に</span>
+
+
+<span class="comment">// 次回 Vol.3：</span>
+<span class="comment">//   US-002（カテゴリ分類）を</span>
+<span class="comment">//   要求→設計→テストで一周</span>
+<span class="comment">//   マスタCRUDの2周目 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.3 へ</div>
+    <p>Vol.2 で<b>開発フローを初めて1周</b>回しました。<b>受入条件がそのままテストになる</b>体験ができたはず。次は Vol.3「<b>カテゴリ管理（マスタの要求と設計）</b>」。<b>US-002 の受入条件</b>を起点に、categories のマスタCRUD を要求→設計→テストで実装します。<b>2周目</b>はパターンが身につく回。並行して<b>別冊S2「設計原則とアーキテクチャ」</b>、<b>GitHub版Vol.2「ブランチ運用」</b>を進めると効果的。<b>本編Vol.3 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>VOL.02 / 14 ── MEMO CRUD FIRST CYCLE（本編）</span>
+</footer>
+
+</body>
+</html>

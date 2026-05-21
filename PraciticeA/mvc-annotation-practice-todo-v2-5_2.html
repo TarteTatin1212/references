@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.5 新規登録機能を作ろう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3d2817;
+  --paper:#f4ecd8;
+  --paper-2:#e8dcc0;
+  --accent:#c0863f;
+  --accent-2:#d8a560;
+  --accent-3:#6b4423;
+  --accent-4:#2d5f3f;
+  --muted:#7a6952;
+  --line:#c9b896;
+  --code-bg:#2a1f15;
+  --code-text:#f0e4cc;
+  --panel-bg:#faf3e0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✎';position:absolute;right:0px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid #c43;padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--accent-3);border-bottom-color:var(--accent-3)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}
+.tag{color:#a3c9ff}
+.attr{color:#ffc88a}
+
+/* WHAT/HOW/WHY */
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+
+/* 用語カード */
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+
+/* この巻で作るパッケージ・ファイル一覧 */
+.file-list{background:#fff;border:1px solid var(--line);padding:0;margin:14px 0;overflow:hidden}
+.file-list-header{background:var(--accent);color:var(--paper);font-family:'Shippori Mincho',serif;font-weight:700;padding:10px 18px;letter-spacing:0.05em;font-size:14px}
+.file-list-row{display:grid;grid-template-columns:80px 110px 1fr 110px;gap:14px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13.5px}
+.file-list-row:last-child{border-bottom:none}
+.file-list-row.is-new{background:rgba(45,95,63,0.06)}
+.file-list-row.is-edit{background:rgba(192,134,63,0.08)}
+.file-status{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;padding:3px 10px;border-radius:3px;text-align:center}
+.file-status.new{background:var(--accent-4);color:var(--paper)}
+.file-status.edit{background:var(--accent);color:var(--paper)}
+.file-type{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);letter-spacing:0.05em}
+.file-path{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink)}
+.file-section{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--accent-3);text-align:right}
+
+/* ハマりどころカード */
+.pitfall{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:12px 0}
+.pitfall-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:8px}
+.pitfall-block{font-size:13px;padding:8px 12px;margin:6px 0;border-left:3px solid}
+.pitfall-symptom{background:rgba(196,67,51,0.07);border-left-color:#c43}
+.pitfall-cause{background:rgba(192,134,63,0.10);border-left-color:var(--accent)}
+.pitfall-fix{background:rgba(45,95,63,0.08);border-left-color:var(--accent-4)}
+.pitfall-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;font-weight:700;margin-right:6px;display:inline-block;min-width:60px}
+
+.tip{margin:18px 0;padding:14px 20px;background:rgba(192,134,63,0.10);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+
+/* 手順ガイド */
+.step-guide{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0}
+.step-guide-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+.step-guide ol{list-style:none;counter-reset:s;margin:0}
+.step-guide li{counter-increment:s;padding:6px 0 6px 32px;position:relative;font-size:13.5px;line-height:1.7}
+.step-guide li::before{content:counter(s);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+/* チェックリスト */
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+
+/* 図解用 */
+.flow-diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;background:#fff;border:1px solid var(--line);padding:14px 18px;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+/* キーボードショートカット */
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 8px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600}
+.kbd{display:inline-block;background:var(--paper-2);border:1px solid var(--line);padding:0 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;border-radius:3px;color:var(--accent-3)}
+.menu{display:inline-block;background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--accent-3);border-radius:2px}
+
+/* NG/OK 対比 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.compare-box{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:13.5px}
+.compare-ng{border-top:3px solid #c43}
+.compare-ok{border-top:3px solid var(--accent-4)}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px}
+.compare-ng .compare-label{color:#c43}
+.compare-ok .compare-label{color:var(--accent-4)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .whw{grid-template-columns:1fr}
+  .compare{grid-template-columns:1fr}
+  .term-grid{grid-template-columns:1fr}
+  .file-list-row{grid-template-columns:1fr;gap:4px}
+  .file-section{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.05 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <h1>新規登録機能を<br>作ろう</h1>
+  <p class="subtitle">CREATE A NEW TASK FORM</p>
+  <p class="lead">Vol.4で「<b>動きは同じ、構造は3層</b>」を体感しました。Vol.5でついに<b>機能を増やす</b>段階に入ります── 一覧表示しかできなかったTODOアプリに<b>新規登録機能</b>を追加します。HTMLフォーム作成、POST送信、DBへのINSERT、リダイレクト── Webアプリ開発の<b>基本フロー</b>をひととおり体験する重要な巻です。Vol.4で作った<b>Service層</b>がここで初めて<b>業務ロジック</b>を持ち始めます。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">💡 Vol.5の前提</div>
+    <p style="font-size:13.5px">Vol.4を完走している前提です。<code style="font-family:'JetBrains Mono'">/tasks</code>でTODO一覧が表示され、内部が<b>3層構造</b>（Controller → Service → Mapper）になっている状態がスタート地点。<b>Service層</b>がこれから真価を発揮します。Vol.4 ADD「なぜService層を作るのか」を未読なら、合わせて読むと本巻の意味が深まります。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.05</div>
+  <ul>
+    <li><a href="#map">01 この巻の地図</a></li>
+    <li><a href="#file-list">02 この巻で作るパッケージ・ファイル一覧</a></li>
+    <li><a href="#term-form">03 用語カード：フォームクラスとEntityの分離</a></li>
+    <li><a href="#term-postmapping">04 用語カード：@PostMapping</a></li>
+    <li><a href="#term-prg">05 用語カード：PRGパターン</a></li>
+    <li><a href="#create-form">06 TaskFormクラスを作る</a></li>
+    <li><a href="#add-insert">07 Mapperに insert を追加する</a></li>
+    <li><a href="#add-register">08 Serviceに register を追加する</a></li>
+    <li><a href="#update-controller">09 Controllerにフォーム表示と登録処理を追加する</a></li>
+    <li><a href="#templates">10 list.html修正 + new.html新規作成</a></li>
+    <li><a href="#runcheck">11 ブラウザで動かして確認</a></li>
+    <li><a href="#pitfalls">12 ハマりどころ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="map">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻の地図</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">本編は<b>実装の見取り図</b>として読んでください。深い「なぜ」（フォームとEntityをなぜ分けるか、PRGパターンの本質）は<b>別冊（Vol.5 ADD）</b>で扱います。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を作るか</div>
+      <div class="whw-desc">
+        <b>新規登録機能</b>の一連の流れ。一覧画面の「<b>新規登録</b>」ボタン → フォーム画面 → 送信ボタン → DBに保存 → <b>一覧画面に自動で戻る</b>。Webアプリの基本動線。
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう作るか</div>
+      <div class="whw-desc">
+        ① <code style="font-family:'JetBrains Mono'">TaskForm</code>クラスを作る（フォーム入力受け皿）<br>
+        ② Mapperに<b><code>@Insert</code></b>メソッドを追加<br>
+        ③ Serviceに<b><code>register()</code></b>を追加（<code>@Transactional</code>本領発揮）<br>
+        ④ Controllerに<b>GETフォーム表示</b>と<b>POST登録処理</b>を追加<br>
+        ⑤ <b>new.html</b>テンプレートを新規作成、<b>list.html</b>に登録ボタン追加
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜそうするか</div>
+      <div class="whw-desc">
+        <b>GETとPOST</b>はHTTPの基本：表示はGET、登録はPOST。<br>
+        <b>TaskFormとTaskを分ける</b>のは、画面用データとDB用データを混ぜないため。<br>
+        <b>PRGパターン</b>でリロード時の二重登録を防ぐ── 業務開発の<b>定番作法</b>です。
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol-5-flow</span>
+      <span class="tag-desc">新規登録の処理の流れ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ユーザーの操作と処理の流れ</div>
+<div class="flow-diagram" style="border:none;padding:0">[ブラウザ] 一覧画面
+   |
+   ↓ 「新規登録」ボタンをクリック
+   ↓ GET /tasks/new
+   |
+[Controller] newForm()
+   ↓ 空の TaskForm を作る
+   ↓ Modelに載せる
+   ↓ return "tasks/new"
+   |
+[Thymeleaf] new.html を描画
+   |
+   ↓ フォーム画面が表示
+   ↓ ユーザーがタイトル入力
+   ↓ 「登録」ボタンをクリック
+   ↓ POST /tasks
+   |
+[Controller] create(taskForm)
+   ↓ taskService.register(form)
+   |
+[Service] register()
+   ↓ TaskForm → Task に変換
+   ↓ taskMapper.insert(task)
+   ↓ (@Transactional でコミット)
+   |
+[Mapper] insert
+   ↓ INSERT INTO tasks ...
+   |
+[MySQL] 1行追加
+   ↑ 完了
+   |
+[Controller]
+   ↓ return "redirect:/tasks"
+   |
+[ブラウザ] 一覧画面（再表示）
+   ↓ 新タスクが追加されて見える</div>
+      </div>
+      <div class="code"><span class="code-head">// この巻でやることのコード骨格</span>
+
+<span class="comment">// ① TaskForm（受け皿）</span>
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+  <span class="kw">private</span> <span class="type">String</span> title;
+}
+
+
+<span class="comment">// ② Mapperに@Insert追加</span>
+<span class="ann">@Insert</span>(<span class="str">"INSERT INTO tasks "</span> +
+        <span class="str">"(title, done, created_at) "</span> +
+        <span class="str">"VALUES (#{title}, false, NOW())"</span>)
+<span class="kw">void</span> <span class="fn">insert</span>(<span class="type">Task</span> task);
+
+
+<span class="comment">// ③ Serviceに register 追加</span>
+<span class="ann">@Transactional</span>  <span class="comment">// 書き込み有効に</span>
+<span class="kw">public void</span> <span class="fn">register</span>(<span class="type">TaskForm</span> form) {
+  <span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+  task.<span class="fn">setTitle</span>(form.<span class="fn">getTitle</span>());
+  taskMapper.<span class="fn">insert</span>(task);
+}
+
+
+<span class="comment">// ④ Controllerに2メソッド追加</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/new"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">newForm</span>(<span class="type">Model</span> m) {
+  m.<span class="fn">addAttribute</span>(<span class="str">"taskForm"</span>,
+    <span class="kw">new</span> <span class="type">TaskForm</span>());
+  <span class="kw">return</span> <span class="str">"tasks/new"</span>;
+}
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(<span class="type">TaskForm</span> form) {
+  taskService.<span class="fn">register</span>(form);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+
+
+<span class="comment">// ⑤ new.html（Thymeleafフォーム）</span>
+<span class="comment">// + list.html に「新規登録」ボタン</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「Vol.4でService層を作っておいた意味」</div>
+    <p>Vol.5でついに<b>業務ロジック</b>が登場します── <b>「TaskFormからTaskへの変換」</b>「<b>insert呼び出し</b>」「<b>トランザクション</b>」── これら全部がService層に集まります。<b>Controllerは「フォームを受けてServiceに渡し、結果を表示」だけ</b>に集中。Vol.4で作っておいた「居場所」が機能し始めます。</p>
+  </div>
+</section>
+
+<section id="file-list">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>この巻で作るパッケージ・ファイル一覧</h2>
+    <span class="en">FILES TO CREATE / MODIFY</span>
+  </div>
+  <p class="pattern-desc">Vol.4から標準化したセクション。本巻は<b>新規3つ、修正4つ</b>と作業範囲が広めです。順番に進めれば迷子になりません。</p>
+
+  <div class="file-list">
+    <div class="file-list-header">📋 Vol.5 で扱うパッケージ・ファイル</div>
+
+    <div class="file-list-row is-new">
+      <span class="file-status new">🆕 NEW</span>
+      <span class="file-type">パッケージ</span>
+      <span class="file-path">com.example.todo.<b>form</b></span>
+      <span class="file-section">→ Section 06</span>
+    </div>
+
+    <div class="file-list-row is-new">
+      <span class="file-status new">🆕 NEW</span>
+      <span class="file-type">クラス</span>
+      <span class="file-path">com.example.todo.form.<b>TaskForm.java</b></span>
+      <span class="file-section">→ Section 06</span>
+    </div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">クラス</span>
+      <span class="file-path">com.example.todo.mapper.<b>TaskMapper.java</b></span>
+      <span class="file-section">→ Section 07</span>
+    </div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">クラス</span>
+      <span class="file-path">com.example.todo.service.<b>TaskService.java</b></span>
+      <span class="file-section">→ Section 08</span>
+    </div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">クラス</span>
+      <span class="file-path">com.example.todo.controller.<b>TaskController.java</b></span>
+      <span class="file-section">→ Section 09</span>
+    </div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">テンプレート</span>
+      <span class="file-path">templates/tasks/<b>list.html</b></span>
+      <span class="file-section">→ Section 10</span>
+    </div>
+
+    <div class="file-list-row is-new">
+      <span class="file-status new">🆕 NEW</span>
+      <span class="file-type">テンプレート</span>
+      <span class="file-path">templates/tasks/<b>new.html</b></span>
+      <span class="file-section">→ Section 10</span>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 作業順</div>
+    <p>順序は<b>「データの流れに沿って下から上へ」</b>。①Form（受け皿） → ②Mapper（保存先） → ③Service（業務ロジック） → ④Controller（受付） → ⑤テンプレート（画面）。<b>下位の層から作ると、上位の層が必要なものを呼び出せる状態が整っている</b>ので、コンパイルエラーが少なく済みます。</p>
+  </div>
+</section>
+
+<section id="term-form">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>用語カード：フォームクラスとEntityの分離</h2>
+    <span class="en">TERM — FORM vs ENTITY</span>
+  </div>
+  <p class="pattern-desc">Vol.5で初登場する<b>フォームクラス（Form）</b>。すでに<b>Task</b>（Entity）があるのに、なぜわざわざ別のクラスを作るのか── 「<b>画面用</b>」と「<b>DB用</b>」を分ける思想を押さえます。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #01</span>
+    <div class="term-card-title">フォームクラス（Form Class）</div>
+    <div class="term-card-sub">画面入力を受け取る専用クラス</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd><b>HTMLフォームから送信されるデータ</b>を受け取るための専用クラス。<code>com.example.todo.form</code>パッケージに置く。</dd>
+      <dt>構造</dt>
+      <dd>Entityと似ているが、<b>画面入力に対応するフィールドだけ</b>を持つ。普通のJavaクラスで、<code>@Data</code>を付けてgetter/setterを自動生成。</dd>
+      <dt>対比</dt>
+      <dd><b>Task（Entity）</b> ── テーブル<code>tasks</code>と1対1対応。id、title、done、createdAt等を持つ。<br>
+        <b>TaskForm（Form）</b> ── 入力フォームと1対1対応。Vol.5では<b>title</b>のみ。<br>
+        <b>共通点</b>：両方ともデータの入れ物（POJO）<br>
+        <b>違い</b>：<b>何の世界を表現するか</b>が違う
+      </dd>
+      <dt>嬉しさ</dt>
+      <dd>① 画面入力項目とDB項目が<b>独立して進化</b>できる<br>
+        ② DBにない項目（パスワード確認用など）も<b>気軽にFormに追加</b>できる<br>
+        ③ <b>バリデーション</b>（Vol.8）はFormに付けるのが自然<br>
+        ④ <b>セキュリティ</b>面で安全（DBの全項目を入力受け付けする事故を防げる）
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-separate</span>
+      <span class="tag-desc">なぜ分けるか具体例</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 同じ「Task」概念でも世界が違う</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>Vol.5時点</b>では、TaskFormはとてもシンプル：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">@Data
+public class TaskForm {
+  private String title;  // 入力項目はこれだけ
+}</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>「これってTaskと同じじゃないの？」</b>── と思うかもしれません。今は<b>確かにそう</b>。でも将来：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b>Vol.8</b>でバリデーションが入る → Formに<code>@NotBlank</code>を付ける（Entityには付けたくない）</li>
+          <li><b>Vol.6以降</b>で編集機能を作る → 編集用Formは登録Formと違うかもしれない（id必要等）</li>
+          <li><b>実務でよくある</b>：パスワード確認欄、利用規約同意チェックなど<b>DBには保存しない項目</b>がフォームに必要になる</li>
+        </ul>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:12px">この変化が起きた時、<b>EntityとFormが分かれていれば片方ずつ進化</b>できる。一緒だと両方に影響が出てぐちゃぐちゃに。<b>「未来の柔軟性のため、最初から分ける」</b>のが業務開発の鉄則です。</p>
+      </div>
+      <div class="code"><span class="code-head">// 画面とDBの「世界」の違い</span>
+
+<span class="comment">// === Task (Entity) ===</span>
+<span class="comment">// DBテーブル tasks と1対1対応</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Task</span> {
+  <span class="kw">private</span> <span class="type">Long</span> id;        <span class="comment">// DBで採番</span>
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">Boolean</span> done;   <span class="comment">// DB状態</span>
+  <span class="kw">private</span> <span class="type">LocalDateTime</span>
+    createdAt;                <span class="comment">// DB自動</span>
+}
+
+
+<span class="comment">// === TaskForm (Form) ===</span>
+<span class="comment">// 新規登録フォームと1対1対応</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="comment">// 入力したいのはタイトルだけ</span>
+  <span class="comment">// id は不要（DBが自動採番）</span>
+  <span class="comment">// done は不要（初期状態は false）</span>
+  <span class="comment">// createdAt は不要（DBが NOW()）</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// 変換は Service の仕事</span>
+
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">register</span>(<span class="type">TaskForm</span> form) {
+  <span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+  task.<span class="fn">setTitle</span>(form.<span class="fn">getTitle</span>());
+  <span class="comment">// done と createdAt は SQL 側で設定</span>
+  taskMapper.<span class="fn">insert</span>(task);
+}
+
+<span class="comment">// Form → Entity の変換</span>
+<span class="comment">// これが Service の「業務ロジック」</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「DTO」という総称</div>
+    <p>Form と Entity に加えて、業界では <b>DTO（Data Transfer Object）</b> という総称も使われます。「<b>データを運ぶための入れ物クラス</b>」の総称で、Form は「画面からServiceへの DTO」とも言えます。これら<b>「データの入れ物クラス」の使い分け</b>は別冊で深掘りします。</p>
+  </div>
+</section>
+
+<section id="term-postmapping">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>用語カード：@PostMapping</h2>
+    <span class="en">TERM — @POSTMAPPING</span>
+  </div>
+  <p class="pattern-desc">Vol.3で覚えた<code style="font-family:'JetBrains Mono'">@GetMapping</code>の<b>POST版</b>。表示はGET、登録はPOST── これがHTTPの基本作法です。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #02</span>
+    <div class="term-card-title">@PostMapping</div>
+    <div class="term-card-sub">POSTリクエストの受付窓口</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>HTTPの<b>POSTメソッド</b>でやってきたリクエストを処理するメソッドに付けるアノテーション。<code>@GetMapping</code>と全く同じ作法でURLを指定。</dd>
+      <dt>仕組み</dt>
+      <dd>Springが起動時に <code>(HTTPメソッド, URL) → メソッド</code> の対応表を作る。<code>@GetMapping("/tasks")</code>と<code>@PostMapping("/tasks")</code>は<b>同じURLでも別の処理</b>として登録される。
+      </dd>
+      <dt>使い分け</dt>
+      <dd><b>GET</b> ── データを<b>表示する</b>（一覧、フォーム表示）。何度叩いても影響なし<br>
+        <b>POST</b> ── データを<b>変更する</b>（登録、更新、削除）。叩くたびに影響あり<br>
+        <b>業界の原則</b>： GETでDBを変更してはいけない／POSTで表示専用はおかしい
+      </dd>
+      <dt>嬉しさ</dt>
+      <dd>① HTTPメソッドで<b>処理の意図が明確</b>になる<br>
+        ② ブラウザの<b>戻るボタン</b>でPOSTが二重実行されない（警告が出る）<br>
+        ③ <b>同じURL</b>でもメソッドで処理を分けられる
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">get-vs-post</span>
+      <span class="tag-desc">GETとPOSTの使い分け</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Vol.5で使う3つのエンドポイント</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>Vol.5完成時点</b>でアプリは<b>3つのエンドポイント</b>を持ちます：</p>
+
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px">
+          <thead>
+            <tr style="background:var(--paper-2)">
+              <th style="border:1px solid var(--line);padding:8px;text-align:left">メソッド</th>
+              <th style="border:1px solid var(--line);padding:8px;text-align:left">URL</th>
+              <th style="border:1px solid var(--line);padding:8px;text-align:left">処理内容</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px;color:var(--accent-4);font-weight:700">GET</td>
+              <td style="border:1px solid var(--line);padding:6px"><code>/tasks</code></td>
+              <td style="border:1px solid var(--line);padding:6px">一覧表示（Vol.3で作成）</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px;color:var(--accent-4);font-weight:700">GET</td>
+              <td style="border:1px solid var(--line);padding:6px"><code>/tasks/new</code></td>
+              <td style="border:1px solid var(--line);padding:6px">新規登録フォーム表示</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px;color:#c43;font-weight:700">POST</td>
+              <td style="border:1px solid var(--line);padding:6px"><code>/tasks</code></td>
+              <td style="border:1px solid var(--line);padding:6px">新規登録実行</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px">注目すべきは <code>GET /tasks</code> と <code>POST /tasks</code> が<b>同じURLだが別の処理</b>であること。Springは<b>HTTPメソッドで処理を分ける</b>ので、これが成立します。</p>
+      </div>
+      <div class="code"><span class="code-head">// 3つのエンドポイントの実装</span>
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">TaskController</span> {
+
+  ...
+
+  <span class="comment">// 一覧（既存）</span>
+  <span class="ann">@GetMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> m) {
+    m.<span class="fn">addAttribute</span>(<span class="str">"tasks"</span>,
+      taskService.<span class="fn">findAll</span>());
+    <span class="kw">return</span> <span class="str">"tasks/list"</span>;
+  }
+
+
+  <span class="comment">// 登録フォーム表示（新規）</span>
+  <span class="ann">@GetMapping</span>(<span class="str">"/tasks/new"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">newForm</span>(<span class="type">Model</span> m) {
+    m.<span class="fn">addAttribute</span>(<span class="str">"taskForm"</span>,
+      <span class="kw">new</span> <span class="type">TaskForm</span>());
+    <span class="kw">return</span> <span class="str">"tasks/new"</span>;
+  }
+
+
+  <span class="comment">// 登録実行（新規）</span>
+  <span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+      <span class="type">TaskForm</span> taskForm) {
+    taskService.<span class="fn">register</span>(taskForm);
+    <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+  }
+}
+
+
+<span class="comment">// 同じURL「/tasks」でも</span>
+<span class="comment">// GET: list() を呼ぶ</span>
+<span class="comment">// POST: create() を呼ぶ</span>
+<span class="comment">// Springが HTTPメソッドで判断</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「<code>/tasks/new</code>」のような<b>新規作成専用URL</b></div>
+    <p>業界の慣例では <b>「<code>/{資源}/new</code>」</b> が「新規作成フォーム」を意味します。<code>/tasks/new</code> = 「新しいタスクを作るフォーム」。これは<b>RESTful URL設計</b>の標準パターンで、慣れると<b>URLを見ただけで意図が分かる</b>ようになります。Vol.6以降、<code>/tasks/{id}/edit</code>（編集フォーム）等の慣例URLも登場します。</p>
+  </div>
+</section>
+
+<section id="term-prg">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>用語カード：PRGパターン</h2>
+    <span class="en">TERM — POST-REDIRECT-GET</span>
+  </div>
+  <p class="pattern-desc">POST処理の後、<b>必ず別のGETにリダイレクト</b>する設計パターン。<b>「リロードで二重登録」</b>を防ぐWeb開発の<b>定番作法</b>です。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #03</span>
+    <div class="term-card-title">PRGパターン（Post-Redirect-Get）</div>
+    <div class="term-card-sub">POST後は必ずリダイレクトする</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>「<b>POST処理を受けたサーバは、レスポンスとしてHTMLを返さず、別のGETエンドポイントへのリダイレクトを返す</b>」設計パターン。「<b>Post → Redirect → Get</b>」の3ステップから命名。</dd>
+      <dt>解決する問題</dt>
+      <dd><b>POST直後にブラウザでリロードすると、POSTが再送信される</b>問題。リダイレクト先のGETに飛ばすことで、リロード時の挙動が<b>「一覧画面を再取得する」</b>になり、<b>二重登録が起きない</b>。</dd>
+      <dt>Vol.5での実装</dt>
+      <dd><code>POST /tasks</code> 処理の最後に <code>return "redirect:/tasks";</code> と書く。Springが<b>HTTP 302リダイレクト</b>レスポンスを返し、ブラウザが自動的に<code>GET /tasks</code>を再リクエストする。</dd>
+      <dt>嬉しさ</dt>
+      <dd>① <b>二重登録の事故を防ぐ</b>（クレジットカード決済等で重大）<br>
+        ② ブラウザの戻るボタンで<b>「フォーム再送信しますか？」警告</b>が出なくなる<br>
+        ③ <b>URLの整合性</b>が保たれる（登録後のURLが一覧画面のURL）
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-prg</span>
+      <span class="tag-desc">PRGなしの悪夢</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// PRG無しの場合のシナリオ</div>
+
+<div class="flow-diagram" style="border:none;padding:0">【PRG 無し （ダメな実装）】
+
+1. ユーザーがフォームを送信
+   POST /tasks (タイトル: "牛乳")
+   ↓
+2. サーバが登録 → 一覧HTMLを直接返す
+   レスポンス: 一覧画面のHTML
+   ↓
+3. ブラウザのアドレス欄: /tasks
+   (POSTのURLのまま)
+   ↓
+4. ★ユーザーがリロード(F5)
+   ↓
+5. ブラウザ:「POSTを再送信しますか?」
+   ↓ OK
+6. POST /tasks (タイトル: "牛乳") ← 再送信
+   ↓
+7. ★同じタスクが二重登録される★
+
+
+【PRG あり （正しい実装）】
+
+1. ユーザーがフォームを送信
+   POST /tasks (タイトル: "牛乳")
+   ↓
+2. サーバが登録 → リダイレクトを返す
+   レスポンス: HTTP 302 → /tasks
+   ↓
+3. ブラウザが自動で GET /tasks
+   ↓
+4. サーバが一覧HTMLを返す
+   ↓
+5. ブラウザのアドレス欄: /tasks
+   (GETのURLになっている)
+   ↓
+6. ユーザーがリロード(F5)
+   ↓
+7. GET /tasks 再実行 (何も問題なし)
+   ↓
+8. ★同じ一覧が再表示されるだけ★</div>
+      </div>
+      <div class="code"><span class="code-head">// Springでの実装</span>
+
+<span class="comment">// === PRGなし（ダメ） ===</span>
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(...) {
+  taskService.<span class="fn">register</span>(form);
+  <span class="kw">return</span> <span class="str">"tasks/list"</span>;
+  <span class="comment">// ↑ テンプレート名を直接返す</span>
+  <span class="comment">// → 一覧HTMLが直接送られる</span>
+  <span class="comment">// → URLは POST /tasks のまま</span>
+  <span class="comment">// → リロードで二重登録</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// === PRGあり（正解） ===</span>
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(...) {
+  taskService.<span class="fn">register</span>(form);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+  <span class="comment">// ↑ "redirect:" プレフィックスが鍵</span>
+  <span class="comment">// → HTTP 302 を返す</span>
+  <span class="comment">// → ブラウザが /tasks を再リクエスト</span>
+  <span class="comment">// → URLが GET /tasks に変わる</span>
+  <span class="comment">// → リロードしても再送信されない</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// redirect: の書き方バリエーション</span>
+
+<span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;     <span class="comment">// 一覧へ</span>
+<span class="kw">return</span> <span class="str">"redirect:/tasks/new"</span>; <span class="comment">// 新規へ</span>
+<span class="kw">return</span> <span class="str">"redirect:/"</span>;          <span class="comment">// ルートへ</span>
+
+<span class="comment">// "redirect:" + 任意のURLパス</span>
+<span class="comment">// テンプレート名ではなくリダイレクト先</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「書き込み処理の後は必ずリダイレクト」</div>
+    <p>業務開発の<b>絶対的ルール</b>：<b>「INSERT/UPDATE/DELETEの後は必ずリダイレクトで返す」</b>。これを守るだけで、ユーザーが知らずに二重登録する事故を完全に防げます。<code>return "redirect:/...";</code> の1行を忘れないだけで、品質が劇的に上がります。深い原理は別冊で。</p>
+  </div>
+</section>
+
+<section id="create-form">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>TaskFormクラスを作る</h2>
+    <span class="en">CREATE TASKFORM</span>
+  </div>
+  <p class="pattern-desc">最初の作業は<b>受け皿</b>の用意。フォームから送信されたデータを受け取るクラスを<b>新パッケージ</b>に作ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">step-by-step</span>
+      <span class="tag-desc">具体手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">A. formパッケージを作る</div>
+          <ol>
+            <li><span class="menu">パッケージ・エクスプローラー</span>で <code>src/main/java</code> &gt; <code>com.example.todo</code> を右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">パッケージ</span></li>
+            <li>名前に <code>com.example.todo.form</code> と入力</li>
+            <li><span class="menu">完了(F)</span> をクリック</li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">B. TaskFormクラスを作る</div>
+          <ol>
+            <li>作った <code>form</code> パッケージを右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">クラス</span></li>
+            <li>名前に <code>TaskForm</code> と入力</li>
+            <li><span class="menu">完了(F)</span> をクリック</li>
+            <li>右のコードをコピペ</li>
+            <li><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> でimport補完（<code>lombok.Data</code>を選ぶ）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:10px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>：パッケージ名は<b><code>com.example.todo.form</code></b>（todoの下のform）。<code>com.example.todoform</code>などにならないよう注意。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// src/main/java/com/example/todo/form/TaskForm.java</span>
+
+<span class="kw">package</span> com.example.todo.form;
+
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+
+  <span class="kw">private</span> <span class="type">String</span> title;
+
+}
+
+
+<span class="code-head" style="margin-top:18px">// このクラスの設計意図</span>
+
+<span class="comment">// ① フィールドは title だけ</span>
+<span class="comment">//   フォームの入力項目に対応</span>
+<span class="comment">//   id、done、createdAt は不要</span>
+
+<span class="comment">// ② @Data でgetter/setter自動生成</span>
+<span class="comment">//   ・getTitle()</span>
+<span class="comment">//   ・setTitle(String)</span>
+<span class="comment">//   Thymeleafがこれを使って</span>
+<span class="comment">//   フィールド値を読み書きする</span>
+
+<span class="comment">// ③ アノテーション無し（@Component等）</span>
+<span class="comment">//   DI管理は不要</span>
+<span class="comment">//   ただのデータ入れ物クラス（POJO）</span>
+
+
+<span class="code-head" style="margin-top:18px">// Vol.8 で進化する姿（先取り）</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+
+  <span class="ann">@NotBlank</span>          <span class="comment">// 空欄禁止</span>
+  <span class="ann">@Size</span>(max = <span class="num">100</span>)  <span class="comment">// 100文字以内</span>
+  <span class="kw">private</span> <span class="type">String</span> title;
+}
+
+<span class="comment">// バリデーションはFormに付ける</span>
+<span class="comment">// → Vol.8で詳しく扱う</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「<code>@Data</code>無しだとどうなるか」</div>
+    <p>Thymeleaf は <code>taskForm.title</code> にアクセスする時、内部的に <code>getTitle()</code> を呼びます。<code>@Data</code> が無いと getter/setter が無く、<b>「IllegalStateException: Neither BindingResult ...」</b>等のエラーになります。Lombokの<code>@Data</code>を必ず付けましょう。</p>
+  </div>
+</section>
+
+<section id="add-insert">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>Mapperに insert を追加する</h2>
+    <span class="en">ADD @INSERT TO MAPPER</span>
+  </div>
+  <p class="pattern-desc">Vol.3で作った <code style="font-family:'JetBrains Mono'">TaskMapper</code> に<b>登録用メソッド</b>を1つ追加します。<code>@Select</code>と並んで<code>@Insert</code>もMyBatisの基本アノテーションです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">add-insert-method</span>
+      <span class="tag-desc">Mapperを修正する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">TaskMapper.java を修正</div>
+          <ol>
+            <li><code>com.example.todo.mapper.TaskMapper.java</code> を開く</li>
+            <li>既存の <code>@Select</code> メソッド <code>findAll()</code> の下に新しい <code>@Insert</code> メソッドを追加</li>
+            <li><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> でimport補完（<code>@Insert</code> のimportが追加される）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>SQLの解読</b>：</p>
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">INSERT INTO tasks (title, done, created_at)
+VALUES (#{title}, false, NOW())</pre>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:8px">
+          <li><b><code>(title, done, created_at)</code></b> ── 値を入れる<b>カラム名</b>のリスト</li>
+          <li><b><code>VALUES (...)</code></b> ── 対応する<b>値</b>のリスト</li>
+          <li><b><code>#{title}</code></b> ── 引数オブジェクトの<code>title</code>プロパティを<b>動的に埋め込む</b>（プレースホルダ）</li>
+          <li><b><code>false</code></b> ── 完了フラグ。新規登録時は未完了固定</li>
+          <li><b><code>NOW()</code></b> ── MySQL関数。<b>現在日時</b>を返す</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 修正後の TaskMapper.java（全体）</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.util.List;
+
+<span class="kw">import</span> org.apache.ibatis.annotations.Insert;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> org.apache.ibatis.annotations.Select;
+
+<span class="kw">import</span> com.example.todo.entity.Task;
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">TaskMapper</span> {
+
+  <span class="comment">// 一覧取得（Vol.3で作成）</span>
+  <span class="ann">@Select</span>(<span class="str">"SELECT id, title, done, "</span> +
+          <span class="str">"created_at FROM tasks "</span> +
+          <span class="str">"ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>();
+
+
+  <span class="comment">// 新規登録（Vol.5で追加）</span>
+  <span class="ann">@Insert</span>(<span class="str">"INSERT INTO tasks "</span> +
+          <span class="str">"(title, done, created_at) "</span> +
+          <span class="str">"VALUES (#{title}, false, NOW())"</span>)
+  <span class="kw">void</span> <span class="fn">insert</span>(<span class="type">Task</span> task);
+}
+
+
+<span class="code-head" style="margin-top:18px">// SQLの動き</span>
+
+<span class="comment">// Service側で:</span>
+<span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+task.<span class="fn">setTitle</span>(<span class="str">"牛乳"</span>);
+taskMapper.<span class="fn">insert</span>(task);
+
+<span class="comment">// MyBatisが実際に流すSQL:</span>
+INSERT INTO tasks
+  (title, done, created_at)
+VALUES (<span class="str">'牛乳'</span>, false, NOW());
+
+<span class="comment">// #{title} は task.getTitle() の値</span>
+<span class="comment">// SQLインジェクション対策で</span>
+<span class="comment">// PreparedStatement になっている</span>
+<span class="comment">// （安全！）</span>
+
+
+<span class="code-head" style="margin-top:18px">// 返り値が void である理由</span>
+
+<span class="kw">void</span> <span class="fn">insert</span>(<span class="type">Task</span> task);
+<span class="comment">// ↑ 返り値なし</span>
+
+<span class="comment">// INSERT は「成功 or 例外」の二択</span>
+<span class="comment">// 成功時は特に返すものがない</span>
+<span class="comment">// 失敗時は例外でServiceに伝わる</span>
+
+<span class="comment">// （応用：1件INSERTした影響行数を</span>
+<span class="comment">// int で受け取る派もあるが、</span>
+<span class="comment">// 業務的にあまり使われない）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「<code>#{}</code>」と「<code>${}</code>」の違い</div>
+    <p>MyBatisには <code>#{...}</code> と <code>${...}</code> の2種類のプレースホルダがあります。<b><code>#{...}</code>はPreparedStatement</b>（SQLインジェクション対策あり、ユーザー入力に使ってOK）。<b><code>${...}</code>は文字列置換</b>（対策なし、ユーザー入力には使うな）。<b>業務開発では<code>#{...}</code>のみ使う</b>のが鉄則です。</p>
+  </div>
+</section>
+
+<section id="add-register">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>Serviceに register を追加する</h2>
+    <span class="en">ADD REGISTER TO SERVICE</span>
+  </div>
+  <p class="pattern-desc">Vol.4の<b>Service層がついに業務ロジックを持つ瞬間</b>です。<code style="font-family:'JetBrains Mono'">@Transactional(readOnly = true)</code> をクラスに付けた状態で、<b>書き込みメソッドだけ</b>を <code>@Transactional</code> で<b>上書き</b>します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">add-register-method</span>
+      <span class="tag-desc">Serviceを修正する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">TaskService.java を修正</div>
+          <ol>
+            <li><code>com.example.todo.service.TaskService.java</code> を開く</li>
+            <li>既存の <code>findAll()</code> の下に新しい <code>register()</code> メソッドを追加</li>
+            <li>メソッドに <code>@Transactional</code> を付ける（クラスの<code>readOnly=true</code>を上書き）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> でimport補完（<code>TaskForm</code>のimportが追加される）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>register()メソッドが行うこと</b>：</p>
+        <ol style="padding-left:24px;font-size:13px;line-height:1.85;margin-top:6px">
+          <li><b>TaskFormを受け取る</b>（Controllerから渡される）</li>
+          <li>新しい<b>Taskインスタンス</b>を作る</li>
+          <li>FormのtitleをTaskにコピー</li>
+          <li><b>Mapperに保存依頼</b></li>
+        </ol>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b><code>@Transactional</code>の効果</b>：このメソッドの処理全体が1つのトランザクションになり、途中で例外が出たら<b>自動でロールバック</b>される。</p>
+      </div>
+      <div class="code"><span class="code-head">// 修正後の TaskService.java（全体）</span>
+
+<span class="kw">package</span> com.example.todo.service;
+
+<span class="kw">import</span> java.util.List;
+
+<span class="kw">import</span> org.springframework.stereotype.Service;
+<span class="kw">import</span> org.springframework.transaction
+       .annotation.Transactional;
+
+<span class="kw">import</span> com.example.todo.entity.Task;
+<span class="kw">import</span> com.example.todo.form.TaskForm;     <span class="comment">// ★追加</span>
+<span class="kw">import</span> com.example.todo.mapper.TaskMapper;
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>(readOnly = <span class="kw">true</span>)
+<span class="kw">public class</span> <span class="type">TaskService</span> {
+
+  <span class="kw">private final</span> <span class="type">TaskMapper</span> taskMapper;
+
+  <span class="kw">public</span> <span class="fn">TaskService</span>(<span class="type">TaskMapper</span> taskMapper) {
+    <span class="kw">this</span>.taskMapper = taskMapper;
+  }
+
+  <span class="comment">// 一覧取得（Vol.4で作成）</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>() {
+    <span class="kw">return</span> taskMapper.<span class="fn">findAll</span>();
+  }
+
+
+  <span class="comment">// 新規登録（Vol.5で追加）</span>
+  <span class="ann">@Transactional</span>   <span class="comment">// ★書き込み有効に上書き</span>
+  <span class="kw">public void</span> <span class="fn">register</span>(<span class="type">TaskForm</span> form) {
+    <span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+    task.<span class="fn">setTitle</span>(form.<span class="fn">getTitle</span>());
+    taskMapper.<span class="fn">insert</span>(task);
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// クラス指定 vs メソッド指定の上書き</span>
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>(readOnly = <span class="kw">true</span>)
+<span class="kw">public class</span> <span class="type">TaskService</span> {
+
+  <span class="comment">// クラスの readOnly=true が効く</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>() {...}
+
+  <span class="comment">// メソッド指定で上書き → 書き込み有効</span>
+  <span class="ann">@Transactional</span>
+  <span class="kw">public void</span> <span class="fn">register</span>(...) {...}
+}
+
+<span class="comment">// ルール: メソッド指定がクラス指定より優先</span>
+
+
+<span class="code-head" style="margin-top:18px">// register() の業務ロジック</span>
+
+<span class="kw">public void</span> <span class="fn">register</span>(<span class="type">TaskForm</span> form) {
+
+  <span class="comment">// ① 新しいEntityインスタンス作成</span>
+  <span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+
+  <span class="comment">// ② FormからEntityへ値コピー</span>
+  task.<span class="fn">setTitle</span>(form.<span class="fn">getTitle</span>());
+  <span class="comment">// id、done、createdAtはSQL側で設定</span>
+
+  <span class="comment">// ③ Mapperに保存依頼</span>
+  taskMapper.<span class="fn">insert</span>(task);
+
+  <span class="comment">// 例外が出たら@Transactionalで自動ロールバック</span>
+  <span class="comment">// 正常終了なら自動コミット</span>
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「Service層の役目」が見えてくる</div>
+    <p>このVol.5の register() メソッドが<b>Service層の役目を体現</b>しています：<b>「Form（画面の世界） → Task(業務の世界） → Mapper呼び出し（DBの世界）」</b>の<b>橋渡し</b>。Vol.4で作っておいた「業務ロジックの居場所」に、業務ロジックが入った瞬間です。Vol.8でバリデーション、Vol.9で例外処理が入ると、ここはさらに育っていきます。</p>
+  </div>
+</section>
+
+<section id="update-controller">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>Controllerにフォーム表示と登録処理を追加する</h2>
+    <span class="en">UPDATE TASKCONTROLLER</span>
+  </div>
+  <p class="pattern-desc"><code style="font-family:'JetBrains Mono'">TaskController</code>に<b>2つのメソッドを追加</b>します。<b>GET</b>でフォーム画面を表示する<code>newForm()</code>、<b>POST</b>で登録処理する<code>create()</code>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">update-controller</span>
+      <span class="tag-desc">Controllerを修正する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">TaskController.java を修正</div>
+          <ol>
+            <li><code>com.example.todo.controller.TaskController.java</code> を開く</li>
+            <li>既存の <code>list()</code> メソッドの下に<code>newForm()</code>を追加</li>
+            <li>さらにその下に<code>create()</code>を追加</li>
+            <li><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> でimport補完（<code>@PostMapping</code>、<code>TaskForm</code>のimportが追加される）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>2つのメソッドの役割</b>：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b><code>newForm()</code></b> ── <code>GET /tasks/new</code> を受ける。空の<code>TaskForm</code>をModelに載せて<code>new.html</code>を表示</li>
+          <li><b><code>create()</code></b> ── <code>POST /tasks</code> を受ける。Serviceの<code>register()</code>を呼んで<b>一覧へリダイレクト</b></li>
+        </ul>
+
+        <div style="background:rgba(192,134,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent)">
+          <b>POINT</b>：Controllerは「<b>HTTPの作法だけ</b>」。業務ロジック（Form→Entity変換やDB登録）は<b>全部Serviceに丸投げ</b>。これがVol.4で確立した「<b>Thin Controller</b>」の作り方。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 修正後の TaskController.java（全体）</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> java.util.List;
+
+<span class="kw">import</span> org.springframework.stereotype.Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind.annotation
+       .GetMapping;
+<span class="kw">import</span> org.springframework.web.bind.annotation
+       .PostMapping;                <span class="comment">// ★追加</span>
+
+<span class="kw">import</span> com.example.todo.entity.Task;
+<span class="kw">import</span> com.example.todo.form.TaskForm;  <span class="comment">// ★追加</span>
+<span class="kw">import</span> com.example.todo.service.TaskService;
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">TaskController</span> {
+
+  <span class="kw">private final</span> <span class="type">TaskService</span> taskService;
+
+  <span class="kw">public</span> <span class="fn">TaskController</span>(
+      <span class="type">TaskService</span> taskService) {
+    <span class="kw">this</span>.taskService = taskService;
+  }
+
+  <span class="comment">// 一覧（Vol.4までで作成）</span>
+  <span class="ann">@GetMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> model) {
+    <span class="type">List</span>&lt;<span class="type">Task</span>&gt; tasks =
+      taskService.<span class="fn">findAll</span>();
+    model.<span class="fn">addAttribute</span>(<span class="str">"tasks"</span>, tasks);
+    <span class="kw">return</span> <span class="str">"tasks/list"</span>;
+  }
+
+
+  <span class="comment">// 新規登録フォーム表示（Vol.5追加）</span>
+  <span class="ann">@GetMapping</span>(<span class="str">"/tasks/new"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">newForm</span>(<span class="type">Model</span> model) {
+    model.<span class="fn">addAttribute</span>(<span class="str">"taskForm"</span>,
+      <span class="kw">new</span> <span class="type">TaskForm</span>());
+    <span class="kw">return</span> <span class="str">"tasks/new"</span>;
+  }
+
+
+  <span class="comment">// 新規登録実行（Vol.5追加）</span>
+  <span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+      <span class="type">TaskForm</span> taskForm) {
+    taskService.<span class="fn">register</span>(taskForm);
+    <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// newForm() の動きを追う</span>
+
+<span class="comment">// ① 空のTaskFormを作る</span>
+<span class="kw">new</span> <span class="type">TaskForm</span>()
+<span class="comment">// → title が null の空っぽインスタンス</span>
+
+<span class="comment">// ② "taskForm" という名前でModelに載せる</span>
+model.<span class="fn">addAttribute</span>(<span class="str">"taskForm"</span>, ...);
+<span class="comment">// この名前が Thymeleafからアクセスする時の鍵</span>
+<span class="comment">// new.html で ${taskForm} と参照する</span>
+
+<span class="comment">// ③ templates/tasks/new.html を表示</span>
+<span class="kw">return</span> <span class="str">"tasks/new"</span>;
+
+
+<span class="code-head" style="margin-top:18px">// create() の動きを追う</span>
+
+<span class="comment">// ① 引数の taskForm</span>
+<span class="comment">// → Springが自動でフォーム値を詰めて</span>
+<span class="comment">//   渡してくれる（@ModelAttribute）</span>
+
+<span class="comment">// ② serviceに丸投げ</span>
+taskService.<span class="fn">register</span>(taskForm);
+
+<span class="comment">// ③ リダイレクト（PRGパターン）</span>
+<span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「<code>taskForm</code>」の名前が一致していること</div>
+    <p>Modelに載せる時の<b>属性名</b>（<code>"taskForm"</code>）、Controllerの<b>引数名</b>（<code>taskForm</code>）、new.htmlの<code>th:object="${taskForm}"</code>── これら<b>全部が「taskForm」で一致</b>する必要があります。Springはこの名前で連携を取るので、<b>1箇所でも違うとフォーム値が渡らない</b>。注意ポイント。</p>
+  </div>
+</section>
+
+<section id="templates">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>list.html修正 + new.html新規作成</h2>
+    <span class="en">UPDATE TEMPLATES</span>
+  </div>
+  <p class="pattern-desc">最後に画面側の作業。<b>一覧画面に「新規登録」ボタン</b>を追加し、<b>新規登録フォーム画面</b>を新規作成します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">list-html-update</span>
+      <span class="tag-desc">A. list.html に「新規登録」ボタンを追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// list.html を修正</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">list.html を修正</div>
+          <ol>
+            <li><code>src/main/resources/templates/tasks/list.html</code> を開く</li>
+            <li><code>&lt;h1&gt;TODO 一覧&lt;/h1&gt;</code> の<b>直後</b>に「新規登録」ボタンを追加</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>追加するHTMLの解説</b>：</p>
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><code>th:href="@{/tasks/new}"</code> ── Thymeleafで<b>絶対パスのリンク</b>を生成（コンテキストパスがあっても安心）</li>
+          <li><code>&lt;a&gt;</code>要素なので<b>クリックでGETリクエスト</b>が飛ぶ</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// templates/tasks/list.html（修正後の抜粋）</span>
+
+<span class="tag">&lt;!DOCTYPE html&gt;</span>
+<span class="tag">&lt;html</span> <span class="attr">xmlns:th</span>=<span class="str">"http://www.thymeleaf.org"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;head&gt;</span>
+  <span class="tag">&lt;meta</span> <span class="attr">charset</span>=<span class="str">"UTF-8"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;title&gt;</span>TODO 一覧<span class="tag">&lt;/title&gt;</span>
+<span class="tag">&lt;/head&gt;</span>
+<span class="tag">&lt;body&gt;</span>
+  <span class="tag">&lt;h1&gt;</span>TODO 一覧<span class="tag">&lt;/h1&gt;</span>
+
+  <span class="comment">&lt;!-- ★ここから追加 --&gt;</span>
+  <span class="tag">&lt;p&gt;</span>
+    <span class="tag">&lt;a</span> <span class="attr">th:href</span>=<span class="str">"@{/tasks/new}"</span><span class="tag">&gt;</span>
+      新規登録
+    <span class="tag">&lt;/a&gt;</span>
+  <span class="tag">&lt;/p&gt;</span>
+  <span class="comment">&lt;!-- ★ここまで追加 --&gt;</span>
+
+  <span class="tag">&lt;table</span> <span class="attr">border</span>=<span class="str">"1"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;thead&gt;</span>
+      <span class="tag">&lt;tr&gt;</span>
+        <span class="tag">&lt;th&gt;</span>ID<span class="tag">&lt;/th&gt;</span>
+        <span class="tag">&lt;th&gt;</span>タイトル<span class="tag">&lt;/th&gt;</span>
+        <span class="tag">&lt;th&gt;</span>完了<span class="tag">&lt;/th&gt;</span>
+        <span class="tag">&lt;th&gt;</span>作成日時<span class="tag">&lt;/th&gt;</span>
+      <span class="tag">&lt;/tr&gt;</span>
+    <span class="tag">&lt;/thead&gt;</span>
+    <span class="tag">&lt;tbody&gt;</span>
+      <span class="tag">&lt;tr</span> <span class="attr">th:each</span>=<span class="str">"task : ${tasks}"</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;td</span> <span class="attr">th:text</span>=<span class="str">"${task.id}"</span><span class="tag">&gt;&lt;/td&gt;</span>
+        ...
+      <span class="tag">&lt;/tr&gt;</span>
+    <span class="tag">&lt;/tbody&gt;</span>
+  <span class="tag">&lt;/table&gt;</span>
+<span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">new-html-create</span>
+      <span class="tag-desc">B. new.html を新規作成</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// new.html を作成</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">new.html を新規作成</div>
+          <ol>
+            <li><code>src/main/resources/templates/tasks</code> フォルダを右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">ファイル</span></li>
+            <li>名前に <code>new.html</code> と入力</li>
+            <li><span class="menu">完了(F)</span> をクリック</li>
+            <li>右のコードをコピペ</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>テンプレートの解説</b>：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b><code>th:action="@{/tasks}"</code></b> ── フォーム送信先URL。<code>POST /tasks</code>に送られる</li>
+          <li><b><code>th:object="${taskForm}"</code></b> ── このフォームが対応するオブジェクト。Modelに載せた<code>taskForm</code>と紐付く</li>
+          <li><b><code>method="post"</code></b> ── HTTPメソッド指定</li>
+          <li><b><code>th:field="*{title}"</code></b> ── オブジェクトの<code>title</code>フィールドと紐付ける。<code>*</code>は「<code>th:object</code>で指定したオブジェクトの」の意味</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// src/main/resources/templates/tasks/new.html</span>
+
+<span class="tag">&lt;!DOCTYPE html&gt;</span>
+<span class="tag">&lt;html</span> <span class="attr">xmlns:th</span>=<span class="str">"http://www.thymeleaf.org"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;head&gt;</span>
+  <span class="tag">&lt;meta</span> <span class="attr">charset</span>=<span class="str">"UTF-8"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;title&gt;</span>新規登録<span class="tag">&lt;/title&gt;</span>
+<span class="tag">&lt;/head&gt;</span>
+<span class="tag">&lt;body&gt;</span>
+  <span class="tag">&lt;h1&gt;</span>新規登録<span class="tag">&lt;/h1&gt;</span>
+
+  <span class="tag">&lt;form</span>
+      <span class="attr">th:action</span>=<span class="str">"@{/tasks}"</span>
+      <span class="attr">th:object</span>=<span class="str">"${taskForm}"</span>
+      <span class="attr">method</span>=<span class="str">"post"</span><span class="tag">&gt;</span>
+
+    <span class="tag">&lt;p&gt;</span>
+      <span class="tag">&lt;label&gt;</span>
+        タイトル:
+        <span class="tag">&lt;input</span>
+            <span class="attr">type</span>=<span class="str">"text"</span>
+            <span class="attr">th:field</span>=<span class="str">"*{title}"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;/label&gt;</span>
+    <span class="tag">&lt;/p&gt;</span>
+
+    <span class="tag">&lt;p&gt;</span>
+      <span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="str">"submit"</span><span class="tag">&gt;</span>
+        登録
+      <span class="tag">&lt;/button&gt;</span>
+    <span class="tag">&lt;/p&gt;</span>
+  <span class="tag">&lt;/form&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    <span class="tag">&lt;a</span> <span class="attr">th:href</span>=<span class="str">"@{/tasks}"</span><span class="tag">&gt;</span>
+      一覧に戻る
+    <span class="tag">&lt;/a&gt;</span>
+  <span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span>
+
+
+<span class="code-head" style="margin-top:18px">// 描画されるHTML（ブラウザが受け取る）</span>
+
+<span class="tag">&lt;form</span> <span class="attr">action</span>=<span class="str">"/tasks"</span> <span class="attr">method</span>=<span class="str">"post"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;p&gt;</span>
+    <span class="tag">&lt;label&gt;</span>
+      タイトル:
+      <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span>
+             <span class="attr">id</span>=<span class="str">"title"</span>
+             <span class="attr">name</span>=<span class="str">"title"</span>
+             <span class="attr">value</span>=<span class="str">""</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;/label&gt;</span>
+  <span class="tag">&lt;/p&gt;</span>
+  ...
+<span class="tag">&lt;/form&gt;</span>
+
+<span class="comment">// th:field="*{title}" が自動で:</span>
+<span class="comment">// ・id="title"</span>
+<span class="comment">// ・name="title"</span>
+<span class="comment">// ・value="${taskForm.title}"</span>
+<span class="comment">// を生成してくれる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「<code>th:field</code>」の魔法</div>
+    <p><code>th:field="*{title}"</code> はたった1行ですが、内部で<b><code>id</code>、<code>name</code>、<code>value</code> の3属性を一気に生成</b>します。<b><code>name</code>属性</b>は<b>フォーム送信時のキー</b>になり、<b>サーバ側で<code>taskForm.title</code>に値が入る</b>仕組みの土台。深掘りは別冊で。</p>
+  </div>
+</section>
+
+<section id="runcheck">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>🚀 ブラウザで動かして確認</h2>
+    <span class="en">RUN AND VERIFY</span>
+  </div>
+  <p class="pattern-desc">いよいよ動作確認。<b>一覧 → 新規登録ボタン → フォーム → 送信 → 一覧（新タスク追加済み）</b>の流れが繋がることを確認します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol-5-runcheck</span>
+      <span class="tag-desc">動作確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動作確認の流れ</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">A. アプリの再起動を確認</div>
+          <ol>
+            <li>全ファイル保存後、DevToolsが自動再起動</li>
+            <li>コンソールで <code>Started TodoApplication</code> を確認</li>
+            <li>赤いERRORログが無いことを確認</li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">B. 動作確認の手順</div>
+          <ol>
+            <li>ブラウザで <code>http://localhost:8080/tasks</code> を開く</li>
+            <li>一覧画面の上部に「<b>新規登録</b>」リンクがあるのを確認</li>
+            <li>「新規登録」をクリック → <code>/tasks/new</code> へ遷移</li>
+            <li>フォーム画面（タイトル入力欄＋登録ボタン）が表示される</li>
+            <li>タイトルに「<b>新しいタスク</b>」と入力</li>
+            <li>「登録」ボタンをクリック</li>
+            <li>自動で一覧画面に戻る（URLが <code>/tasks</code> になっている）</li>
+            <li>一覧の最後に「新しいタスク」が追加されている</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13px;margin-top:14px;line-height:1.85"><b>確認チェックリスト：</b></p>
+        <ul class="checklist">
+          <li>一覧画面に「新規登録」リンクが表示される</li>
+          <li>クリックで <code>/tasks/new</code> に遷移する</li>
+          <li>フォーム画面が表示される</li>
+          <li>タイトル入力 → 登録ボタンで、一覧へ自動リダイレクトする</li>
+          <li>一覧に新タスクが追加されている</li>
+          <li>リロード（F5）しても二重登録されない</li>
+          <li>コンソールに <code>==&gt; Preparing: INSERT ...</code> のSQLが出ている</li>
+          <li>コンソールに ERROR ログが無い</li>
+        </ul>
+
+        <div style="background:#fff;border-left:3px solid var(--accent-4);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.5完了！</b> あなたは<b>CRUD の C（Create）</b>を実装しました。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 期待されるコンソールログ</span>
+
+INFO Started TodoApplication
+
+<span class="comment">// /tasks へアクセス時</span>
+DEBUG c.e.todo.mapper.TaskMapper.findAll
+  ==&gt; Preparing: SELECT ...
+  &lt;==      Total: 3
+
+<span class="comment">// /tasks/new へアクセス時</span>
+<span class="comment">// （SQL発行なし、画面表示のみ）</span>
+
+<span class="comment">// 「登録」ボタンクリック時</span>
+DEBUG c.e.todo.mapper.TaskMapper.insert
+  ==&gt; Preparing: INSERT INTO tasks
+      (title, done, created_at)
+      VALUES (?, false, NOW())
+  ==&gt; Parameters: 新しいタスク(String)
+  &lt;==    Updates: 1
+
+<span class="comment">// リダイレクト後の再表示</span>
+DEBUG c.e.todo.mapper.TaskMapper.findAll
+  ==&gt; Preparing: SELECT ...
+  &lt;==      Total: 4   ← ★1件増えた！
+
+
+<span class="code-head" style="margin-top:18px">// ブラウザの体験</span>
+
+[1] http://localhost:8080/tasks
+    ┌──────────────────┐
+    │ TODO 一覧         │
+    │ → 新規登録       │ ← クリック
+    │ ┌──┬──┬──┬──┐ │
+    │ │ID│..│..│..│ │
+    │ └──┴──┴──┴──┘ │
+    └──────────────────┘
+          ↓
+[2] http://localhost:8080/tasks/new
+    ┌──────────────────┐
+    │ 新規登録          │
+    │ タイトル:[      ] │ ← 「新しいタスク」
+    │ [登録]            │ ← クリック
+    │ → 一覧に戻る     │
+    └──────────────────┘
+          ↓
+[3] http://localhost:8080/tasks
+    ┌──────────────────┐
+    │ TODO 一覧         │
+    │ → 新規登録       │
+    │ ┌──┬──┬──┬──┐ │
+    │ │ 4│新しいタスク│..│..│ │ ← ★追加！
+    │ └──┴──┴──┴──┘ │
+    └──────────────────┘
+
+<span class="good">★ Vol.5 完成 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「CRUDのCを獲得」</div>
+    <p>業界では <b>CRUD</b>（Create / Read / Update / Delete）を<b>データ操作の基本4機能</b>と呼びます。Vol.3で<b>R（Read 一覧）</b>、Vol.5で<b>C（Create 新規登録）</b>を完成。残りVol.6で<b>U（Update 編集・完了切替）</b>、Vol.7で<b>D（Delete 削除）</b>を作って<b>CRUD完全制覇</b>になります。</p>
+  </div>
+</section>
+
+<section id="pitfalls">
+  <div class="section-header">
+    <span class="section-num">12</span>
+    <h2>ハマりどころ（因果で説明）</h2>
+    <span class="en">PITFALLS — CAUSE &amp; EFFECT</span>
+  </div>
+  <p class="pattern-desc">Vol.5は<b>修正・新規・テンプレート</b>と作業範囲が広いので、ハマりやすいポイントも多めです。Vol.3 ADDの<b>9ステップ思考フロー</b>を活かす場面。</p>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 1 ── フォーム送信したら 404</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      フォームに入力して「登録」を押すと、ブラウザに <b>404 Not Found</b> が表示される
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <code>@PostMapping("/tasks")</code> を付け忘れ、または <code>@GetMapping</code> のままになっている。送信先（<code>POST /tasks</code>）に対応するメソッドが存在しないので404。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      <code>create()</code> メソッドのアノテーションが <code>@PostMapping("/tasks")</code> になっていることを確認。<code>@GetMapping</code>と間違えやすいので注意。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 2 ── 登録ボタンを押すとフォーム画面が再表示される</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      登録ボタンを押すと、一覧に戻らずに同じフォーム画面に戻る。DBは更新されている。
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <code>create()</code> の戻り値が <code>return "tasks/new";</code> や <code>return "tasks/list";</code> になっている。<b>"redirect:" プレフィックスが無い</b>のでテンプレート名として扱われている。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      <code>return "redirect:/tasks";</code> に修正。「<b>POSTの後はredirect</b>」が業務の鉄則。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 3 ── BindingResult exception または Model has no taskForm</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      <code>/tasks/new</code> を開くと <code>java.lang.IllegalStateException: Neither BindingResult nor plain target object for bean name 'taskForm' available as request attribute</code> 等のエラー
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <code>newForm()</code> で <code>model.addAttribute("taskForm", new TaskForm())</code> を忘れている、または属性名が "taskForm" 以外になっている。new.html の <code>th:object="${taskForm}"</code> が参照先を見つけられない。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      <code>newForm()</code> でModelに <code>"taskForm"</code> という名前で空のTaskFormを載せる。<b>属性名・引数名・th:object すべてが「taskForm」で統一</b>されているか確認。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 4 ── INSERT時に「Field 'created_at' doesn't have a default value」</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      登録ボタンを押すと500エラー。コンソールに <code>Field 'created_at' doesn't have a default value</code> や類似のSQLエラー
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <code>@Insert</code> のSQLで <code>created_at</code> を指定していない、または <code>NOW()</code> を書き忘れている。MySQLの設定によってはNULL不可で挿入エラーになる。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      SQLを <code>INSERT INTO tasks (title, done, created_at) VALUES (#{title}, false, NOW())</code> に修正。<b>3つのカラム</b>すべてに値を指定する。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 5 ── TaskFormのimportが間違っている</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      Eclipse上で <code>TaskForm</code> に赤線、または <code>cannot find symbol</code> エラー
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <code>com.example.todo.form.TaskForm</code> のimportが無い、またはVol.3 ADDで学んだ<b>「同名異クラスの罠」</b>で別のTaskFormを誤って選んだ。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      Service と Controller の冒頭で <code>import com.example.todo.form.TaskForm;</code> が入っているか確認。<span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> で候補が出たら、必ず <code>com.example.todo.form</code> のものを選ぶ。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 6 ── @Transactional が反映されない</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      register実行時に <code>Connection is read-only</code> 等の例外が出る
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <code>register()</code> メソッドに <code>@Transactional</code>（メソッド指定）を付け忘れ、クラスの <code>@Transactional(readOnly = true)</code> のみが効いている → 書き込み禁止モード。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      <code>register()</code> の直前に <code>@Transactional</code> を付ける（属性なしでOK、デフォルトが書き込み有効）。
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「ハマり多発はチャンス」</div>
+    <p>Vol.5はファイルを6つ触る大型回。<b>1〜2個はハマる前提</b>で進めてください。ハマったらVol.3 ADDの<b>9ステップ思考フロー</b>（症状→種別→3点読み→精読→真犯人→仮説→修正→確認→再発防止）で淡々と解く。<b>解いた回数だけ、業務開発の即戦力に近づきます</b>。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+  <div class="tip-label">NEXT STEP ── VOL.6</div>
+  <p>お疲れさまでした。Vol.5で<b>CRUDのC（Create）</b>を獲得し、<b>Service層がついに業務ロジックを持つ瞬間</b>を体験しました。フォーム送信、POSTリクエスト、リダイレクト── Webアプリの<b>基本フロー</b>が手に入りました。<br><br>
+  「<b>なぜTaskFormとTaskを分けるのか？</b>」「<b>PRGパターンの本質は？</b>」「<b>th:fieldは中で何をしているのか？</b>」── これらの<b>「なぜ」</b>に深く答えるのが、続編の<b>Vol.5 別冊（ADD）「フォーム・POST・リダイレクトの仕組み」</b>です。本編で動かせた今こそ、別冊で<b>仕組みの裏側</b>を覗くベストタイミング。<br><br>
+  次のVol.6では<b>編集・完了切替</b>を作ります。<b>CRUDのU（Update）</b>に挑みます。<code>@Pathvariable</code>、<code>@PutMapping</code>の代替（HiddenInputテクニック）、業務ロジックの拡張── Vol.5で耕した畑に、さらに作物が育ち始めます。お楽しみに。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.05 / 10 ── CREATE FORM</span>
+</footer>
+
+</body>
+</html>

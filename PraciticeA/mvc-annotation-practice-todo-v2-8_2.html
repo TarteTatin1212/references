@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.8 バリデーションを入れよう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3d2817;
+  --paper:#f4ecd8;
+  --paper-2:#e8dcc0;
+  --accent:#daa55a;
+  --accent-2:#ecc283;
+  --accent-3:#6b4423;
+  --accent-4:#2d5f3f;
+  --muted:#7a6952;
+  --line:#c9b896;
+  --code-bg:#2a1f15;
+  --code-text:#f0e4cc;
+  --panel-bg:#faf3e0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✎';position:absolute;right:0px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid #c43;padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--accent-3);border-bottom-color:var(--accent-3)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}.ann{color:#f7c08a}.tag{color:#a3c9ff}.attr{color:#ffc88a}
+
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+
+.file-list{background:#fff;border:1px solid var(--line);padding:0;margin:14px 0;overflow:hidden}
+.file-list-header{background:var(--accent);color:var(--paper);font-family:'Shippori Mincho',serif;font-weight:700;padding:10px 18px;letter-spacing:0.05em;font-size:14px}
+.file-list-row{display:grid;grid-template-columns:80px 110px 1fr 110px;gap:14px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13.5px}
+.file-list-row:last-child{border-bottom:none}
+.file-list-row.is-new{background:rgba(45,95,63,0.06)}
+.file-list-row.is-edit{background:rgba(218,165,90,0.08)}
+.file-status{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;padding:3px 10px;border-radius:3px;text-align:center}
+.file-status.new{background:var(--accent-4);color:var(--paper)}
+.file-status.edit{background:var(--accent);color:var(--paper)}
+.file-type{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);letter-spacing:0.05em}
+.file-path{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink)}
+.file-section{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--accent-3);text-align:right}
+
+.pitfall{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:12px 0}
+.pitfall-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:8px}
+.pitfall-block{font-size:13px;padding:8px 12px;margin:6px 0;border-left:3px solid}
+.pitfall-symptom{background:rgba(196,67,51,0.07);border-left-color:#c43}
+.pitfall-cause{background:rgba(218,165,90,0.10);border-left-color:var(--accent)}
+.pitfall-fix{background:rgba(45,95,63,0.08);border-left-color:var(--accent-4)}
+.pitfall-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;font-weight:700;margin-right:6px;display:inline-block;min-width:60px}
+
+.tip{margin:18px 0;padding:14px 20px;background:rgba(218,165,90,0.10);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+
+.step-guide{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0}
+.step-guide-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+.step-guide ol{list-style:none;counter-reset:s;margin:0}
+.step-guide li{counter-increment:s;padding:6px 0 6px 32px;position:relative;font-size:13.5px;line-height:1.7}
+.step-guide li::before{content:counter(s);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 8px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600}
+.menu{display:inline-block;background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--accent-3);border-radius:2px}
+
+.flow-v2{background:#fff;border:1px solid var(--line);padding:14px 16px;margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;color:var(--ink)}
+.flow-v2 .flow-step{display:block;background:var(--panel-bg);border-left:3px solid var(--line);padding:10px 14px;margin:8px 0;border-radius:3px;line-height:2.0}
+.flow-v2 .flow-step:has(.flow-label-call){border-left-color:var(--accent);background:rgba(218,165,90,0.10)}
+.flow-v2 .flow-step:has(.flow-label-return){border-left-color:var(--accent-4);background:rgba(45,95,63,0.07)}
+.flow-v2 .flow-actor{display:inline-block;background:#fff;color:var(--accent-3);padding:2px 10px;border:1px solid var(--line);border-radius:3px;font-weight:700;font-size:11.5px;margin:1px 2px;white-space:nowrap}
+.flow-v2 .flow-call{color:var(--accent);font-weight:700}
+.flow-v2 .flow-return{color:var(--accent-4);font-weight:700}
+.flow-v2 .flow-arg{color:var(--muted);font-size:11.5px;padding:4px 0 4px 14px;display:block;margin-top:6px;line-height:1.6;border-left:2px dashed var(--accent-2);margin-left:4px}
+.flow-v2 .flow-divider{border-top:1px dashed var(--line);margin:14px 0}
+.flow-v2 .flow-label-call,.flow-v2 .flow-label-return{display:inline-block;color:var(--paper);font-size:10px;padding:2px 8px;border-radius:2px;letter-spacing:0.05em;margin-left:6px;font-weight:700;vertical-align:1px}
+.flow-v2 .flow-label-call{background:var(--accent)}
+.flow-v2 .flow-label-return{background:var(--accent-4)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .whw{grid-template-columns:1fr}
+  .term-grid{grid-template-columns:1fr}
+  .file-list-row{grid-template-columns:1fr;gap:4px}
+  .file-section{text-align:left}
+  .flow-v2 .flow-step{padding:12px 14px;line-height:2.2;font-size:13px}
+  .flow-v2 .flow-actor{font-size:12px;padding:3px 10px;margin:2px 3px}
+  .flow-v2 .flow-arg{font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.08 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <h1>バリデーションを<br>入れよう</h1>
+  <p class="subtitle">INPUT VALIDATION — BEAN VALIDATION</p>
+  <p class="lead">Vol.7で <b>CRUD完全制覇</b> を達成しました。「動くアプリ」は完成。Vol.8からは<b>業務品質への階段</b>を登り始めます。最初の一歩は<b>バリデーション</b>── 入力された値が業務的に妥当かをチェックする仕組みです。<b>空欄登録</b>、<b>長すぎるタイトル</b>、<b>不正な値</b>── これらを<b>サーバ側で確実に弾く</b>のが業務開発の必須要件。Vol.8では <code>@NotBlank</code>、<code>@Size</code>、<code>@Valid</code>、<code>BindingResult</code> という<b>新しい仲間</b>を導入し、<b>「業界標準のバリデーション」</b>を体験します。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">💡 Vol.8の前提</div>
+    <p style="font-size:13.5px">Vol.7まで完走している前提です。<b>新規登録（Vol.5）と編集（Vol.6）の両方</b>にバリデーションを入れます。<b>本巻は「動かして体感」が目的</b>。バリデーション設計の<b>深い思想（信頼境界、クライアント vs サーバ、カスタムバリデーター等）</b>は別冊（Vol.8 ADD）で深掘ります。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.08</div>
+  <ul>
+    <li><a href="#map">01 この巻の地図</a></li>
+    <li><a href="#file-list">02 この巻で作るパッケージ・ファイル一覧</a></li>
+    <li><a href="#term-bean-validation">03 用語カード：Bean Validation</a></li>
+    <li><a href="#term-valid-bindingresult">04 用語カード：@Valid と BindingResult</a></li>
+    <li><a href="#term-error-flow">05 用語カード：エラー時の挙動（PRGの例外パターン）</a></li>
+    <li><a href="#add-constraints">06 TaskForm / TaskEditForm に制約を付ける</a></li>
+    <li><a href="#update-controller">07 Controller に @Valid と BindingResult を導入する</a></li>
+    <li><a href="#update-templates">08 new.html / edit.html にエラー表示を追加する</a></li>
+    <li><a href="#messages">09 messages.properties でメッセージをカスタマイズする</a></li>
+    <li><a href="#runcheck">10 ブラウザで動かして確認</a></li>
+    <li><a href="#pitfalls">11 ハマりどころ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="map">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻の地図</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">バリデーションは<b>「3点セット」</b>で構成されます：<b>① Formに制約付与</b>、<b>② Controllerで検証実行</b>、<b>③ テンプレートでエラー表示</b>。この流れに沿って実装します。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を作るか</div>
+      <div class="whw-desc">
+        <b>新規登録</b>と<b>編集</b>の両方に <b>バリデーション</b> を入れる。空欄やタイトル長過ぎを弾く。エラー時は<b>赤字メッセージ表示</b>、<b>入力値は保持</b>。messages.propertiesで<b>日本語化</b>。
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう作るか</div>
+      <div class="whw-desc">
+        ① Form に <code>@NotBlank</code> <code>@Size</code> を付ける<br>
+        ② Controller に <code>@Valid</code> と <code>BindingResult</code> を入れる<br>
+        ③ エラー時は<b>テンプレート名を返す</b>（リダイレクトしない）<br>
+        ④ テンプレートに <code>th:errors</code> を追加<br>
+        ⑤ messages.properties でメッセージ日本語化
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜそうするか</div>
+      <div class="whw-desc">
+        <b>「信頼できない入力」</b>から業務システムを守る最初の砦。クライアント側のHTML5バリデーションだけでは不十分（簡単に回避される）。<b>サーバ側で必ず検証</b>が業界鉄則。深掘りは別冊で。
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol-8-flow</span>
+      <span class="tag-desc">バリデーションが入ると処理が分岐する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// バリデーション成功時 / 失敗時の2つのフロー</div>
+
+<div class="flow-v2"><span class="flow-step">★ 成功時（入力が妥当）★</span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">Controller</span> に <span class="flow-call">POSTを送る</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">送信: POST /tasks (title="買い物")</span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">Form</span> の <span class="flow-call">制約を検証</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">@NotBlank・@Size をチェック</span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">BindingResult</span> に <span class="flow-return">「エラーなし」を返す</span><span class="flow-label-return">帰り</span></span>
+
+<span class="flow-step"><span class="flow-actor">Controller</span> が <span class="flow-actor">Service</span> の <span class="flow-call">register() を呼ぶ</span><span class="flow-label-call">行き</span></span>
+
+<span class="flow-step">通常のCRUDフロー（Vol.5と同じ）でDB登録、redirect</span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ 失敗時（入力が不正）★</span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">Controller</span> に <span class="flow-call">POSTを送る</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">送信: POST /tasks (title="" 空欄)</span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">Form</span> の <span class="flow-call">制約を検証</span><span class="flow-label-call">行き</span></span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">BindingResult</span> に <span class="flow-return">「@NotBlank違反」を返す</span><span class="flow-label-return">帰り</span></span>
+
+<span class="flow-step"><span class="flow-actor">Controller</span> が <span class="flow-actor">BindingResult</span> に <span class="flow-call">hasErrors() を確認</span></span>
+<span class="flow-arg">true が返る → エラーあり</span>
+
+<span class="flow-step"><span class="flow-actor">Controller</span> が <span class="flow-actor">ブラウザ</span> に <span class="flow-return">フォーム画面を返す</span><span class="flow-label-return">帰り</span></span>
+<span class="flow-arg">return "tasks/new" （redirectしない）</span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">ユーザー</span> に <span class="flow-call">エラー入りフォームを表示</span></span>
+<span class="flow-arg">入力値は保持、エラーメッセージが赤字で表示</span></div>
+      </div>
+      <div class="code"><span class="code-head">// この巻でやることのコード骨格</span>
+
+<span class="comment">// ① TaskForm に制約付与</span>
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+  <span class="ann">@NotBlank</span>
+  <span class="ann">@Size</span>(max = <span class="num">100</span>)
+  <span class="kw">private</span> <span class="type">String</span> title;
+}
+
+
+<span class="comment">// ② Controllerに @Valid と BindingResult</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+    <span class="ann">@Valid</span> <span class="type">TaskForm</span> taskForm,
+    <span class="type">BindingResult</span> bindingResult) {
+
+  <span class="kw">if</span> (bindingResult.<span class="fn">hasErrors</span>()) {
+    <span class="kw">return</span> <span class="str">"tasks/new"</span>;
+    <span class="comment">// ↑ redirectせずテンプレートに戻る</span>
+  }
+  taskService.<span class="fn">register</span>(taskForm);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+
+
+<span class="comment">// ③ テンプレートにエラー表示</span>
+<span class="tag">&lt;input</span> <span class="attr">th:field</span>=<span class="str">"*{title}"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;span</span> <span class="attr">th:if</span>=<span class="str">"${#fields.hasErrors('title')}"</span>
+      <span class="attr">th:errors</span>=<span class="str">"*{title}"</span>
+      <span class="attr">style</span>=<span class="str">"color:red"</span><span class="tag">&gt;&lt;/span&gt;</span>
+
+
+<span class="comment">// ④ messages.properties で日本語化</span>
+NotBlank.taskForm.title=タイトルは必須です
+Size.taskForm.title=タイトルは{2}文字以内です</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「redirectしないのが新しい」</div>
+    <p>これまでのVol.5・6・7では「<b>POSTの後はredirect</b>」が鉄則でした。でも<b>バリデーションエラー時</b>は例外── <b>redirectせず、テンプレート名をそのまま返す</b>。理由は<b>「入力値とエラー情報をModelで運ぶ」</b>必要があるから（redirectすると消える）。「<b>成功時はredirect、エラー時はテンプレート直接</b>」── これがバリデーションを入れたPRGの<b>進化形</b>です。</p>
+  </div>
+</section>
+
+<section id="file-list">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>この巻で作るパッケージ・ファイル一覧</h2>
+    <span class="en">FILES TO CREATE / MODIFY</span>
+  </div>
+  <p class="pattern-desc">Vol.8は<b>新規1件、修正5件</b>。Form 2つに制約付与、Controller の2メソッド修正、テンプレート 2つにエラー表示、新規ファイル <code>messages.properties</code> を作成します。</p>
+
+  <div class="file-list">
+    <div class="file-list-header">📋 Vol.8 で扱うファイル</div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">クラス</span>
+      <span class="file-path">com.example.todo.form.<b>TaskForm.java</b></span>
+      <span class="file-section">→ Section 06</span>
+    </div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">クラス</span>
+      <span class="file-path">com.example.todo.form.<b>TaskEditForm.java</b></span>
+      <span class="file-section">→ Section 06</span>
+    </div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">クラス</span>
+      <span class="file-path">com.example.todo.controller.<b>TaskController.java</b></span>
+      <span class="file-section">→ Section 07</span>
+    </div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">テンプレート</span>
+      <span class="file-path">templates/tasks/<b>new.html</b></span>
+      <span class="file-section">→ Section 08</span>
+    </div>
+
+    <div class="file-list-row is-edit">
+      <span class="file-status edit">✏️ EDIT</span>
+      <span class="file-type">テンプレート</span>
+      <span class="file-path">templates/tasks/<b>edit.html</b></span>
+      <span class="file-section">→ Section 08</span>
+    </div>
+
+    <div class="file-list-row is-new">
+      <span class="file-status new">🆕 NEW</span>
+      <span class="file-type">設定ファイル</span>
+      <span class="file-path">src/main/resources/<b>messages.properties</b></span>
+      <span class="file-section">→ Section 09</span>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「Validation依存の確認」</div>
+    <p>Spring Boot 3.x では <b>spring-boot-starter-validation</b> 依存が必要です。Spring Initializr で<b>「Validation」</b>を選んでいれば pom.xml にすでに入っていますが、入っていない場合は手動で追加が必要。Vol.8 セクション06で確認します。</p>
+  </div>
+</section>
+
+<section id="term-bean-validation">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>用語カード：Bean Validation</h2>
+    <span class="en">TERM — BEAN VALIDATION</span>
+  </div>
+  <p class="pattern-desc">Java界の<b>業界標準のバリデーション仕組み</b>。Java EE / Jakarta EEの仕様で、Spring Bootも採用。<b>「クラスのフィールドにアノテーションで制約を付ける」</b>のが特徴です。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #01</span>
+    <div class="term-card-title">Bean Validation</div>
+    <div class="term-card-sub">Java標準のバリデーション仕様（Jakarta Validation）</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>Java EE / Jakarta EE の<b>標準仕様</b>。クラスのフィールドに<b>アノテーション</b>で制約を宣言し、専用のバリデータが検証実行する仕組み。Spring Boot 3.x では <code>jakarta.validation</code> パッケージを使用。</dd>
+      <dt>主な標準アノテーション</dt>
+      <dd><code>@NotNull</code> ── null禁止<br>
+        <code>@NotBlank</code> ── null・空文字・空白のみ禁止（String用）<br>
+        <code>@NotEmpty</code> ── null・空コレクション禁止<br>
+        <code>@Size(min=, max=)</code> ── 長さチェック（String/Collection）<br>
+        <code>@Min</code> / <code>@Max</code> ── 数値範囲<br>
+        <code>@Email</code> ── メールアドレス形式<br>
+        <code>@Pattern(regexp=)</code> ── 正規表現<br>
+        他にも多数（別冊で網羅）
+      </dd>
+      <dt>仕組み</dt>
+      <dd>① クラスのフィールドにアノテーションで制約宣言<br>
+        ② バリデータがリフレクションで全フィールドをチェック<br>
+        ③ 違反があれば <code>BindingResult</code> にエラー情報を格納
+      </dd>
+      <dt>嬉しさ</dt>
+      <dd>① <b>宣言的</b>：何がOK・NGかが<b>クラス定義から読める</b><br>
+        ② <b>業界標準</b>：あらゆるJavaフレームワークで通じる<br>
+        ③ <b>再利用可能</b>：同じ制約が複数フォームで使える<br>
+        ④ <b>カスタム可能</b>：独自バリデーターも追加できる
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">bean-validation-example</span>
+      <span class="tag-desc">代表的な制約の組み合わせ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 制約付きフォームの読み方</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>このTaskForm</b>を見れば、業務ルールが<b>一目で分かる</b>：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:12px;border-radius:2px;margin-top:6px;line-height:1.7">@Data
+public class TaskForm {
+  @NotBlank          ← 必須（空欄禁止）
+  @Size(max = 100)   ← 100文字以内
+  private String title;
+}</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px">クラスを読むだけで<b>「titleは必須」「100文字以内」</b>という業務ルールが伝わる。コメントを書かなくても<b>制約が自己説明</b>している。これが<b>「宣言的プログラミング」</b>の威力です。</p>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">@NotBlank vs @NotNull vs @NotEmpty</p>
+
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px">
+          <thead>
+            <tr style="background:var(--paper-2)">
+              <th style="border:1px solid var(--line);padding:6px;text-align:left">入力値</th>
+              <th style="border:1px solid var(--line);padding:6px;text-align:center">@NotNull</th>
+              <th style="border:1px solid var(--line);padding:6px;text-align:center">@NotEmpty</th>
+              <th style="border:1px solid var(--line);padding:6px;text-align:center">@NotBlank</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border:1px solid var(--line);padding:5px">null</td>
+              <td style="border:1px solid var(--line);padding:5px;text-align:center;color:#c43">NG</td>
+              <td style="border:1px solid var(--line);padding:5px;text-align:center;color:#c43">NG</td>
+              <td style="border:1px solid var(--line);padding:5px;text-align:center;color:#c43">NG</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:5px">"" (空文字)</td>
+              <td style="border:1px solid var(--line);padding:5px;text-align:center;color:var(--accent-4)">OK</td>
+              <td style="border:1px solid var(--line);padding:5px;text-align:center;color:#c43">NG</td>
+              <td style="border:1px solid var(--line);padding:5px;text-align:center;color:#c43">NG</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:5px">"   " (空白のみ)</td>
+              <td style="border:1px solid var(--line);padding:5px;text-align:center;color:var(--accent-4)">OK</td>
+              <td style="border:1px solid var(--line);padding:5px;text-align:center;color:var(--accent-4)">OK</td>
+              <td style="border:1px solid var(--line);padding:5px;text-align:center;color:#c43">NG</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:5px">"abc"</td>
+              <td style="border:1px solid var(--line);padding:5px;text-align:center;color:var(--accent-4)">OK</td>
+              <td style="border:1px solid var(--line);padding:5px;text-align:center;color:var(--accent-4)">OK</td>
+              <td style="border:1px solid var(--line);padding:5px;text-align:center;color:var(--accent-4)">OK</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="font-size:13px;margin-top:10px;line-height:1.7">テキスト入力には<b>@NotBlank</b>が最適。<b>空白文字だけの入力</b>も拒否してくれる。</p>
+      </div>
+      <div class="code"><span class="code-head">// jakarta.validation の代表的アノテーション</span>
+
+<span class="comment">// === 必須 ===</span>
+<span class="ann">@NotNull</span>     <span class="comment">// null禁止</span>
+<span class="ann">@NotEmpty</span>    <span class="comment">// null・空コレクション禁止</span>
+<span class="ann">@NotBlank</span>    <span class="comment">// null・空文字・空白禁止</span>
+
+
+<span class="comment">// === サイズ ===</span>
+<span class="ann">@Size</span>(min = <span class="num">1</span>, max = <span class="num">100</span>)
+<span class="comment">// 文字列やコレクションの長さ</span>
+
+
+<span class="comment">// === 数値範囲 ===</span>
+<span class="ann">@Min</span>(<span class="num">0</span>)
+<span class="ann">@Max</span>(<span class="num">999</span>)
+<span class="ann">@Positive</span>     <span class="comment">// 正の数のみ</span>
+<span class="ann">@PositiveOrZero</span>
+<span class="ann">@Negative</span>
+<span class="ann">@NegativeOrZero</span>
+
+
+<span class="comment">// === パターン ===</span>
+<span class="ann">@Email</span>
+<span class="ann">@Pattern</span>(regexp = <span class="str">"^[0-9]+$"</span>)
+<span class="ann">@URL</span>     <span class="comment">// 別ライブラリ</span>
+
+
+<span class="comment">// === 日付 ===</span>
+<span class="ann">@Past</span>     <span class="comment">// 過去日付</span>
+<span class="ann">@Future</span>   <span class="comment">// 未来日付</span>
+<span class="ann">@PastOrPresent</span>
+<span class="ann">@FutureOrPresent</span>
+
+
+<span class="comment">// === 真偽値 ===</span>
+<span class="ann">@AssertTrue</span>
+<span class="ann">@AssertFalse</span>
+
+
+<span class="code-head" style="margin-top:18px">// 組み合わせ可能</span>
+
+<span class="kw">public class</span> <span class="type">UserForm</span> {
+
+  <span class="ann">@NotBlank</span>
+  <span class="ann">@Size</span>(min = <span class="num">2</span>, max = <span class="num">30</span>)
+  <span class="kw">private</span> <span class="type">String</span> name;
+
+  <span class="ann">@NotBlank</span>
+  <span class="ann">@Email</span>
+  <span class="kw">private</span> <span class="type">String</span> email;
+
+  <span class="ann">@NotNull</span>
+  <span class="ann">@Min</span>(<span class="num">18</span>)
+  <span class="ann">@Max</span>(<span class="num">120</span>)
+  <span class="kw">private</span> <span class="type">Integer</span> age;
+
+  <span class="ann">@Past</span>
+  <span class="kw">private</span> <span class="type">LocalDate</span> birthDate;
+}
+
+<span class="comment">// クラスを読むだけで業務ルールが分かる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「Bean Validation の歴史」</div>
+    <p>Bean Validation は<b>Java EE 6 (2009年)</b>から続く<b>業界標準</b>。Spring Boot 3.x では Jakarta EE の <code>jakarta.validation</code> パッケージを使用（旧 <code>javax.validation</code> から名前変更）。<b>15年以上磨かれてきた仕組み</b>なので、安心して使えます。<b>Java界で「バリデーション」と言えばこれ</b>です。</p>
+  </div>
+</section>
+
+<section id="term-valid-bindingresult">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>用語カード：@Valid と BindingResult</h2>
+    <span class="en">TERM — @VALID &amp; BINDINGRESULT</span>
+  </div>
+  <p class="pattern-desc">Controllerでバリデーションを動かす<b>2つの仕掛け</b>。<code>@Valid</code>が「<b>検証してくれ</b>」と命令、<code>BindingResult</code>が「<b>結果を受け取る</b>」入れ物。<b>必ずペア</b>で使います。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #02</span>
+    <div class="term-card-title">@Valid と BindingResult</div>
+    <div class="term-card-sub">バリデーション実行と結果受取の組み合わせ</div>
+    <dl class="term-grid">
+      <dt>@Valid とは</dt>
+      <dd>「<b>このFormの制約を検証してください</b>」と Spring に依頼するアノテーション。引数に付ける。</dd>
+      <dt>BindingResult とは</dt>
+      <dd>バリデーション結果を<b>格納するオブジェクト</b>。<code>hasErrors()</code>でエラー有無を確認、<code>getFieldErrors()</code>で詳細取得可。</dd>
+      <dt>ペアで使う理由</dt>
+      <dd><code>@Valid</code> 単独だと、エラー発生時に Spring が<b>例外を投げる</b>（MethodArgumentNotValidException）→ 500エラー画面。<br>
+        <code>BindingResult</code> を引数に追加すると、Spring が<b>例外を投げず、エラー情報を BindingResult に詰める</b>。Controller側で<b>エラー処理を制御できる</b>。
+      </dd>
+      <dt>引数順の重要ルール</dt>
+      <dd><b>BindingResult は @Valid の直後</b>に置く必須ルール。間に他の引数が入ると<b>動かない</b>。</dd>
+      <dt>判定パターン</dt>
+      <dd><code>if (bindingResult.hasErrors()) { ... }</code> で<b>エラー時の分岐</b>を作る。エラーなら<b>フォーム再表示</b>、エラーなしなら<b>通常のCRUD処理</b>。
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">valid-bindingresult-usage</span>
+      <span class="tag-desc">正しい使い方</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// @Valid と BindingResult のペア</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>正しい引数順</b>：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">public String create(
+    @Valid TaskForm taskForm,
+    BindingResult bindingResult) {  ← @Validの直後！</pre>
+
+        <p style="font-size:14px;font-weight:700;color:#c43;margin:18px 0 6px">⚠ 間違った引数順</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:#fff;border:1px solid #c43;padding:10px;border-radius:2px;line-height:1.6">public String create(
+    @Valid TaskForm taskForm,
+    Model model,                  ← 間に他の引数
+    BindingResult bindingResult)  ← ここではダメ！</pre>
+
+        <p style="font-size:13px;margin-top:8px;line-height:1.7">これだと <code>BindingResult</code> が<b>機能せず</b>、エラー時に例外が投げられる。<b>ペアは必ず連続して置く</b>のが鉄則。</p>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">正しい引数順（複数引数の場合）</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">public String update(
+    @PathVariable Long id,        ← 他の引数
+    @Valid TaskEditForm form,     ← @Valid
+    BindingResult bindingResult,  ← その直後！
+    Model model) {                ← その後でOK</pre>
+      </div>
+      <div class="code"><span class="code-head">// 正しい使い方</span>
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+    <span class="ann">@Valid</span> <span class="type">TaskForm</span> taskForm,
+    <span class="type">BindingResult</span> bindingResult) {
+
+  <span class="kw">if</span> (bindingResult.<span class="fn">hasErrors</span>()) {
+    <span class="comment">// エラーあり → フォーム再表示</span>
+    <span class="kw">return</span> <span class="str">"tasks/new"</span>;
+  }
+
+  <span class="comment">// エラーなし → 通常処理</span>
+  taskService.<span class="fn">register</span>(taskForm);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+
+
+<span class="code-head" style="margin-top:18px">// BindingResult が無い場合</span>
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+    <span class="ann">@Valid</span> <span class="type">TaskForm</span> taskForm) {
+                  <span class="comment">// ↑ BindingResult なし</span>
+
+  <span class="comment">// エラー時：</span>
+  <span class="comment">// MethodArgumentNotValidException</span>
+  <span class="comment">// が投げられる</span>
+  <span class="comment">// → 500エラー画面表示</span>
+  <span class="comment">// → ユーザーに優しくない</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// BindingResult の便利メソッド</span>
+
+bindingResult.<span class="fn">hasErrors</span>()
+<span class="comment">// → エラー有無 (boolean)</span>
+
+bindingResult.<span class="fn">getFieldErrors</span>()
+<span class="comment">// → 全フィールドエラーのリスト</span>
+
+bindingResult.<span class="fn">hasFieldErrors</span>(<span class="str">"title"</span>)
+<span class="comment">// → 特定フィールドのエラー有無</span>
+
+bindingResult.<span class="fn">getFieldError</span>(<span class="str">"title"</span>)
+<span class="comment">// → 特定フィールドのエラー情報</span>
+
+
+<span class="code-head" style="margin-top:18px">// 引数順ルール（厳守）</span>
+
+<span class="comment">// ✓ OK：@Valid と BindingResult が連続</span>
+<span class="fn">create</span>(<span class="ann">@Valid</span> <span class="type">Form</span> form,
+       <span class="type">BindingResult</span> br, ...)
+
+<span class="comment">// ✓ OK：他の引数が前後にあるのは平気</span>
+<span class="fn">update</span>(<span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+       <span class="ann">@Valid</span> <span class="type">Form</span> form,
+       <span class="type">BindingResult</span> br,
+       <span class="type">Model</span> model)
+
+<span class="comment">// ✗ NG：@Valid と BindingResult の間に他</span>
+<span class="fn">create</span>(<span class="ann">@Valid</span> <span class="type">Form</span> form,
+       <span class="type">Model</span> model,
+       <span class="type">BindingResult</span> br)
+       <span class="bad">// → エラー時例外</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「ペアで覚える」</div>
+    <p><code>@Valid</code> と <code>BindingResult</code> は<b>「対」で覚える</b>のが鉄則です。「<b>検証してくれ + 結果受け取る</b>」── 必ずセット。<b>引数の順番</b>も「Validのすぐ後にBindingResult」と暗記。これだけ守れば、業務開発でバリデーションを書く時に迷いません。</p>
+  </div>
+</section>
+
+<section id="term-error-flow">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>用語カード：エラー時の挙動（PRGの例外パターン）</h2>
+    <span class="en">TERM — ERROR HANDLING IN PRG</span>
+  </div>
+  <p class="pattern-desc">これまでのPRG（POST→Redirect→GET）の<b>例外パターン</b>。バリデーション失敗時は<b>redirectしない</b>のが正解。理由を整理します。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD #03</span>
+    <div class="term-card-title">エラー時の挙動（PRGの例外）</div>
+    <div class="term-card-sub">バリデーションエラー時は redirect ではなく forward</div>
+    <dl class="term-grid">
+      <dt>通常のPRG</dt>
+      <dd>POST → 処理 → <code>return "redirect:/...";</code> → ブラウザが GET を送り直す → 新画面表示</dd>
+      <dt>エラー時の例外</dt>
+      <dd>POST → 検証失敗 → <code>return "tasks/new";</code>（テンプレート名直接） → 同じ画面を<b>同じURL</b>で表示<br>
+        ★ <b>redirectしない</b>のが特徴</dd>
+      <dt>なぜredirectしないか</dt>
+      <dd><b>redirectすると Model の中身が消える</b>。<br>
+        エラー情報、入力値、BindingResultはすべて<b>1リクエスト内</b>でしか保持されない。redirectすると<b>新しいリクエスト</b>になり、これらが全部失われる。<br>
+        → エラーメッセージも消える、入力値も消える、ユーザーが<b>最初から入力し直し</b>に
+      </dd>
+      <dt>テンプレート直接返す挙動</dt>
+      <dd>これは<b>暗黙のforward</b>。サーバ内部でテンプレートをレンダリングしてHTMLを返す。Model の中身は保持されたまま。
+      </dd>
+      <dt>業界の通称</dt>
+      <dd>「<b>バリデーションエラー時はforward、成功時はredirect</b>」── 業界の常識的パターン。
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prg-with-validation</span>
+      <span class="tag-desc">バリデーション付きPRGの全体像</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 成功時 vs 失敗時のフロー差</div>
+
+<div class="flow-v2"><span class="flow-step">★ バリデーション成功時（PRG通常）</span>
+
+<span class="flow-step"><span class="flow-actor">Controller</span> が <span class="flow-actor">Service</span> に <span class="flow-call">登録処理を依頼</span><span class="flow-label-call">行き</span></span>
+
+<span class="flow-step"><span class="flow-actor">Service</span> が <span class="flow-actor">DB</span> に <span class="flow-call">INSERT実行</span><span class="flow-label-call">行き</span></span>
+
+<span class="flow-step"><span class="flow-actor">Controller</span> が <span class="flow-actor">ブラウザ</span> に <span class="flow-return">redirect指示を返す</span><span class="flow-label-return">帰り</span></span>
+<span class="flow-arg">return "redirect:/tasks" → HTTP 302</span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">サーバ</span> に <span class="flow-call">GET /tasks を送信</span><span class="flow-label-call">行き（新リクエスト）</span></span>
+<span class="flow-arg">★ 新リクエストなのでModel空っぽに（問題なし）</span>
+
+<span class="flow-step">一覧画面表示</span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ バリデーション失敗時（PRG例外パターン）</span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">BindingResult</span> に <span class="flow-return">エラー情報を格納</span><span class="flow-label-return">帰り</span></span>
+<span class="flow-arg">内容: title=「必須項目です」のエラー</span>
+
+<span class="flow-step"><span class="flow-actor">Controller</span> が <span class="flow-actor">BindingResult</span> の <span class="flow-call">hasErrors() を確認</span></span>
+<span class="flow-arg">true が返る</span>
+
+<span class="flow-step"><span class="flow-actor">Controller</span> が <span class="flow-actor">ブラウザ</span> に <span class="flow-return">フォームHTMLを返す</span><span class="flow-label-return">帰り（同リクエスト内）</span></span>
+<span class="flow-arg">return "tasks/new" → forward でテンプレート描画</span>
+<span class="flow-arg">Modelには taskForm（入力値）と BindingResult（エラー）が入っている</span>
+
+<span class="flow-step"><span class="flow-actor">Thymeleaf</span> が <span class="flow-actor">Model</span> から <span class="flow-call">値を読み取って描画</span></span>
+<span class="flow-arg">入力値を value に、エラーを赤字に表示</span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">ユーザー</span> に <span class="flow-call">エラー入りフォームを表示</span></span>
+<span class="flow-arg">「タイトルは必須です」など赤字、入力値は保持されたまま</span></div>
+      </div>
+      <div class="code"><span class="code-head">// Controllerコード対比</span>
+
+<span class="comment">// === 成功時（PRG通常）===</span>
+<span class="kw">if</span> (!bindingResult.<span class="fn">hasErrors</span>()) {
+  taskService.<span class="fn">register</span>(taskForm);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+  <span class="comment">// ↑ 別URLへリダイレクト</span>
+  <span class="comment">// → 新リクエスト → Model消える(問題ない)</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// === 失敗時（PRGの例外） ===</span>
+<span class="kw">if</span> (bindingResult.<span class="fn">hasErrors</span>()) {
+  <span class="kw">return</span> <span class="str">"tasks/new"</span>;
+  <span class="comment">// ↑ テンプレート名を直接返す</span>
+  <span class="comment">// → forward でレンダリング</span>
+  <span class="comment">// → Modelは保持される</span>
+  <span class="comment">// → 入力値もエラー情報も表示できる</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// なぜModelが大事か</span>
+
+<span class="comment">// Spring の Modelの中身（エラー時）:</span>
+
+Model{
+  <span class="str">"taskForm"</span>: TaskForm{title=""},
+  <span class="comment">// ↑ ユーザーが入力した値</span>
+
+  <span class="str">"org.springframework.validation.</span>
+<span class="str">  BindingResult.taskForm"</span>: BindingResult{
+    errors: [
+      {field=<span class="str">"title"</span>,
+       code=<span class="str">"NotBlank"</span>,
+       message=<span class="str">"必須項目です"</span>}
+    ]
+  }
+}
+
+<span class="comment">// → Thymeleafがこれを読んで:</span>
+<span class="comment">//   1. inputに value="" を入れる</span>
+<span class="comment">//   2. エラーメッセージを表示</span>
+
+
+<span class="code-head" style="margin-top:18px">// redirectしてしまうと…</span>
+
+<span class="bad">// ✗ NG例</span>
+<span class="kw">if</span> (bindingResult.<span class="fn">hasErrors</span>()) {
+  <span class="kw">return</span> <span class="str">"redirect:/tasks/new"</span>;
+  <span class="comment">// ↑ ブラウザが GET /tasks/new を送る</span>
+  <span class="comment">// → 新リクエスト = 新Model</span>
+  <span class="comment">// → エラー情報も入力値も消える</span>
+  <span class="comment">// → ユーザーが空っぽのフォームを見る</span>
+  <span class="comment">// → 何がエラーだったか分からない</span>
+}
+
+<span class="comment">// → だから「エラー時はforward」</span>
+<span class="comment">//   が業界の鉄則</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「Modelは1リクエスト内のみ」</div>
+    <p>Spring の <code>Model</code> は<b>1リクエストの中だけ生きる</b>。リクエストが終わるとゴミ箱行き。なので<b>「リダイレクトを挟むとModelが消える」</b>のは Spring の根本仕様。バリデーションエラー時は <b>同じリクエスト内で処理を終える</b>必要があり、それが<code>return "tasks/new";</code> という<b>テンプレート直接返却</b>なのです。深い仕組みは別冊で。</p>
+  </div>
+</section>
+
+<section id="add-constraints">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>TaskForm / TaskEditForm に制約を付ける</h2>
+    <span class="en">ADD CONSTRAINTS TO FORMS</span>
+  </div>
+  <p class="pattern-desc">最初の作業は<b>Formクラスへの制約付与</b>。<code>@NotBlank</code>と<code>@Size(max=100)</code>の2つだけ。シンプルですが、<b>業務品質の第一歩</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">step-pom-check</span>
+      <span class="tag-desc">事前確認：pom.xml に Validation依存があるか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// pom.xml の確認</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">Validation 依存の確認</div>
+          <ol>
+            <li><code>pom.xml</code> を開く</li>
+            <li><code>spring-boot-starter-validation</code> を検索</li>
+            <li>あれば OK。なければ追加が必要</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>無い場合</b>： <code>&lt;dependencies&gt;</code> 内に以下を追加：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">&lt;dependency&gt;
+  &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+  &lt;artifactId&gt;spring-boot-starter-validation&lt;/artifactId&gt;
+&lt;/dependency&gt;</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px">追加後、Mavenを更新（プロジェクト右クリック → <span class="menu">Maven</span> → <span class="menu">Update Project</span>、または <span class="key">Alt</span>+<span class="key">F5</span>）。</p>
+
+        <div style="background:rgba(218,165,90,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent)">
+          <b>POINT</b>：依存が無いと <code>@NotBlank</code> 等のアノテーションが効きません。<b>サイレントに無視される</b>のが厄介。「動いてるけどバリデーションが効いてない」時は、まず依存を確認。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// pom.xml の典型的な配置</span>
+
+<span class="tag">&lt;dependencies&gt;</span>
+  <span class="tag">&lt;dependency&gt;</span>
+    <span class="tag">&lt;groupId&gt;</span>org.springframework.boot<span class="tag">&lt;/groupId&gt;</span>
+    <span class="tag">&lt;artifactId&gt;</span>spring-boot-starter-web<span class="tag">&lt;/artifactId&gt;</span>
+  <span class="tag">&lt;/dependency&gt;</span>
+
+  <span class="tag">&lt;dependency&gt;</span>
+    <span class="tag">&lt;groupId&gt;</span>org.springframework.boot<span class="tag">&lt;/groupId&gt;</span>
+    <span class="tag">&lt;artifactId&gt;</span>spring-boot-starter-validation<span class="tag">&lt;/artifactId&gt;</span>
+  <span class="tag">&lt;/dependency&gt;</span>           <span class="comment">// ↑ これが必要</span>
+
+  <span class="tag">&lt;dependency&gt;</span>
+    <span class="tag">&lt;groupId&gt;</span>org.springframework.boot<span class="tag">&lt;/groupId&gt;</span>
+    <span class="tag">&lt;artifactId&gt;</span>spring-boot-starter-thymeleaf<span class="tag">&lt;/artifactId&gt;</span>
+  <span class="tag">&lt;/dependency&gt;</span>
+
+  <span class="comment">// 他にMyBatis、MySQL、Lombokなど...</span>
+<span class="tag">&lt;/dependencies&gt;</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">step-taskform</span>
+      <span class="tag-desc">TaskForm に制約を付ける</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">TaskForm.java を修正</div>
+          <ol>
+            <li><code>com.example.todo.form.TaskForm.java</code> を開く</li>
+            <li><code>title</code>フィールドに <code>@NotBlank</code> と <code>@Size(max = 100)</code> を追加</li>
+            <li><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> でimport補完</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:14px;font-weight:700;color:#c43;margin:18px 0 6px">⚠ import に注意</p>
+
+        <p style="font-size:13.5px;line-height:1.85">Eclipse の import 補完で、<b>2つの候補</b>が出ることがあります：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b><code>jakarta.validation.constraints.NotBlank</code></b> ← Spring Boot 3.x で正解</li>
+          <li><code>javax.validation.constraints.NotBlank</code> ← 旧 (Spring Boot 2.x)</li>
+        </ul>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>必ず <code>jakarta</code> を選ぶ</b>。<code>javax</code>を選ぶとアノテーションが認識されず<b>サイレントに無視</b>される（Vol.3 ADDで学んだ「同名異クラスの罠」のVol.8版）。</p>
+      </div>
+      <div class="code"><span class="code-head">// 修正後の TaskForm.java（全体）</span>
+
+<span class="kw">package</span> com.example.todo.form;
+
+<span class="kw">import</span> jakarta.validation.constraints.NotBlank;
+<span class="kw">import</span> jakarta.validation.constraints.Size;
+<span class="comment">// ★ jakarta.* を使う（javax.* ではない）</span>
+
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+
+  <span class="ann">@NotBlank</span>                <span class="comment">// ★追加</span>
+  <span class="ann">@Size</span>(max = <span class="num">100</span>)        <span class="comment">// ★追加</span>
+  <span class="kw">private</span> <span class="type">String</span> title;
+
+}
+
+
+<span class="code-head" style="margin-top:18px">// 制約の意味</span>
+
+<span class="comment">// @NotBlank:</span>
+<span class="comment">//   nullを禁止</span>
+<span class="comment">//   空文字 "" を禁止</span>
+<span class="comment">//   空白だけ "  " も禁止</span>
+
+<span class="comment">// @Size(max = 100):</span>
+<span class="comment">//   String なら 100文字以内</span>
+<span class="comment">//   max のみ指定なので最小は0でもOK</span>
+<span class="comment">//   （min も指定可能、デフォルト 0）</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業務想定</span>
+
+<span class="comment">// タスクのタイトルとして:</span>
+<span class="comment">// ・空欄禁止 (@NotBlank)</span>
+<span class="comment">// ・あまりに長い文字列も禁止 (@Size max=100)</span>
+
+<span class="comment">// DBの定義 (VARCHAR(100)) と</span>
+<span class="comment">// 合わせている</span>
+<span class="comment">// → アプリ側で先に弾く方が UX良い</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">step-taskeditform</span>
+      <span class="tag-desc">TaskEditForm にも同じ制約</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">TaskEditForm.java を修正</div>
+          <ol>
+            <li><code>com.example.todo.form.TaskEditForm.java</code> を開く</li>
+            <li>同じく <code>title</code> に <code>@NotBlank</code> と <code>@Size(max = 100)</code></li>
+            <li><code>id</code> と <code>done</code> には<b>制約を付けない</b>（hidden inputで送られてくる内部情報）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> でimport補完（jakarta.* を選ぶ）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>：<b>新規登録（TaskForm）と編集（TaskEditForm）に同じ制約</b>を付けるのが業界標準。<b>業務ルールは同じ</b>なので、Formが違っても制約は揃えます。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 修正後の TaskEditForm.java（全体）</span>
+
+<span class="kw">package</span> com.example.todo.form;
+
+<span class="kw">import</span> jakarta.validation.constraints.NotBlank;
+<span class="kw">import</span> jakarta.validation.constraints.Size;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskEditForm</span> {
+
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="comment">// idには制約なし</span>
+  <span class="comment">// hidden inputから送られる内部値</span>
+
+  <span class="ann">@NotBlank</span>
+  <span class="ann">@Size</span>(max = <span class="num">100</span>)
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="comment">// titleには新規登録と同じ制約</span>
+
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+  <span class="comment">// doneにも制約なし</span>
+  <span class="comment">// checkboxからtrue/falseが来るだけ</span>
+
+}
+
+
+<span class="code-head" style="margin-top:18px">// 「同じ業務ルール = 同じ制約」</span>
+
+<span class="comment">// 新規登録時のtitle:</span>
+<span class="comment">//   ・必須</span>
+<span class="comment">//   ・100文字以内</span>
+
+<span class="comment">// 編集時のtitle:</span>
+<span class="comment">//   ・必須（変えて空にできない）</span>
+<span class="comment">//   ・100文字以内</span>
+
+<span class="comment">// → 両Formで同じ制約を付ける</span>
+
+
+<span class="code-head" style="margin-top:18px">// もし業務ルールが違うなら…</span>
+
+<span class="comment">// 例: 新規登録は20文字、編集は100文字</span>
+<span class="comment">//     → それぞれのFormに違う @Size を付ける</span>
+
+<span class="comment">// 例: 編集時は空欄でも済む</span>
+<span class="comment">//     → @NotBlank を外す</span>
+
+<span class="comment">// 「業務要件」に合わせて柔軟に</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「制約はクラスのドキュメント」</div>
+    <p>Form クラスを開けば<b>業務ルールが一目で分かる</b>── これがBean Validationの最大の利点。「<b>titleは必須で100文字以内</b>」という業務ルールが、コードを読むだけで伝わります。新人が引き継いだ時も<b>Formを読めば仕様が分かる</b>── これは強力な資産です。</p>
+  </div>
+</section>
+
+<section id="update-controller">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>Controller に @Valid と BindingResult を導入する</h2>
+    <span class="en">ADD @VALID TO CONTROLLER</span>
+  </div>
+  <p class="pattern-desc"><code style="font-family:'JetBrains Mono'">TaskController</code>の<b>新規登録と更新の2メソッド</b>に <code>@Valid</code> と <code>BindingResult</code> を導入します。エラー時は<b>テンプレート名を直接返す</b>。完了切替・削除には<b>不要</b>（入力フォームを伴わないため）。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">step-controller</span>
+      <span class="tag-desc">Controllerを修正する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">TaskController.java を修正</div>
+          <ol>
+            <li><code>com.example.todo.controller.TaskController.java</code> を開く</li>
+            <li><code>create()</code> メソッドに <code>@Valid</code> と <code>BindingResult</code> を追加</li>
+            <li><code>update()</code> メソッドにも同じく追加</li>
+            <li>エラー時に <code>return "tasks/new";</code>（または <code>"tasks/edit"</code>）を返す分岐を入れる</li>
+            <li>imports（<code>@Valid</code>、<code>BindingResult</code>）を確認</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>変更点のポイント</b>：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><code>create()</code>: 引数に <code>@Valid TaskForm taskForm, BindingResult bindingResult</code></li>
+          <li><code>update()</code>: 引数に <code>@PathVariable Long id, @Valid TaskEditForm taskEditForm, BindingResult bindingResult</code></li>
+          <li>両方とも、エラー時は<b>テンプレート名を返す</b>（redirectしない）</li>
+          <li>完了切替・削除は<b>そのまま</b>（入力フォーム不要）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 修正後の TaskController.java（主要部分）</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> jakarta.validation.Valid;  <span class="comment">// ★追加</span>
+
+<span class="kw">import</span> org.springframework.stereotype.Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.validation.BindingResult; <span class="comment">// ★追加</span>
+<span class="kw">import</span> org.springframework.web.bind.annotation.*;
+
+<span class="kw">import</span> com.example.todo.entity.Task;
+<span class="kw">import</span> com.example.todo.form.TaskEditForm;
+<span class="kw">import</span> com.example.todo.form.TaskForm;
+<span class="kw">import</span> com.example.todo.service.TaskService;
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">TaskController</span> {
+
+  <span class="kw">private final</span> <span class="type">TaskService</span> taskService;
+
+  <span class="kw">public</span> <span class="fn">TaskController</span>(<span class="type">TaskService</span> taskService) {
+    <span class="kw">this</span>.taskService = taskService;
+  }
+
+  <span class="comment">// 一覧（変更なし）</span>
+  <span class="comment">// 新規登録フォーム表示（変更なし）</span>
+
+
+  <span class="comment">// 新規登録実行（Vol.8で修正）</span>
+  <span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+      <span class="ann">@Valid</span> <span class="type">TaskForm</span> taskForm,
+      <span class="type">BindingResult</span> bindingResult) {
+
+    <span class="kw">if</span> (bindingResult.<span class="fn">hasErrors</span>()) {
+      <span class="kw">return</span> <span class="str">"tasks/new"</span>;
+      <span class="comment">// ★ redirectしない</span>
+    }
+
+    taskService.<span class="fn">register</span>(taskForm);
+    <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+  }
+
+
+  <span class="comment">// 編集フォーム表示（変更なし）</span>
+
+
+  <span class="comment">// 更新実行（Vol.8で修正）</span>
+  <span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">update</span>(
+      <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+      <span class="ann">@Valid</span> <span class="type">TaskEditForm</span> taskEditForm,
+      <span class="type">BindingResult</span> bindingResult) {
+
+    <span class="kw">if</span> (bindingResult.<span class="fn">hasErrors</span>()) {
+      <span class="kw">return</span> <span class="str">"tasks/edit"</span>;
+      <span class="comment">// ★ redirectしない</span>
+    }
+
+    taskService.<span class="fn">update</span>(taskEditForm);
+    <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+  }
+
+
+  <span class="comment">// 完了切替（変更なし）</span>
+  <span class="comment">// 削除（変更なし）</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// 引数順の確認</span>
+
+<span class="comment">// ✓ 正しい順</span>
+<span class="fn">create</span>(<span class="ann">@Valid</span> <span class="type">TaskForm</span> taskForm,
+       <span class="type">BindingResult</span> bindingResult)
+       <span class="comment">// @Valid のすぐ後 ↑</span>
+
+<span class="fn">update</span>(<span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+       <span class="ann">@Valid</span> <span class="type">TaskEditForm</span> form,
+       <span class="type">BindingResult</span> bindingResult)
+       <span class="comment">// @Valid のすぐ後 ↑</span>
+
+
+<span class="comment">// ✗ NG（間違った順）</span>
+<span class="fn">create</span>(<span class="ann">@Valid</span> <span class="type">TaskForm</span> taskForm,
+       <span class="type">Model</span> model,             <span class="bad">// 間に挟まる</span>
+       <span class="type">BindingResult</span> bindingResult)</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「完了切替・削除には不要」</div>
+    <p>Vol.7で作った<b>完了切替</b>と<b>削除</b>は<b>入力フォームを持たない</b>（IDだけPathVariableで受ける）ので、バリデーション不要です。<code>@Valid</code> は<b>フォーム入力</b>を伴うメソッドにだけ付ける。<b>「入力検証が必要な場面で使う」</b>と覚えてください。</p>
+  </div>
+</section>
+
+<section id="update-templates">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>new.html / edit.html にエラー表示を追加する</h2>
+    <span class="en">ADD ERROR DISPLAY TO TEMPLATES</span>
+  </div>
+  <p class="pattern-desc">最後はテンプレート側。<b>エラーメッセージを表示する要素</b>を追加します。<code>th:if</code> で<b>エラーがある時だけ表示</b>、<code>th:errors</code> で<b>メッセージ内容</b>を出力。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">step-new-html</span>
+      <span class="tag-desc">new.html にエラー表示</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// new.html の修正</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">new.html を修正</div>
+          <ol>
+            <li><code>templates/tasks/new.html</code> を開く</li>
+            <li><code>&lt;input th:field="*{title}"&gt;</code> の直後に<b>エラー表示用要素</b>を追加</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>追加する要素の解説</b>：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6"><span class="tag">&lt;span</span>
+  <span class="attr">th:if</span>=<span class="str">"${#fields.hasErrors('title')}"</span>
+  <span class="attr">th:errors</span>=<span class="str">"*{title}"</span>
+  <span class="attr">style</span>=<span class="str">"color:red"</span><span class="tag">&gt;&lt;/span&gt;</span></pre>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:10px">
+          <li><b><code>th:if="${#fields.hasErrors('title')}"</code></b>：title フィールドにエラーがある時だけ表示</li>
+          <li><b><code>th:errors="*{title}"</code></b>：title フィールドのエラーメッセージを出力</li>
+          <li><b><code>style="color:red"</code></b>：見やすく赤字に</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 修正後の new.html（主要部分）</span>
+
+<span class="tag">&lt;!DOCTYPE html&gt;</span>
+<span class="tag">&lt;html</span> <span class="attr">xmlns:th</span>=<span class="str">"http://www.thymeleaf.org"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;head&gt;</span>
+  <span class="tag">&lt;meta</span> <span class="attr">charset</span>=<span class="str">"UTF-8"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;title&gt;</span>新規登録<span class="tag">&lt;/title&gt;</span>
+<span class="tag">&lt;/head&gt;</span>
+<span class="tag">&lt;body&gt;</span>
+  <span class="tag">&lt;h1&gt;</span>タスク新規登録<span class="tag">&lt;/h1&gt;</span>
+
+  <span class="tag">&lt;form</span> <span class="attr">th:action</span>=<span class="str">"@{/tasks}"</span>
+        <span class="attr">th:object</span>=<span class="str">"${taskForm}"</span>
+        <span class="attr">method</span>=<span class="str">"post"</span><span class="tag">&gt;</span>
+
+    <span class="tag">&lt;p&gt;</span>
+      <span class="tag">&lt;label&gt;</span>
+        タイトル:
+        <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span>
+               <span class="attr">th:field</span>=<span class="str">"*{title}"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;/label&gt;</span>
+
+      <span class="comment">&lt;!-- ★ エラー表示追加 --&gt;</span>
+      <span class="tag">&lt;span</span>
+        <span class="attr">th:if</span>=<span class="str">"${#fields.hasErrors('title')}"</span>
+        <span class="attr">th:errors</span>=<span class="str">"*{title}"</span>
+        <span class="attr">style</span>=<span class="str">"color:red"</span><span class="tag">&gt;&lt;/span&gt;</span>
+    <span class="tag">&lt;/p&gt;</span>
+
+    <span class="tag">&lt;p&gt;</span>
+      <span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="str">"submit"</span><span class="tag">&gt;</span>登録<span class="tag">&lt;/button&gt;</span>
+    <span class="tag">&lt;/p&gt;</span>
+  <span class="tag">&lt;/form&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    <span class="tag">&lt;a</span> <span class="attr">th:href</span>=<span class="str">"@{/tasks}"</span><span class="tag">&gt;</span>一覧に戻る<span class="tag">&lt;/a&gt;</span>
+  <span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span>
+
+
+<span class="code-head" style="margin-top:18px">// エラー発生時の出力</span>
+
+<span class="comment">// taskForm.title="" を送信した場合:</span>
+
+<span class="tag">&lt;p&gt;</span>
+  <span class="tag">&lt;label&gt;</span>
+    タイトル:
+    <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span>
+           <span class="attr">id</span>=<span class="str">"title"</span> <span class="attr">name</span>=<span class="str">"title"</span>
+           <span class="attr">value</span>=<span class="str">""</span><span class="tag">&gt;</span>
+                  <span class="comment">// ↑ 入力値が保持される（空欄）</span>
+  <span class="tag">&lt;/label&gt;</span>
+
+  <span class="comment">&lt;!-- エラーがある時だけこのspanが出る --&gt;</span>
+  <span class="tag">&lt;span</span> <span class="attr">style</span>=<span class="str">"color:red"</span><span class="tag">&gt;</span>
+    must not be blank
+    <span class="comment">// ↑ デフォルトの英語メッセージ</span>
+    <span class="comment">// Section 09で日本語化する</span>
+  <span class="tag">&lt;/span&gt;</span>
+<span class="tag">&lt;/p&gt;</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">step-edit-html</span>
+      <span class="tag-desc">edit.html にも同じくエラー表示</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// edit.html の修正</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">edit.html を修正</div>
+          <ol>
+            <li><code>templates/tasks/edit.html</code> を開く</li>
+            <li><code>title</code> の <code>&lt;input&gt;</code> の直後に同じエラー表示要素を追加</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <div style="background:rgba(218,165,90,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent)">
+          <b>POINT</b>：new.html と edit.html で<b>同じパターン</b>。<code>th:if="${#fields.hasErrors('...')}"</code> + <code>th:errors="*{...}"</code> + <code>style="color:red"</code>のセット。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 修正後の edit.html（titleフィールド部分）</span>
+
+<span class="tag">&lt;form</span> <span class="attr">th:action</span>=<span class="str">"@{/tasks/{id}/edit(id=*{id})}"</span>
+      <span class="attr">th:object</span>=<span class="str">"${taskEditForm}"</span>
+      <span class="attr">method</span>=<span class="str">"post"</span><span class="tag">&gt;</span>
+
+  <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"hidden"</span> <span class="attr">th:field</span>=<span class="str">"*{id}"</span><span class="tag">&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    <span class="tag">&lt;label&gt;</span>
+      タイトル:
+      <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span>
+             <span class="attr">th:field</span>=<span class="str">"*{title}"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;/label&gt;</span>
+
+    <span class="comment">&lt;!-- ★ エラー表示追加 --&gt;</span>
+    <span class="tag">&lt;span</span>
+      <span class="attr">th:if</span>=<span class="str">"${#fields.hasErrors('title')}"</span>
+      <span class="attr">th:errors</span>=<span class="str">"*{title}"</span>
+      <span class="attr">style</span>=<span class="str">"color:red"</span><span class="tag">&gt;&lt;/span&gt;</span>
+  <span class="tag">&lt;/p&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    <span class="tag">&lt;label&gt;</span>
+      <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"checkbox"</span>
+             <span class="attr">th:field</span>=<span class="str">"*{done}"</span><span class="tag">&gt;</span>
+      完了
+    <span class="tag">&lt;/label&gt;</span>
+  <span class="tag">&lt;/p&gt;</span>
+
+  <span class="tag">&lt;p&gt;</span>
+    <span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="str">"submit"</span><span class="tag">&gt;</span>更新<span class="tag">&lt;/button&gt;</span>
+  <span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/form&gt;</span>
+
+
+<span class="code-head" style="margin-top:18px">// Thymeleaf のエラー関数</span>
+
+<span class="comment">// #fields.hasErrors('title')</span>
+<span class="comment">//   → title にエラーがあるか確認</span>
+
+<span class="comment">// #fields.hasErrors('*')</span>
+<span class="comment">//   → 全フィールドのエラー有無</span>
+
+<span class="comment">// #fields.hasErrors('${form名}', '*')</span>
+<span class="comment">//   → 特定form全体のエラー有無</span>
+
+
+<span class="code-head" style="margin-top:18px">// th:errors の動作</span>
+
+<span class="comment">// 該当フィールドのエラーメッセージを出力</span>
+<span class="comment">// 複数エラーがある場合はカンマ区切り</span>
+
+<span class="tag">&lt;span</span> <span class="attr">th:errors</span>=<span class="str">"*{title}"</span><span class="tag">&gt;&lt;/span&gt;</span>
+
+<span class="comment">// 出力例:</span>
+<span class="comment">// (エラーなし → 何も出ない)</span>
+<span class="comment">// (1個 → "must not be blank")</span>
+<span class="comment">// (2個 → "must not be blank, size must be...")</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「th:if と th:errors のペア」</div>
+    <p><code>th:if</code> 無しで <code>th:errors</code> だけだと、<b>エラーがない時に空のspanが描画される</b>（見た目には影響ないが汚い）。<code>th:if="${#fields.hasErrors(...)}"</code> を付けると、<b>エラー時だけ要素が描画される</b>。<b>「エラーがある時だけ赤字を出す」</b>のがクリーンな実装です。</p>
+  </div>
+</section>
+
+<section id="messages">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>messages.properties でメッセージをカスタマイズする</h2>
+    <span class="en">CUSTOMIZE ERROR MESSAGES</span>
+  </div>
+  <p class="pattern-desc">標準のエラーメッセージは<b>英語</b>（"must not be blank"等）。日本のユーザー向けには<b>日本語</b>で出したい。<code>messages.properties</code> ファイルを<b>新規作成</b>して、メッセージをカスタマイズします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">step-messages</span>
+      <span class="tag-desc">messages.properties を新規作成</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// messages.properties の作成</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">messages.properties を新規作成</div>
+          <ol>
+            <li><code>src/main/resources</code> フォルダを右クリック</li>
+            <li><span class="menu">新規(N)</span> → <span class="menu">ファイル</span></li>
+            <li>名前に <code>messages.properties</code> と入力</li>
+            <li><span class="menu">完了(F)</span></li>
+            <li>右のコードをコピペ（<b>UTF-8</b>で保存）</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">メッセージキーの命名規則</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:6px">Spring は以下の<b>優先順位</b>でメッセージを探します：</p>
+
+        <ol style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b>制約名.Form名.フィールド名</b> ← 最も具体的（推奨）<br>例：<code>NotBlank.taskForm.title</code></li>
+          <li><b>制約名.フィールド名</b> ← フィールドが共通名の時<br>例：<code>NotBlank.title</code></li>
+          <li><b>制約名.型名</b> ← 型ごとの汎用メッセージ<br>例：<code>NotBlank.java.lang.String</code></li>
+          <li><b>制約名</b> ← フォールバック<br>例：<code>NotBlank</code></li>
+        </ol>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>業務開発では最も具体的なパターン（1番）</b>で書くことが多い。<b>「どのフォームのどのフィールド」</b>を特定してメッセージを変えられるから。</p>
+      </div>
+      <div class="code"><span class="code-head">// src/main/resources/messages.properties</span>
+
+# === TaskForm（新規登録） ===
+NotBlank.taskForm.title=タイトルは必須です
+Size.taskForm.title=タイトルは{2}文字以内で入力してください
+
+# === TaskEditForm（編集） ===
+NotBlank.taskEditForm.title=タイトルは必須です
+Size.taskEditForm.title=タイトルは{2}文字以内で入力してください
+
+
+<span class="code-head" style="margin-top:18px">// プレースホルダの解説</span>
+
+<span class="comment">// {0} = フィールド名</span>
+<span class="comment">// {1} = max値（@Size の場合）</span>
+<span class="comment">// {2} = max値（{1}=max, {2}=max のことも）</span>
+<span class="comment">// 注: 制約により位置が違うので公式参照</span>
+
+<span class="comment">// @Size(max = 100) の場合:</span>
+<span class="comment">//   Size.taskForm.title=...{2}文字以内...</span>
+<span class="comment">//   → "100" に置換される</span>
+
+
+<span class="code-head" style="margin-top:18px">// 文字化け対策</span>
+
+<span class="comment">// messages.properties は</span>
+<span class="comment">// 必ず UTF-8 で保存する</span>
+
+<span class="comment">// Eclipse の保存時のエンコーディング設定:</span>
+<span class="comment">// Window → Preferences</span>
+<span class="comment">//  → General → Workspace</span>
+<span class="comment">//  → Text file encoding: UTF-8</span>
+
+<span class="comment">// または application.properties に:</span>
+<span class="comment">// spring.messages.encoding=UTF-8</span>
+
+
+<span class="code-head" style="margin-top:18px">// メッセージキーの優先順位（実例）</span>
+
+<span class="comment">// @NotBlank が title に付いた時、Springは:</span>
+
+1. NotBlank.taskForm.title  ← 探す
+2. NotBlank.title           ← 無ければ
+3. NotBlank.java.lang.String
+4. NotBlank                  ← 最終フォールバック
+5. (デフォルト英語メッセージ) ← どれもなければ
+
+<span class="comment">// 1番にヒットすればそれを使う</span>
+
+
+<span class="code-head" style="margin-top:18px">// 他のアノテーションへの対応</span>
+
+# @Email を使った場合
+Email.userForm.email=有効なメールアドレスを入力してください
+
+# @Min(18) を使った場合
+Min.userForm.age=18歳以上を入力してください
+
+# @Pattern を使った場合
+Pattern.userForm.phone=半角数字で入力してください
+
+<span class="comment">// すべて「制約名.Form名.フィールド名」のパターン</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「UTF-8で保存」</div>
+    <p><code>messages.properties</code> は<b>必ずUTF-8で保存</b>。日本語が文字化けすると<code>"???????"</code>のような表示になります。Eclipse の<b>デフォルトエンコーディング設定</b>を確認しておきましょう（Window → Preferences → General → Workspace → Text file encoding: UTF-8）。プロパティファイルは<b>古い慣習でISO-8859-1</b>だったので、Spring Boot 3.x でもデフォルト挙動を確認すべきです。</p>
+  </div>
+</section>
+
+<section id="runcheck">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>🚀 ブラウザで動かして確認</h2>
+    <span class="en">RUN AND VERIFY</span>
+  </div>
+  <p class="pattern-desc">いよいよ動作確認。<b>空欄送信、長文送信、正常送信</b>の3パターンを試して、それぞれの挙動を確認します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol-8-runcheck</span>
+      <span class="tag-desc">動作確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動作確認の流れ</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">A. 空欄送信の確認（@NotBlank）</div>
+          <ol>
+            <li>保存後、DevToolsの自動再起動を待つ</li>
+            <li>ブラウザで <code>http://localhost:8080/tasks/new</code></li>
+            <li>タイトルを<b>空欄のまま</b>「登録」</li>
+            <li>同じ画面に戻り、<b>「タイトルは必須です」</b>が赤字で表示される</li>
+            <li>URL が <code>/tasks</code> ではなく <code>/tasks/new</code> のまま（redirectしていない）</li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">B. 長文送信の確認（@Size）</div>
+          <ol>
+            <li>タイトルに <b>101文字</b>を入力（「あ」を 101 回など）</li>
+            <li>「登録」をクリック</li>
+            <li>同じ画面に戻り、<b>「タイトルは100文字以内で入力してください」</b>が赤字で表示</li>
+            <li>入力した文字は<b>保持されている</b></li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">C. 正常送信の確認</div>
+          <ol>
+            <li>タイトルに「テストタスク」（普通の値）</li>
+            <li>「登録」をクリック</li>
+            <li>正常にDB登録され、<code>/tasks</code> へリダイレクト</li>
+            <li>一覧に新タスクが表示される</li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">D. 編集画面でも確認</div>
+          <ol>
+            <li>既存タスクの「編集」リンクをクリック</li>
+            <li>タイトルを空欄に変更して「更新」</li>
+            <li>編集画面に戻り、エラーメッセージ表示</li>
+            <li>同じく101文字でもエラー</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13px;margin-top:14px;line-height:1.85"><b>確認チェックリスト：</b></p>
+        <ul class="checklist">
+          <li>空欄送信で<b>「タイトルは必須です」</b>が日本語で表示される</li>
+          <li>101文字送信で<b>「100文字以内で...」</b>が表示される</li>
+          <li>エラー時に<b>入力値が保持される</b>（再入力不要）</li>
+          <li>エラー時に<b>URL がフォームのまま</b>（redirectしていない）</li>
+          <li>正常入力時のみ <b>DB登録 + redirect</b>される</li>
+          <li>新規登録・編集の<b>両方</b>でバリデーションが効く</li>
+          <li>ERRORログが出ていない（バリデーションエラーは ERROR ではなく WARN または無し）</li>
+        </ul>
+
+        <div style="background:#fff;border-left:3px solid var(--accent-4);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.8完了！</b> <b>業務品質への階段</b>の最初の一段を登りました。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 期待される画面遷移</span>
+
+[1] /tasks/new                新規登録画面
+    ┌──────────────────┐
+    │ タイトル: [       ]   │ ← 空欄のまま
+    │ [登録]               │
+    └──────────────────┘
+          ↓ POST /tasks
+[2] /tasks/new                同じ画面（forward）
+    ┌──────────────────┐
+    │ タイトル: [       ]   │
+    │ <span class="bad">タイトルは必須です</span> │ ← 赤字エラー
+    │ [登録]               │
+    └──────────────────┘
+
+[3] タイトル入力後の「登録」
+    ┌──────────────────┐
+    │ タイトル: [テスト] │
+    │ [登録]               │
+    └──────────────────┘
+          ↓ POST /tasks
+[4] /tasks                    一覧画面（redirect）
+    ┌──────────────────┐
+    │ ID  | タイトル        │
+    │ 1   | テスト          │ ← 登録成功
+    └──────────────────┘
+
+
+<span class="code-head" style="margin-top:18px">// 期待されるコンソールログ</span>
+
+<span class="comment">// 空欄送信時:</span>
+
+DEBUG ... InvalidArgumentException...
+       <span class="comment">// バリデーションエラーは例外として認識</span>
+
+<span class="comment">// 通常の処理ログは出ない</span>
+<span class="comment">// (Mapper呼び出しまで届かない)</span>
+
+<span class="comment">// → Controllerで早期 return しているため</span>
+
+
+<span class="comment">// 正常送信時:</span>
+
+DEBUG TaskMapper.insert
+  ==&gt; Preparing: INSERT INTO tasks ...
+  ==&gt; Parameters: テストタスク(String)
+  &lt;==    Updates: 1
+DEBUG TaskMapper.findAll  ← redirect後の一覧取得
+  ==&gt; Preparing: SELECT ...
+  &lt;==      Total: N</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「動かして体感する大切さ」</div>
+    <p>バリデーションは<b>「動かして確認」</b>がとても重要です。コードを書いただけでは、エラーメッセージが日本語で表示されるか、入力値が保持されるか、redirectしないかなど<b>細かい挙動</b>が分かりません。<b>「空欄、長文、正常」</b>の3パターンを実際にやって、<b>「業務で使えるバリデーション」</b>の感覚を体に刻んでください。</p>
+  </div>
+</section>
+
+<section id="pitfalls">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>ハマりどころ（因果で説明）</h2>
+    <span class="en">PITFALLS — CAUSE &amp; EFFECT</span>
+  </div>
+  <p class="pattern-desc">Vol.8のハマりは<b>「依存」「import」「引数順」「redirect」「文字コード」</b>の5軸に分布。すべて<b>初心者の通過儀礼</b>です。</p>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 1 ── @NotBlank を付けたのに空欄登録できてしまう</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      Formに <code>@NotBlank</code> を付けてもバリデーションが<b>効かない</b>。空欄でも登録成功してしまう。
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      ① <code>pom.xml</code> に <code>spring-boot-starter-validation</code> 依存が無い、または<br>
+      ② Controller に <code>@Valid</code> を書き忘れた、または<br>
+      ③ import を <code>javax.validation.*</code>（旧）にしてしまった（Spring Boot 3.x は <code>jakarta.validation.*</code>）
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      ① <code>pom.xml</code> に依存を追加して<b>Maven Update</b><br>
+      ② Controllerの引数に <code>@Valid TaskForm taskForm</code> を確認<br>
+      ③ import文を確認し、<b>jakarta.* に統一</b>
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 2 ── エラー画面に行ってしまう（MethodArgumentNotValidException）</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      空欄送信すると<b>Whitelabel Error Page (500)</b>が表示される。コンソールに <code>MethodArgumentNotValidException</code>。
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <code>@Valid</code> はあるが <code>BindingResult</code> が<b>無い</b>、または<b>引数順が間違っている</b>（Validの直後にBindingResultが無い）。Springが例外を投げてしまう。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      <code>BindingResult bindingResult</code> を<b><code>@Valid</code>のすぐ後</b>に置く。他の引数（<code>Model</code>等）を間に挟まない。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 3 ── エラー時にも一覧画面に遷移してしまう（入力値消失）</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      空欄送信時に<b>一覧画面にリダイレクト</b>される。エラーメッセージも表示されない。
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <code>if (bindingResult.hasErrors())</code> の分岐で <code>return "redirect:/...";</code> と書いてしまった。redirect は新しいリクエストになり、Model（エラー情報・入力値）が<b>消える</b>。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      エラー時は <b><code>return "tasks/new";</code></b>（テンプレート名だけ）にする。<b>「エラー時はforward、成功時はredirect」</b>が鉄則。
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 4 ── エラーメッセージが英語のまま表示される</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      バリデーションエラーは表示されるが、メッセージが <b>"must not be blank"</b> のまま日本語にならない。
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      ① <code>messages.properties</code> が存在しない、または<br>
+      ② キーの命名が間違っている（<code>NotBlank.taskform.title</code> のように小文字始まりにしてしまった等）、または<br>
+      ③ <code>src/main/resources</code> ではなく別の場所に置いた
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      ① ファイルを <code>src/main/resources</code> 直下に置く<br>
+      ② キー名は<b>制約名.Form名（キャメルケース）.フィールド名</b>（例：<code>NotBlank.taskForm.title</code>）<br>
+      ③ アプリ再起動してファイル変更を反映
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠ ハマり 5 ── 日本語メッセージが文字化けする</div>
+    <div class="pitfall-block pitfall-symptom">
+      <span class="pitfall-label">SYMPTOM</span>
+      日本語メッセージが <code>???????</code> や <code>譁?字?</code> のように文字化けする
+    </div>
+    <div class="pitfall-block pitfall-cause">
+      <span class="pitfall-label">CAUSE</span>
+      <code>messages.properties</code> が<b>UTF-8以外</b>（Shift-JIS、ISO-8859-1等）で保存されている。Eclipse のデフォルト保存エンコーディングが古い設定のまま。
+    </div>
+    <div class="pitfall-block pitfall-fix">
+      <span class="pitfall-label">FIX</span>
+      ① Eclipse 設定で <b>Text file encoding</b> を UTF-8 に変更<br>
+      ② または <code>application.properties</code> に <code>spring.messages.encoding=UTF-8</code> を追加<br>
+      ③ ファイルを開き直して<b>UTF-8で再保存</b>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「バリデーションは初心者の登竜門」</div>
+    <p>Vol.8のハマりはすべて<b>初心者必修の経験</b>です。<b>「Validation依存忘れ」「import違い」「引数順違反」「redirect間違い」「文字化け」</b>── どれも<b>実務で遭遇する典型的な落とし穴</b>。一度経験しておくと、業務でも<b>即座に原因がわかる</b>ようになります。Vol.3 ADD で学んだ<b>9ステップ思考フロー</b>がここでも活躍します。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+  <div class="tip-label">NEXT STEP ── VOL.9</div>
+  <p>お疲れさまでした。Vol.8で<b>バリデーション</b>を獲得しました。<b>「業務品質への階段」</b>の最初の一段を登り、CRUDアプリが<b>「動くだけ」から「不正入力に強い」</b>へと進化しました。<br><br>
+  「<b>クライアント側 vs サーバ側の使い分けは?</b>」「<b>カスタムバリデーターはどう作る?</b>」「<b>業務ルールと入力検証の境界は?</b>」── これらの<b>「なぜ・どう設計するか」</b>に答えるのが<b>Vol.8 別冊（ADD）「バリデーション設計の思想」</b>です。本編で動かせた今、別冊で<b>設計感覚</b>を養うベストタイミング。<br><br>
+  次のVol.9では<b>例外処理</b>を整えます。「DBが落ちた」「存在しないIDで編集を試みた」「想定外のエラー」── これらの<b>「予期しない事態」</b>を業務的に扱う仕組み。<code>@ControllerAdvice</code>、<code>@ExceptionHandler</code>、独自例外クラス── 新しい仲間が登場します。CRUDの<b>守りを固める</b>2つ目の品質向上です。お楽しみに。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.08 / 10 ── INPUT VALIDATION</span>
+</footer>
+
+</body>
+</html>

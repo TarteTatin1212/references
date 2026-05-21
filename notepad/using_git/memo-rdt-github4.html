@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕GitHub版 Vol.4 Issueとタスク管理</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2f38;
+  --paper:#f0ede4;
+  --paper-2:#e2ddc8;
+  --accent:#c95444;
+  --accent-2:#5a6270;
+  --accent-3:#2da44e;
+  --muted:#6a7080;
+  --line:#cac4b2;
+  --code-bg:#1c2026;
+  --code-text:#e8e4dc;
+  --panel-bg:#faf5e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"⎇";position:absolute;right:-10px;top:-30px;font-size:300px;color:var(--accent);opacity:0.17;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-2);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.prompt{color:#7eb87e}
+.gh-out{color:#a8b8c8}
+.key{background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(201,84,68,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-2);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff;font-size:12.5px}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-2);font-family:'JetBrains Mono',monospace}
+.gh-mock{background:#0d1117;color:#c9d1d9;border:1px solid #2a313a;border-radius:6px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.75;margin:8px 0}
+.gh-mock .gh-bar{color:#7d8590;border-bottom:1px solid #2a313a;padding-bottom:6px;margin-bottom:8px;font-size:11px}
+.gh-mock .gh-col{color:#7d8590;font-weight:700;border-bottom:1px solid #2a313a;padding-bottom:4px;margin-bottom:6px}
+.gh-mock .gh-card{background:#161b22;border:1px solid #2a313a;border-radius:4px;padding:6px 8px;margin:4px 0;font-size:11px}
+.gh-mock .gh-label{display:inline-block;padding:0px 6px;border-radius:8px;font-size:9.5px;margin:1px}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.GH4</span>
+    <span class="kind-tag">GitHub版 ── ISSUE &amp; TASK</span>
+    <span class="rdt-tag">BACKLOG MANAGEMENT</span>
+  </div>
+  <h1>Issue とタスク管理<br>要求を見える化する</h1>
+  <div class="subtitle">GH.04 ── ISSUE, LABEL, MILESTONE &amp; PROJECT</div>
+  <p class="lead">Vol.GH1〜3 で<b>1つの要求</b>を Issue→PR→Close まで追いました。今回は<b>複数の要求（バックログ）を管理</b>します。<b>ラベル・マイルストーン・Project ボード</b>で、「<b>次に何を作るか</b>」「<b>v1にどこまで含むか</b>」を可視化。要求工学の<b>「管理」フェーズ</b>を本格的に運用する回です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 GitHub版の赤線対策</div>
+    <p>Vol.GH4は GitHub Web 上の操作が中心。コマンドのエラーはほぼ無し。詰まるとすれば：ラベルの色指定（# 付き6桁）、Project の View 設定、Issue を Project に追加し忘れ。<b>Section 07 で対処</b>します。GitHub の UI は更新されることがあるので、<b>名称が多少違っても役割で読み替え</b>てください。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 この巻のミッション</a></li>
+    <li><a href="#s02">02 完成イメージ</a></li>
+    <li><a href="#s03">03 ラベル設計</a></li>
+    <li><a href="#s04">04 マイルストーンでリリース計画</a></li>
+    <li><a href="#s05">05 Project ボードで可視化</a></li>
+    <li><a href="#s06">06 変更要求(CR)の運用</a></li>
+    <li><a href="#s07">07 ハマりどころ＋NEXT</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>この巻のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">Vol.GH4 のゴールは<b>「複数の要求を整理して、次にやることを可視化する」</b>。1つの Issue を追うのは Vol.3 までで習得。今回は<b>「バックログ全体を俯瞰し、優先順位を管理する」</b>。これが要求工学の<b>「管理」フェーズの本丸</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">「1つの要求」から「要求全体」へ</span><span class="tag-desc">バックログ管理</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Vol.GH3 までとの違い</div>
+        <table class="compare-tbl">
+          <thead><tr><th>観点</th><th>Vol.GH1-3</th><th>Vol.GH4</th></tr></thead>
+          <tbody>
+            <tr><td>対象</td><td>1つの要求</td><td><b>要求全体</b></td></tr>
+            <tr><td>軸</td><td>深さ（Issue→PR→Close）</td><td><b>広さ（バックログ）</b></td></tr>
+            <tr><td>道具</td><td>Issue・PR</td><td><b>ラベル・Milestone・Project</b></td></tr>
+            <tr><td>問い</td><td>「これは完成した？」</td><td><b>「次に何を？」</b></td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 別冊S1の理論を運用</div>
+        <ul>
+          <li><b>MoSCoW</b>（別冊S1）→ ラベルで可視化</li>
+          <li><b>リリース計画</b> → マイルストーン</li>
+          <li><b>変更管理</b>（CR票）→ Issue で運用</li>
+          <li><b>スコープクリープ防止</b> → Won't ラベルで明示</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH4 のゴール</span>
+<span class="comment">// ─── バックログを整理 ───</span>
+GitHub Issues に：
+  #1 US-001 メモ作成     [must][closed]
+  #2 US-002 カテゴリ分類  [should][closed]
+  #3 US-003 タグ付け      [could]
+  #4 US-004 検索          [could]
+  #5 CR-001 フォルダ分け  [wont][v2]
+        ↓
+<span class="kw">ラベル・Milestone・Projectで整理</span>
+        ↓
+「次に着手すべきは #3」が一目 ★★★
+
+
+<span class="comment">// ─── 可視化される情報 ───</span>
+- 何が完了/未完了か
+- 各要求の優先度（MoSCoW）
+- v1 に含むもの/v2 送り
+- 今スプリントでやること
+
+<span class="comment">// → 「迷わず次に進める」状態を作る</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「見えない要求」は管理できない</div>
+    <p>頭の中やテキストファイルにある要求は<b>すぐ忘れ、抜け、優先順位も曖昧</b>に。GitHub の Issue＋ラベル＋Project に乗せると、<b>「全要求が一覧で見え、優先度で並び、次が分かる」</b>。<b>見える化が管理の第一歩</b>。1人開発でも、要求が3つを超えたら<b>管理ツールの価値</b>が出ます。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>完成イメージ</h2><span class="en">FINAL STATE</span></div>
+  <p class="pattern-desc">Vol.GH4 終了時、<b>ラベルで色分けされた Issue 一覧</b>、<b>v1.0 マイルストーンの進捗バー</b>、<b>Todo/In Progress/Done の Project ボード</b>が揃います。「<b>プロジェクトの全体像</b>」が一目で見える状態です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Project ボードの完成像</span><span class="tag-desc">カンバン方式</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 揃うもの</div>
+        <ul>
+          <li><b>ラベル</b>：must/should/could/wont＋種類別</li>
+          <li><b>Milestone</b>：v1.0（進捗 50% など）</li>
+          <li><b>Project ボード</b>：Todo / In Progress / Done の3列</li>
+        </ul>
+        <p style="margin-top:10px"><b>カンバン方式</b>で、Issue がカードとして列を移動。「今どこまで進んでいるか」が視覚的に分かります。</p>
+      </div>
+      <div class="code"><span class="code-head">// Project ボードのイメージ</span>
+<div class="gh-mock">
+<div class="gh-bar">github.com / .../projects / 1</div>
+<div style="display:flex;gap:6px">
+<div style="flex:1">
+<div class="gh-col">📋 Todo</div>
+<div class="gh-card">#4 US-004 検索
+<span class="gh-label" style="background:#3a2c1c;color:#e3a857">could</span></div>
+<div class="gh-card">#3 US-003 タグ
+<span class="gh-label" style="background:#3a2c1c;color:#e3a857">could</span></div>
+</div>
+<div style="flex:1">
+<div class="gh-col">🔨 In Progress</div>
+<div class="gh-card">#3 US-003
+タグ付け実装中
+<span class="gh-label" style="background:#1c3a5e;color:#79c0ff">story</span></div>
+</div>
+<div style="flex:1">
+<div class="gh-col">✅ Done</div>
+<div class="gh-card">#1 US-001 ✓
+<span class="gh-label" style="background:#3a1c1c;color:#ff7b72">must</span></div>
+<div class="gh-card">#2 US-002 ✓
+<span class="gh-label" style="background:#1c3a2c;color:#7ee787">should</span></div>
+</div>
+</div>
+</div>
+
+<span class="comment">// → Todo/進行中/完了が一目 ★★★</span>
+<span class="comment">// → カードをドラッグで列移動</span>
+<span class="comment">// → 「今の状況」が視覚的に分かる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">TIP — カンバンは「仕掛かり過多」を防ぐ</div>
+    <p>Project ボードの<b>In Progress（進行中）</b>列は、<b>同時に進めるタスクを制限</b>する効果があります。In Progress に5個も並んでいたら<b>「手を広げすぎ」のサイン</b>。<b>1つずつ完了させる</b>のが効率的（別冊S2のスコープ管理にも通じる）。<b>「着手中は1〜2個まで」</b>を意識すると、確実に前進します。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>ラベル設計</h2><span class="en">LABEL DESIGN</span></div>
+  <p class="pattern-desc">ラベルは<b>Issue の分類タグ</b>。本シリーズでは<b>MoSCoW（優先度）</b>と<b>種類（story/bug/enhancement）</b>の2軸で設計します。別冊S1で学んだ MoSCoW を、ここで色付きラベルとして実体化します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">2軸のラベル設計</span><span class="tag-desc">優先度 × 種類</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 軸① 優先度（MoSCoW）</div>
+        <table class="compare-tbl">
+          <thead><tr><th>ラベル</th><th>色</th><th>意味</th></tr></thead>
+          <tbody>
+            <tr><td><code>must</code></td><td>赤</td><td>必須</td></tr>
+            <tr><td><code>should</code></td><td>緑</td><td>重要</td></tr>
+            <tr><td><code>could</code></td><td>黄</td><td>あれば</td></tr>
+            <tr><td><code>wont</code></td><td>灰</td><td>今回やらない</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 軸② 種類</div>
+        <table class="compare-tbl">
+          <thead><tr><th>ラベル</th><th>意味</th></tr></thead>
+          <tbody>
+            <tr><td><code>user-story</code></td><td>機能要求（US）</td></tr>
+            <tr><td><code>bug</code></td><td>不具合</td></tr>
+            <tr><td><code>enhancement</code></td><td>改善要望</td></tr>
+            <tr><td><code>question</code></td><td>検討事項</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:8px">1つの Issue に<b>「優先度1つ＋種類1つ」</b>を付けるのが基本。</p>
+      </div>
+      <div class="code"><span class="code-head">// ラベルの作成と運用</span>
+<span class="comment">// ─── 作成手順 ───</span>
+<span class="comment">// Issues タブ → Labels → New label</span>
+名前: must
+説明: 必須（MoSCoW: Must）
+色:  #d73a4a（赤）
+
+<span class="comment">// ↓ 同様に作成</span>
+should  → #0e8a16（緑）
+could   → #fbca04（黄）
+wont    → #cccccc（灰）
+
+user-story  → #1d76db（青）
+bug         → #d73a4a（赤・既定）
+enhancement → #a2eeef（水色・既定）
+
+
+<span class="comment">// ─── ラベルの威力：絞り込み ───</span>
+<span class="comment">// Issues の検索バーで：</span>
+is:open label:must
+  → 未完了の必須要求だけ表示 ★
+
+is:open label:could
+  → 後回しOKな要求
+
+label:bug
+  → バグだけ一覧
+
+
+<span class="comment">// ─── MoSCoW が運用に直結 ───</span>
+<span class="comment">// 別冊S1で決めた優先度が…</span>
+Must（メモCRUD・カテゴリ）→ closed
+Should（絞り込み）→ closed
+Could（タグ・検索）→ 残り
+  ↓
+「must/should は完了、</span>
+ 次は could に着手」が一目 ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — ラベルは「増やしすぎない」</div>
+    <p>ラベルは便利ですが<b>増やしすぎると逆に分からなく</b>なります。本シリーズは<b>優先度4＋種類4</b>程度に抑える。「priority-high-urgent-critical」みたいに細分化しすぎると運用が破綻。別冊S2の<b>KISS</b>がラベル設計にも効きます。<b>「色を見れば分かる」シンプルさ</b>を保ちましょう。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>マイルストーンでリリース計画</h2><span class="en">MILESTONE</span></div>
+  <p class="pattern-desc"><b>マイルストーン</b>は<b>「いつまでに、何を」</b>のグループ。複数の Issue を束ね、<b>リリース単位（v1.0 など）</b>で管理します。別冊S1の<b>「v1で何を作るか」</b>がここで形になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">マイルストーン＝リリースの束</span><span class="tag-desc">進捗が見える</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// マイルストーンの役割</div>
+        <ul>
+          <li>複数 Issue を<b>リリース単位で束ねる</b></li>
+          <li><b>進捗バー</b>（完了/全体）が自動表示</li>
+          <li>期限を設定できる</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 本シリーズのマイルストーン</div>
+        <table class="compare-tbl">
+          <thead><tr><th>Milestone</th><th>含む Issue</th></tr></thead>
+          <tbody>
+            <tr><td><b>v1.0</b></td><td>US-001〜004（Must〜Could）</td></tr>
+            <tr><td><b>v2.0</b></td><td>同期・共同編集（Won't行き）</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// MoSCoW との関係</div>
+        <p><b>Won't = v2.0 マイルストーン</b>に置く。「今やらない」を「v2でやる」と前向きに記録。スコープクリープ防止（別冊S1）。</p>
+      </div>
+      <div class="code"><span class="code-head">// マイルストーンの作成と進捗</span>
+<span class="comment">// ─── 作成手順 ───</span>
+<span class="comment">// Issues → Milestones → New milestone</span>
+Title: v1.0
+Due date: （任意）
+Description:
+  メモ帳アプリ初版
+  US-001〜004（Must/Should/Could）
+
+<span class="comment">// → 各 Issue の右サイドで</span>
+<span class="comment">//   Milestone に v1.0 を設定</span>
+
+
+<span class="comment">// ─── マイルストーンの進捗表示 ───</span>
+<div class="gh-mock">
+<div class="gh-bar">Milestones</div>
+<span style="color:#3fb950">●</span> v1.0
+  ████████░░░░ 50% complete
+  2 closed · 2 open
+
+  #1 US-001 メモ作成     ✓ closed
+  #2 US-002 カテゴリ      ✓ closed
+  #3 US-003 タグ          ○ open
+  #4 US-004 検索          ○ open
+
+<span style="color:#7d8590">●</span> v2.0（将来）
+  #5 CR-001 フォルダ分け
+  #6 複数端末同期
+</div>
+
+<span class="comment">// → 進捗バーで「半分終わった」が一目 ★</span>
+<span class="comment">// → v1.0 で何が残っているか分かる</span>
+
+
+<span class="comment">// ─── 別冊S1の MoSCoW が形に ───</span>
+v1.0 = Must + Should + Could
+v2.0 = Won't（フォルダ・同期・共同編集）
+<span class="comment">// → 「やらない」を「次でやる」に整理 ★★★</span>
+<span class="comment">// → スコープが守られる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — マイルストーンの進捗バーが「あと少し」を見せる</div>
+    <p>マイルストーンの<b>進捗バー</b>は、モチベーション維持に効きます。「v1.0 が 75% 完了、あと1つ」と見えると<b>ゴールが近いと実感</b>できる。逆に「全然進んでない」も可視化される。<b>個人開発で挫折しがちな人ほど、進捗バーの効果は大きい</b>。要求を Issue 化する地味な作業が、ここで報われます。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>Project ボードで可視化</h2><span class="en">PROJECT BOARD</span></div>
+  <p class="pattern-desc"><b>GitHub Projects</b>は<b>カンバン方式のタスク管理</b>。Issue をカードとして<b>Todo → In Progress → Done</b> の列で動かす。「今どこまで進んでいるか」を最も直感的に表せるツールです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">カンバンボードの構築</span><span class="tag-desc">Todo / 進行中 / 完了</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Project 作成手順</div>
+        <ol class="step-list">
+          <li>リポジトリの <b>Projects</b> タブ → <b>New project</b></li>
+          <li>テンプレート <b>Board</b> を選択</li>
+          <li>列：<b>Todo / In Progress / Done</b>（既定であることが多い）</li>
+          <li>Issue を <b>＋ Add item</b> でボードに追加</li>
+          <li>カードを<b>ドラッグで列移動</b></li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// 自動化（Workflows）</div>
+        <ul>
+          <li>Issue が Close されたら<b>自動で Done 列へ</b></li>
+          <li>PR がマージされたら自動移動</li>
+          <li>→ 手動移動の手間が減る</li>
+        </ul>
+        <p style="margin-top:8px"><b>Issue/PR と連動</b>するのが GitHub Projects の強み。</p>
+      </div>
+      <div class="code"><span class="code-head">// カンバンの運用フロー</span>
+<span class="comment">// ─── 1つの要求がボードを移動 ───</span>
+
+US-003（タグ機能）の場合：
+
+[Todo]
+  #3 US-003 タグ付け
+       ↓ 着手したら
+[In Progress]
+  #3 US-003（feature/tag-crud で開発中）
+       ↓ PR マージ＋Closes #3
+[Done]
+  #3 US-003 ✓
+  <span class="comment">// → 自動で Done へ（Workflows）★★★</span>
+
+
+<span class="comment">// ─── ボードと本編の対応 ───</span>
+本編Vol.5 でタグ実装に着手
+  → ボードで #3 を In Progress へ
+本編Vol.6 でタグ付け完成
+  → PR → Closes #3
+  → ボードで #3 が自動 Done へ
+
+
+<span class="comment">// ─── 「次にやること」が明確に ───</span>
+[Todo] を見れば：
+  #4 US-004 検索 ← 次はこれ
+[In Progress] を見れば：
+  今やっていること（1〜2個に絞る）
+[Done] を見れば：
+  これまでの成果（達成感）★
+
+<span class="comment">// → 迷わず開発を進められる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Project は「Issue の見せ方を変える」だけ</div>
+    <p>誤解しやすいですが、Project ボードは<b>Issue を別の形で表示しているだけ</b>。Issue 自体が情報の本体で、Project は<b>「カンバンというビュー」</b>。だから<b>ラベル・マイルストーン・Issue 本文はそのまま活きる</b>。Issue をちゃんと作っていれば、Project は<b>並べ替えて見せるだけ</b>。<b>土台は Issue</b> です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>変更要求(CR)の運用</h2><span class="en">CHANGE REQUEST</span></div>
+  <p class="pattern-desc">別冊S1で学んだ<b>変更要求（CR票）</b>と<b>スコープクリープ</b>。開発中に<b>「この機能も欲しい」</b>は必ず出ます。それを<b>拒否せず、Issue として記録し、影響を見て判断</b>する運用を学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">変更要求を Issue で受け止める</span><span class="tag-desc">拒否でも全受容でもなく</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 変更要求の3つの行き先</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">CASE 1</span>
+            <div class="name">v1 に入れる</div>
+            <div class="desc">影響小・価値大 → 現マイルストーンに追加。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">CASE 2</span>
+            <div class="name">v2 に回す</div>
+            <div class="desc">影響大・急がない → v2.0 マイルストーン＋wont ラベル。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">CASE 3</span>
+            <div class="name">却下</div>
+            <div class="desc">WHYに合わない → close（理由を記録）。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// CR を Issue で記録する意味</div>
+        <ul>
+          <li><b>判断の経緯が残る</b>（なぜv2に回したか）</li>
+          <li>後で「あの話どうなった？」に答えられる</li>
+          <li>スコープクリープを<b>可視化して防ぐ</b></li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 変更要求 Issue のテンプレート</span>
+<span class="comment">// ─── CR を Issue 化（別冊S1のCR票）───</span>
+<span class="ann">## 変更要求 CR-001</span>
+title: [変更要求] フォルダ分けも欲しい
+labels: enhancement, wont
+milestone: v2.0
+
+## 背景・理由
+メモが増えるとタグだけでは
+整理しきれない
+
+## 影響分析
+- 工数: +3日
+- 既存機能: 一覧UIに変更必要
+- DB: folders テーブル追加
+- テスト: 全一覧テストに影響
+
+## 判断
+v1ではタグのみ。
+フォルダは v2.0 に回す。
+（理由：v1スコープを守るため）
+
+<span class="comment">// → 拒否ではなく「v2で検討」と記録 ★★★</span>
+<span class="comment">// → 判断の経緯が永久に残る</span>
+
+
+<span class="comment">// ─── スコープクリープ防止の運用 ───</span>
+新しい要望が来たら：
+  1. まず Issue 化（忘れない）
+  2. 影響分析（工数・波及）
+  3. MoSCoW で判断
+     → Must/Should なら今回
+     → Could なら余裕があれば
+     → Won't なら v2 へ（wont ラベル）
+  4. マイルストーンに割り当て
+
+<span class="comment">// → 「とりあえず作る」を防ぐ ★★★</span>
+<span class="comment">// → スコープが守られ、完成する</span></div>
+    </div>
+  </div>
+
+  <div class="ngok">
+    <div class="ng">
+      <div class="lb">NG — 思いつきで即実装</div>
+      <p>「いいこと思いついた」とその場で実装開始。<b>スコープが膨張</b>し、v1 がいつまでも完成しない。別冊S1の<b>スコープクリープ</b>そのもの。</p>
+    </div>
+    <div class="ok">
+      <div class="lb">OK — まず Issue 化して判断</div>
+      <p>思いつきも<b>一旦 Issue に記録</b>。影響を見て、v1/v2/却下を判断。<b>記録することで忘れず、判断することで膨張を防ぐ</b>。</p>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「却下」も記録する価値がある</div>
+    <p>変更要求を<b>却下</b>するときも、<b>Issue に理由を書いて Close</b>します。「なぜやらないと決めたか」が残ると、<b>後で同じ提案が来たときに即答</b>できる。「これは○月に検討して、WHYに合わないので見送った」と。<b>却下の記録は、判断の一貫性</b>を保ちます。要求工学の「管理」は、やることだけでなく<b>「やらないことの管理」</b>でもあります。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>ハマりどころ＋NEXT STEP</h2><span class="en">PITFALLS &amp; NEXT</span></div>
+  <p class="pattern-desc">Issue・タスク管理で陥りやすい運用上の地雷を5つ。<b>★★★ 印は特に陥りやすい</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.GH4 ハマりどころ 5選</span><span class="tag-desc">運用の落とし穴</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① ラベルを作りすぎて運用崩壊 ★★★</b></p>
+        <ul>
+          <li>細分化しすぎて「どれを付ければ」と迷う</li>
+          <li>対処：優先度4＋種類4程度に抑える（KISS）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② Issue を作るが更新しない ★★★</b></p>
+        <ul>
+          <li>作りっぱなしで状態が古いまま</li>
+          <li>対処：着手で In Progress、完了で Close を習慣化</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ Project にIssueを追加し忘れる</b></p>
+        <ul>
+          <li>Issue は作ったがボードに乗っていない</li>
+          <li>対処：Issue 作成時に Project を設定／Workflowsで自動追加</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ In Progress が大量に溜まる</b></p>
+        <ul>
+          <li>あれこれ同時着手で全部中途半端</li>
+          <li>対処：In Progress は1〜2個まで（仕掛かり制限）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ マイルストーンが「いつか」のまま</b></p>
+        <ul>
+          <li>期限なしで延々と先延ばし</li>
+          <li>対処：ゆるくても期限を置く（個人開発でも目標に）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 運用を続けるコツ</span>
+<span class="comment">// ─── ②の対策：状態更新の習慣 ───</span>
+<span class="comment">// 開発サイクルに組み込む：</span>
+
+着手するとき
+  → Issue を In Progress へ
+  → feature ブランチ作成
+
+実装中
+  → コミットに Refs #N
+
+完成したら
+  → PR に Closes #N
+  → マージで Issue 自動Close
+  → ボードで自動 Done へ
+
+<span class="comment">// → 開発フローに「状態更新」を</span>
+<span class="comment">//   織り込めば、忘れない ★★★</span>
+
+
+<span class="comment">// ─── 自動化で手間を減らす ───</span>
+<span class="comment">// Project の Workflows：</span>
+- Item closed → Done に移動
+- PR merged → Done に移動
+- Item added → Todo に配置
+
+<span class="comment">// → 手動移動が減る ★</span>
+
+
+<span class="comment">// ─── ①ラベル設計の目安 ───</span>
+優先度: must/should/could/wont（4つ）
+種類:   user-story/bug/
+        enhancement/question（4つ）
+<span class="comment">// → これくらいがちょうどいい</span>
+<span class="comment">// → 「迷わない数」に保つ（KISS）</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">GH4 達成チェック</span><span class="tag-desc">バックログ管理完了</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェック</div>
+        <ul class="check-list">
+          <li>MoSCoW のラベルを作成・運用できる</li>
+          <li>種類ラベル（story/bug等）を使い分けられる</li>
+          <li>ラベルで Issue を絞り込める</li>
+          <li>マイルストーン（v1.0/v2.0）を作れる</li>
+          <li>進捗バーで完了度を把握できる</li>
+          <li>Project ボードで Todo/進行中/完了を管理</li>
+          <li>変更要求を Issue で記録・判断できる</li>
+          <li>スコープクリープを防ぐ運用を理解した</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH4 で手に入れた力</span>
+✓ <span class="str">"複数の要求をラベルで整理できる"</span>
+
+✓ <span class="str">"MoSCoW を色付きラベルで可視化"</span>
+
+✓ <span class="str">"マイルストーンでリリース計画"</span>
+
+✓ <span class="str">"Project ボードで進捗を可視化"</span>
+
+✓ <span class="str">"変更要求を拒否せず記録・判断できる"</span>
+
+✓ <span class="str">"スコープクリープを防げる"</span>
+
+
+<span class="comment">// → 要求工学の「管理」を</span>
+<span class="comment">//   バックログ規模で運用できる ★★★</span>
+
+<span class="comment">// 次回 Vol.GH5：</span>
+<span class="comment">//   .gitignore とコミットの作法（深掘り）</span>
+<span class="comment">//   または README とドキュメント整備</span>
+<span class="comment">//   本編Vol.6 のタグ付け実装と連動</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.GH5 へ</div>
+    <p>Vol.GH4 で<b>「バックログ全体の管理」</b>ができるようになりました。要求が見える化され、「次に何を作るか」が明確です。次は Vol.GH5「<b>README とプロジェクトドキュメント編</b>」。<b>要求・設計・テスト方針をドキュメント化</b>し、リポジトリを「他人が読んで分かる」状態にします。本編Vol.5「タグ機能（多対多）」で複雑になった構造を、ドキュメントで整理。<b>本編Vol.5 → Vol.GH5 の順</b>で進めるとスムーズです。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>GH.04 / 14 ── ISSUE &amp; TASK MANAGEMENT（GitHub版）</span>
+</footer>
+
+</body>
+</html>

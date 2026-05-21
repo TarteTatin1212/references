@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.6 補足 ── URLパス変数と編集ライフサイクル</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3d2817;
+  --paper:#f4ecd8;
+  --paper-2:#e8dcc0;
+  --accent:#c98e44;
+  --accent-2:#e0ad6c;
+  --accent-3:#6b4423;
+  --accent-4:#2d5f3f;
+  --muted:#7a6952;
+  --line:#c9b896;
+  --code-bg:#2a1f15;
+  --code-text:#f0e4cc;
+  --panel-bg:#faf3e0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'?';position:absolute;right:0px;top:-30px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+.add-tag{display:inline-block;background:#c43;color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:40px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid #c43;padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--accent-3);border-bottom-color:var(--accent-3)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}
+.tag{color:#a3c9ff}
+.attr{color:#ffc88a}
+.bad{color:#ff8a7a;font-weight:600}
+.good{color:#b5e8b0;font-weight:600}
+
+/* WHAT/HOW/WHY */
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+
+/* 用語カード */
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+
+/* 思考ステップ */
+.think-step{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;position:relative;padding-left:60px;min-height:60px}
+.think-step::before{content:attr(data-step);position:absolute;left:14px;top:14px;background:var(--accent);color:var(--paper);width:36px;height:36px;line-height:36px;text-align:center;border-radius:50%;font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700}
+.think-step-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.think-step-body{font-size:13.5px;line-height:1.8}
+
+/* アナロジー */
+.analogy{background:#fffdf6;border:1px dashed var(--accent);border-left:4px solid var(--accent);padding:14px 18px;margin:12px 0}
+.analogy-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px}
+.analogy-title::before{content:'🗂 ';margin-right:4px}
+.analogy p{font-size:13.5px;line-height:1.85}
+
+/* 比較 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.compare-box{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:13.5px}
+.compare-ng{border-top:3px solid #c43}
+.compare-ok{border-top:3px solid var(--accent-4)}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px}
+.compare-ng .compare-label{color:#c43}
+.compare-ok .compare-label{color:var(--accent-4)}
+
+.tip{margin:18px 0;padding:14px 20px;background:rgba(201,142,68,0.10);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+
+/* 図解 */
+.flow-diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;background:#fff;border:1px solid var(--line);padding:14px 18px;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+/* チェックリスト */
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:220px}
+  h1{font-size:28px}
+  .toc ul{flex-direction:column;gap:8px}
+  .whw{grid-template-columns:1fr}
+  .compare{grid-template-columns:1fr}
+  .term-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.06 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <span class="add-tag">+ ADD</span>
+  <h1>URLパス変数と<br>編集ライフサイクル</h1>
+  <p class="subtitle">VOL.6 SUPPLEMENT — URL PATH VARIABLES &amp; EDIT LIFECYCLE</p>
+  <p class="lead">Vol.6本編で<b>編集機能</b>が動くようになりました。<code style="font-family:'JetBrains Mono'">/tasks/2/edit</code>という<b>IDを含むURL</b>、<code style="font-family:'JetBrains Mono'">@PathVariable</code>でJavaに取り込む仕組み、編集Formに<b>既存値を事前ロード</b>するパターン── 動かしている時には意識しなかったかもしれませんが、これらは<b>RESTful URL設計</b>と<b>編集ライフサイクル</b>という、業務開発で繰り返し登場する<b>深い思想</b>に支えられています。本補足では、Vol.6で身につけた「動く編集機能」の裏側にある<b>設計の哲学</b>を掘り下げ、Vol.7以降の応用力を育てます。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">💡 この補足の位置づけ</div>
+    <p style="font-size:13.5px">本編が「<b>動かす手順書</b>」なら、本補足は「<b>設計の地図</b>」です。新しいコードは書きませんが、<b>「なぜこのURL設計なのか?」「@PathVariableは何をしているのか?」「事前ロードはいつ必要か?」「楽観的ロックって何?」</b>── こうした<b>「なぜ」</b>を1段深く解明します。Vol.5 ADD で身につけた<b>6ステップCRUDテンプレート</b>を改めて見直し、<b>応用力</b>を育てる回です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.06 ADD</div>
+  <ul>
+    <li><a href="#purpose">01 この補足の目的</a></li>
+    <li><a href="#what-is-edit">02 そもそも「編集」とは何が起きているか</a></li>
+    <li><a href="#why-id-in-url">03 なぜURLにIDを含めるのか</a></li>
+    <li><a href="#term-restful">04 用語カード：RESTful URL設計</a></li>
+    <li><a href="#pathvariable-deep">05 @PathVariableの仕組み</a></li>
+    <li><a href="#prefill-design">06 編集Formを「事前に埋める」設計判断</a></li>
+    <li><a href="#update-patterns">07 UPDATEのSQLパターン</a></li>
+    <li><a href="#redirect-target">08 編集後のリダイレクト先の選び方</a></li>
+    <li><a href="#optimistic-lock">09 「楽観的ロック」の予告</a></li>
+    <li><a href="#crud-template">10 CRUDテンプレートの再利用</a></li>
+    <li><a href="#checklist">11 自分で書くためのチェックリスト</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="purpose">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この補足の目的</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">Vol.6本編で動かした<b>編集機能</b>。その<b>裏側にある設計判断</b>を1つずつ解明します。読み終えた時、<b>「同じパターンを別のエンティティでも書ける」</b>応用力が手に入っているはずです。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を解説するか</div>
+      <div class="whw-desc">
+        <b>URLパス変数</b>の思想と仕組み、<b>編集ライフサイクル</b>の全体像、<b>事前ロード</b>の設計判断、<b>UPDATE文のパターン</b>、<b>編集後のリダイレクト先選び</b>、そして<b>楽観的ロック</b>の予告。
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう解説するか</div>
+      <div class="whw-desc">
+        ① <b>HTTPの会話</b>として編集を解剖<br>
+        ② <b>RESTful URL設計</b>の思想を紹介<br>
+        ③ <b>@PathVariableの内部動作</b>を覗く<br>
+        ④ <b>業務開発の意思決定</b>パターンを整理<br>
+        ⑤ <b>Vol.7以降への伏線</b>を張る
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜ別冊で深掘るか</div>
+      <div class="whw-desc">
+        本編で「動かす」だけだと、<b>別のエンティティに応用できない</b>。設計思想が見えれば、<b>あらゆる業務システムの編集機能</b>に同じパターンで取り組める。Vol.7（完了切替・削除）の理解も早くなる。
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>Vol.6本編の編集機能は<b>「TODOアプリ専用の機能」</b>ではありません。同じパターンは<b>顧客管理、在庫管理、ブログ投稿、ECサイト</b>等あらゆる業務システムで再利用されます。本補足はその<b>「再利用可能なパターン」</b>を取り出して見せる回です。</p>
+  </div>
+</section>
+
+<section id="what-is-edit">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>そもそも「編集」とは何が起きているか</h2>
+    <span class="en">WHAT HAPPENS ON EDIT</span>
+  </div>
+  <p class="pattern-desc">「タスクを編集する」── たった1つの操作の裏側で、<b>2つのHTTPリクエスト</b>と<b>2回のDB操作</b>と<b>1回のリダイレクト</b>が連鎖しています。<b>編集ライフサイクル</b>として整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">edit-lifecycle</span>
+      <span class="tag-desc">編集の2段階構造</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 編集は「2段階」で構成されている</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>編集機能の本質</b>は、「<b>既存の状態をユーザーに見せ、変更させて、新しい状態に置き換える</b>」プロセス。Vol.5の<b>新規登録（1段階）</b>と違って、<b>2段階</b>のやりとりが必要です。</p>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">第1段階：状態の取得と提示</div>
+          <div class="think-step-body">
+            <b>GET /tasks/{id}/edit</b><br>
+            サーバはDBから<b>現在の状態</b>を取得し、<b>フォームに埋めた状態</b>でユーザーに見せる。ユーザーは「現在こうなっている」を確認しながら変更できる。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">第2段階：状態の置き換え</div>
+          <div class="think-step-body">
+            <b>POST /tasks/{id}/edit</b><br>
+            ユーザーが変更を加えて送信。サーバは<b>新しい状態でDBを更新</b>し、<b>結果を確認する画面（一覧）にリダイレクト</b>。
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>新規登録との対比</b>：</p>
+
+        <div class="compare">
+          <div class="compare-box">
+            <div class="compare-label" style="color:var(--accent-3)">新規登録（Vol.5）</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65">第1段階：<b>空のフォームを見せる</b>（DBアクセスなし）<br>
+            第2段階：<b>新レコードを作る</b>（INSERT）<br>
+            シンプル、過去の状態を意識しない</p>
+          </div>
+          <div class="compare-box">
+            <div class="compare-label" style="color:var(--accent-3)">編集（Vol.6）</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65">第1段階：<b>現在の値を取得してフォームに埋める</b>（SELECT）<br>
+            第2段階：<b>レコードを更新する</b>（UPDATE）<br>
+            複雑、過去の状態を見せる必要がある</p>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 編集ライフサイクル全体（HTTPの会話）</span>
+
+[Browser]                    [Server]
+
+<span class="comment">// === 第1段階：状態取得 ===</span>
+
+GET /tasks/2/edit
+            →→→→→→
+                            editForm(id=2)
+                            ↓ SELECT WHERE id=2
+                            ↓ Task取得
+                            ↓ TaskEditFormに詰める
+                            ↓ Modelに載せる
+                            ↓ edit.htmlレンダリング
+            ←←←←←← HTTP 200 OK
+                            + フォームHTML
+                            （既存値で埋まっている）
+
+[ユーザーが画面を見て変更]
+
+
+<span class="comment">// === 第2段階：状態適用 ===</span>
+
+POST /tasks/2/edit
+       title=新タイトル
+       done=true
+       id=2 (hidden)
+            →→→→→→
+                            update(id=2, form)
+                            ↓ Form → Task変換
+                            ↓ UPDATE WHERE id=2
+                            ↓ @Transactionalで
+                            ↓   コミット
+            ←←←←←← HTTP 302 Found
+                            Location: /tasks
+
+
+<span class="comment">// === リダイレクト（PRG） ===</span>
+
+GET /tasks
+            →→→→→→
+                            list()
+                            ↓ SELECT全件
+                            ↓ list.htmlレンダリング
+            ←←←←←← HTTP 200 OK
+                            + 一覧HTML
+                            （変更が反映されている）
+
+<span class="comment">// 1つの「編集」操作で:</span>
+<span class="comment">// HTTP 3往復、DB 3クエリ</span>
+<span class="comment">// → 裏では多くの処理が連鎖</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── 書類の修正申請</div>
+    <p>役所での書類修正を想像してください。<br>
+    第1段階：窓口で「<b>現在登録されている内容を見せてください</b>」と請求 → 役所が<b>現状の控えを出してくれる</b>。あなたはそれを見ながら修正を書き込む。<br>
+    第2段階：修正済みの書類を窓口に提出 → 役所が<b>記録を上書き</b>。<br>
+    新規申請（Vol.5の新規登録）は「<b>白紙の用紙</b>」から始めますが、修正申請（Vol.6の編集）は「<b>既存の控えを見ながら</b>」変更点を書き込む。これが<b>事前ロード</b>の本質です。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「編集 = 状態の置き換え」</div>
+    <p>編集は本質的に<b>「現在の状態を新しい状態に置き換える」</b>操作です。新規登録（無から有を作る）とは性質が異なります。<b>「過去の状態を見せる」「変更を受け付ける」「新しい状態にする」</b>── この3つを意識すると、編集機能のあらゆる側面が説明しやすくなります。</p>
+  </div>
+</section>
+
+<section id="why-id-in-url">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>なぜURLにIDを含めるのか</h2>
+    <span class="en">WHY ID IN URL</span>
+  </div>
+  <p class="pattern-desc"><code style="font-family:'JetBrains Mono'">/tasks/2/edit</code> という<b>URLにIDを含める</b>設計。<code style="font-family:'JetBrains Mono'">/tasks/edit?id=2</code> でもいいはずなのに、なぜパスに含めるのか── <b>業界の選択の理由</b>を解明します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">id-in-path-vs-query</span>
+      <span class="tag-desc">URLパス vs クエリ文字列</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの設計の比較</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>同じ「タスク2を編集」を表す2つのURL</b>：</p>
+
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px">
+          <thead>
+            <tr style="background:var(--paper-2)">
+              <th style="border:1px solid var(--line);padding:8px;text-align:left">観点</th>
+              <th style="border:1px solid var(--line);padding:8px;text-align:left;color:var(--accent-4)">パスに含める<br><code>/tasks/2/edit</code></th>
+              <th style="border:1px solid var(--line);padding:8px;text-align:left;color:#c43">クエリ文字列<br><code>/tasks/edit?id=2</code></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">読みやすさ</td>
+              <td style="border:1px solid var(--line);padding:6px">「タスク2の編集」と読める</td>
+              <td style="border:1px solid var(--line);padding:6px">「編集にid=2を渡す」と読める</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">階層構造</td>
+              <td style="border:1px solid var(--line);padding:6px">明確（リソース／ID／操作）</td>
+              <td style="border:1px solid var(--line);padding:6px">フラット</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">ブックマーク</td>
+              <td style="border:1px solid var(--line);padding:6px">特定のレコードへ直リンク</td>
+              <td style="border:1px solid var(--line);padding:6px">同上だが見にくい</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">SEO</td>
+              <td style="border:1px solid var(--line);padding:6px">検索エンジンに評価されやすい</td>
+              <td style="border:1px solid var(--line);padding:6px">クエリは軽視されがち</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">業界標準</td>
+              <td style="border:1px solid var(--line);padding:6px">RESTful、推奨</td>
+              <td style="border:1px solid var(--line);padding:6px">古い形式、非推奨</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>結論</b>：「<b>リソースのID</b>」はURLパスに含めるのが業界の鉄則。<code>/tasks/2/edit</code>は「<b>タスクという資源の、IDが2のものに対する、編集操作</b>」を<b>URLそのものが表現</b>している。</p>
+      </div>
+      <div class="code"><span class="code-head">// URL設計の進化</span>
+
+<span class="comment">// === 古い形式（PHP時代） ===</span>
+/tasks.php?action=edit&amp;id=2
+
+<span class="comment">// 問題点:</span>
+<span class="comment">// ・ファイル名が露出</span>
+<span class="comment">// ・action パラメータが混在</span>
+<span class="comment">// ・読みにくい</span>
+
+
+<span class="code-head" style="margin-top:18px">// === クエリ文字列形式 ===</span>
+/tasks/edit?id=2
+
+<span class="comment">// 改善点:</span>
+<span class="comment">// ・ファイル名は消えた</span>
+<span class="comment">// 残る問題点:</span>
+<span class="comment">// ・「タスクの編集」感はあるが、</span>
+<span class="comment">//   IDがクエリ扱いで弱い</span>
+
+
+<span class="code-head" style="margin-top:18px">// === RESTful形式（推奨） ===</span>
+/tasks/2/edit
+
+<span class="comment">// 利点:</span>
+<span class="comment">// ・「タスクの2番の編集」と読める</span>
+<span class="comment">// ・階層構造が美しい</span>
+<span class="comment">// ・拡張しやすい</span>
+
+
+<span class="code-head" style="margin-top:18px">// 拡張例</span>
+
+<span class="comment">// このRESTful設計だと、こんなURLも</span>
+<span class="comment">// 自然に作れる:</span>
+
+/users/123/tasks/2/edit
+<span class="comment">// → ユーザー123のタスク2の編集</span>
+
+/projects/45/users/123/tasks/2
+<span class="comment">// → プロジェクト45の、ユーザー123の、</span>
+<span class="comment">//   タスク2</span>
+
+<span class="comment">// クエリ文字列だとこうなる:</span>
+/edit?type=task&amp;id=2&amp;user=123&amp;project=45
+<span class="comment">// ↑ 何が主役か分からない、読みにくい</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業界の鉄則</span>
+
+<span class="comment">// ルール1: リソースIDはパスに含める</span>
+<span class="comment">//   /tasks/2 ✓</span>
+<span class="comment">//   /tasks?id=2 ✗</span>
+
+<span class="comment">// ルール2: クエリ文字列は補助的に使う</span>
+<span class="comment">//   /tasks?status=done ✓ (絞り込み)</span>
+<span class="comment">//   /tasks?id=2 ✗ (特定のリソース)</span>
+
+<span class="comment">// ルール3: 動詞はパス末尾</span>
+<span class="comment">//   /tasks/2/edit ✓</span>
+<span class="comment">//   /tasks/edit/2 △ (順序が違和感)</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「URLは設計言語」</div>
+    <p>URLは単なる「ページの場所」ではなく、<b>システムの構造を表現する言語</b>です。<code>/tasks/2/edit</code> というURLは、「<b>tasksというリソース集合があり、その中の2番目を編集する</b>」と<b>URLだけで意味が伝わる</b>。良いURL設計は<b>システムの「読みやすさ」の根本</b>。次セクションのRESTful URL設計はこの考え方を体系化したものです。</p>
+  </div>
+</section>
+
+<section id="term-restful">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>用語カード：RESTful URL設計</h2>
+    <span class="en">TERM — RESTFUL URL DESIGN</span>
+  </div>
+  <p class="pattern-desc">業界で頻出する<b>「RESTful」</b>という用語。これは<b>「リソース指向のURL設計原則」</b>です。Vol.6で使った<code style="font-family:'JetBrains Mono'">/tasks/{id}/edit</code>はこの思想に従っています。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD</span>
+    <div class="term-card-title">RESTful URL設計</div>
+    <div class="term-card-sub">リソース指向のURL命名原則</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>「<b>システムが扱う各種データを<u>リソース</u>として捉え、URLはリソースの識別に専念し、操作はHTTPメソッドで表現する</b>」設計原則。Roy Fielding（HTTPの設計者の1人）が提唱したREST原則の一部。</dd>
+      <dt>核となる発想</dt>
+      <dd>URLは<b>「動詞」ではなく「名詞」</b>。<code>/tasks</code>は「タスク（達）」という<b>リソース集合</b>を指す名詞。「何をするか」（取得・登録・更新・削除）は<b>HTTPメソッド</b>（GET/POST/PUT/DELETE）が表現する。</dd>
+      <dt>典型パターン</dt>
+      <dd><code>GET /tasks</code> ── 一覧取得<br>
+        <code>GET /tasks/2</code> ── 1件取得<br>
+        <code>POST /tasks</code> ── 新規作成<br>
+        <code>PUT /tasks/2</code> ── 更新（全項目）<br>
+        <code>PATCH /tasks/2</code> ── 更新（部分）<br>
+        <code>DELETE /tasks/2</code> ── 削除<br>
+        <b>URLは同じ、HTTPメソッドが変わる</b>のが特徴
+      </dd>
+      <dt>本書での扱い</dt>
+      <dd>HTMLフォームは<b>GET/POSTしか送れない</b>制約があるため、本書では<b>RESTfulに近いが完全なRESTではない</b>形式を採用：<br>
+        <code>GET /tasks/{id}/edit</code> ── 編集画面表示<br>
+        <code>POST /tasks/{id}/edit</code> ── 更新実行（本来はPUT）<br>
+        <code>POST /tasks/{id}/delete</code> ── 削除（本来はDELETE）<br>
+        <b>API化する時はPUT/DELETE</b>を使う方針へ移行できる
+      </dd>
+      <dt>嬉しさ</dt>
+      <dd>① <b>URL設計の指針が明確</b>（迷わない）<br>
+        ② <b>API化が容易</b>（REST APIへのスムーズな移行）<br>
+        ③ <b>業界標準なので開発者間で通じる</b><br>
+        ④ <b>SEO・キャッシュ・ブックマーク</b>と相性が良い
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">restful-rules</span>
+      <span class="tag-desc">RESTful URL設計の原則</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 設計の3原則</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">URLは名詞、操作は動詞（HTTPメソッド）</div>
+          <div class="think-step-body">
+            <code>/tasks</code>（名詞）に対して<code>GET</code>（取得）<code>POST</code>（追加）<code>DELETE</code>（削除）等のHTTPメソッド（動詞）を適用。<br>
+            <b>×：<code>/getTasks</code>、<code>/createTask</code></b><br>
+            <b>○：<code>/tasks</code>に各HTTPメソッド</b>
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">階層は「親リソース／ID／子リソース」</div>
+          <div class="think-step-body">
+            データの<b>包含関係</b>がURL階層に現れる。<br>
+            <code>/projects/45/tasks/2</code> = プロジェクト45のタスク2<br>
+            <code>/users/123/tasks</code> = ユーザー123のタスク一覧<br>
+            <b>URLを見ただけでデータ構造が想像できる</b>のが理想。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">複数形 + ID で「集合とその要素」</div>
+          <div class="think-step-body">
+            <code>/tasks</code>（集合） → <code>/tasks/2</code>（要素）<br>
+            常に<b>複数形</b>を使うのが慣習。<code>/task/2</code>より<code>/tasks/2</code>。<br>
+            「タスクという集合があり、その中の2番」と読める。
+          </div>
+        </div>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>：完全なRESTを実現するにはPUT/DELETEメソッドが必要。HTMLフォームの制約上、Vol.6では<b>POSTで代用</b>しているが、思想は同じ。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// RESTful URL設計の典型例</span>
+
+<span class="comment">// === タスク管理 ===</span>
+
+GET    /tasks          一覧取得
+GET    /tasks/2        1件取得
+POST   /tasks          新規作成
+PUT    /tasks/2        全項目更新
+PATCH  /tasks/2        部分更新
+DELETE /tasks/2        削除
+
+
+<span class="comment">// === HTMLフォーム制約下での代替 ===</span>
+
+GET    /tasks               一覧取得
+GET    /tasks/2/edit        編集フォーム表示
+POST   /tasks               新規作成
+POST   /tasks/2/edit        更新実行（PUT代替）
+POST   /tasks/2/delete      削除実行（DELETE代替）
+
+<span class="comment">// 「URLパスに動詞が残る」のが妥協点</span>
+<span class="comment">// API化（REST API）すれば本来の形に</span>
+
+
+<span class="code-head" style="margin-top:18px">// 入れ子になったリソース</span>
+
+<span class="comment">// プロジェクトとタスクの関係</span>
+
+GET /projects/45/tasks
+  → プロジェクト45のタスク一覧
+
+GET /projects/45/tasks/2
+  → プロジェクト45のタスク2
+
+POST /projects/45/tasks
+  → プロジェクト45に新タスク追加
+
+<span class="comment">// URLからデータ構造が読み取れる</span>
+
+
+<span class="code-head" style="margin-top:18px">// NG例（よくある間違い）</span>
+
+<span class="bad">// 動詞をURLに含める</span>
+<span class="bad">GET /getTasks</span>
+<span class="bad">POST /createTask</span>
+<span class="bad">POST /deleteTask?id=2</span>
+
+<span class="comment">// → 操作がURLに混入</span>
+<span class="comment">// → 業界標準から外れる</span>
+
+<span class="bad">// 単数形を使う</span>
+<span class="bad">GET /task/2</span>
+
+<span class="comment">// → 業界では複数形が標準</span>
+
+<span class="bad">// IDがクエリ文字列</span>
+<span class="bad">GET /tasks?id=2</span>
+
+<span class="comment">// → 特定リソースはパスで指定</span>
+
+
+<span class="code-head" style="margin-top:18px">// 良いURL設計の判定基準</span>
+
+<span class="comment">// チェックポイント:</span>
+<span class="comment">// ① URLに動詞が含まれていないか</span>
+<span class="comment">// ② リソースは複数形で表現しているか</span>
+<span class="comment">// ③ 階層関係が自然に表現されているか</span>
+<span class="comment">// ④ URLだけ見て何のページか分かるか</span>
+<span class="comment">// ⑤ HTTPメソッドで操作が分かれているか</span>
+
+<span class="comment">// 全部 YES なら RESTful 度が高い</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「RESTful設計は資産になる」</div>
+    <p>RESTful設計に従ったURLは<b>業界標準</b>なので、<b>他の開発者がコードを読んだ時に意図が伝わる</b>。チーム開発・引き継ぎ・新人教育で<b>大きな資産</b>になります。逆に独自URL設計のコードは「<b>なぜこの形なのか</b>」を毎回説明する必要があり、保守コストが高い。<b>「業界標準に従う」のは生産性の高い選択</b>です。</p>
+  </div>
+</section>
+
+<section id="pathvariable-deep">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>@PathVariableの仕組み</h2>
+    <span class="en">HOW @PATHVARIABLE WORKS</span>
+  </div>
+  <p class="pattern-desc">本編で<b>「URLから値を取り出すアノテーション」</b>と説明しましたが、Springの中で<b>どう動いているのか</b>を解明します。仕組みが見えれば、ハマった時に自力で解決できるようになります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pathvariable-internals</span>
+      <span class="tag-desc">@PathVariableの内部動作</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Spring内部での処理の流れ</div>
+
+        <p style="font-size:13.5px;line-height:1.85">Vol.5 ADDで学んだ<b>「Springのルーティング表」</b>を思い出してください。Springは起動時に<b>「（HTTPメソッド, URLパターン）→ メソッド」</b>の対応表を作ります。<code>@PathVariable</code>はその<b>パターンマッチング</b>の延長で動きます。</p>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">URLパターンの登録</div>
+          <div class="think-step-body">
+            起動時、Springは <code>@GetMapping("/tasks/{id}/edit")</code> を見て、<br>
+            「<b>このパターンに来たリクエストは <code>editForm()</code> へ送る</b>」と記録。<br>
+            <code>{id}</code> は<b>正規表現でいう <code>([^/]+)</code></b> のような「任意の文字列」マッチを表す。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">リクエスト到来時のマッチング</div>
+          <div class="think-step-body">
+            ブラウザが <code>GET /tasks/2/edit</code> を送ると、Springはルーティング表のパターン <code>/tasks/{id}/edit</code> とマッチさせる。<br>
+            マッチ成功時、<b><code>{id}</code> の位置にあった値「2」を抽出</b>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">型変換</div>
+          <div class="think-step-body">
+            抽出した値「2」は文字列。引数の型 <code>Long</code> に変換するため、Springが<b>内蔵のコンバータ</b>を使って <code>"2"</code> → <code>2L</code> に変換。<br>
+            変換不能な値（例：「abc」を <code>Long</code> へ）の場合、<b>400 Bad Request</b>を自動で返す。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">引数バインディング</div>
+          <div class="think-step-body">
+            変換済みの値を、<code>@PathVariable</code> が付いた引数に渡す。<br>
+            <b>「パス変数名と引数名が一致」</b>を頼りに紐付け。違う名前にしたい時は <code>@PathVariable("id") Long taskId</code> と明示。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 内部動作のイメージ（疑似コード）</span>
+
+<span class="comment">// 起動時:</span>
+
+<span class="kw">class</span> <span class="type">RoutingTable</span> {
+  <span class="type">Map</span>&lt;<span class="type">Pattern</span>, <span class="type">Method</span>&gt; routes;
+
+  <span class="kw">void</span> <span class="fn">register</span>() {
+    <span class="comment">// @GetMapping("/tasks/{id}/edit") を読む</span>
+    <span class="type">Pattern</span> p = <span class="kw">new</span> <span class="type">Pattern</span>(
+      <span class="str">"/tasks/(?&lt;id&gt;[^/]+)/edit"</span>);
+    routes.<span class="fn">put</span>(p, editFormMethod);
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// リクエスト到来時:</span>
+
+<span class="kw">class</span> <span class="type">DispatcherServlet</span> {
+  <span class="kw">void</span> <span class="fn">handle</span>(<span class="type">HttpRequest</span> req) {
+    <span class="comment">// 1. URLマッチング</span>
+    <span class="type">String</span> url = req.<span class="fn">getURL</span>();  <span class="comment">// /tasks/2/edit</span>
+    <span class="type">Match</span> match = routes.<span class="fn">find</span>(url);
+
+    <span class="kw">if</span> (match != <span class="kw">null</span>) {
+      <span class="comment">// 2. 変数抽出</span>
+      <span class="type">String</span> idStr = match.<span class="fn">getGroup</span>(<span class="str">"id"</span>);
+      <span class="comment">// idStr = "2"</span>
+
+      <span class="comment">// 3. 型変換</span>
+      <span class="type">Long</span> id = <span class="type">Long</span>.<span class="fn">parseLong</span>(idStr);
+      <span class="comment">// id = 2L</span>
+
+      <span class="comment">// 4. メソッド呼び出し</span>
+      match.<span class="fn">invoke</span>(id, model);
+    }
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// @PathVariable vs @RequestParam</span>
+
+<span class="comment">// URLからの値取得には2種類ある</span>
+
+<span class="comment">// === @PathVariable ===</span>
+<span class="comment">// URLパスから取る</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}"</span>)
+<span class="kw">public</span> <span class="fn">show</span>(<span class="ann">@PathVariable</span> <span class="type">Long</span> id) {...}
+<span class="comment">// → /tasks/2 の「2」を取る</span>
+
+
+<span class="comment">// === @RequestParam ===</span>
+<span class="comment">// クエリ文字列から取る</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="fn">list</span>(
+    <span class="ann">@RequestParam</span> <span class="type">String</span> status) {...}
+<span class="comment">// → /tasks?status=done の「done」を取る</span>
+
+
+<span class="code-head" style="margin-top:18px">// 使い分けの原則</span>
+
+<span class="comment">// @PathVariable: 「どのリソース」</span>
+<span class="comment">//   → /tasks/{id}</span>
+<span class="comment">//   → 必須かつ「特定」を表す</span>
+
+<span class="comment">// @RequestParam: 「どんな条件で」</span>
+<span class="comment">//   → /tasks?status=done&amp;page=2</span>
+<span class="comment">//   → 任意かつ「絞り込み・修飾」</span>
+
+<span class="comment">// この使い分けが業界標準</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「アノテーションは目印（再確認）」</div>
+    <p>Vol.2 ADDで学んだ<b>「アノテーションは目印」</b>の原則がここでも生きています。<code>@PathVariable</code>は<b>「この引数にURLから値を入れて」</b>という目印。Springが起動時にこの目印を集め、リクエスト時にその指示に従って値を埋める── 仕掛けの本質は<b>「目印を見て自動で動く」</b>です。Spring Bootのあらゆる機能がこの原則で動いていることを意識すると、新しい機能も理解しやすくなります。</p>
+  </div>
+</section>
+
+<section id="prefill-design">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>編集Formを「事前に埋める」設計判断</h2>
+    <span class="en">PRE-FILL DESIGN DECISION</span>
+  </div>
+  <p class="pattern-desc">編集機能の<b>核心アイデア</b>は<b>「Controller が事前にDB値を Form に詰めてからテンプレートを描画する」</b>こと。これは<b>業務開発の意思決定</b>として、いつ・なぜ・どう実装するかを掘ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prefill-when-and-why</span>
+      <span class="tag-desc">事前ロードのいつ・なぜ・どう</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 事前ロードの意義</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>事前ロードしない場合のシナリオ</b>：</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px">編集画面を「空のフォーム」で見せたら、ユーザーは<b>「現在の値を全部入力し直す」</b>羽目になる。<b>1文字だけ修正したい</b>のに全項目入力── これは<b>UXの大失敗</b>。事前ロードがあって初めて、編集機能が<b>「実用的な道具」</b>になる。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>事前ロードしないほうが良いケース</b>もある：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b>パスワード変更</b>：現在のパスワードを画面に表示してはいけない</li>
+          <li><b>クレジットカード番号変更</b>：セキュリティ上、再入力させる</li>
+          <li><b>機密性の高い項目</b>：マスク表示（「****」）にする</li>
+        </ul>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>判断基準</b>：「<b>その項目を見せても良いか</b>」と「<b>変更する時に再確認が必要か</b>」の2軸で決める。</p>
+      </div>
+      <div class="code"><span class="code-head">// 事前ロードのコード分担</span>
+
+<span class="comment">// === Controller でやる（Vol.6の方式） ===</span>
+
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+    <span class="type">Model</span> model) {
+
+  <span class="type">Task</span> task = taskService.<span class="fn">findById</span>(id);
+
+  <span class="comment">// ↓ Controllerで詰め替え</span>
+  <span class="type">TaskEditForm</span> form = <span class="kw">new</span> <span class="type">TaskEditForm</span>();
+  form.<span class="fn">setId</span>(task.<span class="fn">getId</span>());
+  form.<span class="fn">setTitle</span>(task.<span class="fn">getTitle</span>());
+  form.<span class="fn">setDone</span>(task.<span class="fn">getDone</span>());
+
+  model.<span class="fn">addAttribute</span>(<span class="str">"taskEditForm"</span>, form);
+  <span class="kw">return</span> <span class="str">"tasks/edit"</span>;
+}
+
+<span class="comment">// シンプルだが「Fat Controller」傾向</span>
+
+
+<span class="code-head" style="margin-top:18px">// === Service でやる（より業務的） ===</span>
+
+<span class="comment">// Service層に詰め替えメソッド追加</span>
+<span class="kw">public</span> <span class="type">TaskEditForm</span> <span class="fn">getEditForm</span>(<span class="type">Long</span> id) {
+  <span class="type">Task</span> task = taskMapper.<span class="fn">findById</span>(id);
+  <span class="type">TaskEditForm</span> form = <span class="kw">new</span> <span class="type">TaskEditForm</span>();
+  form.<span class="fn">setId</span>(task.<span class="fn">getId</span>());
+  form.<span class="fn">setTitle</span>(task.<span class="fn">getTitle</span>());
+  form.<span class="fn">setDone</span>(task.<span class="fn">getDone</span>());
+  <span class="kw">return</span> form;
+}
+
+<span class="comment">// Controllerはスッキリ</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+    <span class="type">Model</span> model) {
+
+  model.<span class="fn">addAttribute</span>(<span class="str">"taskEditForm"</span>,
+    taskService.<span class="fn">getEditForm</span>(id));
+  <span class="kw">return</span> <span class="str">"tasks/edit"</span>;
+}
+
+<span class="comment">// 業務開発ではこちらが推奨</span>
+<span class="comment">// 但しシンプルなアプリでは前者でもOK</span>
+
+
+<span class="code-head" style="margin-top:18px">// 「事前ロードしない」例</span>
+
+<span class="comment">// パスワード変更フォーム</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/account/password"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">passwordForm</span>(<span class="type">Model</span> m) {
+  <span class="comment">// 空のFormを渡す（既存値を埋めない）</span>
+  m.<span class="fn">addAttribute</span>(<span class="str">"passwordForm"</span>,
+    <span class="kw">new</span> <span class="type">PasswordForm</span>());
+  <span class="kw">return</span> <span class="str">"account/password"</span>;
+}
+
+<span class="comment">// ユーザーが現在のパスワードを</span>
+<span class="comment">// 再入力する</span>
+
+
+<span class="code-head" style="margin-top:18px">// 機密項目のマスク表示</span>
+
+<span class="comment">// クレカ番号: "****-****-****-1234"</span>
+<span class="comment">// (最後の4桁だけ見せる)</span>
+form.<span class="fn">setCardNumberMasked</span>(
+  <span class="str">"****-****-****-"</span> +
+  task.<span class="fn">getCardNumber</span>().<span class="fn">substring</span>(<span class="num">12</span>));
+
+<span class="comment">// 表示用と入力用を分けるなど工夫</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「UXとセキュリティのバランス」</div>
+    <p>事前ロードは<b>UX向上の強力な武器</b>。でも<b>セキュリティと相反する</b>場面がある。<b>UX重視か、セキュリティ重視か</b>── 業務開発では<b>項目ごとに判断</b>します。本書では「項目すべてを安全に表示できる」前提で全部事前ロードしていますが、実務では<b>「この項目は見せて良いか」</b>を逐一考えるのが基本です。</p>
+  </div>
+</section>
+
+<section id="update-patterns">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>UPDATEのSQLパターン</h2>
+    <span class="en">UPDATE SQL PATTERNS</span>
+  </div>
+  <p class="pattern-desc">Vol.6で書いた<code style="font-family:'JetBrains Mono'">UPDATE tasks SET title = #{title}, done = #{done} WHERE id = #{id}</code>── これは<b>「全項目更新パターン」</b>です。他にもいくつかパターンがあり、業務に合わせて選びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">update-patterns</span>
+      <span class="tag-desc">3つのUPDATEパターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主な3パターン</div>
+
+        <div class="think-step" data-step="A">
+          <div class="think-step-title">全項目更新（Vol.6で採用）</div>
+          <div class="think-step-body">
+            編集可能な全項目を毎回更新。SQL固定でシンプル。<br>
+            <b>適する場面</b>：通常の編集画面（全項目を1画面で扱う）<br>
+            <b>欠点</b>：変えていない項目も毎回UPDATEされる
+          </div>
+        </div>
+
+        <div class="think-step" data-step="B">
+          <div class="think-step-title">部分更新（特定項目のみ）</div>
+          <div class="think-step-body">
+            特定の1項目だけ更新。Vol.7で「完了切替」に採用予告。<br>
+            <b>適する場面</b>：ステータス変更、ON/OFF切替、いいねボタン<br>
+            <b>欠点</b>：項目数だけSQLが増える
+          </div>
+        </div>
+
+        <div class="think-step" data-step="C">
+          <div class="think-step-title">動的SQL（変更があった項目のみ）</div>
+          <div class="think-step-body">
+            ユーザーが実際に変更した項目だけ UPDATE する。<br>
+            <b>適する場面</b>：項目数が多く、毎回全項目を流したくない大規模システム<br>
+            <b>欠点</b>：SQL構築が複雑（MyBatisの動的SQL機能を使う）
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>業務開発での選び方</b>：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b>シンプルアプリ</b>：A（全項目更新）でOK</li>
+          <li><b>1クリック操作</b>：B（部分更新）</li>
+          <li><b>項目が多い・性能重要</b>：C（動的SQL）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// パターンA：全項目更新（Vol.6）</span>
+
+<span class="ann">@Update</span>(<span class="str">"UPDATE tasks SET "</span> +
+        <span class="str">"title = #{title}, "</span> +
+        <span class="str">"done = #{done} "</span> +
+        <span class="str">"WHERE id = #{id}"</span>)
+<span class="kw">void</span> <span class="fn">update</span>(<span class="type">Task</span> task);
+
+<span class="comment">// 利点: シンプル、SQL固定</span>
+<span class="comment">// 欠点: 変えてない項目も書き込み</span>
+
+
+<span class="code-head" style="margin-top:18px">// パターンB：部分更新（Vol.7予告）</span>
+
+<span class="ann">@Update</span>(<span class="str">"UPDATE tasks SET "</span> +
+        <span class="str">"done = #{done} "</span> +
+        <span class="str">"WHERE id = #{id}"</span>)
+<span class="kw">void</span> <span class="fn">updateDone</span>(<span class="type">Task</span> task);
+
+<span class="comment">// 完了状態だけ更新する専用メソッド</span>
+<span class="comment">// 利点: 意図が明確、軽い</span>
+<span class="comment">// 欠点: 項目別にメソッドが増える</span>
+
+
+<span class="code-head" style="margin-top:18px">// パターンC：動的SQL</span>
+
+<span class="ann">@UpdateProvider</span>(
+    type = <span class="type">TaskSqlProvider</span>.<span class="kw">class</span>,
+    method = <span class="str">"buildUpdate"</span>)
+<span class="kw">void</span> <span class="fn">updateDynamic</span>(<span class="type">Task</span> task);
+
+<span class="comment">// 別のJavaクラスでSQLを動的構築</span>
+<span class="kw">class</span> <span class="type">TaskSqlProvider</span> {
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">buildUpdate</span>(<span class="type">Task</span> t) {
+    <span class="type">StringBuilder</span> sql = <span class="kw">new</span>
+      <span class="type">StringBuilder</span>(<span class="str">"UPDATE tasks SET "</span>);
+
+    <span class="kw">if</span> (t.<span class="fn">getTitle</span>() != <span class="kw">null</span>) {
+      sql.<span class="fn">append</span>(<span class="str">"title = #{title}, "</span>);
+    }
+    <span class="kw">if</span> (t.<span class="fn">getDone</span>() != <span class="kw">null</span>) {
+      sql.<span class="fn">append</span>(<span class="str">"done = #{done}, "</span>);
+    }
+
+    sql.<span class="fn">append</span>(<span class="str">" WHERE id = #{id}"</span>);
+    <span class="kw">return</span> sql.<span class="fn">toString</span>();
+  }
+}
+
+<span class="comment">// 変更項目だけUPDATE</span>
+<span class="comment">// → 上級者向け、本書では扱わない</span>
+
+
+<span class="code-head" style="margin-top:18px">// Vol.6 と Vol.7 の役割分担</span>
+
+<span class="comment">// Vol.6 編集機能 → パターンA</span>
+<span class="comment">//   全項目を編集する画面なので</span>
+<span class="comment">//   全項目を一度に更新するのが自然</span>
+
+<span class="comment">// Vol.7 完了切替 → パターンB</span>
+<span class="comment">//   doneだけを切り替える操作なので</span>
+<span class="comment">//   1項目だけ更新するのが自然</span>
+
+<span class="comment">// 「画面の意図」と「SQLパターン」を</span>
+<span class="comment">// 合わせるのが業務開発のセオリー</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「画面の意図とSQLを合わせる」</div>
+    <p>UPDATE文のパターンは<b>「画面の意図」と一致</b>させるのが鉄則。<b>編集画面で全項目を扱う</b>なら<b>全項目更新</b>、<b>1ボタンで状態切替</b>するなら<b>部分更新</b>。画面の意図に合っていないSQLを書くと、<b>意図しない副作用</b>が起きがち。Vol.7の完了切替で<b>パターンBの実例</b>を見ることになります。</p>
+  </div>
+</section>
+
+<section id="redirect-target">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>編集後のリダイレクト先の選び方</h2>
+    <span class="en">REDIRECT TARGET CHOICE</span>
+  </div>
+  <p class="pattern-desc">Vol.6本編では更新後に<code style="font-family:'JetBrains Mono'">return "redirect:/tasks";</code>で<b>一覧に戻す</b>選択をしました。実は他にも選択肢があり、業務によって使い分けます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">redirect-options</span>
+      <span class="tag-desc">編集後の遷移先 3パターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 編集後のリダイレクト先 3候補</div>
+
+        <div class="think-step" data-step="A">
+          <div class="think-step-title">一覧画面へ戻す（Vol.6で採用）</div>
+          <div class="think-step-body">
+            <code>return "redirect:/tasks";</code><br>
+            <b>適する場面</b>：複数レコードを順次編集したい、全体の状況を確認したい<br>
+            <b>UX特徴</b>：「変更が一覧に反映されているか」を即座に確認できる<br>
+            <b>業務系での出現頻度</b>：高い（最も一般的）
+          </div>
+        </div>
+
+        <div class="think-step" data-step="B">
+          <div class="think-step-title">詳細画面へ遷移</div>
+          <div class="think-step-body">
+            <code>return "redirect:/tasks/" + id;</code><br>
+            <b>適する場面</b>：そのレコードを詳しく見たい、関連情報を確認したい<br>
+            <b>UX特徴</b>：編集対象の<b>更新後の姿</b>を集中して見られる<br>
+            <b>業務系での出現頻度</b>：中（詳細画面がある場合）
+          </div>
+        </div>
+
+        <div class="think-step" data-step="C">
+          <div class="think-step-title">編集画面を再表示</div>
+          <div class="think-step-body">
+            <code>return "redirect:/tasks/" + id + "/edit";</code><br>
+            <b>適する場面</b>：複数項目を連続して直したい、長文編集など<br>
+            <b>UX特徴</b>：<b>「保存して続行」</b>系のフロー<br>
+            <b>業務系での出現頻度</b>：低（特殊な業務でのみ）
+          </div>
+        </div>
+
+        <div style="background:rgba(201,142,68,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent)">
+          <b>POINT</b>：選び方の指針は<b>「ユーザーは次に何をしたいか」</b>。一覧確認なら A、関連情報確認なら B、続けて編集なら C。
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>応用：ユーザー選択型</b>。Gmail のような業務系では<b>「保存して閉じる」「保存して次へ」「保存して新規」</b>のような複数ボタンを置き、押されたボタンで遷移先を分けるパターンもある。</p>
+      </div>
+      <div class="code"><span class="code-head">// 3パターンの実装比較</span>
+
+<span class="comment">// === パターンA：一覧へ戻す ===</span>
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">update</span>(...) {
+  taskService.<span class="fn">update</span>(form);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+  <span class="comment">// シンプル、最も一般的</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// === パターンB：詳細画面へ ===</span>
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">update</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id, ...) {
+  taskService.<span class="fn">update</span>(form);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks/"</span> + id;
+  <span class="comment">// 編集したレコードの詳細を表示</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// === パターンC：編集画面再表示 ===</span>
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">update</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id, ...) {
+  taskService.<span class="fn">update</span>(form);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks/"</span>
+       + id + <span class="str">"/edit"</span>;
+  <span class="comment">// 編集を続けたい人向け</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// === 応用：複数ボタンで分岐 ===</span>
+
+<span class="comment">// edit.html：</span>
+<span class="comment">// &lt;button name="action" value="list"&gt;保存して一覧&lt;/button&gt;</span>
+<span class="comment">// &lt;button name="action" value="continue"&gt;保存して続行&lt;/button&gt;</span>
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">update</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+    <span class="ann">@RequestParam</span> <span class="type">String</span> action, ...) {
+
+  taskService.<span class="fn">update</span>(form);
+
+  <span class="kw">if</span> (<span class="str">"continue"</span>.<span class="fn">equals</span>(action)) {
+    <span class="kw">return</span> <span class="str">"redirect:/tasks/"</span>
+         + id + <span class="str">"/edit"</span>;
+  }
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+
+<span class="comment">// ボタンによって遷移先が変わる</span>
+<span class="comment">// → 高機能なUI</span>
+
+
+<span class="code-head" style="margin-top:18px">// 各遷移先のUX特性</span>
+
+A. 一覧:    全体俯瞰、複数編集向け
+B. 詳細:    1件集中、関連情報確認
+C. 編集再:  連続編集、長文向け
+
+<span class="comment">// 業務要件に合わせて選択</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「リダイレクト先 ≒ UX設計」</div>
+    <p>編集後のリダイレクト先は<b>細かい話</b>に見えて、<b>UXに大きな影響</b>を与えます。<b>「ユーザーは何をしたくて編集したのか」</b>を考えて選ぶのが業務開発のセオリー。<b>「とりあえず一覧に戻す」</b>はデフォルトとして悪くないですが、ユーザーリサーチで他の選択肢が出てきたら柔軟に変える価値があります。</p>
+  </div>
+</section>
+
+<section id="optimistic-lock">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>「楽観的ロック」の予告</h2>
+    <span class="en">OPTIMISTIC LOCK PREVIEW</span>
+  </div>
+  <p class="pattern-desc">Vol.6で作った編集機能には<b>1つ大きな問題</b>が潜んでいます── <b>「2人のユーザーが同時に同じレコードを編集したらどうなる?」</b>。本格的な業務システムで必ず立ちはだかる<b>同時編集問題</b>を予告します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">concurrent-edit-problem</span>
+      <span class="tag-desc">同時編集問題と解決策</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 同時編集問題のシナリオ</div>
+
+<div class="flow-diagram" style="border:none;padding:0">[時刻 t1] Aさんが編集画面を開く
+          GET /tasks/2/edit
+          → タイトル「牛乳」を表示
+
+[時刻 t2] Bさんも同じレコードの編集画面を開く
+          GET /tasks/2/edit
+          → タイトル「牛乳」を表示
+
+[時刻 t3] Aさんが「牛乳→豆乳」に変更して送信
+          POST /tasks/2/edit (title=豆乳)
+          → DBは「豆乳」に更新
+
+[時刻 t4] Bさんが「牛乳→お米」に変更して送信
+          POST /tasks/2/edit (title=お米)
+          → DBは「お米」に更新
+
+★ 結果：Aさんの変更が消えた！
+        Bさんは「豆乳」になっていたことを知らない</div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>これが「Lost Update（更新喪失）問題」</b>。少人数の社内ツールなら起きないかもしれないが、<b>本格的な業務システムや一般公開サービス</b>では<b>必ず</b>起きる。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>2つの解決策</b>：</p>
+
+        <div class="compare">
+          <div class="compare-box">
+            <div class="compare-label" style="color:var(--accent-3)">楽観的ロック</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65"><b>「衝突は稀」と楽観視</b>。バージョン番号を持たせ、更新時にチェック。衝突したらエラーを返す。<br><b>性能◎、衝突時の対処はユーザー任せ</b>。</p>
+          </div>
+          <div class="compare-box">
+            <div class="compare-label" style="color:var(--accent-3)">悲観的ロック</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65"><b>「衝突は起きる」と悲観視</b>。編集中はDBにロックをかけて他人を排除。<br><b>確実だが性能△、デッドロック懸念</b>。</p>
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>業務開発では「楽観的ロック」が圧倒的多数派</b>。Webアプリのスケーラビリティと両立する。</p>
+      </div>
+      <div class="code"><span class="code-head">// 楽観的ロックの実装イメージ（予告）</span>
+
+<span class="comment">// === Entityにバージョン番号を追加 ===</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Task</span> {
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+  <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+  <span class="kw">private</span> <span class="type">Integer</span> version;  <span class="comment">// ★追加</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// === DDLにカラム追加 ===</span>
+
+ALTER TABLE tasks
+ADD COLUMN version INT DEFAULT 0;
+
+
+<span class="code-head" style="margin-top:18px">// === UPDATE時のバージョンチェック ===</span>
+
+<span class="ann">@Update</span>(<span class="str">"UPDATE tasks SET "</span> +
+        <span class="str">"title = #{title}, "</span> +
+        <span class="str">"done = #{done}, "</span> +
+        <span class="str">"version = version + 1 "</span> +
+        <span class="str">"WHERE id = #{id} "</span> +
+        <span class="str">"AND version = #{version}"</span>)
+<span class="kw">int</span> <span class="fn">update</span>(<span class="type">Task</span> task);
+       <span class="comment">// ↑ 影響行数を返す</span>
+
+
+<span class="code-head" style="margin-top:18px">// === Service層で衝突検知 ===</span>
+
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">update</span>(<span class="type">TaskEditForm</span> form) {
+  <span class="type">Task</span> task = ...;
+  <span class="kw">int</span> updated = taskMapper.<span class="fn">update</span>(task);
+
+  <span class="kw">if</span> (updated == <span class="num">0</span>) {
+    <span class="comment">// バージョンが合わなかった = 他人が先に更新</span>
+    <span class="kw">throw new</span> <span class="type">OptimisticLockException</span>(
+      <span class="str">"他のユーザーが先に変更しました"</span>);
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// 仕組み</span>
+
+<span class="comment">// t1: Aさんが編集開始 (version=0 を取得)</span>
+<span class="comment">// t2: Bさんが編集開始 (version=0 を取得)</span>
+<span class="comment">// t3: Aさんが送信</span>
+<span class="comment">//     UPDATE ... WHERE id=2 AND version=0</span>
+<span class="comment">//     → 1行更新成功、versionが1に</span>
+<span class="comment">// t4: Bさんが送信</span>
+<span class="comment">//     UPDATE ... WHERE id=2 AND version=0</span>
+<span class="comment">//     → 0行更新（versionが既に1）</span>
+<span class="comment">//     → 例外をスロー</span>
+<span class="comment">//     → ユーザーに警告して再編集を促す</span>
+
+
+<span class="code-head" style="margin-top:18px">// 本書での扱い</span>
+
+<span class="comment">// Vol.10付近で本格的に実装する予定</span>
+<span class="comment">// （TODOアプリは小規模なので</span>
+<span class="comment">//  実用上の必要性は低い）</span>
+
+<span class="comment">// だが「思想を知っているか」が</span>
+<span class="comment">// 業務開発者の必須要件</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「業務システムには必ず必要」</div>
+    <p>楽観的ロックは<b>「本格的な業務システムでは必須」</b>です。社内システムは複数人が同時操作するし、顧客向けサービスは何千人が並行で動く。<b>「同時編集が起きない前提」のコードは本番で破綻</b>します。Vol.6時点では「衝突対策を後回しにできる学習用アプリ」ですが、実務に出たら<b>真っ先に検討すべき</b>項目です。</p>
+  </div>
+</section>
+
+<section id="crud-template">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>CRUDテンプレートの再利用</h2>
+    <span class="en">CRUD TEMPLATE REUSE</span>
+  </div>
+  <p class="pattern-desc">Vol.5 ADDで提示した<b>「6ステップCRUDテンプレート」</b>。Vol.6の編集機能はそのテンプレートに<b>そっくり乗りました</b>。Vol.7・以降のあらゆるCRUDに同じパターンが使えることを確認します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">template-reuse</span>
+      <span class="tag-desc">Vol.5・Vol.6 共通のCRUDテンプレート</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 共通の6ステップ</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">Form クラスを作る</div>
+          <div class="think-step-body">
+            Vol.5：<code>TaskForm</code>（titleのみ）<br>
+            Vol.6：<code>TaskEditForm</code>（id・title・done）<br>
+            <b>機能に応じてフィールド構成を変える</b>のみ
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">Mapperにメソッドを追加</div>
+          <div class="think-step-body">
+            Vol.5：<code>@Insert</code> insert()<br>
+            Vol.6：<code>@Select</code> findById() + <code>@Update</code> update()<br>
+            <b>必要なSQL操作を機能別に追加</b>
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">Serviceに業務メソッド</div>
+          <div class="think-step-body">
+            Vol.5：<code>register(TaskForm)</code><br>
+            Vol.6：<code>findById(Long)</code> + <code>update(TaskEditForm)</code><br>
+            <b>「Form → Entity変換 → Mapper呼び出し」のパターン</b>
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">Controllerに2メソッド</div>
+          <div class="think-step-body">
+            Vol.5：<code>newForm()</code> GET + <code>create()</code> POST<br>
+            Vol.6：<code>editForm()</code> GET + <code>update()</code> POST<br>
+            <b>「フォーム表示」と「実行」の2段階構造</b>
+          </div>
+        </div>
+
+        <div class="think-step" data-step="5">
+          <div class="think-step-title">テンプレートを作る</div>
+          <div class="think-step-body">
+            Vol.5：new.html（空フォーム）<br>
+            Vol.6：edit.html（既存値ロード済み）<br>
+            <b>th:object + th:field + th:action のパターン</b>
+          </div>
+        </div>
+
+        <div class="think-step" data-step="6">
+          <div class="think-step-title">一覧画面にナビゲーション追加</div>
+          <div class="think-step-body">
+            Vol.5：「新規登録」リンク（list.html上部）<br>
+            Vol.6：「編集」リンク（list.html各行）<br>
+            <b>動線をユーザーに見せる</b>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// パターン認識：CRUDテンプレートの威力</span>
+
+<span class="comment">// === Vol.5 新規登録 ===</span>
+TaskForm (画面用)
+  ↓
+TaskMapper.insert()
+  ↓
+TaskService.register()
+  ↓
+TaskController:
+  newForm() GET → newForm画面
+  create() POST → redirect
+  ↓
+new.html
+list.html （新規登録リンク）
+
+
+<span class="code-head" style="margin-top:18px">// === Vol.6 編集 ===</span>
+TaskEditForm (画面用)
+  ↓
+TaskMapper.findById() + update()
+  ↓
+TaskService.findById() + update()
+  ↓
+TaskController:
+  editForm() GET → edit画面
+    + 既存値の事前ロード
+  update() POST → redirect
+  ↓
+edit.html
+list.html （編集リンク）
+
+
+<span class="code-head" style="margin-top:18px">// === Vol.7 完了切替 ===</span>
+<span class="comment">// フォームなし（直接POSTのみ）</span>
+  ↓
+TaskMapper.updateDone()
+  ↓
+TaskService.toggleDone()
+  ↓
+TaskController:
+  toggle() POST → redirect
+  ↓
+<span class="comment">// テンプレート変更：list.htmlに切替form</span>
+
+
+<span class="code-head" style="margin-top:18px">// === Vol.7 削除 ===</span>
+<span class="comment">// フォームなし、削除確認はJSで</span>
+  ↓
+TaskMapper.delete()
+  ↓
+TaskService.delete()
+  ↓
+TaskController:
+  delete() POST → redirect
+  ↓
+list.htmlに削除ボタン
+
+
+<span class="code-head" style="margin-top:18px">// パターン認識のメリット</span>
+
+<span class="comment">// 1. 「初めて見るコード」がほぼなくなる</span>
+<span class="comment">// 2. 設計時に「次にすべきこと」が明確</span>
+<span class="comment">// 3. レビュー時にチェックリスト化できる</span>
+<span class="comment">// 4. チーム内で共通理解になる</span>
+
+<span class="good">// これが業務開発の生産性</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「パターンに乗ると速くなる」</div>
+    <p>Vol.5・Vol.6を通じて<b>「同じパターンで違う機能を実装できる」</b>感覚が育っているはずです。これが<b>業務開発の生産性</b>の源です。新しい機能の話が来た時、<b>「6ステップのどれが必要で、何を変えればいいか」</b>を即座に判断できる── これが応用力。Vol.7・8・9でも、同じテンプレートが繰り返し顔を出します。</p>
+  </div>
+</section>
+
+<section id="checklist">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>自分で書くためのチェックリスト</h2>
+    <span class="en">CHECKLIST</span>
+  </div>
+  <p class="pattern-desc">本補足の集大成。<b>新しいエンティティで編集機能を作る時</b>のチェックリストを整理します。明日から使える即戦力ガイドです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">edit-checklist</span>
+      <span class="tag-desc">編集機能実装チェックリスト</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 編集機能を作る前の判断項目</div>
+
+        <p style="font-size:14px;font-weight:700;margin-bottom:8px;color:var(--accent-3)">事前判断（設計）</p>
+        <ul class="checklist">
+          <li><b>編集対象の項目</b>は何か（全フィールド or 一部？）</li>
+          <li><b>事前ロード</b>すべき項目は？ 機密項目はないか?</li>
+          <li><b>URLパターン</b>は <code>/{resource}/{id}/edit</code> でOK?</li>
+          <li><b>UPDATE文のパターン</b>は全項目更新で良いか?</li>
+          <li><b>編集後の遷移先</b>は一覧 / 詳細 / 編集再表示?</li>
+          <li><b>同時編集対策</b>は必要か?（楽観的ロック導入の判断）</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;margin:14px 0 8px;color:var(--accent-3)">実装（6ステップ）</p>
+        <ul class="checklist">
+          <li><b>EditFormクラス</b>を作った（<code>@Data</code>付き、編集対象フィールド）</li>
+          <li><b>Mapperに <code>findById()</code></b> を追加した（<code>@Select WHERE id = #{id}</code>）</li>
+          <li><b>Mapperに <code>update()</code></b> を追加した（<code>@Update WHERE id = #{id}</code> 必須）</li>
+          <li><b>Serviceに <code>findById()</code></b> を追加した（読み取り）</li>
+          <li><b>Serviceに <code>update()</code></b> を追加した（<code>@Transactional</code>付き）</li>
+          <li><b>Controllerに編集GET</b>を追加した（<code>@PathVariable</code>でID取得、既存値Formに詰める）</li>
+          <li><b>Controllerに更新POST</b>を追加した（<code>return "redirect:/...";</code>でPRG）</li>
+          <li><b>edit.html</b>を作った（<code>th:object</code>、<code>th:field</code>、hidden id）</li>
+          <li><b>list.htmlに編集リンク</b>を追加した（動的URL <code>@{...}</code>）</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;margin:14px 0 8px;color:var(--accent-3)">動作確認</p>
+        <ul class="checklist">
+          <li>編集画面で<b>既存値が表示</b>される</li>
+          <li>変更を送信すると<b>DBが更新</b>される</li>
+          <li>送信後<b>一覧（または指定の画面）にリダイレクト</b>する</li>
+          <li>リロードしても<b>二重更新は起きない</b>（PRGが効いている）</li>
+          <li>存在しないIDで <code>/tasks/9999/edit</code> 等にアクセスした時の挙動を確認（Vol.9で例外処理予定）</li>
+          <li>ERRORログが出ていない</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 編集機能スターターテンプレート</span>
+
+<span class="comment">// === 1. EditForm ===</span>
+<span class="kw">package</span> com.example.app.form;
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">XxxEditForm</span> {
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="comment">// 編集対象フィールド...</span>
+}
+
+
+<span class="comment">// === 2-3. Mapper ===</span>
+<span class="ann">@Select</span>(<span class="str">"SELECT ... WHERE id = #{id}"</span>)
+<span class="type">Xxx</span> <span class="fn">findById</span>(<span class="type">Long</span> id);
+
+<span class="ann">@Update</span>(<span class="str">"UPDATE ... SET ... "</span> +
+        <span class="str">"WHERE id = #{id}"</span>)
+<span class="kw">void</span> <span class="fn">update</span>(<span class="type">Xxx</span> xxx);
+
+
+<span class="comment">// === 4-5. Service ===</span>
+<span class="kw">public</span> <span class="type">Xxx</span> <span class="fn">findById</span>(<span class="type">Long</span> id) {
+  <span class="kw">return</span> xxxMapper.<span class="fn">findById</span>(id);
+}
+
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">update</span>(<span class="type">XxxEditForm</span> form) {
+  <span class="type">Xxx</span> xxx = <span class="kw">new</span> <span class="type">Xxx</span>();
+  <span class="comment">// form → xxx へ詰める...</span>
+  xxxMapper.<span class="fn">update</span>(xxx);
+}
+
+
+<span class="comment">// === 6-7. Controller ===</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/xxx/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+    <span class="type">Model</span> m) {
+  <span class="type">Xxx</span> xxx = service.<span class="fn">findById</span>(id);
+  <span class="type">XxxEditForm</span> form = <span class="kw">new</span> <span class="type">XxxEditForm</span>();
+  <span class="comment">// xxx → form へ詰める...</span>
+  m.<span class="fn">addAttribute</span>(<span class="str">"xxxEditForm"</span>, form);
+  <span class="kw">return</span> <span class="str">"xxx/edit"</span>;
+}
+
+<span class="ann">@PostMapping</span>(<span class="str">"/xxx/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">update</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+    <span class="type">XxxEditForm</span> form) {
+  service.<span class="fn">update</span>(form);
+  <span class="kw">return</span> <span class="str">"redirect:/xxx"</span>;
+}
+
+
+<span class="comment">// === 8. edit.html ===</span>
+<span class="tag">&lt;form</span>
+  <span class="attr">th:action</span>=<span class="str">"@{/xxx/{id}/edit(id=*{id})}"</span>
+  <span class="attr">th:object</span>=<span class="str">"${xxxEditForm}"</span>
+  <span class="attr">method</span>=<span class="str">"post"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"hidden"</span> <span class="attr">th:field</span>=<span class="str">"*{id}"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span> <span class="attr">th:field</span>=<span class="str">"*{name}"</span><span class="tag">&gt;</span>
+  ...
+  <span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="str">"submit"</span><span class="tag">&gt;</span>更新<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/form&gt;</span>
+
+
+<span class="comment">// === 9. list.html に編集リンク ===</span>
+<span class="tag">&lt;a</span> <span class="attr">th:href</span>=<span class="str">"@{/xxx/{id}/edit(id=${item.id})}"</span><span class="tag">&gt;</span>編集<span class="tag">&lt;/a&gt;</span>
+
+<span class="good">// この型を当てはめれば</span>
+<span class="good">// あらゆる編集機能が書ける</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「テンプレートを「自分のもの」にする」</div>
+    <p>このチェックリストを<b>暗記する必要はない</b>です。むしろ<b>「自分のメモアプリにコピペしておく」</b>くらいが正解。実務で新しい編集機能を作る時に取り出して、項目を埋めながら書く── これが業務開発の実態です。<b>「全部覚えていなくても、テンプレートを持っているから書ける」</b>のがプロの仕事の流儀です。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+  <div class="tip-label">この補足を読み終えたあなたへ</div>
+  <p>お疲れさまでした。Vol.6本編で「<b>編集機能を動かす</b>」を達成し、本補足で「<b>その裏側にある設計思想</b>」を解明しました。<b>編集ライフサイクル、RESTful URL設計、@PathVariableの仕組み、事前ロードの判断、UPDATEパターン、リダイレクト先選び、楽観的ロックの予告、CRUDテンプレートの再利用</b>── 業務開発で繰り返し顔を出す<b>概念の地図</b>が手に入りました。<br><br>
+  特に重要なのは<b>「6ステップCRUDテンプレート」</b>の再確認。Vol.5（新規登録）→ Vol.6（編集）と<b>同じパターン</b>で違う機能を実装できることを体感しました。<b>次のVol.7（完了切替・削除）でも同じテンプレートが活躍</b>します。<br><br>
+  Vol.7では「<b>list画面のボタン1つで状態を変える</b>」UIパターンを学びます。完了切替は<b>部分UPDATEのパターン</b>、削除は<b>DELETE文と確認ダイアログ</b>。CRUDの<b>U（部分）とD</b>を獲得し、<b>CRUD完全制覇</b>に到達します。お楽しみに。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.06 ADD ── URL PATH VARIABLES &amp; EDIT LIFECYCLE</span>
+</footer>
+
+</body>
+</html>

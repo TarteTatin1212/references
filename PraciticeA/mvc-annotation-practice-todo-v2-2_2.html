@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.2 DBとテーブルを用意して画面まで繋ごう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3d2817;
+  --paper:#f4ecd8;
+  --paper-2:#e8dcc0;
+  --accent:#9a6533;
+  --accent-2:#c19a6b;
+  --accent-3:#6b4423;
+  --muted:#7a6952;
+  --line:#c9b896;
+  --code-bg:#2a1f15;
+  --code-text:#f0e4cc;
+  --panel-bg:#faf3e0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✎';position:absolute;right:0px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:20px 0 8px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;letter-spacing:0.1em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3);background:linear-gradient(transparent 60%,var(--accent-2) 60%,var(--accent-2) 90%,transparent 90%);padding:0 2px}
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px solid transparent;transition:border-color 0.2s}
+.toc a:hover{border-color:var(--accent)}
+.toc a::before{content:'— ';color:var(--accent);font-family:'JetBrains Mono',monospace}
+.red-warning{background:#fff;border:2px solid var(--accent);padding:18px 22px;margin:30px 0;border-radius:3px}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:16px;color:var(--accent-3);margin-bottom:10px;font-weight:700}
+.red-warning p{font-size:13.5px;margin-bottom:6px}
+.red-warning b{color:var(--accent-3)}
+section{margin:80px 0}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.1em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:720px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3);background:linear-gradient(transparent 60%,var(--accent-2) 60%,var(--accent-2) 90%,transparent 90%);padding:0 2px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:20px}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em;margin-bottom:14px;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+.code{background:var(--code-bg);color:var(--code-text);padding:24px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-2);letter-spacing:0.1em;margin-bottom:14px;padding-bottom:8px;border-bottom:1px dashed #5a4530}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}
+.attr{color:#a3c9ff}
+.tip{border-left:3px solid var(--accent);background:rgba(193,154,107,0.15);padding:18px 22px;margin:20px 0}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);letter-spacing:0.15em;margin-bottom:8px;font-weight:600}
+.tip p{font-size:14px}
+.tip b{color:var(--accent-3)}
+.role-card{background:#fff;border:1px solid var(--line);padding:14px;margin:10px 0;border-left:4px solid var(--accent)}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.1em;font-weight:600}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:17px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+.flow-step{display:flex;align-items:flex-start;gap:12px;margin:14px 0;padding:12px;background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent)}
+.flow-step .n{background:var(--accent);color:var(--paper);width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;flex-shrink:0}
+.flow-step .body{flex:1}
+.flow-step .who{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.flow-step .what{font-size:13px;margin-top:2px}
+.bullet-list{list-style:none;margin:10px 0}
+.bullet-list li{padding:6px 0 6px 24px;position:relative;font-size:13px}
+.bullet-list li::before{content:'◆';position:absolute;left:4px;color:var(--accent);font-size:10px;top:9px}
+.checklist{list-style:none}
+.checklist li{padding:6px 0 6px 24px;position:relative;font-size:13px}
+.checklist li::before{content:'□';position:absolute;left:0;color:var(--accent);font-weight:700}
+.preview-img{background:var(--panel-bg);border:1px solid var(--line);padding:12px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.7;white-space:pre;color:var(--ink)}
+.config-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px;background:#fff}
+.config-table th,.config-table td{border:1px solid var(--line);padding:8px;text-align:left}
+.config-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--accent-3)}
+.config-table td:first-child{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);font-weight:600}
+.step-guide{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0}
+.step-guide-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+.step-guide ol{list-style:none;counter-reset:s;margin:0}
+.step-guide li{counter-increment:s;padding:6px 0 6px 32px;position:relative;font-size:13px}
+.step-guide li::before{content:counter(s);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+.kbd{display:inline-block;background:var(--paper-2);border:1px solid var(--line);padding:0 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;border-radius:3px;color:var(--accent-3)}
+.menu{display:inline-block;background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--accent-3);border-radius:2px}
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.02 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <h1>DBとテーブルを用意して<br>画面まで繋ごう</h1>
+  <p class="subtitle">DB SETUP + FIRST DATA-DRIVEN PAGE</p>
+  <p class="lead">v2のVol.2は<b>大きく変わります</b>。旧版では「DBとテーブルを作るだけ」でしたが、v2では<b>「DB＋テーブル＋画面で表示まで一気通貫」</b>。MySQLにテーブルを作り、Spring Bootから繋ぎ、<b>ブラウザでDBの中身が見える</b>状態まで持っていきます。一気に進む内容ですが、各ステップで動作確認しながら進めれば大丈夫。<b>「動くものが見える」感動</b>を早く体験することが、v2の最大の狙いです。</p>
+</header>
+
+<div class="red-warning">
+  <div class="red-warning-title">💡 Vol.1で起きたエラーへの対処（重要）</div>
+  <p>Vol.1完成時にブラウザで <code style="font-family:'JetBrains Mono'">localhost:8080</code> を開いて<b>"Hello, TODO!"</b>が表示されましたか？　もし<b>起動失敗ログ</b>に <code style="font-family:'JetBrains Mono'">Failed to configure a DataSource</code> が出ていたら、それは<b>pom.xmlにDB依存があるのに<code style="font-family:'JetBrains Mono'">application.properties</code>にDB設定が無い</b>状態が原因です。本巻Section 06でDB設定を書けば<b>自動的に解決</b>します。それまでは起動エラーが出ていてもOK。先に進みましょう。</p>
+</div>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#challenge">01 この巻でやること</a></li>
+    <li><a href="#goal">02 完成イメージ</a></li>
+    <li><a href="#prep">03 必要な前提知識</a></li>
+    <li><a href="#mysql">04 MySQLに接続する</a></li>
+    <li><a href="#ddl">05 DBとテーブルを作る</a></li>
+    <li><a href="#properties">06 application.propertiesにDB情報を書く</a></li>
+    <li><a href="#raw-controller">07 動作確認用Controllerを作る</a></li>
+    <li><a href="#runcheck">08 ブラウザで動かして確認</a></li>
+    <li><a href="#pitfall">09 ハマりどころと対処</a></li>
+    <li><a href="#next">10 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="challenge">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>🎯 この巻でやること</h2>
+    <span class="en">THE CHALLENGE</span>
+  </div>
+  <p class="pattern-desc">本巻では<b>「DBにある実データがブラウザで見える」</b>状態を作ります。旧版より一気に内容が増えますが、<b>「Vol.6まで画面が動かない」を回避</b>するためのv2の構造変更。これで「やっぱり地味すぎる」感を最初から打破します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol-02-mission</span>
+      <span class="tag-desc">本巻のミッション</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 達成すべき5つのこと</div>
+        <div class="role-card">
+          <span class="label">MISSION 1</span>
+          <div class="name">MySQLへの接続を確認</div>
+          <div class="desc">MySQLが起動しているか・パスワードでログインできるか確認する。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">MISSION 2</span>
+          <div class="name">DBとテーブルを作成</div>
+          <div class="desc"><code style="font-family:'JetBrains Mono';font-size:12px">todo_db</code>と<code style="font-family:'JetBrains Mono';font-size:12px">tasks</code>テーブルをDDLで作成。動作確認用データも投入。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">MISSION 3</span>
+          <div class="name">application.propertiesにDB情報</div>
+          <div class="desc">Spring BootにDBの場所・認証情報を教える。Vol.1で出た起動エラーが解消する瞬間。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">MISSION 4</span>
+          <div class="name">動作確認用Controllerを作る</div>
+          <div class="desc"><code style="font-family:'JetBrains Mono';font-size:12px">/raw</code>でDBの中身を生のJSONで返す。MyBatisも最小構成で導入。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">MISSION 5</span>
+          <div class="name">ブラウザで動作確認</div>
+          <div class="desc">DBに入れたタスクが画面で見える。Vol.2の決定的な瞬間。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 本巻終了時の状態</span>
+
+<span class="comment">// ── MySQL 側 ──</span>
+todo_db データベース        ← 完成
+  └ tasks テーブル          ← 完成
+     ├ id          BIGINT
+     ├ title       VARCHAR(100)
+     ├ done        BOOLEAN
+     └ created_at  DATETIME
+  
+  サンプルデータ：3件投入済み
+
+
+<span class="comment">// ── プロジェクト構造 ──</span>
+todo/
+└ src/main/java/com/example/todo/
+   ├ TodoApplication.java
+   ├ controller/
+   │  └ HelloController.java
+   └ raw/                   <span class="comment">// ★新規</span>
+      ├ RawTaskController.java
+      └ RawTaskMapper.java
+
+
+<span class="comment">// ── ブラウザでの確認 ──</span>
+URL    : http://localhost:8080/
+表示    : Hello, TODO!         <span class="comment">// 継続</span>
+
+URL    : http://localhost:8080/raw
+表示    : [                     <span class="comment">// JSON</span>
+          {"id":1,"title":"...",...},
+          {"id":2,...},
+          ...
+         ]
+
+<span class="comment">// ─────────────────────</span>
+<span class="comment">// 「DBから取った実データ」が</span>
+<span class="comment">// ブラウザに見える状態に到達！</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">v2の方針 ──</div>
+    <p>本巻はあえて<b>「最小構成のControllerとMapperを<code style="font-family:'JetBrains Mono'">raw</code>パッケージに分けて作る」</b>のがミソ。Vol.3以降で<b>「本物のentity / mapper / controller」</b>を作る際に、この動作確認用コードと混ざらないようにします。Vol.10でこの<code style="font-family:'JetBrains Mono'">raw</code>パッケージは削除します。</p>
+  </div>
+</section>
+
+<section id="goal">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>📷 完成イメージ</h2>
+    <span class="en">THE GOAL</span>
+  </div>
+  <p class="pattern-desc">何が見えれば完成か── 視覚的に確認しておきましょう。<b>MySQL側で「テーブルとデータが見える」</b>こと、<b>ブラウザで「DBの中身がJSONで見える」</b>こと。この2点でVol.2完了です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">expected-result</span>
+      <span class="tag-desc">完成時にこう見える</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// MySQLでテーブル確認</div>
+        <div class="preview-img">mysql&gt; USE todo_db;
+Database changed
+
+mysql&gt; SHOW TABLES;
++-------------------+
+| Tables_in_todo_db |
++-------------------+
+| tasks             |
++-------------------+
+
+mysql&gt; SELECT * FROM tasks;
++----+------------------+------+---------------------+
+| id | title            | done | created_at          |
++----+------------------+------+---------------------+
+|  1 | 最初のタスク     |    0 | 2026-05-17 10:30:21 |
+|  2 | Spring Bootを学ぶ|    0 | 2026-05-17 10:30:25 |
+|  3 | 牛乳を買う        |    1 | 2026-05-17 10:30:28 |
++----+------------------+------+---------------------+</div>
+        <p style="font-size:13px;margin-top:14px"><b>ブラウザでJSON確認：</b></p>
+        <div class="preview-img">🌐 http://localhost:8080/raw
+
+[
+  {"id":1,"title":"最初のタスク",
+   "done":false,"created_at":"2026-05-17T10:30:21"},
+  {"id":2,"title":"Spring Bootを学ぶ",
+   "done":false,"created_at":"2026-05-17T10:30:25"},
+  {"id":3,"title":"牛乳を買う",
+   "done":true,"created_at":"2026-05-17T10:30:28"}
+]</div>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>判定基準：</b><br>
+          ① <code style="font-family:'JetBrains Mono'">SELECT * FROM tasks;</code>でデータが見える<br>
+          ② <code style="font-family:'JetBrains Mono'">http://localhost:8080/raw</code> でJSONが表示<br>
+          → どちらもクリアで合格
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 起動時の正常ログ（DB接続成功）</span>
+
+INFO --- Starting TodoApplication
+INFO --- HikariPool-1 - Starting...
+INFO --- HikariPool-1 - Added connection
+INFO --- HikariPool-1 - Start completed.
+INFO --- Tomcat initialized with port 8080
+INFO --- Started TodoApplication in 3.234 seconds
+
+
+<span class="code-head" style="margin-top:18px">// /raw アクセス時のSQLログ</span>
+
+DEBUG c.e.t.r.RawTaskMapper.findAllRaw
+   ==&gt; Preparing: SELECT * FROM tasks ORDER BY id
+   ==&gt; Parameters:
+   &lt;==      Total: 3
+
+
+<span class="code-head" style="margin-top:18px">// よくある「エラーパターン」</span>
+
+ERROR --- Public Key Retrieval is not allowed
+<span class="comment">// → URL に allowPublicKeyRetrieval=true 不足</span>
+
+ERROR --- Access denied for user 'root'@'localhost'
+<span class="comment">// → パスワード間違い</span>
+
+ERROR --- Communications link failure
+<span class="comment">// → MySQLが起動していない</span>
+
+ERROR --- Unknown database 'todo_db'
+<span class="comment">// → DB未作成</span>
+
+
+<span class="comment">// ─────────────────────</span>
+<span class="comment">// HikariPool = Spring Bootが使う</span>
+<span class="comment">// 「コネクションプール」。</span>
+<span class="comment">// このログが出れば接続準備完了。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">TIP ──</div>
+    <p><b>HikariPool</b>はSpring Bootが使う<b>コネクションプール</b>。「DBへの接続を使い回すための池」と思ってください。この池が作られていれば、DB接続準備は完了です。</p>
+  </div>
+</section>
+
+<section id="prep">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>📚 必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">DBに不慣れな方のために、最小限の前提を整理しておきます。<b>「DBが何をするものか」「JDBCとは何か」「MyBatisとは何か」</b>が分かれば本巻は十分です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">key-concepts</span>
+      <span class="tag-desc">本巻で出てくる用語</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 用語の整理</div>
+        <div class="role-card">
+          <span class="label">TERM 1</span>
+          <div class="name">データベース（DB）</div>
+          <div class="desc">アプリのデータを<b>保存しておく場所</b>。MySQLはその管理ソフト。アプリが終了してもデータは残る。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TERM 2</span>
+          <div class="name">テーブル</div>
+          <div class="desc">DBの中の<b>「表」</b>。Excelの1シートのイメージ。列（カラム）と行（レコード）からなる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TERM 3</span>
+          <div class="name">DDL ／ DML</div>
+          <div class="desc">DDL=テーブル<b>定義</b>のSQL（CREATE TABLE等）／DML=データ<b>操作</b>のSQL（SELECT/INSERT等）。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TERM 4</span>
+          <div class="name">JDBC</div>
+          <div class="desc"><b>「JavaがDBと話すための共通言語」</b>。MySQLでもPostgreSQLでも、同じJavaコードで操作できるようにする仕組み。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TERM 5</span>
+          <div class="name">MyBatis</div>
+          <div class="desc"><b>「SQLとJavaオブジェクトを橋渡し」</b>するライブラリ。SQLを書くだけで、結果セットを自動でJavaクラスに詰めてくれる。Vol.4で詳しく扱う。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// アプリとDBの関係図</span>
+
+┌─────────────────┐
+│  Spring Boot App   │
+│  （Javaコード）     │
+└──────┬──────┘
+       │ MyBatis
+       │  ↓
+       │ JDBC（共通言語）
+       │  ↓
+       │ MySQL Driver（翻訳機）
+       ▼
+┌─────────────────┐
+│  MySQL Server       │
+│  ┌──────────┐  │
+│  │ todo_db        │  │
+│  │  └ tasks       │  │
+│  └──────────┘  │
+└─────────────────┘
+
+
+<span class="comment">// ─────────────────────</span>
+<span class="comment">// この絵を頭に入れておくと、</span>
+<span class="comment">// 「どこで何のエラーか」が</span>
+<span class="comment">// 切り分けやすくなる。</span>
+
+
+<span class="code-head" style="margin-top:18px">// Vol.2で扱う最小のMyBatis</span>
+
+<span class="comment">// 動作確認用なので「最小構成」：</span>
+
+<span class="comment">// 1. Mapperインターフェイス</span>
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">RawTaskMapper</span> {
+  <span class="ann">@Select</span>(<span class="str">"SELECT * FROM tasks"</span>)
+  <span class="type">List</span>&lt;<span class="type">Map</span>&lt;<span class="type">String</span>, <span class="type">Object</span>&gt;&gt; <span class="fn">findAllRaw</span>();
+}
+
+<span class="comment">// 2. それを呼ぶController</span>
+<span class="ann">@RestController</span>
+<span class="kw">public class</span> <span class="type">RawTaskController</span> {
+  <span class="kw">private final</span> <span class="type">RawTaskMapper</span> mapper;
+  ...
+}
+
+
+<span class="comment">// 結果は Map で受けます（簡易）。</span>
+<span class="comment">// Vol.3で「ちゃんとした Task クラス」を</span>
+<span class="comment">// 作って、Map を Task に置き換えます。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>v2のVol.2では<b>「Mapを使った仮の実装」</b>でDBから画面までを一気に繋ぎます。Vol.3で<b>正式なTaskクラス</b>を作ったら、このMapを置き換えます。<b>「動くものを早く見たい」を最優先</b>にしたv2ならではの構成です。</p>
+  </div>
+</section>
+
+<section id="mysql">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>🔌 MySQLに接続する</h2>
+    <span class="en">CONNECT TO MYSQL</span>
+  </div>
+  <p class="pattern-desc">まずはMySQLが起動しているか確認し、コマンドラインから接続できる状態にします。<b>「アプリの前に手動で接続を確認する」</b>のは業務でも超大事な手順です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">mysql-connect</span>
+      <span class="tag-desc">MySQLへのログイン確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 接続確認の手順</div>
+        <div class="step-guide">
+          <div class="step-guide-title">サービス起動確認（Windows）</div>
+          <ol>
+            <li><span class="kbd">Win</span> + <span class="kbd">R</span> → <code style="font-family:'JetBrains Mono';font-size:12px">services.msc</code></li>
+            <li>「MySQL80」（または「MySQL84」「MySQL90」等）のサービスを探す</li>
+            <li>状態が「実行中」になっているか確認</li>
+            <li>止まっていたら右クリック→「開始」</li>
+          </ol>
+        </div>
+        <div class="step-guide">
+          <div class="step-guide-title">コマンドラインで接続</div>
+          <ol>
+            <li>コマンドプロンプトを開く</li>
+            <li><code style="font-family:'JetBrains Mono';font-size:12px">mysql -u root -p</code> と入力</li>
+            <li>パスワード入力（インストール時に設定したもの）</li>
+            <li><code style="font-family:'JetBrains Mono';font-size:12px">mysql&gt;</code> のプロンプトが出れば成功</li>
+          </ol>
+        </div>
+        <p style="font-size:13px;margin-top:14px"><b>もし「<code style="font-family:'JetBrains Mono'">mysql</code>コマンドが見つからない」場合：</b></p>
+        <ul class="bullet-list">
+          <li><b>PATHが通っていない</b>可能性が高い</li>
+          <li>場所は通常 <code style="font-family:'JetBrains Mono';font-size:11px">C:\Program Files\MySQL\MySQL Server 8.0\bin</code></li>
+          <li>フルパスで実行するか、環境変数Pathに追加</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Windows コマンドプロンプトで実行</span>
+
+<span class="comment">// ── ログイン ──</span>
+&gt; mysql -u root -p
+Enter password: <span class="comment">****** （入力時は見えない）</span>
+
+Welcome to the MySQL monitor.
+mysql&gt;
+
+<span class="comment">// プロンプトが mysql&gt; に変わったら成功</span>
+
+
+<span class="comment">// ── バージョン確認 ──</span>
+mysql&gt; SELECT VERSION();
++-----------+
+| VERSION() |
++-----------+
+| 8.0.xx    |        <span class="comment">// または 8.4.xx 等</span>
++-----------+
+
+
+<span class="comment">// ── 既存DB一覧 ──</span>
+mysql&gt; SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+4 rows in set
+
+<span class="comment">// まだ todo_db は無い状態。</span>
+<span class="comment">// 次のセクションで作ります。</span>
+
+
+<span class="code-head" style="margin-top:18px">// MySQL 8.4 / 9.x を使っている場合</span>
+
+<span class="comment">// MySQL 8.4 以降では：</span>
+<span class="comment">// - default_authentication_plugin パラメータが廃止</span>
+<span class="comment">// - authentication_policy を使う</span>
+<span class="comment">// - caching_sha2_password がデフォルト</span>
+
+<span class="comment">// → 本書の手順は全バージョン共通でOK。</span>
+<span class="comment">//   後述の allowPublicKeyRetrieval=true</span>
+<span class="comment">//   で対応できます。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">TIP ──</div>
+    <p>MySQLのバージョンは<b>8.0系・8.4系・9.x系</b>のいずれでもOK。MySQL 8.4以降は認証関連の設定がやや変わっていますが、本書の<code style="font-family:'JetBrains Mono'">allowPublicKeyRetrieval=true</code>付きURLで全バージョンに対応できます。</p>
+  </div>
+</section>
+
+<section id="ddl">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>📐 DBとテーブルを作る</h2>
+    <span class="en">CREATE DATABASE ＆ TABLE</span>
+  </div>
+  <p class="pattern-desc">MySQLにログインできたら、<b>todo_dbとtasksテーブル</b>を作成し、<b>動作確認用のサンプルデータ</b>を投入します。v2では3件入れて、Vol.2のラストでこの3件が画面に出ることを目指します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">tasks-schema</span>
+      <span class="tag-desc">テーブル設計の意図</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 各列の役割</div>
+        <table class="config-table">
+          <thead>
+            <tr><th>列名</th><th>型</th><th>役割</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>id</td>
+              <td>BIGINT</td>
+              <td>主キー。自動連番（AUTO_INCREMENT）</td>
+            </tr>
+            <tr>
+              <td>title</td>
+              <td>VARCHAR(100)</td>
+              <td>タスクのタイトル。最大100文字</td>
+            </tr>
+            <tr>
+              <td>done</td>
+              <td>BOOLEAN</td>
+              <td>完了フラグ。デフォルト FALSE</td>
+            </tr>
+            <tr>
+              <td>created_at</td>
+              <td>DATETIME</td>
+              <td>作成日時。デフォルトで現在時刻</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="font-size:13px;margin-top:14px"><b>設計のポイント：</b></p>
+        <ul class="bullet-list">
+          <li><b>id</b>は必ず<b>主キー</b>にする ── データを一意に特定するため</li>
+          <li><b>BIGINT</b>を選ぶ ── INT(約21億)より大きく、将来安心</li>
+          <li><b>created_at</b>を持つ ── 作成順での並び替えが可能になる</li>
+          <li><b>utf8mb4</b>を使う ── 絵文字も格納できる</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>合言葉：</b>テーブル設計は<b>「シンプルに始めて、必要になったら追加」</b>。最初から完璧を目指さない。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 順番に実行</span>
+
+<span class="comment">// ── ① DBを作成 ──</span>
+mysql&gt; CREATE DATABASE todo_db
+    -&gt;   CHARACTER SET utf8mb4
+    -&gt;   COLLATE utf8mb4_unicode_ci;
+Query OK, 1 row affected
+
+
+<span class="comment">// ── ② 使うDBを切り替え ──</span>
+mysql&gt; USE todo_db;
+Database changed
+
+
+<span class="comment">// ── ③ テーブルを作成 ──</span>
+mysql&gt; CREATE TABLE tasks (
+    -&gt;   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    -&gt;   title VARCHAR(100) NOT NULL,
+    -&gt;   done BOOLEAN NOT NULL DEFAULT FALSE,
+    -&gt;   created_at DATETIME NOT NULL
+    -&gt;     DEFAULT CURRENT_TIMESTAMP
+    -&gt; );
+Query OK, 0 rows affected
+
+
+<span class="comment">// ── ④ 確認 ──</span>
+mysql&gt; DESC tasks;
++------------+--------------+------+-----+
+| Field      | Type         | Null | Key |
++------------+--------------+------+-----+
+| id         | bigint       | NO   | PRI |
+| title      | varchar(100) | NO   |     |
+| done       | tinyint(1)   | NO   |     |
+| created_at | datetime     | NO   |     |
++------------+--------------+------+-----+
+
+
+<span class="comment">// ── ⑤ サンプルデータ（3件） ──</span>
+mysql&gt; INSERT INTO tasks (title, done) VALUES
+    -&gt;   ('最初のタスク', false),
+    -&gt;   ('Spring Bootを学ぶ', false),
+    -&gt;   ('牛乳を買う', true);
+Query OK, 3 rows affected
+
+
+<span class="comment">// ── ⑥ 確認 ──</span>
+mysql&gt; SELECT * FROM tasks;
++----+-------------------+------+-----------+
+| id | title             | done | created..|
++----+-------------------+------+-----------+
+|  1 | 最初のタスク       |    0 | 2026-...  |
+|  2 | Spring Bootを学ぶ |    0 | 2026-...  |
+|  3 | 牛乳を買う         |    1 | 2026-...  |
++----+-------------------+------+-----------+
+3 rows in set
+
+
+<span class="comment">// ─────────────────────</span>
+<span class="comment">// これでDB側の準備は完了。</span>
+<span class="comment">// 次は Spring Boot から繋ぎます。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><code style="font-family:'JetBrains Mono'">BOOLEAN</code>はMySQLでは<b>内部的にTINYINT(1)</b>に変換されます。表示は0/1ですが、論理的には<code style="font-family:'JetBrains Mono'">false/true</code>。MyBatisを通すとJavaの<code style="font-family:'JetBrains Mono'">Boolean</code>型に自動変換されるので意識不要です。</p>
+  </div>
+</section>
+
+<section id="properties">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>⚙️ application.propertiesにDB情報を書く</h2>
+    <span class="en">CONFIGURE APPLICATION.PROPERTIES</span>
+  </div>
+  <p class="pattern-desc">DBは作りました。次はSpring Bootに<b>「ここにDBがあるよ」</b>と教える必要があります。Vol.1の起動エラーの原因はここの設定が無いこと。<b>本セクションを完了すればVol.1のエラーが自動で解消</b>します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">application.properties</span>
+      <span class="tag-desc">DB接続情報の設定</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ファイルの場所</div>
+        <p style="font-size:13px;margin-bottom:10px"><b>編集対象のファイル：</b></p>
+        <div style="background:#fff;border:1px solid var(--line);padding:8px 12px;margin:8px 0;font-family:'JetBrains Mono';font-size:11.5px;color:var(--accent-3)">
+          src/main/resources/<br>
+          &nbsp;&nbsp;application.properties
+        </div>
+        <p style="font-size:13px;margin-top:14px"><b>設定項目の意味：</b></p>
+        <table class="config-table">
+          <thead>
+            <tr><th>キー</th><th>意味</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>spring.datasource.url</td>
+              <td>DBの場所（JDBC URL）</td>
+            </tr>
+            <tr>
+              <td>spring.datasource.username</td>
+              <td>ログインユーザー</td>
+            </tr>
+            <tr>
+              <td>spring.datasource.password</td>
+              <td>パスワード</td>
+            </tr>
+            <tr>
+              <td>mybatis.configuration.<br>map-underscore-to-camel-case</td>
+              <td>DB列名のキャメル変換（神機能）</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="font-size:13px;margin-top:14px"><b>JDBC URLの重要パラメータ：</b></p>
+        <ul class="bullet-list">
+          <li><code style="font-family:'JetBrains Mono';font-size:11px">useSSL=false</code> ── 開発時はSSL不要</li>
+          <li><code style="font-family:'JetBrains Mono';font-size:11px">allowPublicKeyRetrieval=true</code> ── <b>MySQL 8の認証で必須</b></li>
+          <li><code style="font-family:'JetBrains Mono';font-size:11px">characterEncoding=UTF-8</code> ── 日本語の文字化け防止</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>重要：</b>MySQL 8 デフォルトの認証プラグイン<code style="font-family:'JetBrains Mono'">caching_sha2_password</code>で<code style="font-family:'JetBrains Mono'">useSSL=false</code>のときは<code style="font-family:'JetBrains Mono'">allowPublicKeyRetrieval=true</code>が<b>必須</b>。これを忘れると「Public Key Retrieval is not allowed」エラー。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// application.properties（完成版）</span>
+
+<span class="comment"># ─────────────────────────</span>
+<span class="comment"># Application 基本設定</span>
+<span class="comment"># ─────────────────────────</span>
+<span class="attr">spring.application.name</span>=todo
+
+
+<span class="comment"># ─────────────────────────</span>
+<span class="comment"># データソース（MySQL接続）</span>
+<span class="comment"># driver-class-name は省略可</span>
+<span class="comment"># （Spring Bootが URL から自動判定）</span>
+<span class="comment"># ─────────────────────────</span>
+<span class="attr">spring.datasource.url</span>=jdbc:mysql://localhost:3306/todo_db?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;characterEncoding=UTF-8
+
+<span class="attr">spring.datasource.username</span>=root
+<span class="attr">spring.datasource.password</span>=<span class="comment">{各自のパスワード}</span>
+
+
+<span class="comment"># ─────────────────────────</span>
+<span class="comment"># MyBatis 設定</span>
+<span class="comment"># created_at → createdAt に自動変換</span>
+<span class="comment"># ─────────────────────────</span>
+<span class="attr">mybatis.configuration.map-underscore-to-camel-case</span>=<span class="kw">true</span>
+
+
+<span class="comment"># ─────────────────────────</span>
+<span class="comment"># ログ（SQLが見えると便利）</span>
+<span class="comment"># Vol.4以降のデバッグで活躍</span>
+<span class="comment"># ─────────────────────────</span>
+<span class="attr">logging.level.com.example.todo</span>=DEBUG
+
+
+<span class="comment"># ─────────────────────────</span>
+<span class="comment"># 補足：DevToolsが入っているので</span>
+<span class="comment"># Thymeleafキャッシュは自動でfalse。</span>
+<span class="comment"># 明示しなくてもOK。</span>
+<span class="comment"># ─────────────────────────</span>
+
+
+<span class="code-head" style="margin-top:18px">// 重要な注意点：URLは1行で書く</span>
+
+<span class="comment">// ✗ 実は properties ファイルでは</span>
+<span class="comment">//    バックスラッシュで改行できますが、</span>
+<span class="comment">//    本書では分かりやすさ重視で</span>
+<span class="comment">//    1行にまとめます。</span>
+
+<span class="comment">// ✓ こう書く（実際は折り返さない）：</span>
+spring.datasource.url=jdbc:mysql://localhost:3306/todo_db?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;characterEncoding=UTF-8
+
+
+<span class="code-head" style="margin-top:18px">// 設定後の動作（重要）</span>
+
+<span class="comment">// DevToolsが入っているので、</span>
+<span class="comment">// application.properties を保存すると：</span>
+
+INFO --- Restarting due to change
+INFO --- HikariPool-1 - Starting...
+INFO --- HikariPool-1 - Start completed.  <span class="comment">// ★</span>
+INFO --- Started TodoApplication in 0.8s
+
+<span class="comment">// HikariPool が起動できれば DB 接続成功！</span>
+<span class="comment">// Vol.1の起動エラーは自動で解消します。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">裏技 ──</div>
+    <p><code style="font-family:'JetBrains Mono'">logging.level.com.example.todo=DEBUG</code>は<b>超便利</b>。MyBatisが発行したSQLがコンソールに表示されるようになります。Vol.4以降の動作確認で<b>絶大な効果</b>を発揮します。本書では最初から有効化しておきましょう。</p>
+  </div>
+</section>
+
+<section id="raw-controller">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>🔨 動作確認用Controllerを作る</h2>
+    <span class="en">CREATE RAW CONTROLLER</span>
+  </div>
+  <p class="pattern-desc">DBに接続できる状態になりました。最後に<b>「DBから取ったデータをブラウザで見せる」</b>仕組みを作ります。<b>「Vol.2で画面に何かが見える」</b>を実現するための最小コード。Vol.3以降ではこれを<b>本物のTaskクラス</b>に置き換えます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">raw-package</span>
+      <span class="tag-desc">動作確認用パッケージとファイル</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// クラス作成手順</div>
+        <div class="step-guide">
+          <div class="step-guide-title">パッケージを作る</div>
+          <ol>
+            <li><code style="font-family:'JetBrains Mono';font-size:12px">com.example.todo</code>を<b>右クリック</b></li>
+            <li><span class="menu">New</span> → <span class="menu">Package</span></li>
+            <li>Name欄に<code style="font-family:'JetBrains Mono';font-size:12px">com.example.todo.raw</code>と入力</li>
+            <li><span class="menu">Finish</span></li>
+          </ol>
+        </div>
+        <div class="step-guide">
+          <div class="step-guide-title">Mapperインターフェイスを作る</div>
+          <ol>
+            <li><code style="font-family:'JetBrains Mono';font-size:12px">raw</code>パッケージを<b>右クリック</b></li>
+            <li><span class="menu">New</span> → <span class="menu">Interface</span>（<b>Classじゃない！</b>）</li>
+            <li>Name欄に<code style="font-family:'JetBrains Mono';font-size:12px">RawTaskMapper</code>と入力</li>
+            <li><span class="menu">Finish</span> → 右上のコードを書く</li>
+          </ol>
+        </div>
+        <div class="step-guide">
+          <div class="step-guide-title">Controllerクラスを作る</div>
+          <ol>
+            <li><code style="font-family:'JetBrains Mono';font-size:12px">raw</code>パッケージを<b>右クリック</b></li>
+            <li><span class="menu">New</span> → <span class="menu">Class</span></li>
+            <li>Name欄に<code style="font-family:'JetBrains Mono';font-size:12px">RawTaskController</code>と入力</li>
+            <li><span class="menu">Finish</span> → 右下のコードを書く</li>
+          </ol>
+        </div>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>注目：</b><code style="font-family:'JetBrains Mono'">@Mapper</code>付けたインターフェイスは<b>MyBatisが自動で実装を生成</b>します。これがMyBatisの神髄。詳しくはVol.4で。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// RawTaskMapper.java（動作確認用）</span>
+
+<span class="kw">package</span> com.example.todo.raw;
+
+<span class="comment">// ↓ import文は省略せず全部書きます</span>
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> java.util.Map;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> org.apache.ibatis.annotations.Select;
+
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">RawTaskMapper</span> {
+
+  <span class="ann">@Select</span>(<span class="str">"SELECT * FROM tasks ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Map</span>&lt;<span class="type">String</span>, <span class="type">Object</span>&gt;&gt; <span class="fn">findAllRaw</span>();
+}
+
+
+<span class="comment">// ─────────────────────</span>
+<span class="comment">// 結果を Map で受けています。</span>
+<span class="comment">// </span>
+<span class="comment">// 通常は List&lt;Task&gt; で受けますが、</span>
+<span class="comment">// Vol.3でTaskクラスを作るまでは</span>
+<span class="comment">// Map で代用する作戦です。</span>
+<span class="comment">// </span>
+<span class="comment">// 一時的な動作確認用なので OK。</span>
+
+
+<span class="code-head" style="margin-top:18px">// RawTaskController.java（動作確認用）</span>
+
+<span class="kw">package</span> com.example.todo.raw;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> java.util.Map;
+<span class="kw">import</span> org.springframework.web.bind
+       .annotation.GetMapping;
+<span class="kw">import</span> org.springframework.web.bind
+       .annotation.RestController;
+
+
+<span class="ann">@RestController</span>
+<span class="kw">public class</span> <span class="type">RawTaskController</span> {
+
+  <span class="kw">private final</span> <span class="type">RawTaskMapper</span> mapper;
+
+  <span class="comment">// コンストラクタ注入</span>
+  <span class="kw">public</span> <span class="fn">RawTaskController</span>(<span class="type">RawTaskMapper</span> mapper) {
+    <span class="kw">this</span>.mapper = mapper;
+  }
+
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/raw"</span>)
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Map</span>&lt;<span class="type">String</span>, <span class="type">Object</span>&gt;&gt; <span class="fn">rawList</span>() {
+    <span class="kw">return</span> mapper.<span class="fn">findAllRaw</span>();
+  }
+}
+
+
+<span class="comment">// ─────────────────────</span>
+<span class="comment">// たった10行ちょっとで完成。</span>
+<span class="comment">// /raw にアクセスするとDBの中身が</span>
+<span class="comment">// JSONで返ってきます。</span>
+
+
+<span class="code-head" style="margin-top:18px">// 補足：コンストラクタ注入とは？</span>
+
+<span class="comment">// Spring が裏で：</span>
+<span class="comment">// 1. RawTaskMapper の実装を MyBatis が生成</span>
+<span class="comment">// 2. それを Bean として登録</span>
+<span class="comment">// 3. RawTaskController を作る時、</span>
+<span class="comment">//    コンストラクタの引数に</span>
+<span class="comment">//    自動でその Bean をセット</span>
+<span class="comment">// </span>
+<span class="comment">// → 自分で new しないで OK</span>
+<span class="comment">// </span>
+<span class="comment">// 詳しくは Vol.5 で。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><b>Mapperはインターフェイス</b>であることに注目。Eclipseで「New → Interface」を選んでください（Classじゃない）。「<b>SQLという仕事を宣言するだけ。実装はMyBatisが自動生成</b>」── Vol.1のSection 06で扱った話の実例がここで登場します。</p>
+  </div>
+</section>
+
+<section id="runcheck">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>🚀 ブラウザで動かして確認</h2>
+    <span class="en">RUN AND VERIFY IN BROWSER</span>
+  </div>
+  <p class="pattern-desc"><b>v2の決定的瞬間</b>です。ここまでの全ての成果が、ブラウザで一気に確認できます。<b>「DBから取ったデータが画面に出る」</b>── これがVol.2のクライマックス。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">run-and-check</span>
+      <span class="tag-desc">起動と動作確認の手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動作確認の流れ</div>
+        <div class="step-guide">
+          <div class="step-guide-title">起動と画面確認</div>
+          <ol>
+            <li><code style="font-family:'JetBrains Mono';font-size:12px">TodoApplication.java</code>を<b>右クリック</b></li>
+            <li><span class="menu">Run As</span> → <span class="menu">Spring Boot App</span></li>
+            <li>コンソールに<code style="font-family:'JetBrains Mono';font-size:11px">HikariPool-1 - Start completed.</code>が出るのを待つ（DB接続成功）</li>
+            <li><code style="font-family:'JetBrains Mono';font-size:11px">Started TodoApplication in N seconds</code>を確認</li>
+            <li>ブラウザで <code style="font-family:'JetBrains Mono';font-size:12px">http://localhost:8080/</code> → "Hello, TODO!" 確認</li>
+            <li>ブラウザで <code style="font-family:'JetBrains Mono';font-size:12px">http://localhost:8080/raw</code> → <b>JSONでタスク一覧が出る！</b></li>
+          </ol>
+        </div>
+        <p style="font-size:13px;margin-top:14px"><b>確認ポイント：</b></p>
+        <ul class="checklist">
+          <li>コンソールにERROR（赤）が出ていない</li>
+          <li>"HikariPool-1 - Start completed." が出る</li>
+          <li>"Started TodoApplication in N seconds" が出る</li>
+          <li>ブラウザで /raw にアクセスすると JSON が出る</li>
+          <li>JSON にはDBのデータ3件が含まれている</li>
+          <li>コンソールに SELECT 文のログが流れる</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>✅ ここまで動けばVol.2クリア！</b>　ようやく<b>DBと繋がる体験</b>ができました。Vol.3からはこれをもっと丁寧に整えていきます。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// /raw アクセス時のJSON</span>
+
+<span class="comment">// ブラウザに表示される内容：</span>
+
+[
+  {
+    "id": 1,
+    "title": "最初のタスク",
+    "done": false,
+    "createdAt": "2026-05-17T10:30:21"
+  },
+  {
+    "id": 2,
+    "title": "Spring Bootを学ぶ",
+    "done": false,
+    "createdAt": "2026-05-17T10:30:25"
+  },
+  {
+    "id": 3,
+    "title": "牛乳を買う",
+    "done": true,
+    "createdAt": "2026-05-17T10:30:28"
+  }
+]
+
+
+<span class="comment">// ─────────────────────</span>
+<span class="comment">// 注目ポイント：</span>
+<span class="comment">// created_at → createdAt に</span>
+<span class="comment">// 自動変換されている！</span>
+<span class="comment">// </span>
+<span class="comment">// これは application.properties で</span>
+<span class="comment">// 設定した：</span>
+<span class="comment">// mybatis.configuration</span>
+<span class="comment">//   .map-underscore-to-camel-case=true</span>
+<span class="comment">// の効果。神機能。</span>
+
+
+<span class="code-head" style="margin-top:18px">// 同時にコンソールに流れるログ</span>
+
+DEBUG c.e.t.r.RawTaskMapper.findAllRaw
+   ==&gt; Preparing: SELECT * FROM tasks ORDER BY id
+   ==&gt; Parameters:
+   &lt;==      Total: 3
+
+
+<span class="code-head" style="margin-top:18px">// ブラウザの表示が雑な場合</span>
+
+<span class="comment">// JSONがそのまま生で見えて見づらい時：</span>
+<span class="comment">// </span>
+<span class="comment">// Chrome → JSON Viewer 拡張機能</span>
+<span class="comment">// Firefox → 標準で整形表示</span>
+<span class="comment">// Edge   → 標準で整形表示</span>
+<span class="comment">// </span>
+<span class="comment">// → 拡張機能なしでもJSONが見えれば OK。</span>
+<span class="comment">// Vol.3で「ちゃんとした画面」を作る。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">裏技 ──</div>
+    <p>SQLログがコンソールに流れる設定（<code style="font-family:'JetBrains Mono'">logging.level.com.example.todo=DEBUG</code>）は<b>開発中の超強い味方</b>。「何のSQLが発行されたか」が見えると、<b>デバッグが圧倒的に楽</b>になります。本番運用では INFO に下げますが、開発中は必ず DEBUG にしましょう。</p>
+  </div>
+</section>
+
+<section id="pitfall">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>🚨 ハマりどころと対処</h2>
+    <span class="en">COMMON PITFALLS</span>
+  </div>
+  <p class="pattern-desc">DB接続トラブルは<b>初学者にとって最大の難関</b>。エラーの種類を見れば原因はほぼ分かるので、典型パターンを覚えておきましょう。<b>「エラーメッセージは敵じゃなく地図」</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">db-troubles</span>
+      <span class="tag-desc">DB接続でハマる5パターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card" style="border-left-color:#b85c5c">
+          <span class="label" style="color:#b85c5c">PITFALL 1</span>
+          <div class="name">Public Key Retrieval is not allowed</div>
+          <div class="desc">MySQL 8 認証プラグインの問題。<b>URL に<code style="font-family:'JetBrains Mono'">allowPublicKeyRetrieval=true</code>を付け忘れ</b>。Section 6 で示した完全な URL を使うこと。</div>
+        </div>
+        <div class="role-card" style="border-left-color:#b85c5c">
+          <span class="label" style="color:#b85c5c">PITFALL 2</span>
+          <div class="name">Access denied for user</div>
+          <div class="desc"><b>パスワード間違い</b>。<code style="font-family:'JetBrains Mono'">application.properties</code>の<code style="font-family:'JetBrains Mono'">spring.datasource.password</code>を確認。コピペ時の余分なスペース注意。</div>
+        </div>
+        <div class="role-card" style="border-left-color:#b85c5c">
+          <span class="label" style="color:#b85c5c">PITFALL 3</span>
+          <div class="name">Communications link failure</div>
+          <div class="desc"><b>MySQLが起動していない</b>。サービスを確認。<code style="font-family:'JetBrains Mono'">services.msc</code>で「MySQL80」を開始。</div>
+        </div>
+        <div class="role-card" style="border-left-color:#b85c5c">
+          <span class="label" style="color:#b85c5c">PITFALL 4</span>
+          <div class="name">Unknown database 'todo_db'</div>
+          <div class="desc"><b>DBがまだ作られていない</b>。Section 5 の<code style="font-family:'JetBrains Mono'">CREATE DATABASE</code>を実行したか確認。</div>
+        </div>
+        <div class="role-card" style="border-left-color:#b85c5c">
+          <span class="label" style="color:#b85c5c">PITFALL 5</span>
+          <div class="name">No MyBatis mapper was found</div>
+          <div class="desc">Mapperインターフェイスに<code style="font-family:'JetBrains Mono'">@Mapper</code>を付け忘れ、または<code style="font-family:'JetBrains Mono'">com.example.todo</code>の<b>下のパッケージ</b>に置いていない。階層を確認。</div>
+        </div>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>合言葉：</b>エラーメッセージの最初の数行を<b>「読み飛ばさず」読む</b>。たいてい原因が書いてある。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 各パターンの対処</span>
+
+<span class="comment">// ── PITFALL 1 対処 ──</span>
+<span class="comment">// JDBC URLに必須パラメータを追加</span>
+<span class="attr">spring.datasource.url</span>=jdbc:mysql://localhost:3306/todo_db?useSSL=false&amp;allowPublicKeyRetrieval=true
+
+<span class="comment">// 「&」の連結を忘れないこと</span>
+
+
+<span class="comment">// ── PITFALL 2 対処 ──</span>
+<span class="comment">// MySQLクライアントで接続テスト</span>
+&gt; mysql -u root -p
+Enter password: ******
+
+<span class="comment">// ここで通る→Java側のpasswordミス</span>
+<span class="comment">// 通らない→パスワード自体が違う</span>
+
+
+<span class="comment">// ── PITFALL 3 対処（Windows） ──</span>
+&gt; net start MySQL80
+The MySQL80 service is starting.
+The MySQL80 service was started.
+
+<span class="comment">// または services.msc で手動起動</span>
+
+
+<span class="comment">// ── PITFALL 4 対処 ──</span>
+<span class="comment">// MySQLにログインして再作成</span>
+mysql&gt; CREATE DATABASE todo_db
+    -&gt;   CHARACTER SET utf8mb4;
+
+
+<span class="comment">// ── PITFALL 5 対処 ──</span>
+
+<span class="comment">// パッケージ階層を確認：</span>
+src/main/java/
+└ com/example/todo/                <span class="comment">// ← Application</span>
+   ├ TodoApplication.java
+   ├ controller/
+   │  └ HelloController.java
+   └ raw/                          <span class="comment">// ← 必ず下</span>
+      ├ RawTaskMapper.java         <span class="comment">// @Mapper必須</span>
+      └ RawTaskController.java
+
+<span class="comment">// RawTaskMapper を com.example.todo</span>
+<span class="comment">// の外に置くと検出されない！</span>
+
+
+<span class="code-head" style="margin-top:18px">// ── 接続テストだけしたい時 ──</span>
+
+<span class="comment">// MySQLクライアントで直接接続</span>
+&gt; mysql -u root -p todo_db
+Enter password: ******
+mysql&gt; SELECT * FROM tasks;
+
+<span class="comment">// ここでデータが見えるなら</span>
+<span class="comment">// 「DBの問題」ではない。</span>
+<span class="comment">// → application.properties が原因</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>DB接続トラブルは<b>「アプリの問題か、DBの問題か」を切り分ける</b>のが第一歩。コマンドラインで接続できればDBは正常 → アプリ側の設定ミス。コマンドラインでも繋がらなければDB側の問題。<b>これを切り分ける癖が業務で役立ちます</b>。</p>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">VERIFICATION ＆ NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.2のクリア条件です。<b>v2の決定的な瞬間</b>── DBから取ったデータがブラウザで見える、その状態をしっかり確認しましょう。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">final-check</span>
+      <span class="tag-desc">クリア条件</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <p style="font-size:13px;margin-bottom:10px"><b>① MySQL側：</b></p>
+        <ul class="checklist">
+          <li>mysqlコマンドでログインできる</li>
+          <li><code style="font-family:'JetBrains Mono';font-size:12px">SHOW DATABASES;</code>でtodo_dbが見える</li>
+          <li><code style="font-family:'JetBrains Mono';font-size:12px">DESC tasks;</code>でテーブル構造が出る</li>
+          <li><code style="font-family:'JetBrains Mono';font-size:12px">SELECT * FROM tasks;</code>でサンプルデータ3件が見える</li>
+        </ul>
+        <p style="font-size:13px;margin:14px 0 10px"><b>② Spring Boot側：</b></p>
+        <ul class="checklist">
+          <li>application.propertiesに接続情報がある</li>
+          <li>URLに<code style="font-family:'JetBrains Mono';font-size:12px">allowPublicKeyRetrieval=true</code>が入っている</li>
+          <li>パスワードが正しい値で記述されている</li>
+          <li>起動時にHikariPoolのログが出る（Vol.1のDataSourceエラー解消）</li>
+          <li>「Failed to」「Caused by」が出ない</li>
+        </ul>
+        <p style="font-size:13px;margin:14px 0 10px"><b>③ Java側：</b></p>
+        <ul class="checklist">
+          <li><code style="font-family:'JetBrains Mono';font-size:12px">com.example.todo.raw</code>パッケージがある</li>
+          <li>RawTaskMapper.java が<b>インターフェイス</b>として作られている</li>
+          <li><code style="font-family:'JetBrains Mono'">@Mapper</code>付き</li>
+          <li>RawTaskController.java が<b>クラス</b>として作られている</li>
+          <li>import文がコードにちゃんと書かれている</li>
+        </ul>
+        <p style="font-size:13px;margin:14px 0 10px"><b>④ ブラウザ確認：</b></p>
+        <ul class="checklist">
+          <li><code style="font-family:'JetBrains Mono';font-size:12px">/</code> で "Hello, TODO!" が表示される</li>
+          <li><code style="font-family:'JetBrains Mono';font-size:12px">/raw</code> でJSONが表示される</li>
+          <li>JSONに3件のタスクが含まれる</li>
+          <li>JSONに <code style="font-family:'JetBrains Mono';font-size:12px">createdAt</code>（キャメルケース）が出る</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全てクリアでVol.2完了！</b>　DBと繋がるアプリの第一歩を踏み出しました。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この時点での完成プロジェクト</span>
+
+todo/
+├ pom.xml
+├ src/main/java/com/example/todo/
+│  ├ TodoApplication.java
+│  ├ controller/
+│  │  └ HelloController.java
+│  └ raw/                          <span class="comment">// ★完成</span>
+│     ├ RawTaskMapper.java         <span class="comment">// @Mapper</span>
+│     └ RawTaskController.java     <span class="comment">// @RestController</span>
+└ src/main/resources/
+   └ application.properties        <span class="comment">// DB接続情報</span>
+
+
+<span class="code-head" style="margin-top:18px">// MySQL todo_db の状態</span>
+
+mysql&gt; USE todo_db; SHOW TABLES;
++-------------------+
+| Tables_in_todo_db |
++-------------------+
+| tasks             |
++-------------------+
+
+mysql&gt; SELECT COUNT(*) FROM tasks;
++----------+
+| COUNT(*) |
++----------+
+|        3 |
++----------+
+
+
+<span class="code-head" style="margin-top:18px">// 次巻でやること</span>
+
+<span class="comment">// Vol.3：Taskエンティティを作る</span>
+<span class="comment">// </span>
+<span class="comment">// - 本物の Task クラスを作成</span>
+<span class="comment">// - @Data でLombok体験</span>
+<span class="comment">// - Map → Task に置き換え</span>
+<span class="comment">// - JSON のキー名がきれいになる</span>
+<span class="comment">// </span>
+<span class="comment">// raw パッケージはまだ残しますが、</span>
+<span class="comment">// 本物の作りに置き換えていきます。</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+    <div class="tip-label">NEXT STEP ── VOL.3</div>
+    <p>お疲れさまでした。<b>v2のVol.2はかなり盛りだくさん</b>でしたが、その分<b>「DBから取った実データがブラウザで見える」</b>という大きなマイルストーンに到達しました。次のVol.3では<b>「本物のTaskクラス」</b>を作ります。<code style="font-family:'JetBrains Mono'">Map&lt;String, Object&gt;</code>から<code style="font-family:'JetBrains Mono'">Task</code>へ置き換え、<b>Lombokの威力</b>を体験。タイトルは「<b>Taskエンティティを作ろう</b>」── 続けてください。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.02 / 10 ── DB + RAW PAGE</span>
+</footer>
+
+</body>
+</html>

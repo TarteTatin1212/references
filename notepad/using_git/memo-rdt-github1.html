@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕GitHub版 Vol.1 リポジトリ初期化と変更管理の土台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2f38;
+  --paper:#f0ede4;
+  --paper-2:#e2ddc8;
+  --accent:#c95444;
+  --accent-2:#5a6270;
+  --accent-3:#2da44e;
+  --muted:#6a7080;
+  --line:#cac4b2;
+  --code-bg:#1c2026;
+  --code-text:#e8e4dc;
+  --panel-bg:#faf5e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"⎇";position:absolute;right:-10px;top:-30px;font-size:300px;color:var(--accent);opacity:0.17;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-2);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.prompt{color:#7eb87e}
+.gh-out{color:#a8b8c8}
+.key{background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(201,84,68,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-2);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff;font-size:12.5px}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-2);font-family:'JetBrains Mono',monospace}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.gh-mock{background:#0d1117;color:#c9d1d9;border:1px solid #2a313a;border-radius:6px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.75;margin:8px 0}
+.gh-mock .gh-bar{color:#7d8590;border-bottom:1px solid #2a313a;padding-bottom:6px;margin-bottom:8px;font-size:11px}
+.gh-mock .gh-repo{color:#58a6ff;font-weight:700}
+.gh-mock .gh-coral{color:#f78166}
+.gh-mock .gh-green{color:#3fb950}
+.gh-mock .gh-tag{display:inline-block;background:#1c3a5e;color:#79c0ff;padding:1px 8px;border-radius:10px;font-size:10.5px;margin:2px}
+.gh-mock .gh-label{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10.5px;margin:2px}
+.cmd-map{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:14px 0;border:1px solid var(--line)}
+.cmd-map .h{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:700;letter-spacing:0.1em;padding:8px 14px;border-bottom:1px solid var(--line)}
+.cmd-map .h:first-child{border-right:1px solid var(--line)}
+.cmd-map .c{padding:10px 14px;font-size:12.5px;border-bottom:1px solid var(--line);background:#fff;line-height:1.7}
+.cmd-map .c:nth-child(odd){border-right:1px solid var(--line)}
+.cmd-map .c code{background:#f4eed8;color:var(--accent-2);padding:1px 5px;font-family:'JetBrains Mono',monospace;font-size:11.5px}
+.cmd-map .c:last-child,.cmd-map .c:nth-last-child(2){border-bottom:none}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}.cmd-map{grid-template-columns:1fr}.cmd-map .c:nth-child(odd){border-right:none}.cmd-map .h:first-child{border-right:none}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.GH1</span>
+    <span class="kind-tag">GitHub版 ── REPO &amp; CHANGE MGMT</span>
+    <span class="rdt-tag">MANAGEMENT PHASE</span>
+  </div>
+  <h1>リポジトリ初期化と<br>変更管理の土台</h1>
+  <div class="subtitle">GH.01 ── REPOSITORY SETUP &amp; CHANGE MANAGEMENT</div>
+  <p class="lead">本編Vol.1 で<b>要求・設計・テストの土台</b>を作りました。GitHub版は<b>運用</b>を担います。今回はリポジトリ初期化に加えて、要求工学の5番目の活動<b>「管理」</b>を GitHub の <b>Issue</b> で実践する土台を作ります。<b>「要求の記録・変更の追跡」</b>を GitHub で回す。これが本シリーズの GitHub版の特徴です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 GitHub版の赤線対策 — コマンドが通らない時</div>
+    <p>Vol.GH1で出るかもしれないエラー：<code>git: command not found</code>（Git未インストール）、<code>Permission denied (publickey)</code>（SSH鍵未登録）、<code>fatal: not a git repository</code>（プロジェクト外で実行）。<b>Section 03 の準備で全部潰します</b>。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 この巻のミッション</a></li>
+    <li><a href="#s02">02 完成イメージ</a></li>
+    <li><a href="#s03">03 準備するもの</a></li>
+    <li><a href="#s04">04 ハンズオン（CLI版）</a></li>
+    <li><a href="#s05">05 Eclipse EGit 版</a></li>
+    <li><a href="#s06">06 Issueで要求を管理する</a></li>
+    <li><a href="#s07">07 ハマりどころ＋NEXT</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>この巻のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">Vol.GH1 のゴールは2つ。<b>①メモ帳プロジェクトを GitHub に置く</b>、<b>②要求を Issue として記録する土台を作る</b>。①は基本操作、②が<b>RDT版ならでは</b>。要求工学の「管理」フェーズを GitHub で実践します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">GitHub版が担う2つの役割</span><span class="tag-desc">運用＋変更管理</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// RDT版 GitHub の位置づけ</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">ROLE 1</span>
+            <div class="name">運用（Operation）</div>
+            <div class="desc">コードを<b>履歴付きで管理</b>、世界に公開。Git/GitHub の基本。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">ROLE 2</span>
+            <div class="name">変更管理（Management）</div>
+            <div class="desc">要求工学の5活動目。<b>要求・変更を Issue で追跡</b>。本シリーズの肝。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// 本編・別冊との接続</div>
+        <ul>
+          <li><b>本編Vol.1</b>：要求を獲得・分析・仕様化した</li>
+          <li><b>別冊S1</b>：変更管理の理論（CR票・スコープクリープ）を学んだ</li>
+          <li><b>GitHub版Vol.1</b>：その変更管理を<b>Issue で実践</b>する ← 今ここ</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH1 のゴール</span>
+<span class="comment">// ─── ① コードを GitHub へ ───</span>
+PC内 memo/
+  ↓ git init / add / commit / push
+GitHub: yourname/memo-app
+  → 履歴付きで管理・公開
+
+
+<span class="comment">// ─── ② 要求を Issue へ ───</span>
+本編Vol.1 で書いた
+ユーザーストーリー（US-001〜004）
+  ↓ Issue 化
+GitHub Issues:
+  #1 US-001 メモ作成
+  #2 US-002 カテゴリ分類
+  #3 US-003 タグ付け
+  #4 US-004 検索
+  → 「やることリスト」が
+    GitHub上で見える化 ★★★
+
+
+<span class="comment">// → 要求工学の「管理」を</span>
+<span class="comment">//   GitHub で回し始める</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Issue は「要求のデータベース」</div>
+    <p>別冊S1 で学んだ<b>変更要求票（CR票）</b>。これを紙やテキストで管理すると散逸します。<b>GitHub の Issue</b> なら、要求・変更・バグを<b>1か所に集約</b>し、ラベル・担当・期限まで管理できる。<b>Issue = 要求工学の「管理」フェーズの実体</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>完成イメージ</h2><span class="en">FINAL STATE</span></div>
+  <p class="pattern-desc">Vol.GH1 終了時、GitHub上に<b>①コードが置かれたリポジトリ</b>と<b>②要求が並んだ Issue 一覧</b>がある状態がゴール。「<b>何を作るか</b>」が GitHub 上で可視化されます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">リポジトリ＋Issue一覧の完成像</span><span class="tag-desc">これが見えたら成功</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 画面に出ているもの</div>
+        <ul>
+          <li><b>リポジトリ</b>：memo-app（src/ pom.xml README.md .gitignore）</li>
+          <li><b>Issues タブ</b>：US-001〜004 が Open 状態で並ぶ</li>
+          <li><b>ラベル</b>：each Issue に <code>user-story</code> / 優先度ラベル</li>
+          <li><b>Milestone</b>：v1.0</li>
+        </ul>
+        <p style="margin-top:10px"><b>コードと要求が両方 GitHub に揃う</b>のが RDT版の完成形です。</p>
+      </div>
+      <div class="code"><span class="code-head">// Issues タブの完成イメージ</span>
+<div class="gh-mock">
+<div class="gh-bar">github.com / yourname / memo-app / issues</div>
+<span class="gh-green">●</span> 4 Open   ✓ 0 Closed
+
+<span class="gh-green">○</span> <span class="gh-repo">#4 US-004 キーワードで検索したい</span>
+   <span class="gh-label" style="background:#1c3a5e;color:#79c0ff">user-story</span> <span class="gh-label" style="background:#3a2c1c;color:#e3a857">could</span>
+   milestone: v1.0
+
+<span class="gh-green">○</span> <span class="gh-repo">#3 US-003 メモに複数タグを付けたい</span>
+   <span class="gh-label" style="background:#1c3a5e;color:#79c0ff">user-story</span> <span class="gh-label" style="background:#3a2c1c;color:#e3a857">could</span>
+   milestone: v1.0
+
+<span class="gh-green">○</span> <span class="gh-repo">#2 US-002 カテゴリで分類したい</span>
+   <span class="gh-label" style="background:#1c3a5e;color:#79c0ff">user-story</span> <span class="gh-label" style="background:#1c3a2c;color:#7ee787">should</span>
+   milestone: v1.0
+
+<span class="gh-green">○</span> <span class="gh-repo">#1 US-001 すぐにメモを作成したい</span>
+   <span class="gh-label" style="background:#1c3a5e;color:#79c0ff">user-story</span> <span class="gh-label" style="background:#3a1c1c;color:#ff7b72">must</span>
+   milestone: v1.0
+</div>
+
+<span class="comment">// → 本編Vol.1 の US が Issue に</span>
+<span class="comment">// → MoSCoW がラベルに</span>
+<span class="comment">// → 「やることが見える」 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">TIP — MoSCoW をラベルにする</div>
+    <p>本編Vol.1 で決めた<b>MoSCoW（Must/Should/Could/Won't）</b>を、そのまま<b>GitHub のラベル</b>にできます。<code>must</code>（赤）<code>should</code>（緑）<code>could</code>（黄）。Issue 一覧を見れば<b>「次に何を作るべきか」が一目</b>。要求と運用が繋がります。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>準備するもの</h2><span class="en">PREREQUISITES</span></div>
+  <p class="pattern-desc">揃えるのは<b>4つ</b>。Git本体・GitHubアカウント・認証方法・Eclipse EGit。<b>30分で終わります</b>。ここを丁寧にやれば本番で詰まりません。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">準備チェックリスト</span><span class="tag-desc">この4つ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 必要なもの</div>
+        <ul class="check-list">
+          <li><b>Git本体</b>がインストール済み（<code>git --version</code> で確認）</li>
+          <li><b>GitHubアカウント</b>を作成済み（無料）</li>
+          <li><b>認証方法</b>を決めた（HTTPS+PAT 推奨）</li>
+          <li><b>Eclipse EGit</b>が有効（標準同梱）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 初回のユーザー設定</div>
+        <p>Gitインストール直後に<b>必ず</b>実行：</p>
+        <ul>
+          <li><code>git config --global user.name "名前"</code></li>
+          <li><code>git config --global user.email "GitHubのメール"</code></li>
+        </ul>
+        <p style="margin-top:8px">これを忘れると<b>別人名義でコミット</b>されます。</p>
+      </div>
+      <div class="code"><span class="code-head">// インストール確認と初期設定</span>
+<span class="prompt">$</span> <span class="kw">git --version</span>
+<span class="gh-out">git version 2.43.0</span>
+<span class="comment">// → 出ればOK。出なければ git-scm.com から</span>
+
+
+<span class="comment">// ─── 初回ユーザー設定 ───</span>
+<span class="prompt">$</span> <span class="kw">git config --global</span>
+       user.name <span class="str">"Your Name"</span>
+<span class="prompt">$</span> <span class="kw">git config --global</span>
+       user.email <span class="str">"you@example.com"</span>
+
+
+<span class="comment">// ─── 認証：HTTPS+PAT（推奨）───</span>
+<span class="comment">// GitHub右上アバター → Settings</span>
+<span class="comment">// → Developer settings</span>
+<span class="comment">// → Personal access tokens (classic)</span>
+<span class="comment">// → Generate new token</span>
+<span class="comment">// → scope: repo にチェック</span>
+<span class="comment">// → トークンをコピー（二度と表示されない）</span>
+
+<span class="comment">// push 時に：</span>
+<span class="comment">//   Username: yourname</span>
+<span class="comment">//   Password: ghp_xxxx（PATを貼る）</span>
+<span class="comment">// ※2021年8月でパスワード直入力は廃止</span>
+<span class="comment">//   → PAT必須 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — パスワード直入力は廃止済み</div>
+    <p>かつてはGitHubのログインパスワードで push できましたが、<b>2021年8月に廃止</b>。今は <b>PAT</b> か <b>SSH鍵</b> が必須。<b>「パスワード聞かれてログインパスワード入れたら通らない」</b>がハマりどころNo.1。<b>PATを使ってください</b>。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>ハンズオン（コマンドライン版）</h2><span class="en">CLI HANDS-ON</span></div>
+  <p class="pattern-desc">本編Vol.1 で作った<b>メモ帳プロジェクト</b>を GitHub に置きます。<code>git init</code> から <code>push</code> まで。<b>4つの基本コマンド</b>で完了します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">手順 — 7ステップ</span><span class="tag-desc">これで GitHub に置ける</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <ol class="step-list">
+          <li>プロジェクトフォルダに移動（cd）</li>
+          <li><code>git init</code> でGit管理開始</li>
+          <li><code>.gitignore</code> を用意（Spring Boot用）</li>
+          <li><code>README.md</code> を作成</li>
+          <li><code>git add / commit</code> で初コミット</li>
+          <li>GitHubでリポジトリ作成（Web）</li>
+          <li><code>git remote add / push</code> で送信</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// .gitignore（Spring Boot用）</div>
+        <ul>
+          <li><b>target/</b>：mvn build 生成物</li>
+          <li><b>.classpath .project .settings/</b>：Eclipse個人設定</li>
+          <li><b>*.log</b>：ログ</li>
+          <li><b>application-local.properties</b>：個人のDB接続情報</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 全コマンド一覧</span>
+<span class="prompt">$</span> <span class="kw">cd</span> ~/workspace/memo
+<span class="prompt">$</span> <span class="kw">git init</span>
+
+<span class="comment"># .gitignore 作成</span>
+<span class="prompt">$</span> <span class="kw">cat ></span> .gitignore <span class="kw"><<</span> <span class="str">'EOF'</span>
+target/
+.classpath
+.project
+.settings/
+bin/
+.idea/
+*.iml
+*.log
+application-local.properties
+<span class="str">EOF</span>
+
+<span class="comment"># README.md 作成</span>
+<span class="prompt">$</span> <span class="kw">cat ></span> README.md <span class="kw"><<</span> <span class="str">'EOF'</span>
+<span class="ann"># memo-app</span>
+
+Spring Boot + MyBatis のメモ帳アプリ。
+要求・設計・テスト駆動（RDT）で開発。
+
+<span class="ann">## 環境</span>
+- Java 17 / Spring Boot 3.x
+- MyBatis / MySQL 8.0
+
+<span class="ann">## テーブル</span>
+- memos / categories / tags
+- memo_tags（中間テーブル）
+
+<span class="ann">## 開発方針</span>
+- 要求(US) → 設計 → 実装 → テスト
+- 要求は Issue で管理
+<span class="str">EOF</span>
+
+<span class="comment"># 初コミット</span>
+<span class="prompt">$</span> <span class="kw">git add</span> .
+<span class="prompt">$</span> <span class="kw">git commit -m</span>
+       <span class="str">"chore: プロジェクト初期化
+
+- Spring Boot + MyBatis + MySQL
+- 3テーブル設計のDDL
+- 要求(US-001〜004)を定義済み"</span>
+
+<span class="comment"># GitHub でリポジトリ作成後…</span>
+<span class="prompt">$</span> <span class="kw">git branch -M</span> main
+<span class="prompt">$</span> <span class="kw">git remote add</span> origin
+       <span class="str">https://github.com/yourname/memo-app.git</span>
+<span class="prompt">$</span> <span class="kw">git push -u</span> origin main
+
+<span class="comment">// → GitHub に置けた ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 初コミットのメッセージにも要求を残す</div>
+    <p>RDT版では、<b>初コミットのメッセージにも「要求を定義済み」と記録</b>します。<code>chore: プロジェクト初期化 / 要求(US-001〜004)を定義済み</code>。コミット履歴を遡れば<b>「いつ要求が固まったか」</b>も分かる。<b>履歴が開発の記録になる</b>のが RDT版の思想です。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>Eclipse EGit 版</h2><span class="en">EGIT VERSION</span></div>
+  <p class="pattern-desc">コマンドが苦手な方向けの GUI 版。Eclipse の <b>EGit</b>（標準同梱）で同じことを画面操作で完結させます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">EGit 手順 — Share から Push</span><span class="tag-desc">右クリックで完結</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <ol class="step-list">
+          <li>プロジェクト右クリック → <span class="menu-code">Team</span> → <span class="menu-code">Share Project...</span></li>
+          <li><span class="menu-code">Git</span> 選択 → <span class="menu-code">Create Repository</span> → <span class="menu-code">Finish</span></li>
+          <li>.gitignore と README.md を作成（New → File）</li>
+          <li><span class="menu-code">Git Staging</span> ビューで全ファイルをStaged</li>
+          <li>コミットメッセージ入力 → <span class="menu-code">Commit and Push...</span></li>
+          <li>URI入力 → GitHubのURL貼付け → 認証（PAT）</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// ビューの開き方</div>
+        <ul>
+          <li><b>Git Staging</b>：<code>Window → Show View → Other → Git → Git Staging</code></li>
+          <li><b>History</b>：プロジェクト右クリック → <span class="menu-code">Team → Show in History</span></li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// コマンド ↔ EGit 対応マップ</span></div>
+      <div style="background:var(--panel-bg);padding:0">
+        <div class="cmd-map">
+          <div class="h">コマンドライン</div>
+          <div class="h">Eclipse EGit</div>
+          <div class="c"><code>git init</code></div>
+          <div class="c">Team → Share Project → Create Repository</div>
+          <div class="c"><code>git add .</code></div>
+          <div class="c">Git Staging で ＋＋（全Stagedへ）</div>
+          <div class="c"><code>git commit -m</code></div>
+          <div class="c">Git Staging でメッセージ → Commit</div>
+          <div class="c"><code>git push -u origin main</code></div>
+          <div class="c">Commit and Push / Team → Push Branch</div>
+          <div class="c"><code>git log</code></div>
+          <div class="c">Team → Show in History</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">TIP — 両方使えるのがベスト</div>
+    <p>業務では「<b>コミットはEGit、面倒な操作はコマンド</b>」のハイブリッドが主流。EGitは<b>diffの可視化</b>が秀逸、コマンドは<b>履歴整理が速い</b>。<b>両方使い分けられると強い</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>Issueで要求を管理する</h2><span class="en">MANAGE REQUIREMENTS WITH ISSUES</span></div>
+  <p class="pattern-desc"><b>RDT版の核心</b>がここ。本編Vol.1 で書いた<b>ユーザーストーリー（US-001〜004）</b>を、GitHub の <b>Issue</b> として登録します。要求工学の「管理」フェーズを GitHub で実践する第一歩です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ユーザーストーリーを Issue 化</span><span class="tag-desc">要求を可視化する</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Issue 作成手順</div>
+        <ol class="step-list">
+          <li>リポジトリの <b>Issues</b> タブ → <b>New issue</b></li>
+          <li>Title：<code>US-001 すぐにメモを作成したい</code></li>
+          <li>本文に<b>ストーリー＋受入条件</b>を貼る（本編Vol.1 の内容）</li>
+          <li>右サイドの <b>Labels</b> で MoSCoW ラベルを付与</li>
+          <li><b>Milestone</b> で v1.0 を設定</li>
+          <li><b>Submit new issue</b></li>
+          <li>US-002〜004 も同様に作成</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// 事前にラベルを作る</div>
+        <p>Issues → Labels → New label で：</p>
+        <ul>
+          <li><code>must</code>（赤 #d73a4a）</li>
+          <li><code>should</code>（緑 #0e8a16）</li>
+          <li><code>could</code>（黄 #fbca04）</li>
+          <li><code>user-story</code>（青 #1d76db）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Issue #1 の本文テンプレート</span>
+<span class="ann">## ユーザーストーリー</span>
+As a 思いつきを記録したいユーザー
+I want すぐにメモを作成・保存したい
+so that アイデアを忘れる前に書き留められる
+
+<span class="ann">## 受入条件</span>
+- [ ] @AC1 タイトル入力→保存で一覧に出る
+- [ ] @AC2 空タイトルはエラーになる
+- [ ] @AC3 200文字は登録できる
+- [ ] @AC4 201文字はエラーになる
+
+<span class="ann">## 設計メモ</span>
+- memos テーブル（Vol.1で設計済み）
+- Controller→Service→Mapper の3層
+
+<span class="ann">## テスト方針</span>
+- バリデーションは単体テスト(JUnit)
+- CRUD通しは MockMvc
+
+<span class="ann">## MoSCoW</span>
+Must（v1必須）
+
+<span class="comment">// ─── チェックボックスが効く ───</span>
+<span class="comment">// - [ ] は GitHub上でクリック可能</span>
+<span class="comment">// → 受入条件を1つずつチェック</span>
+<span class="comment">// → 進捗が見える化される ★★★</span>
+
+
+<span class="comment">// ─── 別冊S1のCR票もIssueで ───</span>
+<span class="comment">// 変更要求が出たら：</span>
+<span class="ann">## 変更要求 CR-001</span>
+対象: US-003
+内容: フォルダ分けも追加したい
+影響: foldersテーブル追加・+3日
+判断: v2に回す
+labels: enhancement, v2
+<span class="comment">// → 変更も Issue で記録・追跡 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Issue と要求工学の対応</span><span class="tag-desc">「管理」フェーズの実体</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <table class="compare-tbl">
+          <thead><tr><th>要求工学</th><th>GitHub Issue</th></tr></thead>
+          <tbody>
+            <tr><td>ユーザーストーリー</td><td>Issue 本文</td></tr>
+            <tr><td>受入条件</td><td>チェックボックス</td></tr>
+            <tr><td>MoSCoW優先度</td><td>ラベル</td></tr>
+            <tr><td>リリース計画</td><td>Milestone</td></tr>
+            <tr><td>変更要求(CR票)</td><td>新規Issue</td></tr>
+            <tr><td>トレーサビリティ</td><td>Issue↔PR/コミット紐付け</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// トレーサビリティの威力</div>
+        <p>後の Vol.GH3（PR編）で、<b>コミットメッセージに <code>Refs #1</code></b> と書くと、<b>Issue #1 とコミットが自動で紐付く</b>。「<b>この要求が、どのコードで実現されたか</b>」が追跡できる。これが<b>トレーサビリティ</b>です。</p>
+      </div>
+      <div class="code"><span class="code-head">// Issue ↔ コミットの紐付け</span>
+<span class="comment">// コミットメッセージに Issue 番号</span>
+<span class="prompt">$</span> <span class="kw">git commit -m</span> <span class="str">"feat(memo): メモ作成機能
+
+US-001 を実装。
+- Memo Entity / Mapper / Service
+- 空タイトルバリデーション
+- 単体テスト4件（受入条件AC1-4）
+
+Refs #1"</span>
+       <span class="comment">// ↑ #1 と書くと Issue にリンク</span>
+
+
+<span class="comment">// クローズも自動化できる</span>
+<span class="prompt">$</span> <span class="kw">git commit -m</span> <span class="str">"feat: メモ作成完了
+
+Closes #1"</span>
+       <span class="comment">// ↑ Closes #1 でマージ時に</span>
+       <span class="comment">//   Issue #1 が自動Close ★★★</span>
+
+
+<span class="comment">// ─── これで実現すること ───</span>
+要求(US-001)
+  ↓ Issue #1
+  ↓ Refs #1 のコミット群
+  ↓ Closes #1 でクローズ
+完成
+
+<span class="comment">// → 「要求→実装→完了」が</span>
+<span class="comment">//   GitHub上で一本の線に ★★★</span>
+<span class="comment">// → これがトレーサビリティ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「要求の見える化」が開発を変える</div>
+    <p>頭の中やテキストファイルにある要求は<b>すぐ忘れられ、散逸</b>します。GitHub の Issue に置けば<b>「やることリスト」が常に見える</b>。完成したら Close、変更が出たら新 Issue。<b>要求が生き物として管理される</b>。これが要求工学の「管理」フェーズの実践です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>ハマりどころ＋NEXT STEP</h2><span class="en">PITFALLS &amp; NEXT</span></div>
+  <p class="pattern-desc">Vol.GH1 で新人がよく踏む地雷を5つ。<b>★★★ 印は特に頻発</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.GH1 ハマりどころ 5選</span><span class="tag-desc">先に知れば回避できる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① fatal: refusing to merge unrelated histories ★★★</b></p>
+        <ul>
+          <li>原因：GitHub側でREADME作成＋ローカルでも初コミット</li>
+          <li>対処：<code>git pull origin main --allow-unrelated-histories</code></li>
+          <li>予防：GitHub で<b>空リポジトリ</b>を作る（README追加しない）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② Authentication failed（パスワード弾かれる）★★★</b></p>
+        <ul>
+          <li>原因：ログインパスワードを入力した</li>
+          <li>対処：<b>PAT</b>を作成して入力（Section 03）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ target/ がコミットされた</b></p>
+        <ul>
+          <li>原因：.gitignore を書く前に add した</li>
+          <li>対処：<code>git rm -r --cached target/</code> → 再コミット</li>
+          <li>予防：.gitignore は git init 直後に作る</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ Issue にラベルが付けられない</b></p>
+        <ul>
+          <li>原因：ラベルを事前に作っていない</li>
+          <li>対処：Issues → Labels → New label で must/should/could を先に作成</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ Issue の受入条件チェックボックスが効かない</b></p>
+        <ul>
+          <li>原因：<code>- [ ]</code> の書式ミス（ハイフン＋スペース＋角括弧）</li>
+          <li>対処：<code>- [ ] 内容</code> の形を正確に（スペース必須）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 主要エラーの対処</span>
+<span class="comment">// ─── ① unrelated histories ───</span>
+<span class="prompt">$</span> <span class="kw">git pull</span> origin main
+       <span class="ann">--allow-unrelated-histories</span>
+<span class="prompt">$</span> <span class="kw">git push</span>
+
+
+<span class="comment">// ─── ③ target/ 巻き込み ───</span>
+<span class="prompt">$</span> <span class="kw">echo</span> <span class="str">"target/"</span> >> .gitignore
+<span class="prompt">$</span> <span class="kw">git rm -r --cached</span> target/
+<span class="prompt">$</span> <span class="kw">git add</span> .gitignore
+<span class="prompt">$</span> <span class="kw">git commit -m</span>
+       <span class="str">"chore: ignore target dir"</span>
+
+
+<span class="comment">// ─── ⑤ チェックボックスの正しい書式 ───</span>
+<span class="ann">正:</span> - [ ] 空タイトルはエラー
+       └┬┘└┬┘
+        │  └ 半角スペース
+        └ ハイフン+スペース
+
+<span class="ann">誤:</span> -[] 内容       <span class="comment">// スペースなし</span>
+    *[ ] 内容       <span class="comment">// アスタリスク</span>
+    - [x] 内容      <span class="comment">// x はチェック済み</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">GH1 達成チェック</span><span class="tag-desc">運用＋管理の土台完了</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェック</div>
+        <ul class="check-list">
+          <li><code>git --version</code> でバージョン表示</li>
+          <li>user.name / user.email 設定済み</li>
+          <li>PAT 発行済み</li>
+          <li>本編プロジェクトで git init 完了</li>
+          <li>.gitignore に target/ ほか記載</li>
+          <li>README.md 作成・初コミット完了</li>
+          <li>GitHub にリポジトリ作成・push 成功</li>
+          <li>US-001〜004 を Issue 化した</li>
+          <li>MoSCoW ラベルを付けた</li>
+          <li>受入条件をチェックボックスで書いた</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH1 で手に入れたもの</span>
+<span class="comment">// ─── 運用（Operation）───</span>
+✓ <span class="str">"リポジトリを GitHub で持っている"</span>
+✓ <span class="str">"init/add/commit/push の意味を言える"</span>
+✓ <span class="str">".gitignore の役割が分かる"</span>
+
+<span class="comment">// ─── 変更管理（Management）───</span>
+✓ <span class="str">"要求(US)を Issue で管理できる"</span>
+✓ <span class="str">"MoSCoW をラベルで可視化できる"</span>
+✓ <span class="str">"トレーサビリティの概念を理解"</span>
+
+
+<span class="comment">// → 「運用＋要求管理」の土台が完成 ★★★</span>
+
+<span class="comment">// 次回 Vol.GH2：</span>
+<span class="comment">//   ブランチ運用とコミットの作法</span>
+<span class="comment">//   本編Vol.2 の Memo CRUD を</span>
+<span class="comment">//   feature ブランチで管理する</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.GH2 へ</div>
+    <p>Vol.GH1 で<b>「リポジトリを持つ」＋「要求を Issue で管理する」</b>土台ができました。次は Vol.GH2「<b>ブランチ運用とコミットの作法 編</b>」。本編Vol.2「メモCRUD（要求→設計→テスト一周目）」で作るコードを、<b>feature ブランチで管理</b>し、<b>コミットメッセージに Issue 番号を紐付け</b>ます。要求→実装のトレーサビリティを実際に繋ぎます。<b>本編Vol.2 → Vol.GH2 の順</b>で進めるとスムーズです。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>GH.01 / 14 ── REPOSITORY &amp; CHANGE MANAGEMENT（GitHub版）</span>
+</footer>
+
+</body>
+</html>

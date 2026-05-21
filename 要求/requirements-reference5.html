@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>要求編 要求分析・モデリング編 Vol.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2438;
+  --paper:#ebe5d4;
+  --paper-2:#ddd5c0;
+  --accent:#2d3d6e;
+  --accent-2:#4a5a8a;
+  --accent-3:#6b5235;
+  --muted:#6d6657;
+  --line:#b8b09a;
+  --code-bg:#181d2e;
+  --code-text:#e8e3d5;
+  --panel-bg:#f3eedd;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;font-size:15px;line-height:1.8}
+body{max-width:1080px;margin:0 auto;padding:48px 40px 80px}
+.page-header{position:relative;padding:48px 0 32px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"？";position:absolute;right:-20px;top:-40px;font-family:'Shippori Mincho',serif;font-size:340px;font-weight:700;color:var(--accent);opacity:0.12;z-index:0;line-height:1}
+.page-header>*{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.15em;margin-bottom:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em;margin-left:6px;margin-bottom:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;line-height:1.3;margin-top:12px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--muted);margin-top:12px;letter-spacing:0.05em}
+.lead{max-width:640px;margin-top:20px;font-size:15px;line-height:1.9;color:var(--ink)}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 20px}
+.toc a{font-family:'Shippori Mincho',serif;color:var(--ink);text-decoration:none;font-size:14px;font-weight:500}
+.toc a::before{content:"— ";color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:72px}
+.section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px;flex-wrap:wrap}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:32px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1;min-width:200px}
+.en{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase}
+.pattern-desc{max-width:720px;margin-bottom:24px;color:var(--ink);line-height:1.9}
+.pattern-desc b{font-weight:700;background:linear-gradient(transparent 60%,rgba(45,61,110,0.15) 60%)}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:20px}
+.demo-head{background:var(--paper-2);padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+.code .kw{color:#ffc88a}
+.code .type{color:#c2a3ff}
+.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}
+.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}
+.code .ann{color:#f7c08a}
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+}
+.tip{background:rgba(45,61,110,0.06);border-left:3px solid var(--accent);padding:18px 22px;margin:24px 0}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:600;margin-bottom:6px}
+.tip b{font-weight:700}
+.key{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;padding:1px 6px;border-radius:3px;font-weight:600}
+.diagram{font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6;color:var(--ink);white-space:pre;overflow-x:auto}
+.role-list{list-style:none;margin-top:8px}
+.role-list li{padding:8px 0;border-bottom:1px dotted var(--line);font-size:13px}
+.role-list li:last-child{border-bottom:none}
+.role-list .role{font-family:'Shippori Mincho',serif;font-weight:700;color:var(--accent);margin-right:8px}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.compare>div{padding:12px;background:#fff;border:1px solid var(--line);font-size:13px}
+.compare h4{font-family:'Shippori Mincho',serif;font-size:14px;margin-bottom:6px;color:var(--accent)}
+.story-map{margin-top:10px;font-size:11px}
+.story-map .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.1em;margin-bottom:4px}
+.story-map .activities{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.story-map .activity{background:var(--accent);color:var(--paper);padding:6px 10px;font-weight:600;font-size:11px;flex:1;text-align:center;min-width:80px}
+.story-map .tasks{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.story-map .task-col{flex:1;display:flex;flex-direction:column;gap:4px;min-width:80px}
+.story-map .task{background:#ffe89a;color:var(--ink);padding:5px 8px;font-size:10px;border:1px solid #c9a82e;line-height:1.3}
+.story-map .release{border-top:2px dashed var(--accent-3);padding-top:4px;margin-top:4px;font-size:10px;color:var(--accent-3);font-style:italic}
+.impact-tree{display:flex;flex-direction:column;gap:10px;margin-top:10px;font-size:12px}
+.impact-tree .level{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.impact-tree .l-label{background:var(--accent);color:var(--paper);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;min-width:80px;text-align:center;font-weight:600}
+.impact-tree .items{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.impact-tree .item{background:#fff;border:1px solid var(--line);padding:6px 10px;font-size:11px}
+.es-row{display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap;font-size:11px}
+.es-row .ev{background:#f7a8d8;color:var(--ink);padding:5px 8px;border:1px solid #c25a8a;font-weight:600}
+.es-row .cm{background:#ffc88a;color:var(--ink);padding:5px 8px;border:1px solid #c98a2e;font-weight:600}
+.es-row .agg{background:#b5e8b0;color:var(--ink);padding:5px 8px;border:1px solid #5a9a4a;font-weight:600}
+.es-row .arrow{color:var(--muted)}
+.ctx-diagram{margin-top:10px;text-align:center;font-size:11px}
+.ctx-diagram .system{display:inline-block;background:#fff;border:2px solid var(--accent);padding:18px 30px;font-family:'Shippori Mincho',serif;font-weight:700;color:var(--accent);margin:14px 0}
+.ctx-diagram .ext{display:inline-block;background:var(--paper-2);border:1px solid var(--line);padding:8px 14px;font-size:11px;margin:4px}
+.page-footer{margin-top:80px;padding-top:24px;border-top:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.symbol{font-family:'Shippori Mincho',serif;color:var(--accent-3);font-size:18px;margin:0 4px}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">REQUIREMENTS ENGINEERING REFERENCE</span><span class="vol-tag">VOL.05</span>
+  <h1>要求分析・モデリング編</h1>
+  <p class="subtitle">Analysis & Modeling — Structuring the Mess</p>
+  <p class="lead">獲得した要求は<b>「生の声」のままでは使えません</b>。重複・矛盾・抜けがあり、優先順位もバラバラです。本巻ではアジャイル現場の<b>視覚的分析技法</b>——ストーリーマッピング、インパクトマッピング、イベントストーミング——を中心に、要求を整理する技を扱います。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.05</div>
+  <ul>
+    <li><a href="#s1">01 要求分析の役割</a></li>
+    <li><a href="#s2">02 As-Is / To-Be 分析</a></li>
+    <li><a href="#s3">03 ストーリーマッピング</a></li>
+    <li><a href="#s4">04 インパクトマッピング</a></li>
+    <li><a href="#s5">05 イベントストーミング</a></li>
+    <li><a href="#s6">06 コンテキスト図</a></li>
+    <li><a href="#s7">07 ドメインモデル</a></li>
+    <li><a href="#s8">08 MECEで構造化</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s1">
+  <div class="section-header"><span class="section-num">01</span><h2>要求分析の役割</h2><span class="en">WHY ANALYSIS</span></div>
+  <p class="pattern-desc">獲得した要求の山から<b>「本当に必要なもの」「優先すべきもの」「実は不要なもの」</b>をふるい分けるのが分析。ここで重要なのは<b>「視覚化する」</b>こと。テキストの羅列で議論するより、図にした方が桁違いに早く合意に達します。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">analysis_role</span><span class="tag-desc">「生の声」→「構造化された要求」</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 分析でやること</div>
+        <ul class="role-list">
+          <li><span class="role">分類</span>機能・非機能・制約に分ける</li>
+          <li><span class="role">構造化</span>関係性・階層を整理する</li>
+          <li><span class="role">優先化</span>必要なもの・後回しを判別</li>
+          <li><span class="role">検証</span>矛盾・欠落・重複を発見</li>
+          <li><span class="role">視覚化</span>図にして共通認識を作る</li>
+          <li><span class="role">仮説化</span>「これで本当に価値が出るか」を問う</li>
+        </ul>
+        <p style="margin-top:14px;font-size:13px;color:var(--muted)">★★★ <b style="color:var(--ink)">「分析しない要求」</b>は、そのまま実装すると<b style="color:var(--ink)">「言われた通りなのに、誰も喜ばない」</b>システムになります。</p>
+      </div>
+      <div class="code"><span class="comment"># テキスト vs 視覚化の違い</span>
+
+<span class="comment"># [テキストで議論]</span>
+顧客「検索機能、フィルタも、ソート
+も、それから過去履歴もあって、
+お気に入りも、レコメンドも...」
+チーム「うーん、優先順位は？」
+顧客「全部大事です！」
+<span class="comment"># → 1時間議論しても決まらない</span>
+
+<span class="comment"># [視覚化（ストーリーマップ）]</span>
+チーム「では、左から右の流れで
+ユーザーがやることを並べましょう」
+顧客「商品を探す → 比較する → 買う」
+チーム「各ステップで何が必要？」
+顧客「探すは検索 + フィルタ、
+      比較はお気に入り...」
+チーム「これを上下で<span class="kw">必須/任意</span>に
+        分けましょう」
+<span class="comment"># → 30分で優先度が見える</span>
+
+<span class="comment"># 図にすると議論が前に進む</span>
+<span class="comment"># これが本巻のテーマ</span></div>
+    </div>
+  </div>
+  <div class="tip"><div class="tip-head">POINT —</div>分析の道具は<b>「描けるホワイトボード」または「Miro/Figjam」</b>。アジャイル時代の分析は、テキスト文書ではなく<b>付箋の二次元配置</b>で行います。これが「ビジュアルファシリテーション」の本質。</div>
+</section>
+
+<section id="s2">
+  <div class="section-header"><span class="section-num">02</span><h2>As-Is / To-Be 分析</h2><span class="en">AS-IS / TO-BE</span></div>
+  <p class="pattern-desc">業務システムを作る際、最初にやるべきは<b>「現状（As-Is）」と「あるべき姿（To-Be）」の対比</b>です。これをやらずに「新システムを作ります」と進めると、現場の業務を破壊するシステムが出来上がります。<b>ギャップこそが要求</b>です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">as_is_to_be</span><span class="tag-desc">現状とあるべき姿のギャップ分析</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 業務改善の典型フロー</div>
+        <div class="compare">
+          <div>
+            <h4>As-Is（現状）</h4>
+            ・紙の伝票に手書き<br>
+            ・Excel転記に1時間<br>
+            ・転記ミスが月10件<br>
+            ・月末締めで残業<br><br>
+            <span style="color:var(--muted);font-size:11px">→ 現場で本当に起きていること</span>
+          </div>
+          <div>
+            <h4>To-Be（あるべき姿）</h4>
+            ・スマホで直接入力<br>
+            ・自動集計（リアルタイム）<br>
+            ・入力時バリデーション<br>
+            ・月末締めも30分<br><br>
+            <span style="color:var(--muted);font-size:11px">→ 新システム導入後の姿</span>
+          </div>
+        </div>
+        <p style="margin-top:14px;font-size:13px;color:var(--muted)">★★★ <b style="color:var(--ink)">ギャップ = 要求の源泉</b>。「To-Be は理想だけど、現実離れしてない？」のチェックも分析の仕事。</p>
+      </div>
+      <div class="code"><span class="comment"># As-Is / To-Be の記述テンプレート</span>
+
+<span class="ann">@process</span> 経費精算業務
+
+<span class="kw">As-Is</span> (現状):
+  step <span class="num">1</span>: 領収書を集める
+    └ 人: 申請者
+    └ 時間: 1日5分 × 月20日
+    └ 問題: 紛失あり
+
+  step <span class="num">2</span>: 紙申請書に転記
+    └ 人: 申請者
+    └ 時間: 月末2時間
+    └ 問題: ミスが月数件
+
+  step <span class="num">3</span>: 上長承認 (印鑑)
+    └ 人: 上長
+    └ 時間: 出社待ち平均3日
+    └ 問題: リモート時止まる
+
+<span class="kw">To-Be</span> (改善後):
+  step <span class="num">1</span>': 領収書をスマホ撮影
+    └ 即時保存・OCR読取り
+    └ 時間: 30秒/件
+
+  step <span class="num">2</span>': 自動転記
+    └ システム自動
+    └ 時間: 0分
+    └ ミス: 0件
+
+  step <span class="num">3</span>': 電子承認
+    └ Slack通知 → ワンクリック
+    └ 平均承認時間: 2時間
+
+<span class="kw">Gap</span>: ここが要求の源泉</div>
+    </div>
+  </div>
+  <div class="tip"><div class="tip-head">ハマりどころ —</div>「To-Beだけ書いてAs-Isを書かない」のは典型的な失敗。<b>現状の業務を把握しないまま新システム</b>を作ると、現場が混乱します。<b>「現状の良さを残す」</b>のも改善の一形態です。</div>
+</section>
+
+<section id="s3">
+  <div class="section-header"><span class="section-num">03</span><h2>ストーリーマッピング</h2><span class="en">STORY MAPPING</span></div>
+  <p class="pattern-desc">Jeff Patton考案の<b>ユーザーストーリーを2次元で配置する</b>技法。横軸はユーザーの行動の流れ、縦軸は優先順位。「最初に何をリリースするか（MVP）」が一目で分かるようになります。アジャイル時代の<b>定番中の定番</b>。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">story_mapping</span><span class="tag-desc">2次元でストーリーを並べる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// EC サイトのストーリーマップ例</div>
+        <div class="story-map">
+          <div class="label">USER ACTIVITIES（横軸：ユーザーの行動）</div>
+          <div class="activities">
+            <div class="activity">商品を探す</div>
+            <div class="activity">詳細を見る</div>
+            <div class="activity">カート追加</div>
+            <div class="activity">購入</div>
+          </div>
+          <div class="label">RELEASE 1 — MVP</div>
+          <div class="tasks">
+            <div class="task-col"><div class="task">キーワード検索</div></div>
+            <div class="task-col"><div class="task">商品画像表示</div><div class="task">価格表示</div></div>
+            <div class="task-col"><div class="task">カート追加</div></div>
+            <div class="task-col"><div class="task">クレカ決済</div></div>
+          </div>
+          <div class="label">RELEASE 2 — 機能追加</div>
+          <div class="tasks">
+            <div class="task-col"><div class="task">カテゴリ絞込</div><div class="task">価格ソート</div></div>
+            <div class="task-col"><div class="task">レビュー表示</div></div>
+            <div class="task-col"><div class="task">お気に入り</div></div>
+            <div class="task-col"><div class="task">コンビニ払い</div></div>
+          </div>
+          <div class="label">RELEASE 3 — 高度な機能</div>
+          <div class="tasks">
+            <div class="task-col"><div class="task">画像検索</div><div class="task">レコメンド</div></div>
+            <div class="task-col"><div class="task">在庫予測</div></div>
+            <div class="task-col"><div class="task">セット割引</div></div>
+            <div class="task-col"><div class="task">後払い</div></div>
+          </div>
+        </div>
+        <p style="margin-top:14px;font-size:13px;color:var(--muted)">★★★ 上から順にリリースする＝<b style="color:var(--ink)">「薄く全機能を作って、徐々に厚くする」</b>。</p>
+      </div>
+      <div class="code"><span class="comment"># ストーリーマップの作り方</span>
+
+<span class="ann">@workshop</span> 半日
+
+<span class="kw">step</span> <span class="num">1</span>: ユーザーの一連の行動を
+        左から右に並べる
+        （ジャーニーマップ）
+  例: 探す → 見る → 買う → 受取
+
+<span class="kw">step</span> <span class="num">2</span>: 各行動の下に
+        必要な機能を縦に列挙
+  探す: [検索, フィルタ, ソート, AI]
+
+<span class="kw">step</span> <span class="num">3</span>: 縦軸を優先順位で並べる
+        上に行くほど必須
+
+<span class="kw">step</span> <span class="num">4</span>: 横線で「リリース」を切る
+  Release 1: 最低限の体験
+  Release 2: 改善・追加
+  Release 3: 差別化要素
+
+<span class="kw">step</span> <span class="num">5</span>: 各リリースが
+        <span class="str">「一通り価値を提供できる」</span>
+        ことを確認
+
+<span class="comment"># Miro / FigJam / 模造紙でやる</span>
+<span class="comment"># テキストで作るものではない</span></div>
+    </div>
+  </div>
+  <div class="tip"><div class="tip-head">裏技 —</div>ストーリーマップの<b>「一番上のライン」</b>を見て、それだけで<b>顧客にとって価値ある体験</b>になっているかチェック。なっていなければ、まだMVPとして成立していません。<b>「動く骨格」</b>を作る発想です。</div>
+</section>
+
+<section id="s4">
+  <div class="section-header"><span class="section-num">04</span><h2>インパクトマッピング</h2><span class="en">IMPACT MAPPING</span></div>
+  <p class="pattern-desc">Gojko Adzic考案の<b>「目標から逆算して機能を導く」</b>技法。<b>WHY → WHO → HOW → WHAT</b>の4階層で、ビジネス目標から具体的な機能までを1枚の図にまとめます。<b>「作る機能と目標の繋がり」</b>が常に見えるのが最大の利点。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">impact_mapping</span><span class="tag-desc">WHY → WHO → HOW → WHAT の階層</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// インパクトマップの例</div>
+        <div class="impact-tree">
+          <div class="level">
+            <div class="l-label">WHY (目標)</div>
+            <div class="items"><div class="item">月間アクティブユーザー10%増 (3ヶ月で)</div></div>
+          </div>
+          <div class="level">
+            <div class="l-label">WHO (誰)</div>
+            <div class="items">
+              <div class="item">新規ユーザー</div>
+              <div class="item">休眠ユーザー</div>
+              <div class="item">既存ヘビーユーザー</div>
+            </div>
+          </div>
+          <div class="level">
+            <div class="l-label">HOW (どうなる)</div>
+            <div class="items">
+              <div class="item">登録までの離脱を減らす</div>
+              <div class="item">再ログインのきっかけを作る</div>
+              <div class="item">使用頻度を上げる</div>
+            </div>
+          </div>
+          <div class="level">
+            <div class="l-label">WHAT (機能)</div>
+            <div class="items">
+              <div class="item">SNS連携ログイン</div>
+              <div class="item">復活クーポンメール</div>
+              <div class="item">プッシュ通知</div>
+              <div class="item">ゲーミフィケーション</div>
+            </div>
+          </div>
+        </div>
+        <p style="margin-top:14px;font-size:13px;color:var(--muted)">★★★ <b style="color:var(--ink)">「この機能、目標とどう繋がる？」</b>を常に問えるのが強み。繋がらない機能は<b style="color:var(--ink)">作らない</b>判断ができる。</p>
+      </div>
+      <div class="code"><span class="comment"># インパクトマッピングの問い</span>
+
+<span class="kw">WHY</span>:
+  なぜこれを作るのか？
+  → ビジネスゴール
+  → 計測可能な数値目標
+  例: <span class="str">"3ヶ月で離脱率20%減"</span>
+
+<span class="kw">WHO</span>:
+  ゴール達成に影響する人は？
+  → ペルソナ・ステークホルダー
+  例: 新規 / 休眠 / 既存
+
+<span class="kw">HOW</span>:
+  彼らの行動はどう変わるべき？
+  → 行動変容の仮説
+  例: <span class="str">"登録を完了する"</span>
+      <span class="str">"再アクセスする"</span>
+
+<span class="kw">WHAT</span>:
+  それを促す機能・支援は？
+  → 実装候補
+  例: SNSログイン
+      復活クーポン
+      プッシュ通知
+
+<span class="comment"># 最大のメリット</span>
+<span class="comment"># 「目標との繋がりがない機能」</span>
+<span class="comment"># を堂々と削除できる</span>
+
+<span class="ann">@anti_feature</span>
+× <span class="str">「便利そうだから作る」</span>
+× <span class="str">「競合にあるから作る」</span>
+○ <span class="str">「この目標に繋がるから作る」</span></div>
+    </div>
+  </div>
+  <div class="tip"><div class="tip-head">POINT —</div>「インパクトマップに書かれていない機能は作らない」を原則にすると、<b>機能の増殖（Scope Creep）</b>を防げます。新機能の提案があったら<b>「これはどのWHYに繋がる？」</b>と問うのが鉄則。</div>
+</section>
+
+<section id="s5">
+  <div class="section-header"><span class="section-num">05</span><h2>イベントストーミング</h2><span class="en">EVENT STORMING</span></div>
+  <p class="pattern-desc">Alberto Brandolini考案の<b>「業務をイベントの連なりとして可視化する」</b>技法。DDD（ドメイン駆動設計）との相性が抜群で、近年急速に普及しています。<b>付箋の色</b>で要素を区別し、業務全体の流れを浮かび上がらせます。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">event_storming</span><span class="tag-desc">業務を「イベント」の連鎖で表す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// イベントストーミングの要素</div>
+        <ul class="role-list">
+          <li><span class="role">ピンク</span>ドメインイベント（〜された）</li>
+          <li><span class="role">青</span>コマンド（〜する命令）</li>
+          <li><span class="role">黄</span>アクター（誰が）</li>
+          <li><span class="role">緑</span>集約・データ（対象物）</li>
+          <li><span class="role">紫</span>ポリシー（〜なら〜する）</li>
+          <li><span class="role">赤</span>問題・課題（要議論）</li>
+        </ul>
+        <p style="margin-top:14px;font-size:13px;color:var(--muted)"><b>注文業務の例</b>：</p>
+        <div class="es-row">
+          <div class="cm">注文する</div>
+          <div class="arrow">→</div>
+          <div class="ev">注文された</div>
+          <div class="arrow">→</div>
+          <div class="cm">決済処理</div>
+          <div class="arrow">→</div>
+          <div class="ev">決済完了</div>
+        </div>
+        <div class="es-row">
+          <div class="agg">注文</div>
+          <div class="arrow">|</div>
+          <div class="agg">在庫</div>
+          <div class="arrow">|</div>
+          <div class="agg">顧客</div>
+        </div>
+        <p style="margin-top:14px;font-size:13px;color:var(--muted)">★★★ <b style="color:var(--ink)">「過去形のイベント」</b>を時系列に並べると、業務の本質が浮かび上がります。</p>
+      </div>
+      <div class="code"><span class="comment"># イベントストーミングの進め方</span>
+
+<span class="ann">@workshop</span> 4時間〜半日
+
+<span class="kw">step</span> <span class="num">1</span>: 大きな壁・模造紙を用意
+  （イベント数: 数十〜100以上）
+
+<span class="kw">step</span> <span class="num">2</span>: ドメインイベントを書き出す
+  - 過去形で書く
+  - 「注文された」「決済完了した」
+  - 順序は気にせず付箋に貼る
+
+<span class="kw">step</span> <span class="num">3</span>: 時系列に並べる
+  - 左から右へ時間の流れ
+  - 分岐があれば縦に展開
+
+<span class="kw">step</span> <span class="num">4</span>: コマンド・アクターを追加
+  - <span class="str">「誰が」「何をして」</span>
+  - そのイベントが起こるのか
+
+<span class="kw">step</span> <span class="num">5</span>: 集約 (緑) を追加
+  - 状態を持つ対象物
+  - 注文・在庫・顧客 など
+
+<span class="kw">step</span> <span class="num">6</span>: ポリシー (紫) を追加
+  - <span class="str">「Xが起きたら、Yを発動」</span>
+  - 業務ルール
+
+<span class="kw">step</span> <span class="num">7</span>: 問題 (赤) を明示
+  - 議論が必要な点
+  - 後でフォローアップ
+
+<span class="comment"># 出力 = ドメインモデルの素材</span>
+<span class="comment"># DDD への入り口として最適</span></div>
+    </div>
+  </div>
+  <div class="tip"><div class="tip-head">現場の声 —</div>イベントストーミングは<b>「業務の人」「開発の人」が同じ言葉で話せる</b>のが最大の価値。「画面では◯◯」「テーブルでは△△」と言っていた人たちが、「注文された」という<b>共通のイベント名</b>で話せるようになります。</div>
+</section>
+
+<section id="s6">
+  <div class="section-header"><span class="section-num">06</span><h2>コンテキスト図</h2><span class="en">CONTEXT DIAGRAM</span></div>
+  <p class="pattern-desc">システムを<b>1つの箱</b>として描き、その周りに<b>外部システム・ユーザー</b>を配置するだけの図。<b>システムの境界（スコープ）</b>を明確にする最重要ツール。「これは我々が作るもの／作らないもの」を一発で示せます。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">context_diagram</span><span class="tag-desc">システムの境界を明確化する</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// EC サイトのコンテキスト図</div>
+        <div class="ctx-diagram">
+          <div>
+            <div class="ext">買い物客</div>
+            <div class="ext">運営者</div>
+          </div>
+          <div style="margin:6px 0;color:var(--muted)">↓ ↑</div>
+          <div class="system">ECサイト<br><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">(本プロジェクトの対象)</span></div>
+          <div style="margin:6px 0;color:var(--muted)">↓ ↑</div>
+          <div>
+            <div class="ext">決済代行<br>(Stripe)</div>
+            <div class="ext">物流API<br>(ヤマト)</div>
+            <div class="ext">在庫管理<br>(基幹システム)</div>
+            <div class="ext">会計連携<br>(freee)</div>
+          </div>
+        </div>
+        <p style="margin-top:14px;font-size:13px;color:var(--muted)">★★★ コンテキスト図は<b style="color:var(--ink)">プロジェクト最初の1枚</b>。これが描けない＝スコープが固まっていません。</p>
+      </div>
+      <div class="code"><span class="comment"># コンテキスト図の役割</span>
+
+<span class="kw">明確になること</span>:
+  ✓ 何を作るか（システム本体）
+  ✓ 何を作らないか
+    （外部の既存システム）
+  ✓ 連携相手
+    （API・データ連携先）
+  ✓ ユーザー種別
+    （ロール・アクター）
+
+<span class="kw">よくある失敗</span>:
+  ✗ 内部構造を描いてしまう
+    → コンテキスト図ではない
+  ✗ 外部が多すぎる
+    → スコープが広すぎる兆候
+  ✗ 矢印に意味が書いてない
+    → どんなデータが流れる？
+
+<span class="comment"># シンプルが正義</span>
+<span class="comment"># A4 1枚に収まる粒度</span>
+
+<span class="ann">@notation</span>
+- 中央の四角 = システム本体
+- 周囲の四角 = 外部
+  - 人型: ユーザー（アクター）
+  - 箱:   外部システム
+- 矢印 = データ・要求の流れ
+  - ラベルで内容を明示
+  - 例: <span class="str">"注文情報"</span>, <span class="str">"在庫照会"</span>
+
+<span class="comment"># DFD のレベル0 とも呼ばれる</span></div>
+    </div>
+  </div>
+  <div class="tip"><div class="tip-head">TIP —</div>「<b>このAPIは我々が作るんですか？</b>」「<b>この機能は既存システムを使うんですか？</b>」の議論はコンテキスト図1枚で一掃できます。要件定義フェーズ最初に作って<b>全関係者の合意を取る</b>べき図です。</div>
+</section>
+
+<section id="s7">
+  <div class="section-header"><span class="section-num">07</span><h2>ドメインモデル</h2><span class="en">DOMAIN MODEL</span></div>
+  <p class="pattern-desc">業務の主要な<b>「もの」と「関係」</b>を表したのがドメインモデル。クラス図に似ていますが、<b>業務理解</b>のための図であり、実装そのままではありません。<b>「ユビキタス言語」</b>を作る道具でもあります。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">domain_model</span><span class="tag-desc">業務の「もの」と「関係」を表す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// EC サイトのドメインモデル例</div>
+        <div class="diagram">
+            ┌─────────┐         ┌─────────┐
+            │ 顧客       │ 1     * │ 注文       │
+            │─────────│─────────│─────────│
+            │ ID         │         │ 注文番号 │
+            │ 氏名       │ →持つ│ 注文日   │
+            │ 住所       │         │ 合計金額 │
+            └─────────┘         └─────────┘
+                                       │ 1
+                                       │
+                                       │ *
+                                  ┌─────────┐    ┌─────────┐
+                                  │ 注文明細 │* 1│ 商品       │
+                                  │─────────│───│─────────│
+                                  │ 数量       │   │ 商品名   │
+                                  │ 単価       │   │ 価格       │
+                                  └─────────┘   └─────────┘
+        </div>
+        <p style="margin-top:14px;font-size:13px;color:var(--muted)">★★★ <b style="color:var(--ink)">用語の統一</b>に貢献。<br>「お客さま」「ユーザー」「会員」が混在していた現場が、<b style="color:var(--ink)">「顧客」</b>で揃うようになります。</p>
+      </div>
+      <div class="code"><span class="comment"># ドメインモデルの作法</span>
+
+<span class="kw">業務側の用語で書く</span>:
+  ✓ <span class="str">"顧客"</span> <span class="str">"注文"</span> <span class="str">"商品"</span>
+  ✗ <span class="str">"User"</span> <span class="str">"Order"</span> <span class="str">"Product"</span>
+    （業務の人と話せない）
+
+<span class="kw">実装は後で考える</span>:
+  ✓ <span class="str">"会員ランク"</span>: 業務概念
+  ✗ <span class="str">"member_rank_id"</span>: 実装
+  ✗ <span class="str">"members_table"</span>: DB
+
+<span class="kw">関係を線で結ぶ</span>:
+  - 1対多 / 多対多 を明示
+  - 必須 / 任意 を多重度で
+
+<span class="kw">業務ルール（不変条件）も併記</span>:
+  - <span class="str">"未成年は購入できない"</span>
+  - <span class="str">"在庫切れ商品は注文不可"</span>
+
+<span class="comment"># ユビキタス言語との関係</span>
+<span class="comment"># （DDDの用語）</span>
+<span class="comment"># この図に出てくる名詞・動詞が</span>
+<span class="comment"># 開発・業務全員の「共通語」になる</span>
+
+<span class="ann">@goal</span>
+PO「注文が完了した状態とは？」
+開発「注文された&決済完了です」
+業務「私たちはそれを<span class="str">"確定注文"</span>
+      と呼んでいます」
+全員「では <span class="str">"確定注文"</span> に統一」
+<span class="comment"># これがユビキタス言語の誕生</span></div>
+    </div>
+  </div>
+  <div class="tip"><div class="tip-head">ハマりどころ —</div>「ドメインモデル＝DB設計」と勘違いしがち。<b>違います</b>。ドメインモデルは<b>業務の構造</b>であり、DB設計は実装の都合。両者は似ていますが、混同すると業務概念が歪みます。UML編Vol.2のクラス図と併せて読むと理解が深まります。</div>
+</section>
+
+<section id="s8">
+  <div class="section-header"><span class="section-num">08</span><h2>MECEで構造化</h2><span class="en">MECE STRUCTURING</span></div>
+  <p class="pattern-desc">要求を整理するときの黄金ルールが<b>MECE（ミーシー）</b>：<b>Mutually Exclusive, Collectively Exhaustive</b>。<b>「重複なく、漏れなく」</b>。コンサルティング由来の概念ですが、要求の構造化に非常に有用。これを意識すると、要求リストが綺麗に整います。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">mece_structuring</span><span class="tag-desc">重複なく、漏れなく整理する</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// MECE な分類 vs ダメな分類</div>
+        <div class="compare">
+          <div style="border-color:#a85c4c;background:#fbf3ef">
+            <h4 style="color:#a85c4c">ダメな分類</h4>
+            ・主要機能<br>
+            ・サブ機能<br>
+            ・便利機能<br>
+            ・新機能<br><br>
+            <span style="color:#a85c4c;font-size:11px">→ 「便利」と「新」は重複し得る</span>
+          </div>
+          <div class="ok">
+            <h4>MECEな分類</h4>
+            ・必須機能 (Must)<br>
+            ・重要機能 (Should)<br>
+            ・あったら機能 (Could)<br>
+            ・今回除外 (Won't)<br><br>
+            <span style="color:var(--accent);font-size:11px">→ MoSCoW法。1つに割り当たる</span>
+          </div>
+        </div>
+        <p style="margin-top:14px;font-size:13px;color:var(--muted)">★★★ <b style="color:var(--ink)">「両端」「中間」が抜けてないか</b>を確認するのがコツ。<br>MoSCoWは次巻Vol.6で詳述。</p>
+      </div>
+      <div class="code"><span class="comment"># MECEなチェック観点</span>
+
+<span class="ann">@check_mece</span>
+<span class="kw">def</span> <span class="fn">validate</span>(categories):
+
+  <span class="comment"># [1] 漏れがないか (Exhaustive)</span>
+  <span class="comment"># すべての要求がどこかに入るか</span>
+  <span class="kw">for</span> req <span class="kw">in</span> all_requirements:
+    <span class="kw">assert</span> req <span class="kw">in</span> some_category
+
+  <span class="comment"># [2] 重複がないか (Exclusive)</span>
+  <span class="comment"># 1つの要求は1カテゴリだけ</span>
+  <span class="kw">for</span> req <span class="kw">in</span> all_requirements:
+    matched = [
+      c <span class="kw">for</span> c <span class="kw">in</span> categories
+      <span class="kw">if</span> req <span class="kw">in</span> c
+    ]
+    <span class="kw">assert</span> <span class="fn">len</span>(matched) == <span class="num">1</span>
+
+<span class="comment"># 要求の典型的なMECE分類</span>
+
+<span class="kw">分類軸A</span>: 種別
+  - 機能要求 / 非機能要求 / 制約
+
+<span class="kw">分類軸B</span>: 優先度
+  - Must / Should / Could / Won't
+
+<span class="kw">分類軸C</span>: 確実性
+  - 確定 / 検討中 / 仮説
+
+<span class="kw">分類軸D</span>: 関係者
+  - エンドユーザー / 管理者 / 運用
+
+<span class="comment"># 軸を複数持つと多面的に見える</span></div>
+    </div>
+  </div>
+  <div class="tip"><div class="tip-head">POINT —</div>MECEは万能ではありません。<b>「ざっくり80%MECE」</b>でも実用上十分です。完璧主義は時間の浪費。<b>「重複・漏れを発見したら、その都度修正する」</b>くらいの運用が現実的。</div>
+</section>
+
+</main>
+
+<div class="tip" style="margin-top:48px;">
+  <div class="tip-head">NEXT STEP —</div>
+  分析した要求は、最終的に<b>「いつ、誰が、何を作るか」</b>に落とし込まれます。<b>Vol.6 プロダクトバックログ・優先順位編</b>では、MoSCoW法・WSJF・カノモデルなどの優先順位付け技法と、プランニングポーカーによる見積もり、トレーサビリティの確保について扱います。
+</div>
+
+<footer class="page-footer">
+  <span>REQUIREMENTS ENGINEERING REFERENCE / VOL.05 — ANALYSIS</span>
+  <span class="symbol">？</span>
+  <span>Visualize. Then decide.</span>
+</footer>
+
+</body>
+</html>

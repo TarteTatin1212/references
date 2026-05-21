@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕Vol.8 全文検索 FULLTEXTと最適化</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2940;
+  --paper:#f3f0e6;
+  --paper-2:#e4dfcd;
+  --accent:#2d5485;
+  --accent-2:#507aa8;
+  --accent-3:#8a6a3a;
+  --muted:#6a7484;
+  --line:#c6c1b0;
+  --code-bg:#1a2236;
+  --code-text:#e8e4d4;
+  --panel-bg:#ede7d3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✦";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.phase-badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700;letter-spacing:0.05em}
+.ph-req{background:#e8eef6;color:#2d5485;border:1px solid #2d5485}
+.ph-des{background:#f0ebe0;color:#8a6a3a;border:1px solid #8a6a3a}
+.ph-imp{background:#e6efe8;color:#3a6a4a;border:1px solid #3a6a4a}
+.ph-test{background:#f3e8e8;color:#9a4040;border:1px solid #9a4040}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.key{background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(45,84,133,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.8</span>
+    <span class="kind-tag">本編 ── MAIN</span>
+    <span class="rdt-tag">REQ · DESIGN · TEST</span>
+  </div>
+  <h1>全文検索<br>FULLTEXTと最適化</h1>
+  <div class="subtitle">VOL.08 ── FULL-TEXT SEARCH ── PERFORMANCE</div>
+  <p class="lead">Vol.7 の LIKE 検索を<b>高速化</b>し、<b>US-004 を完成</b>させます。別冊S6で学んだ通り <code>LIKE '%%'</code> は<b>大量データで遅い</b>。MySQL の <b>FULLTEXT インデックス</b>で高速な全文検索を実現。<b>「測定してから最適化」（別冊S2）</b>がついに実践される回。性能改善の<b>before/afterをテスト</b>で確認します。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら — Vol.8 で新たに使うもの</div>
+    <p>実装の新規 import はほぼ無し。SQL で <code>MATCH ... AGAINST</code>（全文検索構文）が初登場。DDL で <code>FULLTEXT INDEX</code>。日本語対応には <code>ngram</code> パーサが必要（後述）。H2 は FULLTEXT 非対応のため、この巻のテストは<b>実MySQL（Testcontainers）</b>を使う選択肢に触れます。<code>Ctrl + Shift + O</code>整理。<b>別冊S6・S2を開きながら</b>進めましょう。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 要求の確認（US-004の完成）</a></li>
+    <li><a href="#s02">02 受入条件をテストケース化</a></li>
+    <li><a href="#s03">03 仕様化：LIKEの限界を測る</a></li>
+    <li><a href="#s04">04 設計①：FULLTEXTインデックス</a></li>
+    <li><a href="#s05">05 設計②：段階的移行の判断</a></li>
+    <li><a href="#s06">06 実装</a></li>
+    <li><a href="#s07">07 テスト（性能と正しさ）</a></li>
+    <li><a href="#s08">08 ブラウザ確認＋ハマりどころ</a></li>
+    <li><a href="#s09">09 レビュー・評価＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>要求の確認（US-004の完成）</h2><span class="phase-badge ph-req">PHASE: REQ</span><span class="en">REVISIT REQUIREMENT</span></div>
+  <p class="pattern-desc">Vol.7 で検索（LIKE）は動きましたが、<b>「メモが大量になっても速い」</b>という非機能要求がまだ。US-004 を<b>本当に完成</b>させるには、<b>性能</b>も満たす必要があります。Vol.8 は US-004 の<b>仕上げ</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">機能要求と非機能要求</span><span class="tag-desc">動く＋速い</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Vol.7 で足りなかったこと</div>
+        <p>Vol.7 で<b>「検索できる」（機能要求）</b>は満たしました。でも US-004 には<b>「快適に使える」（非機能要求）</b>も暗黙に含まれます。メモ1万件で<b>検索に数秒</b>かかったら使えない。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 機能 vs 非機能（別冊S1）</div>
+        <table class="compare-tbl">
+          <thead><tr><th>種類</th><th>例</th><th>巻</th></tr></thead>
+          <tbody>
+            <tr><td>機能要求</td><td>検索できる</td><td>Vol.7</td></tr>
+            <tr><td>非機能要求</td><td>速い・快適</td><td><b>Vol.8</b></td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 「測定してから」が前提</div>
+        <p>別冊S2の<b>「測定してから最適化」</b>通り、まず Vol.7 で素直に LIKE 実装→<b>遅いと測定で確認→FULLTEXT で改善</b>という順序を踏みます。</p>
+      </div>
+      <div class="code"><span class="code-head">// US-004 の非機能要求</span>
+<span class="ann">@AC6</span> 性能（非機能要求）
+Given: メモが大量（例: 1万件）ある
+When : キーワード検索する
+Then : 実用的な速度で結果が返る
+       （体感で待たされない）
+
+<span class="ann">@AC7</span> 改善後も正しさ維持
+Given: FULLTEXT に変更した
+When : Vol.7 と同じ検索をする
+Then : Vol.7 と同じ結果が返る
+       （高速化で結果が変わらない）
+
+
+<span class="comment">// ─── @AC6,7 が Vol.8 の核心 ★★★ ───</span>
+<span class="comment">// @AC6：速くする（非機能）</span>
+<span class="comment">// @AC7：速くしても結果は同じ</span>
+<span class="comment">//   → 最適化で壊さないことを保証</span>
+<span class="comment">//   → 既存テストが守ってくれる ★</span>
+
+
+<span class="comment">// ─── 「動く」の次は「使える」───</span>
+<span class="comment">// 機能要求（動く）= Vol.7</span>
+<span class="comment">// 非機能要求（速い・使える）= Vol.8</span>
+<span class="comment">// → 両方満たして US-004 完成 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「速い」も立派な要求（非機能要求）</div>
+    <p>要求には<b>機能要求（何ができるか）</b>と<b>非機能要求（どれだけ快適か）</b>があります（別冊S1）。「検索できる」は機能、「<b>1秒以内に結果が返る</b>」は非機能。初学者は機能ばかり気にしますが、<b>遅いと「使えない」</b>のは同じ。ただし<b>「最初から最速」を狙うのは過剰</b>（別冊S2）。<b>まず動かし、測って、遅ければ直す</b>——この順序が Vol.7→Vol.8 の流れです。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>受入条件をテストケース化</h2><span class="phase-badge ph-req">PHASE: REQ→TEST</span><span class="en">AC TO TEST CASES</span></div>
+  <p class="pattern-desc">性能改善のテストは<b>2種類</b>。①<b>速くなったか（性能）</b>、②<b>結果は変わらないか（正しさ）</b>。特に②が重要。<b>最適化で結果が変わったら本末転倒</b>。Vol.7 のテストが<b>「壊していない保証」</b>になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">性能改善のテスト戦略</span><span class="tag-desc">速さと正しさ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの観点</div>
+        <table class="compare-tbl">
+          <thead><tr><th>観点</th><th>確認内容</th></tr></thead>
+          <tbody>
+            <tr><td>正しさ</td><td>Vol.7と同じ結果が返る</td></tr>
+            <tr><td>性能</td><td>大量データで速い</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 正しさのテスト（最重要）</div>
+        <p><b>Vol.7 の検索テストがそのまま使える</b>。FULLTEXT に変えても<b>同じテストが緑なら、結果は変わっていない</b>。これが<b>「最適化で壊していない」保証</b>（別冊S3の変更の安全網）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 性能のテスト（補助的）</div>
+        <p>性能テストは<b>環境依存で不安定</b>。CI で厳密に測るより、<b>大量データで「実用的か」を手動確認</b>が現実的。</p>
+      </div>
+      <div class="code"><span class="code-head">// 性能改善のテスト戦略</span>
+<span class="comment">// ─── ① 正しさ（既存テストが守る）★★★ ───</span>
+<span class="comment">// Vol.7 の MemoSearchTest がそのまま</span>
+<span class="comment">// 「キーワードで絞り込める」等のテストが</span>
+<span class="comment">// FULLTEXT に変えても緑なら…</span>
+<span class="comment">// → 結果が変わっていない証明 ★★★</span>
+<span class="comment">// → リファクタの安全網（別冊S3）</span>
+
+<span class="ann">@Test</span> <span class="kw">void</span> <span class="fn">キーワードで絞り込める</span>() {
+  <span class="comment">// Vol.7 と同じテスト</span>
+  <span class="comment">// 実装が LIKE→FULLTEXT に変わっても</span>
+  <span class="comment">// このテストは変えない</span>
+  <span class="comment">// → 緑なら「動作は同じ」★</span>
+}
+
+
+<span class="comment">// ─── ② 性能（手動測定が現実的）───</span>
+<span class="comment">// 大量データを投入して測る</span>
+<span class="comment">// LIKE:     1万件で 800ms</span>
+<span class="comment">// FULLTEXT: 1万件で  20ms</span>
+<span class="comment">// → 改善を数値で確認 ★</span>
+
+<span class="comment">// 自動の性能テストは環境依存で不安定</span>
+<span class="comment">// → 別冊S3「sleep/時間依存は避ける」</span>
+<span class="comment">// → 性能は手動測定＋ログで確認が無難</span>
+
+
+<span class="comment">// ─── 最適化の鉄則 ───</span>
+<span class="comment">// 「速くする」より先に</span>
+<span class="comment">// 「結果を変えない」を保証する</span>
+<span class="comment">// → 既存テストを緑に保つ ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 最適化の前に「テストが緑」を確認する</div>
+    <p>性能改善（リファクタの一種）の鉄則：<b>「変更前にテストが緑、変更後もテストが緑」</b>。Vol.7 の検索テストがあるおかげで、LIKE→FULLTEXT に変えても<b>「結果が変わっていない」</b>と即確認できる。これが別冊S3の<b>「テストは変更の安全網」</b>の真価。<b>テストがあるから、安心して最適化できる</b>。テストなしの最適化は「直したつもりが壊した」の温床です。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>仕様化：LIKEの限界を測る</h2><span class="phase-badge ph-req">PHASE: SPEC</span><span class="en">MEASURE THE LIMIT</span></div>
+  <p class="pattern-desc">いきなり FULLTEXT にせず、まず<b>「LIKE が本当に遅いか測る」</b>。別冊S2の<b>「推測するな、測定せよ」</b>。EXPLAIN で実行計画を見て、<b>LIKE がインデックスを使えていない</b>ことを確認します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">LIKEの遅さを測定で確認</span><span class="tag-desc">推測でなく測定</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ LIKE '%word%' は遅いか</div>
+        <p>別冊S6・S7 の復習。<code>LIKE '%word%'</code> は<b>先頭が % なのでインデックスが効かない</b>。全行を1つずつ調べる<b>フルスキャン</b>になる。</p>
+
+        <div class="panel-head" style="margin-top:18px">// EXPLAIN で実行計画を見る</div>
+        <p>MySQL の <code>EXPLAIN</code> で<b>「どう実行されるか」</b>が分かる。<code>type: ALL</code> が出たら<b>フルスキャン（遅い）</b>の証拠。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 測定の手順（別冊S2）</div>
+        <ol style="margin-left:20px">
+          <li>大量データを投入</li>
+          <li>LIKE 検索の時間を測る</li>
+          <li>EXPLAIN で実行計画を確認</li>
+          <li>遅さの原因を特定</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// LIKE の限界を測定</span>
+<span class="comment">// ─── EXPLAIN で実行計画 ───</span>
+<span class="kw">EXPLAIN</span>
+SELECT * FROM memos
+ WHERE title LIKE '%会議%';
+
+<span class="comment">// 結果：</span>
++------+-------+--------+
+| type | rows  | Extra  |
++------+-------+--------+
+| <span class="ann">ALL</span>  | 10000 | Using  |  ← フルスキャン ★
+|      |       | where  |
++------+-------+--------+
+<span class="comment">// type=ALL = 全行スキャン（遅い）</span>
+<span class="comment">// rows=10000 = 1万行を全部調べる ★★★</span>
+
+
+<span class="comment">// ─── 時間を測る ───</span>
+<span class="comment">// メモ10件：     1ms（一瞬）</span>
+<span class="comment">// メモ1000件：   80ms</span>
+<span class="comment">// メモ10000件：  800ms（体感で遅い）★</span>
+<span class="comment">// メモ100000件： 8秒（実用不可）★★★</span>
+
+
+<span class="comment">// ─── なぜ通常インデックスが効かないか ───</span>
+<span class="comment">// 索引は「先頭から探す」（別冊S6）</span>
+LIKE '会議%'   → 前方一致 → 索引が効く
+LIKE '%会議%'  → 中間一致 → 索引が効かない ★
+LIKE '%会議'   → 後方一致 → 索引が効かない
+
+<span class="comment">// メモ検索は「どこに含まれるか」なので</span>
+<span class="comment">// '%会議%' が必要 → 通常索引では無理</span>
+<span class="comment">// → FULLTEXT が必要（Section 04）★★★</span>
+
+
+<span class="comment">// ─── 別冊S2 の実践 ───</span>
+<span class="comment">// 「遅そう」で最適化せず、測ってから ★</span>
+<span class="comment">// メモ帳v1が数百件なら LIKE で十分</span>
+<span class="comment">// 大量を想定するなら FULLTEXT へ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — EXPLAIN は「SQLの健康診断」</div>
+    <p><code>EXPLAIN</code> は SQL の前に付けるだけで<b>「どう実行されるか」</b>を教えてくれる、性能チューニングの必須ツール。<code>type: ALL</code>（フルスキャン）や <code>rows</code> が大きいと<b>遅いサイン</b>。「<b>なんとなく遅い</b>」ではなく<b>EXPLAIN で原因を特定</b>してから対策する。これが別冊S2の<b>「推測するな、測定せよ」</b>の実践。<b>当てずっぽうの最適化を避ける</b>道具です。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>設計①：FULLTEXTインデックス</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">FULLTEXT INDEX</span></div>
+  <p class="pattern-desc">遅さの原因が分かったので<b>FULLTEXT インデックス</b>を設計します。全文検索専用の索引で、<b>「文章の中の単語」</b>を高速に探せる。日本語には<b>ngram パーサ</b>が必要な点も押さえます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">FULLTEXT の仕組みと日本語対応</span><span class="tag-desc">MATCH ... AGAINST</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// FULLTEXT インデックスとは</div>
+        <p>通常の索引が「列の値そのもの」を索引化するのに対し、FULLTEXT は<b>「文章を単語に分解して索引化」</b>。だから<b>「文章中のどこに含まれるか」</b>を高速に探せる。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 日本語の壁と ngram</div>
+        <p>FULLTEXT は元々<b>英語向け</b>（スペースで単語分割）。日本語は<b>スペースがない</b>ので、<b>ngram パーサ</b>（N文字ずつ区切る）が必要。MySQL 5.7+ で利用可能。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 検索構文</div>
+        <p>LIKE の代わりに <code>MATCH(列) AGAINST(キーワード)</code> を使う。</p>
+      </div>
+      <div class="code"><span class="code-head">// FULLTEXT インデックスの設計</span>
+<span class="comment">// ─── DDL：FULLTEXT インデックス追加 ───</span>
+<span class="comment">// 日本語対応のため ngram パーサを指定</span>
+<span class="kw">ALTER TABLE</span> memos
+  <span class="kw">ADD FULLTEXT INDEX</span> ft_memo
+    (title, content)
+    <span class="ann">WITH PARSER ngram</span>;
+    <span class="comment">// ↑ 日本語をN文字ずつ索引化 ★★★</span>
+
+
+<span class="comment">// ─── 検索構文（LIKE → MATCH AGAINST）───</span>
+<span class="comment">// Vol.7（LIKE・遅い）:</span>
+WHERE title LIKE '%会議%'
+
+<span class="comment">// Vol.8（FULLTEXT・速い）:</span>
+WHERE <span class="ann">MATCH</span>(title, content)
+      <span class="ann">AGAINST</span>(#{keyword}
+              IN BOOLEAN MODE)
+<span class="comment">// → 索引を使って高速検索 ★★★</span>
+
+
+<span class="comment">// ─── EXPLAIN で改善を確認 ───</span>
+<span class="kw">EXPLAIN</span>
+SELECT * FROM memos
+ WHERE MATCH(title,content)
+       AGAINST('会議');
+
++----------+------+
+| type     | rows |
++----------+------+
+| <span class="ann">fulltext</span> | <span class="num">1</span>    |  ← 索引使用！★★★
++----------+------+
+<span class="comment">// type=fulltext = FULLTEXT索引を使用</span>
+<span class="comment">// rows=1 = 全行スキャンしない（速い）</span>
+
+
+<span class="comment">// ─── 性能の改善 ───</span>
+        LIKE      FULLTEXT
+1万件:  800ms  →   20ms ★★★
+10万件: 8秒    →   50ms ★★★
+<span class="comment">// → 桁違いに速くなる</span>
+
+
+<span class="comment">// ─── ngram の仕組み（bigram例）───</span>
+<span class="comment">// 「会議メモ」を2文字ずつ索引化：</span>
+<span class="comment">// 会議 / 議メ / メモ</span>
+<span class="comment">// → 「会議」で検索すると索引ヒット ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 日本語の全文検索は ngram パーサが必須</div>
+    <p>FULLTEXT は<b>英語前提（スペース区切り）</b>なので、そのままだと<b>日本語が検索できません</b>。日本語は<b>ngram パーサ</b>（文章をN文字ずつ区切って索引化）が必要。MySQL なら <code>WITH PARSER ngram</code>。これを忘れると「FULLTEXT を作ったのに日本語がヒットしない」とハマります（Section 08）。<b>言語によって全文検索の設定が変わる</b>——日本語特有の注意点です。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>設計②：段階的移行の判断</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">GRADUAL MIGRATION</span></div>
+  <p class="pattern-desc">FULLTEXT は強力ですが<b>万能ではない</b>。<b>「いつ LIKE から FULLTEXT に切り替えるか」</b>は判断が要ります。別冊S2の<b>トレードオフ</b>と<b>YAGNI</b>で、<b>段階的な移行</b>を設計します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">LIKE と FULLTEXT の使い分け</span><span class="tag-desc">トレードオフの判断</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// それぞれの長所・短所</div>
+        <table class="compare-tbl">
+          <thead><tr><th></th><th>LIKE</th><th>FULLTEXT</th></tr></thead>
+          <tbody>
+            <tr><td>速度（大量）</td><td>遅い</td><td><b>速い</b></td></tr>
+            <tr><td>少量データ</td><td><b>十分速い</b></td><td>速い</td></tr>
+            <tr><td>実装</td><td><b>簡単</b></td><td>索引・ngram設定</td></tr>
+            <tr><td>部分一致</td><td><b>柔軟</b></td><td>単語単位の癖</td></tr>
+            <tr><td>H2テスト</td><td><b>可</b></td><td>不可（要MySQL）</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 判断基準</div>
+        <ul>
+          <li><b>少量（〜数千件）</b>：LIKE で十分（KISS）</li>
+          <li><b>大量・高頻度検索</b>：FULLTEXT</li>
+          <li>本シリーズは<b>「学習目的で FULLTEXT を体験」</b></li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 段階的移行の設計</span>
+<span class="comment">// ─── 別冊S2 の判断軸を適用 ───</span>
+
+<span class="kw">if</span> (データ量が少ない &amp;&amp; 検索が稀) {
+  <span class="comment">// LIKE で十分（YAGNI）</span>
+  <span class="comment">// 索引・ngramの複雑さは不要</span>
+  → Vol.7 の LIKE のまま ★
+}
+
+<span class="kw">else if</span> (大量データ || 高頻度検索) {
+  <span class="comment">// 性能が問題 → FULLTEXT</span>
+  → Vol.8 の FULLTEXT へ移行 ★★★
+}
+
+
+<span class="comment">// ─── 移行を段階的に ───</span>
+<span class="num">1.</span> Vol.7：LIKE で動かす（まず動く）
+<span class="num">2.</span> 測定：遅いことを EXPLAIN で確認
+<span class="num">3.</span> Vol.8：FULLTEXT に切り替え
+<span class="num">4.</span> 既存テストで「結果同じ」を確認
+<span class="comment">// → いきなり FULLTEXT にしない</span>
+<span class="comment">// → 「動く→測る→直す」の順 ★★★</span>
+
+
+<span class="comment">// ─── FULLTEXT の注意（万能でない）───</span>
+<span class="comment">// ・短すぎる単語は検索できないことがある</span>
+<span class="comment">//   （ngramのトークン長設定に依存）</span>
+<span class="comment">// ・LIKE ほど柔軟な部分一致でない場合も</span>
+<span class="comment">// → 要件に応じて LIKE 併用もあり</span>
+<span class="comment">// → 「銀の弾丸はない」（別冊S2）★</span>
+
+
+<span class="comment">// ─── 本シリーズの方針 ───</span>
+<span class="comment">// 学習目的で FULLTEXT を実装・体験</span>
+<span class="comment">// 「性能改善の流れ」を一通り経験する</span>
+<span class="comment">// → 実務で判断できる土台を作る ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — FULLTEXT も「銀の弾丸」ではない</div>
+    <p>FULLTEXT は速いですが<b>万能ではありません</b>。短い単語が検索できない、LIKE ほど柔軟な部分一致が苦手、設定が複雑、H2 でテストできない——といった<b>トレードオフ</b>があります（別冊S2）。「速いから常に FULLTEXT」ではなく<b>「データ量・検索頻度・要件で選ぶ」</b>。少量データなら LIKE のシンプルさが勝つことも。<b>道具の長所と短所を知って選ぶ</b>のが設計です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>実装</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">IMPLEMENTATION</span></div>
+  <p class="pattern-desc">設計に沿って実装。<b>DDL（FULLTEXT追加）</b>と<b>Mapper の SQL（LIKE→MATCH AGAINST）</b>。Vol.7 の動的SQLの<b>キーワード部分だけ</b>を差し替えます。<b>カテゴリ・タグの条件はそのまま</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">DDL と Mapper の変更</span><span class="tag-desc">キーワード部分を差し替え</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 変更箇所</div>
+        <p>変えるのは<b>キーワード検索の部分だけ</b>。Vol.7 の動的SQLの構造（&lt;if&gt;&lt;where&gt;）は維持し、<code>LIKE</code> を <code>MATCH AGAINST</code> に置き換え。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 作業手順</div>
+        <ol class="step-list">
+          <li>DDL で memos に FULLTEXT インデックス追加（ngram）</li>
+          <li>MemoMapper.xml のキーワード <code>&lt;if&gt;</code> を MATCH AGAINST に</li>
+          <li>カテゴリ・タグの条件はそのまま</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// 既存構造を活かす</div>
+        <p>SearchForm・Service・Controller・View は<b>変更不要</b>。Mapper の SQL だけ変える＝<b>影響範囲が小さい</b>（別冊S2の低結合の恩恵）。</p>
+      </div>
+      <div class="code"><span class="code-head">// 実装の変更</span>
+<span class="comment">// ─── DDL（FULLTEXT追加）───</span>
+<span class="kw">ALTER TABLE</span> memos
+  <span class="kw">ADD FULLTEXT INDEX</span> ft_memo
+    (title, content)
+    WITH PARSER ngram;
+
+
+<span class="comment">// ─── MemoMapper.xml（キーワード部分）───</span>
+<span class="comment">&lt;!-- Vol.7（LIKE）--&gt;</span>
+<span class="comment">&lt;!--
+&lt;if test="keyword != null and keyword != ''"&gt;
+  AND (m.title LIKE CONCAT('%',#{keyword},'%')
+    OR m.content LIKE CONCAT('%',#{keyword},'%'))
+&lt;/if&gt;
+--&gt;</span>
+
+<span class="comment">&lt;!-- Vol.8（FULLTEXT）★★★ --&gt;</span>
+<span class="ann">&lt;if</span> test=<span class="str">"keyword != null</span>
+          <span class="str">and keyword != ''"</span><span class="ann">&gt;</span>
+  AND <span class="ann">MATCH</span>(m.title, m.content)
+      <span class="ann">AGAINST</span>(#{keyword}
+              IN BOOLEAN MODE)
+<span class="ann">&lt;/if&gt;</span>
+<span class="comment">// → #{} で安全（別冊S6）★</span>
+<span class="comment">// → カテゴリ・タグの&lt;if&gt;はそのまま</span>
+
+
+<span class="comment">// ─── 変更不要なもの ───</span>
+SearchForm    → そのまま
+MemoService   → そのまま
+Controller    → そのまま
+search.html   → そのまま
+<span class="comment">// → Mapper の SQL だけ変更 ★★★</span>
+<span class="comment">// → 別冊S2「低結合」の恩恵</span>
+<span class="comment">//   = 影響範囲が小さい</span>
+
+
+<span class="comment">// ─── IN BOOLEAN MODE とは ───</span>
+<span class="comment">// FULLTEXT の検索モードの一つ</span>
+<span class="comment">// 部分的なマッチや演算子(+/-)が使える</span>
+<span class="comment">// → 柔軟な検索が可能</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 変更が「Mapper の SQL だけ」で済む設計の価値</div>
+    <p>LIKE→FULLTEXT という<b>大きな変更</b>なのに、変えるのは<b>Mapper の SQL だけ</b>。SearchForm も Service も Controller も View も<b>無傷</b>。これは Vol.1 から積み上げた<b>3層構造・低結合（別冊S2）</b>のおかげ。「検索のロジックは Mapper に閉じ込めた」から、<b>実装方法を変えても他に波及しない</b>。<b>良い設計は、後の変更を局所化する</b>——その恩恵を実感する場面です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>テスト（性能と正しさ）</h2><span class="phase-badge ph-test">PHASE: TEST</span><span class="en">TEST</span></div>
+  <p class="pattern-desc">FULLTEXT は H2 で動かないため、テスト戦略を見直します。<b>正しさ</b>は Vol.7 のテストを<b>実MySQL（Testcontainers）</b>で実行。<b>性能</b>は手動測定。別冊S3の<b>「H2 vs Testcontainers」</b>の判断が活きます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Testcontainers で実MySQLテスト</span><span class="tag-desc">FULLTEXTはH2不可</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ Testcontainers か</div>
+        <p>FULLTEXT・ngram は<b>MySQL固有機能</b>で H2 にない（別冊S3）。だから検索テストは<b>実MySQL</b>が必要。<b>Testcontainers</b> で Docker の MySQL を起動してテストします。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 正しさのテスト</div>
+        <p>Vol.7 の検索テストを<b>実MySQL で実行</b>。FULLTEXT に変えても<b>同じ結果が返る</b>ことを確認（@AC7）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 段階的なテスト方針</div>
+        <ul>
+          <li>カテゴリ・タグ検索：H2 でもOK（FULLTEXT不要）</li>
+          <li>キーワード検索：Testcontainers（実MySQL）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Testcontainers での結合テスト</span>
+<span class="comment">// ─── 依存追加（build.gradle）───</span>
+testImplementation
+  'org.testcontainers:mysql'
+
+
+<span class="comment">// ─── MemoFulltextTest.java ───</span>
+<span class="ann">@SpringBootTest</span>
+<span class="ann">@Testcontainers</span>
+<span class="kw">class</span> <span class="type">MemoFulltextTest</span> {
+
+  <span class="ann">@Container</span>
+  <span class="kw">static</span> <span class="type">MySQLContainer</span>&lt;?&gt; mysql =
+    <span class="kw">new</span> <span class="type">MySQLContainer</span>&lt;&gt;(<span class="str">"mysql:8.0"</span>);
+  <span class="comment">// → Docker で本物の MySQL を起動 ★★★</span>
+
+  <span class="ann">@DynamicPropertySource</span>
+  <span class="kw">static void</span> <span class="fn">props</span>(
+      <span class="type">DynamicPropertyRegistry</span> r) {
+    r.<span class="fn">add</span>(<span class="str">"spring.datasource.url"</span>,
+      mysql::<span class="fn">getJdbcUrl</span>);
+    <span class="comment">// 起動したMySQLに接続</span>
+  }
+
+  <span class="ann">@Autowired</span> <span class="type">MemoMapper</span> mapper;
+
+  <span class="comment">// @AC7: FULLTEXTでも結果は同じ</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">キーワードで絞り込める</span>() {
+    <span class="comment">// Vol.7 と同じ検証内容</span>
+    <span class="type">SearchForm</span> form = <span class="kw">new</span> <span class="type">SearchForm</span>();
+    form.<span class="fn">setKeyword</span>(<span class="str">"会議"</span>);
+
+    <span class="kw">var</span> result = mapper.<span class="fn">search</span>(form);
+
+    <span class="comment">// 「会議」を含むメモだけ（Vol.7と同じ）</span>
+    <span class="fn">assertThat</span>(result)
+      .<span class="fn">extracting</span>(<span class="type">Memo</span>::<span class="fn">getTitle</span>)
+      .<span class="fn">contains</span>(<span class="str">"会議メモ"</span>);
+    <span class="comment">// → FULLTEXTでも結果同じ ★★★</span>
+    <span class="comment">// → 最適化で壊していない証明</span>
+  }
+}
+
+
+<span class="comment">// ─── 性能の手動測定 ───</span>
+<span class="comment">// 大量データ投入スクリプトで1万件作成</span>
+<span class="comment">// LIKE版とFULLTEXT版の時間を比較：</span>
+<span class="comment">// LIKE:     ~800ms</span>
+<span class="comment">// FULLTEXT:  ~20ms</span>
+<span class="comment">// → 改善を数値で確認（@AC6）★</span>
+<span class="comment">// → 自動性能テストは環境依存で不安定</span>
+<span class="comment">//   なので手動測定が現実的（別冊S3）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「実DB固有機能」のテストは Testcontainers</div>
+    <p>別冊S3で触れた<b>「H2 vs Testcontainers」</b>の判断が、ここで現実に。FULLTEXT・ngram は<b>MySQL固有</b>で H2 では動かない。こういう<b>「本番DB固有の機能」を使う部分</b>は、H2 では不十分で<b>Testcontainers（実MySQL）</b>が必要。一方、カテゴリ・タグ検索など標準SQLの部分は H2 で十分速い。<b>「テストしたい対象に応じてDBを選ぶ」</b>——速さと忠実さのトレードオフ（別冊S3）の実践です。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>ブラウザ確認＋ハマりどころ</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">VERIFY &amp; PITFALLS</span></div>
+  <p class="pattern-desc">テストが緑になったらブラウザで確認。<b>検索結果が Vol.7 と同じか、速くなったか</b>を確認。Vol.8 で踏みやすい FULLTEXT 特有の地雷を5つ先回りします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.8 ハマりどころ 5選</span><span class="tag-desc">FULLTEXT特有の地雷</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 日本語がヒットしない ★★★</b></p>
+        <ul>
+          <li>原因：ngram パーサ指定なしで FULLTEXT 作成</li>
+          <li>対処：<code>WITH PARSER ngram</code> を付けて作り直す</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② H2 のテストで FULLTEXT が動かない ★★★</b></p>
+        <ul>
+          <li>原因：H2 は MATCH AGAINST 非対応</li>
+          <li>対処：キーワード検索のテストは Testcontainers（Section 07）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ 短い単語が検索できない</b></p>
+        <ul>
+          <li>原因：ngram_token_size より短い語</li>
+          <li>対処：トークンサイズ設定を確認／LIKE 併用も検討</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 既存データが検索に出ない</b></p>
+        <ul>
+          <li>原因：FULLTEXT 索引作成前のデータ</li>
+          <li>対処：通常は自動で索引化されるが、確認・再構築</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ AGAINST に直接ユーザー入力を文字列連結</b></p>
+        <ul>
+          <li>原因：${} で埋め込み→インジェクション</li>
+          <li>対処：必ず <code>#{keyword}</code>（別冊S6）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// テスト＆ブラウザ確認</span>
+<span class="comment">// ─── テスト結果 ───</span>
+MemoSearchTest（H2・カテゴリ/タグ）
+  ✓ カテゴリで絞り込める
+  ✓ タグで絞り込める
+MemoFulltextTest（Testcontainers・MySQL）
+  ✓ キーワードで絞り込める
+  ✓ 複合条件で絞り込める
+
+<span class="kw">all green</span> ★★★
+
+
+<span class="comment">// ─── ① 日本語対応の確認 ───</span>
+<span class="ann">NG:</span>
+ALTER TABLE memos
+  ADD FULLTEXT INDEX ft(title,content);
+<span class="comment">// → ngram なし → 日本語ヒットせず ★</span>
+
+<span class="ann">OK:</span>
+ALTER TABLE memos
+  ADD FULLTEXT INDEX ft(title,content)
+  WITH PARSER ngram;  <span class="comment">// ← 必須 ★★★</span>
+
+
+<span class="comment">// ─── ⑤ 安全性の維持 ───</span>
+<span class="ann">NG:</span> AGAINST('${keyword}')  <span class="comment">// インジェクション ★</span>
+<span class="ann">OK:</span> AGAINST(#{keyword} ...)  <span class="comment">// 安全 ★★★</span>
+
+
+<span class="comment">// ─── 性能確認（before/after）───</span>
+<span class="comment">// 大量データで検索時間を比較：</span>
+LIKE版:     1万件で 800ms
+FULLTEXT版: 1万件で  20ms ★★★
+<span class="comment">// → 体感で「待たされない」（@AC6達成）</span>
+
+
+<span class="comment">// ─── ブラウザ確認 ───</span>
+<span class="comment">// /memos/search で：</span>
+<span class="comment">// - キーワード検索が Vol.7 と同じ結果（@AC7）</span>
+<span class="comment">// - 大量データでも速い（@AC6）</span>
+<span class="comment">// - カテゴリ・タグとの複合も動く</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 最適化しても「結果が同じ」をブラウザでも確認</div>
+    <p>性能改善で最も怖いのが<b>「速くなったが結果が変わった」</b>。テストで保証していても、<b>ブラウザで Vol.7 と同じ検索をして同じ結果が出るか</b>を目視確認する。「会議」で検索→Vol.7 と同じメモが出る。<b>「速さ」と「正しさ」は別物</b>で、両方確認して初めて最適化成功（@AC6＋@AC7）。<b>速くしただけで満足せず、壊していないことを必ず確認</b>します。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>レビュー・評価＆次巻へ</h2><span class="phase-badge ph-test">PHASE: REVIEW</span><span class="en">REVIEW &amp; NEXT</span></div>
+  <p class="pattern-desc">全文検索を実装し、<b>US-004 が完成</b>しました。<b>4つのユーザーストーリーが全て揃った</b>瞬間です。<b>性能改善は正しく行えたか、テストで守れたか</b>を振り返ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.8 卒業チェック</span><span class="tag-desc">US-004完成・全US達成</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 要求の達成</div>
+        <ul class="check-list">
+          <li>US-004 の @AC6（性能）@AC7（正しさ維持）を満たした</li>
+          <li>FULLTEXT で高速化した</li>
+          <li><b>US-004 が完全に達成</b>された</li>
+          <li><b>US-001〜004 が全て揃った</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 設計の評価</div>
+        <ul class="check-list">
+          <li>「測定してから最適化」を実践した（EXPLAIN）</li>
+          <li>LIKE→FULLTEXT の段階的移行をした</li>
+          <li>ngram で日本語対応した</li>
+          <li>変更が Mapper だけで済む設計の恩恵を得た</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// テストの評価</div>
+        <ul class="check-list">
+          <li>既存テストで「結果が変わらない」を保証した</li>
+          <li>FULLTEXT は Testcontainers で検証した</li>
+          <li>性能改善を before/after で確認した</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.8 で完成したフロー</span>
+<span class="comment">// ─── 要求（REQ）───</span>
+US-004 検索（非機能：性能）
+@AC6 速い・@AC7 結果は同じ
+  ↓
+<span class="comment">// ─── 設計（DESIGN）───</span>
+測定（EXPLAIN）でLIKEの限界確認
++ FULLTEXT（ngram）で高速化
++ 段階的移行（別冊S2）
+  ↓
+<span class="comment">// ─── 実装（IMPL）───</span>
+Mapper の SQL だけ差し替え
+（LIKE → MATCH AGAINST）
+  ↓
+<span class="comment">// ─── テスト（TEST）───</span>
+既存テストで正しさ維持
++ Testcontainers で実MySQL検証
++ 性能の before/after 測定
+
+
+<span class="comment">// ─── 4つのUS、全て達成！ ───</span>
+US-001 メモ作成     ✓
+US-002 カテゴリ分類  ✓
+US-003 タグ付け      ✓
+US-004 検索          ✓ ★★★
+<span class="comment">// → 当初の要求が全て実現した！</span>
+
+
+<span class="comment">// 次回 Vol.9：</span>
+<span class="comment">//   ピン留め・並び替え・アーカイブ</span>
+<span class="comment">//   使い勝手の向上（追加要求）</span>
+<span class="comment">//   要求は進化する（別冊S1）★</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.9 へ</div>
+    <p>Vol.8 で<b>全文検索</b>を実装し、<b>US-004 を完成</b>。これで当初の<b>4つのユーザーストーリー（US-001〜004）が全て達成</b>されました！基本機能は完成です。次は Vol.9「<b>ピン留め・並び替え・アーカイブ</b>」。使い込むうちに出てきた<b>「よく使うメモを上に固定したい」「古いメモを隠したい」</b>という<b>新しい要求（追加US）</b>を実装します。要求は<b>進化する</b>（別冊S1の変更管理）——その実践です。並行して<b>別冊S8</b>、<b>GitHub版Vol.8（CI）</b>を進めると効果的。<b>本編Vol.9 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>VOL.08 / 14 ── FULL-TEXT SEARCH &amp; PERFORMANCE（本編）</span>
+</footer>
+
+</body>
+</html>

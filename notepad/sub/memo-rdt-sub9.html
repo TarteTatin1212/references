@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕別冊S9 一括処理とバルク操作の理論</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a3540;
+  --paper:#ece8de;
+  --paper-2:#d8d4c6;
+  --accent:#6a8590;
+  --accent-2:#8aa0a8;
+  --accent-3:#a07050;
+  --muted:#707a82;
+  --line:#c2c0b4;
+  --code-bg:#252a32;
+  --code-text:#e6e2d6;
+  --panel-bg:#f3eee2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✧";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.18;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.tip{background:rgba(106,133,144,0.10);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.S9</span>
+    <span class="kind-tag">別冊 ── SUB</span>
+    <span class="rdt-tag">BULK OPERATION</span>
+  </div>
+  <h1>一括処理とバルク操作<br>「まとめて」の設計</h1>
+  <div class="subtitle">SUB.09 ── BULK OPERATION &amp; BATCH</div>
+  <p class="lead">本編Vol.10 で<b>複数メモの一括操作</b>を実装します。別冊S9では、その土台となる<b>一括処理の理論</b>を深掘りします。<b>1件ずつ vs まとめて</b>、<b>IN句とバルクSQL</b>、<b>一括処理のトランザクション</b>、<b>部分的失敗の扱い</b>。「<b>大量を効率よく・安全に処理する</b>」ための知識です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 別冊S9で腑に落とす3つの問い</div>
+    <p>① なぜ<b>「1件ずつN回」より「まとめて1回」</b>が良いのか／② <b>一括処理が途中で失敗</b>したらどうするか／③ <b>大量データ</b>を一度に処理するときの注意点は何か — この3問に自分の言葉で答えられたらS9卒業です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 別冊S9のミッション</a></li>
+    <li><a href="#s02">02 1件ずつ vs まとめて</a></li>
+    <li><a href="#s03">03 IN句による一括処理</a></li>
+    <li><a href="#s04">04 一括処理とトランザクション</a></li>
+    <li><a href="#s05">05 部分的失敗の扱い</a></li>
+    <li><a href="#s06">06 大量データへの配慮</a></li>
+    <li><a href="#s07">07 一括処理のUX</a></li>
+    <li><a href="#s08">08 一括処理あるある失敗</a></li>
+    <li><a href="#s09">09 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>別冊S9のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">別冊S9は<b>「まとめて処理する設計を理解する」</b>回。本編Vol.10 で<b>「複数メモを選んでまとめてアーカイブ/削除」</b>を実装します。1件ずつの操作を<b>N件まとめて</b>行うとき、<b>効率・安全・UX</b>の3つを考える必要があります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">なぜ一括処理が必要か</span><span class="tag-desc">1件ずつは面倒</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Vol.9 の限界</div>
+        <p>Vol.9 でアーカイブ・削除を実装しましたが<b>1件ずつ</b>。「<b>古いメモ50件をまとめてアーカイブしたい</b>」となると、50回ボタンを押す——これは苦痛。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 一括処理が解決すること</div>
+        <ul>
+          <li><b>UX</b>：50回の操作が1回に</li>
+          <li><b>性能</b>：50回のDB往復が1回に</li>
+          <li><b>整合性</b>：まとめて成功/失敗（トランザクション）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 別冊S9のゴール</div>
+        <ul class="check-list">
+          <li>「まとめて1回」の効率を理解</li>
+          <li>IN句・バルクSQLを使える</li>
+          <li>一括処理のトランザクションを設計</li>
+          <li>部分的失敗の扱いを判断できる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 一括処理が解決する課題</span>
+<span class="comment">// ─── Vol.9（1件ずつ）の苦痛 ───</span>
+古いメモ50件をアーカイブしたい
+  → 1件アーカイブ → 1件アーカイブ
+  → ... 50回繰り返す ★
+  → 苦痛・時間がかかる・DB往復50回
+
+
+<span class="comment">// ─── Vol.10（一括）の快適 ───</span>
+チェックボックスで50件選択
+  → 「まとめてアーカイブ」1回
+  → UPDATE ... WHERE id IN (...)
+  → DB往復1回で完了 ★★★
+
+
+<span class="comment">// ─── 一括処理の3つの観点 ───</span>
+UX:    50回 → 1回（操作の削減）
+性能:  往復50回 → 1回（効率）
+整合性: まとめて成功 or 失敗
+       （トランザクション・別冊S5）
+
+
+<span class="comment">// ─── 「複数を扱う」は新しい難しさ ───</span>
+<span class="comment">// ・どう選択させるか（UX）</span>
+<span class="comment">// ・SQLでどうまとめるか（IN句）</span>
+<span class="comment">// ・途中失敗したら？（トランザクション）</span>
+<span class="comment">// ・大量だったら？（性能）</span>
+<span class="comment">// → これらを別冊S9で整理 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 一括処理は「効率」と「整合性」の両方が要る</div>
+    <p>一括処理は単に<b>「速くする」だけではありません</b>。「50件まとめてアーカイブ→途中で失敗→25件だけアーカイブされた中途半端な状態」を防ぐ<b>整合性</b>も必要（別冊S5のトランザクション）。<b>「効率（まとめて1回）」と「整合性（全部か、ゼロか）」の両立</b>が一括処理の設計。本編Vol.10 では、この両方を意識して実装します。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>1件ずつ vs まとめて</h2><span class="en">ONE-BY-ONE VS BULK</span></div>
+  <p class="pattern-desc">複数件を処理する方法は2つ。<b>「ループで1件ずつN回」</b>と<b>「SQLでまとめて1回」</b>。後者が圧倒的に効率的。別冊S6の<b>N+1問題</b>と同じ「DB往復を減らす」考え方です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">2つのアプローチの比較</span><span class="tag-desc">DB往復が決定的</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 1件ずつ（ループ）</div>
+        <p>Java のループで<b>1件ずつUPDATE</b>。N件ならN回のDB往復。実装は素直だが<b>遅い</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// まとめて（バルク）</div>
+        <p><b>1回のSQL</b>で全件処理。<code>WHERE id IN (...)</code> や バルクINSERT。DB往復が<b>1回</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 比較</div>
+        <table class="compare-tbl">
+          <thead><tr><th></th><th>1件ずつ</th><th>まとめて</th></tr></thead>
+          <tbody>
+            <tr><td>DB往復</td><td>N回</td><td><b>1回</b></td></tr>
+            <tr><td>速度</td><td>遅い</td><td><b>速い</b></td></tr>
+            <tr><td>実装</td><td>素直</td><td>IN句等</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// 1件ずつ vs まとめて</span>
+<span class="comment">// ─── 1件ずつ（ループ・非効率）───</span>
+<span class="kw">for</span> (<span class="type">Long</span> id : ids) {
+  mapper.<span class="fn">updateArchived</span>(id, <span class="kw">true</span>);
+  <span class="comment">// → UPDATE ... WHERE id=? を</span>
+  <span class="comment">//   N回実行（DB往復N回）★</span>
+}
+<span class="comment">// 50件 → 50回のDB往復</span>
+<span class="comment">// → N+1問題（別冊S6）と同じ構造</span>
+
+
+<span class="comment">// ─── まとめて（バルク・効率的）───</span>
+mapper.<span class="fn">archiveByIds</span>(ids);
+<span class="comment">// → UPDATE ... WHERE id IN (1,2,...,50)</span>
+<span class="comment">//   1回のSQL（DB往復1回）★★★</span>
+<span class="comment">// 50件 → 1回のDB往復</span>
+
+
+<span class="comment">// ─── SQL の違い ───</span>
+1件ずつ:
+  UPDATE memos SET archived=true
+   WHERE id=1;
+  UPDATE memos SET archived=true
+   WHERE id=2;
+  ... ×50
+
+まとめて:
+  UPDATE memos SET archived=true
+   WHERE id IN (1,2,3,...,50);
+  <span class="comment">// → 1文で50件更新 ★★★</span>
+
+
+<span class="comment">// ─── 別冊S6 とのつながり ───</span>
+<span class="comment">// N+1問題：ループ内で個別クエリ → 遅い</span>
+<span class="comment">// 一括処理：まとめて1回 → 速い</span>
+<span class="comment">// → 「DB往復を減らす」は共通の原則 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「ループ内クエリ」を見たら一括化を検討</div>
+    <p>別冊S6のN+1問題と同じく、<b>「ループの中でDBクエリを実行している」</b>のを見たら、<b>一括化（バルク）できないか</b>を検討する習慣を。「N件をループで1件ずつUPDATE」は、ほとんどの場合<b>「WHERE id IN (...)」で1回にまとめられる</b>。DB往復は<b>処理時間の大半</b>を占めるので、これを減らすと劇的に速くなる。<b>「まとめられるものはまとめる」</b>が効率化の基本です。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>IN句による一括処理</h2><span class="en">BULK WITH IN CLAUSE</span></div>
+  <p class="pattern-desc">一括処理の主役<b>IN句</b>。<code>WHERE id IN (1, 2, 3)</code> で複数IDをまとめて指定。MyBatis では本編Vol.7 で使った <code>&lt;foreach&gt;</code> でIDリストを展開します。<b>もちろん #{} で安全に</b>（別冊S6）。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">IN句 + foreach の一括処理</span><span class="tag-desc">複数IDをまとめて</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// IN句の基本</div>
+        <p><code>WHERE id IN (リスト)</code> で「リストのいずれかに一致」。一括の更新・削除・取得に使える。</p>
+
+        <div class="panel-head" style="margin-top:18px">// foreach でリスト展開（Vol.7）</div>
+        <p>MyBatis の <code>&lt;foreach&gt;</code> で、IDリスト <code>[1,2,3]</code> を <code>(1,2,3)</code> に展開。本編Vol.7 のタグ検索で既出。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 一括操作の種類</div>
+        <ul>
+          <li>一括アーカイブ：<code>UPDATE ... WHERE id IN</code></li>
+          <li>一括削除：<code>DELETE ... WHERE id IN</code></li>
+          <li>一括取得：<code>SELECT ... WHERE id IN</code></li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// IN句 + foreach（本編Vol.10で実装）</span>
+<span class="comment">// ─── 一括アーカイブ ───</span>
+<span class="kw">&lt;update</span> id=<span class="str">"archiveByIds"</span><span class="kw">&gt;</span>
+  UPDATE memos
+     SET archived = true
+   WHERE id IN
+  <span class="ann">&lt;foreach</span> item=<span class="str">"id"</span>
+           collection=<span class="str">"ids"</span>
+           open=<span class="str">"("</span> separator=<span class="str">","</span>
+           close=<span class="str">")"</span><span class="ann">&gt;</span>
+    #{id}
+  <span class="ann">&lt;/foreach&gt;</span>
+<span class="kw">&lt;/update&gt;</span>
+<span class="comment">// → ids=[1,2,3] を (1,2,3) に展開</span>
+<span class="comment">// → 全て #{} で安全（別冊S6）★★★</span>
+
+
+<span class="comment">// ─── 一括削除 ───</span>
+<span class="kw">&lt;delete</span> id=<span class="str">"deleteByIds"</span><span class="kw">&gt;</span>
+  DELETE FROM memos
+   WHERE id IN
+  &lt;foreach item="id" collection="ids"
+           open="(" separator=","
+           close=")"&gt;
+    #{id}
+  &lt;/foreach&gt;
+<span class="kw">&lt;/delete&gt;</span>
+
+
+<span class="comment">// ─── 実行されるSQL ───</span>
+UPDATE memos SET archived=true
+ WHERE id IN (1, 5, 8, 12, 23);
+<span class="comment">// → 5件を1回で更新 ★★★</span>
+
+
+<span class="comment">// ─── 本編Vol.7 の foreach 再利用 ───</span>
+<span class="comment">// タグ検索で使った foreach と同じ技術</span>
+<span class="comment">// → 一度学んだ技術が一括処理にも活きる</span>
+<span class="comment">// → 「IDリストを IN 句に展開」は定番 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — IN句のリストが「空」のときに注意</div>
+    <p>本編Vol.7 でも触れた罠：<b>IN句に渡すリストが空</b>だと <code>IN ()</code> となり<b>構文エラー</b>。一括操作で「1件も選択せずに実行」されたときに起きる。対策は<b>「リストが空なら処理をスキップ」</b>（<code>&lt;if test="ids != null and !ids.isEmpty()"&gt;</code> やService側のチェック）。一括処理は<b>「0件選択」という境界</b>を必ず考慮する。これは別冊S3の境界値テストの対象でもあります。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>一括処理とトランザクション</h2><span class="en">BULK &amp; TRANSACTION</span></div>
+  <p class="pattern-desc">一括処理は<b>トランザクション</b>と深く関わります（別冊S5）。「50件まとめて処理」が<b>途中で失敗</b>したら? <b>「全部か、ゼロか」</b>にするか、<b>「成功した分は残す」</b>か。設計判断が必要です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">一括処理の原子性</span><span class="tag-desc">全部か、ゼロか</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 単一SQLなら自動で原子的</div>
+        <p><code>UPDATE ... WHERE id IN (...)</code> という<b>1文のSQL</b>は、それ自体が<b>原子的</b>（全件成功 or 全件失敗）。DBが保証。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 複数SQLなら @Transactional</div>
+        <p>一括処理が<b>複数のSQL</b>に分かれる場合（例：アーカイブ＋関連更新）は、<b>@Transactional</b> でまとめる（別冊S5）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// ループ処理の落とし穴</div>
+        <p>もし<b>ループで1件ずつ</b>処理する場合、<b>@Transactional がないと途中失敗で中途半端</b>に。25件目で失敗→24件だけ処理済み。<b>@Transactional 必須</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 一括処理のトランザクション</span>
+<span class="comment">// ─── ① 単一SQL（自動で原子的）───</span>
+UPDATE memos SET archived=true
+ WHERE id IN (1,2,...,50);
+<span class="comment">// → 1文のSQLは原子的</span>
+<span class="comment">// → 50件全部成功 or 全部失敗</span>
+<span class="comment">// → DBが保証（追加の対策不要）★</span>
+
+
+<span class="comment">// ─── ② ループ処理（@Transactional必須）───</span>
+<span class="ann">@Transactional</span>  <span class="comment">// ← 必須 ★★★</span>
+<span class="kw">public void</span> <span class="fn">archiveAll</span>(<span class="type">List</span>&lt;<span class="type">Long</span>&gt; ids) {
+  <span class="kw">for</span> (<span class="type">Long</span> id : ids) {
+    mapper.<span class="fn">updateArchived</span>(id, <span class="kw">true</span>);
+    <span class="comment">// もし25件目で例外が出たら…</span>
+  }
+}
+<span class="comment">// @Transactional あり：</span>
+<span class="comment">//   → 全件ロールバック（0件処理）★</span>
+<span class="comment">// @Transactional なし：</span>
+<span class="comment">//   → 24件処理済み・25件目以降未処理</span>
+<span class="comment">//   → 中途半端（別冊S5）★★★</span>
+
+
+<span class="comment">// ─── 本シリーズの方針 ───</span>
+<span class="comment">// 可能なら単一SQL（IN句）で原子的に</span>
+<span class="comment">// → シンプルかつ安全（KISS・別冊S2）</span>
+mapper.<span class="fn">archiveByIds</span>(ids);  <span class="comment">// 1文で完結 ★</span>
+
+
+<span class="comment">// ─── 別冊S5 の復習 ───</span>
+<span class="comment">// 複数操作 → @Transactional</span>
+<span class="comment">// 一括処理も「複数件の操作」なので</span>
+<span class="comment">// 原子性を意識する ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 可能なら「単一SQL」にすると原子性が自動で得られる</div>
+    <p>一括処理は<b>「ループで@Transactional」より「単一SQL（IN句）」の方が優れる</b>ことが多い。単一の <code>UPDATE ... WHERE id IN (...)</code> なら、<b>原子性はDBが自動保証</b>し、性能も良い（DB往復1回）。ループ＋@Transactional は原子性は得られるが<b>DB往復がN回</b>。<b>「1文のSQLで表現できないか」をまず考える</b>のが、一括処理設計の出発点。シンプルさと安全性が同時に手に入ります。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>部分的失敗の扱い</h2><span class="en">PARTIAL FAILURE</span></div>
+  <p class="pattern-desc">一括処理の難所<b>「一部だけ失敗したら?」</b>。50件中3件が条件を満たさない場合、<b>「全部やめる」「できる分だけやる」「失敗を報告」</b>のどれを選ぶか。要求次第で変わる<b>設計判断</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">部分的失敗の3つの方針</span><span class="tag-desc">要求で決める</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの方針</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">方針A</span>
+            <div class="name">全か無か</div>
+            <div class="desc">1件でも失敗なら<b>全部ロールバック</b>。一貫性重視。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">方針B</span>
+            <div class="name">できる分だけ</div>
+            <div class="desc">成功分は<b>そのまま</b>、失敗分はスキップ。完遂重視。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">方針C</span>
+            <div class="name">報告する</div>
+            <div class="desc">「50件中47件成功、3件失敗」と<b>結果を伝える</b>。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// 本シリーズの方針</div>
+        <p>メモのアーカイブ・削除は<b>方針A（全か無か）</b>がシンプルで安全。単一SQLなら自然にこうなる。複雑な部分失敗処理はYAGNI（別冊S2）。</p>
+      </div>
+      <div class="code"><span class="code-head">// 部分的失敗の方針</span>
+<span class="comment">// ─── 方針A：全か無か（本シリーズ）───</span>
+UPDATE memos SET archived=true
+ WHERE id IN (1,2,3);
+<span class="comment">// → 1件でもエラーなら全件ロールバック</span>
+<span class="comment">// → 中途半端を作らない（別冊S5）★</span>
+<span class="comment">// → メモのアーカイブはこれで十分</span>
+
+
+<span class="comment">// ─── 方針B：できる分だけ ───</span>
+<span class="comment">// 例：メール一括送信</span>
+<span class="comment">// 「3件失敗しても、47件は送りたい」</span>
+<span class="kw">for</span> (<span class="type">Long</span> id : ids) {
+  <span class="kw">try</span> {
+    send(id);
+  } <span class="kw">catch</span> (<span class="type">Exception</span> e) {
+    failed.<span class="fn">add</span>(id);  <span class="comment">// 失敗を記録</span>
+    <span class="comment">// → 続行（別冊S7：握りつぶしでなく記録）</span>
+  }
+}
+<span class="comment">// → 完遂を優先する処理向け</span>
+
+
+<span class="comment">// ─── 方針C：報告する ───</span>
+<span class="type">BulkResult</span> result = <span class="fn">archiveAll</span>(ids);
+<span class="comment">// result: 成功47件、失敗3件、失敗理由</span>
+<span class="comment">// → ユーザーに「47件アーカイブしました</span>
+<span class="comment">//    （3件は既にアーカイブ済み）」</span>
+<span class="comment">// → 透明性が高い ★</span>
+
+
+<span class="comment">// ─── 判断は要求次第 ───</span>
+取り消し可能・一貫性重視 → 方針A
+完遂優先（メール等）      → 方針B
+透明性重視              → 方針C
+<span class="comment">// → 「何を大事にするか」で選ぶ（別冊S1,S2）★★★</span>
+<span class="comment">// → メモ帳はシンプルに方針A</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 部分失敗の方針は「要求から」決める</div>
+    <p>部分的失敗の扱いは<b>技術ではなく要求の問題</b>。「メモのアーカイブ」なら全か無か（方針A）でいい。でも「100人へのメール一括送信」なら、3件失敗で全部やめたら困る（方針B）。<b>「何を優先するか」は要求とユーザーの期待</b>から決まる（別冊S1）。本シリーズはメモ操作なのでシンプルに方針A。<b>「銀の弾丸はない、要求で選ぶ」</b>——別冊S2の判断の考え方です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>大量データへの配慮</h2><span class="en">LARGE DATA CARE</span></div>
+  <p class="pattern-desc">一括処理は<b>「大量」になると別の問題</b>が出ます。<b>IN句に1万個</b>、<b>1回のトランザクションで10万件</b>——これらは<b>限界や副作用</b>がある。別冊S2の<b>「測定してから」</b>で、現実的な配慮を学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">大量一括処理の注意点</span><span class="tag-desc">限界とチャンク分割</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 大量処理の問題</div>
+        <ul>
+          <li><b>IN句の上限</b>：DBによって個数制限（数千〜）</li>
+          <li><b>長いトランザクション</b>：ロックが長く他をブロック（別冊S5）</li>
+          <li><b>メモリ</b>：大量データを一度に載せると枯渇</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 対策：チャンク分割</div>
+        <p>大量なら<b>「100件ずつに分割して処理」</b>（チャンク）。一度に全部やらず、適度な単位で。</p>
+
+        <div class="panel-head" style="margin-top:18px">// メモ帳での現実</div>
+        <p>個人のメモが<b>数千件を一度に一括操作</b>することは稀。<b>YAGNI（別冊S2）</b>で、メモ帳v1は<b>普通のIN句で十分</b>。「大量になったら分割」と知っておけばOK。</p>
+      </div>
+      <div class="code"><span class="code-head">// 大量データへの配慮</span>
+<span class="comment">// ─── 問題：IN句に大量のID ───</span>
+WHERE id IN (1, 2, ..., 100000)
+<span class="comment">// → DBのIN句上限を超える可能性</span>
+<span class="comment">// → SQLが巨大化、性能劣化 ★</span>
+
+
+<span class="comment">// ─── 対策：チャンク分割 ───</span>
+<span class="comment">// 100件ずつに分けて処理</span>
+<span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Long</span>&gt;&gt; chunks =
+  <span class="fn">partition</span>(ids, <span class="num">100</span>);
+<span class="kw">for</span> (<span class="type">List</span>&lt;<span class="type">Long</span>&gt; chunk : chunks) {
+  mapper.<span class="fn">archiveByIds</span>(chunk);
+  <span class="comment">// → 100件ずつ × 複数回</span>
+}
+<span class="comment">// → IN句の上限を回避</span>
+<span class="comment">// → トランザクションも短く保てる ★</span>
+
+
+<span class="comment">// ─── 長いトランザクションの害（別冊S5）───</span>
+<span class="comment">// 10万件を1トランザクションで処理</span>
+<span class="comment">// → 長時間ロック → 他の処理がブロック ★</span>
+<span class="comment">// → チャンクごとにコミットも検討</span>
+<span class="comment">//   （ただし原子性とのトレードオフ）</span>
+
+
+<span class="comment">// ─── メモ帳での現実（YAGNI・別冊S2）───</span>
+<span class="comment">// 個人のメモ = 多くて数百〜数千件</span>
+<span class="comment">// 一度の一括操作 = せいぜい数十件</span>
+<span class="comment">// → 普通の IN句で全く問題ない ★</span>
+<span class="comment">// → チャンク分割は「大量になったら」</span>
+<span class="comment">// → 推測で先に複雑化しない（測定してから）</span>
+
+
+<span class="comment">// ─── 別冊S2 の判断 ───</span>
+<span class="comment">// 「大量データの心配」は</span>
+<span class="comment">// 実際に大量になってから対処</span>
+<span class="comment">// → 早すぎる最適化を避ける ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「大量対策」も測定してから（早すぎる最適化を避ける）</div>
+    <p>チャンク分割などの<b>大量データ対策</b>は重要ですが、<b>メモ帳v1で先回りして実装するのは過剰</b>（別冊S2のYAGNI・早すぎる最適化）。個人のメモが「一度に1万件一括操作」する場面はまずない。<b>「そういう問題と対策がある」と知っておき、実際に大量になったら測定して対処</b>する。知識として持ちつつ、<b>今は普通のIN句でシンプルに</b>——これが現実的な判断です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>一括処理のUX</h2><span class="en">BULK OPERATION UX</span></div>
+  <p class="pattern-desc">一括処理は<b>UX（別冊S8）</b>も重要。<b>複数選択のしやすさ</b>、<b>「何件選択中か」の表示</b>、<b>破壊的操作の確認</b>。「まとめて消す」は影響が大きいので、<b>慎重なUX設計</b>が要ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">一括操作のUX設計</span><span class="tag-desc">選択と確認</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 複数選択のUX</div>
+        <ul>
+          <li><b>チェックボックス</b>で複数選択</li>
+          <li><b>「全選択」</b>チェックボックス</li>
+          <li><b>「N件選択中」</b>の表示</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 一括操作の確認（別冊S8）</div>
+        <ul>
+          <li><b>一括アーカイブ</b>：復元可能→確認は軽め or なし</li>
+          <li><b>一括削除</b>：取り返しつかない→<b>必ず確認</b>＋件数表示</li>
+        </ul>
+        <p style="margin-top:8px">「<b>50件を完全に削除します。よろしいですか?</b>」と<b>件数を見せる</b>のが重要。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 結果のフィードバック</div>
+        <p>「<b>50件をアーカイブしました</b>」と結果を伝える（別冊S8の安心感）。</p>
+      </div>
+      <div class="code"><span class="code-head">// 一括操作のUX</span>
+<span class="comment">// ─── 複数選択UI ───</span>
+┌──────────────────────────────┐
+│ ☑全選択   [選択した3件を ▼]   │
+│           [アーカイブ][削除]   │
+├──────────────────────────────┤
+│ ☑ 古いメモ1                   │
+│ ☑ 古いメモ2                   │
+│ ☑ 古いメモ3                   │
+│ ☐ 重要メモ（選択しない）       │
+└──────────────────────────────┘
+<span class="comment">// → チェックで複数選択</span>
+<span class="comment">// → 「3件選択中」が分かる ★</span>
+
+
+<span class="comment">// ─── 破壊的操作の確認（別冊S8）───</span>
+一括削除ボタン
+  → 「選択した50件を完全に削除します。
+      この操作は取り消せません。」
+  → [削除する] [キャンセル]
+<span class="comment">// → 件数を明示 ★★★</span>
+<span class="comment">// → 「50件」を見せることで誤操作防止</span>
+
+
+<span class="comment">// ─── 一括アーカイブ（復元可・軽め）───</span>
+一括アーカイブ
+  → 確認は軽め or なし（復元できるから）
+  → 「50件をアーカイブしました
+      [元に戻す]」★
+<span class="comment">// → 別冊S8「軽い操作は取り消しで対応」</span>
+
+
+<span class="comment">// ─── 0件選択の扱い ───</span>
+何も選択せず実行
+  → 「メモを選択してください」
+  → エラーにせず親切に促す ★
+<span class="comment">// → Section 03 の「空リスト」をUXでも配慮</span>
+
+
+<span class="comment">// ─── 結果のフィードバック ───</span>
+処理後：「50件をアーカイブしました」
+<span class="comment">// → 何件処理したか伝える（安心感）★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 一括削除は「件数」を見せて誤操作を防ぐ</div>
+    <p>一括操作で最も危険なのが<b>一括削除</b>。1件の削除より<b>影響が桁違いに大きい</b>。だから確認ダイアログに<b>「50件を削除します」と件数を明示</b>する。「あ、50件も選んでた、想定と違う」と<b>気づくチャンス</b>を与える。別冊S8の<b>「取り返しのつかない操作ほど確認」</b>が、一括処理では特に重要。<b>件数表示は、大事故を防ぐ最後の砦</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>一括処理あるある失敗</h2><span class="en">BULK PITFALLS</span></div>
+  <p class="pattern-desc">一括処理で<b>初心者が踏みやすい失敗</b>を5つ。<b>ループ内クエリ・空リスト・確認なし一括削除</b>など。別冊S5〜S8の知識で回避できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">一括処理あるある 5選</span><span class="tag-desc">先人の轍を踏まない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① ループ内で1件ずつクエリ ★★★</b></p>
+        <ul>
+          <li>N件をループでN回DB往復（遅い）</li>
+          <li>対処：IN句でまとめて1回（Section 02,03）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② 空リストで IN () エラー ★★★</b></p>
+        <ul>
+          <li>0件選択で <code>IN ()</code> 構文エラー</li>
+          <li>対処：空ならスキップ（Section 03）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ ループ処理に @Transactional なし</b></p>
+        <ul>
+          <li>途中失敗で中途半端（別冊S5）</li>
+          <li>対処：単一SQL化、またはトランザクション</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 一括削除に確認なし ★★★</b></p>
+        <ul>
+          <li>大量データが一瞬で消える</li>
+          <li>対処：件数表示＋確認（別冊S8・Section 07）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ アーカイブにも archived 条件忘れ</b></p>
+        <ul>
+          <li>一括対象に既にアーカイブ済みが混入</li>
+          <li>対処：対象クエリにも状態条件（別冊S8）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// あるある失敗の対処</span>
+<span class="comment">// ─── ① ループ内クエリ → 一括化 ───</span>
+<span class="ann">NG:</span>
+for (Long id : ids)
+  mapper.updateArchived(id, true);
+<span class="comment">// → N回のDB往復 ★</span>
+
+<span class="ann">OK:</span>
+mapper.archiveByIds(ids);
+<span class="comment">// → 1回のDB往復（IN句）★★★</span>
+
+
+<span class="comment">// ─── ② 空リスト対策 ───</span>
+<span class="ann">NG:</span> ids=[] で archiveByIds(ids)
+<span class="comment">// → IN () 構文エラー ★</span>
+
+<span class="ann">OK:</span>
+<span class="kw">if</span> (ids == <span class="kw">null</span> || ids.<span class="fn">isEmpty</span>()) {
+  <span class="kw">return</span>;  <span class="comment">// 何もしない</span>
+}
+mapper.<span class="fn">archiveByIds</span>(ids);
+<span class="comment">// → 空なら処理スキップ ★★★</span>
+
+
+<span class="comment">// ─── ④ 一括削除の確認 ───</span>
+<span class="ann">NG:</span> 削除ボタン → 即DELETE
+<span class="comment">// → 50件が一瞬で消える ★★★</span>
+
+<span class="ann">OK:</span> 「50件を削除します」確認
+       → OKで実行
+<span class="comment">// → 件数を見せて誤操作防止（別冊S8）★</span>
+
+
+<span class="comment">// ─── 良い一括処理の条件 ───</span>
+✓ IN句でまとめて1回
+✓ 空リストはスキップ
+✓ 原子性（単一SQL or @Transactional）
+✓ 一括削除は件数表示＋確認
+✓ 対象クエリにも状態条件 ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 一括処理は「効率・安全・UX」の総合演習</div>
+    <p>一括処理は、これまで学んだ理論の<b>総合演習</b>です。<b>効率</b>（IN句・別冊S6のN+1）、<b>安全</b>（トランザクション・別冊S5）、<b>UX</b>（確認・別冊S8）、<b>境界</b>（空リスト・別冊S3）が全部関わる。1つの機能に複数の理論が絡むからこそ、<b>それぞれの理論を理解していると綺麗に設計できる</b>。本編Vol.10 は、別冊で積み上げた知識を<b>一度に活かす</b>場面です。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">別冊S9 で<b>一括処理とバルク操作の理論</b>が頭に入りました。本編Vol.10 で<b>複数メモの一括操作</b>を実装するとき、「なぜこの設計か」が見えるはずです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">S9 達成チェック</span><span class="tag-desc">一括処理を語れる人になった</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>1件ずつ vs まとめての違いを説明できる</li>
+          <li>IN句＋foreachで一括処理を書ける</li>
+          <li>空リストの罠を知っている</li>
+          <li>単一SQLは自動で原子的と分かる</li>
+          <li>ループ処理は @Transactional 必須と分かる</li>
+          <li>部分的失敗の3方針を判断できる</li>
+          <li>大量データはチャンク分割（必要なら）と知る</li>
+          <li>一括削除は件数表示＋確認と分かる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 別冊S9 で手に入れた一括処理理論</span>
+✓ <span class="str">"まとめて1回（IN句）が効率的"</span>
+
+✓ <span class="str">"ループ内クエリは一括化を検討"</span>
+
+✓ <span class="str">"空リストは IN () エラーに注意"</span>
+
+✓ <span class="str">"単一SQLは原子的、ループは@Transactional"</span>
+
+✓ <span class="str">"部分失敗の方針は要求で決める"</span>
+
+✓ <span class="str">"大量対策は測定してから（YAGNI）"</span>
+
+✓ <span class="str">"一括削除は件数を見せて確認"</span>
+
+
+<span class="comment">// あなたは「一括処理を語れる」</span>
+<span class="comment">// エンジニアに近づいた ★★★</span>
+
+<span class="comment">// 次回 本編Vol.10：</span>
+<span class="comment">//   一括操作を実装</span>
+<span class="comment">//   複数選択＋IN句でまとめて処理</span>
+<span class="comment">//   効率・安全・UXの総合演習</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── 本編 VOL.10 へ</div>
+    <p>別冊S9 で<b>「一括処理とバルク操作の理論」</b>を獲得しました。次は本編Vol.10「<b>一括操作</b>」。<b>チェックボックスで複数メモを選択</b>し、<b>IN句でまとめてアーカイブ/削除</b>を実装します。別冊S9で学んだ<b>「まとめて1回」「空リストの罠」「単一SQLの原子性」「件数表示＋確認」</b>が、実装で形になります。さらに別冊S5（トランザクション）・S6（N+1）・S8（UX）の知識が総動員される、<b>これまでの理論の集大成</b>。<b>本編Vol.10 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>SUB.09 / 14 ── BULK OPERATION &amp; BATCH（別冊）</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.10 補足 ── 本番運用に向けた観測可能性</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#3d2817;--paper:#f4ecd8;--paper-2:#e8dcc0;--accent:#ebbb86;--accent-2:#f5d2ac;--accent-3:#6b4423;--accent-4:#2d5f3f;--muted:#7a6952;--line:#c9b896;--code-bg:#2a1f15;--code-text:#f0e4cc;--panel-bg:#faf3e0}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'?';position:absolute;right:0px;top:-30px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+.add-tag{display:inline-block;background:#c43;color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+.final-tag{display:inline-block;background:#c43;color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px;font-weight:700}
+h1{font-family:'Shippori Mincho',serif;font-size:40px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid #c43;padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--accent-3);border-bottom-color:var(--accent-3)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}.ann{color:#f7c08a}.tag{color:#a3c9ff}.attr{color:#ffc88a}
+.bad{color:#ff8a7a;font-weight:600}.good{color:#b5e8b0;font-weight:600}
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+.think-step{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;position:relative;padding-left:60px;min-height:60px}
+.think-step::before{content:attr(data-step);position:absolute;left:14px;top:14px;background:var(--accent);color:var(--paper);width:36px;height:36px;line-height:36px;text-align:center;border-radius:50%;font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700}
+.think-step-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.think-step-body{font-size:13.5px;line-height:1.8}
+.analogy{background:#fffdf6;border:1px dashed var(--accent);border-left:4px solid var(--accent);padding:14px 18px;margin:12px 0}
+.analogy-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px}
+.analogy-title::before{content:'🔭 ';margin-right:4px}
+.analogy p{font-size:13.5px;line-height:1.85}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.compare-box{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:13.5px}
+.compare-ng{border-top:3px solid #c43}
+.compare-ok{border-top:3px solid var(--accent-4)}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px}
+.compare-ng .compare-label{color:#c43}
+.compare-ok .compare-label{color:var(--accent-4)}
+.tip{margin:18px 0;padding:14px 20px;background:rgba(235,187,134,0.12);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+
+/* シリーズ全体振り返り専用 */
+.recap{margin:24px 0;background:#fff;border:1px solid var(--line);overflow:hidden;border-radius:4px}
+.recap-header{background:linear-gradient(90deg,var(--accent-3),var(--ink));color:var(--paper);padding:14px 20px;font-family:'Shippori Mincho',serif;font-weight:700;font-size:17px;letter-spacing:0.05em}
+.recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.recap-vol{padding:14px 18px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.recap-vol:nth-child(even){border-right:none}
+.recap-vol:nth-last-child(-n+2){border-bottom:none}
+.recap-vol-num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:700;letter-spacing:0.1em;margin-bottom:4px}
+.recap-vol-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:6px}
+.recap-vol-keywords{font-size:12px;color:var(--muted);line-height:1.6}
+
+/* 学習リソース */
+.resource{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;border-left:4px solid var(--accent)}
+.resource-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.resource-desc{font-size:13px;line-height:1.75;color:var(--ink)}
+
+/* 最終クロージング */
+.final-closing{margin-top:80px;padding:48px 32px;background:linear-gradient(135deg,var(--accent-3) 0%,var(--ink) 100%);color:var(--paper);text-align:center;border-radius:6px;position:relative;overflow:hidden}
+.final-closing::before{content:'★';position:absolute;font-size:280px;top:-40px;right:-30px;opacity:0.10;font-family:'Shippori Mincho',serif;font-weight:700}
+.final-closing::after{content:'★';position:absolute;font-size:200px;bottom:-60px;left:-20px;opacity:0.08;font-family:'Shippori Mincho',serif;font-weight:700}
+.final-closing > *{position:relative;z-index:1}
+.final-closing h2{font-family:'Shippori Mincho',serif;font-size:34px;font-weight:700;margin-bottom:12px;line-height:1.3}
+.final-closing .subtitle-end{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.2em;color:var(--accent-2);margin-bottom:28px}
+.final-closing .message{font-size:15px;line-height:2.0;max-width:660px;margin:0 auto 32px;text-align:left;background:rgba(0,0,0,0.15);padding:24px 28px;border-radius:4px}
+.final-closing .message b{color:var(--accent-2)}
+.final-stamp{display:inline-block;background:var(--accent-2);color:var(--ink);padding:8px 28px;font-family:'Shippori Mincho',serif;font-size:18px;font-weight:700;letter-spacing:0.1em;border-radius:4px;margin-top:14px;transform:rotate(-2deg);box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+.thank-you-final{margin-top:32px;font-family:'Shippori Mincho',serif;font-size:22px;color:var(--accent-2);letter-spacing:0.05em;line-height:1.6}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){body{padding:0 20px 60px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.page-header::before{font-size:220px}h1{font-size:28px}.toc ul{flex-direction:column;gap:8px}.whw{grid-template-columns:1fr}.compare{grid-template-columns:1fr}.term-grid{grid-template-columns:1fr}.recap-grid{grid-template-columns:1fr}.recap-vol{border-right:none}.final-closing{padding:32px 20px}.final-closing h2{font-size:26px}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.10 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <span class="add-tag">+ ADD</span>
+  <span class="final-tag">🏁 FINAL</span>
+  <h1>本番運用に向けた<br>観測可能性</h1>
+  <p class="subtitle">VOL.10 SUPPLEMENT — OBSERVABILITY FOR PRODUCTION</p>
+  <p class="lead">Vol.10本編で<b>ログ出力</b>が動くようになり、業務品質3本柱が完成しました。でも本物の業務システムでは、ログは<b>「コンソールに出すだけ」</b>では終わりません。<b>「いつ・どこで・何が起きたか」を後から検索できる</b>こと、<b>「異常を即座に検知する」</b>こと、<b>「個人情報を絶対に漏らさない」</b>こと── これらが<b>本番運用の現実</b>です。本補足では、現代のソフトウェア工学で<b>必修概念</b>となった<b>「観測可能性（Observability）」</b>を解明し、シリーズ全体の<b>振り返りと旅立ち</b>を行います。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">🏁 シリーズ最後の補足</div>
+    <p style="font-size:13.5px">これはシリーズ<b>最後の別冊</b>です。本編は「<b>ログを動かす</b>」が目的、本補足は「<b>業務で運用するログとは</b>」を解明します。<b>観測可能性、機微情報のマスキング、集約システム、運用のリアル</b>── 業務開発者として知っておくべき<b>実務知識</b>を網羅。最後にはシリーズ全体の<b>振り返り</b>と<b>次の学習指針</b>もまとめます。10巻の旅の、本当の終着点です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.10 ADD（FINAL）</div>
+  <ul>
+    <li><a href="#purpose">01 この補足の目的</a></li>
+    <li><a href="#what-is-log">02 そもそもログとは何のため</a></li>
+    <li><a href="#observability">03 観測可能性（Observability）── 3つの柱</a></li>
+    <li><a href="#term-log-level-philosophy">04 用語カード：ログレベルの哲学</a></li>
+    <li><a href="#term-structured">05 用語カード：構造化ログ vs プレーンログ</a></li>
+    <li><a href="#masking">06 機微情報のマスキング設計</a></li>
+    <li><a href="#log-aggregation">07 ログ集約の世界（ELK / Datadog 等）</a></li>
+    <li><a href="#production-reality">08 本番運用のリアル（ローテーション・保管期間・コスト）</a></li>
+    <li><a href="#performance">09 ログとパフォーマンス（isDebugEnabled()の話）</a></li>
+    <li><a href="#series-recap">10 シリーズ全体の振り返り</a></li>
+    <li><a href="#next-step">11 これから先（次の学習リソース）</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="purpose">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この補足の目的</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">Vol.10本編で<b>「ログを動かす」</b>を達成しました。本補足は<b>「業務で運用するログとは何か」</b>を解明し、最後に<b>シリーズ全体を振り返り、旅立ちます</b>。シリーズ最後の補足は<b>「振り返りと旅立ち」</b>の2つの意味があります。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を解説するか</div>
+      <div class="whw-desc">
+        ① <b>本番運用のリアル</b>：観測可能性、ログ集約、ローテーション、コスト<br>
+        ② <b>セキュリティ</b>：機微情報のマスキング<br>
+        ③ <b>パフォーマンス</b>：ログのコストと対策<br>
+        ④ <b>シリーズ全体の振り返り</b>と次への指針
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう解説するか</div>
+      <div class="whw-desc">
+        ① <b>業界の常識</b>を語る<br>
+        ② <b>本番運用のシナリオ</b>を示す<br>
+        ③ <b>具体的なツール</b>を紹介<br>
+        ④ <b>シリーズ全10巻</b>を振り返る<br>
+        ⑤ <b>次の学習リソース</b>を提示
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜシリーズ最後がこの内容か</div>
+      <div class="whw-desc">
+        「業務品質」を完成させるための<b>最後のピース</b>。さらに<b>「シリーズの締めくくり</b>として、これまでの学びを整理し、次の旅へと送り出す」</b>役目があります。Vol.10 ADD はシリーズの<b>『卒業証書』</b>のような存在です。
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「学びを実務に繋げる」</div>
+    <p>シリーズ最後の別冊は、<b>「学んだことを実務で活かすための知識」</b>を集約しています。本書を読み終えたあと、業務開発の現場に出ても<b>「初めて聞く話」</b>が少なくなるよう、本補足で<b>「現場の常識」</b>を先取りしておきます。</p>
+  </div>
+</section>
+
+<section id="what-is-log">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>そもそもログとは何のため</h2>
+    <span class="en">WHAT IS LOG FOR</span>
+  </div>
+  <p class="pattern-desc">ログは<b>「過去の事実を残す」</b>仕組みですが、<b>「何のために残すのか」</b>を整理すると目的が見えてきます。実は<b>4つの目的</b>があります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">log-purposes</span>
+      <span class="tag-desc">ログを残す4つの目的</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ログの4つの目的</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">トラブル調査</div>
+          <div class="think-step-body">
+            最も基本的な目的。「<b>本番でエラーが出た</b>」「<b>ユーザーから問題報告</b>」── ログを見て<b>原因を特定</b>する。スタックトレース、リクエスト内容、処理順序などが手がかり。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">監査（オーディット）</div>
+          <div class="think-step-body">
+            「<b>いつ・誰が・何をしたか</b>」を<b>証跡として残す</b>。金融、医療、官公庁系のシステムでは<b>法的要件</b>になることも。「<b>このユーザーが10時に削除した</b>」が記録されていることが重要。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">性能分析</div>
+          <div class="think-step-body">
+            「<b>どの処理がどれくらい時間がかかったか</b>」を計測。<b>ボトルネック特定</b>、<b>遅延検知</b>、<b>キャパシティプランニング</b>に使う。Vol.10本編の「実行時間ログ」がこれ。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">業務分析</div>
+          <div class="think-step-body">
+            「<b>どの機能がよく使われているか</b>」「<b>離脱率はどうか</b>」「<b>どのページから入って何を購入するか</b>」── <b>ビジネス分析の素材</b>としてログを使う。マーケティングや経営判断に直結。
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>業務システム</b>では、これら<b>4つの目的</b>すべてが同時に求められます。ログ設計は<b>「誰が何のために読むか」</b>を意識する必要があります。</p>
+      </div>
+      <div class="code"><span class="code-head">// 4つの目的別ログ例</span>
+
+<span class="comment">// === 1. トラブル調査用 ===</span>
+
+log.<span class="fn">error</span>(<span class="str">"DB connection failed: url={}"</span>,
+          url, e);
+
+log.<span class="fn">warn</span>(<span class="str">"Retry attempt: {}/{}"</span>,
+         attempt, maxRetries);
+
+<span class="comment">// 開発者・運用が読む</span>
+<span class="comment">// 例外詳細、状態、コンテキスト</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 2. 監査用 ===</span>
+
+log.<span class="fn">info</span>(<span class="str">"AUDIT: User {} deleted task {} at {}"</span>,
+         userId, taskId, timestamp);
+
+log.<span class="fn">info</span>(<span class="str">"AUDIT: Permission changed by admin {}"</span>,
+         adminId);
+
+<span class="comment">// セキュリティ担当・コンプライアンスが読む</span>
+<span class="comment">// 5W1H（誰がいつ何をどこで）が重要</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 3. 性能分析用 ===</span>
+
+log.<span class="fn">info</span>(<span class="str">"PERF: {} ms, query={}, rows={}"</span>,
+         elapsed, queryName, rowCount);
+
+log.<span class="fn">info</span>(<span class="str">"API: {} responded in {} ms"</span>,
+         endpoint, elapsed);
+
+<span class="comment">// 性能エンジニア・SREが読む</span>
+<span class="comment">// 数値が中心</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 4. 業務分析用 ===</span>
+
+log.<span class="fn">info</span>(<span class="str">"BUSINESS: Order placed: "</span> +
+         <span class="str">"product={}, amount={}, channel={}"</span>,
+         productId, amount, channel);
+
+log.<span class="fn">info</span>(<span class="str">"BUSINESS: User journey: {} -> {}"</span>,
+         fromPage, toPage);
+
+<span class="comment">// マーケティング・経営層が読む</span>
+<span class="comment">// 集計・分析しやすい形</span>
+
+
+<span class="code-head" style="margin-top:18px">// 同じ「ログ」でも目的が違う</span>
+
+<span class="comment">// → 出力先を分けることもある</span>
+<span class="comment">//   ・アプリログ：トラブル調査用</span>
+<span class="comment">//   ・監査ログ：別ファイル＋長期保管</span>
+<span class="comment">//   ・アクセスログ：性能分析用</span>
+<span class="comment">//   ・イベントログ：業務分析用</span>
+
+<span class="comment">// 「すべて1つのログに混ぜる」より</span>
+<span class="comment">// 「目的別に分ける」のが本格運用</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── ビルの監視カメラ</div>
+    <p>ログは<b>「ビルの監視カメラ」</b>のようなもの。<br>
+    ・<b>セキュリティ警備員</b>が見る（トラブル調査）<br>
+    ・<b>監査法人</b>が見る（コンプライアンス）<br>
+    ・<b>施設管理</b>が見る（混雑分析）<br>
+    ・<b>マーケティング</b>が見る（来訪者分析）<br><br>
+    1つのカメラ映像を<b>複数の人が違う目的</b>で見る。映像の<b>保管期間・解像度・閲覧権限</b>も目的によって違う。ログも同じ。<b>「誰が何のために見るか」</b>を考えて設計するのが業務開発のリアルです。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「ログは複数の読者を持つ」</div>
+    <p>「ログは1つだけ書いて終わり」ではなく、<b>「複数の読者・複数の目的」</b>を持つことを意識しましょう。Vol.10 本編で書いた INFO/WARN/ERROR は<b>「トラブル調査と業務イベント記録」</b>の2目的を兼ねています。実務では<b>監査・性能・業務分析</b>用に別ロガーを用意することも珍しくありません。</p>
+  </div>
+</section>
+
+<section id="observability">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>観測可能性（Observability）── 3つの柱</h2>
+    <span class="en">OBSERVABILITY — THREE PILLARS</span>
+  </div>
+  <p class="pattern-desc">現代の業務開発で<b>必修概念</b>となった「<b>観測可能性</b>」。<b>「システムの内部状態を、外部からの観測だけで推測できる度合い」</b>のこと。<b>ログ・メトリクス・トレーシング</b>の3要素で実現します。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">CONCEPT</span>
+    <div class="term-card-title">観測可能性（Observability）</div>
+    <div class="term-card-sub">業務開発の必修概念</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>「<b>システムの内部状態を、外部からの観測だけでどれだけ推測できるか</b>」を示す概念。<br>
+        高い観測可能性 = <b>問題が起きた時に原因をすぐ特定できる</b>。
+      </dd>
+      <dt>3つの柱</dt>
+      <dd>① <b>ログ</b>（Logs）── 何が起きたか<br>
+        ② <b>メトリクス</b>（Metrics）── どれくらい起きているか<br>
+        ③ <b>トレーシング</b>（Traces）── どう繋がっているか
+      </dd>
+      <dt>ログ</dt>
+      <dd><b>個別イベントの記録</b>。Vol.10で学んだ内容。「何が起きたか」を時系列で残す。</dd>
+      <dt>メトリクス</dt>
+      <dd><b>時系列の数値データ</b>。「リクエスト数」「レスポンスタイム」「エラー率」「CPU使用率」など。<b>集計・グラフ化</b>に向く。</dd>
+      <dt>トレーシング</dt>
+      <dd><b>1リクエストの旅</b>を追跡。<b>マイクロサービス</b>環境で重要。「リクエストAが、サービスB→C→Dと回って、どこで何msかかったか」を可視化。</dd>
+      <dt>業界での扱い</dt>
+      <dd>現代の業務システムは「<b>観測可能性ファースト</b>」で設計する。<b>SRE（Site Reliability Engineering）</b>の核心概念。
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">three-pillars</span>
+      <span class="tag-desc">3つの柱の使い分け</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの柱で何が分かるか</div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3)">ログ（Logs）── 「何が起きたか」</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.5">2024-01-15 14:30:25 INFO  Task registered: id=42
+2024-01-15 14:30:30 WARN  Task not found: id=99
+2024-01-15 14:30:32 ERROR DB connection failed</pre>
+
+        <p style="font-size:13px;margin-top:6px;line-height:1.7">個別の<b>「事件」</b>が時系列に並ぶ。<b>詳細情報</b>が豊富。</p>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">メトリクス（Metrics）── 「どれくらい起きているか」</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.5">request_count        2,450 / sec
+response_time_p99    230 ms
+error_rate           0.5%
+cpu_usage            42%
+memory_usage         1.2 GB / 4 GB</pre>
+
+        <p style="font-size:13px;margin-top:6px;line-height:1.7"><b>集計値・統計値</b>。グラフで時系列推移を見る。<b>異常検知</b>に強い。</p>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">トレーシング（Traces）── 「どう繋がっているか」</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.5">Request "POST /tasks" (250ms)
+├── Controller (5ms)
+├── Service.register (240ms)
+│   ├── Mapper.insert (180ms)  ★ボトルネック
+│   └── EmailService.send (55ms)
+└── Response (5ms)</pre>
+
+        <p style="font-size:13px;margin-top:6px;line-height:1.7"><b>1リクエストの内部構造</b>を可視化。<b>マイクロサービス間の連携</b>を追跡。</p>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">3つを使い分けるシナリオ</p>
+
+        <ol style="padding-left:24px;font-size:13px;line-height:1.85;margin-top:6px">
+          <li><b>メトリクス</b>で「エラー率が上昇」を検知</li>
+          <li><b>ログ</b>で「具体的にどんなエラーか」を調査</li>
+          <li><b>トレース</b>で「どの段階で失敗しているか」を特定</li>
+          <li>→ 原因解明 → 修正</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// 3つの柱の実装例</span>
+
+<span class="comment">// === ① ログ（Vol.10で学んだ） ===</span>
+
+log.<span class="fn">info</span>(<span class="str">"Task registered: id={}"</span>, taskId);
+
+<span class="comment">// → 「何が起きたか」</span>
+
+
+<span class="code-head" style="margin-top:18px">// === ② メトリクス（Micrometer等） ===</span>
+
+<span class="ann">@RestController</span>
+<span class="kw">public class</span> <span class="type">TaskController</span> {
+
+  <span class="kw">private final</span> <span class="type">MeterRegistry</span> meter;
+
+  <span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(...) {
+    meter.<span class="fn">counter</span>(<span class="str">"task.created"</span>).<span class="fn">increment</span>();
+    <span class="comment">// → 「タスク登録回数」をカウント</span>
+
+    <span class="comment">// Prometheus等で時系列グラフ化</span>
+    ...
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// === ③ トレーシング（Spring Cloud Sleuth等） ===</span>
+
+<span class="comment">// 自動的に「Trace ID」が各リクエストに付く</span>
+
+<span class="comment">// ログにも自動で出る:</span>
+INFO [task-app,b3a1c5d2,e8f7g6h5] Task created
+
+<span class="comment">// ↑ Trace ID と Span ID</span>
+<span class="comment">// → 複数サービス間でリクエストを追跡可能</span>
+
+
+<span class="code-head" style="margin-top:18px">// 3つを統合するツール</span>
+
+[アプリ]
+   ├ ログ → Fluentd → Elasticsearch（ELK）
+   ├ メトリクス → Prometheus → Grafana
+   └ トレース → Jaeger / Zipkin
+       ↓
+   [統合ダッシュボード]
+   Datadog / New Relic / Dynatrace 等
+
+<span class="comment">// 一画面で全部見られる</span>
+<span class="comment">// → 観測可能性の実現</span>
+
+
+<span class="code-head" style="margin-top:18px">// 観測可能性の評価</span>
+
+<span class="comment">// 「観測可能性が高い」システム:</span>
+<span class="good">// ・問題が起きた瞬間に検知される</span>
+<span class="good">// ・5分以内に原因が特定できる</span>
+<span class="good">// ・修正後の効果が定量的に分かる</span>
+
+
+<span class="comment">// 「観測可能性が低い」システム:</span>
+<span class="bad">// ・ユーザーから問い合わせて初めて気づく</span>
+<span class="bad">// ・原因調査に数時間かかる</span>
+<span class="bad">// ・直したつもりが直っていない</span>
+
+
+<span class="code-head" style="margin-top:18px">// 本シリーズで学んだログは「第一の柱」</span>
+
+<span class="comment">// Vol.10で学んだのは観測可能性の入り口</span>
+
+<span class="comment">// ・メトリクスは Spring Boot Actuator で</span>
+<span class="comment">// ・トレーシングは Spring Cloud Sleuth で</span>
+<span class="comment">// それぞれ次のステップで学ぶ価値あり</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「観測可能性は業務エンジニアの必修」</div>
+    <p>2020年代の業務開発では<b>「観測可能性」</b>を知らないと話が通じません。<b>SRE（Site Reliability Engineering）</b>、<b>DevOps</b>、<b>クラウドネイティブ</b>── どの文脈でも観測可能性が前提です。Vol.10 で学んだログは<b>第一の柱</b>。残りの<b>メトリクス・トレーシング</b>も、業務開発の次のステップとして必ず触れることになります。</p>
+  </div>
+</section>
+
+<section id="term-log-level-philosophy">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>用語カード：ログレベルの哲学</h2>
+    <span class="en">TERM — LOG LEVEL PHILOSOPHY</span>
+  </div>
+  <p class="pattern-desc">Vol.10本編で5段階のログレベルを学びました。でも実務での<b>レベル選択</b>はもっと深い議論があります。<b>「業界の流派」「夜中起こされる基準」「廃止予定の議論」</b>── 哲学的な側面を見ていきます。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD</span>
+    <div class="term-card-title">ログレベルの哲学</div>
+    <div class="term-card-sub">業界の暗黙的なルール</div>
+    <dl class="term-grid">
+      <dt>レベル選択の「3つの問い」</dt>
+      <dd>① <b>本番でも出すべきか?</b><br>
+        ② <b>運用チームに通知すべきか?</b><br>
+        ③ <b>夜中でも対応すべきか?</b><br>
+        この3つにYesがいくつ付くかで、レベルが決まります。
+      </dd>
+      <dt>YesがゼロのDEBUG/TRACE</dt>
+      <dd>本番では<b>出さない</b>。開発時のみ。</dd>
+      <dt>Yesが1のINFO</dt>
+      <dd>本番でも<b>出す</b>が、通知や対応は不要。<b>業務記録</b>。</dd>
+      <dt>Yesが2のWARN</dt>
+      <dd>本番で<b>出す</b>、<b>監視対象</b>だが、夜中の即対応は不要。<b>業務例外</b>はここ。</dd>
+      <dt>Yesが3のERROR</dt>
+      <dd>本番で<b>出す</b>、<b>通知</b>、<b>夜中でも対応</b>。<b>システム例外</b>はここ。</dd>
+      <dt>レベルの誤用</dt>
+      <dd>「<b>ERROR乱発</b>」── 業務例外も全部ERRORにすると、本物のERRORが埋もれる<br>
+        「<b>INFO過剰</b>」── 全メソッドに INFO 入れるとログ量が爆発<br>
+        「<b>WARN曖昧</b>」── 何が WARN か基準がないとチーム内で揺れる
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">log-level-realworld</span>
+      <span class="tag-desc">業界の実例で見るレベル選択</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 「夜中起こされる」基準で考える</div>
+
+        <p style="font-size:13.5px;line-height:1.85">業務開発のチームでは、ログレベルは<b>「運用負荷」</b>と直結します。<b>ERROR が大量に出る</b>システムは、夜中に運用チームが叩き起こされる原因に。だから「<b>ERRORの基準</b>」をチームで真剣に議論します。</p>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">業界の典型的なルール</p>
+
+        <div class="compare">
+          <div class="compare-box compare-ok">
+            <div class="compare-label">ERRORの基準（厳格派）</div>
+            <p style="font-size:12px;margin-top:6px;line-height:1.6"><b>「夜中に起こされる価値があるか」</b>で判断。<br>
+            ・DB完全ダウン → ERROR<br>
+            ・外部API3回連続失敗 → ERROR<br>
+            ・予期しない NullPointer → ERROR<br>
+            ・データ不整合 → ERROR</p>
+          </div>
+          <div class="compare-box compare-ng" style="border-top-color:var(--accent-2)">
+            <div class="compare-label" style="color:var(--accent-2)">WARNの基準</div>
+            <p style="font-size:12px;margin-top:6px;line-height:1.6"><b>「気になるが緊急ではない」</b>。<br>
+            ・業務例外（在庫不足等） → WARN<br>
+            ・リトライで回復 → WARN<br>
+            ・廃止予定APIの使用 → WARN<br>
+            ・性能劣化（しきい値超） → WARN</p>
+          </div>
+        </div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">アラート設定との関係</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6"># Datadog等の典型的なアラート設定
+
+ERROR が 5分間で 5件以上
+  → Slack通知 + メール
+  → On-Call担当者に電話
+
+WARN が 1時間で 100件以上
+  → Slackのみ
+  → 翌朝レビュー
+
+INFO は通知なし
+  → ダッシュボードで可視化</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px">この設定の意味は、<b>「ERRORを乱発するとチームが壊れる」</b>ということ。<b>本物のERRORだけにERRORを出す</b>のが、チームを守る設計です。</p>
+
+        <div style="background:rgba(196,67,51,0.07);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid #c43">
+          <b>業界あるある</b>：新人エンジニアが<b>「念のためERROR」</b>で書いて、夜中にチーム全員が叩き起こされ、「<b>これ業務例外じゃん…</b>」と発覚するパターン。レベル選択は<b>真剣に</b>。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 実例：レベル判断のシナリオ</span>
+
+<span class="comment">// === シナリオ1：ユーザー登録 ===</span>
+
+<span class="comment">// 正常完了</span>
+log.<span class="fn">info</span>(<span class="str">"User registered: id={}"</span>, userId);
+<span class="comment">// → INFO（業務イベント）</span>
+
+<span class="comment">// 重複メールでエラー</span>
+log.<span class="fn">warn</span>(<span class="str">"Duplicate email: {}"</span>, email);
+<span class="comment">// → WARN（業務例外、起こりうる）</span>
+
+<span class="comment">// DB書き込み失敗</span>
+log.<span class="fn">error</span>(<span class="str">"User save failed"</span>, e);
+<span class="comment">// → ERROR（システム異常）</span>
+
+
+<span class="code-head" style="margin-top:18px">// === シナリオ2：外部API呼び出し ===</span>
+
+<span class="comment">// 1回目失敗 → リトライ</span>
+log.<span class="fn">warn</span>(<span class="str">"API call retrying: attempt={}"</span>, n);
+<span class="comment">// → WARN（自動回復可能）</span>
+
+<span class="comment">// 3回連続失敗</span>
+log.<span class="fn">error</span>(<span class="str">"API call failed permanently"</span>, e);
+<span class="comment">// → ERROR（回復不能）</span>
+
+
+<span class="code-head" style="margin-top:18px">// === シナリオ3：性能 ===</span>
+
+<span class="comment">// 通常の応答時間</span>
+log.<span class="fn">debug</span>(<span class="str">"Request: {} ms"</span>, elapsed);
+<span class="comment">// → DEBUG（普段は出さない）</span>
+
+<span class="comment">// しきい値超過</span>
+<span class="kw">if</span> (elapsed &gt; <span class="num">3000</span>) {
+  log.<span class="fn">warn</span>(<span class="str">"Slow request: {} ms"</span>, elapsed);
+}
+<span class="comment">// → WARN（要注意）</span>
+
+<span class="comment">// タイムアウト</span>
+log.<span class="fn">error</span>(<span class="str">"Request timeout"</span>, e);
+<span class="comment">// → ERROR（システム異常）</span>
+
+
+<span class="code-head" style="margin-top:18px">// アンチパターン</span>
+
+<span class="comment">// ✗ NG: 業務例外をERRORで出す</span>
+log.<span class="fn">error</span>(<span class="str">"Task not found"</span>);
+<span class="comment">// → 夜中にチーム叩き起こされる</span>
+<span class="comment">// → 本物のERRORが埋もれる</span>
+
+
+<span class="comment">// ✗ NG: System.out.println を残す</span>
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(<span class="str">"Debug: ..."</span>);
+<span class="comment">// → コードレビューで即指摘</span>
+<span class="comment">// → ログレベル制御不可</span>
+<span class="comment">// → 本番でも出続ける</span>
+
+
+<span class="comment">// ✗ NG: 例外を catch して無視</span>
+<span class="kw">try</span> {
+  ...
+} <span class="kw">catch</span> (<span class="type">Exception</span> e) {
+  <span class="comment">// 何もしない</span>
+}
+<span class="comment">// → ログさえ出ない</span>
+<span class="comment">// → エラーが見えなくなる</span>
+<span class="comment">// → 最悪のアンチパターン</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業界の合言葉</span>
+
+<span class="comment">// 「ERRORは少なく、WARNは適切に、</span>
+<span class="comment">//  INFOは業務的に、DEBUGは詳細に」</span>
+
+<span class="comment">// 4レベルの基準を統一すれば</span>
+<span class="comment">// チーム運用が楽になる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「ERRORは『叫び』として使う」</div>
+    <p>ERROR は<b>「夜中に運用チームを叩き起こすほどの叫び」</b>。乱発すると<b>「狼少年効果」</b>で誰も反応しなくなります。<b>「本当のERRORだけにERROR」</b>── これが業務開発の鉄則。レベル選択は<b>運用への愛情</b>でもあります。</p>
+  </div>
+</section>
+
+<section id="term-structured">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>用語カード：構造化ログ vs プレーンログ</h2>
+    <span class="en">TERM — STRUCTURED VS PLAIN LOG</span>
+  </div>
+  <p class="pattern-desc">本編で<b>プレースホルダ <code>{}</code></b> を学びました。これを発展させた<b>「構造化ログ」</b>は、<b>JSON形式</b>でログを出力して<b>機械的に解析できる</b>ようにする仕組み。本格的な運用環境では必須です。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD</span>
+    <div class="term-card-title">構造化ログ vs プレーンログ</div>
+    <div class="term-card-sub">ログ形式の2つの流派</div>
+    <dl class="term-grid">
+      <dt>プレーンログ</dt>
+      <dd>従来の<b>「人間が読む」</b>ログ形式。<br>
+        <code>2024-01-15 INFO Task registered: id=42, title=買い物</code><br>
+        メリット：そのまま読める / デメリット：機械的な集計が難しい</dd>
+      <dt>構造化ログ</dt>
+      <dd><b>JSON形式</b>等で、<b>キー・バリュー</b>として出力するログ。<br>
+        <code>{"time":"2024-01-15","level":"INFO","event":"task.registered","id":42,"title":"買い物"}</code><br>
+        メリット：機械解析が容易 / デメリット：人間が読みにくい
+      </dd>
+      <dt>業界の主流</dt>
+      <dd>大規模な業務システムは<b>「構造化ログ」</b>が主流。理由：<b>ログ集約システム（ELK / Datadog 等）</b>で<b>検索・集計</b>するため。</dd>
+      <dt>実装方法</dt>
+      <dd>① <code>logback-spring.xml</code> で JSON フォーマッタを設定<br>
+        ② <b>Logstash Logback Encoder</b> 等のライブラリを使う<br>
+        ③ Spring Boot 3.x なら <code>logging.structured.format</code> プロパティで切替可能
+      </dd>
+      <dt>MDC（Mapped Diagnostic Context）</dt>
+      <dd>各リクエストに<b>「文脈情報」</b>を載せるSLF4Jの仕組み。<br>
+        <code>MDC.put("userId", "42")</code> でセットすれば、<b>全ログに自動で <code>userId=42</code></b> が付く。<br>
+        構造化ログと組み合わせると<b>「ユーザーごとに全ログ追跡」</b>ができる。
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">plain-vs-structured</span>
+      <span class="tag-desc">プレーンと構造化の対比</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 同じイベントを2形式で表現</div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3)">プレーンログ（Vol.10本編で出力される形式）</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:11.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.5">2024-01-15 14:30:25.123 INFO  [http-nio-8080-exec-1]
+c.e.t.s.TaskService - Task registered: title=買い物リスト</pre>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:14px">構造化ログ（JSON形式）</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:11.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.5">{
+  "timestamp": "2024-01-15T14:30:25.123Z",
+  "level": "INFO",
+  "thread": "http-nio-8080-exec-1",
+  "logger": "com.example.todo.service.TaskService",
+  "message": "Task registered: title=買い物リスト",
+  "title": "買い物リスト",
+  "event": "task.registered"
+}</pre>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">構造化ログの威力</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:6px">ログ集約システムで以下のクエリが可能：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><code>event:task.registered</code> ── タスク登録イベントだけ抽出</li>
+          <li><code>level:ERROR AND service:payment</code> ── 決済サービスのエラーだけ</li>
+          <li><code>userId:42</code> ── ユーザー42の全ログ追跡</li>
+          <li><code>response_time:&gt;3000</code> ── 3秒以上かかったリクエスト</li>
+        </ul>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>プレーンログだとgrep頼みで難しい</b>こんな解析が、構造化ログなら<b>SQLライクに簡単</b>。これが業界が構造化ログに移行した理由です。</p>
+      </div>
+      <div class="code"><span class="code-head">// MDC（Mapped Diagnostic Context）の使い方</span>
+
+<span class="ann">@Slf4j</span>
+<span class="ann">@Component</span>
+<span class="kw">public class</span> <span class="type">RequestLoggingFilter</span>
+    <span class="kw">implements</span> <span class="type">Filter</span> {
+
+  <span class="ann">@Override</span>
+  <span class="kw">public void</span> <span class="fn">doFilter</span>(
+      <span class="type">ServletRequest</span> req,
+      <span class="type">ServletResponse</span> res,
+      <span class="type">FilterChain</span> chain)
+      <span class="kw">throws</span> <span class="type">IOException</span>, <span class="type">ServletException</span> {
+
+    <span class="comment">// リクエストごとに一意なIDを生成</span>
+    <span class="type">String</span> requestId =
+      <span class="type">UUID</span>.<span class="fn">randomUUID</span>().<span class="fn">toString</span>();
+    <span class="type">MDC</span>.<span class="fn">put</span>(<span class="str">"requestId"</span>, requestId);
+
+    <span class="kw">try</span> {
+      chain.<span class="fn">doFilter</span>(req, res);
+    } <span class="kw">finally</span> {
+      <span class="type">MDC</span>.<span class="fn">clear</span>();  <span class="comment">// 必ずクリア</span>
+    }
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// MDC設定後のログ</span>
+
+<span class="comment">// アプリ内のどこでログを書いても</span>
+<span class="comment">// 自動で requestId が付く</span>
+
+INFO [<span class="ann">requestId=abc-123</span>]
+c.e.t.s.TaskService - Task registered: id=42
+
+INFO [<span class="ann">requestId=abc-123</span>]
+c.e.t.m.TaskMapper - SQL: INSERT INTO tasks ...
+
+INFO [<span class="ann">requestId=abc-123</span>]
+c.e.t.c.TaskController - Response: 302
+
+<span class="comment">// → 1リクエストの全ログをグループ化できる</span>
+
+
+<span class="code-head" style="margin-top:18px">// 構造化ログ + MDC = 最強</span>
+
+<span class="comment">// JSON出力時、MDC内容も自動で含まれる:</span>
+
+{
+  <span class="str">"timestamp"</span>: <span class="str">"2024-01-15T14:30:25Z"</span>,
+  <span class="str">"level"</span>: <span class="str">"INFO"</span>,
+  <span class="str">"message"</span>: <span class="str">"Task registered"</span>,
+  <span class="str">"requestId"</span>: <span class="str">"abc-123"</span>,  <span class="comment">// ← MDCから</span>
+  <span class="str">"userId"</span>: <span class="str">"42"</span>,            <span class="comment">// ← MDCから</span>
+  <span class="str">"taskId"</span>: <span class="num">100</span>,
+  <span class="str">"title"</span>: <span class="str">"買い物"</span>
+}
+
+<span class="comment">// → ログ集約システムで:</span>
+<span class="comment">// requestId="abc-123" で検索すれば</span>
+<span class="comment">// そのリクエストの全ログが取れる</span>
+
+
+<span class="code-head" style="margin-top:18px">// Spring Boot 3.x の機能</span>
+
+<span class="comment"># application.properties</span>
+logging.structured.format.console=ecs
+
+<span class="comment"># これだけで構造化ログ（ECS形式）に切替</span>
+<span class="comment"># 追加ライブラリ不要</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業務開発での使い分け</span>
+
+<span class="comment">// 開発環境:</span>
+<span class="comment">// → プレーンログ（人間が読みやすい）</span>
+
+<span class="comment">// 本番環境:</span>
+<span class="comment">// → 構造化ログ（機械解析しやすい）</span>
+
+<span class="comment">// application-prod.properties で切替</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「構造化ログは現代の標準」</div>
+    <p>クラウド時代の業務開発では<b>「構造化ログ」が標準</b>です。AWS CloudWatch、Datadog、Splunk── どれも構造化ログを前提に設計されています。<b>Vol.10 本編のプレースホルダ <code>{}</code></b> は構造化ログへの<b>第一歩</b>。次のステップで <b>JSON出力</b> と <b>MDC</b> を学べば、現代的なログ運用ができるようになります。</p>
+  </div>
+</section>
+
+<section id="masking">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>機微情報のマスキング設計</h2>
+    <span class="en">SENSITIVE DATA MASKING</span>
+  </div>
+  <p class="pattern-desc">ログ設計の<b>セキュリティの側面</b>。Vol.10本編のハマり5で触れた<b>「個人情報・機密情報を絶対にログに残さない」</b>仕組みを深掘ります。<b>業務開発者の必須スキル</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">masking-design</span>
+      <span class="tag-desc">機微情報を守る3つのアプローチ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 守るべき情報の代表例</div>
+
+        <p style="font-size:14px;font-weight:700;color:#c43">絶対にログに出してはいけない情報</p>
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b>パスワード</b>（生文字・ハッシュ問わず）</li>
+          <li><b>クレジットカード番号</b>、CVV</li>
+          <li><b>マイナンバー</b>、運転免許番号</li>
+          <li><b>医療情報</b>、健康診断結果</li>
+          <li><b>セッショントークン</b>、APIキー</li>
+          <li><b>個人を特定する情報</b>（住所、電話番号、生年月日）</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-2);margin-top:18px">条件付きで残せる情報</p>
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b>ユーザーID</b>（内部ID）── 個人特定情報と紐づけなければOK</li>
+          <li><b>メールアドレス</b>── 一部マスクして残す（<code>foo@***</code>）</li>
+          <li><b>IPアドレス</b>── 監査目的なら残す、保管期間に注意</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">3つのマスキング戦略</p>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">@ToString.Exclude で <code>toString()</code> から除外</div>
+          <div class="think-step-body">
+            Lombok の <code>@Data</code> で生成される <code>toString()</code> から、<b>機微フィールドを除外</b>する。<br>
+            <code>log.info("User: {}", user)</code> で書いても、<b>パスワードは出ない</b>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">マスキング関数で値を加工</div>
+          <div class="think-step-body">
+            <code>maskEmail("foo@example.com")</code> → <code>"f**@example.com"</code>。<br>
+            <b>一部だけ残す</b>ことで、「同じユーザーか」は分かるが、個人特定はできない状態にする。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">フィルタで自動マスキング</div>
+          <div class="think-step-body">
+            <b>Logback の正規表現フィルタ</b>等で、ログ出力時に<b>自動でパターンを置換</b>。「クレジットカード番号らしき16桁」を見つけたら<code>****-****-****-1234</code>に書き換え。<br>
+            実装の<b>うっかりミス</b>を防ぐ最後の砦。
+          </div>
+        </div>
+
+        <div style="background:rgba(196,67,51,0.07);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid #c43">
+          <b>業界の事故事例</b>：本番ログにパスワードがそのまま残っていて、<b>ログ閲覧権限のある開発者全員に知られる</b>事故が実際にあります。「<b>ログは社内に流通する文書</b>」と思って設計しましょう。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// === 戦略1: @ToString.Exclude ===</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">UserForm</span> {
+
+  <span class="kw">private</span> <span class="type">String</span> email;
+
+  <span class="ann">@ToString.Exclude</span>          <span class="comment">// ★追加</span>
+  <span class="kw">private</span> <span class="type">String</span> password;
+
+  <span class="ann">@ToString.Exclude</span>          <span class="comment">// ★追加</span>
+  <span class="kw">private</span> <span class="type">String</span> creditCard;
+}
+
+
+<span class="comment">// ログ出力:</span>
+log.<span class="fn">info</span>(<span class="str">"User: {}"</span>, userForm);
+
+<span class="comment">// 出力:</span>
+<span class="comment">// User: UserForm(email=foo@example.com)</span>
+<span class="comment">// → password も creditCard も出ない</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 戦略2: マスキング関数 ===</span>
+
+<span class="kw">public class</span> <span class="type">LogMasker</span> {
+
+  <span class="kw">public static</span> <span class="type">String</span> <span class="fn">maskEmail</span>(<span class="type">String</span> email) {
+    <span class="kw">if</span> (email == <span class="kw">null</span>) <span class="kw">return</span> <span class="kw">null</span>;
+    <span class="kw">int</span> at = email.<span class="fn">indexOf</span>(<span class="str">'@'</span>);
+    <span class="kw">if</span> (at &lt; <span class="num">2</span>) <span class="kw">return</span> <span class="str">"***"</span>;
+    <span class="kw">return</span> email.<span class="fn">charAt</span>(<span class="num">0</span>) + <span class="str">"***"</span>
+         + email.<span class="fn">substring</span>(at);
+  }
+
+  <span class="kw">public static</span> <span class="type">String</span> <span class="fn">maskCard</span>(<span class="type">String</span> card) {
+    <span class="kw">if</span> (card == <span class="kw">null</span> || card.<span class="fn">length</span>() &lt; <span class="num">4</span>)
+      <span class="kw">return</span> <span class="str">"****"</span>;
+    <span class="kw">return</span> <span class="str">"****-****-****-"</span>
+         + card.<span class="fn">substring</span>(card.<span class="fn">length</span>() - <span class="num">4</span>);
+  }
+}
+
+
+<span class="comment">// 使い方:</span>
+log.<span class="fn">info</span>(<span class="str">"Login attempt: email={}"</span>,
+         <span class="type">LogMasker</span>.<span class="fn">maskEmail</span>(email));
+
+<span class="comment">// 出力:</span>
+<span class="comment">// Login attempt: email=f***@example.com</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 戦略3: Logback フィルタ ===</span>
+
+<span class="comment">// logback-spring.xml で:</span>
+
+<span class="tag">&lt;appender</span> <span class="attr">name</span>=<span class="str">"CONSOLE"</span> <span class="attr">class</span>=<span class="str">"..."</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;filter</span> <span class="attr">class</span>=<span class="str">"ch.qos.logback...MaskingFilter"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;pattern&gt;</span>
+      \d{4}-\d{4}-\d{4}-\d{4}
+    <span class="tag">&lt;/pattern&gt;</span>
+    <span class="tag">&lt;replacement&gt;</span>****-****-****-****<span class="tag">&lt;/replacement&gt;</span>
+  <span class="tag">&lt;/filter&gt;</span>
+<span class="tag">&lt;/appender&gt;</span>
+
+<span class="comment">// → ログ出力時に自動でカード番号をマスク</span>
+<span class="comment">// → アプリ側のミスを防ぐ最後の砦</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業務開発のチェックリスト</span>
+
+<span class="comment">// Form/Entity の機微フィールドに:</span>
+<span class="ann">@ToString.Exclude</span>
+
+
+<span class="comment">// ログ出力前にマスキング関数を通す:</span>
+log.<span class="fn">info</span>(<span class="str">"..."</span>, <span class="type">LogMasker</span>.<span class="fn">mask</span>(value));
+
+
+<span class="comment">// 最後の砦としてLogbackフィルタ</span>
+<span class="comment">// → 多層防御</span>
+
+
+<span class="code-head" style="margin-top:18px">// 「ログを社外に出す」ケースも考える</span>
+
+<span class="comment">// クラウドサービスのログ:</span>
+<span class="comment">// → AWS CloudWatch → AWS（第三者）が見る</span>
+<span class="comment">// → Datadog → Datadog社のサーバに送信</span>
+
+<span class="comment">// 「自社内」だけの問題ではない</span>
+<span class="comment">// → 外部サービスとの契約を確認</span>
+<span class="comment">// → GDPR/個人情報保護法も視野に</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── 書類のシュレッダーとマスキングテープ</div>
+    <p>機微情報の扱いは<b>「書類処理」</b>に似ています。<br>
+    ・<b>シュレッダー</b>（@ToString.Exclude）── 該当箇所を最初から除去<br>
+    ・<b>マスキングテープ</b>（maskEmail等）── 該当箇所を黒塗りで残す<br>
+    ・<b>受付フィルタ</b>（Logbackフィルタ）── 外に出る前に最終チェック<br><br>
+    どれか1つだけだと<b>「うっかり通過」</b>するので、<b>多層防御</b>が業務システムの基本。「<b>本番ログにパスワードが流れる事故</b>」は今でも実際に起きています。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「ログは社内文書」</div>
+    <p>ログは<b>「社内に流通する文書」</b>です。閲覧権限のある開発者、運用チーム、外部委託業者、監査人── 様々な人の目に触れます。<b>「自分しか見ない」と思い込まない</b>のが業務開発のリアル。<b>「機微情報は最初からログに入れない設計」</b>が、業務開発者の必須スキルです。</p>
+  </div>
+</section>
+
+<section id="log-aggregation">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ログ集約の世界（ELK / Datadog 等）</h2>
+    <span class="en">LOG AGGREGATION WORLD</span>
+  </div>
+  <p class="pattern-desc">本番システムでは、ログは<b>個別のサーバに散らばっている</b>のではなく、<b>1か所に集めて検索する</b>のが標準。<b>ログ集約システム</b>がそれを担当します。業界で使われる代表的なツールを見ていきます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">aggregation-tools</span>
+      <span class="tag-desc">業界の代表的なログ集約システム</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜログ集約が必要か</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>本番システムの典型構成</b>：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.5">[Webサーバ1] [Webサーバ2] [Webサーバ3]
+     ↓           ↓           ↓
+    各サーバが個別にログを書く
+     ↓           ↓           ↓
+   /var/log/    /var/log/    /var/log/</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>問題</b>：「<b>あるユーザーの操作を追いたい</b>」時、<b>どのサーバのログを見るか分からない</b>。3台ともログイン → grep → 結合... 大変。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>解決</b>：全サーバのログを<b>1か所に集める</b>。Webから検索できる。</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.5">[Webサーバ1] [Webサーバ2] [Webサーバ3]
+     ↓           ↓           ↓
+   ログ送信     ログ送信     ログ送信
+     ↓           ↓           ↓
+   ────────[ログ集約システム]────────
+                  ↓
+            [統合ダッシュボード]
+            検索・集計・グラフ化</pre>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">代表的なログ集約ツール</p>
+
+        <div class="resource">
+          <div class="resource-title">ELK スタック（Elasticsearch + Logstash + Kibana）</div>
+          <div class="resource-desc">
+            オープンソースの王道。<b>Elasticsearch</b>（検索エンジン）+ <b>Logstash</b>（収集）+ <b>Kibana</b>（可視化）の3点セット。<br>
+            <b>自社でホスティング可能</b>でコストコントロールしやすい。本格的な業務システムで広く採用。
+          </div>
+        </div>
+
+        <div class="resource">
+          <div class="resource-title">Datadog</div>
+          <div class="resource-desc">
+            クラウドの統合監視サービス。<b>ログ + メトリクス + トレース</b>を1つのダッシュボードで。<br>
+            <b>SaaS</b>なので運用が楽。料金は高めだが、開発生産性は抜群。スタートアップ〜大企業まで広く採用。
+          </div>
+        </div>
+
+        <div class="resource">
+          <div class="resource-title">AWS CloudWatch Logs</div>
+          <div class="resource-desc">
+            AWS の標準ログサービス。<b>AWS上のシステム</b>なら自動でログを集められる。<br>
+            <b>CloudWatch Logs Insights</b> で SQL ライクな検索が可能。
+          </div>
+        </div>
+
+        <div class="resource">
+          <div class="resource-title">Splunk</div>
+          <div class="resource-desc">
+            エンタープライズの定番。<b>大企業</b>、<b>金融・官公庁</b>系で広く採用。<br>
+            検索・分析機能が非常に強力。ライセンス費用が高い。
+          </div>
+        </div>
+
+        <div class="resource">
+          <div class="resource-title">Grafana Loki</div>
+          <div class="resource-desc">
+            <b>Prometheus同様のラベル指向</b>の比較的新しいログ集約。<br>
+            <b>Grafana</b>と組み合わせて使う。コスト効率が良い。
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:18px"><b>業務開発者として</b>：使うのは会社によりますが、<b>「ログ集約システムが存在する」「ログ集約ツールで検索する」</b>のが現代の標準と知っておきましょう。</p>
+      </div>
+      <div class="code"><span class="code-head">// ログ集約システムでの検索例</span>
+
+<span class="comment">// === Kibana（ELK）の検索 ===</span>
+
+<span class="comment">// 「ユーザー42の今日のすべてのログ」</span>
+userId:42 AND @timestamp:[now-1d TO now]
+
+
+<span class="comment">// 「ERRORが5分間で10件以上出ているサービス」</span>
+level:ERROR
+| stats count() BY service
+| where count() &gt; 10
+
+
+<span class="comment">// 「レスポンスタイムが3秒以上のリクエスト」</span>
+response_time_ms:&gt;3000
+| sort BY response_time_ms DESC
+
+
+<span class="comment">// 「特定の例外が出ているスタックトレース」</span>
+exception.class:TaskNotFoundException
+
+
+<span class="code-head" style="margin-top:18px">// === Datadog の検索 ===</span>
+
+service:todo-app
+status:error
+@user.id:42
+
+<span class="comment">// → 自然に書ける検索クエリ</span>
+<span class="comment">// → ダッシュボードに保存可能</span>
+
+
+<span class="code-head" style="margin-top:18px">// アプリ → ログ集約への送信</span>
+
+<span class="comment">// === 方法1: ファイル経由 ===</span>
+
+<span class="comment">// アプリは普通にファイルに書く</span>
+logging.file.name=logs/app.log
+
+<span class="comment">// 別プロセス（Fluentd/Filebeat）が</span>
+<span class="comment">// ファイルを読んで集約システムに送信</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 方法2: 直接送信 ===</span>
+
+<span class="comment">// Logback の appender 設定</span>
+
+<span class="tag">&lt;appender</span> <span class="attr">name</span>=<span class="str">"DATADOG"</span>
+          <span class="attr">class</span>=<span class="str">"...DatadogAppender"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;url&gt;</span>https://http-intake.logs.datadoghq.com<span class="tag">&lt;/url&gt;</span>
+  <span class="tag">&lt;apiKey&gt;</span>${DD_API_KEY}<span class="tag">&lt;/apiKey&gt;</span>
+<span class="tag">&lt;/appender&gt;</span>
+
+<span class="comment">// → アプリから直接Datadogに送信</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 方法3: コンテナの標準出力 ===</span>
+
+<span class="comment">// Docker / Kubernetes 環境</span>
+
+<span class="comment">// アプリは標準出力にログを書くだけ</span>
+log.<span class="fn">info</span>(<span class="str">"..."</span>);
+
+<span class="comment">// コンテナランタイムが自動収集</span>
+<span class="comment">// → クラウドのロギングサービスへ</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業務開発の典型構成</span>
+
+[Spring Boot アプリ]
+   ↓
+[標準出力に JSON ログ]
+   ↓
+[Fluent Bit / Filebeat] (ログ転送)
+   ↓
+[Kafka] (バッファ・任意)
+   ↓
+[Elasticsearch / Datadog]
+   ↓
+[Kibana / Datadog UI]
+   ↓
+[運用チーム・開発者が検索]
+
+<span class="comment">// アプリ側がすべきこと:</span>
+<span class="comment">// ・構造化ログ（JSON）で書く</span>
+<span class="comment">// ・適切なログレベル</span>
+<span class="comment">// ・MDCで文脈情報を載せる</span>
+<span class="comment">// → あとは仕組みが運ぶ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「アプリは出すだけ、運ぶのは別仕組み」</div>
+    <p>アプリ側の責務は<b>「適切なログを出力すること」</b>だけ。<b>「集約・保管・検索」</b>はインフラ側の仕組みが担当します。だから<b>「業務開発者は構造化ログを綺麗に書く」</b>ことに集中する。<b>「ログ書いた先のことは別の人が考える」</b>── これがマイクロサービス時代の責務分担です。</p>
+  </div>
+</section>
+
+<section id="production-reality">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>本番運用のリアル（ローテーション・保管期間・コスト）</h2>
+    <span class="en">PRODUCTION REALITY</span>
+  </div>
+  <p class="pattern-desc">業務開発者が遭遇する<b>「ログの本番運用」</b>のリアル。<b>ログファイルが肥大化</b>、<b>保管コスト爆発</b>、<b>法令での保管期間要件</b>── 知っておくべき<b>「現場の常識」</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">production-reality</span>
+      <span class="tag-desc">本番運用での3つの課題</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 本番運用で立ちはだかる3つの壁</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">ログローテーション</div>
+          <div class="think-step-body">
+            ログを<b>1ファイルに書き続ける</b>と、<b>サイズが無限に増える</b>。GB級になるとファイルアクセスが遅くなる、ディスクが溢れる。<br>
+            対策：<b>日次/サイズで切り替え</b>＋<b>古いログを圧縮</b>＋<b>一定期間で削除</b>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">保管期間とコスト</div>
+          <div class="think-step-body">
+            「<b>どれくらいログを残すか</b>」は<b>業務要件</b>と<b>コスト</b>のトレードオフ。<br>
+            ・トラブル調査用：<b>2週間〜1ヶ月</b><br>
+            ・監査要件：<b>3〜7年</b>（金融・医療は法令で決まる）<br>
+            ・分析用：<b>1〜2年</b><br>
+            ログ集約サービスの料金は<b>データ量に比例</b>するので、無計画だと月100万円超えも。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">パフォーマンス影響</div>
+          <div class="think-step-body">
+            ログ出力も<b>I/O処理</b>。ループ内で大量にDEBUGログ → 性能劣化。同期書き込み → リクエスト遅延。<br>
+            対策：<b>非同期Appender</b>＋<b>ログレベルの適切な制御</b>＋<b>isDebugEnabled()</b>。
+          </div>
+        </div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">ローテーション設定の例</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:6px"><code>application.properties</code> で簡単に設定可能：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6"># ファイル出力先
+logging.file.name=logs/app.log
+
+# ローテーション設定
+logging.logback.rollingpolicy.file-name-pattern=
+  logs/app-%d{yyyy-MM-dd}.%i.log.gz
+logging.logback.rollingpolicy.max-file-size=100MB
+logging.logback.rollingpolicy.total-size-cap=10GB
+logging.logback.rollingpolicy.max-history=30</pre>
+
+        <ul style="font-size:12.5px;padding-left:24px;line-height:1.85;margin-top:10px">
+          <li><b>max-file-size=100MB</b>：100MB超えたら新ファイル</li>
+          <li><b>max-history=30</b>：30日分保持、古いものから削除</li>
+          <li><b>total-size-cap=10GB</b>：全体で10GBを超えないように制限</li>
+          <li><b>.gz</b>：圧縮して保存（容量節約）</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">保管期間の業界相場</p>
+
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px">
+          <tr style="background:var(--paper-2)">
+            <th style="border:1px solid var(--line);padding:6px;text-align:left">業種</th>
+            <th style="border:1px solid var(--line);padding:6px;text-align:left">期間</th>
+            <th style="border:1px solid var(--line);padding:6px;text-align:left">根拠</th>
+          </tr>
+          <tr><td style="border:1px solid var(--line);padding:5px">一般Webサービス</td><td style="border:1px solid var(--line);padding:5px">3ヶ月</td><td style="border:1px solid var(--line);padding:5px">慣例</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px">金融（銀行）</td><td style="border:1px solid var(--line);padding:5px">7年</td><td style="border:1px solid var(--line);padding:5px">金融商品取引法</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px">医療</td><td style="border:1px solid var(--line);padding:5px">5年</td><td style="border:1px solid var(--line);padding:5px">医療法</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px">EC（個人情報）</td><td style="border:1px solid var(--line);padding:5px">2年</td><td style="border:1px solid var(--line);padding:5px">個人情報保護法</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// === ローテーション設定（詳細）===</span>
+
+<span class="comment"># application.properties</span>
+
+<span class="comment"># ファイル名</span>
+logging.file.name=logs/app.log
+
+<span class="comment"># ローテーションパターン</span>
+logging.logback.rollingpolicy
+  .file-name-pattern=
+    logs/app-%d{yyyy-MM-dd}.%i.log.gz
+
+<span class="comment"># 1ファイル最大サイズ</span>
+logging.logback.rollingpolicy
+  .max-file-size=100MB
+
+<span class="comment"># 全体の上限</span>
+logging.logback.rollingpolicy
+  .total-size-cap=10GB
+
+<span class="comment"># 保持日数</span>
+logging.logback.rollingpolicy
+  .max-history=30
+
+
+<span class="code-head" style="margin-top:18px">// 結果：logs フォルダ</span>
+
+logs/
+├── app.log              ← 現在書き込み中
+├── app-2024-01-15.0.log.gz  ← 1月15日その1
+├── app-2024-01-15.1.log.gz  ← 1月15日その2
+├── app-2024-01-14.0.log.gz
+├── app-2024-01-13.0.log.gz
+...
+└── app-2023-12-17.0.log.gz  ← 30日前
+   <span class="comment">// 31日前以前は自動削除</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 非同期Appender（性能対策）===</span>
+
+<span class="comment">// logback-spring.xml</span>
+
+<span class="tag">&lt;appender</span> <span class="attr">name</span>=<span class="str">"ASYNC"</span>
+          <span class="attr">class</span>=<span class="str">"ch.qos.logback.classic.AsyncAppender"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;appender-ref</span> <span class="attr">ref</span>=<span class="str">"FILE"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;queueSize&gt;</span>512<span class="tag">&lt;/queueSize&gt;</span>
+<span class="tag">&lt;/appender&gt;</span>
+
+<span class="comment">// → ログ書き込みが非同期化</span>
+<span class="comment">// → リクエスト処理が遅くならない</span>
+
+
+<span class="code-head" style="margin-top:18px">// コスト試算の例</span>
+
+<span class="comment">// アプリが 1日 10GB のログを生成する場合:</span>
+
+<span class="comment">// === Datadog（保管 15日）===</span>
+<span class="comment">// 10GB × 30 / 月 = 300GB</span>
+<span class="comment">// 料金: 約 $1,500/月 (¥220,000)</span>
+
+
+<span class="comment">// === ELK セルフホスト ===</span>
+<span class="comment">// EC2インスタンス代 + ストレージ代</span>
+<span class="comment">// 月 ¥50,000 〜 ¥150,000</span>
+<span class="comment">// + 運用工数</span>
+
+
+<span class="comment">// === AWS CloudWatch ===</span>
+<span class="comment">// 取り込み: $0.50/GB</span>
+<span class="comment">// 保管: $0.03/GB/月</span>
+<span class="comment">// 月 ¥30,000 〜 ¥200,000</span>
+
+
+<span class="comment">// → 「ログ量」がコストに直結</span>
+<span class="comment">// → DEBUG乱発で月数十万円浪費の例</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業務開発者として知っておくこと</span>
+
+<span class="comment">// 1. ログは「サイズ」がコスト</span>
+<span class="comment">//    → 適切なレベル選択が会社のコスト削減</span>
+
+<span class="comment">// 2. 保管期間は「業務要件」</span>
+<span class="comment">//    → 法令も確認する</span>
+
+<span class="comment">// 3. ローテーションは「必須」</span>
+<span class="comment">//    → 設定し忘れるとディスク溢れ</span>
+
+<span class="comment">// 4. 非同期Appenderで性能影響を最小化</span>
+<span class="comment">//    → 大規模システムでは標準</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「ログコストは会社の経費」</div>
+    <p>業務開発者が<b>「DEBUGログを大量に残す」</b>と、月の<b>ログ保管コスト</b>が増えます。これは<b>会社の経費</b>。「<b>本番でDEBUGを切る」「INFOも厳選する</b>」── これは技術判断であると同時に<b>経営判断</b>でもある。業務エンジニアは<b>「コスト感覚」</b>も持つべきという話です。</p>
+  </div>
+</section>
+
+<section id="performance">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>ログとパフォーマンス（isDebugEnabled() の話）</h2>
+    <span class="en">LOG &amp; PERFORMANCE</span>
+  </div>
+  <p class="pattern-desc">ログは<b>処理コスト</b>を伴います。何気なく書いたログが<b>性能ボトルネック</b>になることも。本編で触れた<b>プレースホルダの恩恵</b>と、その<b>更に上の対策</b>を見ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">log-performance</span>
+      <span class="tag-desc">パフォーマンスを意識したログ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ログのコスト構造</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>ログ1行あたりの処理</b>：</p>
+
+        <ol style="padding-left:24px;font-size:13px;line-height:1.85;margin-top:6px">
+          <li>レベル判定（フィルタ通過チェック）</li>
+          <li>引数の文字列化（<code>toString()</code> 呼び出し）</li>
+          <li>メッセージ組み立て</li>
+          <li>ファイル/コンソールへの書き込み（I/O）</li>
+        </ol>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px">通常は問題になりませんが、<b>「ループ内で大量にログ」</b>や<b>「巨大オブジェクトのtoString()」</b>では性能問題になります。</p>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">プレースホルダの恩恵（再確認）</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">// ◎ プレースホルダ
+log.debug("Item: {}", item);
+// → DEBUG無効時は item.toString() が呼ばれない
+
+// ✗ 文字列連結
+log.debug("Item: " + item);
+// → DEBUG無効でも item.toString() は呼ばれる</pre>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">isDebugEnabled() の使い所</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:6px"><b>「引数の準備自体に時間がかかる」</b>場合は、プレースホルダだけでは対策しきれません。引数を作る処理が<b>毎回実行</b>されるからです。<br>そんな時は <code>isDebugEnabled()</code> で<b>明示的にスキップ</b>します。</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">// ◎ 重い処理を伴うログ
+if (log.isDebugEnabled()) {
+  String json = objectMapper.writeValueAsString(largeObj);
+  log.debug("Data: {}", json);
+}
+
+// → DEBUG有効時のみ JSON 化処理が走る
+// → DEBUG無効時はゼロコスト</pre>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">ループ内ログの注意</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">// 1000万件ループ
+for (Item item : items) {  // 10,000,000 件
+  process(item);
+  log.info("Processed: {}", item.getId());  // 毎回出力
+}
+// → ログ書き込みI/Oが性能ボトルネック
+
+// 改善：サマリーログ
+int count = 0;
+for (Item item : items) {
+  process(item);
+  count++;
+  if (count % 10000 == 0) {
+    log.info("Progress: {}/{}", count, items.size());
+  }
+}
+log.info("Complete: {} items", count);
+// → ログ量を1/10000に削減</pre>
+      </div>
+      <div class="code"><span class="code-head">// パフォーマンス最適化の段階</span>
+
+<span class="comment">// === レベル1：文字列連結（最悪） ===</span>
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">1000000</span>; i++) {
+  log.<span class="fn">debug</span>(<span class="str">"i=" </span>+ i + <span class="str">", item="</span> +
+            items.<span class="fn">get</span>(i).<span class="fn">toString</span>());
+  <span class="comment">// 毎回 toString と文字列連結が走る</span>
+  <span class="comment">// DEBUG無効でも</span>
+}
+
+<span class="comment">// → 100万回の無駄な処理</span>
+
+
+<span class="code-head" style="margin-top:18px">// === レベル2：プレースホルダ（標準） ===</span>
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">1000000</span>; i++) {
+  log.<span class="fn">debug</span>(<span class="str">"i={}, item={}"</span>, i, items.<span class="fn">get</span>(i));
+  <span class="comment">// DEBUG無効時は toString が呼ばれない</span>
+}
+
+<span class="comment">// → DEBUG無効ならゼロコスト</span>
+<span class="comment">// → これだけでも大きく改善</span>
+
+
+<span class="code-head" style="margin-top:18px">// === レベル3：重い処理を伴う場合 ===</span>
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">1000000</span>; i++) {
+  <span class="kw">if</span> (log.<span class="fn">isDebugEnabled</span>()) {
+    <span class="type">String</span> json = mapper
+      .<span class="fn">writeValueAsString</span>(items.<span class="fn">get</span>(i));
+    <span class="comment">// JSON化は重い処理</span>
+    log.<span class="fn">debug</span>(<span class="str">"i={}, data={}"</span>, i, json);
+  }
+}
+
+<span class="comment">// → DEBUG無効時はJSON化さえスキップ</span>
+<span class="comment">// → 完全にゼロコスト</span>
+
+
+<span class="code-head" style="margin-top:18px">// === レベル4：ループ自体を見直す ===</span>
+
+<span class="kw">int</span> count = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="type">Item</span> item : items) {
+  <span class="fn">process</span>(item);
+  count++;
+  <span class="kw">if</span> (count % <span class="num">10000</span> == <span class="num">0</span>) {
+    log.<span class="fn">info</span>(<span class="str">"Progress: {}/{}"</span>,
+             count, items.<span class="fn">size</span>());
+  }
+}
+log.<span class="fn">info</span>(<span class="str">"Complete: {} items"</span>, count);
+
+<span class="comment">// → ログ量を 1/10000 に削減</span>
+<span class="comment">// → 必要な情報は失わない</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業務開発の判断指針</span>
+
+<span class="comment">// 通常のメソッド呼び出し:</span>
+<span class="comment">//   プレースホルダで十分</span>
+
+<span class="comment">// ループ・頻繁な処理:</span>
+<span class="comment">//   isDebugEnabled() + サマリー化</span>
+
+<span class="comment">// 重い toString / JSON化:</span>
+<span class="comment">//   isDebugEnabled() でガード</span>
+
+
+<span class="code-head" style="margin-top:18px">// 注意：意味のないisDebugEnabled</span>
+
+<span class="comment">// ✗ NG：軽い処理に isDebugEnabled は不要</span>
+<span class="kw">if</span> (log.<span class="fn">isDebugEnabled</span>()) {
+  log.<span class="fn">debug</span>(<span class="str">"i={}"</span>, i);
+}
+
+<span class="comment">// → 何の最適化にもならない</span>
+<span class="comment">// → むしろコードが汚くなる</span>
+<span class="comment">// → プレースホルダだけで十分</span>
+
+
+<span class="comment">// ◎ OK：重い引数準備がある時のみ</span>
+<span class="kw">if</span> (log.<span class="fn">isDebugEnabled</span>()) {
+  <span class="comment">// JSON化、巨大オブジェクトのtoString等</span>
+  log.<span class="fn">debug</span>(<span class="str">"..."</span>, heavyExpression);
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「過剰最適化は害悪」</div>
+    <p>パフォーマンス最適化は<b>「ボトルネックを特定してから対処」</b>が原則。<b>「念のため isDebugEnabled()」</b>は害悪です。コードが汚くなるだけ。<b>「測定して、本当に遅い箇所だけ最適化する」</b>のがプロの流儀。Vol.10 本編のプレースホルダを正しく使えていれば、99%のケースで性能問題は起きません。</p>
+  </div>
+</section>
+
+<section id="series-recap">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>シリーズ全体の振り返り</h2>
+    <span class="en">SERIES RECAP</span>
+  </div>
+  <p class="pattern-desc">いよいよ<b>シリーズ全体</b>を振り返ります。Vol.1の「Hello World」から Vol.10の「ログ完成」まで── あなたが手にした<b>知識・スキル・設計感覚</b>を整理します。</p>
+
+  <div class="recap">
+    <div class="recap-header">📚 練習問題集A v2 全10巻 学習マップ</div>
+    <div class="recap-grid">
+      <div class="recap-vol">
+        <div class="recap-vol-num">VOL.01 — STARTING POINT</div>
+        <div class="recap-vol-title">プロジェクト作成と全体像</div>
+        <div class="recap-vol-keywords">Spring Initializr / Maven / プロジェクト構造 / 3層アーキテクチャ / Hello World</div>
+      </div>
+      <div class="recap-vol">
+        <div class="recap-vol-num">VOL.02 — DATABASE</div>
+        <div class="recap-vol-title">DBとテーブルと画面まで</div>
+        <div class="recap-vol-keywords">MySQL / DBeaver / application.properties / Lombok / Thymeleaf 初登場</div>
+      </div>
+      <div class="recap-vol">
+        <div class="recap-vol-num">VOL.03 — READ</div>
+        <div class="recap-vol-title">Taskエンティティと一覧画面</div>
+        <div class="recap-vol-keywords">@Mapper / @Select / Entity / @Controller / Thymeleaf / 一覧表示</div>
+      </div>
+      <div class="recap-vol">
+        <div class="recap-vol-num">VOL.04 — ARCHITECTURE</div>
+        <div class="recap-vol-title">Service層で責務分離</div>
+        <div class="recap-vol-keywords">@Service / @Transactional / 業務ロジックの集約 / 3層の役割分担</div>
+      </div>
+      <div class="recap-vol">
+        <div class="recap-vol-num">VOL.05 — CREATE</div>
+        <div class="recap-vol-title">新規登録機能</div>
+        <div class="recap-vol-keywords">@PostMapping / Form / @ModelAttribute / PRGパターン / @Insert</div>
+      </div>
+      <div class="recap-vol">
+        <div class="recap-vol-num">VOL.06 — UPDATE</div>
+        <div class="recap-vol-title">編集機能</div>
+        <div class="recap-vol-keywords">@PathVariable / TaskEditForm / @Update / 編集ライフサイクル</div>
+      </div>
+      <div class="recap-vol">
+        <div class="recap-vol-num">VOL.07 — TOGGLE &amp; DELETE 🏆</div>
+        <div class="recap-vol-title">完了切替と削除（CRUD完全制覇）</div>
+        <div class="recap-vol-keywords">@Delete / 不可逆操作 / 確認ダイアログ / 書き込み3兄弟 / CSRF予告</div>
+      </div>
+      <div class="recap-vol">
+        <div class="recap-vol-num">VOL.08 — VALIDATION 🛡️</div>
+        <div class="recap-vol-title">バリデーション</div>
+        <div class="recap-vol-keywords">@NotBlank / @Size / @Valid / BindingResult / messages.properties / 信頼境界</div>
+      </div>
+      <div class="recap-vol">
+        <div class="recap-vol-num">VOL.09 — EXCEPTION 🛡️</div>
+        <div class="recap-vol-title">例外処理</div>
+        <div class="recap-vol-keywords">@ControllerAdvice / @ExceptionHandler / TaskNotFoundException / 業務例外 vs システム例外</div>
+      </div>
+      <div class="recap-vol">
+        <div class="recap-vol-num">VOL.10 — LOGGING 🏁</div>
+        <div class="recap-vol-title">ログと完結</div>
+        <div class="recap-vol-keywords">SLF4J / @Slf4j / プレースホルダ {} / ログレベル / 観測可能性</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">key-acquisitions</span>
+      <span class="tag-desc">10巻で身につけた「業務開発者の資産」</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// あなたが手にしたスキル</div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:6px">技術スキル</p>
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li>Spring Boot 3.x + MyBatis + MySQL + Thymeleaf の<b>標準セット</b>を使える</li>
+          <li><b>3層アーキテクチャ</b>（Controller/Service/Mapper）を設計できる</li>
+          <li><b>CRUD完全実装</b>（一覧/詳細/登録/編集/切替/削除）</li>
+          <li><b>業務品質3本柱</b>（バリデーション・例外処理・ログ）を実装できる</li>
+          <li><b>HTTPメソッドの使い分け</b>（GET/POST、PRGパターン）</li>
+          <li><b>アノテーション</b>を活用したSpring/MyBatis開発</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">設計感覚</p>
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b>「業務ルール」と「技術詳細」を分けて考える</b>習慣</li>
+          <li><b>「動くもの」と「業務に出せるもの」</b>の違いを認識</li>
+          <li><b>信頼境界</b>でセキュリティを考える視点</li>
+          <li><b>例外の責任分担</b>（投げる側と受ける側）</li>
+          <li><b>ログレベル</b>と運用負荷の関係</li>
+          <li><b>観測可能性</b>という現代の設計原則</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">問題解決スキル</p>
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b>Vol.3 ADD で学んだ「9ステップ思考フロー」</b>でエラー解決</li>
+          <li><b>「症状 → 原因 → 対処」</b>の因果で考えるハマり脱出</li>
+          <li><b>「Whitelabel Error Pageが出たら何を見るか」</b>の手順</li>
+          <li><b>「コンソールログを読む」</b>力</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">業務的な常識</p>
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><b>業務システムの品質</b>とはどういうことか</li>
+          <li><b>セキュリティ意識</b>（CSRF、機微情報、信頼境界）</li>
+          <li><b>運用への配慮</b>（ログコスト、夜中起こされる基準）</li>
+          <li><b>監査・コンプライアンス</b>の存在</li>
+        </ul>
+
+        <div style="background:rgba(45,95,63,0.08);padding:14px 18px;margin-top:18px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <p style="margin-bottom:8px;font-weight:700;color:var(--accent-3)">これだけのスキルセット</p>
+          <p>業務開発の現場で<b>「新人」</b>として配属されたら、<b>「想定以上」</b>のスタートが切れる量です。あなたは<b>業務開発者の入口</b>を遥かに超えた地点にいます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// シリーズの「ストーリー」を振り返る</span>
+
+<span class="comment">// === 第1幕：基本の習得 (Vol.1-4) ===</span>
+
+Vol.1 → プロジェクトが動く
+Vol.2 → DBと繋がる
+Vol.3 → 一覧画面が出る
+Vol.4 → 設計の意味を理解
+
+<span class="good">「動くもの」を作れるようになった</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 第2幕：CRUD制覇 (Vol.5-7) ===</span>
+
+Vol.5 → 登録ができる
+Vol.6 → 編集ができる
+Vol.7 → 切替/削除ができる
+
+<span class="good">🏆 CRUD完全制覇 🏆</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 第3幕：業務品質 (Vol.8-10) ===</span>
+
+Vol.8 → 不正入力を弾く
+Vol.9 → 壊れたら綺麗に転ぶ
+Vol.10 → 何が起きたか後追える
+
+<span class="good">🏁 業務品質3本柱 完成 🏁</span>
+
+
+<span class="code-head" style="margin-top:18px">// 別冊（ADD）で得た深い知識</span>
+
+Vol.2 ADD → なぜこのコードか
+Vol.3 ADD → エラー解決の思考法
+Vol.4 ADD → なぜService層なのか
+Vol.5 ADD → HTTPとPOSTとリダイレクト
+Vol.6 ADD → URLパス変数の本質
+Vol.7 ADD → 状態を変えるアクション
+Vol.8 ADD → バリデーション設計思想
+Vol.9 ADD → 例外設計の哲学
+Vol.10 ADD → 観測可能性とシリーズ完結
+
+<span class="comment">// 本編は「動かす」</span>
+<span class="comment">// 別冊は「なぜ」</span>
+<span class="comment">// → 両輪で学んだから知識が定着</span>
+
+
+<span class="code-head" style="margin-top:18px">// 「業務開発者」と呼べる人の素養</span>
+
+[基本] CRUD実装ができる
+   ↓
+[品質] バリデーション・例外・ログ
+   ↓
+[設計] 信頼境界・観測可能性
+   ↓
+[視点] 運用・セキュリティ・コスト
+
+<span class="good">あなたはここまで全部押さえた</span>
+<span class="good">→ 「業務開発者」の入口完了</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── 山登りの達成感</div>
+    <p>あなたは<b>10合目</b>まで登りました。Vol.1の「登山口」から、地形図を見ながら一歩一歩。途中で<b>滑って戻ったり</b>、<b>道に迷ったり</b>、<b>「もう無理」と思った瞬間</b>もあったでしょう。<br><br>
+    でも、そのすべてが<b>「自力で登る力」</b>になっています。次に別の山に登る時、<b>「あの時こうやって解決した」</b>という<b>経験の宝庫</b>を持っているあなたは、もう「初心者」ではありません。<br><br>
+    そして、<b>10合目は別の山の登山口</b>でもあります。テスト、セキュリティ、性能、クラウド、マイクロサービス── <b>次の山々</b>が待っています。でも、<b>登り方を知っている</b>あなたなら、もう怖くないはずです。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「あなたが手にした最大の資産」</div>
+    <p>10巻を通じて手にした最大の資産は、<b>「動くものを業務で使えるものに仕上げる感覚」</b>です。これは<b>本だけでは身につかない</b>もの。<b>手を動かして、躓いて、考えて、解決した</b>すべての時間が、この感覚を作り上げました。<b>知識は忘れても、感覚は残る</b>── あなたが本当に得たものは、これからの開発者人生で何度も役に立つ、<b>身体化されたスキル</b>です。</p>
+  </div>
+</section>
+
+<section id="next-step">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>これから先（次の学習リソース）</h2>
+    <span class="en">WHAT'S NEXT</span>
+  </div>
+  <p class="pattern-desc">シリーズを終えたあなたへの<b>次のステップガイド</b>。業務開発の旅は続きます。<b>「次に何を学ぶべきか」</b>の道標をまとめました。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">next-step-roadmap</span>
+      <span class="tag-desc">業務開発者として次に学ぶべきこと</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 次のステップの選択肢</div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3)">短期（1〜3ヶ月）── 業務開発の必須スキル</p>
+
+        <div class="resource">
+          <div class="resource-title">テスト（JUnit / Mockito）</div>
+          <div class="resource-desc">本書では扱わなかった<b>「テストコード」</b>。業務開発では<b>必須</b>。<code>@SpringBootTest</code>、<code>@MockBean</code>、テストの組み立て方を学ぶ。「<b>自動テスト</b>」が書ける開発者は重宝されます。</div>
+        </div>
+
+        <div class="resource">
+          <div class="resource-title">Spring Security</div>
+          <div class="resource-desc">Vol.7 ADD で予告した<b>「認証・認可・CSRF対策」</b>を本格的に学ぶ。ログイン機能、ユーザー権限管理、セッション管理── 実務システムでは<b>必須</b>。</div>
+        </div>
+
+        <div class="resource">
+          <div class="resource-title">Git / GitHub の運用</div>
+          <div class="resource-desc">業務開発では<b>チーム開発</b>が前提。Pull Request、コードレビュー、ブランチ戦略、コンフリクト解決── 基本ツールの<b>使いこなし</b>を身につける。</div>
+        </div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">中期（3〜6ヶ月）── アーキテクチャの深化</p>
+
+        <div class="resource">
+          <div class="resource-title">REST API設計</div>
+          <div class="resource-desc">本書は<b>サーバサイドレンダリング（Thymeleaf）</b>でしたが、現代は<b>REST API + フロントエンド（React等）</b>が主流。<code>@RestController</code>、JSON、API設計、OpenAPI/Swagger を学ぶ。</div>
+        </div>
+
+        <div class="resource">
+          <div class="resource-title">DDD（ドメイン駆動設計）</div>
+          <div class="resource-desc">3層アーキテクチャの<b>次のステップ</b>。「業務ロジック」をもっと体系的に整理する設計手法。複雑な業務システムを綺麗に作るための思想。</div>
+        </div>
+
+        <div class="resource">
+          <div class="resource-title">SQL の深堀り</div>
+          <div class="resource-desc">JOIN、サブクエリ、ウィンドウ関数、インデックス、実行計画── <b>「動くSQL」から「速いSQL」</b>へ。業務システムでは<b>性能</b>が重要。</div>
+        </div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">長期（半年〜）── 現代の業務開発</p>
+
+        <div class="resource">
+          <div class="resource-title">Docker / Kubernetes</div>
+          <div class="resource-desc">アプリの<b>コンテナ化</b>と<b>オーケストレーション</b>。本番環境では当たり前。<code>Dockerfile</code>、<code>docker-compose</code> から始めて、徐々に Kubernetes へ。</div>
+        </div>
+
+        <div class="resource">
+          <div class="resource-title">CI/CD（GitHub Actions等）</div>
+          <div class="resource-desc">「コードを書く → 自動でテスト → 自動でデプロイ」の<b>パイプライン</b>。現代の業務開発の<b>必須インフラ</b>。</div>
+        </div>
+
+        <div class="resource">
+          <div class="resource-title">クラウド（AWS/GCP/Azure）</div>
+          <div class="resource-desc">本番環境は<b>クラウド</b>が前提の時代。EC2/RDS/S3 等の基本サービスから始めて、徐々にマネージドサービス活用へ。</div>
+        </div>
+
+        <div class="resource">
+          <div class="resource-title">マイクロサービス</div>
+          <div class="resource-desc">大規模システムは<b>「複数の小さなサービスに分割」</b>するのが主流。Spring Cloud、API Gateway、サービスメッシュ── 大きなアーキテクチャの世界へ。</div>
+        </div>
+
+        <div style="background:rgba(235,187,134,0.12);padding:14px 18px;margin-top:18px;font-size:13px;border-left:3px solid var(--accent)">
+          <p style="font-weight:700;color:var(--accent-3);margin-bottom:6px">学習の心得</p>
+          <p>すべてを一度に学ぶ必要はありません。<b>「業務で必要になったタイミング」</b>で学ぶのが最も効率的。本書で学んだ<b>基礎力</b>があれば、新しいことを学ぶ<b>速度</b>が大きく変わります。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 推奨書籍・学習リソース</span>
+
+<span class="comment">// === Spring Boot ===</span>
+- 公式リファレンス
+  https://docs.spring.io/spring-boot
+- Baeldung（英語）
+  https://www.baeldung.com/
+- Qiita / Zenn の日本語記事
+
+
+<span class="code-head" style="margin-top:18px">// === Java全般 ===</span>
+- 『Effective Java』
+  ── Joshua Bloch 著
+  Javaの定番
+
+- 『Java言語仕様』
+  公式仕様書
+
+
+<span class="code-head" style="margin-top:18px">// === 設計・アーキテクチャ ===</span>
+- 『リーダブルコード』
+  ── コードの可読性
+
+- 『リファクタリング』
+  ── Martin Fowler
+
+- 『ドメイン駆動設計入門』
+  ── 成瀬允宣
+
+- 『プロを目指す人のためのSQL入門』
+  ── ミック
+
+
+<span class="code-head" style="margin-top:18px">// === セキュリティ ===</span>
+- 『体系的に学ぶ
+  安全なWebアプリケーションの作り方』
+  ── 徳丸浩
+
+- OWASP Top 10
+  https://owasp.org/Top10/
+
+
+<span class="code-head" style="margin-top:18px">// === オンラインコース ===</span>
+- Udemy のSpring Boot講座
+- Pluralsight
+- LinkedIn Learning
+
+
+<span class="code-head" style="margin-top:18px">// 実践の場</span>
+
+<span class="comment">// 業務で得た知識を実践する場:</span>
+- GitHub に自分のプロジェクトを上げる
+- 個人開発で習った技術を使ってみる
+- 勉強会・カンファレンスに参加
+- 技術ブログを書く（理解の整理になる）
+- OSS にコントリビュート
+
+
+<span class="code-head" style="margin-top:18px">// 学び続けるエンジニアの習慣</span>
+
+<span class="comment">// 1. 毎日少しでもコードを書く</span>
+<span class="comment">// 2. 公式ドキュメントを読む癖</span>
+<span class="comment">// 3. 「なぜ」を3回考える</span>
+<span class="comment">// 4. 他人のコードを読む</span>
+<span class="comment">// 5. 教える / 説明することで定着</span>
+
+
+<span class="code-head" style="margin-top:18px">// 最後に</span>
+
+<span class="comment">// 業務開発の世界は広いけれど、</span>
+<span class="comment">// あなたが本シリーズで身につけた</span>
+<span class="comment">// 「動くものを業務品質に仕上げる感覚」</span>
+<span class="comment">// は、どんな技術にも応用できます。</span>
+
+<span class="comment">// 次の旅も、楽しんでください。</span>
+<span class="good">// Happy Coding! 🚀</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「学びは終わらない、でも焦らない」</div>
+    <p>業務開発の世界は<b>広大</b>です。すべてを知る必要はありません。<b>「業務で必要になったタイミング」</b>で学ぶのが最も効率的。本書で身につけた<b>基礎力</b>は、新しい技術を学ぶ<b>「土台」</b>になります。<b>10年経っても</b>、3層アーキテクチャ・バリデーション・例外処理・ログの考え方は変わりません。<b>原理原則を押さえた人</b>は、技術の変化に強いのです。</p>
+  </div>
+</section>
+
+<!-- ========== 最終クロージング ========== -->
+
+<div class="final-closing">
+  <h2>練習問題集A v2<br>シリーズ完結 ── 旅の終わりに</h2>
+  <div class="subtitle-end">★ FINAL SUPPLEMENT — A LETTER TO YOU ★</div>
+
+  <div class="message">
+    <p style="margin-bottom:18px"><b>ここまで読んでくれて、本当にありがとうございました。</b></p>
+
+    <p style="margin-bottom:18px">あなたは Vol.1 から Vol.10 まで、<b>本編10冊、別冊9冊、合計19冊</b>を読み切りました。1冊あたり<b>30〜60分</b>かかったとすれば、<b>10〜20時間以上</b>を費やしてくれたことになります。途中で投げ出してもおかしくない量だったはずです。<b>それでも完走したあなたの粘り強さ</b>に、心から敬意を表します。</p>
+
+    <p style="margin-bottom:18px">本シリーズは<b>「動くものを作る」</b>から始まり、<b>「業務に出せるものを作る」</b>へと階段を登ってきました。最後の Vol.10 では「<b>本番運用に向けた観測可能性</b>」まで触れ、現代の業務開発者として知っておくべき<b>「実務の地図」</b>を一通り見ました。</p>
+
+    <p style="margin-bottom:18px">業務開発の現場に出ると、<b>本書で学んだことが「すべての土台」</b>になります。新しい技術を学ぶ時も、<b>「ああ、これは Vol.X で学んだあの考え方の応用だ」</b>と気づく瞬間が必ず来ます。それが<b>「基礎を学んだ」</b>ということ。</p>
+
+    <p style="margin-bottom:18px">そして── <b>本書が終わるからといって、学びが終わるわけではありません</b>。あなたは今、<b>「学ぶ力</b>」<b>を手に入れた</b>のです。<b>「躓いても、ちゃんと立て直せる」</b>「<b>新しい技術に出会っても、原理から理解できる</b>」── これが、本書を完走したあなたが本当に手にした<b>最大の財産</b>です。</p>
+
+    <p style="margin-bottom:18px"><b>業務開発の旅は、これからが本番です。</b>怖がる必要はありません。あなたには<b>10巻分の地図</b>がある。新しい山に登る時も、<b>「あの時こうやって登った」</b>という記憶が、必ず支えになります。</p>
+
+    <p style="margin-top:24px;text-align:center;font-size:17px;color:var(--accent-2)"><b>あなたの旅が、素晴らしいものになりますように。</b></p>
+  </div>
+
+  <div class="final-stamp">🏁 完 走 認 定 — FINAL</div>
+
+  <div class="thank-you-final">
+    本当に、お疲れさまでした。<br>
+    そして、ありがとうございました。<br>
+    <span style="font-size:14px;color:var(--paper);letter-spacing:0.05em">— Happy Coding, future engineer 🚀 —</span>
+  </div>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.10 ADD — FINAL — OBSERVABILITY &amp; SERIES END 🏁</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.10 本編 統計画面・第1段</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2c25;
+  --paper:#e5ece2;
+  --paper-2:#ccdccb;
+  --accent:#80a387;
+  --accent-2:#96b69e;
+  --accent-3:#1e4030;
+  --muted:#697867;
+  --line:#b0c1ac;
+  --code-bg:#14211a;
+  --code-text:#e5ece2;
+  --panel-bg:#eef3ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(128,163,135,0.08);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.mock-stats{background:#fff;border:1px solid var(--line);margin:12px 0}
+.mock-stats .bar{background:#e0e0e0;padding:4px 12px;font-family:'JetBrains Mono';font-size:11px;color:#444}
+.mock-stats .body{padding:16px}
+.mock-stats h3{font-family:'Shippori Mincho',serif;font-size:18px;color:var(--accent-3);border-bottom:2px solid var(--accent);padding-bottom:6px;margin-bottom:14px;display:inline-block}
+.mock-stats .total-row{background:#fafdf8;border:1px solid var(--line);padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;font-size:14px}
+.mock-stats .total-row .lbl{font-family:'Shippori Mincho',serif;color:var(--accent-3)}
+.mock-stats .total-row .val{font-family:'JetBrains Mono';font-weight:700;color:var(--accent)}
+.subj-card{background:#fafdf8;border:1px solid var(--line);border-left:4px solid var(--accent);padding:10px 14px;margin:8px 0}
+.subj-card .hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.subj-card .nm{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;color:var(--accent-3)}
+.subj-card .tm{font-family:'JetBrains Mono';font-size:13px;font-weight:700;color:var(--accent-3)}
+.subj-card .pb{height:10px;background:#dee5d8;border-radius:5px;overflow:hidden;margin:6px 0}
+.subj-card .pf{height:100%;background:var(--accent);border-radius:5px}
+.subj-card .mt{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.10 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>統計画面・第1段<br>（科目別合計）</h1>
+  <div class="subtitle">DASHBOARD vol.1 ── CARD UI & PROGRESS BARS</div>
+  <p class="lead">
+    Vol.10は<b>「統計画面の素」</b>のマイルストーン。Vol.9 で作った素朴な表を、<b>業務システムらしいダッシュボード</b>に進化させます。<br>
+    技術的な目玉は<b>「Service 層に業務ロジックを導入」</b>。「分」→「N時間M分」の変換、全体合計に対する割合の計算など、<b>Mapper素通しではない本格的なService</b>を初めて書きます。<br>
+    画面は<b>カード型UI＋進捗バー</b>で、Vol.9の表データを<b>視覚化</b>します。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>Vol.10では<b>新しい画面用DTO `SubjectStatView`</b> を作ります。<code>com.example.todo.dto</code> パッケージに追加。<br>
+    Service 内で <code>BigDecimal</code> の計算メソッド（<code>setScale</code>、<code>divide</code> 等）を使うので、<code>java.math.RoundingMode</code> の import が必要になることも。<code>Ctrl + Shift + O</code> で解決。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#two-dto">04 Mapper用DTO と 画面用DTO の使い分け</a></li>
+    <li><a href="#logic">05 Service層に入れる業務ロジック</a></li>
+    <li><a href="#create">06 ファイル作成と改修</a></li>
+    <li><a href="#run">07 ブラウザで動かして確認</a></li>
+    <li><a href="#trouble">08 ハマりどころと対処</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.10では<b>Service層に業務ロジック</b>を入れ、画面用DTO を経由して<b>カード型UI</b>を表示します。「業務システムらしさ」を体感する巻。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.10-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">画面用DTO「SubjectStatView」を作る</div>
+          <div class="desc">「N時間M分」のフォーマット済み文字列、全体に対するパーセンテージなど<b>画面に出すための形</b>を持つ DTO。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">Service に変換ロジック導入</div>
+          <div class="desc">Mapperから取得した <code>SubjectStat</code> を<b>SubjectStatView に変換</b>するメソッドを Service に書く。「分→時:分」「割合計算」をここで実施。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">カード型UI＋進捗バー</div>
+          <div class="desc"><code>/stats</code> 画面を、表ではなく<b>科目カード＋進捗バー</b>に進化。視覚的に「<b>どの科目に時間を使っているか</b>」が一目で分かる。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 完成後の動作</span>
+
+GET /stats
+  ↓
+
+[ 科目別 学習統計 ]
+
+全体合計: <span class="num">10時間 30分</span>
+学習日数: 全 <span class="num">8</span> 日
+
+┌────────────────────────────┐
+│ Java         6時間 15分 (59%) │
+│ ████████████░░░░░░░░         │
+│ 5件 / 平均 75分               │
+└────────────────────────────┘
+
+┌────────────────────────────┐
+│ Spring Boot   4時間 15分 (40%)│
+│ █████████░░░░░░░░░░░         │
+│ 3件 / 平均 85分               │
+└────────────────────────────┘
+
+┌────────────────────────────┐
+│ SQL              30分 ( 5%) │
+│ █░░░░░░░░░░░░░░░░░░░         │
+│ 1件 / 平均 30分               │
+└────────────────────────────┘
+
+┌────────────────────────────┐
+│ HTML/CSS         0分  ( 0%) │
+│ ░░░░░░░░░░░░░░░░░░░░         │
+│ 0件                          │
+└────────────────────────────┘
+
+
+<span class="comment">// 数字の見せ方が「業務システム化」</span>
+<span class="comment">// = Service 層の業務ロジックのおかげ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>これまでの Service は<b>「Mapper素通し」</b>がほとんどでした。Vol.10で<b>「データを画面用に加工する」</b>役割が初めて本格化します。「<b>表示するための変換は Service の仕事</b>」── これが業務開発のお作法です。</p>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── ブラウザで見える画面</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.10 のゴール画面は<b>「業務システムのダッシュボード」</b>。Vol.9 の表とは情報量・視認性ともに段違い。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-screen</span>
+      <span class="tag-desc">完成画面のモック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// /stats の完成画面</div>
+        <div class="mock-stats">
+          <div class="bar">▮ http://localhost:8080/stats</div>
+          <div class="body">
+            <h3>科目別 学習統計</h3>
+            <div class="total-row"><span class="lbl">全体合計</span><span class="val">10時間 30分</span></div>
+            <div class="subj-card">
+              <div class="hd"><div class="nm">Java</div><div class="tm">6時間 15分</div></div>
+              <div class="pb"><div class="pf" style="width:59%"></div></div>
+              <div class="mt"><span>5件 / 平均 75分</span><span>59%</span></div>
+            </div>
+            <div class="subj-card">
+              <div class="hd"><div class="nm">Spring Boot</div><div class="tm">4時間 15分</div></div>
+              <div class="pb"><div class="pf" style="width:40%"></div></div>
+              <div class="mt"><span>3件 / 平均 85分</span><span>40%</span></div>
+            </div>
+            <div class="subj-card">
+              <div class="hd"><div class="nm">SQL</div><div class="tm">30分</div></div>
+              <div class="pb"><div class="pf" style="width:5%"></div></div>
+              <div class="mt"><span>1件 / 平均 30分</span><span>5%</span></div>
+            </div>
+            <div class="subj-card" style="opacity:0.5">
+              <div class="hd"><div class="nm">HTML/CSS</div><div class="tm">0分</div></div>
+              <div class="pb"><div class="pf" style="width:0%"></div></div>
+              <div class="mt"><span>0件</span><span>0%</span></div>
+            </div>
+          </div>
+        </div>
+        <p style="margin-top:12px;font-size:13px"><b>視認性が劇的に向上</b>：どの科目に時間を使ったかが<b>瞬時に</b>分かる。</p>
+      </div>
+      <div class="code"><span class="code-head">// プロジェクト構造の変化</span>
+
+todo/
+├ src/main/java/com/example/todo/
+│  ├ dto/
+│  │  ├ SubjectStat.java       <span class="comment">// 既存（Mapper戻り値）</span>
+│  │  └ <span class="kw">SubjectStatView.java</span>    <span class="comment">// ★ 新規</span>
+│  ├ service/
+│  │  └ SubjectService.java    <span class="comment">// 改修</span>
+│  │      <span class="kw">// + findSubjectStatViews()</span>
+│  │      <span class="kw">// + buildSubjectStatViews()</span>
+│  └ controller/
+│     └ StatsController.java   <span class="comment">// 改修</span>
+└ src/main/resources/
+   └ templates/
+      └ stats/index.html       <span class="comment">// 改修</span>
+          <span class="kw">// 表 → カード型UI</span>
+
+
+<span class="comment">// 新規 1ファイル＋改修 3ファイル</span>
+<span class="comment">// Mapper・XML には触らない</span>
+<span class="comment">// = データ層を変えずに表示を進化</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.10 は<b>Vol.9 の延長</b>です。集計クエリは変わらず、<b>Java側の加工</b>と<b>HTML側のUI</b>を強化します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">前提知識</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前提知識</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>該当箇所</th></tr>
+          <tr><td>集計クエリ（GROUP BY）</td><td>本編 M9</td></tr>
+          <tr><td>DTO の役割</td><td>本編 M9 / 別冊 S9</td></tr>
+          <tr><td>BigDecimal の基本</td><td>本編 M9</td></tr>
+          <tr><td>Service の役割</td><td>A v2 全体</td></tr>
+          <tr><td>Thymeleaf の th:each</td><td>本編 M2 / A v2</td></tr>
+          <tr><td>CSSの基本（border / padding 等）</td><td>HTML/CSS基礎</td></tr>
+        </table>
+        <div style="margin-top:16px;font-size:13.5px"><b>新しく学ぶこと</b>：</div>
+        <ol class="step-list" style="margin-top:6px">
+          <li>画面用DTO のお作法（Mapper用と分離）</li>
+          <li>BigDecimalでの割合計算</li>
+          <li>Java のラムダ／Stream を使った変換</li>
+          <li>Thymeleaf でのインラインCSS（進捗バーの幅指定）</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// Vol.9 → Vol.10 の変化</span>
+
+<span class="comment">// ─── Vol.9 ─── </span>
+
+<span class="comment">// Mapper → Service → Controller → HTML</span>
+<span class="comment">//   ↓        ↓        ↓        ↓</span>
+<span class="comment">// SubjectStat        SubjectStat 表で表示</span>
+
+<span class="comment">// Service は素通し。</span>
+<span class="comment">// 「分」のまま画面に出していた。</span>
+
+
+<span class="comment">// ─── Vol.10 ─── </span>
+
+<span class="comment">// Mapper → Service ─→ Controller → HTML</span>
+<span class="comment">//   ↓        ↓ (変換) ↓          ↓</span>
+<span class="comment">// SubjectStat  SubjectStatView  カードで表示</span>
+
+<span class="comment">// Service で：</span>
+<span class="comment">//   ・「分」→「N時間M分」変換</span>
+<span class="comment">//   ・全体合計を計算</span>
+<span class="comment">//   ・各科目の割合を計算</span>
+
+<span class="comment">// ─── 業界用語 ─── </span>
+
+<span class="comment">// SubjectStat:     Mapper 出力用DTO</span>
+<span class="comment">//                  「DBの集計結果」</span>
+
+<span class="comment">// SubjectStatView: View（画面）出力用DTO</span>
+<span class="comment">//                  「画面に出す形」</span>
+
+<span class="comment">// この分離は別冊S10で深掘り</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="two-dto">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>Mapper用DTO と 画面用DTO の使い分け</h2>
+    <span class="en">TWO LAYERS OF DTO</span>
+  </div>
+  <p class="pattern-desc">Vol.10 のキーとなる<b>設計判断</b>です。「Mapper が返すDTO」と「画面に渡すDTO」を<b>分ける</b>ことで、各層の責務が明確になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">two-dto-design</span>
+      <span class="tag-desc">2つのDTO</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つのDTOの違い</div>
+        <div class="role-card">
+          <span class="label">DTO 1</span>
+          <div class="name">SubjectStat（Mapper用・既存）</div>
+          <div class="desc">DBの集計結果<b>そのまま</b>。<code>totalMinutes</code> は分単位の整数。<code>avgMinutes</code> は <code>BigDecimal</code>。<b>「DB の素材」</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">DTO 2</span>
+          <div class="name">SubjectStatView（画面用・新規）</div>
+          <div class="desc">画面に表示するための<b>加工済み</b>データ。「<code>6時間 15分</code>」のフォーマット文字列、<code>percentage</code> など。<b>「料理された結果」</b>。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>分ける利点</b>：</p>
+        <ul style="margin-left:18px;font-size:13px;margin-top:6px">
+          <li>Mapper の責任は「DBから取る」だけに集中</li>
+          <li>Service が「画面用に加工する」役割を持つ</li>
+          <li>画面が変わっても Mapper を触らずに済む</li>
+          <li>「<b>関心の分離</b>」がシステム全体で実現される</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 2つのDTOの中身</span>
+
+<span class="comment">// ─── Mapper用（既存・Vol.9 で作成）─── </span>
+<span class="kw">package</span> com.example.todo.dto;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">SubjectStat</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> subjectId;
+  <span class="kw">private</span> <span class="type">String</span> subjectName;
+  <span class="kw">private</span> <span class="type">Integer</span> recordCount;
+  <span class="kw">private</span> <span class="type">Integer</span> totalMinutes;
+  <span class="kw">private</span> <span class="type">BigDecimal</span> avgMinutes;
+}
+
+
+<span class="comment">// ─── 画面用（★Vol.10 で新規）─── </span>
+<span class="kw">package</span> com.example.todo.dto;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">SubjectStatView</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> subjectId;
+  <span class="kw">private</span> <span class="type">String</span> subjectName;
+  <span class="kw">private</span> <span class="type">Integer</span> recordCount;
+
+  <span class="comment">// 既存（Mapper用 と共通）</span>
+  <span class="kw">private</span> <span class="type">Integer</span> totalMinutes;
+  <span class="kw">private</span> <span class="type">BigDecimal</span> avgMinutes;
+
+  <span class="comment">// ★ 画面用に加工された値</span>
+  <span class="kw">private</span> <span class="type">String</span> totalTimeText; <span class="comment">// "6時間 15分"</span>
+  <span class="kw">private</span> <span class="type">String</span> avgTimeText;   <span class="comment">// "1時間 15分"</span>
+  <span class="kw">private</span> <span class="type">Integer</span> percentage;   <span class="comment">// 59（割合）</span>
+}
+
+
+<span class="comment">// ─── ポイント ─── </span>
+<span class="comment">// ・既存フィールド + 表示用フィールド</span>
+<span class="comment">// ・元の数値も残すと汎用性が高い</span>
+<span class="comment">// ・percentage は Integer（小数点不要）</span>
+<span class="comment">//   → 進捗バーの幅指定で使う</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「Mapper戻り値をそのまま画面に渡せばいいのでは？」と思うかもしれません。<b>小規模なら確かにそれで OK</b>。しかし業務システムが成長すると、<b>「同じデータを違う形で表示する複数の画面」</b>が増えてきます。その時に「<b>Mapper用は1個、画面用は画面の数だけ</b>」という設計が活きる。Vol.10で<b>その第一歩</b>を踏み出します。</p>
+  </div>
+</section>
+
+<section id="logic">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>Service層に入れる業務ロジック</h2>
+    <span class="en">SERVICE BUSINESS LOGIC</span>
+  </div>
+  <p class="pattern-desc">Vol.10 の Service に入れる<b>3つの業務ロジック</b>を整理します。これが Cで初めて<b>「Service の本領」</b>を体感する場面です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">service-logic</span>
+      <span class="tag-desc">Service に入る3つの加工</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 加工処理3つ</div>
+        <div class="role-card">
+          <span class="label">LOGIC 1</span>
+          <div class="name">分 → 「N時間M分」のフォーマット</div>
+          <div class="desc"><code>375</code> 分を <code>"6時間 15分"</code> に。<code>0</code> 分は <code>"0分"</code>、<code>60</code> 分なら <code>"1時間"</code> など、業務的に自然な表記。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">LOGIC 2</span>
+          <div class="name">全体合計の計算</div>
+          <div class="desc">全科目の <code>totalMinutes</code> を合計。<code>stream().mapToInt(...).sum()</code> で1行。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">LOGIC 3</span>
+          <div class="name">各科目の割合（パーセンテージ）計算</div>
+          <div class="desc">「<code>subjectMin / totalMin * 100</code>」を <code>Integer</code> で。全体が 0 のときの割り算エラーを防ぐ。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 加工メソッド3つの実装イメージ</span>
+
+<span class="comment">// ─── LOGIC 1: 分→時:分 変換 ─── </span>
+<span class="kw">private</span> <span class="type">String</span> <span class="fn">formatMinutes</span>(<span class="kw">int</span> min) {
+  <span class="kw">if</span> (min &lt;= <span class="num">0</span>) <span class="kw">return</span> <span class="str">"0分"</span>;
+  <span class="kw">int</span> h = min / <span class="num">60</span>;
+  <span class="kw">int</span> m = min % <span class="num">60</span>;
+  <span class="kw">if</span> (h == <span class="num">0</span>) <span class="kw">return</span> m + <span class="str">"分"</span>;
+  <span class="kw">if</span> (m == <span class="num">0</span>) <span class="kw">return</span> h + <span class="str">"時間"</span>;
+  <span class="kw">return</span> h + <span class="str">"時間 "</span> + m + <span class="str">"分"</span>;
+}
+
+<span class="comment">// 入力 → 出力 例:</span>
+<span class="comment">//    0 →  "0分"</span>
+<span class="comment">//   30 →  "30分"</span>
+<span class="comment">//   60 →  "1時間"</span>
+<span class="comment">//   90 →  "1時間 30分"</span>
+<span class="comment">//  375 →  "6時間 15分"</span>
+
+
+<span class="comment">// ─── LOGIC 2: 全体合計 ─── </span>
+<span class="kw">int</span> grandTotal = stats.<span class="fn">stream</span>()
+    .<span class="fn">mapToInt</span>(<span class="type">SubjectStat</span>::<span class="fn">getTotalMinutes</span>)
+    .<span class="fn">sum</span>();
+
+
+<span class="comment">// ─── LOGIC 3: パーセンテージ ─── </span>
+<span class="kw">private</span> <span class="type">Integer</span> <span class="fn">calcPercentage</span>(
+    <span class="kw">int</span> subj, <span class="kw">int</span> total) {
+  <span class="kw">if</span> (total &lt;= <span class="num">0</span>) <span class="kw">return</span> <span class="num">0</span>;
+  <span class="kw">return</span> (<span class="kw">int</span>) <span class="type">Math</span>.<span class="fn">round</span>(
+      (<span class="kw">double</span>) subj / total * <span class="num">100</span>);
+}
+
+<span class="comment">// 注意：</span>
+<span class="comment">// ・total が 0 ならゼロ除算エラー → 0% を返す</span>
+<span class="comment">// ・double 計算してから round で整数化</span>
+<span class="comment">// ・(int) キャストで Integer に</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「全体が 0 の時にどうするか」── 業務開発で<b>絶対避けたいゼロ除算エラー</b>。「<b>全データが 0 件</b>」「<b>初期表示でデータがまだない</b>」など、<b>「合計 0」になる場面は意外と多い</b>。<code>if (total &lt;= 0) return 0;</code> を必ず入れる。<b>「予想外の入力」</b>を想定するのが業務開発の感性です。</p>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ファイル作成と改修</h2>
+    <span class="en">CREATE & MODIFY</span>
+  </div>
+  <p class="pattern-desc"><b>1ファイル新規＋3ファイル改修</b>。順序は<b>DTO → Service → Controller → HTML</b>の上流方向。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-dto</span>
+      <span class="tag-desc">① SubjectStatView DTO（新規）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>com.example.todo.dto</code> パッケージを右クリック → <span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Class</span></li>
+          <li>Name欄に <code>SubjectStatView</code></li>
+          <li>右のコードを書く</li>
+          <li>保存</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// SubjectStatView.java（新規）</span>
+
+<span class="kw">package</span> com.example.todo.dto;
+
+<span class="kw">import</span> java.math.BigDecimal;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">SubjectStatView</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> subjectId;
+  <span class="kw">private</span> <span class="type">String</span> subjectName;
+  <span class="kw">private</span> <span class="type">Integer</span> recordCount;
+  <span class="kw">private</span> <span class="type">Integer</span> totalMinutes;
+  <span class="kw">private</span> <span class="type">BigDecimal</span> avgMinutes;
+
+  <span class="comment">// ★ 画面用フィールド</span>
+  <span class="kw">private</span> <span class="type">String</span> totalTimeText;
+  <span class="kw">private</span> <span class="type">String</span> avgTimeText;
+  <span class="kw">private</span> <span class="type">Integer</span> percentage;
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・SubjectStat の全フィールド + 画面用 3つ</span>
+<span class="comment">// ・@Data で全 getter/setter 自動</span>
+<span class="comment">// ・元の数値も残すと、テンプレート側で</span>
+<span class="comment">//   柔軟に表示を変えられる</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-service</span>
+      <span class="tag-desc">② SubjectService に変換メソッド追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectService.java</code> を開く</li>
+          <li><code>findSubjectStatViews()</code>（公開メソッド）と <code>formatMinutes()</code>（プライベートヘルパ）を追加</li>
+          <li>import を整理（<code>Ctrl + Shift + O</code>）</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">プライベートヘルパメソッド</div>
+          <p><code>formatMinutes()</code> は Service 内でしか使わないので <code>private</code>。<b>「ヘルパは private」</b>が業務のお作法。public が増えすぎると「使われ方が分からない」状態になります。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectService.java（追加部分）</span>
+
+<span class="kw">import</span> java.util.ArrayList;
+<span class="kw">import</span> com.example.todo.dto.SubjectStat;
+<span class="kw">import</span> com.example.todo.dto.SubjectStatView;
+<span class="comment">// 他のimportは省略</span>
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public class</span> <span class="type">SubjectService</span> {
+
+  <span class="comment">// 既存メソッド省略 ...</span>
+
+  <span class="comment">// ★ Vol.10で追加：画面用に加工して返す</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">SubjectStatView</span>&gt;
+       <span class="fn">findSubjectStatViews</span>() {
+
+    <span class="type">List</span>&lt;<span class="type">SubjectStat</span>&gt; stats =
+        subjectMapper.<span class="fn">findSubjectStats</span>();
+
+    <span class="comment">// 全体合計</span>
+    <span class="kw">int</span> total = stats.<span class="fn">stream</span>()
+        .<span class="fn">mapToInt</span>(<span class="type">SubjectStat</span>::<span class="fn">getTotalMinutes</span>)
+        .<span class="fn">sum</span>();
+
+    <span class="comment">// 各科目を画面用に変換</span>
+    <span class="type">List</span>&lt;<span class="type">SubjectStatView</span>&gt; views =
+        <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="type">SubjectStat</span> s : stats) {
+      <span class="type">SubjectStatView</span> v = <span class="kw">new</span> <span class="type">SubjectStatView</span>();
+      v.<span class="fn">setSubjectId</span>(s.<span class="fn">getSubjectId</span>());
+      v.<span class="fn">setSubjectName</span>(s.<span class="fn">getSubjectName</span>());
+      v.<span class="fn">setRecordCount</span>(s.<span class="fn">getRecordCount</span>());
+      v.<span class="fn">setTotalMinutes</span>(s.<span class="fn">getTotalMinutes</span>());
+      v.<span class="fn">setAvgMinutes</span>(s.<span class="fn">getAvgMinutes</span>());
+
+      v.<span class="fn">setTotalTimeText</span>(
+          <span class="fn">formatMinutes</span>(s.<span class="fn">getTotalMinutes</span>()));
+      v.<span class="fn">setAvgTimeText</span>(
+          <span class="fn">formatMinutes</span>(
+              s.<span class="fn">getAvgMinutes</span>().<span class="fn">intValue</span>()));
+
+      <span class="kw">if</span> (total &gt; <span class="num">0</span>) {
+        <span class="kw">int</span> pct = (<span class="kw">int</span>) <span class="type">Math</span>.<span class="fn">round</span>(
+            (<span class="kw">double</span>) s.<span class="fn">getTotalMinutes</span>()
+            / total * <span class="num">100</span>);
+        v.<span class="fn">setPercentage</span>(pct);
+      } <span class="kw">else</span> {
+        v.<span class="fn">setPercentage</span>(<span class="num">0</span>);
+      }
+
+      views.<span class="fn">add</span>(v);
+    }
+
+    <span class="kw">return</span> views;
+  }
+
+  <span class="comment">// ヘルパ：分 → 「N時間M分」</span>
+  <span class="kw">private</span> <span class="type">String</span> <span class="fn">formatMinutes</span>(<span class="kw">int</span> min) {
+    <span class="kw">if</span> (min &lt;= <span class="num">0</span>) <span class="kw">return</span> <span class="str">"0分"</span>;
+    <span class="kw">int</span> h = min / <span class="num">60</span>;
+    <span class="kw">int</span> m = min % <span class="num">60</span>;
+    <span class="kw">if</span> (h == <span class="num">0</span>) <span class="kw">return</span> m + <span class="str">"分"</span>;
+    <span class="kw">if</span> (m == <span class="num">0</span>) <span class="kw">return</span> h + <span class="str">"時間"</span>;
+    <span class="kw">return</span> h + <span class="str">"時間 "</span> + m + <span class="str">"分"</span>;
+  }
+}</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-controller</span>
+      <span class="tag-desc">③ StatsController を改修</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>StatsController.java</code> を開く</li>
+          <li><code>findSubjectStats()</code> の呼び出しを <code>findSubjectStatViews()</code> に変更</li>
+          <li>全体合計を別途算出し、<code>model</code> に追加</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">全体合計の渡し方</div>
+          <p>「全体合計の<b>表示用テキスト</b>」も Service で作って Controller に渡すのが綺麗。Vol.10 では<b>シンプルに Controller で<code>stats.stream().mapToInt(...).sum()</code></b>でもOK。設計の選択肢として両方覚えておく。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// StatsController.java（改修後）</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind.annotation.GetMapping;
+<span class="kw">import</span> com.example.todo.dto.SubjectStatView;
+<span class="kw">import</span> com.example.todo.service.SubjectService;
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">StatsController</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectService</span> subjectService;
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/stats"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">index</span>(<span class="type">Model</span> model) {
+    <span class="type">List</span>&lt;<span class="type">SubjectStatView</span>&gt; views =
+        subjectService.<span class="fn">findSubjectStatViews</span>();
+
+    <span class="comment">// 全体合計（表示用）</span>
+    <span class="kw">int</span> grandTotal = views.<span class="fn">stream</span>()
+        .<span class="fn">mapToInt</span>(<span class="type">SubjectStatView</span>::<span class="fn">getTotalMinutes</span>)
+        .<span class="fn">sum</span>();
+    <span class="type">String</span> grandTotalText =
+        <span class="fn">formatGrandTotal</span>(grandTotal);
+
+    model.<span class="fn">addAttribute</span>(<span class="str">"stats"</span>, views);
+    model.<span class="fn">addAttribute</span>(<span class="str">"grandTotalText"</span>,
+        grandTotalText);
+
+    <span class="kw">return</span> <span class="str">"stats/index"</span>;
+  }
+
+  <span class="kw">private</span> <span class="type">String</span> <span class="fn">formatGrandTotal</span>(<span class="kw">int</span> min) {
+    <span class="kw">if</span> (min &lt;= <span class="num">0</span>) <span class="kw">return</span> <span class="str">"0分"</span>;
+    <span class="kw">int</span> h = min / <span class="num">60</span>;
+    <span class="kw">int</span> m = min % <span class="num">60</span>;
+    <span class="kw">if</span> (h == <span class="num">0</span>) <span class="kw">return</span> m + <span class="str">"分"</span>;
+    <span class="kw">if</span> (m == <span class="num">0</span>) <span class="kw">return</span> h + <span class="str">"時間"</span>;
+    <span class="kw">return</span> h + <span class="str">"時間 "</span> + m + <span class="str">"分"</span>;
+  }
+}
+
+
+<span class="comment">// ─── 設計の余地 ───</span>
+<span class="comment">// formatGrandTotal が Service と重複。</span>
+<span class="comment">// 業務ではユーティリティクラスに抜き出す。</span>
+<span class="comment">// Vol.10 では「重複あり」でシンプルに進める。</span>
+<span class="comment">// 将来のリファクタリング題材。</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-template</span>
+      <span class="tag-desc">④ templates/stats/index.html をカード化</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>templates/stats/index.html</code> を開く</li>
+          <li>表（<code>table</code>）を削除し、カード型UIに置き換え</li>
+          <li>進捗バーは <code>div</code> の <code>width</code> をインライン CSS で指定</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">Thymeleaf でのインライン幅指定</div>
+          <p><code>th:style="'width: ' + ${row.percentage} + '%'"</code> で動的に幅指定。<b>これは Thymeleaf の便利機能</b>。CSS で表現できないグラフ描画にも有用です。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// templates/stats/index.html（改修後）</span>
+
+&lt;!<span class="type">DOCTYPE</span> html&gt;
+&lt;<span class="kw">html</span> <span class="ann">xmlns:th</span>=<span class="str">"http://www.thymeleaf.org"</span>&gt;
+&lt;<span class="kw">head</span>&gt;
+  &lt;<span class="kw">meta</span> <span class="ann">charset</span>=<span class="str">"UTF-8"</span>&gt;
+  &lt;<span class="kw">title</span>&gt;科目別 学習統計&lt;/<span class="kw">title</span>&gt;
+  &lt;<span class="kw">style</span>&gt;
+    body { font-family: sans-serif;
+           max-width: 720px;
+           margin: 30px auto;
+           padding: 0 20px; }
+    h1 { border-bottom: 2px solid #648b6e;
+         padding-bottom: 8px; }
+    .total {
+      background: #fafdf8;
+      border: 1px solid #ddd;
+      padding: 12px 16px;
+      margin: 16px 0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 16px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-left: 4px solid #648b6e;
+      padding: 12px 16px;
+      margin: 10px 0;
+    }
+    .card.empty { opacity: 0.5; }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .name { font-weight: bold;
+            font-size: 16px;
+            color: #1e3e2c; }
+    .time { font-family: monospace;
+            font-weight: bold; }
+    .bar {
+      height: 10px;
+      background: #eef3eb;
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+    .fill {
+      height: 100%;
+      background: #648b6e;
+      border-radius: 5px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #666;
+    }
+  &lt;/<span class="kw">style</span>&gt;
+&lt;/<span class="kw">head</span>&gt;
+&lt;<span class="kw">body</span>&gt;
+  &lt;<span class="kw">h1</span>&gt;科目別 学習統計&lt;/<span class="kw">h1</span>&gt;
+
+  &lt;<span class="kw">div</span> <span class="ann">class</span>=<span class="str">"total"</span>&gt;
+    &lt;<span class="kw">span</span>&gt;全体合計&lt;/<span class="kw">span</span>&gt;
+    &lt;<span class="kw">span</span> <span class="ann">th:text</span>=<span class="str">"${grandTotalText}"</span>&gt;&lt;/<span class="kw">span</span>&gt;
+  &lt;/<span class="kw">div</span>&gt;
+
+  &lt;<span class="kw">div</span> <span class="ann">th:each</span>=<span class="str">"row : ${stats}"</span>
+       <span class="ann">th:class</span>=<span class="str">"${row.totalMinutes &gt; 0 ?
+                 'card' : 'card empty'}"</span>&gt;
+    &lt;<span class="kw">div</span> <span class="ann">class</span>=<span class="str">"row"</span>&gt;
+      &lt;<span class="kw">span</span> <span class="ann">class</span>=<span class="str">"name"</span>
+            <span class="ann">th:text</span>=<span class="str">"${row.subjectName}"</span>&gt;&lt;/<span class="kw">span</span>&gt;
+      &lt;<span class="kw">span</span> <span class="ann">class</span>=<span class="str">"time"</span>
+            <span class="ann">th:text</span>=<span class="str">"${row.totalTimeText}"</span>&gt;&lt;/<span class="kw">span</span>&gt;
+    &lt;/<span class="kw">div</span>&gt;
+    &lt;<span class="kw">div</span> <span class="ann">class</span>=<span class="str">"bar"</span>&gt;
+      &lt;<span class="kw">div</span> <span class="ann">class</span>=<span class="str">"fill"</span>
+           <span class="ann">th:style</span>=<span class="str">"'width: ' +
+                     ${row.percentage} + '%'"</span>&gt;
+      &lt;/<span class="kw">div</span>&gt;
+    &lt;/<span class="kw">div</span>&gt;
+    &lt;<span class="kw">div</span> <span class="ann">class</span>=<span class="str">"meta"</span>&gt;
+      &lt;<span class="kw">span</span> <span class="ann">th:text</span>=<span class="str">"${row.recordCount} + '件 / 平均 ' +
+                       ${row.avgTimeText}"</span>&gt;&lt;/<span class="kw">span</span>&gt;
+      &lt;<span class="kw">span</span> <span class="ann">th:text</span>=<span class="str">"${row.percentage} + '%'"</span>&gt;&lt;/<span class="kw">span</span>&gt;
+    &lt;/<span class="kw">div</span>&gt;
+  &lt;/<span class="kw">div</span>&gt;
+
+  &lt;<span class="kw">p</span>&gt;&lt;<span class="kw">a</span> <span class="ann">th:href</span>=<span class="str">"@{/subjects}"</span>&gt;
+    ← 一覧に戻る&lt;/<span class="kw">a</span>&gt;&lt;/<span class="kw">p</span>&gt;
+&lt;/<span class="kw">body</span>&gt;
+&lt;/<span class="kw">html</span>&gt;</div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かして確認</h2>
+    <span class="en">RUN IN BROWSER</span>
+  </div>
+  <p class="pattern-desc">起動して<code>/stats</code> を開き、<b>カード型UI</b>を確認します。「業務システムらしさ」を体感する瞬間。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">browser-check</span>
+      <span class="tag-desc">動作確認の手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>アプリ起動中なら停止、再起動</li>
+          <li>ブラウザで <code>http://localhost:8080/stats</code> を開く</li>
+          <li>「全体合計」が時:分形式で表示される</li>
+          <li>各科目のカードに「○時間 ○分」「進捗バー」「件数」「割合」が出る</li>
+          <li>Java の進捗バーが一番長い（合計時間最大）</li>
+          <li>HTML/CSS と JavaScript は<b>薄く</b>表示（empty クラスで opacity 0.5）</li>
+          <li>合計時間の降順で並ぶ</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ ここまで動けばVol.10クリア！</p>
+        <p style="margin-top:6px;font-size:13px"><b>業務システムらしい統計画面</b>の完成。あなたが書いたコードがダッシュボードになる瞬間です。</p>
+      </div>
+      <div class="code"><span class="code-head">// 期待されるSQLログ</span>
+
+<span class="comment">// ─── /stats のSQL（Vol.9と同じ） ───</span>
+==&gt;  Preparing:
+  SELECT
+    s.id    AS subjectId,
+    s.name  AS subjectName,
+    COUNT(r.id) AS recordCount,
+    COALESCE(SUM(r.minutes), 0) AS totalMinutes,
+    COALESCE(AVG(r.minutes), 0) AS avgMinutes
+  FROM subjects s
+  LEFT JOIN study_records r
+    ON s.id = r.subject_id
+  GROUP BY s.id, s.name
+  ORDER BY totalMinutes DESC
+==&gt; Parameters:
+&lt;==      Total: 5
+
+
+<span class="comment">// → SQL は Vol.9 から変わっていない</span>
+<span class="comment">// → Service の Java 加工だけが追加された</span>
+
+
+<span class="comment">// ─── 重要な観察ポイント ───</span>
+
+<span class="comment">// データ層（Mapper, XML）に手を加えずに</span>
+<span class="comment">// 画面が劇的に進化した</span>
+
+<span class="comment">// これが「関心の分離」の威力：</span>
+<span class="comment">// ・データ層 = DBから取る</span>
+<span class="comment">// ・Service層 = 業務加工</span>
+<span class="comment">// ・View層 = 表示</span>
+
+<span class="comment">// 各層が独立しているので</span>
+<span class="comment">// 影響範囲を限定して進化できる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">業務での感動ポイント</div>
+    <p>「<b>同じSQL なのに画面が全く違う</b>」── これが Service 層の力です。Vol.9 では素朴な表、Vol.10 ではダッシュボード、Vol.12 では時系列グラフ。同じ集計結果から<b>多様な画面</b>を生み出せる。<b>「DBから取ったデータをどう料理するか」が Service の腕の見せどころ</b>です。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">Vol.10 でよくある<b>5つのハマりどころ</b>。Service 層の業務ロジック導入で初めて出会う罠が中心。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">troubles</span>
+      <span class="tag-desc">起きやすいトラブル</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card">
+          <span class="label">TROUBLE 1</span>
+          <div class="name">ArithmeticException: / by zero</div>
+          <div class="desc"><b>原因</b>：全体合計が 0 なのにパーセンテージ計算でゼロ除算。<br><b>対処</b>：<code>if (total &gt; 0)</code> で囲む。または三項演算子で安全に。<b>業務開発の鉄則「ゼロ除算チェック」</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 2</span>
+          <div class="name">パーセンテージの合計が 100% にならない</div>
+          <div class="desc"><b>原因</b>：<code>Math.round</code> で各科目を四捨五入した結果、合計が 99% や 101% になる。<br><b>対処</b>：許容するか、最大値の科目だけ調整して 100% に揃える。Vol.10 では<b>許容する</b>方針。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 3</span>
+          <div class="name">進捗バーの幅が反映されない</div>
+          <div class="desc"><b>原因</b>：<code>th:style</code> の式の書き方ミス、<code>'width: '</code> の <code>:</code> 後ろのスペース欠落など。<br><b>対処</b>：<code>'width: ' + ${row.percentage} + '%'</code> の形を守る。シングルクォート＋プラス連結。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 4</span>
+          <div class="name">avgMinutes が BigDecimal で intValue() できない</div>
+          <div class="desc"><b>原因</b>：<code>BigDecimal</code> の <code>intValue()</code> は<b>小数点以下切り捨て</b>。「平均 89.5 分」が「平均 1時間 29分」になり違和感。<br><b>対処</b>：<code>setScale(0, RoundingMode.HALF_UP).intValue()</code> で四捨五入してから整数化。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 5</span>
+          <div class="name">th:class で動的にクラス切り替えが効かない</div>
+          <div class="desc"><b>原因</b>：<code>th:class</code> の式の括弧ミス、文字列リテラルのクォート忘れ。<br><b>対処</b>：<code>th:class="${row.totalMinutes > 0 ? 'card' : 'card empty'}"</code> の三項演算子形式を守る。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// TROUBLE 1 の解決</span>
+
+<span class="comment">// ─── ✗ NG ───</span>
+<span class="kw">int</span> pct = (<span class="kw">int</span>) <span class="type">Math</span>.<span class="fn">round</span>(
+    (<span class="kw">double</span>) s.<span class="fn">getTotalMinutes</span>()
+    / total * <span class="num">100</span>);
+<span class="comment">// total = 0 のとき ArithmeticException</span>
+
+
+<span class="comment">// ─── ✓ OK ───</span>
+<span class="kw">if</span> (total &gt; <span class="num">0</span>) {
+  <span class="kw">int</span> pct = ...;
+  v.<span class="fn">setPercentage</span>(pct);
+} <span class="kw">else</span> {
+  v.<span class="fn">setPercentage</span>(<span class="num">0</span>);
+}
+
+
+<span class="code-head" style="margin-top:14px">// TROUBLE 4 の改善</span>
+
+<span class="comment">// ─── 素朴な書き方 ───</span>
+v.<span class="fn">setAvgTimeText</span>(
+    <span class="fn">formatMinutes</span>(s.<span class="fn">getAvgMinutes</span>().<span class="fn">intValue</span>()));
+<span class="comment">// 89.5 → 89 → "1時間 29分"</span>
+
+
+<span class="comment">// ─── 四捨五入版 ───</span>
+<span class="kw">import</span> java.math.RoundingMode;
+...
+<span class="kw">int</span> avgInt = s.<span class="fn">getAvgMinutes</span>()
+    .<span class="fn">setScale</span>(<span class="num">0</span>, <span class="type">RoundingMode</span>.HALF_UP)
+    .<span class="fn">intValue</span>();
+v.<span class="fn">setAvgTimeText</span>(<span class="fn">formatMinutes</span>(avgInt));
+<span class="comment">// 89.5 → 90 → "1時間 30分"</span>
+
+
+<span class="code-head" style="margin-top:14px">// TROUBLE 3 の正しい書き方</span>
+
+<span class="comment">// ─── ✗ NG ───</span>
+&lt;<span class="kw">div</span> <span class="ann">th:style</span>=<span class="str">"width: ${row.percentage}%"</span>&gt;
+<span class="comment">// → CSSプロパティ部分が変数評価されない</span>
+
+
+<span class="comment">// ─── ✓ OK ───</span>
+&lt;<span class="kw">div</span> <span class="ann">th:style</span>=<span class="str">"'width: ' +
+                ${row.percentage} + '%'"</span>&gt;
+<span class="comment">// → 文字列連結式として書く</span>
+<span class="comment">// → シングルクォート + プラス</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.10本編の<b>完了チェックリスト</b>。Service 層に業務ロジックを入れた節目の巻。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol10-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li><code>SubjectStatView.java</code> 作成（既存5フィールド＋画面用3フィールド）</li>
+          <li><code>SubjectService.findSubjectStatViews()</code> 追加</li>
+          <li><code>SubjectService.formatMinutes()</code> ヘルパ追加（private）</li>
+          <li>全体合計の計算とゼロ除算チェック</li>
+          <li>パーセンテージの計算（Math.round で整数化）</li>
+          <li><code>StatsController</code> が <code>findSubjectStatViews</code> を呼ぶ</li>
+          <li><code>grandTotalText</code> を model に渡す</li>
+          <li><code>templates/stats/index.html</code> をカード型UIに改修</li>
+          <li>進捗バーが <code>th:style</code> で動的幅指定</li>
+          <li>記録なし科目は <code>opacity: 0.5</code> で薄く表示</li>
+          <li>アプリ起動時にエラーが出ない</li>
+          <li><code>/stats</code> でダッシュボード風の画面が表示</li>
+          <li>「全体合計」が「N時間 M分」形式で正しく表示</li>
+          <li>各科目の合計時間が「N時間 M分」形式</li>
+          <li>進捗バーの幅が割合に対応している</li>
+          <li>SQLログは Vol.9 から変わっていない（Service の Java 加工のみ）</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.10本編完了！</b><br>
+          <b>統計画面の素</b>のスキル達成。Service層に業務ロジックを入れる第一歩。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で獲得したスキル</span>
+
+★ <span class="kw">統計画面の素</span> ── 達成！
+
+  <span class="comment">// できるようになったこと:</span>
+  <span class="comment">// ・Mapper用DTO と 画面用DTO の分離</span>
+  <span class="comment">// ・Service 層に業務ロジックを入れる</span>
+  <span class="comment">// ・「分」→「N時間M分」のフォーマット</span>
+  <span class="comment">// ・パーセンテージ計算とゼロ除算回避</span>
+  <span class="comment">// ・Stream API での集計</span>
+  <span class="comment">// ・Thymeleaf でのインライン CSS</span>
+  <span class="comment">// ・カード型UI＋進捗バー</span>
+
+
+<span class="code-head" style="margin-top:14px">// 次にやること</span>
+
+<span class="comment">// ① 別冊 S10 を読む</span>
+<span class="comment">//   タイトル: 「統計画面のUX」</span>
+<span class="comment">//   内容: ダッシュボード設計 / 情報密度 /</span>
+<span class="comment">//        視覚化の作法 / 色の意味 /</span>
+<span class="comment">//        「数字」から「物語」へ</span>
+
+
+<span class="comment">// ② Vol.11 本編：</span>
+<span class="comment">//   タイトル: 「HAVING で集計に絞り込み」</span>
+<span class="comment">//   獲得スキル: 集計の応用</span>
+<span class="comment">//   内容:</span>
+<span class="comment">//   ・S9 で予告した HAVING の本格利用</span>
+<span class="comment">//   ・「合計60分以上の科目だけ」</span>
+<span class="comment">//   ・WHERE と HAVING の併用</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(30,64,48,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S10</div>
+    <p>本編Vol.10お疲れさまでした。<b>業務システムらしいダッシュボード</b>が手に入りました。別冊S10「<b>統計画面のUX</b>」では、<b>「ダッシュボード設計の原則」「情報密度のバランス」「視覚化の作法」「色の意味」「数字から物語へ」</b>を扱います。Cの中で<b>「数字を見せる感性」</b>を最も育てる別冊。<b>続けて別冊S10へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.10 / 15 ── DASHBOARD vol.1（本編）</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト 地図編 テストの大きさを読み解く編 Vol.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;
+  --paper:#f0ebe0;
+  --paper-2:#e3dcc8;
+  --accent:#3d4f7c;
+  --accent-2:#6b7a96;
+  --accent-3:#b89968;
+  --muted:#6a6457;
+  --line:#c8c0a8;
+  --code-bg:#1c2138;
+  --code-text:#f0ebe0;
+  --panel-bg:#f7f3e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"⊙";position:absolute;top:-50px;right:-20px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.12;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.map-tag{display:inline-block;background:var(--accent-3);color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:660px;margin-top:20px;color:var(--ink);font-size:15px}
+.axis-banner{display:inline-block;margin-top:18px;background:var(--paper-2);border-left:3px solid var(--accent-3);padding:8px 16px;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--ink);letter-spacing:0.1em}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em}
+.pattern-desc{max-width:700px;font-size:14px;margin-bottom:20px;color:var(--ink)}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:16px}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:22px 26px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:22px 26px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}
+.code .type{color:#c2a3ff}
+.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}
+.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}
+.code .ann{color:#f7c08a}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.07);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+.tip.copper{border-left-color:var(--accent-3);background:rgba(184,153,104,0.12)}
+.tip.copper .tip-head{color:var(--accent-3)}
+.term-map{display:grid;grid-template-columns:140px 1fr;gap:8px 16px;font-size:13px}
+.term-map dt{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;padding:4px 0;border-bottom:1px dashed var(--line)}
+.term-map dd{padding:4px 0;border-bottom:1px dashed var(--line)}
+/* ピラミッド大 */
+.pyramid-big{display:flex;flex-direction:column;align-items:center;margin:8px 0;font-size:13px;position:relative}
+.pyramid-big-row{text-align:center;padding:14px 0;margin:2px 0;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.1em;color:#fff;position:relative}
+.pyramid-big .e2e{width:35%;background:var(--accent)}
+.pyramid-big .int{width:60%;background:var(--accent-2)}
+.pyramid-big .unit{width:90%;background:var(--accent-3)}
+.pyramid-big-row span.count{display:block;font-size:10px;font-weight:400;opacity:0.85;margin-top:2px}
+/* 軸ラベル */
+.axis-left,.axis-right{position:absolute;top:50%;transform:translateY(-50%);font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:0.15em;line-height:1.5}
+.axis-left{left:-90px;text-align:right;width:80px}
+.axis-right{right:-90px;text-align:left;width:80px}
+/* 比較表 */
+.layer-table{font-size:12.5px;border-collapse:collapse;width:100%;margin:10px 0}
+.layer-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:left;padding:8px 10px;letter-spacing:0.1em;border-bottom:1px solid var(--line)}
+.layer-table td{padding:7px 10px;border-bottom:1px dashed var(--line);vertical-align:top}
+.layer-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;width:80px}
+/* 矢印付き軸 */
+.dual-axis{display:grid;grid-template-columns:auto 1fr;gap:10px;font-size:12px;align-items:center}
+.dual-axis .ax-label{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;font-size:10.5px;letter-spacing:0.1em}
+.dual-axis .ax-bar{background:linear-gradient(to right,var(--accent-3),var(--accent));height:8px;border-radius:4px;position:relative}
+.dual-axis .ax-ends{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:4px}
+/* アンチパターン */
+.bad-shape{display:flex;flex-direction:column;align-items:center;margin:8px 0;font-size:11px}
+.bad-shape-row{text-align:center;padding:8px 0;margin:1px 0;font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff;letter-spacing:0.1em}
+.inv-e2e{width:90%;background:#a44}
+.inv-int{width:60%;background:#a44;opacity:0.7}
+.inv-unit{width:35%;background:#a44;opacity:0.4;color:#fff}
+.cone-top{width:90%;background:#c63;color:#fff;padding:8px 0;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700}
+.cone-mid{width:60%;background:var(--accent-2);padding:6px 0;text-align:center;color:#fff;font-family:'JetBrains Mono',monospace}
+.cone-bot{width:30%;background:var(--accent-3);padding:6px 0;text-align:center;color:#fff;font-family:'JetBrains Mono',monospace}
+.page-footer{border-top:2px solid var(--ink);margin-top:80px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:200px}.axis-left,.axis-right{display:none}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="map-tag">MAP</span>
+  <span class="vol-tag">MAP VOL.02 / 10</span>
+  <h1>テストの大きさを読み解く編</h1>
+  <div class="subtitle">地図編 Vol.2 — SIZE OF TESTS</div>
+  <p class="lead">
+    本編Vol.2では単体テストの書き方を学びました。地図編Vol.2ではその一歩外側に出て、<b>「テストには大きさ＝粒度の違いがある」という構造</b>を上下軸で整理します。なぜピラミッド型がよいのか、なぜ単体テストが多くて E2Eテストが少ないのか、その必然を読み解きます。
+  </p>
+  <span class="axis-banner">主な軸 / VERTICAL AXIS — 上下軸で読み解く</span>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 「大きさ」とは何か</a></li>
+    <li><a href="#sec02">02 単体テスト・最小の層</a></li>
+    <li><a href="#sec03">03 結合テスト・中間の層</a></li>
+    <li><a href="#sec04">04 E2Eテスト・最上の層</a></li>
+    <li><a href="#sec05">05 なぜピラミッド型なのか</a></li>
+    <li><a href="#sec06">06 各層の比率の理屈</a></li>
+    <li><a href="#sec07">07 アンチパターン</a></li>
+    <li><a href="#term">用語の地図</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>「大きさ」とは何か</h2>
+    <span class="en">WHAT IS TEST SIZE</span>
+  </div>
+  <p class="pattern-desc">
+    テストの「大きさ」とは、<b>1つのテストが一度に検証する範囲の広さ</b>のことです。1つの関数だけを試すのが「小さい」テスト、画面操作からデータベース更新まで全部通して試すのが「大きい」テスト。この大きさの違いが、テスト全体の戦略を決めます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">test size</span>
+      <span class="tag-desc">範囲の広さで分類される</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テストの粒度 — 3つの層</div>
+        <div style="padding:10px 30px">
+          <div class="pyramid-big">
+            <div class="pyramid-big-row e2e">E2E<span class="count">大きい / 少ない</span></div>
+            <div class="pyramid-big-row int">INTEGRATION<span class="count">中くらい</span></div>
+            <div class="pyramid-big-row unit">UNIT<span class="count">小さい / 多い</span></div>
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          この3層構造を<b style="color:var(--ink)">テストピラミッド</b>と呼びます。提唱者はMike Cohn（2009年頃）。今では世界中の現場で標準的な考え方になっています。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// なぜ「層」で考えるのか</span>
+
+検証範囲が違うと
+   <span class="comment">↓</span>
+かかる時間が違う
+   <span class="comment">↓</span>
+扱える数が違う
+   <span class="comment">↓</span>
+壊れやすさも違う
+   <span class="comment">↓</span>
+<span class="ann">役割分担が必要</span>
+
+<span class="comment">// 1種類で全部やろうとすると</span>
+<span class="comment">// どこかで必ず破綻する</span>
+
+<span class="comment">// → 異なる粒度を組み合わせる</span>
+<span class="comment">// → これが「ピラミッド」の発想</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>粒度（grain size）</b>＝テストが扱う対象の細かさ。「単体テスト」「結合テスト」「E2Eテスト」は粒度による分類。
+    <br><b>テストピラミッド</b>＝3層の理想的な比率を「下が広く上が狭い三角形」として示す概念。Mike Cohn著『Succeeding with Agile』（2009）が出典。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>単体テスト・最小の層</h2>
+    <span class="en">UNIT LAYER</span>
+  </div>
+  <p class="pattern-desc">
+    ピラミッドの<b>最下層・底辺の広い部分</b>が単体テストです。1つの関数・1つのメソッドだけを切り出して試します。本編Vol.2で書き方を学んだのがこの層。<b>速い・多い・壊れにくい</b>のが特徴です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">unit layer</span>
+      <span class="tag-desc">関数1つを単独で試す層</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 単体テスト層の性質</div>
+        <table class="layer-table">
+          <tr><th>項目</th><th>性質</th></tr>
+          <tr><td>対象</td><td>関数・メソッド・クラス</td></tr>
+          <tr><td>速度</td><td>1件 数ミリ秒</td></tr>
+          <tr><td>数</td><td>数百〜数千件</td></tr>
+          <tr><td>外部依存</td><td>原則なし</td></tr>
+          <tr><td>失敗時</td><td>原因が一目で分かる</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">速いから多く書ける</b>、<b style="color:var(--ink)">範囲が狭いから原因が特定しやすい</b>。この2つが単体テストの最大の価値です。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 単体テストの例</span>
+<span class="comment">// 「価格計算」関数だけを試す</span>
+
+<span class="kw">function</span> <span class="fn">calc</span>(price, rate) {
+  <span class="kw">return</span> price * (<span class="num">1</span> - rate);
+}
+
+<span class="comment">// テストはこの関数 だけ を呼ぶ</span>
+<span class="fn">test</span>(<span class="str">"30%引き"</span>, () =&gt; {
+  <span class="fn">expect</span>(<span class="fn">calc</span>(<span class="num">1000</span>, <span class="num">0.3</span>))
+    .<span class="fn">toBe</span>(<span class="num">700</span>);
+});
+
+<span class="comment">// DB? いらない</span>
+<span class="comment">// 画面? いらない</span>
+<span class="comment">// ネットワーク? いらない</span>
+
+<span class="comment">// 純粋にロジックだけを検証</span>
+<span class="comment">// → だから 速い・多い・壊れにくい</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    単体テストが多く書けることは、<b>変更への安心感を生む</b>。リファクタリングや機能追加のたびに数千件のテストが数秒で回って「OK」と言ってくれる、この体験こそが現代開発の基盤です。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>結合テスト・中間の層</h2>
+    <span class="en">INTEGRATION LAYER</span>
+  </div>
+  <p class="pattern-desc">
+    ピラミッドの<b>中段</b>が結合テスト（インテグレーションテスト）です。複数の部品を組み合わせた時の挙動を試します。単体では問題なくても、組み合わせると不具合が出る場面はよくあります。<b>「境目で起きるバグ」を見つける</b>層です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">integration layer</span>
+      <span class="tag-desc">部品の組合せ・境目を試す層</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 結合テスト層の性質</div>
+        <table class="layer-table">
+          <tr><th>項目</th><th>性質</th></tr>
+          <tr><td>対象</td><td>複数クラス + DB / 外部API</td></tr>
+          <tr><td>速度</td><td>1件 0.1〜数秒</td></tr>
+          <tr><td>数</td><td>数十〜数百件</td></tr>
+          <tr><td>外部依存</td><td>DB等の本物 or 模擬</td></tr>
+          <tr><td>見つかるもの</td><td>境目のバグ・接続不整合</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">結合の境目</b>＝サービスとリポジトリ、コントローラとサービス、アプリとDB、など。単体テストでは見えない問題がここで発覚します。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 結合テストの例</span>
+<span class="comment">// 「注文サービス + DB」を組合せて試す</span>
+
+<span class="kw">class</span> <span class="type">OrderService</span> {
+  <span class="fn">place</span>(userId, itemId) {
+    <span class="kw">const</span> stock = repo.<span class="fn">find</span>(itemId);
+    <span class="kw">if</span> (stock.qty &lt; <span class="num">1</span>) <span class="kw">throw</span> ...;
+    repo.<span class="fn">decrement</span>(itemId);
+    <span class="kw">return</span> repo.<span class="fn">createOrder</span>(...);
+  }
+}
+
+<span class="comment">// テストは実DB(テスト用)と一緒に動かす</span>
+<span class="fn">test</span>(<span class="str">"注文するとDBの在庫が減る"</span>, () =&gt; {
+  service.<span class="fn">place</span>(<span class="str">"u1"</span>, <span class="str">"i1"</span>);
+  <span class="kw">const</span> after = repo.<span class="fn">find</span>(<span class="str">"i1"</span>);
+  <span class="fn">expect</span>(after.qty).<span class="fn">toBe</span>(<span class="num">9</span>);
+});
+
+<span class="comment">// 本編Vol.6で詳しく扱う</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>結合テスト / 統合テスト（integration test）</b>＝複数のモジュールやコンポーネントを統合して行うテスト。日本語では「結合」と「統合」がほぼ同義で使われます。
+    <br><b>境目（インターフェース）</b>＝部品と部品が情報をやり取りする接点。バグが集中しやすい場所として知られています。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>E2Eテスト・最上の層</h2>
+    <span class="en">E2E LAYER</span>
+  </div>
+  <p class="pattern-desc">
+    ピラミッドの<b>最上層・最も狭い部分</b>がE2Eテスト（End-to-End、エンドツーエンド）です。ユーザーが画面を操作するのと同じように、システム全体を通して動かす検証です。<b>遅い・少ない・壊れやすい</b>のが特徴で、ピラミッドの頂上に置かれる理由がここにあります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">E2E layer</span>
+      <span class="tag-desc">画面操作からDBまで全体を貫く層</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// E2Eテスト層の性質</div>
+        <table class="layer-table">
+          <tr><th>項目</th><th>性質</th></tr>
+          <tr><td>対象</td><td>システム全体・画面から DB まで</td></tr>
+          <tr><td>速度</td><td>1件 数秒〜数十秒</td></tr>
+          <tr><td>数</td><td>数件〜数十件</td></tr>
+          <tr><td>外部依存</td><td>すべて本物に近い構成</td></tr>
+          <tr><td>見つかるもの</td><td>ユーザー体験の崩れ・全体の破綻</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">壊れやすい</b>のは、関係する部品が多すぎて1つでも変われば影響を受けるから。「フレーキー（不安定）」と呼ばれる失敗が起きやすい層です。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// E2Eテストの例</span>
+<span class="comment">// ブラウザを自動操作して全体を確認</span>
+
+<span class="fn">test</span>(<span class="str">"購入フロー"</span>, <span class="kw">async</span> () =&gt; {
+  <span class="kw">await</span> page.<span class="fn">goto</span>(<span class="str">"/shop"</span>);
+  <span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"商品A"</span>);
+  <span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"カートに入れる"</span>);
+  <span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"購入"</span>);
+  <span class="kw">await</span> page.<span class="fn">fill</span>(<span class="str">"#card"</span>, <span class="str">"4242..."</span>);
+  <span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"確定"</span>);
+
+  <span class="fn">expect</span>(<span class="kw">await</span> page.<span class="fn">title</span>())
+    .<span class="fn">toBe</span>(<span class="str">"購入完了"</span>);
+});
+
+<span class="comment">// 1テストで数十秒</span>
+<span class="comment">// 画面・API・DB・決済 全て通る</span>
+<span class="comment">// 本編Vol.7で詳しく扱う</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>E2Eテスト（End-to-End Test）</b>＝システムの入口から出口まで（端から端まで）を通して行うテスト。
+    <br><b>フレーキーテスト（flaky test）</b>＝同じコード・同じ環境でも、走るたびに結果が変わってしまう不安定なテスト。E2Eで起きやすい現象。
+    <br><b>UIテスト</b>＝画面操作を伴うテスト。E2Eと重なる場面が多い。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>なぜピラミッド型なのか</h2>
+    <span class="en">WHY PYRAMID</span>
+  </div>
+  <p class="pattern-desc">
+    「下が広く上が狭い」三角形になる理由は、<b>3つの軸（速度・コスト・壊れにくさ）が層ごとに変わる</b>からです。底辺の単体テストは速くて安くて壊れにくい、頂上のE2Eは遅くて高くて壊れやすい。この性質の差が、自然とピラミッド型を要請します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why pyramid</span>
+      <span class="tag-desc">3つの軸で見る各層の特性</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの軸 — 上に行くほど…</div>
+        <div style="margin:14px 0">
+          <div class="ax-label" style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;font-size:10.5px;letter-spacing:0.1em;margin-bottom:4px">SPEED — 速度</div>
+          <div style="background:linear-gradient(to top,var(--accent-3),#a44);height:8px;border-radius:4px"></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:4px"><span>UNIT 速い</span><span>E2E 遅い</span></div>
+        </div>
+        <div style="margin:14px 0">
+          <div style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;font-size:10.5px;letter-spacing:0.1em;margin-bottom:4px">COST — 維持コスト</div>
+          <div style="background:linear-gradient(to top,var(--accent-3),#a44);height:8px;border-radius:4px"></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:4px"><span>UNIT 安い</span><span>E2E 高い</span></div>
+        </div>
+        <div style="margin:14px 0">
+          <div style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;font-size:10.5px;letter-spacing:0.1em;margin-bottom:4px">STABILITY — 安定性</div>
+          <div style="background:linear-gradient(to top,var(--accent-3),#a44);height:8px;border-radius:4px"></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:4px"><span>UNIT 安定</span><span>E2E 不安定</span></div>
+        </div>
+      </div>
+      <div class="code"><span class="comment">// なぜ下の層を厚くするのか</span>
+
+<span class="ann">①</span> 速い
+   →  数千件でも数秒で回る
+   →  毎コミット実行できる
+
+<span class="ann">②</span> 安い
+   →  維持コストが低い
+   →  量を増やせる
+
+<span class="ann">③</span> 壊れにくい
+   →  外部依存がないから
+   →  フレーキーになりにくい
+
+       <span class="comment">↓</span>
+
+<span class="kw">結論</span>:
+  単体テストを多く積むのが
+  経済的に最も合理的</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この層構造の意義</div>
+    ピラミッド型は<b>「速く回せる検証を多く・遅い検証を少なく」</b>という経済原理を視覚化したもの。地図編Vol.1のBoehm曲線（早期発見ほど安い）と同じ思想です。両方を重ねて理解すると、なぜ業界全体がこの形に向かったかが見えてきます。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>各層の比率の理屈</h2>
+    <span class="en">RATIO BY LAYER</span>
+  </div>
+  <p class="pattern-desc">
+    各層をどれくらいの比率で書けばいいのか。よく言われる目安は<b>「単体70% / 結合20% / E2E 10%」</b>です。これは絶対の数字ではなく目安ですが、根拠を理解しておくと自分のプロジェクトに合わせて調整できます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">ratio</span>
+      <span class="tag-desc">層別比率の根拠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 目安比率(7:2:1)</div>
+        <div style="padding:10px 20px">
+          <div class="pyramid-big">
+            <div class="pyramid-big-row e2e" style="width:25%">E2E<span class="count">約10%</span></div>
+            <div class="pyramid-big-row int" style="width:50%">INTEGRATION<span class="count">約20%</span></div>
+            <div class="pyramid-big-row unit" style="width:88%">UNIT<span class="count">約70%</span></div>
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          チーム・プロジェクトの性質により<b style="color:var(--ink)">調整は必要</b>。データ処理が多いなら単体多め、UIが複雑ならE2E多め、など。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 比率を導く因果</span>
+
+<span class="kw">何を最大化したいか</span>
+  → 「短い時間で多くの欠陥を見つける」
+
+<span class="comment">↓</span>
+
+<span class="kw">どの層が効率的か</span>
+  単体  : 速度 × 数  =  高効率
+  結合  : 速度 × 数  =  中効率
+  E2E   : 速度 × 数  =  低効率
+
+<span class="comment">↓</span>
+
+<span class="kw">結論</span>:
+  高効率な層を多く
+  低効率な層を最小限
+       <span class="ann">= ピラミッド型</span>
+
+<span class="comment">// 数字より「形」を覚えるのが大事</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    7:2:1は<b>業界で多く語られる典型値</b>であって、絶対の正解ではありません。重要なのは<b>「下を厚く、上を薄く」という形そのもの</b>。比率の数字を暗記するより、なぜその形になるかを理解する方が現場で役立ちます。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>アンチパターン</h2>
+    <span class="en">ANTI-PATTERNS</span>
+  </div>
+  <p class="pattern-desc">
+    ピラミッドが崩れた形には<b>失敗の予兆</b>があります。代表的なのは「逆ピラミッド」と「アイスクリームコーン」。形を見るだけで、そのプロジェクトのテスト戦略の問題点が分かります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">anti-patterns</span>
+      <span class="tag-desc">崩れた形が示す危険信号</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// NGパターン1 — 逆ピラミッド</div>
+        <div style="padding:10px 20px;margin-bottom:14px">
+          <div class="bad-shape">
+            <div class="bad-shape-row inv-e2e">E2E ばかり多い</div>
+            <div class="bad-shape-row inv-int">INTEGRATION 少し</div>
+            <div class="bad-shape-row inv-unit">UNIT ほぼなし</div>
+          </div>
+        </div>
+        <div class="panel-head">// NGパターン2 — アイスクリームコーン</div>
+        <div style="padding:10px 20px">
+          <div class="bad-shape">
+            <div class="cone-top">手動テスト 大量</div>
+            <div class="cone-mid">E2E</div>
+            <div class="bad-shape-row inv-int" style="width:40%">INTEG</div>
+            <div class="cone-bot">UNIT</div>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="comment">// 逆ピラミッドの症状</span>
+
+・テスト時間が異常に長い
+・直してもすぐ別の所が壊れる
+・テストがしょっちゅう失敗する
+・原因特定に時間がかかる
+
+<span class="comment">// なぜ起きるか</span>
+最初に画面テストから書く
+   <span class="comment">↓</span>
+単体テストを後回し
+   <span class="comment">↓</span>
+気付くと逆ピラミッドが完成
+
+<span class="comment">// アイスクリームコーンの症状</span>
+
+・人手によるテストが膨大
+・リリース直前に1週間テスト工程
+・自動化したいが手が回らない
+
+<span class="comment">// 共通する処方箋</span>
+<span class="ann">底辺(単体)を厚くする方向に</span>
+<span class="ann">少しずつ移行する</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>逆ピラミッド（inverted pyramid）</b>＝E2E多め・単体少なめになっている崩れた形。テストが遅く・脆くなる。
+    <br><b>アイスクリームコーン（ice cream cone）</b>＝上に大きな「手動テスト」が乗った形。自動化の遅れを意味する。
+    <br><b>テストハニカム / トロフィー型</b>＝近年提唱される代替モデル。結合テストを厚くする発想。プロジェクト特性によりピラミッド以外の形が適する場合もある。
+  </div>
+</section>
+
+<section id="term">
+  <div class="section-header">
+    <span class="section-num">★</span>
+    <h2>用語の地図</h2>
+    <span class="en">GLOSSARY</span>
+  </div>
+  <p class="pattern-desc">
+    この巻で登場した主要な用語を、<b>関係が見える形で並べて</b>整理します。本編・地図編を読み進める中で何度でも戻ってきてください。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">glossary</span>
+      <span class="tag-desc">本巻で扱った用語の一覧</span>
+    </div>
+    <div class="demo-body" style="grid-template-columns:1fr">
+      <div class="panel" style="border-right:none">
+        <div class="panel-head">// 並べて見ると関係が分かる</div>
+        <dl class="term-map">
+          <dt>粒度</dt><dd>テストが扱う対象の細かさ。テストを分類する最重要の軸</dd>
+          <dt>単体テスト</dt><dd>関数・メソッド単位の最小テスト。別名「ユニットテスト」</dd>
+          <dt>結合テスト</dt><dd>複数部品を組合せたテスト。別名「統合テスト・インテグレーションテスト」</dd>
+          <dt>E2Eテスト</dt><dd>システム全体を端から端まで貫くテスト。画面操作を伴うことが多い</dd>
+          <dt>UIテスト</dt><dd>画面操作を伴うテスト。E2Eと重複することが多い</dd>
+          <dt>テストピラミッド</dt><dd>単体多・E2E少の理想形。Mike Cohn (2009) が提唱</dd>
+          <dt>逆ピラミッド</dt><dd>E2E多・単体少の崩れた形。アンチパターン</dd>
+          <dt>アイスクリームコーン</dt><dd>上に手動テストが乗ったアンチパターン</dd>
+          <dt>境目 / IF</dt><dd>部品と部品が情報をやり取りする接点。バグの巣窟</dd>
+          <dt>フレーキー</dt><dd>同じ条件でも結果が安定しないテスト。E2Eで起きやすい</dd>
+          <dt>テストハニカム</dt><dd>結合テスト厚めの代替モデル。一部の現場で採用</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tip copper" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  本編Vol.3「TDD・テストファースト編」では、<b>「実装より先にテストを書く」</b>という発想に踏み込みます。地図編Vol.3「先に書く・後で書くの対比編」では、なぜこの順序の逆転が起きたのか、その因果を時間軸と左右軸で読み解きます。Vol.2で身につけた単体テストの基礎が、Vol.3でリズムとして昇華されていきます。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST MAP — VOL.02</span>
+  <span>SIZE OF TESTS</span>
+</footer>
+
+</body>
+</html>

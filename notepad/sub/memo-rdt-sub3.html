@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕別冊S3 テスト技法の深掘り</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a3540;
+  --paper:#ece8de;
+  --paper-2:#d8d4c6;
+  --accent:#6a8590;
+  --accent-2:#8aa0a8;
+  --accent-3:#a07050;
+  --muted:#707a82;
+  --line:#c2c0b4;
+  --code-bg:#252a32;
+  --code-text:#e6e2d6;
+  --panel-bg:#f3eee2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✧";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.18;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.tip{background:rgba(106,133,144,0.10);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.pyramid{background:#fff;border:1px solid var(--line);padding:18px;margin:14px 0;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.9;text-align:center;color:var(--ink)}
+.pyramid .e2e{color:#9a4040;font-weight:700}
+.pyramid .integ{color:#a07050;font-weight:700}
+.pyramid .unit{color:#3a6a4a;font-weight:700}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.S3</span>
+    <span class="kind-tag">別冊 ── SUB</span>
+    <span class="rdt-tag">TEST THEORY</span>
+  </div>
+  <h1>テスト技法の深掘り<br>ピラミッドから設計技法まで</h1>
+  <div class="subtitle">SUB.03 ── TEST TECHNIQUES &amp; STRATEGY</div>
+  <p class="lead">本編Vol.2・3 で<b>単体テスト・結合テスト</b>を書きました。別冊S3では、その背後にある<b>テスト戦略の理論</b>を深掘りします。<b>テストピラミッド</b>、<b>AAA</b>、<b>テスト設計技法</b>、<b>モックと実DBの使い分け</b>、<b>テストの独立性</b>。<b>「なぜそのテストを書くか」を語れる</b>ようになるための知識を詰め込みます。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 別冊S3で腑に落とす3つの問い</div>
+    <p>① なぜ<b>下（単体）を厚く、上（E2E）を薄く</b>するのか／② <b>モックと実DB</b>はどう使い分けるか／③ <b>どんなケースを書けば十分</b>か（境界値・異常系） — この3問に自分の言葉で答えられたらS3卒業です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 別冊S3のミッション</a></li>
+    <li><a href="#s02">02 テストは何のために書くか</a></li>
+    <li><a href="#s03">03 テストピラミッド</a></li>
+    <li><a href="#s04">04 AAAパターン</a></li>
+    <li><a href="#s05">05 テスト設計技法</a></li>
+    <li><a href="#s06">06 モック vs 実DB</a></li>
+    <li><a href="#s07">07 テストの独立性</a></li>
+    <li><a href="#s08">08 やってはいけないテスト</a></li>
+    <li><a href="#s09">09 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>別冊S3のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">別冊S3は<b>「テストを戦略として理解する」</b>回。本編で「単体は多く、結合は要所で」を実践しました。でも<b>「なぜその配分か」「どんなケースを書けば十分か」</b>を理論で理解すると、無駄なく効果的なテストが書けます。<b>テストはセンスではなく戦略</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">テストを学ぶと何が変わるか</span><span class="tag-desc">安心して変更できる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テストの根本的な価値</div>
+        <p>テストフロー文書の核心：<b>「テストは『動いた』を確認するためではなく、『これからも安心して変更できる』状態を作るために書く」</b>。</p>
+        <ul>
+          <li>テストの価値は<b>書いた瞬間ではなく、変更時</b>に出る</li>
+          <li>テストがあれば<b>リファクタや機能追加が怖くない</b></li>
+          <li>「壊れたらテストが教えてくれる」安心感</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 別冊S3のゴール</div>
+        <ul class="check-list">
+          <li>テストピラミッドの「なぜ」を説明できる</li>
+          <li>境界値・異常系の選び方が分かる</li>
+          <li>モックと実DBを適切に使い分けられる</li>
+          <li>「ダメなテスト」を見抜ける</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// テストがある世界・ない世界</span>
+<span class="comment">// ─── テストがない世界 ───</span>
+コードを変更
+  ↓
+「動くかな…」と手動で全画面確認
+  ↓
+見落とし → 本番でバグ発覚
+  ↓
+「触るのが怖い」コードになる
+  ↓
+誰も直せない → 塩漬け ★
+
+
+<span class="comment">// ─── テストがある世界 ───</span>
+コードを変更
+  ↓
+テスト実行（数秒）
+  ↓
+緑 → 安心してコミット
+赤 → 壊れた箇所が即わかる
+  ↓
+「いつでも直せる」コードになる ★★★
+
+
+<span class="comment">// → テストは「変更する勇気」をくれる</span>
+<span class="comment">// → これが投資としての価値</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — テストは「コスト」ではなく「投資」</div>
+    <p>「テストを書く時間がもったいない」は<b>初学者の典型的な誤解</b>。テストは<b>将来の自分を救う投資</b>。書く時は少し手間でも、<b>変更・リファクタ・バグ修正で何倍も回収</b>できます。特に<b>「半年後に機能追加」</b>のとき、テストの有無で天と地の差が出ます。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>テストは何のために書くか</h2><span class="en">WHY TEST</span></div>
+  <p class="pattern-desc">テストの目的は<b>「正しさの確認」だけではありません</b>。<b>変更の安全網、仕様の記録、設計の改善</b>。テストには複数の役割があります。これを理解すると、テストの書き方が変わります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">テストの4つの役割</span><span class="tag-desc">確認だけじゃない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">ROLE 1</span>
+            <div class="name">正しさの確認</div>
+            <div class="desc"><b>意図通り動くか</b>を確認。最も基本的な役割。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">ROLE 2</span>
+            <div class="name">変更の安全網</div>
+            <div class="desc"><b>変更で壊れたら教えてくれる</b>。リファクタの命綱。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">ROLE 3</span>
+            <div class="name">仕様の記録</div>
+            <div class="desc"><b>テストを読めば仕様が分かる</b>。実行可能なドキュメント。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">ROLE 4</span>
+            <div class="name">設計の改善</div>
+            <div class="desc"><b>テストしにくい＝設計が悪い</b>サイン。設計を磨く鏡。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// RDT版での意味</div>
+        <p>本シリーズでは<b>受入条件＝テスト</b>。テストが<b>「要求の記録（ROLE 3）」</b>を兼ねる。テスト名 <code>空タイトルはエラーになる()</code> を読めば、要求が分かります。</p>
+      </div>
+      <div class="code"><span class="code-head">// テスト名が「仕様」になる</span>
+<span class="comment">// ─── テストを読むと仕様が分かる ───</span>
+class MemoValidationTest {
+  空タイトルはエラーになる()      <span class="comment">// 仕様</span>
+  _200文字は登録できる()         <span class="comment">// 仕様</span>
+  _201文字はエラーになる()       <span class="comment">// 仕様</span>
+}
+<span class="comment">// → テスト名を並べると「タイトルの仕様」</span>
+<span class="comment">//   が浮かび上がる ★★★</span>
+<span class="comment">// → 実行可能なドキュメント</span>
+
+
+<span class="comment">// ─── バグ修正は再現テストから ───</span>
+<span class="comment">// テストフロー文書の鉄則：</span>
+<span class="comment">// 「バグ修正は必ず再現テストを</span>
+<span class="comment">//   先に書いてから直す」</span>
+
+<span class="num">1.</span> バグを再現するテストを書く（赤）
+<span class="num">2.</span> バグを修正する（緑）
+<span class="num">3.</span> このテストが再発を防ぐ ★★★
+
+<span class="comment">// → 同じバグが二度と出ない</span>
+<span class="comment">// → これがテストの「変更の安全網」</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — テスト名は日本語で「何を検証するか」</div>
+    <p>テストフロー文書の指針：<b>テスト名は「何を検証しているか」が分かる日本語で</b>。<code>test1()</code> ではなく <code>空タイトルはエラーになる()</code>。こうすると<b>テスト一覧が仕様書</b>になる。失敗時も<b>「何が壊れたか」が名前で即わかる</b>。Javaのテストメソッド名に日本語が使えるのは大きな利点です。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>テストピラミッド</h2><span class="en">TEST PYRAMID</span></div>
+  <p class="pattern-desc">テスト戦略の最重要概念<b>テストピラミッド</b>。<b>下（単体）を厚く、上（E2E）を薄く</b>。なぜこの形が良いのか、理論で理解します。本編で実践した配分の<b>根拠</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ピラミッドの形と理由</span><span class="tag-desc">速さ・安定性・コスト</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="pyramid">
+          <span class="e2e">▲ E2E (10%)</span><br>
+          遅い・脆い・高コスト<br>
+          ─────────────<br>
+          <span class="integ">▰▰ 結合 (20%)</span><br>
+          中速・DB絡み<br>
+          ───────────────────<br>
+          <span class="unit">▰▰▰▰ 単体 (70%)</span><br>
+          速い・安定・低コスト
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// なぜ下を厚くするか</div>
+        <table class="compare-tbl">
+          <thead><tr><th>層</th><th>速度</th><th>安定性</th></tr></thead>
+          <tbody>
+            <tr><td>単体</td><td><b>速い(ms)</b></td><td><b>高い</b></td></tr>
+            <tr><td>結合</td><td>中(秒)</td><td>中</td></tr>
+            <tr><td>E2E</td><td>遅い(分)</td><td>脆い</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:8px"><b>単体は速くて安定</b>なので、たくさん書ける。<b>E2Eは遅くて脆い</b>ので、最小限に。</p>
+      </div>
+      <div class="code"><span class="code-head">// 逆ピラミッド（アンチパターン）</span>
+<span class="comment">// ─── やってはいけない形 ───</span>
+▰▰▰▰ E2E（多い）← 全部E2Eで確認
+─────────
+▰▰ 結合
+───
+▲ 単体（少ない）
+
+<span class="comment">// 問題：</span>
+<span class="comment">// - テストが遅い（毎回ブラウザ起動）</span>
+<span class="comment">// - 脆い（画面変更で大量に壊れる）</span>
+<span class="comment">// - 失敗原因が特定しにくい</span>
+<span class="comment">// → 「アイスクリームコーン」</span>
+<span class="comment">//   と呼ばれるアンチパターン ★</span>
+
+
+<span class="comment">// ─── 本シリーズの配分（Spring版）───</span>
+単体（70%）：
+  - バリデーション（@NotBlank/@Size）
+  - Service のロジック（Mockito）
+  → JUnit + Mockito + AssertJ
+
+結合（20%）：
+  - Mapper の SQL（UNIQUE/並び順/JOIN）
+  → @MybatisTest + H2
+
+E2E相当（10%）：
+  - 主要フロー（保存→一覧）
+  → MockMvc
+
+
+<span class="comment">// → 下を厚く、上を薄く ★★★</span>
+<span class="comment">// → 本編Vol.2,3 でこの通り実践した</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — E2Eで全部やろうとしない</div>
+    <p>テストフロー文書の警告：<b>「E2Eで全バリデーションを網羅しようとする（遅く・脆くなる）」</b>のは避ける。バリデーションは<b>単体で網羅</b>し、E2E（MockMvc）は<b>主要フロー1〜2本</b>だけ。「空タイトル」「201文字」などのエッジケースを全部 MockMvc で書くと、<b>遅くて壊れやすいテスト群</b>になります。<b>適材適所</b>が鉄則です。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>AAAパターン</h2><span class="en">ARRANGE-ACT-ASSERT</span></div>
+  <p class="pattern-desc">1つのテストは<b>「準備→実行→検証」の3ブロック</b>で書く。これが<b>AAA（Arrange-Act-Assert）</b>。受入条件の<b>Given/When/Then</b>と完全対応します。読みやすく、壊れにくいテストの基本構造です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">AAA と Given/When/Then</span><span class="tag-desc">要求とテストの対応</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3ブロックの対応</div>
+        <table class="compare-tbl">
+          <thead><tr><th>受入条件</th><th>テスト(AAA)</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td>Given</td><td><b>Arrange</b></td><td>前提・準備</td></tr>
+            <tr><td>When</td><td><b>Act</b></td><td>実行する操作</td></tr>
+            <tr><td>Then</td><td><b>Assert</b></td><td>期待結果の検証</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// AAA を守る効果</div>
+        <ul>
+          <li><b>読みやすい</b>：3ブロックで構造が一目</li>
+          <li><b>1テスト1検証</b>：Assert が肥大化しない</li>
+          <li><b>要求と対応</b>：受入条件がそのまま写せる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// AAA の実例（コメントで明示）</span>
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">空タイトルはエラーになる</span>() {
+
+    <span class="comment">// ── Arrange（準備）= Given ──</span>
+    <span class="type">Memo</span> memo = <span class="kw">new</span> <span class="type">Memo</span>();
+    memo.<span class="fn">setTitle</span>(<span class="str">""</span>);
+
+    <span class="comment">// ── Act（実行）= When ──</span>
+    <span class="kw">var</span> errors = validator.<span class="fn">validate</span>(memo);
+
+    <span class="comment">// ── Assert（検証）= Then ──</span>
+    <span class="fn">assertThat</span>(errors).<span class="fn">isNotEmpty</span>();
+}
+
+<span class="comment">// → 受入条件@AC2が3ブロックに ★★★</span>
+
+
+<span class="comment">// ─── 1テスト1検証が原則 ───</span>
+<span class="ann">悪い例：</span>
+<span class="ann">@Test</span> <span class="kw">void</span> <span class="fn">全部テスト</span>() {
+  <span class="comment">// 空もテスト、201文字もテスト、</span>
+  <span class="comment">// 重複もテスト… → 何が壊れたか不明</span>
+}
+
+<span class="ann">良い例：</span>
+<span class="ann">@Test</span> <span class="kw">void</span> <span class="fn">空はエラー</span>() { ... }
+<span class="ann">@Test</span> <span class="kw">void</span> <span class="fn">_201文字はエラー</span>() { ... }
+<span class="comment">// → 1テスト1検証</span>
+<span class="comment">// → 失敗時に原因が即わかる ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Assert の肥大化に注意</div>
+    <p>1つのテストで<b>何でもかんでも検証（Assert）</b>すると、何が壊れたか分からなくなります。<b>1テスト＝1つの振る舞いの検証</b>が理想。「空もチェック、文字数もチェック、重複もチェック」を1メソッドに詰めない。<b>テストを分ける勇気</b>が、失敗原因の特定を楽にします。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>テスト設計技法</h2><span class="en">TEST DESIGN TECHNIQUES</span></div>
+  <p class="pattern-desc">無限の入力を全部は試せません。<b>代表値・境界値・異常系</b>を賢く選ぶ。これが<b>テスト設計技法</b>。本編で「200文字OK・201文字NG」を選んだ根拠がここにあります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">3つの代表的技法</span><span class="tag-desc">どんなケースを書くか</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ① 同値分割</div>
+        <p>入力を<b>「同じ結果になるグループ」</b>に分け、各グループから1つ選ぶ。1〜200文字は全部「OK」グループ→代表で1つ。</p>
+
+        <div class="panel-head" style="margin-top:18px">// ② 境界値分析</div>
+        <p>バグは<b>境界に潜む</b>。「200文字OK、201文字NG」のように<b>境界の両側</b>をテスト。<code>&gt;</code> と <code>&gt;=</code> の書き間違いを検出。</p>
+
+        <div class="panel-head" style="margin-top:18px">// ③ 異常系</div>
+        <p>空・null・想定外の入力。<b>意識しないと抜ける</b>。テストフロー文書の目安：<b>1機能につき正常系1〜2＋異常系3〜5</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// タイトル（1〜200文字必須）のテスト設計</span>
+<span class="comment">// ─── 同値分割 + 境界値分析 ───</span>
+入力          期待   技法
+─────────────────────────
+空文字         エラー  異常系・境界
+1文字          OK     下限境界
+100文字        OK     代表値（同値）
+200文字        OK     上限境界 ★
+201文字        エラー  上限境界の外 ★
+null           エラー  異常系
+─────────────────────────
+
+<span class="comment">// → 200と201の両方を書くのが肝 ★★★</span>
+<span class="comment">// → if (len > 200) と if (len >= 200)</span>
+<span class="comment">//   の書き間違いを検出できる</span>
+
+
+<span class="comment">// ─── 境界値が重要な理由 ───</span>
+<span class="comment">// バグは「ちょうど境目」に潜む</span>
+@Size(max = 200)
+<span class="comment">// もし max = 199 と書き間違えたら？</span>
+<span class="comment">// → 200文字テストが落ちて気づける ★★★</span>
+<span class="comment">// → 100文字だけテストしても気づけない</span>
+
+
+<span class="comment">// ─── 異常系は意識して書く ───</span>
+<span class="comment">// 正常系（OK系）は思いつきやすい</span>
+<span class="comment">// 異常系（空・null・超過）は</span>
+<span class="comment">// 意識しないと抜ける</span>
+<span class="comment">// → 「正常1〜2 + 異常3〜5」を目安に ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 境界値「ちょうど」と「±1」を狙う</div>
+    <p>境界値テストのコツは<b>「境界そのもの」と「境界の外側1つ」</b>を両方書くこと。max=200 なら<b>200（OK）と201（NG）</b>。これで <code>&gt;</code>/<code>&gt;=</code>/<code>&lt;</code>/<code>&lt;=</code> の<b>オフバイワンエラー</b>（1ずれバグ）を検出できます。<b>「真ん中の値」だけのテストは境界バグを見逃す</b>のです。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>モック vs 実DB</h2><span class="en">MOCK VS REAL DB</span></div>
+  <p class="pattern-desc">本編Vol.2 は<b>モック（Mockito）</b>、Vol.3 は<b>実DB（H2）</b>を使いました。<b>どう使い分けるか</b>。これはテスト戦略の重要な判断。「<b>何を検証したいか</b>」で決まります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">モックと実DBの使い分け</span><span class="tag-desc">何を検証したいか</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 使い分けの基準</div>
+        <table class="compare-tbl">
+          <thead><tr><th>検証したいこと</th><th>使うもの</th></tr></thead>
+          <tbody>
+            <tr><td>Serviceのロジック</td><td><b>モック</b></td></tr>
+            <tr><td>「Mapperが呼ばれたか」</td><td><b>モック</b></td></tr>
+            <tr><td>SQLが正しいか</td><td><b>実DB(H2)</b></td></tr>
+            <tr><td>UNIQUE制約の動作</td><td><b>実DB</b></td></tr>
+            <tr><td>JOINの結果</td><td><b>実DB</b></td></tr>
+            <tr><td>並び順</td><td><b>実DB</b></td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// モックの本質と限界</div>
+        <ul>
+          <li><b>モックは「ニセモノ」</b>：戻り値を自分で決める</li>
+          <li>「呼ばれたか」「何が渡されたか」は検証できる</li>
+          <li><b>でも「DBが本当にどう動くか」は分からない</b></li>
+          <li>→ DBの挙動（制約・JOIN）は<b>実DBでしか検証できない</b></li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// モックと実DBの役割の違い</span>
+<span class="comment">// ─── モック（Mockito）でできること ───</span>
+<span class="ann">@Mock</span> <span class="type">MemoMapper</span> mapper;
+<span class="ann">@InjectMocks</span> <span class="type">MemoService</span> service;
+
+<span class="ann">@Test</span> <span class="kw">void</span> <span class="fn">日時がセットされる</span>() {
+    <span class="type">Memo</span> m = <span class="kw">new</span> <span class="type">Memo</span>();
+    service.<span class="fn">create</span>(m);
+    <span class="comment">// 「createdAtがセットされたか」= Serviceのロジック</span>
+    <span class="fn">assertThat</span>(m.<span class="fn">getCreatedAt</span>()).<span class="fn">isNotNull</span>();
+    <span class="comment">// 「insertが呼ばれたか」= 呼び出しの検証</span>
+    <span class="fn">verify</span>(mapper).<span class="fn">insert</span>(m);
+}
+<span class="comment">// → DBは登場しない。ロジックだけ検証 ★</span>
+<span class="comment">// → 速い・どこでも動く</span>
+
+
+<span class="comment">// ─── モックでは検証できないこと ───</span>
+<span class="comment">// 「UNIQUE制約で重複が弾かれるか」</span>
+<span class="comment">// → モックは戻り値を自分で決めるので</span>
+<span class="comment">//   「重複時に例外」を再現できない ★</span>
+
+
+<span class="comment">// ─── 実DB（@MybatisTest+H2）の出番 ───</span>
+<span class="ann">@MybatisTest</span>
+<span class="kw">class</span> <span class="type">CategoryMapperTest</span> {
+  <span class="ann">@Autowired</span> <span class="type">CategoryMapper</span> mapper;
+
+  <span class="ann">@Test</span> <span class="kw">void</span> <span class="fn">重複は登録できない</span>() {
+    mapper.<span class="fn">insert</span>(<span class="fn">cat</span>(<span class="str">"仕事"</span>));
+    <span class="fn">assertThatThrownBy</span>(() ->
+        mapper.<span class="fn">insert</span>(<span class="fn">cat</span>(<span class="str">"仕事"</span>)))
+      .<span class="fn">isInstanceOf</span>(
+        <span class="type">DataIntegrityViolationException</span>.<span class="kw">class</span>);
+  }
+  <span class="comment">// → 本物のDBがUNIQUE制約を発動 ★★★</span>
+  <span class="comment">// → これはモックでは不可能</span>
+}</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">H2 vs Testcontainers（実MySQL）</span><span class="tag-desc">速さと忠実さ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <table class="compare-tbl">
+          <thead><tr><th>観点</th><th>H2(インメモリ)</th><th>Testcontainers</th></tr></thead>
+          <tbody>
+            <tr><td>速度</td><td><b>速い</b></td><td>遅い(起動コスト)</td></tr>
+            <tr><td>忠実さ</td><td>MySQL方言は不完全</td><td><b>本物のMySQL</b></td></tr>
+            <tr><td>環境</td><td>不要</td><td>Docker必要</td></tr>
+            <tr><td>向き</td><td>日常の結合テスト</td><td>本番に近い検証</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>本シリーズは H2 が基本</b>。MySQL固有機能（FULLTEXT等）の検証が必要な巻では<b>Testcontainers</b>を検討します（Vol.8の全文検索など）。<b>速さと忠実さのトレードオフ</b>（別冊S2の判断軸）。</p>
+      </div>
+      <div class="code"><span class="code-head">// トレードオフの判断（別冊S2と連動）</span>
+<span class="comment">// ─── H2 を選ぶ理由（日常）───</span>
+<span class="kw">if</span> (検証したいのが) {
+  基本的なCRUD・UNIQUE・並び順
+    → H2 で十分（速い）★
+}
+
+
+<span class="comment">// ─── Testcontainers が要る場面 ───</span>
+<span class="kw">if</span> (検証したいのが) {
+  MySQL固有機能：
+    - FULLTEXT INDEX（全文検索）
+    - MySQL特有の関数
+    → H2では再現できない
+    → Testcontainers で実MySQL ★★★
+}
+
+
+<span class="comment">// ─── 「迷ったら戻せる選択肢」───</span>
+<span class="comment">// まず H2 で始める（速い・手軽）</span>
+<span class="comment">// 不足を感じたら Testcontainers へ</span>
+<span class="comment">// → 段階的に判断（YAGNI）★</span>
+<span class="comment">// → 別冊S2の設計判断と同じ思想</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — DI があるからモックも実DBも選べる</div>
+    <p>本編Vol.2 で <code>@RequiredArgsConstructor</code> による<b>DI</b>を入れたおかげで、テストで<b>Mapper をモックに差し替え</b>られました。別冊S2の<b>「低結合がテスト容易性を生む」</b>がここで効いています。<b>設計（DI）→テスト容易性→モックと実DBの選択肢</b>。すべて繋がっています。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>テストの独立性</h2><span class="en">TEST INDEPENDENCE</span></div>
+  <p class="pattern-desc">テストフロー文書の重要原則：<b>各テストは互いに独立させる</b>。前のテストの状態に依存しない。順序を変えても、1つだけ実行しても通る。<b>これが守れないと「たまに落ちるテスト」</b>になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">独立性が崩れると何が起きるか</span><span class="tag-desc">フレーキーテストの正体</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 独立性の鉄則</div>
+        <ul>
+          <li>テスト間で<b>データを共有しない</b></li>
+          <li><b>実行順序に依存しない</b></li>
+          <li>1つだけ実行しても通る</li>
+          <li>各テスト後に<b>状態をリセット</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 独立性が崩れる典型</div>
+        <ul>
+          <li>テストAがDBに登録 → テストBがそれに依存</li>
+          <li>テストの実行順が変わると<b>突然落ちる</b></li>
+          <li>「<b>たまに落ちる</b>」フレーキー（不安定）テストに</li>
+        </ul>
+        <p style="margin-top:8px"><b>Spring では @Transactional で自動ロールバック</b>が便利。</p>
+      </div>
+      <div class="code"><span class="code-head">// 独立性を保つ仕組み</span>
+<span class="comment">// ─── @Transactional で自動ロールバック ───</span>
+<span class="ann">@MybatisTest</span>  <span class="comment">// デフォルトでロールバックされる</span>
+<span class="kw">class</span> <span class="type">CategoryMapperTest</span> {
+
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">テストA_登録</span>() {
+    mapper.<span class="fn">insert</span>(<span class="fn">cat</span>(<span class="str">"仕事"</span>));
+    <span class="comment">// このテスト終了後、自動でロールバック</span>
+    <span class="comment">// → DBは空に戻る ★★★</span>
+  }
+
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">テストB_別の登録</span>() {
+    <span class="comment">// テストAの「仕事」は残っていない</span>
+    <span class="comment">// → 各テストがクリーンな状態から開始 ★</span>
+    mapper.<span class="fn">insert</span>(<span class="fn">cat</span>(<span class="str">"仕事"</span>)); <span class="comment">// 重複しない</span>
+  }
+}
+
+
+<span class="comment">// ─── @BeforeEach でリセットする手も ───</span>
+<span class="ann">@BeforeEach</span>
+<span class="kw">void</span> <span class="fn">setup</span>() {
+  <span class="comment">// 各テスト前にデータをクリア</span>
+  mapper.<span class="fn">deleteAll</span>();
+}
+
+
+<span class="comment">// ─── 独立性が崩れた例（NG）───</span>
+<span class="kw">static</span> <span class="type">Long</span> savedId; <span class="comment">// テスト間で共有 ← NG</span>
+
+<span class="ann">@Test</span> <span class="kw">void</span> <span class="fn">テスト1</span>() {
+  savedId = service.<span class="fn">create</span>(...); <span class="comment">// 保存</span>
+}
+<span class="ann">@Test</span> <span class="kw">void</span> <span class="fn">テスト2</span>() {
+  service.<span class="fn">findById</span>(savedId); <span class="comment">// テスト1に依存！</span>
+  <span class="comment">// → テスト2だけ実行すると savedId=null</span>
+  <span class="comment">// → 落ちる ★★★</span>
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — sleep() は使わない、条件待ちを使う</div>
+    <p>テストフロー文書の禁止事項：<b>sleep()（固定待ち）は使わない</b>。「3秒待てば終わってるだろう」は<b>環境次第で破綻</b>します（速いマシンでは無駄、遅いマシンでは足りない）。<b>「条件が満たされるまで待つ」</b>仕組みを使う。本シリーズの MockMvc は同期的なので待ち不要ですが、非同期処理を扱う時は覚えておきましょう。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>やってはいけないテスト</h2><span class="en">TEST ANTI-PATTERNS</span></div>
+  <p class="pattern-desc">テストにも<b>アンチパターン</b>があります。<b>検証なしテスト、カバレッジ至上主義、脆いテスト</b>。これらを知っておけば「テストを書いたのに意味がない」を避けられます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">テストアンチパターン 5選</span><span class="tag-desc">避けるべき書き方</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 検証のない「実行だけ」テスト ★★★</b></p>
+        <ul>
+          <li>メソッドを呼ぶだけで assert が無い</li>
+          <li>カバレッジは上がるが<b>何も保証しない</b></li>
+          <li>→ 必ず Assert を書く</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② カバレッジ100%を目標化 ★★★</b></p>
+        <ul>
+          <li>数値のために無意味なテストを量産</li>
+          <li>→ 目安は<b>ライン80%・ブランチ70%</b>で十分</li>
+          <li>カバレッジは<b>手段であって目的ではない</b></li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ E2Eで全網羅（アイスクリームコーン）</b></p>
+        <ul>
+          <li>遅く・脆くなる</li>
+          <li>→ 細かいケースは単体で（Section 03）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ テスト間でデータ共有（順序依存）</b></p>
+        <ul>
+          <li>「たまに落ちる」フレーキーテストの原因</li>
+          <li>→ 各テストを独立させる（Section 07）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ sleep() で固定待ち</b></p>
+        <ul>
+          <li>環境次第で破綻、無駄に遅い</li>
+          <li>→ 条件待ちを使う</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// アンチパターンの実例</span>
+<span class="comment">// ─── ① 検証なしテスト（無意味）───</span>
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">createのテスト</span>() {
+  service.<span class="fn">create</span>(<span class="kw">new</span> <span class="type">Memo</span>());
+  <span class="comment">// assert が無い！</span>
+  <span class="comment">// → 例外が出なければ「成功」扱い</span>
+  <span class="comment">// → 何も保証していない ★</span>
+}
+
+<span class="ann">良い例：</span>
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">作成で日時がセットされる</span>() {
+  <span class="type">Memo</span> m = <span class="kw">new</span> <span class="type">Memo</span>();
+  service.<span class="fn">create</span>(m);
+  <span class="fn">assertThat</span>(m.<span class="fn">getCreatedAt</span>())
+    .<span class="fn">isNotNull</span>();  <span class="comment">// ← 検証あり ★</span>
+}
+
+
+<span class="comment">// ─── ② カバレッジ至上主義の罠 ───</span>
+<span class="comment">// 「100%にしろ」と言われ…</span>
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">getterのテスト</span>() {
+  <span class="type">Memo</span> m = <span class="kw">new</span> <span class="type">Memo</span>();
+  m.<span class="fn">setTitle</span>(<span class="str">"a"</span>);
+  <span class="fn">assertThat</span>(m.<span class="fn">getTitle</span>())
+    .<span class="fn">isEqualTo</span>(<span class="str">"a"</span>);
+  <span class="comment">// → Lombokのgetterをテスト…</span>
+  <span class="comment">// → カバレッジは上がるが無意味 ★</span>
+}
+<span class="comment">// 目安：ライン80% / ブランチ70%</span>
+<span class="comment">// → 「意味のあるテスト」を優先</span>
+
+
+<span class="comment">// ─── 良いテストの条件 ───</span>
+✓ 検証（Assert）がある
+✓ 1テスト1検証
+✓ 独立している
+✓ 名前で意図が分かる
+✓ 意味のあるケースを選んでいる ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — カバレッジは「目的」ではなく「目安」</div>
+    <p>カバレッジ（テストが通ったコードの割合）は<b>便利な指標</b>ですが、<b>100%を目標にすると本末転倒</b>。Lombokのgetterや単純な委譲をテストしても意味は薄い。<b>「重要なロジック・境界・異常系がテストされているか」</b>が本質。<b>ライン80%・ブランチ70%で十分</b>というのが現実的な目安です。<b>数より質</b>。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">別冊S3 で<b>テスト戦略の理論</b>が頭に入りました。本編Vol.4 以降で<b>JOIN・多対多・検索</b>のテストを書くとき、これらの技法が<b>「なぜこのテストか」の根拠</b>になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">S3 達成チェック</span><span class="tag-desc">テストを語れる人になった</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>テストは「変更の安全網」と説明できる</li>
+          <li>テストピラミッド（下を厚く）の理由を言える</li>
+          <li>AAA（Arrange/Act/Assert）で書ける</li>
+          <li>境界値・異常系の選び方が分かる</li>
+          <li>モックと実DBを使い分けられる</li>
+          <li>H2 と Testcontainers の違いを知っている</li>
+          <li>テストの独立性を保てる</li>
+          <li>アンチパターン（検証なし・カバレッジ至上）を避けられる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 別冊S3 で手に入れたテスト理論</span>
+✓ <span class="str">"テストは安心して変更するための投資"</span>
+
+✓ <span class="str">"下（単体）を厚く、上（E2E）を薄く"</span>
+
+✓ <span class="str">"Arrange/Act/Assert の3ブロック"</span>
+
+✓ <span class="str">"境界値は『ちょうど』と『±1』を狙う"</span>
+
+✓ <span class="str">"ロジックはモック、DB制約は実DB"</span>
+
+✓ <span class="str">"各テストは独立。順序に依存しない"</span>
+
+✓ <span class="str">"カバレッジは目安。100%は目的化しない"</span>
+
+
+<span class="comment">// あなたは「テストを語れる」</span>
+<span class="comment">// エンジニアに近づいた ★★★</span>
+
+<span class="comment">// 次回 本編Vol.4：</span>
+<span class="comment">//   JOIN（1対多）の実装とテスト</span>
+<span class="comment">//   resultMap・絞り込み</span>
+<span class="comment">//   結合テストで JOIN 結果を検証</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── 本編 VOL.4 へ</div>
+    <p>別冊S3 で<b>「テスト戦略の理論」</b>を獲得しました。次は本編Vol.4「<b>1対多の表示・絞り込み</b>」。<b>memos と categories を LEFT JOIN</b> し、カテゴリ別の絞り込みを実装します。<b>JOIN の結果は実DB（結合テスト）で検証</b>——別冊S3の「モック vs 実DB」の判断がそのまま活きます。境界値・異常系の技法も、検索条件のテストで使います。<b>本編Vol.4 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>SUB.03 / 14 ── TEST TECHNIQUES &amp; STRATEGY（別冊）</span>
+</footer>
+
+</body>
+</html>

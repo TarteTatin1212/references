@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.5 別冊 N+1問題の正体</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a302a;
+  --paper:#e8eae3;
+  --paper-2:#d4d7ce;
+  --accent:#8a957a;
+  --accent-2:#a0aa90;
+  --accent-3:#555c4c;
+  --muted:#737a72;
+  --line:#b8c0b1;
+  --code-bg:#1f231f;
+  --code-text:#e8eae3;
+  --panel-bg:#f0f2eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✧';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#9aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(138,149,122,0.09);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.case-card{background:#fff;border:1px solid var(--line);padding:16px 18px;margin:14px 0}
+.case-card .ph{font-family:'JetBrains Mono',monospace;font-size:11px;color:#a04040;letter-spacing:0.1em;margin-bottom:6px}
+.case-card .ttl{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--accent-3);margin-bottom:8px}
+.case-card .body{font-size:13.5px;line-height:1.75}
+.case-card .res{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:13px;color:#a04040}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.05 / 15</span>
+    <span class="kind-tag">別冊</span>
+  </div>
+  <h1>N+1問題の<br>正体</h1>
+  <div class="subtitle">N+1 IN DEPTH ── TOOLS & FIELD STORIES</div>
+  <p class="lead">
+    本編Vol.5で<b>N+1問題を体感</b>しました。別冊S5では、業務現場でこの問題が<b>どう発見され／どう対策され／どんな災厄を引き起こしたか</b>を多角的に深掘りします。<br>
+    キーワードは<b>「検出ツール」「業務での実話」「対策3パターン」「JPAでも同じ問題が起きる」「業界の検出文化」</b>。<br>
+    Cの中で<b>「性能対策の感性」</b>を最も磨く別冊。読み終わると、「<b>動くけど重い</b>」というプロジェクトに参加した時、<b>真っ先に疑うべき場所が分かる目</b>が手に入ります。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#theme">01 この別冊のテーマ</a></li>
+    <li><a href="#detection">02 N+1の検出方法</a></li>
+    <li><a href="#tools">03 業界の検出ツール</a></li>
+    <li><a href="#cases">04 業務での災厄事例集</a></li>
+    <li><a href="#solutions">05 対策3パターン</a></li>
+    <li><a href="#jpa">06 JPAでも起きる同じ問題</a></li>
+    <li><a href="#culture">07 業界の検出文化</a></li>
+    <li><a href="#trouble">08 N+1対策のハマりどころ</a></li>
+    <li><a href="#next">09 次の本編へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="theme">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この別冊のテーマ</h2>
+    <span class="en">THEME</span>
+  </div>
+  <p class="pattern-desc">本編Vol.5で<b>「N+1を見つける目」</b>を手に入れたあなたに、別冊S5では<b>業界全体の文脈</b>を伝授します。N+1問題は<b>新人エンジニアが最初に学ぶべき性能課題</b>として、業界共通の知識になっています。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-important</span>
+      <span class="tag-desc">なぜ N+1 を業界全体が警戒するか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// N+1 が業界共通課題である理由</div>
+        <div class="role-card">
+          <span class="label">理由1</span>
+          <div class="name">頻発する</div>
+          <div class="desc">あらゆるWebシステムで「1対多」「多対多」関係は必ず登場。N+1はその全てで起こりうる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">理由2</span>
+          <div class="name">テストで気付きにくい</div>
+          <div class="desc">開発環境はデータが少ない。テストはパスする。本番でデータ蓄積するほど顕在化。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">理由3</span>
+          <div class="name">対策はシンプル</div>
+          <div class="desc">「JOINで1回取得」「IN句で一括取得」など、対策パターンが確立されている。だから<b>気付けば直せる</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">理由4</span>
+          <div class="name">災厄レベルが大きい</div>
+          <div class="desc">気付かないまま本番稼働すると、ピーク時に<b>サービス停止級</b>の遅延を引き起こす。後述の事例集を参照。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で答える4つの問い</span>
+
+<span class="comment">// 問1: 開発中にN+1をどう見つける？</span>
+<span class="comment">//   → SQLログ・p6spy・カウントテスト</span>
+
+<span class="comment">// 問2: 業務でどんな事例があった？</span>
+<span class="comment">//   → 「画面が30秒返らない」級の災厄</span>
+
+<span class="comment">// 問3: 対策は何種類ある？</span>
+<span class="comment">//   → JOIN / IN句一括 / バッチサイズ指定</span>
+
+<span class="comment">// 問4: JPAでも同じ？</span>
+<span class="comment">//   → むしろ JPA の方が起きやすい</span>
+
+
+<span class="comment">// この別冊の収穫：</span>
+<span class="comment">// ・新規プロジェクト参加時に</span>
+<span class="comment">//   N+1の地雷を真っ先に疑える目</span>
+<span class="comment">// ・性能問題の発生源を即推理できる感性</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="detection">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>N+1の検出方法</h2>
+    <span class="en">HOW TO DETECT N+1</span>
+  </div>
+  <p class="pattern-desc">N+1問題は<b>「動作上はバグではない」</b>ので、能動的に探さないと気付けません。発見方法は<b>5パターン</b>あります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">detection-methods</span>
+      <span class="tag-desc">5つの検出手法</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 検出方法5つ</div>
+        <div class="role-card">
+          <span class="label">METHOD 1</span>
+          <div class="name">SQLログ目視確認（最も基本）</div>
+          <div class="desc">本編Vol.5でやった方法。<code>logging.level.com.example.todo.mapper=DEBUG</code> でMyBatisのSQLログを出す。<b>1リクエストでSQLが何本流れたか数える</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">METHOD 2</span>
+          <div class="name">p6spy（プロキシ・データソース）</div>
+          <div class="desc">JDBCドライバを<b>ラッピング</b>して全SQLをログ出力するツール。実行時間も計測できる。詳細は次セクション。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">METHOD 3</span>
+          <div class="name">DBサーバ側のクエリログ</div>
+          <div class="desc">MySQLの <code>general_log</code> や <code>slow_query_log</code> を有効化。<b>DB側から</b>「1リクエストで何本SQLが来たか」を観測する。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">METHOD 4</span>
+          <div class="name">SQLカウントテスト</div>
+          <div class="desc">テストコードで「1リクエスト = SQL n本以下」を assertion する。<b>CIで自動検出</b>できる。大規模プロジェクトで採用される手法。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">METHOD 5</span>
+          <div class="name">APMツール（New Relic・Datadog 等）</div>
+          <div class="desc">本番運用中に<b>遅いリクエスト</b>を自動検出。SQL本数・実行時間も可視化。<b>商用環境での発見手段</b>。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// METHOD 1：SQLログ目視（実例）</span>
+
+<span class="comment"># application.properties</span>
+logging.level.com.example.todo.mapper=DEBUG
+
+
+<span class="comment">// 1リクエストでこんなログが流れたら...</span>
+
+==&gt; Preparing: SELECT ... FROM subjects
+==&gt; Preparing: SELECT ... FROM study_records WHERE id=?
+==&gt; Preparing: SELECT ... FROM study_records WHERE id=?
+==&gt; Preparing: SELECT ... FROM study_records WHERE id=?
+==&gt; Preparing: SELECT ... FROM study_records WHERE id=?
+...
+
+<span class="comment">// 「同じパターンのSQLが繰り返されている」</span>
+<span class="comment">// = N+1のサイン</span>
+
+
+<span class="code-head" style="margin-top:14px">// METHOD 4：SQLカウントテスト</span>
+
+<span class="comment">// QueryCountInterceptor を使った例</span>
+
+<span class="ann">@SpringBootTest</span>
+<span class="kw">public class</span> <span class="type">SubjectListTest</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectService</span> service;
+
+  <span class="ann">@Test</span>
+  <span class="kw">public void</span> <span class="fn">listShouldUseOneQuery</span>() {
+    <span class="type">QueryCount</span> qc = <span class="type">QueryCountHolder</span>
+        .<span class="fn">getGrandTotal</span>();
+    qc.<span class="fn">reset</span>();
+
+    service.<span class="fn">findAllWithRecords</span>();
+
+    <span class="comment">// 期待値: SELECT 1回</span>
+    assertEquals(<span class="num">1</span>, qc.<span class="fn">getSelect</span>());
+  }
+}
+
+
+<span class="comment">// ─── CI での効果 ───</span>
+<span class="comment">// リファクタで気付かず N+1 を埋め込むと</span>
+<span class="comment">// このテストが落ちる</span>
+<span class="comment">// → デグレ防止になる</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="tools">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>業界の検出ツール</h2>
+    <span class="en">DETECTION TOOLS</span>
+  </div>
+  <p class="pattern-desc">N+1検出に使われる代表的なツール3つを紹介します。<b>名前を知っているだけでも</b>、プロジェクトに入った時に「あ、これか」と気付ける。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">industry-tools</span>
+      <span class="tag-desc">代表的なツール3つ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 業界ツール</div>
+        <div class="role-card">
+          <span class="label">TOOL 1</span>
+          <div class="name">p6spy</div>
+          <div class="desc">JDBCドライバの<b>プロキシ</b>として動作。全SQL（パラメータ展開済み）と実行時間をログ出力。<b>Spring Boot との連携が容易</b>で日本のSI現場では定番。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TOOL 2</span>
+          <div class="name">datasource-proxy</div>
+          <div class="desc">p6spyと似たプロキシ系ツール。<b>スロークエリ閾値</b>や<b>SQLカウント取得</b>のAPIが豊富で、テストでの利用に向く。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TOOL 3</span>
+          <div class="name">Hibernate Statistics</div>
+          <div class="desc">JPA/Hibernate内蔵の統計機能。「N+1が何回起きたか」「キャッシュヒット率」などを取得できる。<b>JPA派の現場で必須</b>。MyBatisでは使わない。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// p6spy の設定例（参考）</span>
+
+<span class="comment">// pom.xml に依存追加</span>
+&lt;<span class="kw">dependency</span>&gt;
+  &lt;<span class="kw">groupId</span>&gt;com.github.gavlyukovskiy&lt;/<span class="kw">groupId</span>&gt;
+  &lt;<span class="kw">artifactId</span>&gt;p6spy-spring-boot-starter&lt;/<span class="kw">artifactId</span>&gt;
+  &lt;<span class="kw">version</span>&gt;<span class="num">1.9</span>.<span class="num">0</span>&lt;/<span class="kw">version</span>&gt;
+&lt;/<span class="kw">dependency</span>&gt;
+
+
+<span class="comment">// application.properties</span>
+decorator.datasource.p6spy.enable-logging=true
+decorator.datasource.p6spy.logging=slf4j
+
+
+<span class="comment">// ─── 出力例 ─── </span>
+<span class="comment">// （パラメータが ? ではなく実値で展開される）</span>
+
+#1715923200000 | took 3ms | statement
+| SELECT * FROM subjects ORDER BY id
+| SELECT * FROM subjects ORDER BY id
+
+#1715923200003 | took 1ms | statement
+| SELECT * FROM study_records
+  WHERE subject_id = ? ORDER BY studied_on
+| SELECT * FROM study_records
+  WHERE subject_id = <span class="num">1</span> ORDER BY studied_on
+
+
+<span class="comment">// → MyBatis標準ログより詳細</span>
+<span class="comment">// → DBツールにそのままコピペできる</span>
+<span class="comment">// → 開発効率が一段上がる</span>
+
+
+<span class="comment">// 注意：Cではこのツールは導入しない</span>
+<span class="comment">// （現場知識として「あるよ」を伝えるだけ）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>p6spy は<b>「業務開発を10倍ラクにするツール」</b>と言われます。SQL のパラメータが <code>?</code> ではなく実値で展開されるので、<b>DBツールに即コピペ・即再実行</b>できる。プロジェクトに参加した時、もし「p6spy 入ってない」と言われたら<b>導入を提案する価値あり</b>。</p>
+  </div>
+</section>
+
+<section id="cases">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>業務での災厄事例集</h2>
+    <span class="en">FIELD DISASTERS</span>
+  </div>
+  <p class="pattern-desc">N+1問題が引き起こした<b>実際の業務災厄</b>を、典型的な4パターンで紹介。これらは<b>業界で何度も繰り返されている話</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">disaster-cases</span>
+      <span class="tag-desc">業務での災厄パターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 業務災厄</div>
+        <div class="case-card">
+          <div class="ph">DISASTER 1</div>
+          <div class="ttl">「リリース後に画面が30秒返らない」</div>
+          <div class="body">ECサイトの商品一覧。開発時はデータ5件で爆速。本番でデータが10万件になり、商品ごとに「在庫」「画像」「タグ」を別SQLで取得 → 30万SQL／リクエスト → タイムアウト連発。</div>
+          <div class="res">対策：JOIN+resultMap で1リクエスト1〜3SQLに削減</div>
+        </div>
+        <div class="case-card">
+          <div class="ph">DISASTER 2</div>
+          <div class="ttl">「DB接続プールが枯渇してサーバ全停止」</div>
+          <div class="body">APIサーバが1リクエストで100SQLを発行 → 同時アクセス10ユーザーで1000接続が同時に必要 → コネクションプールの上限（50）を超えてシステム全停止。</div>
+          <div class="res">対策：N+1対策によりリクエストあたりSQL数を激減</div>
+        </div>
+        <div class="case-card">
+          <div class="ph">DISASTER 3</div>
+          <div class="ttl">「ピーク時にDBサーバCPU 100%」</div>
+          <div class="body">人気のレポート画面で、各行ごとに集計SQL発行。ピーク時の同時アクセスで<b>DBサーバが悲鳴</b>。アプリ側ではなくDB側がボトルネック化。</div>
+          <div class="res">対策：集計を1SQL化（GROUP BY活用、Vol.9で扱う）</div>
+        </div>
+        <div class="case-card">
+          <div class="ph">DISASTER 4</div>
+          <div class="ttl">「ローカルでは動くがAWSで激遅」</div>
+          <div class="body">開発はDBがローカルでSQL 1往復 1ms。本番はDBがAWS RDSで1往復 20ms。100SQL × 20ms = <b>2秒</b>の遅延。「動くのに遅い」状態でユーザーから苦情。</div>
+          <div class="res">対策：ネットワーク遅延を踏まえた本番想定の負荷試験</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// DISASTER 1 の典型コード</span>
+
+<span class="comment">// 商品一覧Service（NG実装）</span>
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">ProductDto</span>&gt; <span class="fn">findAll</span>() {
+  <span class="type">List</span>&lt;<span class="type">Product</span>&gt; products =
+      productMapper.<span class="fn">findAll</span>();
+  <span class="comment">// → 10万件返る</span>
+
+  <span class="kw">for</span> (<span class="type">Product</span> p : products) {
+    <span class="type">Stock</span> stock =
+        stockMapper.<span class="fn">findByProductId</span>(p.<span class="fn">getId</span>());
+    <span class="type">List</span>&lt;<span class="type">Image</span>&gt; images =
+        imageMapper.<span class="fn">findByProductId</span>(p.<span class="fn">getId</span>());
+    <span class="type">List</span>&lt;<span class="type">Tag</span>&gt; tags =
+        tagMapper.<span class="fn">findByProductId</span>(p.<span class="fn">getId</span>());
+    ...
+  }
+  <span class="comment">// → 商品ごとに3〜4SQL</span>
+  <span class="comment">// → 30〜40万SQL/リクエスト</span>
+}
+
+
+<span class="comment">// ─── 開発環境では...─── </span>
+<span class="comment">// 商品 = 5件</span>
+<span class="comment">// SQL = 5*4 + 1 = 21回</span>
+<span class="comment">// 1リクエスト 200ms</span>
+<span class="comment">// → 「速い」と感じる</span>
+
+
+<span class="comment">// ─── 本番では...─── </span>
+<span class="comment">// 商品 = 100,000件</span>
+<span class="comment">// SQL = 400,001回</span>
+<span class="comment">// 1リクエスト 数十秒〜タイムアウト</span>
+<span class="comment">// → 「使えない」</span>
+
+
+<span class="comment">// ─── 教訓 ─── </span>
+<span class="comment">// 「動く」と「本番で使える」は別物</span>
+<span class="comment">// テスト環境の少データに油断しない</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>業務開発の<b>「あるある」</b>として：「<b>急いでリリースしたら、翌日からサポート対応で1ヶ月吹き飛ぶ</b>」というパターンが本当によくあります。N+1問題はその<b>常連犯人</b>。<b>リリース前にSQLログを30秒見るだけ</b>でも、何百万円分のサポートコストを防げます。</p>
+  </div>
+</section>
+
+<section id="solutions">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>対策3パターン</h2>
+    <span class="en">3 SOLUTION PATTERNS</span>
+  </div>
+  <p class="pattern-desc">N+1対策は<b>3つの確立されたパターン</b>があります。場面に応じて使い分けます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">solution-patterns</span>
+      <span class="tag-desc">3つの対策パターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 対策パターン</div>
+        <div class="role-card">
+          <span class="label">PATTERN 1</span>
+          <div class="name">JOIN + resultMap（本編Vol.4の手法）</div>
+          <div class="desc"><b>最も基本</b>。1回のJOINで親子を取得。MyBatis標準。<b>軽中規模なら第一選択</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PATTERN 2</span>
+          <div class="name">IN句での一括取得</div>
+          <div class="desc">親の id を集めて <code>WHERE id IN (1,2,3,...)</code> で子を一括取得 → Javaコード側で親に振り分け。<b>JOIN結果が爆発しやすい場面で有効</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PATTERN 3</span>
+          <div class="name">バッチサイズ指定（JPA/Hibernate固有）</div>
+          <div class="desc"><code>@BatchSize(size=N)</code> で「N件まとめてIN句で取りに行く」設定。JPA派の常用テクニック。MyBatisでは使わない。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>結論</b>：MyBatisでは<b>「PATTERN 1（JOIN）」を基本</b>、件数や複雑さに応じて<b>「PATTERN 2（IN句）」</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// PATTERN 2: IN句一括取得（イメージ）</span>
+
+<span class="comment">// ─── Service層 ─── </span>
+<span class="type">List</span>&lt;<span class="type">Subject</span>&gt; subjects =
+    subjectMapper.<span class="fn">findAll</span>();
+<span class="comment">// SQL ① → 5件取得</span>
+
+<span class="type">List</span>&lt;<span class="type">Integer</span>&gt; subjectIds = subjects
+    .<span class="fn">stream</span>()
+    .<span class="fn">map</span>(<span class="type">Subject</span>::<span class="fn">getId</span>)
+    .<span class="fn">toList</span>();
+
+<span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt; allRecords =
+    studyRecordMapper.<span class="fn">findBySubjectIds</span>(subjectIds);
+<span class="comment">// SQL ② → 1回でまとめて取得</span>
+<span class="comment">//        WHERE subject_id IN (1,2,3,4,5)</span>
+
+<span class="comment">// Java側で振り分け</span>
+<span class="type">Map</span>&lt;<span class="type">Integer</span>, <span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt;&gt; bySubject =
+    allRecords.<span class="fn">stream</span>()
+    .<span class="fn">collect</span>(<span class="type">Collectors</span>
+      .<span class="fn">groupingBy</span>(<span class="type">StudyRecord</span>::<span class="fn">getSubjectId</span>));
+
+subjects.<span class="fn">forEach</span>(s -&gt;
+    s.<span class="fn">setRecords</span>(
+      bySubject.<span class="fn">getOrDefault</span>(s.<span class="fn">getId</span>(),
+                            <span class="type">List</span>.<span class="fn">of</span>())));
+
+
+<span class="comment">// → SQL は計 2回</span>
+<span class="comment">// → JOINと違って結果セットが爆発しない</span>
+
+
+<span class="comment">// ─── XMLマッパー側 ─── </span>
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findBySubjectIds"</span>
+        <span class="ann">resultType</span>=<span class="str">"StudyRecord"</span>&gt;
+  SELECT * FROM study_records
+  WHERE subject_id IN
+  &lt;<span class="kw">foreach</span> item=<span class="str">"id"</span>
+           collection=<span class="str">"list"</span>
+           open=<span class="str">"("</span> close=<span class="str">")"</span>
+           separator=<span class="str">","</span>&gt;
+    #{id}
+  &lt;/<span class="kw">foreach</span>&gt;
+&lt;/<span class="kw">select</span>&gt;
+
+
+<span class="comment">// → &lt;foreach&gt; は Vol.6 動的SQLで詳しく</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">どっちを選ぶか</div>
+    <p><b>JOIN派 vs IN句派</b>は時に宗教戦争になります。判断軸は<b>「JOIN結果の行数が爆発するか」</b>。親100件×子10件=1000行ならJOINでも問題ない。親100件×子1000件=10万行になるとIN句の方が安全。<b>件数を見て選ぶ</b>のが現場の鉄則。</p>
+  </div>
+</section>
+
+<section id="jpa">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>JPAでも起きる同じ問題</h2>
+    <span class="en">SAME PROBLEM IN JPA</span>
+  </div>
+  <p class="pattern-desc">JPA/Hibernate（Spring Data JPA）でも<b>同じN+1問題</b>が発生します。むしろ<b>JPAの方が発生しやすい</b>側面もある。技術が変わっても本質は同じ。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">jpa-n-plus-1</span>
+      <span class="tag-desc">JPAでのN+1</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// JPAで起こる典型例</div>
+        <div class="role-card">
+          <span class="label">JPA罠1</span>
+          <div class="name">@OneToMany(fetch = LAZY) のループアクセス</div>
+          <div class="desc">親をリスト取得 → ループで <code>parent.getChildren()</code> → 各呼び出しで子のSQL発行 → 結果N+1。JPAの<b>最頻出</b>パターン。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">JPA罠2</span>
+          <div class="name">@OneToMany(fetch = EAGER) でも危険</div>
+          <div class="desc">EAGER にすると<b>毎回JOIN</b>になる。「子の数が大きい時」「親を全件取る時」に結果セットが爆発し、メモリ枯渇。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">JPA罠3</span>
+          <div class="name">findAll() の見た目に騙される</div>
+          <div class="desc"><code>repository.findAll()</code> は一見「全部取る」が、関連エンティティはLAZYなので<b>後で別SQL</b>になる。コードが綺麗に見えるだけに気付きにくい。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>JPA対策</b>：<code>JOIN FETCH</code> 句を明示する／<code>@EntityGraph</code> を使う／<code>@BatchSize</code> でIN句一括化。</p>
+      </div>
+      <div class="code"><span class="code-head">// JPA罠1の典型コード</span>
+
+<span class="ann">@Entity</span>
+<span class="kw">public class</span> <span class="type">Subject</span> {
+  <span class="ann">@Id</span> <span class="kw">private</span> <span class="type">Long</span> id;
+
+  <span class="ann">@OneToMany</span>(mappedBy = <span class="str">"subject"</span>,
+             fetch = <span class="type">FetchType</span>.LAZY)
+  <span class="kw">private</span> <span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt; records;
+}
+
+
+<span class="comment">// Service層</span>
+<span class="type">List</span>&lt;<span class="type">Subject</span>&gt; subjects = repo.<span class="fn">findAll</span>();
+<span class="comment">// ↑ ここで SELECT * FROM subjects (1回)</span>
+
+<span class="kw">for</span> (<span class="type">Subject</span> s : subjects) {
+  <span class="kw">int</span> count = s.<span class="fn">getRecords</span>().<span class="fn">size</span>();
+  <span class="comment">// ↑ 各反復でSQL発行！</span>
+  <span class="comment">// SELECT * FROM study_records WHERE...</span>
+  <span class="comment">// 「LAZY だから後で取りに行く」</span>
+}
+<span class="comment">// → 1+N回SQL = N+1問題</span>
+
+
+<span class="code-head" style="margin-top:14px">// JPA対策: JOIN FETCH</span>
+
+<span class="ann">@Repository</span>
+<span class="kw">public interface</span> <span class="type">SubjectRepository</span>
+       <span class="kw">extends</span> <span class="type">JpaRepository</span>&lt;<span class="type">Subject</span>, <span class="type">Long</span>&gt; {
+
+  <span class="ann">@Query</span>(<span class="str">"SELECT DISTINCT s FROM Subject s "</span>
+       + <span class="str">"LEFT JOIN FETCH s.records"</span>)
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>();
+}
+
+
+<span class="comment">// → 1回のJOINで親子取得</span>
+<span class="comment">// → MyBatisの resultMap + JOIN と本質同じ</span>
+
+
+<span class="comment">// ─── 技術が変わっても本質は同じ ─── </span>
+<span class="comment">// MyBatis:</span>
+<span class="comment">//   &lt;resultMap&gt; + &lt;collection&gt; + JOIN</span>
+<span class="comment">// JPA:</span>
+<span class="comment">//   @Query + JOIN FETCH</span>
+<span class="comment">// 生JDBC:</span>
+<span class="comment">//   PreparedStatement + JOIN文字列</span>
+
+
+<span class="comment">// すべて「1回でJOINして取る」</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="culture">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>業界の検出文化</h2>
+    <span class="en">DETECTION CULTURE</span>
+  </div>
+  <p class="pattern-desc">N+1検出は<b>個人の技</b>から<b>チーム文化</b>へと進化してきました。業界全体での「<b>N+1を生まない仕組み</b>」がどう運用されているかを紹介します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">culture-practices</span>
+      <span class="tag-desc">現場の慣習</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 業界での慣習</div>
+        <div class="role-card">
+          <span class="label">PRACTICE 1</span>
+          <div class="name">コードレビューでSQLログ確認</div>
+          <div class="desc">PRレビュー時に「<b>このコードでSQL何本出る？</b>」と必ず質問する文化。<b>レビュアー側がN+1を見つける目を持つ</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PRACTICE 2</span>
+          <div class="name">SQL カウントの assertion 必須化</div>
+          <div class="desc">主要画面の<b>SQL本数上限</b>をテストで保証。一覧画面は3本以下、詳細画面は5本以下、など。CIで自動検証。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PRACTICE 3</span>
+          <div class="name">本番相当データでの定期検証</div>
+          <div class="desc">月1回、本番相当のデータ量で各画面をアクセス → SQL本数と応答時間を計測。<b>劣化の早期検出</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PRACTICE 4</span>
+          <div class="name">スロークエリ通知の自動化</div>
+          <div class="desc">DB側でスロークエリ閾値（例：100ms以上）を設定 → ログ収集ツール → Slack通知。<b>本番で出てから即対応</b>できる体制。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 現場あるある：レビューでの質問</span>
+
+<span class="comment">// レビュアーのよくある質問：</span>
+
+<span class="comment">// 「この画面、本番でデータ1000件になっても</span>
+<span class="comment">//  動きますか？」</span>
+
+<span class="comment">// 「SQLログ見ました？何本流れますか？」</span>
+
+<span class="comment">// 「サブクエリの中に for ループない？」</span>
+
+<span class="comment">// 「stream().map で別Mapper呼んでない？」</span>
+
+<span class="comment">// 「ここJOIN FETCHで取れません？」</span>
+
+
+<span class="comment">// → これらの質問が出るチームは強い</span>
+<span class="comment">// → 新人にもこの目を継承していく</span>
+
+
+<span class="code-head" style="margin-top:14px">// チームに N+1 を継承する仕組み</span>
+
+<span class="comment">// ① コーディング規約に明記</span>
+<span class="comment">//    「親子取得は JOIN または IN句で」</span>
+<span class="comment">//    「ループ中のMapper呼び出し禁止」</span>
+
+<span class="comment">// ② 新人研修で必ずN+1を体験させる</span>
+<span class="comment">//    （本編Vol.5でやったような比較実験）</span>
+
+<span class="comment">// ③ Lint / 静的解析で機械検出</span>
+<span class="comment">//    （Java版の検出ツールは未発達だが</span>
+<span class="comment">//     一部存在する）</span>
+
+<span class="comment">// ④ SQLログを常時CIで監視</span>
+<span class="comment">//    （SQL数の増加で即アラート）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>N+1 を見つける目</b>」は、エンジニアとしての<b>市場価値を直接的に押し上げる</b>スキルです。面接や転職活動で「N+1問題について説明してください」と聞かれた時、<b>本編Vol.5での体験</b>を語れるなら、<b>「実戦感のある人」</b>として評価されます。理屈だけでなく<b>「やった経験」</b>が大事。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>N+1対策のハマりどころ</h2>
+    <span class="en">PITFALLS</span>
+  </div>
+  <p class="pattern-desc">N+1対策<b>そのもの</b>にも落とし穴があります。<b>「直したつもりがまた別の問題を作る」</b>の典型例を整理。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">solution-pitfalls</span>
+      <span class="tag-desc">対策の罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 対策の罠</div>
+        <div class="role-card">
+          <span class="label">PITFALL 1</span>
+          <div class="name">JOIN で結果セットが爆発</div>
+          <div class="desc">親1000件×子100件 = 10万行のJOIN結果。<b>メモリを大量消費</b>＋<b>ネットワーク帯域を食う</b>。直したのに別の遅さが出る。<br><b>対策</b>：IN句一括取得（PATTERN 2）に切り替える。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 2</span>
+          <div class="name">JOIN FETCH で DISTINCT 忘れ（JPA）</div>
+          <div class="desc">JPAで <code>JOIN FETCH</code> すると<b>親が子の数だけ重複</b>。重複した親リストが返ってきて画面表示がおかしくなる。<br><b>対策</b>：<code>SELECT DISTINCT s FROM ...</code> と DISTINCT を付ける。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 3</span>
+          <div class="name">不要なEAGER化</div>
+          <div class="desc">「N+1怖いから全部EAGER」とした結果、<b>使わない関連まで毎回取得</b>。性能劣化。<br><b>対策</b>：必要な画面でだけ JOIN FETCH を明示。デフォルトは LAZY のまま。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 4</span>
+          <div class="name">JOINだらけで保守性低下</div>
+          <div class="desc">複雑なJOINに次々resultMapを書くと、<b>SQLが読めなくなる</b>。性能と引き換えに保守性を失う。<br><b>対策</b>：性能と読みやすさのバランス。本当に必要な時だけJOIN化。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// PITFALL 1: JOIN爆発の事例</span>
+
+<span class="comment">// 親 1,000件 × 子平均 100件</span>
+
+<span class="comment">// ─── JOIN方式 ───</span>
+<span class="kw">SELECT</span> ... <span class="kw">FROM</span> parents p
+<span class="kw">LEFT JOIN</span> children c ON p.id = c.parent_id;
+
+<span class="comment">// 結果セット: 100,000行</span>
+<span class="comment">// 各行: 親の列＋子の列を全部含む</span>
+<span class="comment">// → ネットワーク転送量が大きい</span>
+<span class="comment">// → アプリ側のメモリ消費も大きい</span>
+<span class="comment">// → SQL自体は速いがトータルで遅い</span>
+
+
+<span class="comment">// ─── IN句方式 ───</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> parents;
+<span class="comment">// → 1,000行</span>
+
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> children
+<span class="kw">WHERE</span> parent_id <span class="kw">IN</span> (<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,...,<span class="num">1000</span>);
+<span class="comment">// → 100,000行（重複なし）</span>
+
+<span class="comment">// 合計: 1,000 + 100,000 = 101,000行</span>
+<span class="comment">// JOIN: 100,000行と同等</span>
+
+<span class="comment">// だがJOIN行と違って親列は重複しない</span>
+<span class="comment">// → 転送量は同等以下</span>
+<span class="comment">// → メモリ効率は良い</span>
+
+
+<span class="comment">// ─── 結論 ───</span>
+<span class="comment">// 親が多くて子も多い場合は IN句方式の方が有利</span>
+
+
+<span class="code-head" style="margin-top:14px">// PITFALL 2: DISTINCT忘れ（JPA）</span>
+
+<span class="ann">@Query</span>(<span class="str">"SELECT s FROM Subject s "</span>
+     + <span class="str">"LEFT JOIN FETCH s.records"</span>)
+<span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>();
+
+<span class="comment">// 結果: Subject 1(records 3件) が3個</span>
+<span class="comment">//       Subject 2(records 2件) が2個 ...</span>
+<span class="comment">// → 画面に Subject が重複表示</span>
+
+
+<span class="ann">@Query</span>(<span class="str">"SELECT DISTINCT s FROM Subject s "</span>
+     + <span class="str">"LEFT JOIN FETCH s.records"</span>)
+<span class="comment">// ↑ DISTINCT で重複除去</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次の本編へ</h2>
+    <span class="en">TO THE NEXT VOLUME</span>
+  </div>
+  <p class="pattern-desc">別冊S5お疲れさまでした。<b>「N+1問題を業界全体の文脈で理解できる目」</b>が手に入りました。これからの開発で<b>常にSQLログを意識する習慣</b>が、最大の武器になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">この別冊のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 持ち帰る5つの知見</div>
+        <div class="role-card">
+          <span class="label">知見1</span>
+          <div class="name">N+1の検出方法は5パターン</div>
+          <div class="desc">SQLログ／p6spy／DB側ログ／SQLカウントテスト／APM</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見2</span>
+          <div class="name">対策は3パターン</div>
+          <div class="desc">JOIN+resultMap／IN句一括／バッチサイズ指定</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見3</span>
+          <div class="name">JPAでも起きる本質的問題</div>
+          <div class="desc">技術が変わっても「ループ中のSQL」が地雷</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見4</span>
+          <div class="name">業務で災厄を生んできた</div>
+          <div class="desc">30秒返らない／コネクション枯渇／DB CPU 100%</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見5</span>
+          <div class="name">対策にも罠がある</div>
+          <div class="desc">JOIN爆発・DISTINCT忘れ・不要EAGER化</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.6 本編で起きること</span>
+
+<span class="comment">// タイトル：</span>
+<span class="comment">// 「@RequestParam で絞り込もう」</span>
+
+<span class="comment">// やること：</span>
+<span class="comment">// 1. URLパラメータ ?subject=1 で絞り込み</span>
+<span class="comment">// 2. @RequestParam の使い方</span>
+<span class="comment">// 3. SubjectMapper.xmlに条件付きSELECT追加</span>
+<span class="comment">// 4. 検索フォーム（科目セレクトボックス）</span>
+<span class="comment">// 5. 動的SQLの予告（Vol.8で本格化）</span>
+
+<span class="comment">// 獲得スキル：</span>
+<span class="comment">// → 検索獲得</span>
+
+
+<span class="comment">// Vol.5で「N+1の感性」を磨き、</span>
+<span class="comment">// Vol.6で「実用機能」に踏み込む。</span>
+<span class="comment">// Cの中盤戦の始まり。</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(85,92,76,0.12)">
+    <div class="tip-label">NEXT STEP ── VOL.6 本編</div>
+    <p>別冊S5で<b>「N+1の業界知識」</b>を獲得しました。次のVol.6 本編「<b>@RequestParam で絞り込もう</b>」では、<b>実用的な検索機能</b>を実装します。<br>URLパラメータで「特定の科目だけ表示」「期間で絞り込み」を実現。Cの<b>中盤戦</b>の始まりです。本編Vol.6 へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.05 / 15 ── N+1 IN DEPTH（別冊）</span>
+</footer>
+
+</body>
+</html>

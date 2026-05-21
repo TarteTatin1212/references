@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕Vol.7 複合検索 動的SQLの実装</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2940;
+  --paper:#f3f0e6;
+  --paper-2:#e4dfcd;
+  --accent:#2d5485;
+  --accent-2:#507aa8;
+  --accent-3:#8a6a3a;
+  --muted:#6a7484;
+  --line:#c6c1b0;
+  --code-bg:#1a2236;
+  --code-text:#e8e4d4;
+  --panel-bg:#ede7d3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✦";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.phase-badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700;letter-spacing:0.05em}
+.ph-req{background:#e8eef6;color:#2d5485;border:1px solid #2d5485}
+.ph-des{background:#f0ebe0;color:#8a6a3a;border:1px solid #8a6a3a}
+.ph-imp{background:#e6efe8;color:#3a6a4a;border:1px solid #3a6a4a}
+.ph-test{background:#f3e8e8;color:#9a4040;border:1px solid #9a4040}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.key{background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(45,84,133,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.tag-chip{display:inline-block;background:var(--accent-2);color:#fff;padding:1px 10px;border-radius:12px;font-size:11px;margin:2px;font-family:'JetBrains Mono',monospace}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.7</span>
+    <span class="kind-tag">本編 ── MAIN</span>
+    <span class="rdt-tag">REQ · DESIGN · TEST</span>
+  </div>
+  <h1>複合検索<br>動的SQLの実装</h1>
+  <div class="subtitle">VOL.07 ── COMPOUND SEARCH ── DYNAMIC SQL</div>
+  <p class="lead">いよいよ最後のユーザーストーリー<b>US-004（検索）</b>に着手。<b>キーワード＋カテゴリ＋タグ</b>を組み合わせた複合検索を実装します。条件の有無で SQL が変わる<b>動的SQL（&lt;if&gt;&lt;where&gt;&lt;foreach&gt;）</b>が登場。もちろん全て <code>#{}</code> で<b>安全</b>に。別冊S6の理論が、ついに実装で形になります。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら — Vol.7 で新たに使うもの</div>
+    <p>実装の新規 import はほぼ無し。XML で <code>&lt;if&gt;</code> <code>&lt;where&gt;</code> <code>&lt;foreach&gt;</code> が初登場。検索条件をまとめる<b>SearchForm</b> クラスを新規作成（右クリック→New→Class）。<code>Ctrl + Shift + O</code>整理、<code>Ctrl + 1</code>クイック修正。<b>別冊S6を開きながら</b>進めましょう。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 要求の確認（US-004）</a></li>
+    <li><a href="#s02">02 受入条件をテストケース化</a></li>
+    <li><a href="#s03">03 仕様化：検索条件の設計</a></li>
+    <li><a href="#s04">04 設計①：検索条件オブジェクト</a></li>
+    <li><a href="#s05">05 設計②：動的SQLの組み立て</a></li>
+    <li><a href="#s06">06 実装</a></li>
+    <li><a href="#s07">07 テスト（条件の組み合わせ）</a></li>
+    <li><a href="#s08">08 ブラウザ確認＋ハマりどころ</a></li>
+    <li><a href="#s09">09 レビュー・評価＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>要求の確認（US-004）</h2><span class="phase-badge ph-req">PHASE: REQ</span><span class="en">REVISIT REQUIREMENT</span></div>
+  <p class="pattern-desc">いつも通り<b>まず要求から</b>。Vol.1 で定義した最後のストーリー <b>US-004（検索）</b>を確認します。メモが増えると一覧では探しきれない。<b>「キーワードで探す」「条件を組み合わせて絞る」</b>——これが検索の価値です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">US-004 と受入条件</span><span class="tag-desc">条件の組み合わせ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// この巻のスコープ</div>
+        <p>Vol.7 では <b>キーワード（部分一致）＋カテゴリ＋タグ</b>を組み合わせた検索を実装。<b>LIKE 検索</b>が中心です。大量データ向けの<b>全文検索（FULLTEXT）</b>は次の Vol.8。</p>
+
+        <div class="panel-head" style="margin-top:18px">// US-004 の再掲</div>
+        <div class="role-card" style="margin-top:8px">
+          <span class="label">US-004 / COULD</span>
+          <div class="name">メモを検索したい</div>
+          <div class="desc"><b>As a</b> たくさんメモを持つユーザー<br><b>I want</b> キーワードや条件でメモを探したい<br><b>so that</b> 目的のメモにすぐ辿り着ける</div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// 検索の難所（別冊S6）</div>
+        <p>検索は<b>動的・安全・速さ</b>の3課題が同時に来ます。Vol.7 では<b>動的（条件で変わる）と安全（#{}）</b>に集中。速さは Vol.8 で。</p>
+      </div>
+      <div class="code"><span class="code-head">// US-004 の受入条件</span>
+<span class="ann">@AC1</span> キーワード検索
+Given: 「会議」を含むメモがある
+When : キーワード「会議」で検索
+Then : タイトル/本文に「会議」を含むメモが出る
+
+<span class="ann">@AC2</span> カテゴリで絞り込み
+Given: 複数カテゴリのメモがある
+When : カテゴリ「仕事」で検索
+Then : 「仕事」のメモだけ出る
+
+<span class="ann">@AC3</span> タグで絞り込み
+Given: 複数タグのメモがある
+When : タグ「重要」で検索
+Then : 「重要」が付いたメモだけ出る
+
+<span class="ann">@AC4</span> 複合条件（AND）★動的SQLの核心
+Given: メモが複数ある
+When : キーワード＋カテゴリ＋タグを同時指定
+Then : 全条件を満たすメモだけ出る
+
+<span class="ann">@AC5</span> 条件なし
+Given: メモがある
+When : 何も入力せず検索
+Then : 全件が出る（エラーにしない）
+
+
+<span class="comment">// ─── @AC4,5 が動的SQLの核心 ★★★ ───</span>
+<span class="comment">// 条件の有無・組み合わせで SQL が変わる</span>
+<span class="comment">// → &lt;if&gt;&lt;where&gt; が必要（別冊S6）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「条件なしで全件」も立派な仕様</div>
+    <p>@AC5「何も入力せず検索→全件」は<b>見落としやすいが重要</b>な受入条件。検索フォームで空のまま検索したとき、<b>エラーにせず全件返す</b>のが親切な挙動。これは別冊S6の動的SQL <code>&lt;where&gt;</code> が<b>「条件0個なら WHERE を出さない」</b>で自然に実現します。<b>「入力なし」という境界もテストする</b>のが、別冊S3のテスト設計です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>受入条件をテストケース化</h2><span class="phase-badge ph-req">PHASE: REQ→TEST</span><span class="en">AC TO TEST CASES</span></div>
+  <p class="pattern-desc">検索の受入条件をテストに。<b>条件の組み合わせ</b>が多いので、テストケースも<b>組み合わせ網羅</b>が肝。これらは<b>SQLの動作</b>なので結合テスト（H2）です。別冊S3の<b>テスト設計技法</b>が活きます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">検索のテストケース表</span><span class="tag-desc">条件の組み合わせ網羅</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 組み合わせテストケース</div>
+        <table class="compare-tbl">
+          <thead><tr><th>キーワード</th><th>カテゴリ</th><th>タグ</th><th>期待</th></tr></thead>
+          <tbody>
+            <tr><td>あり</td><td>—</td><td>—</td><td>キーワード一致</td></tr>
+            <tr><td>—</td><td>あり</td><td>—</td><td>カテゴリ一致</td></tr>
+            <tr><td>—</td><td>—</td><td>あり</td><td>タグ一致</td></tr>
+            <tr><td>あり</td><td>あり</td><td>あり</td><td><b>全条件AND</b></td></tr>
+            <tr><td>—</td><td>—</td><td>—</td><td>全件</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px">条件の<b>有無の組み合わせ</b>を網羅。特に<b>@AC4（全部）と@AC5（なし）</b>の両端をテスト（別冊S3の境界値）。</p>
+      </div>
+      <div class="code"><span class="code-head">// 受入条件 → テスト層</span>
+<span class="comment">// ─── 全部結合テスト（@MybatisTest+H2）───</span>
+<span class="comment">// 検索はSQLの動作 → 実DBで検証</span>
+
+@AC1 キーワード
+  → LIKE が効くか
+
+@AC2 カテゴリ
+  → WHERE category_id が効くか
+
+@AC3 タグ
+  → IN句（中間テーブル）が効くか
+
+@AC4 複合（AND）★★★
+  → 全条件が AND で効くか
+
+@AC5 条件なし
+  → WHERE が出ず全件か
+
+
+<span class="comment">// ─── 別冊S3 のテスト技法を適用 ───</span>
+<span class="comment">// 同値分割：条件あり/なしのグループ</span>
+<span class="comment">// 境界値：「全部指定」と「全部なし」の両端</span>
+<span class="comment">// → 組み合わせの端をテスト ★★★</span>
+
+
+<span class="comment">// ─── テストデータの設計が肝 ───</span>
+<span class="comment">// 「条件で絞れること」を示すには</span>
+<span class="comment">// 「絞られて消えるデータ」も必要</span>
+メモA: 会議・仕事・重要  ← 全条件一致
+メモB: 買物・私用・なし  ← 何も一致しない
+<span class="comment">// → 検索でAだけ残ることを確認 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 検索テストは「ヒットしないデータ」も用意する</div>
+    <p>検索テストの落とし穴：<b>ヒットするデータだけ</b>用意すると、「実は絞り込めていない（全件返ってるだけ）」バグを見逃します。<b>「条件に合うメモ」と「合わないメモ」の両方</b>を用意し、<b>合わないメモが結果から消える</b>ことを確認する。「メモA（一致）が出て、メモB（不一致）が出ない」——<b>両方検証してこそ「絞り込めた」証明</b>になります。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>仕様化：検索条件の設計</h2><span class="phase-badge ph-req">PHASE: SPEC</span><span class="en">SPECIFICATION</span></div>
+  <p class="pattern-desc">検索画面と URL を設計します。<b>GET メソッド＋クエリパラメータ</b>（別冊S6・本編Vol.4）。複数の条件をまとめて受け取る方法を決めます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">検索画面とURL設計</span><span class="tag-desc">GET＋クエリパラメータ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// URL設計</div>
+        <ul>
+          <li>検索：<code>GET /memos/search</code></li>
+          <li>パラメータ：<code>?keyword=会議&categoryId=1&tagIds=2</code></li>
+        </ul>
+        <p style="margin-top:8px"><b>GET＋クエリパラメータ</b>で、URLに検索条件が表れる。ブックマーク・共有・戻る進むが効く（本編Vol.4のPOINT）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 検索フォームの構成</div>
+        <ul>
+          <li><b>キーワード</b>：text 入力</li>
+          <li><b>カテゴリ</b>：select（単一）</li>
+          <li><b>タグ</b>：checkbox（複数）</li>
+        </ul>
+        <p style="margin-top:8px">一覧画面（SC-01）の絞り込みを<b>強化した検索画面（SC-08）</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 検索画面と URL</span>
+<span class="comment">// ─── 検索画面イメージ ───</span>
+┌────────────────────────────┐
+│ メモ検索                     │
+│ キーワード: [会議        ]   │
+│ カテゴリ:   [仕事 ▼]         │
+│ タグ:  ☑重要 ☐急ぎ ☐あとで  │
+│ [検索]                      │
+├────────────────────────────┤
+│ 検索結果（2件）              │
+│ ・会議メモ ●仕事 [重要]      │
+│ ・定例会議 ●仕事 [重要][急ぎ]│
+└────────────────────────────┘
+
+
+<span class="comment">// ─── 送信される URL ───</span>
+GET /memos/search
+    ?keyword=会議
+    &categoryId=1
+    &tagIds=2
+
+<span class="comment">// → 全条件がURLに（ブックマーク可）★</span>
+
+
+<span class="comment">// ─── 条件の組み合わせパターン ───</span>
+全部指定:
+  ?keyword=会議&categoryId=1&tagIds=2
+キーワードのみ:
+  ?keyword=会議
+何もなし:
+  /memos/search （パラメータなし）
+
+<span class="comment">// → 条件の有無で動的にSQL変化（Section 05）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 検索条件は1つのオブジェクトにまとめる</div>
+    <p>検索条件が増えると、Controller のメソッド引数が <code>keyword, categoryId, tagIds, ...</code> と<b>膨らみます</b>。これを<b>1つの「検索条件オブジェクト（SearchForm）」にまとめる</b>のが定石（次の Section 04）。引数が1個になり、条件が増えてもフィールド追加で対応できる。<b>「関連するデータはまとめる」</b>——別冊S2の凝集度の考え方です。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>設計①：検索条件オブジェクト</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">SEARCH FORM OBJECT</span></div>
+  <p class="pattern-desc">複数の検索条件を<b>1つのオブジェクト（SearchForm）</b>にまとめます。バラバラの引数より<b>凝集度が高く</b>、条件追加にも強い。別冊S2の設計原則をここで実践します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">SearchForm クラスの設計</span><span class="tag-desc">条件をまとめる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// SearchForm の役割</div>
+        <p>検索条件（キーワード・カテゴリID・タグIDリスト）を<b>1つのオブジェクト</b>に。Controller はこれ1個を受け取り、Mapper にそのまま渡す。</p>
+
+        <div class="panel-head" style="margin-top:18px">// メリット</div>
+        <ul>
+          <li>引数が<b>1個</b>で済む</li>
+          <li>条件追加が<b>フィールド追加だけ</b></li>
+          <li><b>「検索条件」という概念</b>がコードに表れる</li>
+          <li>Mapper の <code>&lt;if test&gt;</code> で各フィールドを判定</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 作成手順</div>
+        <p><code>form</code> パッケージ右クリック → <b>New → Class</b> → <b>SearchForm</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// SearchForm.java</span>
+<span class="kw">package</span> com.example.memo.form;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">SearchForm</span> {
+    <span class="comment">// キーワード（タイトル/本文の部分一致）</span>
+    <span class="kw">private</span> <span class="type">String</span> keyword;
+
+    <span class="comment">// カテゴリ（単一）</span>
+    <span class="kw">private</span> <span class="type">Long</span> categoryId;
+
+    <span class="comment">// タグ（複数）</span>
+    <span class="kw">private</span> <span class="type">List</span>&lt;<span class="type">Long</span>&gt; tagIds;
+}
+
+
+<span class="comment">// ─── 引数1個 vs バラバラ ───</span>
+<span class="ann">バラバラ（NG）:</span>
+search(String keyword,
+       Long categoryId,
+       List&lt;Long&gt; tagIds, ...)
+<span class="comment">// → 条件が増えると引数も増える ★</span>
+
+<span class="ann">まとめる（OK）:</span>
+search(SearchForm form)
+<span class="comment">// → 引数1個。条件追加はフィールド追加 ★★★</span>
+<span class="comment">// → 別冊S2の「凝集度を高める」</span>
+
+
+<span class="comment">// ─── Controller での受け取り ───</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/search"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">search</span>(
+    <span class="ann">@ModelAttribute</span> <span class="type">SearchForm</span> form,
+    <span class="type">Model</span> model) {
+  <span class="comment">// keyword=会議&categoryId=1&tagIds=2 が</span>
+  <span class="comment">// 自動で SearchForm にバインドされる ★</span>
+  model.<span class="fn">addAttribute</span>(<span class="str">"memos"</span>,
+    service.<span class="fn">search</span>(form));
+  <span class="comment">// 検索フォーム再表示用にカテゴリ・タグも</span>
+  model.<span class="fn">addAttribute</span>(<span class="str">"form"</span>, form);
+  <span class="kw">return</span> <span class="str">"memos/search"</span>;
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — フォームオブジェクトは @ModelAttribute で自動バインド</div>
+    <p>Spring の <code>@ModelAttribute SearchForm form</code> は、<b>クエリパラメータを自動で SearchForm のフィールドにマッピング</b>します。<code>?keyword=会議&categoryId=1</code> が <code>form.keyword="会議"</code> <code>form.categoryId=1</code> に。手作業のパラメータ取得が不要。<b>「URLのパラメータ名＝フィールド名」</b>にしておけば、Spring が全部やってくれる。これも凝集度を高める設計の恩恵です。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>設計②：動的SQLの組み立て</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">DYNAMIC SQL DESIGN</span></div>
+  <p class="pattern-desc"><b>別冊S6の集大成</b>。SearchForm の各条件を、<b>&lt;if&gt;&lt;where&gt;&lt;foreach&gt;</b> で動的SQLに組み立てます。条件があれば WHERE に足し、なければ足さない。全て <code>#{}</code> で<b>安全</b>に。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">動的SQLの設計（別冊S6の実践）</span><span class="tag-desc">if/where/foreach</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 各条件の組み立て方</div>
+        <table class="compare-tbl">
+          <thead><tr><th>条件</th><th>SQL断片</th><th>タグ</th></tr></thead>
+          <tbody>
+            <tr><td>キーワード</td><td>title/content LIKE</td><td>&lt;if&gt;</td></tr>
+            <tr><td>カテゴリ</td><td>category_id =</td><td>&lt;if&gt;</td></tr>
+            <tr><td>タグ</td><td>IN (memo_tags)</td><td>&lt;foreach&gt;</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// &lt;where&gt; が整える</div>
+        <p><code>&lt;where&gt;</code> が<b>「条件0個なら WHERE 省略」「先頭 AND 削除」</b>を自動化（別冊S6）。@AC5（条件なし→全件）も自然に実現。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 安全性</div>
+        <p>全て <code>#{}</code>。<code>${}</code> は使わない（別冊S6）。SQLインジェクション対策を徹底。</p>
+      </div>
+      <div class="code"><span class="code-head">// 検索の動的SQL（MemoMapper.xml）</span>
+<span class="kw">&lt;select</span> id=<span class="str">"search"</span>
+        resultMap=<span class="str">"MemoFull"</span><span class="kw">&gt;</span>
+  SELECT DISTINCT m.*,
+    c.name AS category_name,
+    c.color AS category_color
+  FROM memos m
+  LEFT JOIN categories c
+    ON m.category_id = c.id
+  <span class="ann">&lt;where&gt;</span>
+    <span class="comment">&lt;!-- @AC1 キーワード --&gt;</span>
+    <span class="ann">&lt;if</span> test=<span class="str">"keyword != null</span>
+              <span class="str">and keyword != ''"</span><span class="ann">&gt;</span>
+      AND (m.title LIKE
+             CONCAT('%', #{keyword}, '%')
+        OR m.content LIKE
+             CONCAT('%', #{keyword}, '%'))
+    <span class="ann">&lt;/if&gt;</span>
+    <span class="comment">&lt;!-- @AC2 カテゴリ --&gt;</span>
+    <span class="ann">&lt;if</span> test=<span class="str">"categoryId != null"</span><span class="ann">&gt;</span>
+      AND m.category_id = #{categoryId}
+    <span class="ann">&lt;/if&gt;</span>
+    <span class="comment">&lt;!-- @AC3 タグ（IN句）--&gt;</span>
+    <span class="ann">&lt;if</span> test=<span class="str">"tagIds != null</span>
+              <span class="str">and !tagIds.isEmpty()"</span><span class="ann">&gt;</span>
+      AND m.id IN (
+        SELECT memo_id FROM memo_tags
+         WHERE tag_id IN
+        <span class="ann">&lt;foreach</span> item=<span class="str">"id"</span>
+                 collection=<span class="str">"tagIds"</span>
+                 open=<span class="str">"("</span> separator=<span class="str">","</span>
+                 close=<span class="str">")"</span><span class="ann">&gt;</span>
+          #{id}
+        <span class="ann">&lt;/foreach&gt;</span>
+      )
+    <span class="ann">&lt;/if&gt;</span>
+  <span class="ann">&lt;/where&gt;</span>
+  ORDER BY m.updated_at DESC
+<span class="kw">&lt;/select&gt;</span>
+
+<span class="comment">// ─── 条件で SQL がこう変わる ───</span>
+<span class="comment">// 全部指定 → WHERE ... AND ... AND ...</span>
+<span class="comment">// キーワードのみ → WHERE title LIKE ...</span>
+<span class="comment">// なし → WHERE なし（全件）★★★</span>
+
+<span class="comment">// ─── 全て #{} で安全 ───</span>
+<span class="comment">// #{keyword} #{categoryId} #{id}</span>
+<span class="comment">// → SQLインジェクション対策（別冊S6）★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — タグ検索（多対多）は IN ＋サブクエリ＋foreach</div>
+    <p>タグでの絞り込みは<b>多対多</b>なので、少し工夫が要ります。「<b>指定タグのいずれかが付いたメモのID</b>」を中間テーブルから取り、<code>m.id IN (...)</code> で絞る。<code>&lt;foreach&gt;</code> でタグIDリストを <code>(2, 5, 7)</code> に展開（別冊S6）。<code>SELECT DISTINCT</code> を付けるのは、複数タグ一致でメモが重複しないようにするため。<b>多対多の検索は IN ＋サブクエリが定石</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>実装</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">IMPLEMENTATION</span></div>
+  <p class="pattern-desc">設計に沿って実装。<b>SearchForm</b>、<b>Mapper（動的SQL）</b>、<b>Service</b>、<b>Controller</b>、<b>検索View</b>。既存の構造に検索を追加します。クラス作成は<b>「右クリック → New」</b>を明示します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Mapper・Service の実装</span><span class="tag-desc">動的SQLを呼ぶ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 作成手順</div>
+        <ol class="step-list">
+          <li><code>form</code> に <b>SearchForm</b>（Section 04）</li>
+          <li><code>MemoMapper</code> に <code>search(SearchForm)</code> 追加</li>
+          <li><code>MemoMapper.xml</code> に動的SQL（Section 05）</li>
+          <li><code>MemoService</code> に <code>search</code> メソッド</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// Service はシンプル</div>
+        <p>動的SQLの複雑さは XML に閉じ込めたので、Service は<b>Mapper を呼ぶだけ</b>。薄く保てる（別冊S2の責務分離）。</p>
+      </div>
+      <div class="code"><span class="code-head">// Mapper / Service の追加</span>
+<span class="comment">// ─── MemoMapper.java（追加）───</span>
+<span class="type">List</span>&lt;<span class="type">Memo</span>&gt; <span class="fn">search</span>(<span class="type">SearchForm</span> form);
+<span class="comment">// → SearchForm を渡すだけ</span>
+<span class="comment">// → XML側で form.keyword 等を参照</span>
+
+
+<span class="comment">// ─── MemoService（追加）───</span>
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Memo</span>&gt; <span class="fn">search</span>(
+    <span class="type">SearchForm</span> form) {
+  <span class="kw">return</span> mapper.<span class="fn">search</span>(form);
+}
+<span class="comment">// → 動的SQLの複雑さはXMLに</span>
+<span class="comment">// → Serviceは薄い（別冊S2）★</span>
+
+
+<span class="comment">// ─── 検索でもタグを表示したい ───</span>
+<span class="comment">// 注：Section 05のSQLはカテゴリのみJOIN。</span>
+<span class="comment">// タグ表示も必要なら、検索でヒットした</span>
+<span class="comment">// メモIDに対しタグをまとめて取得するか、</span>
+<span class="comment">// resultMapにtagsのcollectionを追加。</span>
+<span class="comment">// （Vol.5のMemoFull resultMapを流用）</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Controller・View の実装</span><span class="tag-desc">検索フォームと結果表示</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Controller</div>
+        <p><code>@ModelAttribute SearchForm</code> で条件を受け取り（Section 04）、検索結果と<b>フォーム再表示用のデータ</b>（カテゴリ・タグ一覧、入力値）を Model に渡す。</p>
+
+        <div class="panel-head" style="margin-top:18px">// View（検索フォーム＋結果）</div>
+        <p>1画面に<b>検索フォーム</b>と<b>結果一覧</b>を表示。検索後も<b>入力した条件が残る</b>ようにする（再検索しやすい）。</p>
+      </div>
+      <div class="code"><span class="code-head">// Controller + 検索View</span>
+<span class="comment">// ─── MemoController（検索）───</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/search"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">search</span>(
+    <span class="ann">@ModelAttribute</span> <span class="type">SearchForm</span> form,
+    <span class="type">Model</span> model) {
+  model.<span class="fn">addAttribute</span>(<span class="str">"memos"</span>,
+    service.<span class="fn">search</span>(form));
+  <span class="comment">// フォーム再表示用</span>
+  model.<span class="fn">addAttribute</span>(<span class="str">"categories"</span>,
+    categoryService.<span class="fn">findAll</span>());
+  model.<span class="fn">addAttribute</span>(<span class="str">"allTags"</span>,
+    tagService.<span class="fn">findAll</span>());
+  model.<span class="fn">addAttribute</span>(<span class="str">"form"</span>, form);
+  <span class="kw">return</span> <span class="str">"memos/search"</span>;
+}
+
+
+<span class="comment">// ─── search.html（検索フォーム）───</span>
+<span class="kw">&lt;form</span> method=<span class="str">"get"</span>
+      action=<span class="str">"/memos/search"</span>
+      th:object=<span class="str">"${form}"</span><span class="kw">&gt;</span>
+  <span class="comment">&lt;!-- キーワード（入力値が残る）--&gt;</span>
+  <span class="kw">&lt;input</span> type=<span class="str">"text"</span>
+         name=<span class="str">"keyword"</span>
+         th:value=<span class="str">"*{keyword}"</span><span class="kw">&gt;</span>
+  <span class="comment">&lt;!-- カテゴリ --&gt;</span>
+  <span class="kw">&lt;select</span> name=<span class="str">"categoryId"</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;option</span> value=<span class="str">""</span><span class="kw">&gt;</span>すべて<span class="kw">&lt;/option&gt;</span>
+    <span class="kw">&lt;option</span> th:each=<span class="str">"c : ${categories}"</span>
+       th:value=<span class="str">"${c.id}"</span>
+       th:text=<span class="str">"${c.name}"</span>
+       th:selected=
+         <span class="str">"${c.id == form.categoryId}"</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;/option&gt;</span>
+  <span class="kw">&lt;/select&gt;</span>
+  <span class="comment">&lt;!-- タグ（複数）--&gt;</span>
+  <span class="kw">&lt;span</span> th:each=<span class="str">"t : ${allTags}"</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;input</span> type=<span class="str">"checkbox"</span>
+           name=<span class="str">"tagIds"</span>
+           th:value=<span class="str">"${t.id}"</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;span</span> th:text=<span class="str">"${t.name}"</span><span class="kw">&gt;</span><span class="kw">&lt;/span&gt;</span>
+  <span class="kw">&lt;/span&gt;</span>
+  <span class="kw">&lt;button&gt;</span>検索<span class="kw">&lt;/button&gt;</span>
+<span class="kw">&lt;/form&gt;</span>
+
+<span class="comment">&lt;!-- 検索結果（一覧と同じ表示）--&gt;</span>
+<span class="kw">&lt;div</span> th:each=<span class="str">"memo : ${memos}"</span><span class="kw">&gt;</span> ... <span class="kw">&lt;/div&gt;</span>
+<span class="comment">// → 結果0件なら「該当なし」も表示</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 検索後も「入力した条件」を残す</div>
+    <p>検索のUX で大事なのが<b>「検索後も入力値が残る」</b>こと。キーワードを打って検索→結果が出たとき、<b>入力欄が空に戻る</b>と「条件を変えて再検索」がやりにくい。<code>th:value="*{keyword}"</code> で<b>入力値を保持</b>し、カテゴリ・タグも選択状態を維持。<b>「ユーザーの操作を無駄にしない」</b>のが親切な検索画面です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>テスト（条件の組み合わせ）</h2><span class="phase-badge ph-test">PHASE: TEST</span><span class="en">TEST</span></div>
+  <p class="pattern-desc">検索を結合テストで検証。<b>各条件単独・複合・条件なし</b>を網羅。「<b>ヒットするメモが出て、ヒットしないメモが消える</b>」を厳密に確認します（Section 02 のPOINT）。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">結合テスト — 検索の組み合わせ</span><span class="tag-desc">@AC1〜5 を実DBで</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テストデータ設計</div>
+        <p>「絞り込めること」を示すため、<b>条件に合うメモと合わないメモ</b>を用意：</p>
+        <ul>
+          <li>メモA：「会議」仕事カテゴリ・重要タグ</li>
+          <li>メモB：「買物」私用カテゴリ・タグなし</li>
+        </ul>
+        <p style="margin-top:8px">各検索で<b>Aが出てBが消える</b>ことを検証。</p>
+      </div>
+      <div class="code"><span class="code-head">// MemoSearchTest.java（結合・H2）</span>
+<span class="ann">@MybatisTest</span>
+<span class="kw">class</span> <span class="type">MemoSearchTest</span> {
+  <span class="ann">@Autowired</span> <span class="type">MemoMapper</span> mapper;
+  <span class="comment">// @BeforeEach でメモA・Bを用意（省略）</span>
+
+  <span class="comment">// @AC1 キーワード</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">キーワードで絞り込める</span>() {
+    <span class="type">SearchForm</span> form = <span class="kw">new</span> <span class="type">SearchForm</span>();
+    form.<span class="fn">setKeyword</span>(<span class="str">"会議"</span>);
+
+    <span class="kw">var</span> result = mapper.<span class="fn">search</span>(form);
+
+    <span class="comment">// Aだけ（Bは消える）</span>
+    <span class="fn">assertThat</span>(result)
+      .<span class="fn">extracting</span>(<span class="type">Memo</span>::<span class="fn">getTitle</span>)
+      .<span class="fn">containsExactly</span>(<span class="str">"会議メモ"</span>);
+    <span class="comment">// → 「買物」は出ない ★★★</span>
+  }
+
+  <span class="comment">// @AC4 複合条件（AND）</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">複合条件で絞り込める</span>() {
+    <span class="type">SearchForm</span> form = <span class="kw">new</span> <span class="type">SearchForm</span>();
+    form.<span class="fn">setKeyword</span>(<span class="str">"会議"</span>);
+    form.<span class="fn">setCategoryId</span>(workId);
+    form.<span class="fn">setTagIds</span>(<span class="type">List</span>.<span class="fn">of</span>(importantId));
+
+    <span class="kw">var</span> result = mapper.<span class="fn">search</span>(form);
+
+    <span class="comment">// 全条件を満たすAだけ</span>
+    <span class="fn">assertThat</span>(result).<span class="fn">hasSize</span>(<span class="num">1</span>);
+    <span class="comment">// → AND で全部効いている ★★★</span>
+  }
+
+  <span class="comment">// @AC5 条件なし → 全件</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">条件なしなら全件</span>() {
+    <span class="type">SearchForm</span> form = <span class="kw">new</span> <span class="type">SearchForm</span>();
+    <span class="comment">// 何も設定しない</span>
+
+    <span class="kw">var</span> result = mapper.<span class="fn">search</span>(form);
+
+    <span class="comment">// 全件（A・B両方）</span>
+    <span class="fn">assertThat</span>(result).<span class="fn">hasSize</span>(<span class="num">2</span>);
+    <span class="comment">// → &lt;where&gt;が空→WHERE省略→全件 ★★★</span>
+  }
+
+  <span class="comment">// @AC3 タグで絞り込み</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">タグで絞り込める</span>() {
+    <span class="type">SearchForm</span> form = <span class="kw">new</span> <span class="type">SearchForm</span>();
+    form.<span class="fn">setTagIds</span>(<span class="type">List</span>.<span class="fn">of</span>(importantId));
+
+    <span class="kw">var</span> result = mapper.<span class="fn">search</span>(form);
+    <span class="comment">// 重要タグ付きのAだけ</span>
+    <span class="fn">assertThat</span>(result).<span class="fn">hasSize</span>(<span class="num">1</span>);
+  }
+}
+
+<span class="comment">// → 条件の有無・組み合わせを網羅 ★★★</span>
+<span class="comment">// → 動的SQLが正しく変化するか実証</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 動的SQLは「条件の組み合わせ」をテストで網羅</div>
+    <p>動的SQLは<b>条件の有無で生成されるSQLが変わる</b>ため、<b>「条件あり」「条件なし」「複合」を網羅</b>してテストします。特に<b>@AC5（条件なし→全件）</b>は <code>&lt;where&gt;</code> が正しく空になるかの検証。もし <code>&lt;if&gt;</code> の test 条件にミスがあると、<b>「条件を入れたのに絞れない」「空なのに0件」</b>といったバグが出る。<b>組み合わせテストが動的SQLの正しさを保証</b>します。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>ブラウザ確認＋ハマりどころ</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">VERIFY &amp; PITFALLS</span></div>
+  <p class="pattern-desc">テストが緑になったらブラウザで確認。<b>各条件・複合・空検索</b>を目視。Vol.7 で踏みやすい動的SQL特有の地雷を5つ先回りします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.7 ハマりどころ 5選</span><span class="tag-desc">動的SQL特有の地雷</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 空文字とnullの判定漏れ ★★★</b></p>
+        <ul>
+          <li>キーワード未入力で空文字 "" が来る→ LIKE '%%' で全件のはずが意図せず動く</li>
+          <li>対処：<code>keyword != null and keyword != ''</code> の両方を test に</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② &lt;foreach&gt; で空リストエラー ★★★</b></p>
+        <ul>
+          <li>tagIds が空で <code>IN ()</code> になり構文エラー</li>
+          <li>対処：<code>&lt;if test="tagIds != null and !tagIds.isEmpty()"&gt;</code> で囲む</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ タグ複数指定でメモが重複表示</b></p>
+        <ul>
+          <li>JOIN で1メモが複数行に</li>
+          <li>対処：<code>SELECT DISTINCT</code> または IN＋サブクエリ（Section 05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ ${} を使ってインジェクション穴</b></p>
+        <ul>
+          <li>うっかり ${keyword} と書く</li>
+          <li>対処：必ず #{}（別冊S6）。${} は使わない</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 検索後に入力値が消える</b></p>
+        <ul>
+          <li>th:value 未設定でフォームが空に戻る</li>
+          <li>対処：form の値を th:value で再表示（Section 06）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// テスト＆ブラウザ確認</span>
+<span class="comment">// ─── テスト結果 ───</span>
+MemoSearchTest
+  ✓ キーワードで絞り込める
+  ✓ タグで絞り込める
+  ✓ 複合条件で絞り込める
+  ✓ 条件なしなら全件
+
+<span class="kw">all green</span> ★★★
+
+
+<span class="comment">// ─── ① 空文字の判定 ───</span>
+<span class="ann">NG:</span> &lt;if test="keyword != null"&gt;
+<span class="comment">// → 空文字 "" のとき true になり</span>
+<span class="comment">//   LIKE '%%' が走る（実害は薄いが無駄）</span>
+
+<span class="ann">OK:</span> &lt;if test="keyword != null
+            and keyword != ''"&gt;
+<span class="comment">// → 空文字なら条件を足さない ★★★</span>
+
+
+<span class="comment">// ─── ② foreach の空リスト対策 ───</span>
+<span class="ann">NG:</span> tagIds=[] で
+    IN () ← 構文エラー ★
+
+<span class="ann">OK:</span> &lt;if test="tagIds != null
+            and !tagIds.isEmpty()"&gt;
+      ... &lt;foreach&gt; ...
+    &lt;/if&gt;
+<span class="comment">// → 空なら IN 句ごと出さない ★★★</span>
+
+
+<span class="comment">// ─── ブラウザ確認 ───</span>
+<span class="comment">// /memos/search で：</span>
+<span class="comment">// - キーワードのみ検索（@AC1）</span>
+<span class="comment">// - カテゴリのみ（@AC2）</span>
+<span class="comment">// - タグのみ（@AC3）</span>
+<span class="comment">// - 全部指定（@AC4・AND）</span>
+<span class="comment">// - 空検索→全件（@AC5）</span>
+<span class="comment">// - 検索後も条件が残る（⑤）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 動的SQLは「実際に生成されたSQL」をログで確認</div>
+    <p>動的SQLのデバッグでは、<b>実際に生成されたSQLをログ出力</b>すると一発で原因が分かります。<code>application.properties</code> に MyBatis のSQLログ設定を入れると、<b>条件によってどんな SQL になったか</b>がコンソールに出る。「条件を入れたのに WHERE に出ていない」「IN () になっている」が目で見える。<b>「動的に何が生成されたか」を見る</b>のが、動的SQLデバッグの王道です。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>レビュー・評価＆次巻へ</h2><span class="phase-badge ph-test">PHASE: REVIEW</span><span class="en">REVIEW &amp; NEXT</span></div>
+  <p class="pattern-desc">複合検索を実装しました。<b>US-004 の検索が動くか、動的SQLは安全か、条件の組み合わせはテストしたか</b>を振り返ります。<b>4つ目のユーザーストーリー</b>に着手できたことを実感しましょう。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.7 卒業チェック</span><span class="tag-desc">動的SQL突破の評価</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 要求の達成</div>
+        <ul class="check-list">
+          <li>US-004 の @AC1〜@AC5 をテスト化した</li>
+          <li>各テストが緑になった</li>
+          <li>キーワード＋カテゴリ＋タグの複合検索が動く</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 設計の評価</div>
+        <ul class="check-list">
+          <li>検索条件を SearchForm にまとめた（凝集度）</li>
+          <li>&lt;if&gt;&lt;where&gt;&lt;foreach&gt; で動的SQLを組んだ</li>
+          <li>全て #{} で安全に書いた（インジェクション対策）</li>
+          <li>条件なし→全件を &lt;where&gt; で自然に実現した</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// テストの評価</div>
+        <ul class="check-list">
+          <li>条件の組み合わせを網羅した</li>
+          <li>「ヒットする/しない」両方を検証した</li>
+          <li>条件なし（全件）の境界もテストした</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.7 で完成したフロー</span>
+<span class="comment">// ─── 要求（REQ）───</span>
+US-004 検索（前半）
+@AC4 複合・@AC5 条件なしが核心
+  ↓
+<span class="comment">// ─── 設計（DESIGN）───</span>
+SearchForm（条件をまとめる）
++ 動的SQL（&lt;if&gt;&lt;where&gt;&lt;foreach&gt;）
++ 全て #{}（安全）
+  ↓
+<span class="comment">// ─── 実装（IMPL）───</span>
+動的SQL＋検索フォーム
++ 入力値の保持
+  ↓
+<span class="comment">// ─── テスト（TEST）───</span>
+条件の組み合わせ網羅
++ ヒットする/しないの両方
+
+
+<span class="comment">// ─── Vol.7 で得たもの ───</span>
+<span class="comment">// ・動的SQL（条件で変わるSQL）</span>
+<span class="comment">// ・SQLインジェクション対策の実践</span>
+<span class="comment">// ・検索条件オブジェクトの設計</span>
+<span class="comment">// ・組み合わせテストの網羅</span>
+
+
+<span class="comment">// ─── 4つのUSの状況 ───</span>
+US-001 メモ作成     ✓
+US-002 カテゴリ分類  ✓
+US-003 タグ付け      ✓
+US-004 検索          着手（LIKE検索完成）★
+
+
+<span class="comment">// 次回 Vol.8：</span>
+<span class="comment">//   全文検索（FULLTEXT）</span>
+<span class="comment">//   大量データでも速い検索</span>
+<span class="comment">//   LIKE の限界とインデックス</span>
+<span class="comment">//   US-004 の完成 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.8 へ</div>
+    <p>Vol.7 で<b>動的SQL</b>を習得し、複合検索（LIKE）を実装しました。次は Vol.8「<b>全文検索（FULLTEXT）</b>」。今回の LIKE 検索は<b>メモが少ないうちは十分</b>ですが、<b>大量データだと遅い</b>（別冊S6：<code>LIKE '%%'</code> は索引が効かない）。Vol.8 では <b>MySQL の FULLTEXT インデックス</b>で高速化し、<b>US-004 を完成</b>させます。別冊S2の<b>「測定してから最適化」</b>がついに実践される回。並行して<b>別冊S7</b>、<b>GitHub版Vol.7</b>を進めると効果的。<b>本編Vol.8 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>VOL.07 / 14 ── COMPOUND SEARCH（DYNAMIC SQL）（本編）</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕別冊S5 トランザクションと整合性の理論</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a3540;
+  --paper:#ece8de;
+  --paper-2:#d8d4c6;
+  --accent:#6a8590;
+  --accent-2:#8aa0a8;
+  --accent-3:#a07050;
+  --muted:#707a82;
+  --line:#c2c0b4;
+  --code-bg:#252a32;
+  --code-text:#e6e2d6;
+  --panel-bg:#f3eee2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✧";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.18;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.tip{background:rgba(106,133,144,0.10);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.S5</span>
+    <span class="kind-tag">別冊 ── SUB</span>
+    <span class="rdt-tag">TRANSACTION THEORY</span>
+  </div>
+  <h1>トランザクションと整合性<br>「全部成功か、全部なかったことに」</h1>
+  <div class="subtitle">SUB.05 ── TRANSACTION &amp; DATA INTEGRITY</div>
+  <p class="lead">本編Vol.6 で<b>メモへのタグ付け（複数テーブル更新）</b>を実装します。別冊S5では、その土台となる<b>トランザクションの理論</b>を深掘りします。<b>ACID</b>、<b>原子性</b>、<b>@Transactional の仕組み</b>、<b>ロールバック</b>、<b>分離レベル</b>。「<b>データが中途半端な状態にならない</b>」を保証する技術です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 別冊S5で腑に落とす3つの問い</div>
+    <p>① なぜ<b>複数テーブル更新</b>にトランザクションが要るのか／② <b>@Transactional</b> は何をしているのか／③ <b>例外でロールバック</b>される条件は何か — この3問に自分の言葉で答えられたらS5卒業です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 別冊S5のミッション</a></li>
+    <li><a href="#s02">02 トランザクションとは</a></li>
+    <li><a href="#s03">03 ACID特性</a></li>
+    <li><a href="#s04">04 原子性とロールバック</a></li>
+    <li><a href="#s05">05 @Transactionalの仕組み</a></li>
+    <li><a href="#s06">06 ロールバックの条件</a></li>
+    <li><a href="#s07">07 分離レベルと同時実行</a></li>
+    <li><a href="#s08">08 トランザクションあるある失敗</a></li>
+    <li><a href="#s09">09 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>別冊S5のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">別冊S5は<b>「データの整合性を守る理論を理解する」</b>回。本編Vol.6 で<b>メモのタグ付け</b>を実装します。これは<b>「memos を更新し、memo_tags に複数INSERT」</b>という複数の操作。<b>途中で失敗したら？</b>——この問いに答えるのがトランザクションです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">なぜトランザクションが必要か</span><span class="tag-desc">中途半端を防ぐ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 複数操作の「中途半端」問題</div>
+        <p>本編Vol.6 の「メモにタグ3つを付ける」は、内部で<b>複数のINSERT</b>になります。もし<b>2つ目で失敗</b>したら？</p>
+        <ul>
+          <li>1つ目のタグ：保存済み</li>
+          <li>2つ目のタグ：失敗</li>
+          <li>3つ目のタグ：未実行</li>
+        </ul>
+        <p style="margin-top:8px">→ <b>中途半端な状態</b>。「タグ1つだけ付いた壊れたメモ」が残る。これを防ぐのがトランザクション。</p>
+
+        <div class="panel-head" style="margin-top:18px">// トランザクションの約束</div>
+        <p><b>「全部成功か、全部なかったことに」</b>。途中で失敗したら<b>最初の状態に戻す（ロールバック）</b>。中途半端を許さない。</p>
+      </div>
+      <div class="code"><span class="code-head">// トランザクションがない世界の悲劇</span>
+<span class="comment">// ─── タグ付けで途中失敗 ───</span>
+メモにタグ[重要,急ぎ,あとで]を付ける
+
+INSERT memo_tags(memo=1, tag=重要) ✓
+INSERT memo_tags(memo=1, tag=急ぎ) ✓
+INSERT memo_tags(memo=1, tag=あとで) ✗ 失敗！
+                                （DB接続切れ等）
+
+<span class="comment">// トランザクションなしだと…</span>
+結果：重要・急ぎは保存、あとでは未保存
+  → 中途半端な状態 ★
+  → ユーザー「あれ、あとでタグは？」
+  → データが意図と違う
+
+
+<span class="comment">// ─── 銀行の例（古典）───</span>
+A口座から1万円引く ✓
+B口座に1万円足す ✗ 失敗
+
+<span class="comment">// → トランザクションなし：</span>
+<span class="comment">//   1万円が消えた！（Aから引いたまま）</span>
+<span class="comment">// → トランザクションあり：</span>
+<span class="comment">//   全部取り消し、Aの1万円は戻る ★★★</span>
+
+
+<span class="comment">// → 「全部か、ゼロか」が整合性の鍵</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「単一の操作」には不要、「複数の操作」に必要</div>
+    <p>トランザクションが必要なのは<b>「1つの業務が複数のDB操作にまたがる」</b>とき。Vol.2〜5 の単一INSERTには不要でした（1操作は元々原子的）。でも Vol.6 の<b>「メモ更新＋タグ複数INSERT」</b>は複数操作なので必要。<b>「この業務、途中で失敗したら困る複数操作か?」</b>がトランザクション要否の判断基準です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>トランザクションとは</h2><span class="en">WHAT IS TRANSACTION</span></div>
+  <p class="pattern-desc"><b>トランザクション</b>とは<b>「ひとまとまりの処理」</b>。複数のDB操作を1つの単位として扱い、<b>「全部成功（コミット）」か「全部取り消し（ロールバック）」</b>のどちらかにする仕組みです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">コミットとロールバック</span><span class="tag-desc">2つの結末</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// トランザクションの3つの操作</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">BEGIN</span>
+            <div class="name">開始</div>
+            <div class="desc">トランザクションを<b>始める</b>。ここから一連の操作。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">COMMIT</span>
+            <div class="name">確定</div>
+            <div class="desc">全部成功 → <b>変更を確定</b>。DBに永続化。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">ROLLBACK</span>
+            <div class="name">取り消し</div>
+            <div class="desc">失敗 → <b>全部なかったことに</b>。開始前に戻す。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// 流れ</div>
+        <p>BEGIN →（複数の操作）→ 全部OKなら COMMIT、1つでも失敗なら ROLLBACK。<b>「中間状態が外から見えない」</b>のが特徴。</p>
+      </div>
+      <div class="code"><span class="code-head">// トランザクションの流れ</span>
+<span class="comment">// ─── 成功パターン ───</span>
+<span class="kw">BEGIN</span>;                    <span class="comment">// 開始</span>
+  UPDATE memos ...        <span class="comment">// 操作1 ✓</span>
+  INSERT memo_tags ...    <span class="comment">// 操作2 ✓</span>
+  INSERT memo_tags ...    <span class="comment">// 操作3 ✓</span>
+<span class="kw">COMMIT</span>;                   <span class="comment">// 全部確定 ★</span>
+<span class="comment">// → 変更がDBに永続化される</span>
+
+
+<span class="comment">// ─── 失敗パターン ───</span>
+<span class="kw">BEGIN</span>;                    <span class="comment">// 開始</span>
+  UPDATE memos ...        <span class="comment">// 操作1 ✓</span>
+  INSERT memo_tags ...    <span class="comment">// 操作2 ✓</span>
+  INSERT memo_tags ...    <span class="comment">// 操作3 ✗ 例外！</span>
+<span class="kw">ROLLBACK</span>;                 <span class="comment">// 全部取り消し ★★★</span>
+<span class="comment">// → 操作1,2もなかったことに</span>
+<span class="comment">// → BEGIN前の状態に完全に戻る</span>
+
+
+<span class="comment">// ─── Spring では自動 ───</span>
+<span class="comment">// @Transactional を付けると…</span>
+<span class="comment">// メソッド開始 = BEGIN</span>
+<span class="comment">// 正常終了 = COMMIT</span>
+<span class="comment">// 例外発生 = ROLLBACK</span>
+<span class="comment">// → BEGIN/COMMIT/ROLLBACKを</span>
+<span class="comment">//   手で書かなくていい ★★★（Section 05）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「中間状態が見えない」のが重要</div>
+    <p>トランザクション中の<b>中途半端な状態は、外（他のユーザーや処理）からは見えません</b>。タグを3つINSERTしている途中、他の人が一覧を見ても<b>「0個」か「3個」</b>しか見えない（1個や2個の中間は見えない）。COMMIT した瞬間に全部見える。<b>「全部見えるか、何も見えないか」</b>。これがデータの一貫性を守ります。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>ACID特性</h2><span class="en">ACID PROPERTIES</span></div>
+  <p class="pattern-desc">トランザクションが守るべき<b>4つの性質 ACID</b>。<b>原子性・一貫性・分離性・永続性</b>。難しい用語ですが、<b>「中途半端を作らない」</b>ための4つの約束と理解すれば十分です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ACID — 4つの約束</span><span class="tag-desc">頭文字で覚える</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <table class="compare-tbl">
+          <thead><tr><th>頭字</th><th>性質</th><th>意味</th></tr></thead>
+          <tbody>
+            <tr><td><b>A</b></td><td>原子性<br>Atomicity</td><td>全部か、ゼロか</td></tr>
+            <tr><td><b>C</b></td><td>一貫性<br>Consistency</td><td>ルールを保つ</td></tr>
+            <tr><td><b>I</b></td><td>分離性<br>Isolation</td><td>互いに干渉しない</td></tr>
+            <tr><td><b>D</b></td><td>永続性<br>Durability</td><td>確定後は消えない</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 本シリーズで特に重要な2つ</div>
+        <ul>
+          <li><b>A（原子性）</b>：タグ複数INSERTが「全部か、ゼロか」（Vol.6）</li>
+          <li><b>I（分離性）</b>：同時アクセス時の干渉防止（Section 07）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// ACID をメモ帳で理解</span>
+<span class="comment">// ─── A 原子性（Atomicity）───</span>
+<span class="comment">// タグ3つINSERT</span>
+<span class="comment">// → 全部成功 or 全部なし</span>
+<span class="comment">// → 「タグ1個だけ」は許さない ★★★</span>
+
+
+<span class="comment">// ─── C 一貫性（Consistency）───</span>
+<span class="comment">// 制約（FK・UNIQUE等）を破らない</span>
+<span class="comment">// → 存在しないtag_idは紐付けられない</span>
+<span class="comment">//   （FK制約が一貫性を守る）</span>
+
+
+<span class="comment">// ─── I 分離性（Isolation）───</span>
+<span class="comment">// 2人が同時にタグ付けしても</span>
+<span class="comment">// 互いの中間状態が見えない</span>
+<span class="comment">// → 混ざらない（Section 07）</span>
+
+
+<span class="comment">// ─── D 永続性（Durability）───</span>
+<span class="comment">// COMMITしたら、停電してもデータは残る</span>
+<span class="comment">// → DBがディスクに確実に記録</span>
+
+
+<span class="comment">// ─── 4つは「中途半端を作らない」───</span>
+<span class="comment">// ための異なる角度の保証 ★★★</span>
+<span class="comment">// A: 操作の中途半端なし</span>
+<span class="comment">// C: ルール違反の状態なし</span>
+<span class="comment">// I: 他者との混ざりなし</span>
+<span class="comment">// D: 確定後の消失なし</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — ACID は「DBが頑張ってくれる」</div>
+    <p>ACID の多くは<b>DB（MySQL等）が自動的に保証</b>してくれます。私たちが意識するのは主に<b>A（原子性）＝トランザクションの境界をどこに引くか</b>。「この一連の操作は全部か、ゼロか」とまとめるのが開発者の仕事。Spring では <b>@Transactional でメソッドに境界を引く</b>だけ。<b>残りはDBとフレームワークがやってくれる</b>のです。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>原子性とロールバック</h2><span class="en">ATOMICITY &amp; ROLLBACK</span></div>
+  <p class="pattern-desc">ACID で最重要な<b>原子性（Atomicity）</b>。「<b>全部か、ゼロか</b>」を実現するのが<b>ロールバック</b>。失敗時に開始前の状態へ完全に巻き戻す。本編Vol.6 のタグ付けで、この恩恵を受けます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ロールバックが「全部か、ゼロか」を作る</span><span class="tag-desc">巻き戻しの仕組み</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Vol.6 のタグ付けで考える</div>
+        <p>「メモのタグを[重要,急ぎ,あとで]に更新」は、内部で：</p>
+        <ol style="margin-left:20px">
+          <li>既存のタグ紐付けを全削除</li>
+          <li>新しいタグを順にINSERT</li>
+        </ol>
+        <p style="margin-top:8px"><b>途中で失敗したら？</b> ロールバックで<b>削除も取り消し、INSERTも取り消し</b>。元のタグ状態に戻る。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 「全削除→再INSERT」が安全な理由</div>
+        <p>タグ更新は<b>「全部消して付け直す」</b>のが定石。トランザクションがあるので、途中失敗しても<b>元に戻る</b>から安全。差分更新より<b>シンプルで確実</b>です。</p>
+      </div>
+      <div class="code"><span class="code-head">// タグ更新とロールバック</span>
+<span class="comment">// ─── タグを付け替える処理 ───</span>
+<span class="ann">@Transactional</span>  <span class="comment">// ← これが原子性を保証</span>
+<span class="kw">public void</span> <span class="fn">updateTags</span>(
+    <span class="type">Long</span> memoId,
+    <span class="type">List</span>&lt;<span class="type">Long</span>&gt; tagIds) {
+
+  <span class="comment">// 1. 既存の紐付けを全削除</span>
+  mapper.<span class="fn">deleteTagsByMemoId</span>(memoId);
+
+  <span class="comment">// 2. 新しいタグを順にINSERT</span>
+  <span class="kw">for</span> (<span class="type">Long</span> tagId : tagIds) {
+    mapper.<span class="fn">addTag</span>(memoId, tagId);
+  }
+}
+
+
+<span class="comment">// ─── 途中失敗時の動き ───</span>
+deleteTagsByMemoId(1)  ✓ 削除
+addTag(1, 重要)        ✓
+addTag(1, 急ぎ)        ✗ 例外！
+
+<span class="comment">// @Transactional のおかげで…</span>
+<span class="kw">ROLLBACK</span>
+  → 削除も取り消し（タグが戻る）
+  → 重要のINSERTも取り消し
+  → 元のタグ状態に完全復帰 ★★★
+
+<span class="comment">// → 「全削除したのに付け直せなかった」</span>
+<span class="comment">//   という最悪の事態を防ぐ</span>
+
+
+<span class="comment">// ─── トランザクションなしの恐怖 ───</span>
+<span class="comment">// deleteで全タグ消えた後に</span>
+<span class="comment">// INSERTが失敗したら…</span>
+<span class="comment">// → タグが全部消えたまま！★</span>
+<span class="comment">// → だから @Transactional が必須</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「全削除→再INSERT」はトランザクションが前提</div>
+    <p>多対多の更新で<b>「既存を全削除して新しく付け直す」</b>のは定石ですが、<b>トランザクションがあって初めて安全</b>です。もしトランザクションなしで「全削除→INSERT失敗」したら、<b>タグが全部消えたまま</b>の悲劇に。<b>@Transactional があるから、大胆に全削除→再INSERTできる</b>。トランザクションが<b>シンプルな実装を可能にする</b>のです。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>@Transactionalの仕組み</h2><span class="en">HOW @TRANSACTIONAL WORKS</span></div>
+  <p class="pattern-desc">Spring では <b>@Transactional</b> アノテーション1つでトランザクションが効きます。BEGIN/COMMIT/ROLLBACK を手で書く必要がない。その<b>仕組み</b>と<b>正しい付け方</b>を理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">@Transactional の動作</span><span class="tag-desc">メソッド境界がトランザクション</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// @Transactional が自動でやること</div>
+        <ul>
+          <li>メソッド<b>開始時に BEGIN</b></li>
+          <li>正常に<b>戻ったら COMMIT</b></li>
+          <li><b>例外が出たら ROLLBACK</b></li>
+        </ul>
+        <p style="margin-top:8px"><b>メソッドの実行範囲＝トランザクションの範囲</b>。だから「複数操作を1メソッドにまとめ、@Transactional を付ける」が基本形。</p>
+
+        <div class="panel-head" style="margin-top:18px">// どこに付けるか</div>
+        <ul>
+          <li><b>Service のメソッド</b>に付ける（業務の単位）</li>
+          <li>Controller や Mapper には付けない</li>
+          <li>クラスに付けると全メソッドに適用</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// @Transactional の正しい使い方</span>
+<span class="kw">import</span> org.springframework
+         .transaction.annotation.Transactional;
+
+<span class="ann">@Service</span>
+<span class="ann">@RequiredArgsConstructor</span>
+<span class="kw">public class</span> <span class="type">MemoTagService</span> {
+  <span class="kw">private final</span> <span class="type">MemoMapper</span> mapper;
+
+  <span class="comment">// 複数操作 → @Transactional 必須</span>
+  <span class="ann">@Transactional</span>
+  <span class="kw">public void</span> <span class="fn">updateTags</span>(
+      <span class="type">Long</span> memoId,
+      <span class="type">List</span>&lt;<span class="type">Long</span>&gt; tagIds) {
+    mapper.<span class="fn">deleteTagsByMemoId</span>(memoId);
+    <span class="kw">for</span> (<span class="type">Long</span> id : tagIds) {
+      mapper.<span class="fn">addTag</span>(memoId, id);
+    }
+  }
+  <span class="comment">// → メソッド全体が1トランザクション</span>
+  <span class="comment">// → 例外で全ロールバック ★★★</span>
+}
+
+
+<span class="comment">// ─── 仕組み：プロキシ（AOP）───</span>
+<span class="comment">// Spring は @Transactional メソッドを</span>
+<span class="comment">// 「プロキシ」で包む：</span>
+
+呼び出し
+  ↓
+[プロキシ] BEGIN
+  ↓
+実際のメソッド実行
+  ↓
+[プロキシ] 正常 → COMMIT
+          例外 → ROLLBACK
+
+<span class="comment">// → 開発者は中身を書くだけ ★</span>
+<span class="comment">// → 境界管理はSpringが代行</span>
+
+
+<span class="comment">// ─── 付ける場所の指針 ───</span>
+Controller : 付けない（HTTPの世話）
+<span class="kw">Service</span>    : <span class="kw">付ける</span>（業務の単位）★
+Mapper     : 付けない（SQLの実行）
+
+<span class="comment">// → 別冊S2の3層と対応</span>
+<span class="comment">// → 業務ロジックの境界＝トランザクション</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — トランザクションは「Service層」に引く</div>
+    <p>@Transactional は<b>Service のメソッド</b>に付けます。理由：<b>Service は「1つの業務」を表す単位</b>だから（別冊S2）。「メモにタグを付ける」という業務全体が1トランザクション。Mapper（個々のSQL）や Controller（HTTP）には付けない。<b>「業務の境界＝トランザクションの境界」</b>。3層構造とトランザクションが綺麗に対応します。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>ロールバックの条件</h2><span class="en">ROLLBACK CONDITIONS</span></div>
+  <p class="pattern-desc"><b>意外な落とし穴</b>：@Transactional は<b>「どんな例外でもロールバック」ではありません</b>。デフォルトでは<b>非チェック例外（RuntimeException）でのみロールバック</b>。チェック例外では<b>ロールバックしない</b>。ここを知らないとハマります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ロールバックされる例外・されない例外</span><span class="tag-desc">デフォルトの挙動に注意</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// デフォルトの挙動</div>
+        <table class="compare-tbl">
+          <thead><tr><th>例外の種類</th><th>ロールバック</th></tr></thead>
+          <tbody>
+            <tr><td>RuntimeException系</td><td><b>される</b></td></tr>
+            <tr><td>Error系</td><td><b>される</b></td></tr>
+            <tr><td>チェック例外<br>(IOException等)</td><td><b>されない！</b></td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>チェック例外ではロールバックされない</b>のがデフォルト。これは罠。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 対処</div>
+        <ul>
+          <li>本シリーズの例外（DB系）は大半が<b>RuntimeException</b>なので普通はOK</li>
+          <li>チェック例外でもロールバックしたいなら <code>@Transactional(rollbackFor = Exception.class)</code></li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// ロールバック条件の詳細</span>
+<span class="comment">// ─── デフォルト：RuntimeException のみ ───</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">updateTags</span>(...) {
+  mapper.<span class="fn">deleteTagsByMemoId</span>(memoId);
+
+  <span class="comment">// DB系の例外は RuntimeException</span>
+  <span class="comment">// （DataAccessException系）</span>
+  mapper.<span class="fn">addTag</span>(...);
+  <span class="comment">// → 失敗時 RuntimeException</span>
+  <span class="comment">// → 自動でロールバック ★</span>
+}
+
+
+<span class="comment">// ─── 罠：チェック例外 ───</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">process</span>() <span class="kw">throws</span> <span class="type">IOException</span> {
+  mapper.<span class="fn">insert</span>(...);   <span class="comment">// ✓</span>
+  <span class="kw">throw new</span> <span class="type">IOException</span>();
+  <span class="comment">// → チェック例外</span>
+  <span class="comment">// → デフォルトではロールバックされない！★</span>
+  <span class="comment">// → insertが残ってしまう</span>
+}
+
+
+<span class="comment">// ─── 対処：rollbackFor 指定 ───</span>
+<span class="ann">@Transactional</span>(rollbackFor = <span class="type">Exception</span>.<span class="kw">class</span>)
+<span class="kw">public void</span> <span class="fn">process</span>() <span class="kw">throws</span> <span class="type">IOException</span> {
+  <span class="comment">// → 全ての例外でロールバック ★★★</span>
+}
+
+
+<span class="comment">// ─── もう一つの罠：自己呼び出し ───</span>
+<span class="comment">// 同じクラス内のメソッド呼び出しでは</span>
+<span class="comment">// @Transactional が効かない</span>
+<span class="comment">// （プロキシを経由しないため）★★★</span>
+<span class="kw">public void</span> <span class="fn">a</span>() {
+  <span class="fn">b</span>();  <span class="comment">// b の @Transactional は効かない！</span>
+}
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">b</span>() { ... }
+<span class="comment">// → 別クラスに分けるか、設計を見直す</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「自己呼び出し」で @Transactional が効かない罠</div>
+    <p>もう一つの有名な罠：<b>同じクラス内のメソッド呼び出し</b>では @Transactional が<b>効きません</b>。Spring はプロキシ（Section 05）で包んでトランザクションを効かせますが、<b>クラス内部の直接呼び出しはプロキシを経由しない</b>から。対処は<b>別のService クラスに分ける</b>。本シリーズでは1メソッド完結なので問題になりませんが、<b>知っておくと将来のデバッグが楽</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>分離レベルと同時実行</h2><span class="en">ISOLATION LEVELS</span></div>
+  <p class="pattern-desc">ACID の<b>I（分離性）</b>。複数のトランザクションが<b>同時に動くとき</b>の干渉をどこまで防ぐか。これが<b>分離レベル</b>。個人開発では深入り不要ですが、<b>業務で必須の知識</b>として概要を押さえます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">同時実行の問題と分離レベル</span><span class="tag-desc">業務で効いてくる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 同時実行で起きる問題</div>
+        <ul>
+          <li><b>ダーティリード</b>：他者の未確定データを読む</li>
+          <li><b>反復不能読み取り</b>：同じ読み取りで結果が変わる</li>
+          <li><b>ファントムリード</b>：途中で行が増減する</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 分離レベル（強い順）</div>
+        <table class="compare-tbl">
+          <thead><tr><th>レベル</th><th>特徴</th></tr></thead>
+          <tbody>
+            <tr><td>SERIALIZABLE</td><td>最強・遅い</td></tr>
+            <tr><td>REPEATABLE READ</td><td>MySQLの既定</td></tr>
+            <tr><td>READ COMMITTED</td><td>多くのDBの既定</td></tr>
+            <tr><td>READ UNCOMMITTED</td><td>最弱・速い</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:8px"><b>強いほど安全だが遅い</b>（別冊S2のトレードオフ）。通常は<b>DBの既定で十分</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 分離レベルの考え方</span>
+<span class="comment">// ─── トレードオフ（別冊S2）───</span>
+強い分離（SERIALIZABLE）
+  + 安全（干渉なし）
+  - 遅い（ロック多い）
+
+弱い分離（READ UNCOMMITTED）
+  + 速い
+  - 危険（未確定データが見える）
+
+<span class="comment">// → 厳密さ vs 速度のトレードオフ</span>
+
+
+<span class="comment">// ─── 本シリーズの方針 ───</span>
+<span class="comment">// 個人開発・単一ユーザー前提（v1制約）</span>
+<span class="comment">// → 同時実行はほぼ起きない</span>
+<span class="comment">// → DBの既定（MySQL: REPEATABLE READ）で十分</span>
+<span class="comment">// → 分離レベルを意識しなくてOK ★</span>
+
+
+<span class="comment">// ─── 業務で必要になる場面 ───</span>
+<span class="comment">// 在庫管理：同時に注文が来たら？</span>
+<span class="comment">// 座席予約：同じ席を2人が取ったら？</span>
+<span class="comment">// → 分離レベル＋ロックが効いてくる</span>
+<span class="comment">// → メモ帳v1では不要（YAGNI）</span>
+
+
+<span class="comment">// ─── 指定する場合（参考）───</span>
+<span class="ann">@Transactional</span>(
+  isolation = <span class="type">Isolation</span>.SERIALIZABLE)
+<span class="comment">// → 必要になったら指定（通常は不要）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 個人開発では分離レベルは「既定でOK」</div>
+    <p>分離レベルは<b>同時アクセスが多い業務システム</b>で重要ですが、<b>本シリーズは単一ユーザー前提（v1制約）</b>なので、<b>DBの既定のまま</b>で問題ありません。「将来 多人数対応するなら考える」（YAGNI＝別冊S2）。<b>今は「@Transactional で原子性を守る」</b>だけに集中。分離レベルは<b>「そういう概念がある」</b>と知っておけば十分です。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>トランザクションあるある失敗</h2><span class="en">TRANSACTION PITFALLS</span></div>
+  <p class="pattern-desc">トランザクションで<b>初心者が踏みやすい失敗</b>を5つ。<b>知っていれば回避できる</b>ものばかり。特に<b>「@Transactional の付け忘れ」</b>と<b>「自己呼び出し」</b>は要注意です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">トランザクションあるある 5選</span><span class="tag-desc">先人の轍を踏まない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 複数操作なのに @Transactional 付け忘れ ★★★</b></p>
+        <ul>
+          <li>タグ複数INSERTにトランザクションなし</li>
+          <li>途中失敗で中途半端なデータ</li>
+          <li>→ 複数DB操作のService に必ず付ける</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② 自己呼び出しで効かない ★★★</b></p>
+        <ul>
+          <li>同クラス内の呼び出しはプロキシを通らない</li>
+          <li>→ 別クラスに分ける（Section 06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ チェック例外でロールバックされない</b></p>
+        <ul>
+          <li>デフォルトは RuntimeException のみ</li>
+          <li>→ rollbackFor を指定（Section 06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 例外を catch して握りつぶす</b></p>
+        <ul>
+          <li>try-catch で例外を捕まえて何もしない</li>
+          <li>→ 例外が伝播しないとロールバックされない</li>
+          <li>→ catch するなら再スローするか、handle する</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ トランザクションを長く持ちすぎ</b></p>
+        <ul>
+          <li>外部API呼び出しなど重い処理をトランザクション内に</li>
+          <li>→ DBロックが長く、性能劣化</li>
+          <li>→ トランザクションは短く保つ</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// ④例外の握りつぶし（要注意）</span>
+<span class="comment">// ─── NG：例外を握りつぶす ───</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">updateTags</span>(...) {
+  <span class="kw">try</span> {
+    mapper.<span class="fn">deleteTagsByMemoId</span>(memoId);
+    mapper.<span class="fn">addTag</span>(...);  <span class="comment">// 失敗</span>
+  } <span class="kw">catch</span> (<span class="type">Exception</span> e) {
+    <span class="comment">// 何もしない（握りつぶし）★</span>
+  }
+}
+<span class="comment">// → 例外が外に出ない</span>
+<span class="comment">// → Springがロールバックを発動できない</span>
+<span class="comment">// → 中途半端なデータが残る ★★★</span>
+
+
+<span class="comment">// ─── OK：例外を伝播させる ───</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">updateTags</span>(...) {
+  mapper.<span class="fn">deleteTagsByMemoId</span>(memoId);
+  mapper.<span class="fn">addTag</span>(...);
+  <span class="comment">// 例外が出たらそのまま外へ伝播</span>
+  <span class="comment">// → Springがロールバック ★★★</span>
+}
+
+
+<span class="comment">// ─── ⑤トランザクションは短く ───</span>
+<span class="ann">NG:</span>
+<span class="ann">@Transactional</span>
+public void process() {
+  mapper.insert(...);
+  callExternalApi();  <span class="comment">// 重い・遅い ★</span>
+  mapper.update(...);
+}
+<span class="comment">// → API呼び出し中もDBロック</span>
+
+<span class="ann">OK:</span>
+<span class="comment">// 外部API は トランザクション外で</span>
+<span class="comment">// DB操作だけを @Transactional で囲む</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「例外を握りつぶさない」は鉄則</div>
+    <p>④の<b>例外の握りつぶし</b>は特に危険。<code>catch</code> して何もしないと、<b>Spring が例外を検知できず、ロールバックが発動しません</b>。結果、中途半端なデータが残る。<b>「トランザクション内では、例外を握りつぶさず外に伝播させる」</b>。どうしても catch するなら、<b>適切に処理するか再スロー</b>する。これはエラーハンドリング（Vol.12 で本格的に扱う）の基本でもあります。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">別冊S5 で<b>トランザクションの理論</b>が頭に入りました。本編Vol.6 で<b>メモへのタグ付け</b>を実装するとき、@Transactional の「なぜ」が見えるはずです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">S5 達成チェック</span><span class="tag-desc">整合性を語れる人になった</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>複数操作にトランザクションが要る理由を説明できる</li>
+          <li>コミットとロールバックの違いが分かる</li>
+          <li>ACID の4特性を言える</li>
+          <li>原子性「全部か、ゼロか」を理解</li>
+          <li>@Transactional の動作を説明できる</li>
+          <li>トランザクションは Service 層に引くと分かる</li>
+          <li>ロールバック条件（RuntimeException）を知っている</li>
+          <li>自己呼び出し・例外握りつぶしの罠を知っている</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 別冊S5 で手に入れた整合性理論</span>
+✓ <span class="str">"複数操作は『全部か、ゼロか』にする"</span>
+
+✓ <span class="str">"ACID = 中途半端を作らない4つの約束"</span>
+
+✓ <span class="str">"@Transactional はメソッド境界に</span>
+   <span class="str"> トランザクションを引く"</span>
+
+✓ <span class="str">"トランザクションは Service 層に"</span>
+
+✓ <span class="str">"デフォルトは RuntimeException で</span>
+   <span class="str"> ロールバック"</span>
+
+✓ <span class="str">"例外を握りつぶすとロールバックしない"</span>
+
+✓ <span class="str">"全削除→再INSERTはトランザクションが前提"</span>
+
+
+<span class="comment">// あなたは「整合性を語れる」</span>
+<span class="comment">// エンジニアに近づいた ★★★</span>
+
+<span class="comment">// 次回 本編Vol.6：</span>
+<span class="comment">//   メモへのタグ付け（保存）を実装</span>
+<span class="comment">//   @Transactional 登場</span>
+<span class="comment">//   全削除→再INSERT＋ロールバックのテスト</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── 本編 VOL.6 へ</div>
+    <p>別冊S5 で<b>「トランザクションと整合性の理論」</b>を獲得しました。次は本編Vol.6「<b>タグ付けとトランザクション</b>」。<b>メモに複数タグを保存</b>します。「<b>既存タグを全削除→新タグを再INSERT</b>」を <b>@Transactional</b> で囲み、途中失敗時のロールバックを<b>テストで確認</b>します。別冊S5で学んだ<b>原子性・@Transactional・ロールバック条件</b>が、実装で形になります。これで <b>US-003 が完成</b>。<b>本編Vol.6 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>SUB.05 / 14 ── TRANSACTION &amp; INTEGRITY（別冊）</span>
+</footer>
+
+</body>
+</html>

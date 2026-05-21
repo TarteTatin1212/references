@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git/GitHub探源編 Gitはなぜ生まれたか Vol.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a1814;
+  --paper:#ebe7df;
+  --paper-2:#d8d3c6;
+  --accent:#9a3a2a;
+  --accent-2:#c2a585;
+  --accent-3:#3a342a;
+  --muted:#7a7368;
+  --line:#b0a89a;
+  --code-bg:#16140f;
+  --code-text:#d8d3c6;
+  --panel-bg:#dfd9ca;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;font-size:15px;line-height:1.95}
+body{max-width:1180px;margin:0 auto;padding:48px 40px 80px}
+
+/* ===== Header ===== */
+.page-header{position:relative;padding:42px 32px 48px;border-bottom:2px solid var(--ink);margin-bottom:52px;overflow:hidden}
+.page-header::before{content:"∴";position:absolute;right:20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.10;font-family:"Shippori Mincho",serif;line-height:1;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;margin-right:8px}
+.companion-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--paper-2);color:var(--accent-3);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;border:1px solid var(--line)}
+h1{font-family:"Shippori Mincho",serif;font-size:44px;font-weight:700;margin:22px 0 12px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;letter-spacing:0.18em;font-family:"JetBrains Mono",monospace;margin-bottom:24px}
+.lead{max-width:660px;font-size:15px;line-height:2.05;color:var(--ink)}
+.lead b{color:var(--accent)}
+
+/* ===== TOC ===== */
+.toc{background:#fff;padding:26px 30px;margin-bottom:64px;border:1px solid var(--line);border-left:4px solid var(--accent)}
+.toc-title{font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:0.25em;margin-bottom:14px;color:var(--accent);font-weight:700}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13.5px;font-family:"JetBrains Mono",monospace}
+.toc a::before{content:"∴ ";color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+/* ===== Section ===== */
+section{margin-bottom:80px}
+.section-header{display:flex;align-items:baseline;gap:18px;border-bottom:1px solid var(--accent-3);padding-bottom:12px;margin-bottom:20px}
+.section-num{font-family:"JetBrains Mono",monospace;font-size:15px;color:var(--accent);font-weight:700;letter-spacing:0.05em}
+.section-header h2{font-family:"Shippori Mincho",serif;font-size:27px;font-weight:700;flex:1;color:var(--ink)}
+.en{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.25em;color:var(--muted)}
+.pattern-desc{max-width:760px;margin-bottom:22px;color:var(--ink);font-size:14.5px;line-height:2.05}
+.pattern-desc b{color:var(--accent)}
+
+/* ===== 用語集ブロック (新規) ===== */
+.terms{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:20px 26px;margin-bottom:26px;max-width:780px}
+.terms-head{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:0.25em;color:var(--accent);margin-bottom:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.terms-head::before{content:"∴";color:var(--accent);font-size:16px}
+.term{margin-bottom:16px;padding-left:2px}
+.term:last-child{margin-bottom:0}
+.t1{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--ink);font-weight:600;line-height:1.5}
+.t1 .slash{color:var(--accent);margin:0 6px}
+.t2{margin-left:18px;font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.6}
+.t2::before{content:"└ ";color:var(--line)}
+.t3{margin-left:18px;font-size:13.5px;color:var(--accent-3);margin-top:2px;line-height:1.7;font-weight:500}
+.t3::before{content:"└ ";color:var(--line)}
+.t3 b{color:var(--accent)}
+
+/* ===== Demo Card (読み物寄り構造) ===== */
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:18px}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-family:"Shippori Mincho",serif;font-weight:700;color:var(--accent-3);font-size:14px}
+.tag-desc{font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:0.1em}
+.demo-body{display:grid;grid-template-columns:340px 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.12em}
+.text{background:#fff;padding:28px 30px;font-size:14.5px;line-height:2.1}
+.text p{margin-bottom:16px}
+.text p:last-child{margin-bottom:0}
+.text h3{font-family:"Shippori Mincho",serif;font-size:17px;margin:24px 0 12px;color:var(--accent-3);font-weight:700;letter-spacing:0.02em}
+.text h3:first-child{margin-top:0}
+.text b{color:var(--accent)}
+.text .small{font-size:12.5px;color:var(--muted);line-height:1.8}
+
+/* 引用ブロック (読み物の核) */
+.quote{border-left:3px solid var(--accent);padding:14px 18px;margin:18px 0;background:#f5f0e6;font-family:"Shippori Mincho",serif;font-size:14.5px;line-height:1.95;color:var(--accent-3)}
+.quote .source{display:block;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-top:8px;font-style:normal;letter-spacing:0.05em}
+
+@media(max-width:720px){
+  body{padding:24px 18px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .text{padding:22px}
+  h1{font-size:32px}
+  .page-header::before{font-size:200px}
+  .toc ul{gap:6px 14px}
+  .terms{padding:16px 18px}
+}
+
+/* ===== 左パネル内部要素 ===== */
+.timeline{font-family:"JetBrains Mono",monospace;font-size:11.5px;line-height:1.85;background:#fff;border:1px solid var(--line);padding:14px}
+.timeline .year{color:var(--accent);font-weight:700;font-size:11px;letter-spacing:0.1em}
+.timeline .event{color:var(--ink);margin-bottom:8px;padding-left:6px;border-left:1px solid var(--line);margin-left:2px;padding-top:1px}
+.timeline .event:last-child{margin-bottom:0}
+
+.box{background:#fff;border:1px solid var(--line);padding:14px 16px;margin-bottom:10px}
+.box .box-title{font-family:"Shippori Mincho",serif;font-size:13px;color:var(--accent);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.box p{font-size:13px;line-height:1.85}
+
+.diagram{background:#fff;border:1px solid var(--line);padding:18px;font-family:"JetBrains Mono",monospace;font-size:11.5px;line-height:1.75;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.compare > div{background:#fff;border:1px solid var(--line);padding:12px}
+.compare .heading{font-family:"Shippori Mincho",serif;font-size:12px;font-weight:700;color:var(--accent);margin-bottom:6px;letter-spacing:0.05em}
+.compare ul{list-style:none;font-size:12px;line-height:1.7}
+.compare li{padding:1px 0;padding-left:12px;position:relative}
+.compare li::before{content:"・";position:absolute;left:0;color:var(--accent)}
+
+/* ===== Tip (末尾) ===== */
+.tip{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);padding:18px 24px;margin:20px 0;max-width:880px}
+.tip-title{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:0.2em;color:var(--accent);font-weight:700;margin-bottom:8px}
+.tip p{font-size:14px;line-height:2}
+.tip b{color:var(--accent-3)}
+
+/* ===== Footer ===== */
+.page-footer{margin-top:72px;padding-top:28px;border-top:1px solid var(--accent-3);display:flex;justify-content:space-between;align-items:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+.page-footer .right{text-align:right}
+
+code.inline{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 6px;font-size:12.5px;color:var(--accent-3);border-radius:2px}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">GIT / GITHUB</span>
+  <span class="companion-tag">探源編 ORIGINS</span>
+  <span class="vol-tag">VOL.01 / 09</span>
+  <h1>Gitはなぜ生まれたか</h1>
+  <div class="subtitle">WHY GIT WAS BORN — ORIGINS &amp; PHILOSOPHY</div>
+  <p class="lead">
+    リファレンス本編が「使い方の地図」だったなら、本巻は「<b>なぜこの地図がこの形なのか</b>」を辿る旅です。
+    Gitは2005年に突如世界に現れたかに見えますが、その背景には<b>30年以上にわたる版管理の試行錯誤</b>と、
+    1人の頑固な男の怒りがありました。本巻ではその<b>必然性</b>を時間軸で掘り起こします。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01. 履歴管理の前史</a></li>
+    <li><a href="#s02">02. SCCSとRCS、最初の試み</a></li>
+    <li><a href="#s03">03. CVSとSubversionの時代</a></li>
+    <li><a href="#s04">04. 2005年・BitKeeper事件</a></li>
+    <li><a href="#s05">05. Linusが求めたもの</a></li>
+    <li><a href="#s06">06. なぜ「3つのエリア」なのか</a></li>
+    <li><a href="#s07">07. GitHubの誕生</a></li>
+    <li><a href="#s08">08. なぜGitが標準になったか</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ============ 01 ============ -->
+<section id="s01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>履歴管理の前史</h2>
+    <span class="en">PREHISTORY</span>
+  </div>
+  <p class="pattern-desc">
+    Gitは突然生まれたわけではありません。「<b>変化するものをどう記録するか</b>」という問いは、
+    印刷術の時代から人類が抱えてきた古い課題でした。
+    まずはこの「<b>履歴を残したい</b>」という根源的な欲求が、どこから来たのかを辿ります。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">edition <span class="slash">/</span> エディション</div>
+      <div class="t2">版・刷</div>
+      <div class="t3">同じ本でも、誤りを直したり内容を更新するたびに作られる<b>別バージョン</b>のこと</div>
+    </div>
+    <div class="term">
+      <div class="t1">revision <span class="slash">/</span> リビジョン</div>
+      <div class="t2">改訂・修正版</div>
+      <div class="t3">元のものに手を入れて作られた<b>新しい改訂版</b>。ソフトウェアでは「コードの修正版」を指す</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">なぜ「履歴」を残したいのか</span>
+      <span class="tag-desc">PRE-1970s</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 履歴管理の系譜</div>
+        <div class="timeline">
+          <div class="year">紀元前〜中世</div>
+          <div class="event">写本の時代<br>同じ本でも書き手で内容が変わる</div>
+          <div class="year">1450年頃</div>
+          <div class="event">グーテンベルクの活版印刷<br>「版」という概念の誕生</div>
+          <div class="year">17-18世紀</div>
+          <div class="event">学術論文の改訂版文化<br>「第○版」の表記が定着</div>
+          <div class="year">1950年代</div>
+          <div class="event">大型計算機の時代<br>プログラム = 紙のパンチカードの束</div>
+          <div class="year">1960年代</div>
+          <div class="event">複数人プログラミング<br>「最新版どれ?」問題の発生</div>
+        </div>
+
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">問いの根源</div>
+          <p>「<b>変化するものをどう同定するか</b>」——
+          これは文字、本、図面、設計書、そしてプログラムまで、人類が知識を扱う限り付き合ってきた問題です。</p>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>写本から版へ</h3>
+<p>中世のヨーロッパでは、書物は<b>修道士が一冊一冊手で写して複製していました</b>。これがいわゆる「写本」の時代です。問題は、写し間違いや書き写し時の意図的な改変が必ず混入することでした。同じ題名の本でも、修道院ごとに少しずつ内容が違う、ということが当たり前に起きていました。</p>
+
+<p>15世紀半ばにグーテンベルクが活版印刷を発明した時、はじめて「全部同じ内容を大量に作る」ことが可能になります。しかし今度は別の問題が浮上します。<b>誤りを修正したり、内容を更新した時に、どの本がどの版なのかを区別する必要</b>が生まれたのです。ここに「初版」「第二版」という<b>履歴の概念</b>が誕生しました。</p>
+
+<h3>ソフトウェア時代以前</h3>
+<p>20世紀に入り、設計図や原稿の改訂が日常的になると、図面の右下に「<b>Rev. A / Rev. B</b>」と書く慣習が生まれます。Revはリビジョンの略。これがそのままソフトウェア用語に持ち込まれることになります。</p>
+
+<p>1950-60年代の大型計算機の時代、プログラムは<b>紙のパンチカードの束</b>として物理的に存在していました。修正するということは、新しいカードを作って差し替えるということ。「<b>古いカードの束</b>」と「<b>新しいカードの束</b>」が物理空間を占有していたのです。古いカードを捨てるのは怖い。だから保管する。気がつくと、誰も「どれが本当の最新版か」分からなくなる——この混乱が、ソフトウェアの世界で<b>履歴管理を必要と感じさせた最初のきっかけ</b>でした。</p>
+
+<h3>「履歴」という思想の本質</h3>
+<p>突き詰めると、履歴管理とは<b>「過去の自分を信用しない技術」</b>です。「あの時の判断が正しかったかわからない」「やっぱり戻したい」「他人の改変と区別したい」——
+こうした不安に対する人類の答えが、版管理という思想なのです。</p>
+
+<p>この<b>「過去を捨てない」</b>という思想は、後にGitの中心的な設計思想として結晶することになります。Gitは過去のコミットを基本的に消しません。それは技術的な制約ではなく、思想的な選択だったのです。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ POINT</div>
+    <p>履歴管理は<b>ソフトウェア固有の問題ではありません</b>。「過去を信用しない」「変化を追跡したい」という人類の古くからの欲求が、コンピュータの登場で<b>急に切実になった</b>だけ。Gitが解いている問題は、実は何百年も前から人類が抱えていた問題なのです。</p>
+  </div>
+</section>
+
+<!-- ============ 02 ============ -->
+<section id="s02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>SCCSとRCS、最初の試み</h2>
+    <span class="en">FIRST ATTEMPTS</span>
+  </div>
+  <p class="pattern-desc">
+    1970年代、アメリカのベル研究所で「<b>プログラムの版を自動で管理する仕組み</b>」が初めて作られます。
+    SCCSとRCS——この2つの祖先は、現代のGitにも繋がる<b>diff(差分)という概念</b>を確立した、記念碑的なソフトウェアでした。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">SCCS <span class="slash">/</span> Source Code Control System</div>
+      <div class="t2">ソースコード管理システム</div>
+      <div class="t3"><b>プログラム原本を世代別に管理する仕組み</b>。1972年にベル研究所で開発された世界初の本格的な版管理ツール</div>
+    </div>
+    <div class="term">
+      <div class="t1">RCS <span class="slash">/</span> Revision Control System</div>
+      <div class="t2">リビジョン管理システム</div>
+      <div class="t3"><b>改訂版を効率よく管理する仕組み</b>。SCCSの欠点を克服し、1982年に登場</div>
+    </div>
+    <div class="term">
+      <div class="t1">diff <span class="slash">/</span> differential file comparison</div>
+      <div class="t2">差分比較</div>
+      <div class="t3">2つのファイルの<b>違うところだけを抜き出す技術</b>。版管理の基礎中の基礎で、現代のGitも内部で使っている</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">単一マシン時代の挑戦</span>
+      <span class="tag-desc">1972 - 1982</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 系譜図</div>
+        <div class="diagram">         [ ベル研究所 ]
+              │
+        1972 │  SCCS
+              │  M. Rochkind
+              │  ─ 単一マシン
+              │  ─ ロック方式
+              ↓
+              │
+        1982 │  RCS
+              │  W. F. Tichy
+              │  ─ 単一マシン
+              │  ─ 差分圧縮
+              │  ─ 高速化
+              ↓
+              ?
+        (この後、ネットワーク
+         対応のCVSへ → s03)</div>
+
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">ロック方式</div>
+          <p>ファイルを編集したい人は<b>「ロック」</b>を取る。他の人は同じファイルを編集できない。原始的だが確実な並行作業の方式でした。</p>
+        </div>
+
+        <div class="box">
+          <div class="box-title">差分圧縮の発明</div>
+          <p>古い版を全部保存するとディスクが圧迫されます。RCSは<b>「差分だけ保存して、必要な時に復元」</b>という発想で、これを解決しました。</p>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>1972年、最初の挑戦</h3>
+<p>世界で初めての本格的な版管理ツールは、AT&amp;Tベル研究所の<b>マーク・ロッキンド</b>が1972年に開発した <b>SCCS</b> でした。UNIXの誕生とほぼ同時期、まさにソフトウェア工学の黎明期です。</p>
+
+<p>SCCSの発想は単純でした。<b>「ファイルを変更するたびに、その差分を別ファイルとして記録する」</b>。これだけで、過去のどの時点の状態にも戻れるようになります。同じファイルの異なる版を、別の名前で大量に保存する必要がなくなったのです。当時としては画期的な発想でした。</p>
+
+<h3>RCS、改良の波</h3>
+<p>1982年、ドイツ出身のコンピュータ科学者 <b>ヴァルター・F・ティッヒ</b>が SCCS の欠点を克服した <b>RCS</b> を発表します。SCCSが最新版から古い版へ向かって差分を取っていたのに対し、RCSは<b>逆方向に差分を取る</b>設計でした。これによって、よく使う「最新版を取り出す」操作が劇的に速くなったのです。</p>
+
+<div class="quote">
+古いものから新しいものへの差分でなく、新しいものから古いものへの差分を保存する——たったこの逆転で、最新版の取り出しが瞬時になる。
+<span class="source">— RCS の設計思想を表す古典的な解釈</span>
+</div>
+
+<h3>共通する限界</h3>
+<p>SCCSもRCSも、決定的な<b>限界</b>を抱えていました。それは「<b>1台のマシンの中だけ</b>」で動くツールだったということです。複数のプログラマが同じプログラムを編集したくても、全員が同じマシンにログインする必要がありました。</p>
+
+<p>また、編集中のファイルは<b>「ロック」</b>される仕組み。ロックを取った人だけが編集できる代わりに、他の人は待たされる。誰かが帰宅したまま忘れていると、翌朝までロックが残って業務が止まるという悲劇もありました。</p>
+
+<h3>それでも残った遺産</h3>
+<p>SCCSとRCSは現在ではほとんど使われていません。しかし、これらが残した思想——<b>「差分を保存して履歴を復元する」</b>「<b>diffコマンドという発想</b>」「<b>過去のどの状態にも戻れる</b>」——は、現在のGitに脈々と受け継がれています。</p>
+
+<p>Gitは内部的に、はるかに洗練された方法で同じ問題を解いていますが、根本にあるのは50年前にベル研究所で生まれた発想です。<b>過去は思っているより、現在の中に生きている</b>のです。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>SCCS と RCS が解いたのは<b>「単一マシン内での版管理」</b>。次の時代に問われたのは「<b>ネットワークを越えて、複数人でどう協調するか</b>」でした。技術は、解いた問題の数だけ、新しい問題を発見していくのです。</p>
+  </div>
+</section>
+
+<!-- ============ 03 ============ -->
+<section id="s03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>CVSとSubversionの時代</h2>
+    <span class="en">CENTRALIZED ERA</span>
+  </div>
+  <p class="pattern-desc">
+    1990年代から2000年代前半は、<b>「中央サーバーに1つのリポジトリを置き、皆がそこに繋ぐ」</b>という発想が主流でした。
+    CVSとSubversion——この2つの覇者が築いた「<b>中央集権モデル</b>」は、20年近くソフトウェア開発の標準だったのです。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">CVS <span class="slash">/</span> Concurrent Versions System</div>
+      <div class="t2">並行バージョンシステム</div>
+      <div class="t3"><b>複数人が同時に編集できる版管理の仕組み</b>。1990年に登場し、20年近く業界標準だった</div>
+    </div>
+    <div class="term">
+      <div class="t1">SVN <span class="slash">/</span> Subversion(Apache Subversion)</div>
+      <div class="t2">アパッチ・サブバージョン</div>
+      <div class="t3"><b>CVSの欠点を克服した後継ツール</b>。2000年に登場し、現在も一部現場で使われている</div>
+    </div>
+    <div class="term">
+      <div class="t1">centralized <span class="slash">/</span> centralized model</div>
+      <div class="t2">中央集権モデル</div>
+      <div class="t3"><b>「正本は中央サーバーにある1つだけ」とする方式</b>。各開発者の手元にあるのは作業用のコピー</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">中央サーバーという発想</span>
+      <span class="tag-desc">1990 - 2005</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 中央集権モデル</div>
+        <div class="diagram">      ┌──────────────┐
+      │  中央サーバー   │
+      │   (正本一式)    │
+      └───┬──────┬───┘
+          │      │
+     commit│      │update
+          │      │
+   ┌──────┴──┐┌──┴──────┐
+   │開発者A   ││開発者B   │
+   │作業コピー││作業コピー │
+   └─────────┘└─────────┘
+
+特徴:
+・サーバー上が「正」
+・各人の手元はコピー
+・ネット必須(オフライン不可)</div>
+
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">CVSの弱点</div>
+          <p>① ファイルのリネームが苦手<br>② コミットが原子的でない<br>③ 大量のファイル変更が遅い<br>④ サーバーが落ちると皆作業不能</p>
+        </div>
+
+        <div class="box">
+          <div class="box-title">SVNの改善</div>
+          <p>① ディレクトリも版管理<br>② コミットは原子単位で<br>③ 大量変更も高速<br>④ ただし中央集権は維持</p>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>1990年、CVSの登場</h3>
+<p>1990年、オランダの計算機科学者 <b>ディック・グルーネ</b>が CVS を発表します。これは画期的でした。なぜなら、初めて<b>「ネットワーク越しに複数人が並行作業できる版管理ツール」</b>が世に現れたからです。</p>
+
+<p>CVSの中心思想は<b>「中央サーバーに正本があり、各人はそのコピーを手元に持つ」</b>というものでした。誰かが作業を終えて<b>「コミット」</b>すると、中央サーバーが更新される。他の人は<b>「アップデート」</b>で最新の状態を取り込む——この基本パターンは、今もWeb系のクラウドサービスで広く見られるモデルですね。</p>
+
+<h3>CVSの限界</h3>
+<p>しかしCVSには多くの欠点がありました。たとえば<b>ファイルの名前を変更すると履歴が切れてしまう</b>。<b>複数ファイルへの変更をまとめて1コミットにできない</b>(コミットの途中でエラーが起きると、中途半端な状態になる)。<b>大量のファイルを扱うと極端に遅い</b>。</p>
+
+<p>そして何より致命的だったのは、<b>「中央サーバーに繋がっていないと何もできない」</b>こと。出張中の飛行機の中、ネットの繋がらないカフェ、サーバーが落ちている時——どんな理由であれ、ネットがなければコミットも履歴閲覧もできない。これは開発者にとって大きなストレスでした。</p>
+
+<h3>2000年、Subversionの挑戦</h3>
+<p>2000年、<b>「CVSをまともにする」</b>を旗印に <b>Subversion</b> プロジェクトが立ち上がります。アパッチソフトウェア財団のもとで開発されたこのツールは、CVSの多くの欠点を解消しました。</p>
+
+<p>ファイルのリネームを履歴として追跡できる。1つのコミットは<b>「全部成功するか、全部失敗するか」</b>のどちらかという原子性が保証される。バイナリファイルや大量ファイルの扱いも改善。 Subversion は2000年代を通じて世界のソフトウェア開発の主流となっていきました。</p>
+
+<h3>それでも残った思想的限界</h3>
+<p>Subversionは技術的にはCVSをはるかに超えていました。しかし、根本にある<b>「中央サーバーが正本」</b>という思想は変わらなかったのです。これが意味することは:</p>
+
+<p>● <b>サーバーが落ちると全員が作業不能</b>になる<br>
+● 履歴はサーバーに集中しているので、<b>サーバーが壊れたら過去も消える</b>(バックアップなしの場合)<br>
+● ローカルでブランチを切るような実験的な作業がしづらい<br>
+● 大規模な分散型開発(全世界に開発者が散らばっているような状況)に向かない</p>
+
+<p>そして2005年、ある事件をきっかけに、この<b>中央集権の時代</b>に終止符が打たれることになります。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>中央集権モデルの限界は技術的なものではなく、<b>世界観としての限界</b>でした。「中心がないと協調できない」という前提自体が、インターネット時代の<b>「世界中の人が対等に貢献する開発」</b>と相性が悪かったのです。次の時代を呼び込んだのは、皮肉にも<b>商用ソフトウェアとの衝突</b>でした。</p>
+  </div>
+</section>
+
+<!-- ============ 04 ============ -->
+<section id="s04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>2005年・BitKeeper事件</h2>
+    <span class="en">THE BITKEEPER INCIDENT</span>
+  </div>
+  <p class="pattern-desc">
+    Gitは<b>「怒り」から生まれた</b>とよく言われます。
+    2005年4月、Linuxカーネル開発で使われていた商用ツール「BitKeeper」が突然使えなくなり、
+    <b>Linus Torvaldsが10日間でGitを書き上げる</b>——この事件は、現代ソフトウェア史で最も劇的な瞬間の一つです。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">BitKeeper</div>
+      <div class="t2">ビットキーパー(製品名)</div>
+      <div class="t3"><b>分散型を採用していた商用の版管理ツール</b>。2005年まで、Linuxカーネル開発で使われていた</div>
+    </div>
+    <div class="term">
+      <div class="t1">kernel <span class="slash">/</span> Linux kernel</div>
+      <div class="t2">カーネル / リナックスカーネル</div>
+      <div class="t3"><b>OSの中枢部分</b>。Linuxという有名なOSの中で、ハードウェアと直接やり取りする「心臓部」のこと。Linus Torvalds が1991年に作り始めた</div>
+    </div>
+    <div class="term">
+      <div class="t1">DVCS <span class="slash">/</span> Distributed Version Control System</div>
+      <div class="t2">分散型バージョン管理システム</div>
+      <div class="t3"><b>履歴を全員が手元に持つ版管理の仕組み</b>。中央サーバーに依存せず、各開発者が完全な履歴のコピーを所有する</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">10日間の革命</span>
+      <span class="tag-desc">APRIL 2005</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 事件のタイムライン</div>
+        <div class="timeline">
+          <div class="year">2002</div>
+          <div class="event">Linuxカーネル開発<br>BitKeeperを採用<br>(特別ライセンスで無償使用)</div>
+          <div class="year">2005.04.05</div>
+          <div class="event">BitMover社、無償提供を中止<br>リバースエンジニアリングを<br>懸念したと言われる</div>
+          <div class="year">2005.04.06</div>
+          <div class="event">Linus、新ツール開発を決意<br>「数日で作ってみせる」</div>
+          <div class="year">2005.04.07</div>
+          <div class="event">Git 最初のコミット<br>("first commit"がリポジトリに残る)</div>
+          <div class="year">2005.04.18</div>
+          <div class="event">自身のコードでGitが動く<br>(self-hosting達成)</div>
+          <div class="year">2005.06.16</div>
+          <div class="event">Linux 2.6.12 リリース<br>Gitで管理された最初の版</div>
+        </div>
+
+        <div class="quote">
+"I'm an egotistical bastard, and I name all my projects after myself. First Linux, now Git."
+<span class="source">— Linus Torvalds(2005年頃のインタビュー)</span>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>Linus Torvalds とは何者か</h3>
+<p><b>リーナス・トーバルズ</b>(1969年フィンランド生まれ)は、1991年に大学生として Linuxカーネルを作り始め、それが世界中で使われるOSになるという、ソフトウェア史で最も有名な人物の一人です。頑固で、率直で、技術的な妥協を許さない性格で知られています。</p>
+
+<p>2002年、彼が率いるLinuxカーネル開発チームは、版管理ツールに<b>BitKeeper</b>を採用しました。当時、BitKeeperは数少ない<b>分散型</b>の版管理ツールで、世界中に散らばる開発者たちが効率的に協調できる稀有な存在だったのです。商用ツールでしたが、開発元のBitMover社が「<b>オープンソース開発には無償で提供する</b>」という特別なライセンスを用意してくれていました。</p>
+
+<h3>2005年4月、関係の崩壊</h3>
+<p>3年間続いたこの蜜月関係は、突然終わります。きっかけは、コミュニティの一部メンバーがBitKeeperの<b>リバースエンジニアリング</b>(中身の仕組みを解析すること)を試みたこと。BitMover社のCEOラリー・マクヴォイは激怒し、Linux開発への無償提供を打ち切ると宣言しました。</p>
+
+<p>普通の人なら別の既存ツールを探したでしょう。CVS や Subversion ——選択肢はありました。しかしLinus は、それらをすべて<b>「クソ」</b>と切り捨てたのです。彼の有名な発言があります:</p>
+
+<div class="quote">
+「CVSは思いつく限り最悪のソフトウェアだ。Subversionは……CVSをまともにしようとした失敗作で、根本的な問題は何も解いていない」
+<span class="source">— Linus Torvalds の 2007年Google講演より要約</span>
+</div>
+
+<h3>10日間の創作</h3>
+<p>2005年4月6日、Linus は新しい版管理ツールを自作することを決意します。要件は明確でした:</p>
+
+<p>● <b>分散型であること</b>(中央サーバーに依存しない)<br>
+● <b>Linuxカーネルの規模に耐える速さ</b>を持つこと<br>
+● <b>履歴の改ざんを検知できる</b>こと</p>
+
+<p>翌4月7日、Gitの最初のコミットがリポジトリに刻まれます。コミットメッセージは <code class="inline">"Initial revision of git, the information manager from hell"</code>(初版 git、地獄から来た情報管理者)。 4月18日には<b>Git自身のコードを Git で管理する</b>段階に到達。約2ヶ月後の6月、Linuxカーネルの正式なリリース(2.6.12)が Git で管理された最初の版として世に出ました。</p>
+
+<h3>「Git」という名前</h3>
+<p>名前の由来には諸説あります。Linus 自身が言うには「<b>イギリス英語で『間抜け野郎』を意味するスラング</b>」だとか、「<b>気分次第で意味が変わる3文字</b>」だとか。本人の言葉によれば「<b>最初にLinux、次にGit</b>。俺は自分にちなんで名前をつけるエゴイストだ」とのこと。</p>
+
+<p>真面目に解釈するなら、"Global Information Tracker"(全世界の情報追跡者)という<b>後付けの説明</b>もあります。が、本人の真意はどうやら<b>「ふざけた名前を真面目なツールに付けたかった」</b>ようです。これがそのまま全世界の標準ツールになるとは、本人も予想していなかったでしょう。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>Git は<b>「設計の積み重ね」から生まれたのではなく、「明確な不満から生まれた」</b>のです。既存のツール全部を「ダメだ」と切り捨てる確信、自分で作り直せるという技術的自信、10日で動くものを書き上げる集中力——この3つが揃った瞬間が、たまたま2005年4月だっただけ。<b>歴史を動かすのは、しばしば1人の頑固さである</b>ということを、この事件は教えてくれます。</p>
+  </div>
+</section>
+
+<!-- ============ 05 ============ -->
+<section id="s05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>Linusが求めたもの</h2>
+    <span class="en">DESIGN PRINCIPLES</span>
+  </div>
+  <p class="pattern-desc">
+    なぜGitはあのような形をしているのか。その答えは、Linus Torvaldsが Linuxカーネル開発という<b>「世界最大級の分散プロジェクト」</b>の長としての経験から導き出した、<b>3つの厳しい要件</b>にあります。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">patch <span class="slash">/</span> patch file</div>
+      <div class="t2">パッチ / パッチファイル</div>
+      <div class="t3"><b>ソースコードの変更内容だけを抜き出した小さなファイル</b>。メールに添付して送り、相手側で「適用」して変更を取り込む</div>
+    </div>
+    <div class="term">
+      <div class="t1">integrity <span class="slash">/</span> data integrity</div>
+      <div class="t2">完全性 / データ完全性</div>
+      <div class="t3"><b>データが途中で壊れたり改ざんされたりしていないことを保証する性質</b>。Gitはこれを暗号学的ハッシュ値で実現している</div>
+    </div>
+    <div class="term">
+      <div class="t1">SHA-1 <span class="slash">/</span> Secure Hash Algorithm 1</div>
+      <div class="t2">セキュア・ハッシュ・アルゴリズム1</div>
+      <div class="t3"><b>データから40文字の指紋(ハッシュ値)を計算する仕組み</b>。同じ内容なら必ず同じ指紋になり、1ビットでも違えば全く違う指紋になる</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">3つの設計要件</span>
+      <span class="tag-desc">SPEED / DISTRIBUTED / INTEGRITY</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Linuxカーネルの規模</div>
+        <div class="box">
+          <div class="box-title">2005年当時の数字</div>
+          <p>● 開発者: <b>1,000人以上</b><br>
+          ● コード行数: <b>約 600万行</b><br>
+          ● 月間コミット: <b>数千件</b><br>
+          ● 全世界に分散</p>
+        </div>
+
+        <div class="box">
+          <div class="box-title">3つの要件</div>
+          <p><b>① 速度</b>: 大規模でも瞬時に応答<br>
+          <b>② 分散</b>: 中央なしで成立<br>
+          <b>③ 完全性</b>: 改ざん検知が可能</p>
+        </div>
+
+        <div class="diagram">[ ハッシュ値の例 ]
+
+"hello"
+   ↓ SHA-1
+aaf4c61d...(40文字)
+
+"hellp" (1文字違い)
+   ↓ SHA-1
+ac34f9c2...(全く違う)
+
+↑ 1文字でも違えば
+   完全に違う指紋になる</div>
+      </div>
+      <div class="text">
+
+<h3>要件①: 速度</h3>
+<p>Linuxカーネル開発では、毎月数千件のコミットが世界中から送られてきます。Linus が単独で全てを統合する立場にあった以上、<b>「コミットや差分計算が遅い」というのは死活問題</b>でした。BitKeeperで5秒かかる操作が、Gitでは0.5秒で終わる——これは贅沢ではなく、必須要件だったのです。</p>
+
+<p>そこでLinusは、内部設計にかなりの工夫を入れます。たとえば、Gitはファイルを<b>「圧縮された塊(オブジェクト)」</b>として保存し、それを暗号学的なハッシュ値で参照します。これは初心者には複雑に見えますが、<b>「速度のための内部最適化」</b>と思えば理解できます。すべての操作を高速にするための、徹底した設計だったのです。</p>
+
+<h3>要件②: 分散</h3>
+<p>Linuxカーネル開発は、すでに<b>「世界中に開発者が散らばっている」</b>状態でした。アメリカ、ヨーロッパ、日本、オーストラリア——全員が自分のペースで作業し、変更をメールやネット経由で交換する文化が出来上がっていました。</p>
+
+<p>従来のCVSやSubversionでは、この働き方が成り立ちません。中央サーバーに繋いでいないと何もできないからです。<b>分散型(DVCS)であること</b>は、Linus にとって「あれば便利」ではなく「<b>これがなければ意味がない</b>」要件でした。</p>
+
+<p>分散型では、各開発者の手元に<b>完全な履歴のコピー</b>が存在します。ネットが切れていても全ての操作ができる。中央サーバーが落ちても、誰かのコピーから復元できる。「<b>正本</b>」という概念がなくなる代わりに、<b>すべてのコピーが対等</b>になる。これは思想的にも大きな転換でした。</p>
+
+<h3>要件③: 完全性</h3>
+<p>3つ目の要件——これがGitを特異な存在にした最大の特徴です。Linus は<b>「履歴が改ざんされていないことを暗号学的に証明できる仕組み」</b>を求めたのです。</p>
+
+<p>なぜそれが必要だったのか。世界中から送られてくるパッチを取り込む時、<b>「これは本当に信頼できる開発者から送られたものか」</b>「<b>途中で誰かに書き換えられていないか</b>」——これを機械的に検証する必要があったのです。悪意ある攻撃を心配していたわけではなく、技術的・運用的な信頼性の問題として。</p>
+
+<div class="quote">
+「Gitでは、特定のバージョンを指定すれば、その内容は絶対に変わらない。1ビットでも変わったら、別のものになる。これは銀行レベルの整合性保証だ」
+<span class="source">— Linus Torvalds 2007年 Google講演より要約</span>
+</div>
+
+<h3>内容アドレス可能ストレージ</h3>
+<p>これを実現する仕組みが、<b>「内容アドレス可能ストレージ」</b>(content-addressable storage)です。難しい名前ですが、考え方はシンプル。<b>ファイルの中身そのものから計算したハッシュ値を、そのファイルの名前にしてしまう</b>のです。</p>
+
+<p>つまり、同じ内容のファイルは<b>必ず同じ名前(ID)</b>になり、内容が1ビットでも変われば<b>必ず別の名前になる</b>。これにより、コミットID(あの長い英数字)を1つ確認するだけで、「<b>そのコミットの状態は完全に決まっている</b>」ことが保証されるのです。</p>
+
+<p>この仕組みは、版管理という枠を超えて、後にブロックチェーンの基本思想にも繋がっていきます。<b>Git は、ある意味では世界初の「分散合意プロトコル」の一つ</b>だったのです。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>速度・分散・完全性——Linus が掲げた3要件は、現代の<b>大規模分散システム</b>が共通して直面する課題そのものです。Gitは「単なる版管理ツール」を超えて、<b>「分散環境で信頼を確立する仕組み」</b>を世に提示しました。これがGitの真の革新性だったのです。</p>
+  </div>
+</section>
+
+<!-- ============ 06 ============ -->
+<section id="s06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>なぜ「3つのエリア」なのか</h2>
+    <span class="en">THREE TREES</span>
+  </div>
+  <p class="pattern-desc">
+    リファレンス本編で「Gitには3つのエリアがある」と学びました。
+    しかし<b>「なぜ3つなのか」</b>——他のツールは2層なのに、なぜGitは中間ステージを挟むのか?
+    その答えは、Linusの<b>「コミットの粒度を、人間が自由に決められるべきだ」</b>という哲学にあります。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">working tree <span class="slash">/</span> working directory</div>
+      <div class="t2">ワーキングツリー / 作業ディレクトリ</div>
+      <div class="t3"><b>今あなたが編集している、目に見えるファイルの場所</b>。エディタで開いているフォルダそのもの</div>
+    </div>
+    <div class="term">
+      <div class="t1">staging area <span class="slash">/</span> index</div>
+      <div class="t2">ステージング領域 / インデックス</div>
+      <div class="t3"><b>「次のコミットに含めるもの」を一時的に置く場所</b>。荷物を運ぶ前の積み込み場のような中間地点</div>
+    </div>
+    <div class="term">
+      <div class="t1">commit <span class="slash">/</span> commit object</div>
+      <div class="t2">コミット / コミットオブジェクト</div>
+      <div class="t3"><b>「ある時点のスナップショット」として履歴に正式登録されたもの</b>。一度作られたら原則として中身は変わらない</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">中間ステージの哲学</span>
+      <span class="tag-desc">DESIGN PHILOSOPHY</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2層 vs 3層</div>
+        <div class="compare">
+          <div>
+            <div class="heading">SVN等 (2層)</div>
+            <ul>
+              <li>作業ファイル</li>
+              <li>リポジトリ</li>
+              <li>commit = 全変更を送信</li>
+            </ul>
+          </div>
+          <div>
+            <div class="heading">Git (3層)</div>
+            <ul>
+              <li>working tree</li>
+              <li>staging area</li>
+              <li>repository</li>
+              <li>add で選び、commit で確定</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">3層の意味</div>
+          <p><b>「未完成の編集」と「次に記録すること」を分離</b>。これによって、同じ作業中でも<b>「コミットの単位を自由に切り出せる」</b>。</p>
+        </div>
+
+        <div class="box">
+          <div class="box-title">index ファイルとは</div>
+          <p>実体は <code class="inline">.git/index</code> という1つのバイナリファイル。これがステージングの正体です。</p>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>多くのツールは「2層」だった</h3>
+<p>Gitより前の版管理ツール——CVS、Subversion、その前のSCCS、RCS——これらは基本的に<b>「2層構造」</b>でした。手元の作業ファイルがあり、リポジトリがあり、「コミット」とは作業ファイルの<b>変更を全部</b>リポジトリに送る操作だったのです。</p>
+
+<p>このモデルは直感的でわかりやすい。しかし、ある問題を抱えていました。それは<b>「同時に複数のことに手をつけてしまった時、それらを別々のコミットに分けにくい」</b>という問題です。</p>
+
+<h3>現実の開発の風景</h3>
+<p>たとえば、ある機能を実装している最中に、別のバグを見つけてしまったとしましょう。あなたはそのバグも直してしまいます。気が付くと、5個のファイルに2つの異なる目的の変更が混じっている状態に。</p>
+
+<p>これを<b>「機能追加」と「バグ修正」の2つのコミットに分けたい</b>——これはチーム開発で頻繁に起きるシナリオです。が、2層構造のツールでは難しい。一度のコミットは「今ある変更を全部」送るしかないからです。</p>
+
+<h3>Linusの解</h3>
+<p>Linus はここに<b>「中間ステージ」</b>を挟みました。working tree(作業中のファイル)とrepository(履歴)の間に、<b>「次のコミットに何を含めるかを宣言する場所」</b>を作ったのです。</p>
+
+<p><code class="inline">git add</code> は<b>「これを次のコミットに含める」</b>と宣言する操作。<code class="inline">git commit</code> は<b>「宣言したものを実際に履歴に刻む」</b>操作。この2段階に分けたことで、開発者は<b>「複数の変更が混じった状態から、論理的に意味のあるコミット単位を切り出せる」</b>ようになったのです。</p>
+
+<div class="quote">
+「コミットは、技術的な区切りではなく、論理的な区切りであるべきだ。1コミット = 1つのまとまった意図」
+<span class="source">— Git設計の根本思想として広く語られる原則</span>
+</div>
+
+<h3>ステージングの実体</h3>
+<p>このステージングエリアは、技術的には <code class="inline">.git/index</code> という名前の1つのバイナリファイルです。なので<b>「インデックス(index)」</b>とも呼ばれます。「ステージング」と「インデックス」は同じものを指す別の呼び方なのです。</p>
+
+<p>名前が2つあるのは、Linusが最初これを「index」と呼んでいたのに対し、後にユーザー視点では「stage(ステージに乗せる)」という比喩の方が分かりやすいと判断されたから。今は<b>状況に応じて両方の名前が使われる</b>ことになっています。</p>
+
+<h3>哲学としての中間ステージ</h3>
+<p>3層構造は単なる技術的な工夫ではなく、<b>「人間が思考を整理する時間を作る」</b>という思想の表れです。コミットの粒度は機械が決めるものではなく、<b>人間が判断するもの</b>。そのための猶予を、Gitは設計レベルで保証している。</p>
+
+<p>この発想は、後のソフトウェア設計に大きな影響を与えました。<b>「中間状態を許容することで、最終結果の品質を上げる」</b>——この考え方は、現代の多くのツール(ChatGPT のような対話型AIですら)に脈々と受け継がれています。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>3層構造は<b>「不便を増やすことで、自由を得る」</b>設計です。<code class="inline">git add</code> という余計な一手間が、コミットの自由度という<b>大きな価値</b>を生んでいる。初学者には冗長に見えるこの設計こそ、Gitが他のツールと一線を画す<b>思想的な核</b>なのです。</p>
+  </div>
+</section>
+
+<!-- ============ 07 ============ -->
+<section id="s07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>GitHubの誕生</h2>
+    <span class="en">BIRTH OF GITHUB</span>
+  </div>
+  <p class="pattern-desc">
+    Gitが世に出てから3年後、<b>「Gitを使うのは難しすぎる」</b>という壁を超えるために、4人の若者がGitHubを立ち上げます。
+    2008年——この年は、<b>コードに『社会性』が宿った瞬間</b>として記憶される歴史的な節目です。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">GitHub</div>
+      <div class="t2">ギットハブ(サービス名)</div>
+      <div class="t3"><b>Gitリポジトリをウェブ上で扱えるようにしたサービス</b>。2008年に設立され、2018年にマイクロソフトに買収された</div>
+    </div>
+    <div class="term">
+      <div class="t1">Pull Request <span class="slash">/</span> PR</div>
+      <div class="t2">プルリクエスト</div>
+      <div class="t3"><b>「私の変更をあなたのリポジトリに取り込んでください」というお願いの仕組み</b>。レビューや議論ができる場として機能する</div>
+    </div>
+    <div class="term">
+      <div class="t1">fork</div>
+      <div class="t2">フォーク(枝分かれ)</div>
+      <div class="t3"><b>誰かのリポジトリを自分のアカウントに丸ごとコピーする操作</b>。ここから独自に改造したり、本家へPRを送ったりできる</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">コードに社会が宿った日</span>
+      <span class="tag-desc">APRIL 2008</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// GitHub の歩み</div>
+        <div class="timeline">
+          <div class="year">2007.10</div>
+          <div class="event">Tom Preston-Werner ら<br>サンフランシスコのバーで構想</div>
+          <div class="year">2008.04.10</div>
+          <div class="event">GitHub 正式公開<br>創業4名</div>
+          <div class="year">2009</div>
+          <div class="event">登録リポジトリ 4万件突破</div>
+          <div class="year">2012</div>
+          <div class="event">$100M の投資ラウンド<br>シリコンバレーの寵児へ</div>
+          <div class="year">2018.06</div>
+          <div class="event">マイクロソフトが$7.5Bで買収<br>業界に衝撃</div>
+          <div class="year">2026</div>
+          <div class="event">登録開発者 1億人超<br>世界最大の開発インフラ</div>
+        </div>
+
+        <div class="quote">
+"Social coding."
+<span class="source">— GitHub 初期のキャッチコピー</span>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>2008年、4人のスタート</h3>
+<p>2007年10月、サンフランシスコのバーで、<b>トム・プレストン=ワーナー</b>、<b>クリス・ワンストラス</b>、<b>P.J.ハイエット</b>の3人が話し合っていました。「Gitは素晴らしいツールだけど、使い方が難しすぎる。誰でも使えるWebサービスを作ろう」——半年後の2008年4月10日、後に<b>スコット・チャコン</b>を加えた4人で <b>GitHub</b> を正式公開します。</p>
+
+<p>当時、Gitはコマンドライン操作が必須で、SSH鍵の設定、リモートの登録、コミットの作法——どれをとっても初心者には敷居が高いものでした。GitHubが提供したのは<b>「Gitの全機能を、Webブラウザで直感的に扱える環境」</b>。これだけで一気に裾野が広がります。</p>
+
+<h3>Pull Request という発明</h3>
+<p>GitHubが世界を変えた最大の理由は、技術ではなく<b>「Pull Request」</b>という発明にありました。これは単なる機能ではなく、<b>「コードの取り込みを社会的な会話にする仕組み」</b>でした。</p>
+
+<p>従来、オープンソースへの貢献はメーリングリストにパッチを送ることでした。それを受け取って取り込むかどうかは、メンテナの胸三寸。議論は埋もれ、過去の判断を辿るのは困難でした。</p>
+
+<p>Pull Request は、この流れを<b>「画面上で見える形」</b>にしたのです。変更内容、議論、テスト結果、レビューコメント——すべてが1つのWebページにまとまり、誰でも見られる。マージするかどうかは公開された判断になる。これは<b>開発の透明性</b>を劇的に高めました。</p>
+
+<h3>「フォーク」という文化の解放</h3>
+<p>もう一つの革新が <b>fork(フォーク)</b> の文化です。GitHub以前、他人のプロジェクトを改造したい場合、ライセンスを確認し、ソースを落とし、自分のサーバーに置く——という手間がかかりました。</p>
+
+<p>GitHubは<b>「ボタン1つで他人のリポジトリを自分のアカウントにコピー」</b>できるようにし、改造して本家へPull Requestを送るまでを<b>「3クリック」</b>で完結させました。これによって<b>「OSSに貢献するハードル」</b>が劇的に下がったのです。</p>
+
+<div class="quote">
+「GitHubのおかげで、私の最初のオープンソース貢献は、コーヒーを飲んでいる間に終わった」
+<span class="source">— ある開発者の典型的な感想</span>
+</div>
+
+<h3>マイクロソフトという衝撃</h3>
+<p>2018年6月、業界に衝撃が走ります。<b>マイクロソフトがGitHubを75億ドル(約8,000億円)で買収</b>すると発表したのです。マイクロソフトはかつて「<b>オープンソースはがん</b>」と公言した会社。そのマイクロソフトが、世界最大のオープンソースインフラを所有することになる——多くの開発者が困惑しました。</p>
+
+<p>しかし結果として、GitHubは買収後も<b>独立した運営</b>を維持し、機能は拡張され、料金体系はむしろ無料枠が広がりました。「<b>マイクロソフトが本気でオープンソースに寄り添う時代</b>」の象徴的な事件として、今では肯定的に振り返られています。</p>
+
+<h3>「社会的コーディング」という思想</h3>
+<p>GitHubの本当の発明は、技術ではなく<b>文化</b>でした。コードを書くことが個人の閉じた作業から、<b>世界中の人と対話しながら作るもの</b>へと変わったのです。スターを付ける、フォローする、Issueで議論する——SNSの作法がコード開発に持ち込まれました。</p>
+
+<p>これは賛否ある変化です。「コードがバズを狙うものになった」「フォロワー数が技術力の指標と誤解される」——批判もあります。しかし全体として、ソフトウェア開発を<b>「閉じた職人技」から「開かれた文化」</b>に変えた功績は計り知れません。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>Linusが作ったのは<b>「分散型版管理ツール」</b>でした。GitHubが作ったのは<b>「分散型コラボレーション文化」</b>です。ツールが先にあり、そこから文化が育つ——ソフトウェア史で、ここまで明確に<b>道具と文化の対応</b>が見られる例は他にありません。</p>
+  </div>
+</section>
+
+<!-- ============ 08 ============ -->
+<section id="s08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>なぜGitが標準になったか</h2>
+    <span class="en">WHY GIT WON</span>
+  </div>
+  <p class="pattern-desc">
+    Gitと同じ時期、競合する分散型ツール(MercurialやBazaar)もありました。
+    なぜGitだけが標準になったのか——
+    それは<b>「技術的優位だけでなく、時代との相性」</b>という、もう少し大きな話に繋がります。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">Mercurial <span class="slash">/</span> hg</div>
+      <div class="t2">マーキュリアル</div>
+      <div class="t3"><b>Gitとほぼ同時期(2005年)に登場した、もう一つの分散型版管理ツール</b>。設計思想は近いが、Gitとの覇権争いに敗れた</div>
+    </div>
+    <div class="term">
+      <div class="t1">open source <span class="slash">/</span> OSS</div>
+      <div class="t2">オープンソース / オープンソースソフトウェア</div>
+      <div class="t3"><b>ソースコードが公開され、誰でも自由に使い・改変・配布できるソフトウェア</b>。1990年代後半から急速に広まった文化</div>
+    </div>
+    <div class="term">
+      <div class="t1">network effect <span class="slash">/</span> ネットワーク効果</div>
+      <div class="t2">ネットワーク効果</div>
+      <div class="t3"><b>「使う人が増えるほど、その道具の価値が増す」現象</b>。電話やSNSと同じく、版管理ツールにも強く働く</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">時代と思想の交差点</span>
+      <span class="tag-desc">WHY GIT WON</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主要DVCSの運命</div>
+        <div class="box">
+          <div class="box-title">勝者: Git</div>
+          <p>● 2005年4月誕生<br>● 2008年 GitHub設立<br>● 2026年 デファクト標準</p>
+        </div>
+        <div class="box">
+          <div class="box-title">敗者①: Mercurial</div>
+          <p>● 2005年4月誕生(Gitとほぼ同日)<br>● Facebook 等が一時採用<br>● 主要ホスティング撤退で衰退</p>
+        </div>
+        <div class="box">
+          <div class="box-title">敗者②: Bazaar</div>
+          <p>● 2005年 Canonical(Ubuntu)社開発<br>● Launchpad で運用<br>● 開発停滞・撤退</p>
+        </div>
+
+        <div class="diagram">[ 採用率推移(概念図) ]
+
+2005 ╱──────── SVN
+2010 ╲ ─── Git ↑
+2015      ╲─ Git ↑↑
+2020         ╲ Git ↑↑↑
+2026   ──── Git 90%超
+
+(数字は概念的なもの)</div>
+      </div>
+      <div class="text">
+
+<h3>同時に生まれたライバル</h3>
+<p>2005年4月、Gitが誕生したのとほぼ同時に、もう一つの分散型版管理ツール <b>Mercurial</b>(マーキュリアル) が公開されました。設計者は<b>マット・マッコール</b>。Linusと同じく BitKeeper の代替を求めていたエンジニアです。</p>
+
+<p>技術的には、MercurialはGitと多くの点で似ていました。分散型、ハッシュベース、コミット履歴の改ざん検知——基本思想は同じです。違いは、Mercurial の方が<b>「使いやすさ」</b>を重視していたこと。コマンド体系が直感的で、ドキュメントが整っており、初心者向けでした。</p>
+
+<p>同じく2005年、Ubuntuを開発する Canonical社が <b>Bazaar</b>(バザール)を発表します。これもまた分散型でした。3つの強力な分散型ツールが同時に立ち上がった——2005年は、まさに<b>分散型版管理の元年</b>だったのです。</p>
+
+<h3>なぜGitが勝ったのか</h3>
+<p>3つのツールはほぼ同時期、同じような技術で出発しました。が、結果はGitの一方的な勝利。なぜか? 答えは技術ではなく、<b>「採用された場所」</b>にあります。</p>
+
+<p>● Gitは <b>Linuxカーネル</b>に採用された(2005年から)<br>
+● その後、世界中の主要OSSが追随<br>
+● 2008年、GitHubが Gitだけをサポート<br>
+● オープンソース開発者が一気に GitHub に集まる<br>
+● その結果、企業の開発現場でも Git が標準に</p>
+
+<p>つまり、Gitが勝ったのは技術が優れていたからではなく、<b>「最初に巨大な実例(Linuxカーネル)があり、それを支える Webプラットフォーム(GitHub) が生まれ、両者がループしながら成長した」</b>からなのです。これが<b>ネットワーク効果</b>です。</p>
+
+<h3>時代との相性</h3>
+<p>2008年以降の世界に、もう一つ追い風が吹きます。<b>スタートアップ革命</b>と<b>クラウドの普及</b>です。世界中に開発者が散らばり、リモートワークが日常になり、コードを公開して仲間を集める文化が一気に広まりました。</p>
+
+<p>このような時代に必要だったのは:<br>
+● <b>分散型</b>(中央サーバー不要、世界中で対等に作業)<br>
+● <b>速度</b>(クラウド時代の頻繁なデプロイ)<br>
+● <b>透明性</b>(誰でも見られる履歴とレビュー)<br>
+● <b>低コスト</b>(無料の公開リポジトリ)</p>
+
+<p>すべて、Gitと GitHub が体現していた要素でした。技術が時代を作ったのではなく、<b>時代が技術を選んだ</b>のです。</p>
+
+<h3>道具と文化の循環</h3>
+<p>振り返ると、Git の物語は<b>「道具が文化を作り、文化が道具を選ぶ」</b>循環の見本のような事例です。</p>
+
+<p>1人の頑固な男(Linus)の不満が、新しい道具(Git)を生んだ。その道具が新しい文化(分散開発・OSS)を可能にし、その文化を支えるサービス(GitHub)を生んだ。サービスが文化をさらに広め、文化が道具をデファクト標準に押し上げた。</p>
+
+<p>2026年現在、世界中の<b>ほぼ全てのソフトウェアプロジェクト</b>がGitを使っています。学校で教えられ、企業の研修で扱われ、就職活動で問われる。<b>Gitを使えることが、エンジニアであることの定義の一部</b>になってしまったのです。</p>
+
+<div class="quote">
+「Gitの勝利は技術の勝利ではない。Linusの執念、GitHubの設計眼、オープンソース文化の隆盛——この3つが同じ時代に重なった奇跡の結果である」
+<span class="source">— 本書筆者の解釈</span>
+</div>
+
+<h3>そして、なぜそれが私たちにとって重要なのか</h3>
+<p>歴史を辿ることに、何の意味があるのか。Gitの過去を知って、何が変わるのか——そう思うかもしれません。</p>
+
+<p>答えは単純です。<b>「なぜそうなっているか」を知った人は、応用が効くようになる</b>。コマンドを暗記している人は新しい状況で困りますが、設計思想を知っている人は<b>状況に合わせて自分で考えられる</b>。Gitに振り回されるのではなく、Gitを使いこなす側に回る——これが、別冊シリーズが目指す境地なのです。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ FINAL THOUGHT</div>
+    <p>Gitは<b>「1人の頑固さ」「明確な要件」「時代との偶然の相性」</b>——この3つの幸運な掛け算で生まれました。あなたが今 git コマンドを打つ時、その背後には<b>50年の歴史と、数千人の知恵</b>が積み重なっています。それを知っているかどうかは、エンジニアとしての視野を確実に変えるはずです。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:56px">
+  <div class="tip-title">∴ NEXT VOLUME</div>
+  <p>別冊第1巻では、<b>「Gitがなぜ生まれたか」</b>という起源を辿りました。次巻 Vol.2「<b>コマンド設計の系譜</b>」では、視点を内側に向けます。<code class="inline">git add</code> <code class="inline">git commit</code> <code class="inline">git status</code>——なぜGitのコマンドはこういう名前で、こういう動きをするのか? 答えは<b>UNIX哲学</b>という、もう少し古い思想の中にあります。<b>道具の形は、その道具を生んだ思想の形</b>なのです。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <div>GIT / GITHUB ORIGINS — VOL.01</div>
+  <div class="right">WHY GIT WAS BORN / Gitはなぜ生まれたか</div>
+</footer>
+
+</body>
+</html>

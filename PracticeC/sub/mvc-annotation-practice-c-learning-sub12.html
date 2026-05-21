@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.12 別冊 時系列データの扱い</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a302a;
+  --paper:#eaece5;
+  --paper-2:#d8dcd0;
+  --accent:#c2cbac;
+  --accent-2:#ced6ba;
+  --accent-3:#6f7660;
+  --muted:#737a72;
+  --line:#bdc5b5;
+  --code-bg:#1f231f;
+  --code-text:#eaece5;
+  --panel-bg:#f2f4ed;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✧';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.22;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--ink);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent-3)}
+.toc a:hover{color:var(--accent-3)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent-3);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#9aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(194,203,172,0.20);border-left:3px solid var(--accent-3);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent-3);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent-3);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.12 / 15</span>
+    <span class="kind-tag">別冊</span>
+  </div>
+  <h1>時系列データの<br>扱い</h1>
+  <div class="subtitle">TIME SERIES DATA ── GAPS, TRENDS & PERFORMANCE</div>
+  <p class="lead">
+    本編Vol.12で<b>日別集計と欠損日の補完</b>を実装しました。別冊S12では、業務開発で<b>「時系列データを扱う設計」</b>を深掘ります。<br>
+    キーワードは<b>「欠損補完の戦略」「移動平均と累積」「カレンダーテーブル」「時系列のパフォーマンス」「集計の前計算」</b>。<br>
+    時系列は<b>ダッシュボード・ログ分析・売上推移・モニタリング</b>など、業務のあらゆる場面で登場します。<br>
+    Cの<b>統計フェーズの締めくくり</b>として、時系列の設計感覚を固めます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#theme">01 この別冊のテーマ</a></li>
+    <li><a href="#gap-strategy">02 欠損補完の戦略</a></li>
+    <li><a href="#calendar-table">03 カレンダーテーブル方式</a></li>
+    <li><a href="#trends">04 移動平均と累積</a></li>
+    <li><a href="#granularity">05 集計の粒度（日/週/月）</a></li>
+    <li><a href="#perf">06 時系列のパフォーマンス</a></li>
+    <li><a href="#precompute">07 集計の前計算（サマリー）</a></li>
+    <li><a href="#trouble">08 時系列のハマりどころ</a></li>
+    <li><a href="#next">09 次の本編へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="theme">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この別冊のテーマ</h2>
+    <span class="en">THEME</span>
+  </div>
+  <p class="pattern-desc">時系列データは<b>「時間軸を持つデータ」</b>。売上・アクセス数・センサー値・学習時間── あらゆる業務に登場します。本巻では時系列特有の<b>設計パターン</b>を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-timeseries</span>
+      <span class="tag-desc">時系列が重要な理由</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 時系列が登場する場面</div>
+        <div class="role-card">
+          <span class="label">場面1</span>
+          <div class="name">売上・KPIの推移</div>
+          <div class="desc">「日別売上」「月別新規ユーザー」など。<b>経営ダッシュボードの主役</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">場面2</span>
+          <div class="name">ログ・モニタリング</div>
+          <div class="desc">「1時間ごとのエラー数」「分単位のCPU使用率」。<b>システム監視</b>の基盤。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">場面3</span>
+          <div class="name">ユーザー行動分析</div>
+          <div class="desc">「曜日別のアクティブ率」「継続率の推移」。<b>グロース分析</b>の核心。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">場面4</span>
+          <div class="name">習慣・記録アプリ</div>
+          <div class="desc">「日別の学習時間」「連続記録日数」。<b>本プロジェクトの学習記録アプリ</b>がこれ。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で答える4つの問い</span>
+
+<span class="comment">// 問1: 欠損日はどう埋める？</span>
+<span class="comment">//   → Java補完 or カレンダーテーブル</span>
+
+<span class="comment">// 問2: 推移をどう分析する？</span>
+<span class="comment">//   → 移動平均・累積で傾向を見る</span>
+
+<span class="comment">// 問3: 粒度はどう選ぶ？</span>
+<span class="comment">//   → 日/週/月、見たい期間で決める</span>
+
+<span class="comment">// 問4: 大量の時系列をどう速く集計？</span>
+<span class="comment">//   → インデックス + 前計算（サマリー）</span>
+
+
+<span class="comment">// 結論を先に：</span>
+<span class="comment">// ・欠損は「埋める」のが基本</span>
+<span class="comment">// ・傾向は「平均化」して見る</span>
+<span class="comment">// ・粒度は「見たい単位」で集計</span>
+<span class="comment">// ・大量データは「前計算」で速く</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="gap-strategy">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>欠損補完の戦略</h2>
+    <span class="en">GAP FILLING STRATEGY</span>
+  </div>
+  <p class="pattern-desc">本編Vol.12 では「0埋め」をしました。しかし業務では<b>「どう埋めるか」に複数の選択肢</b>があります。データの性質で使い分けます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">fill-strategies</span>
+      <span class="tag-desc">欠損補完の4戦略</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 補完の4戦略</div>
+        <div class="role-card">
+          <span class="label">戦略1</span>
+          <div class="name">ゼロ埋め（Vol.12採用）</div>
+          <div class="desc">記録なし＝0。<b>「学習時間」「売上」など「やってない＝0」が自然なデータ</b>に最適。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">戦略2</span>
+          <div class="name">前値保持（直前の値を引き継ぐ）</div>
+          <div class="desc">「在庫残高」「口座残高」など<b>「変化がなければ前と同じ」</b>データ。欠損日は前日の値。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">戦略3</span>
+          <div class="name">線形補間（前後から推定）</div>
+          <div class="desc">「気温」「センサー値」など<b>連続的に変化</b>するデータ。前後の値から中間を推定。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">戦略4</span>
+          <div class="name">欠損のまま（NULL/null表示）</div>
+          <div class="desc">「測定できなかった」ことに意味がある場合。<b>グラフで線を切る</b>などの表現。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>判断軸</b>：「そのデータで<b>欠損は何を意味するか</b>」。学習時間なら「やってない＝0」が自然。</p>
+      </div>
+      <div class="code"><span class="code-head">// 戦略別のコード例</span>
+
+<span class="comment">// ─── 戦略1: ゼロ埋め（Vol.12）───</span>
+<span class="kw">int</span> v = map.<span class="fn">getOrDefault</span>(d, <span class="num">0</span>);
+<span class="comment">// 学習時間：やってない → 0分</span>
+
+
+<span class="comment">// ─── 戦略2: 前値保持 ───</span>
+<span class="type">Integer</span> v = map.<span class="fn">get</span>(d);
+<span class="kw">if</span> (v == <span class="kw">null</span>) {
+  v = lastValue;  <span class="comment">// 前日の値を引き継ぐ</span>
+} <span class="kw">else</span> {
+  lastValue = v;
+}
+<span class="comment">// 在庫残高：動きがなければ前日と同じ</span>
+
+
+<span class="comment">// ─── 戦略3: 線形補間 ───</span>
+<span class="comment">// 前後の実測値から中間を計算</span>
+<span class="comment">// 例: 5/8=10, 5/11=40 で 5/9,5/10 欠損</span>
+<span class="comment">//  → 5/9=20, 5/10=30 と推定</span>
+<span class="comment">// （気温などの連続データ）</span>
+
+
+<span class="comment">// ─── 戦略4: 欠損のまま ───</span>
+<span class="type">Integer</span> v = map.<span class="fn">get</span>(d);  <span class="comment">// null のまま</span>
+<span class="comment">// グラフで線を切る</span>
+<span class="comment">// 「データなし」を明示</span>
+
+
+<span class="comment">// ─── 学習記録アプリの選択 ───</span>
+<span class="comment">// 「サボった日 = 0分」が自然</span>
+<span class="comment">// → 戦略1（ゼロ埋め）が正解</span>
+<span class="comment">// → 習慣の途切れも可視化できる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「欠損をどう埋めるか」を<b>間違えると分析が嘘になる</b>。例えば在庫残高を「ゼロ埋め」すると「在庫が突然消えた」ように見える。逆に学習時間を「前値保持」すると「ずっと勉強し続けた」ように見える。<b>データの意味に合った補完</b>を選ぶのが鉄則です。</p>
+  </div>
+</section>
+
+<section id="calendar-table">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>カレンダーテーブル方式</h2>
+    <span class="en">CALENDAR TABLE</span>
+  </div>
+  <p class="pattern-desc">本編では「Javaで欠損日を埋めた」が、業務では<b>SQLだけで完結させる方法</b>もあります。それが<b>カレンダーテーブル</b>。大規模・複雑な時系列で有効。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">calendar-table</span>
+      <span class="tag-desc">SQL で欠損日を埋める</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// カレンダーテーブルとは</div>
+        <p>「<b>全ての日付を持つテーブル</b>」を用意し、集計結果と LEFT JOIN する。記録のない日も<b>カレンダー側に存在する</b>ので結果に出る。</p>
+        <p style="margin-top:8px"><b>2つの作り方</b>：</p>
+        <ul style="margin-left:18px;font-size:13px;margin-top:6px">
+          <li>物理テーブルを事前に作る（calendarテーブル）</li>
+          <li>再帰CTEで動的に生成（MySQL 8.0+）</li>
+        </ul>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">Java方式 vs SQL方式</div>
+          <p><b>Java方式（Vol.12）</b>：シンプル・小規模向け・補完ロジックが柔軟。<br><b>SQL方式（カレンダーテーブル）</b>：大規模・複雑な集計・SQL内で完結。学習記録アプリは<b>Java方式で十分</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// カレンダーテーブル方式</span>
+
+<span class="comment">// ─── 方法1: 物理テーブル ───</span>
+<span class="kw">CREATE TABLE</span> calendar (
+  d DATE PRIMARY KEY
+);
+<span class="comment">// 事前に日付を大量投入しておく</span>
+<span class="comment">// INSERT INTO calendar VALUES</span>
+<span class="comment">//   ('2026-05-01'), ('2026-05-02'), ...</span>
+
+
+<span class="comment">// 集計と LEFT JOIN</span>
+SELECT
+  c.d AS studiedOn,
+  COALESCE(SUM(r.minutes), 0) AS total
+FROM calendar c
+LEFT JOIN study_records r
+  ON c.d = r.studied_on
+WHERE c.d BETWEEN '2026-05-08'
+            AND '2026-05-15'
+GROUP BY c.d
+ORDER BY c.d;
+
+<span class="comment">// → カレンダー側の全日付が残る</span>
+<span class="comment">// → 欠損日も 0 で出る</span>
+<span class="comment">// → Java の補完が不要に</span>
+
+
+<span class="comment">// ─── 方法2: 再帰CTE（MySQL 8.0+）───</span>
+WITH RECURSIVE dates AS (
+  SELECT DATE('2026-05-08') AS d
+  UNION ALL
+  SELECT d + INTERVAL 1 DAY
+  FROM dates
+  WHERE d &lt; '2026-05-15'
+)
+SELECT
+  dates.d AS studiedOn,
+  COALESCE(SUM(r.minutes), 0) AS total
+FROM dates
+LEFT JOIN study_records r
+  ON dates.d = r.studied_on
+GROUP BY dates.d
+ORDER BY dates.d;
+
+<span class="comment">// → テーブル不要・SQLだけで日付生成</span>
+
+
+<span class="comment">// ─── どちらを選ぶか ───</span>
+<span class="comment">// Java方式: 学習記録アプリ（小規模）✓</span>
+<span class="comment">// 物理テーブル: 大規模・頻繁な集計</span>
+<span class="comment">// 再帰CTE: モダンDB・中規模</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="trends">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>移動平均と累積</h2>
+    <span class="en">MOVING AVG & CUMULATIVE</span>
+  </div>
+  <p class="pattern-desc">時系列の<b>「傾向」</b>を見るには、生データだけでは不十分。<b>移動平均</b>でノイズを消し、<b>累積</b>で総量を見る。業務分析の定番テクニック。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">moving-cumulative</span>
+      <span class="tag-desc">傾向を見る2手法</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの分析手法</div>
+        <div class="role-card">
+          <span class="label">手法1</span>
+          <div class="name">移動平均（ノイズを消す）</div>
+          <div class="desc">「直近7日の平均」を毎日計算。日々のばらつきを平滑化し、<b>「上昇傾向か下降傾向か」</b>を見やすくする。株価チャートでお馴染み。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">手法2</span>
+          <div class="name">累積（総量を見る）</div>
+          <div class="desc">「今月の累計学習時間」を日々加算。<b>「目標まであとどれくらいか」</b>が見える。進捗管理に最適。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>ウィンドウ関数</b>（<code>OVER</code>）を使うとSQLで計算可能。MySQL 8.0+ で利用可。Cの範囲外ですが知識として。</p>
+      </div>
+      <div class="code"><span class="code-head">// ウィンドウ関数での計算（参考）</span>
+
+<span class="comment">// ─── 7日移動平均 ───</span>
+SELECT
+  studied_on,
+  SUM(minutes) AS daily,
+  AVG(SUM(minutes)) OVER (
+    ORDER BY studied_on
+    ROWS BETWEEN 6 PRECEDING
+             AND CURRENT ROW
+  ) AS moving_avg_7d
+FROM study_records
+GROUP BY studied_on
+ORDER BY studied_on;
+
+<span class="comment">// 各日について「直近7日の平均」を計算</span>
+<span class="comment">// → 日々のブレが平滑化される</span>
+
+
+<span class="comment">// ─── 累積（ランニングトータル）───</span>
+SELECT
+  studied_on,
+  SUM(minutes) AS daily,
+  SUM(SUM(minutes)) OVER (
+    ORDER BY studied_on
+  ) AS cumulative
+FROM study_records
+GROUP BY studied_on
+ORDER BY studied_on;
+
+<span class="comment">// 各日について「その日までの累計」</span>
+<span class="comment">// → 総量の推移が見える</span>
+
+
+<span class="comment">// ─── Java で計算する場合（Cの範囲）───</span>
+
+<span class="comment">// 累積はループで簡単に計算できる</span>
+<span class="kw">int</span> cumulative = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="type">DailyStatView</span> v : views) {
+  cumulative += v.<span class="fn">getTotalMinutes</span>();
+  v.<span class="fn">setCumulative</span>(cumulative);
+}
+<span class="comment">// → ウィンドウ関数を使わずとも</span>
+<span class="comment">//   Java のループで実現可能</span>
+
+<span class="comment">// 移動平均も同様に</span>
+<span class="comment">// 直近N件を平均すればよい</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><b>ウィンドウ関数（<code>OVER</code>）</b>は時系列分析の強力な武器ですが、<b>SQLの中ではやや高度</b>。学習記録アプリの規模なら、<b>累積や移動平均は Java のループで計算</b>する方が分かりやすい。「<b>SQLでやるべきか・Javaでやるべきか</b>」は、複雑さと規模で判断。Cでは Java 寄りで十分です。</p>
+  </div>
+</section>
+
+<section id="granularity">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>集計の粒度（日/週/月）</h2>
+    <span class="en">GRANULARITY</span>
+  </div>
+  <p class="pattern-desc">時系列集計は<b>「どの単位でまとめるか」</b>を選びます。日別・週別・月別── <b>見たい期間で粒度を変える</b>のが業務の定石。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">granularity</span>
+      <span class="tag-desc">粒度の使い分け</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 粒度と表示期間の関係</div>
+        <table class="compare-tbl">
+          <tr><th>粒度</th><th>適した表示期間</th></tr>
+          <tr><td>時間別</td><td>1日〜数日</td></tr>
+          <tr><td>日別</td><td>1週間〜2ヶ月</td></tr>
+          <tr><td>週別</td><td>2ヶ月〜1年</td></tr>
+          <tr><td>月別</td><td>1年〜数年</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>原則</b>：「<b>表示する点が20〜60個</b>」くらいになる粒度を選ぶ。1年を日別（365点）で見ると細かすぎ、月別（12点）が適切。</p>
+      </div>
+      <div class="code"><span class="code-head">// 粒度別の GROUP BY</span>
+
+<span class="comment">// ─── 日別（Vol.12）───</span>
+GROUP BY studied_on
+<span class="comment">// studied_on が DATE 型ならそのまま</span>
+
+
+<span class="comment">// ─── 週別 ───</span>
+GROUP BY YEARWEEK(studied_on)
+<span class="comment">// 年と週番号でグループ化</span>
+
+
+<span class="comment">// ─── 月別 ───</span>
+GROUP BY DATE_FORMAT(studied_on, '%Y-%m')
+<span class="comment">// "2026-05" でグループ化</span>
+
+
+<span class="comment">// ─── 曜日別（時系列ではないが分析的）───</span>
+GROUP BY DAYOFWEEK(studied_on)
+<span class="comment">// 「何曜日に勉強しがちか」</span>
+
+
+<span class="comment">// ─── 時間帯別（DATETIME の場合）───</span>
+GROUP BY HOUR(created_at)
+<span class="comment">// 「何時に記録しがちか」</span>
+
+
+<span class="comment">// ─── 業務での粒度切り替え UI ───</span>
+
+<span class="comment">// よくある実装：</span>
+<span class="comment">// 「日」「週」「月」のタブ切り替え</span>
+
+<span class="ann">@RequestParam</span>(defaultValue = <span class="str">"day"</span>)
+<span class="type">String</span> granularity
+
+<span class="comment">// granularity で GROUP BY を切り替え</span>
+<span class="comment">// （&lt;choose&gt; などの動的SQLで・S8参照）</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="perf">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>時系列のパフォーマンス</h2>
+    <span class="en">PERFORMANCE</span>
+  </div>
+  <p class="pattern-desc">時系列データは<b>「蓄積し続ける」</b>性質上、放置すると膨大になります。パフォーマンスの3つの定石を整理。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">ts-perf</span>
+      <span class="tag-desc">時系列の高速化</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 高速化の3定石</div>
+        <div class="role-card">
+          <span class="label">定石1</span>
+          <div class="name">日付列にインデックス</div>
+          <div class="desc"><code>studied_on</code> や <code>created_at</code> に<b>インデックス</b>。期間絞り込みと集計が速くなる。時系列の最重要対策。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">定石2</span>
+          <div class="name">期間で必ず絞る（WHERE）</div>
+          <div class="desc">「全期間集計」は避け、<b>「直近30日」など期間限定</b>。S11 の「早く絞る」原則。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">定石3</span>
+          <div class="name">古いデータのアーカイブ</div>
+          <div class="desc">時系列は<b>無限に増える</b>。古いデータは別テーブルや別ストレージに退避。アクティブなテーブルを小さく保つ。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px">学習記録アプリは小規模なので<b>定石1だけ</b>意識すれば十分。大規模化したら定石2・3。</p>
+      </div>
+      <div class="code"><span class="code-head">// 時系列の INDEX 設計</span>
+
+<span class="comment">// ─── 日付列に INDEX ───</span>
+<span class="kw">CREATE INDEX</span> idx_studied_on
+  <span class="kw">ON</span> study_records(studied_on);
+
+<span class="comment">// 「日別集計」「期間絞り込み」が速くなる</span>
+
+
+<span class="comment">// ─── 複合 INDEX（科目×日付）───</span>
+<span class="kw">CREATE INDEX</span> idx_subject_studied
+  <span class="kw">ON</span> study_records(subject_id, studied_on);
+
+<span class="comment">// 「特定科目の日別推移」に効く</span>
+
+
+<span class="comment">// ─── 期間で絞る（定石2）───</span>
+SELECT studied_on, SUM(minutes)
+FROM study_records
+WHERE studied_on &gt;= '2026-05-01'  <span class="comment">// 必ず絞る</span>
+  AND studied_on &lt;  '2026-06-01'
+GROUP BY studied_on;
+
+<span class="comment">// 全期間ではなく月単位など</span>
+
+
+<span class="comment">// ─── アーカイブ戦略（定石3）───</span>
+
+<span class="comment">// アクティブ: study_records（直近1年）</span>
+<span class="comment">// アーカイブ: study_records_archive（過去）</span>
+
+<span class="comment">// 定期バッチで古いデータを移動</span>
+<span class="comment">// → アクティブテーブルが小さく保たれる</span>
+<span class="comment">// → 日々の集計が速い</span>
+
+
+<span class="comment">// ─── 学習記録アプリでは ───</span>
+<span class="comment">// 個人利用の記録なので</span>
+<span class="comment">// 数年分でも数千行程度</span>
+<span class="comment">// → INDEX があれば全く問題なし</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="precompute">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>集計の前計算（サマリー）</h2>
+    <span class="en">PRE-COMPUTATION</span>
+  </div>
+  <p class="pattern-desc">大規模な時系列で<b>究極の高速化</b>が<b>「前計算」</b>。集計を毎回するのではなく、<b>事前に計算して保存</b>しておく。S9 でも触れたサマリーテーブルの応用。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pre-compute</span>
+      <span class="tag-desc">前計算の考え方</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前計算とは</div>
+        <p>「画面表示のたびに集計」は、データが増えると重くなる。<b>「1日1回バッチで集計し、結果を保存」</b>しておけば、画面は保存済みの結果を読むだけで高速。</p>
+        <div class="role-card" style="margin-top:12px">
+          <span class="label">リアルタイム集計</span>
+          <div class="name">毎回 SQL で集計</div>
+          <div class="desc">常に最新・実装シンプル。但しデータ増で遅くなる。<b>Cの学習記録アプリはこれ</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">前計算</span>
+          <div class="name">バッチで集計→サマリーテーブル保存</div>
+          <div class="desc">画面は高速。但し「最新でない」リスクと、バッチ運用の複雑さ。<b>大規模向け</b>。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>トレードオフ</b>：「鮮度」と「速度」。リアルタイム性が必要なら都度集計、速度優先なら前計算。</p>
+      </div>
+      <div class="code"><span class="code-head">// 前計算の実装イメージ</span>
+
+<span class="comment">// ─── サマリーテーブル ───</span>
+<span class="kw">CREATE TABLE</span> daily_summary (
+  summary_date DATE PRIMARY KEY,
+  total_minutes INT,
+  record_count INT,
+  updated_at DATETIME
+);
+
+
+<span class="comment">// ─── バッチで集計＆保存（1日1回）───</span>
+<span class="comment">// Spring の @Scheduled で定期実行</span>
+
+<span class="ann">@Scheduled</span>(cron = <span class="str">"0 0 1 * * *"</span>)
+<span class="comment">// 毎日 AM1:00 に実行</span>
+<span class="kw">public void</span> <span class="fn">aggregateDaily</span>() {
+  <span class="comment">// 前日分を集計して daily_summary に保存</span>
+  <span class="comment">// （INSERT or UPDATE）</span>
+}
+
+
+<span class="comment">// ─── 画面表示は高速 ───</span>
+SELECT summary_date, total_minutes
+FROM daily_summary
+WHERE summary_date &gt;= '2026-05-01'
+ORDER BY summary_date;
+
+<span class="comment">// → 集計済みなので一瞬で返る</span>
+<span class="comment">// → study_records を毎回集計しない</span>
+
+
+<span class="comment">// ─── トレードオフ ───</span>
+
+<span class="comment">// メリット: 画面が高速</span>
+<span class="comment">// デメリット:</span>
+<span class="comment">//   ・「今日のデータ」は翌朝まで反映されない</span>
+<span class="comment">//   ・バッチの運用・監視が必要</span>
+<span class="comment">//   ・サマリーと実データの整合性管理</span>
+
+
+<span class="comment">// ─── Cでの方針 ───</span>
+<span class="comment">// 学習記録アプリは小規模</span>
+<span class="comment">// → リアルタイム集計で十分</span>
+<span class="comment">// → 前計算は「知識として」知っておく</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>前計算（サマリーテーブル）</b>」は大規模システムの定番ですが、<b>「最初から導入するのは過剰設計」</b>のことが多い。まずは<b>リアルタイム集計</b>で作り、「遅くなってきたら前計算を検討」が正しい順序。<b>「早すぎる最適化は諸悪の根源」</b>── これはエンジニアリングの格言です。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>時系列のハマりどころ</h2>
+    <span class="en">TIME SERIES PITFALLS</span>
+  </div>
+  <p class="pattern-desc">時系列データで<b>業務でよくある罠</b>を4つ。本編Vol.12 で押さえた内容と対比します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">ts-pitfalls</span>
+      <span class="tag-desc">時系列の罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある罠</div>
+        <div class="role-card">
+          <span class="label">PITFALL 1</span>
+          <div class="name">欠損日を消したまま分析する</div>
+          <div class="desc"><b>原因</b>：SQL結果をそのまま使い、記録のない日が抜ける。「毎日やっている」ように錯覚。<br><b>対処</b>：欠損日を埋める（Vol.12 の核心）。「ないことも情報」。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 2</span>
+          <div class="name">タイムゾーンで日付がズレる</div>
+          <div class="desc"><b>原因</b>：UTC保存のデータを日別集計する時、JSTとの境界で日付がずれる。<br><b>対処</b>：集計前にタイムゾーン変換（S7参照）。<code>studied_on</code> は DATE なので Cでは問題なし。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 3</span>
+          <div class="name">月別集計で月の途中まで含めてしまう</div>
+          <div class="desc"><b>原因</b>：「今月」の範囲を <code>BETWEEN 月初 AND 今日</code> としたが、月末の比較対象が揃わない。<br><b>対処</b>：「完了した月だけ」集計するか、「経過日数で正規化」する。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 4</span>
+          <div class="name">LocalDate の不変性を忘れる</div>
+          <div class="desc"><b>原因</b>：<code>d.plusDays(1)</code> の戻り値を代入し忘れて無限ループ（Vol.12 でも警告）。<br><b>対処</b>：<code>d = d.plusDays(1)</code>。<code>java.time</code> は全て不変。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// PITFALL 1: 欠損で錯覚する例</span>
+
+<span class="comment">// ─── 欠損を消したまま ───</span>
+<span class="comment">// 05-08  60分</span>
+<span class="comment">// 05-10  90分    ← 05-09 が抜けてる</span>
+<span class="comment">// 05-12 120分    ← 05-11 が抜けてる</span>
+
+<span class="comment">// グラフにすると「ずっと右肩上がり」</span>
+<span class="comment">// に見える → 実際はサボった日がある</span>
+
+
+<span class="comment">// ─── 欠損を埋めた（Vol.12）───</span>
+<span class="comment">// 05-08  60分</span>
+<span class="comment">// 05-09   0分    ← サボりが見える</span>
+<span class="comment">// 05-10  90分</span>
+<span class="comment">// 05-11  45分</span>
+<span class="comment">// 05-12 120分</span>
+
+<span class="comment">// → 習慣の途切れが正しく見える</span>
+
+
+<span class="code-head" style="margin-top:14px">// PITFALL 3: 月途中の罠</span>
+
+<span class="comment">// ─── 今日が 5/15 の場合 ───</span>
+
+<span class="comment">// ✗ NG: 単純比較</span>
+<span class="comment">// 4月（30日分）: 600分</span>
+<span class="comment">// 5月（15日分）: 350分</span>
+<span class="comment">// → 「5月は減った」と誤解</span>
+<span class="comment">//   （まだ月の半分なのに）</span>
+
+
+<span class="comment">// ✓ OK: 1日あたりで正規化</span>
+<span class="comment">// 4月: 600/30 = 20分/日</span>
+<span class="comment">// 5月: 350/15 = 23分/日</span>
+<span class="comment">// → 「5月の方がペースが速い」と正しく判断</span>
+
+
+<span class="comment">// 「期間の長さ」を揃えて比較するのが鉄則</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次の本編へ</h2>
+    <span class="en">TO THE NEXT VOLUME</span>
+  </div>
+  <p class="pattern-desc">別冊S12お疲れさまでした。<b>時系列データの設計感覚</b>が固まりました。これで<b>統計フェーズが完全に完結</b>。次のVol.13 からは<b>完成フェーズ</b>── トランザクションの応用に入ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">この別冊のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 持ち帰る5つの知見</div>
+        <div class="role-card">
+          <span class="label">知見1</span>
+          <div class="name">欠損補完は4戦略</div>
+          <div class="desc">ゼロ埋め・前値保持・線形補間・欠損のまま</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見2</span>
+          <div class="name">SQL方式はカレンダーテーブル</div>
+          <div class="desc">大規模なら物理テーブルor再帰CTE</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見3</span>
+          <div class="name">傾向は移動平均・累積で見る</div>
+          <div class="desc">ノイズ除去と総量把握</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見4</span>
+          <div class="name">粒度は表示期間で選ぶ</div>
+          <div class="desc">点が20〜60個になる単位</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見5</span>
+          <div class="name">前計算は「遅くなったら」</div>
+          <div class="desc">早すぎる最適化は避ける</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.13 本編で起きること</span>
+
+<span class="comment">// タイトル：</span>
+<span class="comment">// 「複数テーブル更新と@Transactional応用」</span>
+
+<span class="comment">// やること：</span>
+<span class="comment">// 1. 1つの操作で複数テーブルを更新</span>
+<span class="comment">// 2. @Transactional の本格活用</span>
+<span class="comment">// 3. ロールバックの仕組み</span>
+<span class="comment">// 4. 例外とトランザクションの関係</span>
+<span class="comment">// 5. 「全部成功 or 全部失敗」の保証</span>
+
+<span class="comment">// 獲得スキル：</span>
+<span class="comment">// → トランザクション応用</span>
+
+
+<span class="comment">// ─── フェーズ移行 ───</span>
+<span class="comment">// 統計フェーズ（Vol.9〜12）完結！</span>
+<span class="comment">// → 完成フェーズ（Vol.13〜15）開始</span>
+<span class="comment">//   トランザクション・外部キー・完結</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(111,118,96,0.14)">
+    <div class="tip-label">NEXT STEP ── VOL.13 本編</div>
+    <p>別冊S12で<b>時系列の設計感覚</b>を固め、<b>統計フェーズが完結</b>しました。次のVol.13 本編「<b>複数テーブル更新と@Transactional応用</b>」から、Cは<b>完成フェーズ</b>に入ります。「全部成功するか、全部失敗するか」を保証する<b>トランザクション</b>を本格的に学びます。本編Vol.13 へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.12 / 15 ── TIME SERIES DATA（別冊）</span>
+</footer>
+
+</body>
+</html>

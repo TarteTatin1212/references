@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト 地図編 部品から製品への流れ編 Vol.6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;--paper:#f0ebe0;--paper-2:#e3dcc8;
+  --accent:#3d4f7c;--accent-2:#6b7a96;--accent-3:#b89968;
+  --muted:#6a6457;--line:#c8c0a8;
+  --code-bg:#1c2138;--code-text:#f0ebe0;--panel-bg:#f7f3e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"⊙";position:absolute;top:-50px;right:-20px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.12;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.map-tag{display:inline-block;background:var(--accent-3);color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:660px;margin-top:20px;color:var(--ink);font-size:15px}
+.axis-banner{display:inline-block;margin-top:18px;background:var(--paper-2);border-left:3px solid var(--accent-3);padding:8px 16px;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--ink);letter-spacing:0.1em}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em}
+.pattern-desc{max-width:700px;font-size:14px;margin-bottom:20px;color:var(--ink)}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:16px}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:22px 26px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:22px 26px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}.code .type{color:#c2a3ff}.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}.code .ann{color:#f7c08a}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.07);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+.tip.copper{border-left-color:var(--accent-3);background:rgba(184,153,104,0.12)}
+.tip.copper .tip-head{color:var(--accent-3)}
+.term-map{display:grid;grid-template-columns:170px 1fr;gap:8px 16px;font-size:13px}
+.term-map dt{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;padding:4px 0;border-bottom:1px dashed var(--line)}
+.term-map dd{padding:4px 0;border-bottom:1px dashed var(--line)}
+/* 組み上がり階層図 */
+.assembly{display:flex;flex-direction:column;gap:2px;font-family:'JetBrains Mono',monospace;font-size:11.5px;margin:8px 0}
+.assembly .l{padding:10px 14px;color:#fff;text-align:center;font-weight:600;letter-spacing:0.05em}
+.assembly .grow{position:relative}
+.assembly .grow::after{content:"";display:block;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid var(--accent-3);margin:2px auto -2px}
+.assembly .l-atom{background:#386a3d;width:30%;align-self:center}
+.assembly .l-mol{background:var(--accent-3);color:var(--ink);width:50%;align-self:center}
+.assembly .l-cell{background:var(--accent-2);width:70%;align-self:center}
+.assembly .l-organ{background:var(--accent);width:90%;align-self:center}
+.assembly .l-body{background:var(--ink);width:100%;align-self:center}
+.assembly .lbl{font-size:9.5px;font-weight:400;display:block;opacity:0.85}
+/* 境目図 */
+.junction-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:0;font-size:13px;margin:10px 0;align-items:stretch}
+.junction-grid .col{padding:14px 16px;border:1px solid var(--line);background:#fff;text-align:center}
+.junction-grid .col.left{border-right:none}
+.junction-grid .col.right{border-left:none}
+.junction-grid .junction{display:flex;align-items:center;justify-content:center;background:#c43030;color:#fff;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;padding:0 12px;letter-spacing:0.1em;writing-mode:vertical-rl;text-orientation:mixed}
+.junction-grid .h{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:700;margin-bottom:6px}
+/* 時間軸 */
+.timeline{position:relative;padding-left:24px;border-left:2px solid var(--accent-3);font-size:13px}
+.timeline .era{position:relative;padding:10px 0 10px 6px}
+.timeline .era::before{content:"●";position:absolute;left:-32px;top:8px;color:var(--accent-3);font-size:14px;background:var(--panel-bg);width:22px;text-align:center}
+.timeline .label{font-weight:700;color:var(--ink);display:block}
+.timeline .desc{font-size:12px;color:var(--muted);margin-top:2px;display:block}
+/* テーブル */
+.cmp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+.cmp-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:left;padding:8px 10px;letter-spacing:0.1em;border-bottom:1px solid var(--line)}
+.cmp-table td{padding:8px 10px;border-bottom:1px dashed var(--line);vertical-align:top}
+.cmp-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;width:130px}
+/* 因果鎖 */
+.chain{padding-left:0;list-style:none;font-size:13px}
+.chain li{padding:8px 14px;background:#fff;border-left:3px solid var(--accent-3);margin-bottom:8px;position:relative}
+.chain li::after{content:"↓";display:block;text-align:center;color:var(--accent-3);font-size:14px;margin-top:6px;margin-bottom:-12px}
+.chain li:last-child::after{content:""}
+.chain li b{color:var(--accent)}
+.page-footer{border-top:2px solid var(--ink);margin-top:80px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:200px}.junction-grid{grid-template-columns:1fr}.junction-grid .junction{writing-mode:initial;padding:8px 0}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="map-tag">MAP</span>
+  <span class="vol-tag">MAP VOL.06 / 10</span>
+  <h1>部品から製品への流れ編</h1>
+  <div class="subtitle">地図編 Vol.6 — FROM PARTS TO PRODUCT</div>
+  <p class="lead">
+    本編Vol.6では結合テストの実装を学びました。地図編Vol.6では一段引いて、<b>「ソフトウェアはどう組み上がっていくのか」</b>という構造を読み解きます。個々の部品が中規模・大規模へと積み上がる<b>上下軸</b>と、開発の中で組み合わさっていく<b>時間軸</b>。結合テストが「境目を見張る層」として位置づく理由が見えてきます。
+  </p>
+  <span class="axis-banner">主な軸 / VERTICAL × TIME — 上下軸と時間軸で読み解く</span>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 ソフトウェアは層で出来ている</a></li>
+    <li><a href="#sec02">02 組み上がりの上下軸</a></li>
+    <li><a href="#sec03">03 境目が生まれる場所</a></li>
+    <li><a href="#sec04">04 結合テストはどこを見るか</a></li>
+    <li><a href="#sec05">05 統合戦略の時間軸</a></li>
+    <li><a href="#sec06">06 マイクロサービスと統合</a></li>
+    <li><a href="#sec07">07 ピラミッドの中で結合層が持つ意味</a></li>
+    <li><a href="#term">用語の地図</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>ソフトウェアは層で出来ている</h2>
+    <span class="en">LAYERED STRUCTURE</span>
+  </div>
+  <p class="pattern-desc">
+    まず前提として、現代のソフトウェアは<b>層構造</b>で組み上がっています。小さな関数→クラス→モジュール→サービス→システム、と部品が積み上がる構造。これを<b>レイヤードアーキテクチャ</b>と呼びます。テストの粒度はこの構造に対応します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">layers</span>
+      <span class="tag-desc">部品が積み上がる階層構造</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 5層の組み上がり</div>
+        <div class="assembly">
+          <div class="l l-body">SYSTEM<span class="lbl">システム全体 / 完成品</span></div>
+          <div class="l l-organ">MODULE<span class="lbl">モジュール / 機能群</span></div>
+          <div class="l l-cell">CLASS<span class="lbl">クラス / 部品</span></div>
+          <div class="l l-mol">FUNCTION<span class="lbl">関数 / メソッド</span></div>
+          <div class="l l-atom">STATEMENT<span class="lbl">文 / 行</span></div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          下から上へ<b style="color:var(--ink)">部品が組み合わさって大きくなる</b>。各層には独自の役割と境界がある。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 層と粒度の対応</span>
+
+<span class="kw">STATEMENT</span>
+  if文・代入・式
+  → テスト対象にはならない
+
+<span class="kw">FUNCTION</span>
+  add(), discount(), greet()
+  → <span class="ann">単体テスト の対象</span>
+
+<span class="kw">CLASS</span>
+  OrderService, UserRepository
+  → 単体 or 結合のどちらでも
+
+<span class="kw">MODULE</span>
+  注文管理機能, 認証機能
+  → <span class="ann">結合テスト の対象</span>
+
+<span class="kw">SYSTEM</span>
+  ECサイト全体
+  → <span class="ann">E2Eテスト の対象</span>
+
+<span class="comment">// テストの粒度は</span>
+<span class="comment">// この階層に従って決まる</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>レイヤードアーキテクチャ</b>＝ソフトウェアを層に分けて構築する設計。よく見るのは「プレゼンテーション層 / アプリケーション層 / ドメイン層 / インフラ層」の4層。
+    <br><b>モジュール</b>＝関連するクラス群を1つにまとめた単位。「注文モジュール」「認証モジュール」など機能単位の塊。
+    <br><b>関心の分離</b>＝層ごとに役割を明確に分けるという設計原則。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>組み上がりの上下軸</h2>
+    <span class="en">VERTICAL ASSEMBLY</span>
+  </div>
+  <p class="pattern-desc">
+    層は下から上へ積み上がります。下層は<b>小さく・抽象度低く・数が多い</b>。上層は<b>大きく・抽象度高く・数が少ない</b>。この性質は地図編Vol.2のテストピラミッドと驚くほど似ています。<b>テストの粒度はソフトウェアの構造そのものを反映している</b>のです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vertical axis</span>
+      <span class="tag-desc">下から上への組み上がり</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 各層の性質</div>
+        <table class="cmp-table">
+          <tr><th>層</th><th>数</th><th>大きさ</th></tr>
+          <tr><td>関数</td><td>数百〜数千</td><td>1〜数十行</td></tr>
+          <tr><td>クラス</td><td>数十〜数百</td><td>100〜数百行</td></tr>
+          <tr><td>モジュール</td><td>数個〜数十</td><td>千〜数千行</td></tr>
+          <tr><td>サービス</td><td>1〜数個</td><td>万〜数十万行</td></tr>
+          <tr><td>システム</td><td>1</td><td>全体</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          下に行くほど<b style="color:var(--ink)">数が多い</b>から単体テストは<b style="color:var(--ink)">数が多くなる</b>。上に行くほど<b style="color:var(--ink)">数が少ない</b>からE2Eテストも<b style="color:var(--ink)">少なくなる</b>。この対応こそピラミッド型の根拠。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// ピラミッドの正体</span>
+
+ソフトウェア構造        テスト粒度
+   ─────────         ─────────
+   STATEMENT
+   FUNCTION  数千  →   UNIT 数千
+   CLASS     数百
+   MODULE    数十  →   INTEG 数十
+   SERVICE   数個
+   SYSTEM    1     →   E2E 数件
+
+       <span class="comment">↓</span>
+
+<span class="kw">ピラミッド型は</span>
+<span class="kw">構造の自然な反映</span>
+<span class="kw">「下が広く、上が狭い」</span>
+
+<span class="comment">// 部品の数 = テストの数</span>
+<span class="comment">// → ピラミッドが必然的に発生</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この対応の意味</div>
+    地図編Vol.2では<b>「ピラミッドにすると効率が良いから」</b>と説明しました。今回はもう一歩深い理由が見えました。<b>「ソフトウェアの構造自体がピラミッド型だから、テストもピラミッド型になる」</b>。下層の部品数が多いからこそ、下層のテストも多くなるのです。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>境目が生まれる場所</h2>
+    <span class="en">WHERE JUNCTIONS APPEAR</span>
+  </div>
+  <p class="pattern-desc">
+    層と層の<b>つなぎ目</b>、それが「境目（interface）」です。部品Aと部品Bが情報をやり取りする場所。<b>バグが集中する場所</b>として知られ、結合テストが見張るべき領域そのものです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">junctions</span>
+      <span class="tag-desc">部品と部品のつなぎ目に注目</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 典型的な境目</div>
+        <div class="junction-grid">
+          <div class="col left">
+            <div class="h">部品 A</div>
+            Controller<br>
+            (HTTP受付)
+          </div>
+          <div class="junction">境目</div>
+          <div class="col right">
+            <div class="h">部品 B</div>
+            Service<br>
+            (業務ロジック)
+          </div>
+        </div>
+        <div class="junction-grid" style="margin-top:8px">
+          <div class="col left">
+            <div class="h">部品 A</div>
+            Service
+          </div>
+          <div class="junction">境目</div>
+          <div class="col right">
+            <div class="h">部品 B</div>
+            Repository<br>
+            (DB操作)
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          境目で起きる典型バグ:<br>
+          ・データ形式の不一致<br>
+          ・null許容性の食い違い<br>
+          ・文字コード変換ミス<br>
+          ・例外の取り扱い相違
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 境目バグの実例</span>
+
+<span class="kw">部品A (Controller)</span>:
+  受け取ったメールを
+  そのまま渡す
+  → <span class="str">"FOO@BAR.com"</span>
+
+<span class="kw">部品B (Service)</span>:
+  メールで重複チェック
+  小文字化してDB問い合わせ
+  → <span class="str">"foo@bar.com"</span>
+
+<span class="kw">部品C (Repository)</span>:
+  DBには大文字のまま保存されていた
+  → <span class="str">"FOO@BAR.com"</span>
+
+<span class="comment">// 単体テストでは見えない</span>
+<span class="comment">// それぞれの部品は「正しく」動く</span>
+
+<span class="comment">// 結合してみると</span>
+<span class="comment">// 境目の処理がズレているのが発覚</span>
+
+       <span class="comment">↓</span>
+
+<span class="ann">これが結合テストの仕事</span>
+<span class="ann">「個別では正しいが組合せると壊れる」</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">なぜ境目にバグが集中するか</div>
+    <b>「2人以上の作者が関わるから」</b>。部品Aを作った人と部品Bを作った人の<b>暗黙の前提が食い違う</b>と、境目で問題が露呈します。1人で全部書いていても、書いた時期がズレれば過去の自分の前提を忘れる。これは構造的に避けられない。だから境目を狙ったテストが必要なのです。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>結合テストはどこを見るか</h2>
+    <span class="en">WHAT INTEGRATION SEES</span>
+  </div>
+  <p class="pattern-desc">
+    結合テストが見るのは<b>「境目の正常な振る舞い」</b>です。本編Vol.6では具体的な書き方を学びましたが、地図編で改めて整理すると、結合テストは<b>「単体では見えない領域を狙い撃つ」</b>専用の道具だと分かります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">what to test</span>
+      <span class="tag-desc">結合層が見るべき固有のもの</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 結合層固有の検証対象</div>
+        <table class="cmp-table">
+          <tr><th>対象</th><th>説明</th></tr>
+          <tr><td>SQLの構文</td><td>本物のDB上での実行可能性</td></tr>
+          <tr><td>外部API連携</td><td>HTTP往復・JSONマッピング</td></tr>
+          <tr><td>トランザクション</td><td>ロールバック・コミットの境界</td></tr>
+          <tr><td>制約</td><td>UNIQUE・FK・NOT NULL</td></tr>
+          <tr><td>マッピング</td><td>DTO ⇔ Entity ⇔ DB</td></tr>
+          <tr><td>シリアライズ</td><td>JSON ⇔ オブジェクト</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          いずれも<b style="color:var(--ink)">「本物の何か」を組み合わせないと検証できない</b>もの。だから結合テストでなければ意味がない。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 何を結合テストで見るかの基準</span>
+
+<span class="kw">①</span> 単体で検証できないか?
+   yes → 単体で書く
+
+<span class="kw">②</span> その「組合せ」固有の問題か?
+   yes → 結合テストの出番
+
+<span class="kw">③</span> E2Eで検証する方が自然か?
+   yes → E2Eに任せる
+
+       <span class="comment">↓</span>
+
+<span class="kw">結合テストは</span>
+  「単体でもE2Eでもなく」
+  「境目を狙い撃つ層」
+  という位置づけ
+
+<span class="comment">// 範囲を欲張ると</span>
+<span class="comment">// E2Eと区別がつかなくなる</span>
+<span class="comment">// 狭くしすぎると</span>
+<span class="comment">// 単体テストと区別がつかない</span>
+
+<span class="ann">「ちょうど境目だけ」</span>
+<span class="ann">が結合テストの真価</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    本編Vol.6で「Testcontainersで本物DBを起動」「WireMockで外部APIを擬似化」という手段を学びました。<b>これらが必要になる理由</b>は、まさに「境目だけを正確に見る」ためです。本物のSQL構文や本物のHTTPやり取りを検証する必要があるから、ダブルだけでは足りない。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>統合戦略の時間軸</h2>
+    <span class="en">INTEGRATION OVER TIME</span>
+  </div>
+  <p class="pattern-desc">
+    部品を組み合わせていく手順にも歴史があります。<b>ビッグバン統合</b>から始まり、<b>トップダウン・ボトムアップ・サンドイッチ・継続的統合</b>へと進化してきました。今の主流であるCI（継続的統合）はこの進化の到達点です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">integration history</span>
+      <span class="tag-desc">統合手順の時代変遷</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 統合戦略の進化</div>
+        <div class="timeline">
+          <div class="era">
+            <span class="label">ビッグバン統合</span>
+            <span class="desc">最後に全部一気に組合せる。失敗多発の悪しき手法</span>
+          </div>
+          <div class="era">
+            <span class="label">トップダウン統合</span>
+            <span class="desc">上層から組合せる。スタブで下層を代用</span>
+          </div>
+          <div class="era">
+            <span class="label">ボトムアップ統合</span>
+            <span class="desc">下層から組合せる。ドライバで上層を代用</span>
+          </div>
+          <div class="era">
+            <span class="label">サンドイッチ統合</span>
+            <span class="desc">両端から中央へ向かって組合せる</span>
+          </div>
+          <div class="era">
+            <span class="label">継続的統合 (CI)</span>
+            <span class="desc">変更ごとに自動で組合せ&テスト。<b>現代の主流</b></span>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="comment">// 戦略ごとの特徴</span>
+
+<span class="kw">ビッグバン</span>:
+  全部書く → 最後に組合せ
+  → どこが原因か特定不能
+  → 失敗の典型
+
+<span class="kw">トップダウン</span>:
+  上から組み立て
+  下はStub(空っぽ)で代用
+  → 動く形が早く見える
+
+<span class="kw">ボトムアップ</span>:
+  下から組み立て
+  上はDriver(呼び出し役)で代用
+  → 基礎が固まる
+
+<span class="kw">継続的統合 (CI)</span>:
+  小さな変更を頻繁に統合
+  自動テストが常に回る
+  → 問題の早期発見
+  → 統合の痛みを分散
+
+<span class="comment">// 詳細は本編Vol.9で扱う</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>スタブ（stub）</b>＝統合段階で、まだ実装されていない下層の代わりに置く仮実装。本編Vol.4のテストダブルと同じ言葉だが、文脈が違う。
+    <br><b>ドライバ（driver）</b>＝下層を呼び出す上層が未完成の時、代わりに呼び出してくれる仮の上層。
+    <br><b>継続的統合 / CI</b>＝変更を毎回統合し自動テストを走らせる開発スタイル。本編Vol.9で詳述。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>マイクロサービスと統合</h2>
+    <span class="en">MICROSERVICES</span>
+  </div>
+  <p class="pattern-desc">
+    現代のソフトウェアは<b>マイクロサービス</b>（多数の小サービスの集合体）として構築されることが増えています。「境目」がプロセス内ではなくネットワーク越しに広がり、結合テストの意味も変わります。<b>契約テスト</b>という新しい概念も登場しました。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">microservices</span>
+      <span class="tag-desc">境目がネットワーク越しに広がる時代</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 一枚岩 vs マイクロサービス</div>
+        <table class="cmp-table">
+          <tr><th>観点</th><th>違い</th></tr>
+          <tr><td>境目</td><td>プロセス内 → ネットワーク越し</td></tr>
+          <tr><td>境目の数</td><td>数十 → 数百〜</td></tr>
+          <tr><td>失敗モード</td><td>例外 → タイムアウト・部分障害</td></tr>
+          <tr><td>結合テスト</td><td>1プロセス内 → 複数サービス間</td></tr>
+          <tr><td>新たな技法</td><td>契約テスト (Contract Test)</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          サービス数が増えると<b style="color:var(--ink)">全部を起動して結合テスト</b>は事実上不可能。代わりに「<b style="color:var(--ink)">契約テスト</b>」が広まっている。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 契約テストの発想</span>
+
+<span class="kw">問題</span>:
+  サービスAがサービスBを呼ぶ
+  10サービスあると組合せ爆発
+  全部起動してテストは無理
+
+<span class="kw">解決</span>:
+  AとBの「契約」を文書化
+  AはBの仕様に従って呼ぶか検証
+  BはAの期待通りに応答するか検証
+
+  両者が契約を満たしていれば
+  本物を組合せなくても動くはず
+
+<span class="comment">// 代表ツール</span>
+<span class="comment">// Pact, Spring Cloud Contract</span>
+
+<span class="comment">// 「結合テストの代替」というより</span>
+<span class="comment">// 「境目を細分化して検証する」</span>
+<span class="comment">// 新しいアプローチ</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>マイクロサービス</b>＝小さな独立サービスの集合体としてシステムを構築するアーキテクチャ。1サービス1機能が原則。
+    <br><b>契約テスト（Contract Test）</b>＝「サービス間の取り決め（契約）」を満たしているかを検証するテスト。両端を実際に組合せず、契約に対する適合を検証する。
+    <br><b>Pact</b>＝契約テストのデファクトツール。「コンシューマ駆動契約テスト」を実現する。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ピラミッドの中で結合層が持つ意味</h2>
+    <span class="en">ROLE IN THE PYRAMID</span>
+  </div>
+  <p class="pattern-desc">
+    地図編Vol.2のテストピラミッドで「中段」に位置した結合テスト。今や、その役割がより鮮明になります。<b>「単体では見えず、E2Eでは遅すぎる」境目専門の層</b>として、ピラミッドのバランスを保つ要となっています。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">role</span>
+      <span class="tag-desc">中間層は単に「中間」ではない</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 各層の役割の再整理</div>
+        <ol class="chain">
+          <li><b>UNIT</b> 個々の部品の正しさを検証</li>
+          <li><b>INTEGRATION</b> 部品同士の境目を検証</li>
+          <li><b>E2E</b> 部品が組み上がったシステム全体の振る舞いを検証</li>
+        </ol>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          結合層がなければ、<b style="color:var(--ink)">単体ですり抜けたバグはE2Eまで見つからない</b>。E2Eは遅いので発見が遅れる。だから結合層が必要。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 結合層の存在価値</span>
+
+  単体で見つからない
+       <span class="comment">↓</span>
+  結合層で捕まえる
+       <span class="comment">↓</span>
+  ここで捕まえないと…
+       <span class="comment">↓</span>
+  E2Eまで見つからない
+       <span class="comment">↓</span>
+  E2Eで失敗が出る頃には
+       <span class="comment">↓</span>
+  原因特定に時間がかかる
+       <span class="comment">↓</span>
+  地図編Vol.1のBoehm曲線
+  「発見が遅いほど高コスト」
+
+       <span class="comment">↓</span>
+
+<span class="ann">結合層は</span>
+<span class="ann">単体とE2Eの</span>
+<span class="ann">「セーフティネット」</span>
+
+<span class="comment">// 数は少なくても、ないと困る層</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この層の本質</div>
+    結合テストは<b>「単体テストと E2Eテストの間にある検証の隙間を埋める」</b>役割。多すぎるとピラミッドが崩れ、少なすぎると境目バグの発見が遅れる。<b>「境目を狙い撃つ専門部隊」</b>として、ちょうど良い数だけ書く、これが現場の知恵です。
+  </div>
+</section>
+
+<section id="term">
+  <div class="section-header">
+    <span class="section-num">★</span>
+    <h2>用語の地図</h2>
+    <span class="en">GLOSSARY</span>
+  </div>
+  <p class="pattern-desc">
+    この巻で登場した用語を<b>関係が分かる形で並べて</b>整理します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">glossary</span>
+      <span class="tag-desc">本巻で扱った用語の一覧</span>
+    </div>
+    <div class="demo-body" style="grid-template-columns:1fr">
+      <div class="panel" style="border-right:none">
+        <div class="panel-head">// 並べて見ると関係が分かる</div>
+        <dl class="term-map">
+          <dt>レイヤード</dt><dd>層構造でソフトウェアを構築する設計。プレゼン/アプリ/ドメイン/インフラの4層が典型</dd>
+          <dt>モジュール</dt><dd>関連するクラス群の塊。機能単位のまとまり</dd>
+          <dt>関心の分離</dt><dd>層ごとに役割を明確に分ける設計原則</dd>
+          <dt>境目 / インターフェース</dt><dd>部品と部品が情報をやり取りする接点</dd>
+          <dt>結合テスト</dt><dd>境目を狙い撃つ専用のテスト層</dd>
+          <dt>Testcontainers</dt><dd>テスト時にDockerでDB等を立ち上げるライブラリ</dd>
+          <dt>WireMock</dt><dd>擬似HTTPサーバ。外部API連携の検証に使う</dd>
+          <dt>Pact</dt><dd>契約テストのデファクトツール</dd>
+          <dt>契約テスト</dt><dd>サービス間の取り決めへの適合を検証するテスト</dd>
+          <dt>ビッグバン統合</dt><dd>最後に全部組合せる悪しき手法</dd>
+          <dt>トップダウン統合</dt><dd>上層から組合せる。下はStubで代用</dd>
+          <dt>ボトムアップ統合</dt><dd>下層から組合せる。上はDriverで代用</dd>
+          <dt>サンドイッチ統合</dt><dd>両端から中央へ向かって組合せる</dd>
+          <dt>継続的統合 / CI</dt><dd>変更ごとに自動で統合&テストを行う現代的手法</dd>
+          <dt>マイクロサービス</dt><dd>多数の小サービスでシステムを構成する設計</dd>
+          <dt>スタブ / ドライバ</dt><dd>統合時に未完成の部品を代用する仮実装</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tip copper" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  本編Vol.7「E2E・UIテスト編」では、ピラミッドの頂上、システム全体を画面操作から検証する世界に進みます。地図編Vol.7「ユーザー視点と開発者視点編」では、なぜE2Eが他のテストと根本的に違うのか、<b>「視点の切り替え」</b>を左右軸で読み解きます。Vol.6で見た<b>「組み上がりの構造」</b>の最上層が、いよいよ姿を現します。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST MAP — VOL.06</span>
+  <span>FROM PARTS TO PRODUCT</span>
+</footer>
+
+</body>
+</html>

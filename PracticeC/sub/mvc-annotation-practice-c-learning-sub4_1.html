@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.4 別冊 resultMapが裏で何をしているか</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a302a;
+  --paper:#e8eae3;
+  --paper-2:#d4d8cf;
+  --accent:#808d76;
+  --accent-2:#98a38c;
+  --accent-3:#525a4c;
+  --muted:#737a72;
+  --line:#b8c0b2;
+  --code-bg:#1f231f;
+  --code-text:#e8eae3;
+  --panel-bg:#f0f2eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✧';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#9aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(128,141,118,0.09);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.flow-step{background:#fff;border:1px solid var(--line);padding:14px 16px;margin:14px 0;position:relative}
+.flow-step .num{position:absolute;left:14px;top:14px;font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--accent);font-weight:700}
+.flow-step .ttl{margin-left:46px;font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;color:var(--accent-3);margin-bottom:6px}
+.flow-step .body{margin-left:46px;font-size:13px}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.04 / 15</span>
+    <span class="kind-tag">別冊</span>
+  </div>
+  <h1>resultMap が裏で<br>何をしているか</h1>
+  <div class="subtitle">UNDER THE HOOD ── MYBATIS INTERNALS</div>
+  <p class="lead">
+    本編Vol.4で <code style="font-family:'JetBrains Mono'">&lt;resultMap&gt;</code> と <code style="font-family:'JetBrains Mono'">&lt;collection&gt;</code> が動きました。<b>魔法のように見える</b>かもしれませんが、内部は<b>明確な処理</b>です。<br>
+    別冊S4では、<b>MyBatisがJOIN結果のテーブル行を、どうやってJavaオブジェクトに組み立てているか</b>を内部処理レベルで覗きます。<br>
+    キーワードは<b>「リフレクション」「ResultSetHandler」「TypeHandler」「グループ化アルゴリズム」</b>。<br>
+    この巻を読むと、<b>「resultMapで動かない時の原因の見つけ方」が身につき</b>、エラーへの恐怖が一段下がります。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#theme">01 この別冊のテーマ</a></li>
+    <li><a href="#magic">02 「魔法に見える」処理の正体</a></li>
+    <li><a href="#flow">03 MyBatisの内部処理フロー</a></li>
+    <li><a href="#reflection">04 リフレクションの役割</a></li>
+    <li><a href="#typehandler">05 TypeHandler の役割</a></li>
+    <li><a href="#grouping">06 グループ化アルゴリズム</a></li>
+    <li><a href="#debug">07 内部を知るとデバッグが変わる</a></li>
+    <li><a href="#trouble">08 内部を意識すべきハマりどころ</a></li>
+    <li><a href="#next">09 次の本編へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="theme">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この別冊のテーマ</h2>
+    <span class="en">THEME</span>
+  </div>
+  <p class="pattern-desc">本編Vol.4のresultMapは<b>「結果がオブジェクトになる」</b>不思議さがあります。「<b>XMLを書いたらJavaオブジェクトが返ってくる</b>」── これがどう成立するのか、裏側を理解する巻です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-internals</span>
+      <span class="tag-desc">内部を知る意義</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 内部を知ることで得られるもの</div>
+        <div class="role-card">
+          <span class="label">BENEFIT 1</span>
+          <div class="name">エラー文が読めるようになる</div>
+          <div class="desc">「ReflectionException」「TypeHandler not found」── 内部処理を知ると、これらのエラーが「どの段階で起きたか」が即分かる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">BENEFIT 2</span>
+          <div class="name">resultMap が動かない理由を推測できる</div>
+          <div class="desc">「全部同じデータが返る」「子が1件しか入らない」── 症状から内部のどこが詰まったか推理できる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">BENEFIT 3</span>
+          <div class="name">魔法への恐怖が消える</div>
+          <div class="desc">「動くけど何故動くか分からない」状態は、業務開発で<b>最も精神的に苦しい</b>。内部理解は<b>自信の源</b>。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で答える3つの問い</span>
+
+<span class="comment">// 問1: JOIN結果の表（11行）が</span>
+<span class="comment">//      どうやって 5個のSubject + Listに</span>
+<span class="comment">//      変身しているのか？</span>
+
+<span class="comment">// 問2: Java側のフィールドに</span>
+<span class="comment">//      値はどう設定されるのか？</span>
+<span class="comment">//      （setter が呼ばれるのか？）</span>
+
+<span class="comment">// 問3: DBの DATE 型は</span>
+<span class="comment">//      なぜ Java の LocalDate になるのか？</span>
+
+
+<span class="comment">// 答えのキーワード：</span>
+<span class="comment">// 1. ResultSetHandler のグループ化</span>
+<span class="comment">// 2. リフレクションによる setter 呼び出し</span>
+<span class="comment">// 3. TypeHandler による型変換</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="magic">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>「魔法に見える」処理の正体</h2>
+    <span class="en">DEMYSTIFY THE MAGIC</span>
+  </div>
+  <p class="pattern-desc">resultMap の<b>「魔法感」</b>は、実は<b>3つの異なる処理</b>が組み合わさったものです。それぞれは普通のJavaコードで実現できる仕組み。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">three-magics</span>
+      <span class="tag-desc">3つの「魔法」</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 魔法に見える3つの処理</div>
+        <div class="role-card">
+          <span class="label">魔法1</span>
+          <div class="name">「<code>property="name"</code> と書けば setName が呼ばれる」</div>
+          <div class="desc"><b>正体：リフレクション</b>。実行時にクラス情報を取り出して setName() を呼ぶ。Javaの標準機能。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">魔法2</span>
+          <div class="name">「DBのDATE型がJavaのLocalDateになる」</div>
+          <div class="desc"><b>正体：TypeHandler</b>。型変換専用のクラスが存在し、ResultSet から取った値を Java の型に変換する。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">魔法3</span>
+          <div class="name">「11行の冗長な行が5個のオブジェクト + 子Listになる」</div>
+          <div class="desc"><b>正体：グループ化アルゴリズム</b>。<code>&lt;id&gt;</code> の column の値で行をグループ化する、ループとMapを使った標準処理。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>結論</b>：全部「<b>普通のJava処理</b>」の組み合わせ。魔法ではない。</p>
+      </div>
+      <div class="code"><span class="code-head">// 概念的に「自分で書く」とどうなるか</span>
+
+<span class="comment">// resultMap がやっていることを</span>
+<span class="comment">// Javaで「自分で書く」とこうなる：</span>
+
+<span class="type">Map</span>&lt;<span class="type">Integer</span>, <span class="type">Subject</span>&gt; map =
+    <span class="kw">new</span> <span class="type">LinkedHashMap</span>&lt;&gt;();
+
+<span class="comment">// JOIN結果の11行をループ</span>
+<span class="kw">for</span> (<span class="type">ResultRow</span> row : resultSet) {
+
+  <span class="type">Integer</span> sid = row.<span class="fn">getInt</span>(<span class="str">"subject_id"</span>);
+
+  <span class="comment">// 既にこのSubjectがあれば取り出し、</span>
+  <span class="comment">// なければ新規作成</span>
+  <span class="type">Subject</span> s = map.<span class="fn">computeIfAbsent</span>(sid,
+      k -&gt; {
+    <span class="type">Subject</span> ns = <span class="kw">new</span> <span class="type">Subject</span>();
+    ns.<span class="fn">setId</span>(sid);
+    ns.<span class="fn">setName</span>(row.<span class="fn">getString</span>(<span class="str">"subject_name"</span>));
+    ns.<span class="fn">setColor</span>(row.<span class="fn">getString</span>(<span class="str">"color"</span>));
+    ns.<span class="fn">setRecords</span>(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;());
+    <span class="kw">return</span> ns;
+  });
+
+  <span class="comment">// 子の id がNULLなら子なし行</span>
+  <span class="type">Integer</span> rid = row.<span class="fn">getInt</span>(<span class="str">"record_id"</span>);
+  <span class="kw">if</span> (rid != null) {
+    <span class="type">StudyRecord</span> r = <span class="kw">new</span> <span class="type">StudyRecord</span>();
+    r.<span class="fn">setId</span>(rid);
+    r.<span class="fn">setSubjectId</span>(sid);
+    r.<span class="fn">setStudiedOn</span>(row.<span class="fn">getDate</span>(<span class="str">"studied_on"</span>));
+    r.<span class="fn">setMinutes</span>(row.<span class="fn">getInt</span>(<span class="str">"minutes"</span>));
+    r.<span class="fn">setMemo</span>(row.<span class="fn">getString</span>(<span class="str">"memo"</span>));
+    s.<span class="fn">getRecords</span>().<span class="fn">add</span>(r);
+  }
+}
+
+<span class="kw">return</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;(map.<span class="fn">values</span>());
+
+
+<span class="comment">// → resultMapはこの処理を自動化</span>
+<span class="comment">// → XML側で「設計」を書くだけで</span>
+<span class="comment">//   自動的に組み立ててくれる</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="flow">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>MyBatisの内部処理フロー</h2>
+    <span class="en">INTERNAL PROCESSING FLOW</span>
+  </div>
+  <p class="pattern-desc">MyBatisが <code>subjectMapper.findAllWithRecords()</code> の呼び出しを受けてから、結果リストを返すまでの<b>7ステップ</b>を順に追います。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">flow-7-steps</span>
+      <span class="tag-desc">処理の7段階</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 7ステップ</div>
+        <div class="flow-step">
+          <span class="num">1</span>
+          <div class="ttl">プロキシ経由でメソッド呼び出し</div>
+          <div class="body">SubjectMapper はインターフェイス。MyBatisが<b>動的プロキシ</b>を生成し、メソッド呼び出しを受け取る。</div>
+        </div>
+        <div class="flow-step">
+          <span class="num">2</span>
+          <div class="ttl">XMLからSQLとresultMapを取得</div>
+          <div class="body">起動時にパース済みの <code>findAllWithRecords</code> 定義を引く。SQL本体と resultMap が手に入る。</div>
+        </div>
+        <div class="flow-step">
+          <span class="num">3</span>
+          <div class="ttl">SQLを実行（JDBC経由）</div>
+          <div class="body">PreparedStatement を作って実行。ResultSet（結果のテーブル）が返る。</div>
+        </div>
+        <div class="flow-step">
+          <span class="num">4</span>
+          <div class="ttl">ResultSetHandler が行ごとに処理開始</div>
+          <div class="body">11行を1行ずつ取り出す。各行が「列名→値」のマップとして扱える状態に。</div>
+        </div>
+        <div class="flow-step">
+          <span class="num">5</span>
+          <div class="ttl">TypeHandler が型変換</div>
+          <div class="body"><code>studied_on</code> 列の値は SQL の DATE。Java側の LocalDate に変換するのが TypeHandler の仕事。</div>
+        </div>
+        <div class="flow-step">
+          <span class="num">6</span>
+          <div class="ttl">リフレクションでオブジェクト構築</div>
+          <div class="body"><code>new Subject()</code> → リフレクションで <code>setId(...)</code>、<code>setName(...)</code> 等を順次呼び出し。</div>
+        </div>
+        <div class="flow-step">
+          <span class="num">7</span>
+          <div class="ttl">グループ化と List 構築</div>
+          <div class="body"><code>&lt;id&gt;</code> の値で「同じ親に纏める」処理。<code>&lt;collection&gt;</code> の指示で子を追加。最終的に List&lt;Subject&gt; が完成。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// シーケンス図的イメージ</span>
+
+[<span class="type">Service</span>]
+    ↓ findAllWithRecords()
+[<span class="type">SubjectMapper</span>]    <span class="comment">// インターフェイス</span>
+    ↓
+[<span class="type">MyBatisProxy</span>]      <span class="comment">// ★Step 1</span>
+    ↓
+[<span class="type">XMLConfigCache</span>]    <span class="comment">// ★Step 2</span>
+    ↓ SQL + resultMap 取得
+[<span class="type">SqlSession</span>]       <span class="comment">// ★Step 3</span>
+    ↓ SQL 実行
+[<span class="type">JDBC/ResultSet</span>]    <span class="comment">// 11行</span>
+    ↓
+[<span class="type">ResultSetHandler</span>]  <span class="comment">// ★Step 4〜7</span>
+    ↓ 各行を処理
+    ├─ TypeHandler (型変換)
+    ├─ Reflector (setter呼出)
+    └─ ResultContext (グループ化)
+    ↓
+List&lt;<span class="type">Subject</span>&gt;
+    ↓
+[<span class="type">Service</span>]
+
+
+<span class="comment">// この流れを知ると：</span>
+<span class="comment">// ・「namespace 不一致」→ Step 2 で失敗</span>
+<span class="comment">// ・「TypeHandler not found」→ Step 5 で失敗</span>
+<span class="comment">// ・「ReflectionException」→ Step 6 で失敗</span>
+<span class="comment">// ・「件数おかしい」→ Step 7 のグループ化</span>
+<span class="comment">// と原因の場所が即推理できる</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="reflection">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>リフレクションの役割</h2>
+    <span class="en">REFLECTION</span>
+  </div>
+  <p class="pattern-desc"><b>リフレクション</b>は「<b>実行時にクラスの情報を取り出して操作する</b>」Javaの標準機能。<code>resultMap</code> の <code>property="name"</code> から <code>setName(...)</code> への変換は、リフレクションで実現されています。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">reflection-basics</span>
+      <span class="tag-desc">リフレクションの動き</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// リフレクションでできること</div>
+        <ul style="margin-left:18px;font-size:13.5px">
+          <li><code>"Subject"</code> という文字列から <code>Class&lt;?&gt;</code> を取り出す</li>
+          <li>そのクラスのフィールド一覧を取得</li>
+          <li>「property="name"」から <code>setName(String)</code> メソッドを見つける</li>
+          <li>そのメソッドを引数付きで呼び出す</li>
+        </ul>
+        <p style="margin-top:14px;font-size:13.5px"><b>普通のJavaコード</b>では <code>obj.setName("Java")</code> と書きますが、<b>リフレクション</b>では「メソッドを<b>動的に</b>探して呼ぶ」ことができます。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">便利だが代償</div>
+          <p>リフレクションは<b>強力だが遅い</b>。MyBatisは<b>結果をキャッシュ</b>することで実用速度を保っています。1回目は遅くても、2回目以降は爆速。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// リフレクションで setter を呼ぶ例</span>
+
+<span class="comment">// ─── 通常のJavaコード ───</span>
+<span class="type">Subject</span> s = <span class="kw">new</span> <span class="type">Subject</span>();
+s.<span class="fn">setName</span>(<span class="str">"Java"</span>);
+
+
+<span class="comment">// ─── リフレクション版（同じ動作）───</span>
+<span class="type">Class</span>&lt;?&gt; clazz =
+  <span class="type">Class</span>.<span class="fn">forName</span>(<span class="str">"...Subject"</span>);
+<span class="type">Object</span> obj = clazz
+  .<span class="fn">getDeclaredConstructor</span>()
+  .<span class="fn">newInstance</span>();
+<span class="type">Method</span> setter = clazz
+  .<span class="fn">getMethod</span>(<span class="str">"setName"</span>, <span class="type">String</span>.<span class="kw">class</span>);
+setter.<span class="fn">invoke</span>(obj, <span class="str">"Java"</span>);
+
+
+<span class="comment">// ─── MyBatisは何をしているか ───</span>
+<span class="comment">// XML: &lt;result property="name" .../&gt;</span>
+<span class="comment">// ↓</span>
+<span class="comment">// 1. type="Subject" でクラス取得</span>
+<span class="comment">// 2. property="name" から</span>
+<span class="comment">//    "setName" のメソッド名を作る</span>
+<span class="comment">//    （Bean命名規則）</span>
+<span class="comment">// 3. メソッドを invoke で呼ぶ</span>
+
+
+<span class="comment">// ─── 知っておくべき事実 ───</span>
+<span class="comment">// resultMap で property="name" と書いた時:</span>
+<span class="comment">// ・getter は無くてもいい</span>
+<span class="comment">// ・setter は必須（リフレクションで呼ぶ）</span>
+<span class="comment">// ・Lombok の @Data があれば</span>
+<span class="comment">//   setterが自動生成されるのでOK</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>@Dataなのに setter が見つからないエラー</b>」が出る時は、Lombokの設定が効いていない可能性があります。Eclipse なら <b>「Project → Clean」</b>でビルド再生成、起動し直しで解決することが多いです。リフレクションは「<b>実体としての setter</b>」を探すので、コンパイル時に生成されていないと失敗します。</p>
+  </div>
+</section>
+
+<section id="typehandler">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>TypeHandler の役割</h2>
+    <span class="en">TYPE HANDLER</span>
+  </div>
+  <p class="pattern-desc">SQLの値とJavaの値は、<b>そもそも型が違います</b>。<code>VARCHAR</code>→<code>String</code>、<code>INT</code>→<code>Integer</code>、<code>DATE</code>→<code>LocalDate</code>──この変換をしているのが<b>TypeHandler</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">typehandler</span>
+      <span class="tag-desc">TypeHandler の動き</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 標準的な対応</div>
+        <table class="compare-tbl">
+          <tr><th>DB側の型</th><th>Java側の型</th><th>TypeHandler</th></tr>
+          <tr><td>VARCHAR / CHAR</td><td>String</td><td>StringTypeHandler</td></tr>
+          <tr><td>INT</td><td>Integer / int</td><td>IntegerTypeHandler</td></tr>
+          <tr><td>BIGINT</td><td>Long / long</td><td>LongTypeHandler</td></tr>
+          <tr><td>DECIMAL</td><td>BigDecimal</td><td>BigDecimalTypeHandler</td></tr>
+          <tr><td>DATE</td><td>LocalDate</td><td>LocalDateTypeHandler</td></tr>
+          <tr><td>DATETIME</td><td>LocalDateTime</td><td>LocalDateTimeTypeHandler</td></tr>
+          <tr><td>TINYINT(1)</td><td>Boolean</td><td>BooleanTypeHandler</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>結論</b>：MyBatisは<b>標準の型変換</b>を最初から大量に持っています。学習記録アプリの全列はこれで賄えます。<b>自前のTypeHandlerが必要になる場面はほぼない</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 学習記録アプリでのTypeHandler使用箇所</span>
+
+<span class="comment">// study_records テーブル</span>
+
+<span class="kw">CREATE TABLE</span> study_records (
+  id          <span class="type">INT</span>,           <span class="comment">// → Integer</span>
+  subject_id  <span class="type">INT</span>,           <span class="comment">// → Integer</span>
+  studied_on  <span class="type">DATE</span>,          <span class="comment">// → LocalDate</span>
+  minutes     <span class="type">INT</span>,           <span class="comment">// → Integer</span>
+  memo        <span class="type">VARCHAR</span>(<span class="num">200</span>),  <span class="comment">// → String</span>
+  created_at  <span class="type">DATETIME</span>       <span class="comment">// → LocalDateTime</span>
+);
+
+
+<span class="comment">// 各列で TypeHandler が暗黙に動く</span>
+
+
+<span class="code-head" style="margin-top:14px">// 失敗パターン</span>
+
+<span class="comment">// ── 例1：型ミスマッチ ──</span>
+<span class="comment">// DB側: VARCHAR / Java側: LocalDate</span>
+<span class="comment">// → 変換失敗で例外</span>
+<span class="comment">// → 「Could not convert...」エラー</span>
+
+
+<span class="comment">// ── 例2：DATE → Date (古い) ──</span>
+<span class="kw">private</span> <span class="type">Date</span> studiedOn;  <span class="comment">// java.util.Date</span>
+<span class="comment">// 動くが古い書き方</span>
+<span class="comment">// → 必ず LocalDate を使う（Vol.2でも強調）</span>
+
+
+<span class="comment">// ── 例3：DATE → String ──</span>
+<span class="kw">private</span> <span class="type">String</span> studiedOn;
+<span class="comment">// 動く（自動で文字列化）が</span>
+<span class="comment">// 「日付として比較・計算」できない</span>
+<span class="comment">// → 業務的にはアウト</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="grouping">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>グループ化アルゴリズム</h2>
+    <span class="en">GROUPING ALGORITHM</span>
+  </div>
+  <p class="pattern-desc">resultMapの<b>最も重要な処理</b>がここ。<code>&lt;id&gt;</code> 要素の column の値で行をグループ化します。<b>「同じidの行は同じオブジェクトに纏める」</b>のがロジックの心臓。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">grouping</span>
+      <span class="tag-desc">グループ化の動作</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// アルゴリズムの流れ</div>
+        <ol class="step-list" style="margin-top:6px">
+          <li>結果セットの各行を順に処理</li>
+          <li>その行の <code>&lt;id&gt;</code> column の値を取得</li>
+          <li><b>既に同じ値で作ったオブジェクトがあるか</b>マップで検索</li>
+          <li>あれば<b>そのオブジェクトに子だけ追加</b>／なければ<b>新規作成して登録</b></li>
+          <li>子側の <code>&lt;id&gt;</code> column が NULL なら子は追加しない</li>
+          <li>全行処理後、登録順を保ったListを返す</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">なぜ ORDER BY が重要か</div>
+          <p>JOIN結果が<b>「親IDでソート」</b>されていれば、グループ化がスムーズです。並び順次第で<b>同じ親の行が散らばる</b>とMyBatisは正しく集約できないため、SQL側で <code>ORDER BY s.id, ...</code> を入れます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 11行を5オブジェクトに変換する流れ</span>
+
+<span class="comment">// 入力（JOIN後の11行）：</span>
+sid=1, sname=Java, rid=1
+sid=1, sname=Java, rid=2
+sid=1, sname=Java, rid=3
+sid=1, sname=Java, rid=4
+sid=1, sname=Java, rid=5
+sid=2, sname=Spr,  rid=6
+sid=2, sname=Spr,  rid=7
+sid=2, sname=Spr,  rid=8
+sid=3, sname=SQL,  rid=9
+sid=4, sname=HTML, rid=NULL
+sid=5, sname=JS,   rid=NULL
+
+
+<span class="comment">// 処理ループ：</span>
+行1: sid=1 → 新規作成、Subject{id:1, ...}
+    子: rid=1 → 追加 → records=[1]
+行2: sid=1 → 既存利用
+    子: rid=2 → 追加 → records=[1,2]
+行3: sid=1 → 既存利用
+    子: rid=3 → 追加 → records=[1,2,3]
+行4: sid=1 → 既存利用
+    子: rid=4 → 追加 → records=[1,2,3,4]
+行5: sid=1 → 既存利用
+    子: rid=5 → 追加 → records=[1,2,3,4,5]
+行6: sid=2 → 新規作成、Subject{id:2, ...}
+    子: rid=6 → 追加 → records=[6]
+行7〜8: sid=2 既存利用 → records=[6,7,8]
+行9: sid=3 → 新規作成、records=[9]
+行10: sid=4 → 新規作成
+    子: rid=NULL → 追加しない → records=[]
+行11: sid=5 → 新規作成
+    子: rid=NULL → 追加しない → records=[]
+
+
+<span class="comment">// 結果：</span>
+[
+  Subject{id=1, name=Java, records=[5件]},
+  Subject{id=2, name=Spr,  records=[3件]},
+  Subject{id=3, name=SQL,  records=[1件]},
+  Subject{id=4, name=HTML, records=[]},
+  Subject{id=5, name=JS,   records=[]}
+]
+
+
+<span class="comment">// → これがVol.2で「2回SQL」で作っていた</span>
+<span class="comment">//   オブジェクトと完全に同じ形</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="debug">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>内部を知るとデバッグが変わる</h2>
+    <span class="en">DEBUGGING WITH KNOWLEDGE</span>
+  </div>
+  <p class="pattern-desc">内部処理の流れを知っていると、<b>エラーの「どこで起きたか」</b>が即推理できます。これは業務開発で<b>圧倒的な武器</b>になる能力。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">debug-by-knowledge</span>
+      <span class="tag-desc">症状 → 原因の段階推理</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 症状から原因段階を推理</div>
+        <table class="compare-tbl">
+          <tr><th>症状</th><th>段階</th><th>原因の場所</th></tr>
+          <tr><td>Invalid bound statement</td><td>Step 2</td><td>XMLの namespace / id 不一致</td></tr>
+          <tr><td>SQLSyntaxErrorException</td><td>Step 3</td><td>SQL本体の構文エラー</td></tr>
+          <tr><td>Column 'xxx' not found</td><td>Step 4</td><td>SELECT句に該当列がない</td></tr>
+          <tr><td>Could not convert value</td><td>Step 5</td><td>TypeHandler 失敗（型ミスマッチ）</td></tr>
+          <tr><td>ReflectionException</td><td>Step 6</td><td>setter が無い／引数の型違い</td></tr>
+          <tr><td>件数が想定と違う</td><td>Step 7</td><td>&lt;id&gt; 漏れ／SQL の ORDER BY</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>「症状→段階→対処」</b>のショートカットができる。これが内部理解の真の価値。</p>
+      </div>
+      <div class="code"><span class="code-head">// 実例：エラーログから即推理</span>
+
+<span class="comment">// ─── エラー1 ───</span>
+<span class="type">java.sql.SQLException</span>: Column
+  <span class="str">'subject_id'</span> not found.
+
+<span class="comment">// 推理：Step 4 で起きた</span>
+<span class="comment">// → SELECT句に AS subject_id を書き忘れた</span>
+<span class="comment">// → SQLの SELECT を確認</span>
+
+
+<span class="comment">// ─── エラー2 ───</span>
+<span class="type">org.apache.ibatis.executor.
+  result.ResultMapException</span>:
+  Error attempting to get column
+  <span class="str">'studied_on'</span> from result set.
+  Cause: ... Could not convert ...
+
+<span class="comment">// 推理：Step 5 で起きた</span>
+<span class="comment">// → TypeHandler 変換失敗</span>
+<span class="comment">// → Java側の StudyRecord.studiedOn が</span>
+<span class="comment">//   LocalDate ではなく String になっている等</span>
+
+
+<span class="comment">// ─── エラー3 ───</span>
+<span class="type">org.apache.ibatis.reflection.
+  ReflectionException</span>:
+  There is no setter for property
+  named <span class="str">'records'</span> in 'class Subject'
+
+<span class="comment">// 推理：Step 6 で起きた</span>
+<span class="comment">// → Subject に setRecords が無い</span>
+<span class="comment">// → @Data の Lombok 設定確認</span>
+<span class="comment">// → または records フィールド書き忘れ</span>
+
+
+<span class="comment">// ─── エラー4（症状ベース）───</span>
+<span class="comment">// 「Subjectが11個返ってくる」</span>
+
+<span class="comment">// 推理：Step 7 で起きた</span>
+<span class="comment">// → &lt;id property="id" column="subject_id"/&gt;</span>
+<span class="comment">//   の &lt;id&gt; 要素が無い</span>
+<span class="comment">// → 各行を別オブジェクト扱いしてる</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>内部を意識すべきハマりどころ</h2>
+    <span class="en">INTERNAL PITFALLS</span>
+  </div>
+  <p class="pattern-desc">内部処理を知ると、<b>「なぜこういう書き方をすべきか」</b>が見えてきます。表面的なルールではなく<b>原理</b>で覚えられる。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">internal-pitfalls</span>
+      <span class="tag-desc">内部理解で防げる罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 内部視点での罠</div>
+        <div class="role-card">
+          <span class="label">PITFALL 1</span>
+          <div class="name">setter が無いプロパティを書く</div>
+          <div class="desc">@Data 無しのクラスで <code>private final</code> フィールドを書いた等。<b>リフレクションで setter を呼ぶ</b>のが原理なので、setter 無し＝即失敗。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 2</span>
+          <div class="name">no-arg コンストラクタが無い</div>
+          <div class="desc">MyBatisは <code>new Subject()</code> でインスタンス化する。<b>引数なしのデフォルトコンストラクタ</b>が必須。<br>@Data があれば自動だが、@Builder だけだと無くなることがあるので注意。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 3</span>
+          <div class="name">JOIN結果が ORDER BY されていない</div>
+          <div class="desc">グループ化アルゴリズムは<b>順序に依存しない</b>（LinkedHashMapで対応）が、<b>結果のList順序</b>はSQL順になる。「IDが順番に並んでほしい」なら <code>ORDER BY s.id</code> を必ず入れる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 4</span>
+          <div class="name">resultMap を再帰的に使う複雑性</div>
+          <div class="desc">resultMap は他のresultMapを <code>extends</code> や <code>association</code> で参照できる。<b>複雑になると追えなくなる</b>ので、Cでは深追いしない（Bで扱う予定）。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// PITFALL 1 を内部視点で見る</span>
+
+<span class="comment">// ─── ✗ NG ───</span>
+<span class="kw">public class</span> <span class="type">Subject</span> {
+  <span class="kw">private final</span> <span class="type">Integer</span> id;
+  <span class="comment">// final → setterが作れない</span>
+}
+
+
+<span class="comment">// MyBatisが Step 6 でやる処理：</span>
+<span class="comment">// 1. new Subject() ← コンストラクタが要る</span>
+<span class="comment">// 2. setId(1) ← setterが要る</span>
+
+
+<span class="comment">// → final で setter 無し</span>
+<span class="comment">// → ReflectionException</span>
+
+
+<span class="comment">// ─── ✓ OK ───</span>
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Subject</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> id;
+}
+
+
+<span class="comment">// Lombok @Data が生成するもの：</span>
+<span class="comment">// ・引数なしコンストラクタ ✓</span>
+<span class="comment">// ・setId(...) ✓</span>
+<span class="comment">// ・getId() ✓</span>
+<span class="comment">// → リフレクションで全て呼べる</span>
+
+
+<span class="code-head" style="margin-top:14px">// PITFALL 2 を内部視点で見る</span>
+
+<span class="comment">// ─── ✗ NG（@Builder のみ）───</span>
+<span class="ann">@Builder</span>
+<span class="kw">public class</span> <span class="type">Subject</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> id;
+}
+<span class="comment">// → 引数なしコンストラクタが生成されない</span>
+<span class="comment">// → new Subject() でエラー</span>
+
+
+<span class="comment">// ─── ✓ OK ───</span>
+<span class="ann">@Data</span>
+<span class="ann">@NoArgsConstructor</span>  <span class="comment">// 明示</span>
+<span class="ann">@AllArgsConstructor</span>
+<span class="ann">@Builder</span>
+<span class="kw">public class</span> <span class="type">Subject</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> id;
+}</div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次の本編へ</h2>
+    <span class="en">TO THE NEXT VOLUME</span>
+  </div>
+  <p class="pattern-desc">別冊S4お疲れさまでした。<b>「resultMapの裏側」</b>が見えるようになりました。これからの開発でエラーに出会った時、<b>「どこで起きたか」を即推理できる目</b>を手に入れています。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">この別冊のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 持ち帰る5つの知見</div>
+        <div class="role-card">
+          <span class="label">知見1</span>
+          <div class="name">resultMap は3つの仕組みの組み合わせ</div>
+          <div class="desc">リフレクション・TypeHandler・グループ化</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見2</span>
+          <div class="name">処理は7段階で進む</div>
+          <div class="desc">プロキシ→XML取得→SQL実行→ResultSetHandler→TypeHandler→リフレクション→グループ化</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見3</span>
+          <div class="name">エラーは段階で原因が分かる</div>
+          <div class="desc">症状から「どのステップで失敗したか」を推理</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見4</span>
+          <div class="name">setter と no-arg コンストラクタは必須</div>
+          <div class="desc">リフレクションが呼ぶ前提・@Data で自動生成</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見5</span>
+          <div class="name">魔法ではなく原理で動く</div>
+          <div class="desc">XMLは「設計」を書く。実体は普通のJava処理</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.5 本編で起きること</span>
+
+<span class="comment">// タイトル：</span>
+<span class="comment">// 「N+1問題を体験して直そう」</span>
+
+<span class="comment">// やること：</span>
+<span class="comment">// 1. 改めて「N+1問題とは何か」整理</span>
+<span class="comment">// 2. Vol.2の状態を再現し問題を「見る」</span>
+<span class="comment">// 3. Vol.4の resultMap + JOIN による解消</span>
+<span class="comment">//    が「なぜN+1を解消するか」深掘り</span>
+<span class="comment">// 4. 別の場面で起きるN+1パターンも紹介</span>
+<span class="comment">//    （例：ループ内でgetXxx()）</span>
+<span class="comment">// 5. SQLログ監視の習慣化</span>
+
+<span class="comment">// 獲得スキル：</span>
+<span class="comment">// → N+1の発見と修正</span>
+
+
+<span class="comment">// Vol.4と Vol.5は表裏一体：</span>
+<span class="comment">// Vol.4: 解決策を実装した</span>
+<span class="comment">// Vol.5: 問題そのものを深く理解する</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(82,90,76,0.12)">
+    <div class="tip-label">NEXT STEP ── VOL.5 本編</div>
+    <p>別冊S4で<b>「resultMapの内部」</b>を覗きました。次のVol.5 本編「<b>N+1問題を体験して直そう</b>」では、本編Vol.2で<b>「あえて作った」</b>N+1問題を、改めて深く理解し、Vol.4の解決がなぜ機能するかを<b>原理から</b>整理します。<br>Cの中で<b>「性能対策の感性」</b>を養う最重要巻のひとつ。本編Vol.5 へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.04 / 15 ── UNDER THE HOOD（別冊）</span>
+</footer>
+
+</body>
+</html>

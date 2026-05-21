@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト編 カバレッジ・品質測定編 Vol.8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;--paper:#e8eaee;--paper-2:#d4d7df;
+  --accent:#3d4f7c;--accent-2:#5a6b94;--accent-3:#8a98b8;
+  --muted:#5a6480;--line:#b8bccc;
+  --code-bg:#1c2138;--code-text:#e8eaee;--panel-bg:#f4f5f8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"✓";position:absolute;top:-30px;right:-10px;font-size:280px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:640px;margin-top:20px;color:var(--ink);font-size:15px}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em}
+.pattern-desc{max-width:680px;font-size:14px;margin-bottom:20px;color:var(--ink)}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:16px}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+.panel{background:var(--panel-bg);padding:20px 24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:20px 24px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}.code .type{color:#c2a3ff}.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}.code .ann{color:#f7c08a}
+.code .covered{background:rgba(181,232,176,0.18);display:inline-block;padding:0 2px}
+.code .uncovered{background:rgba(247,168,216,0.15);display:inline-block;padding:0 2px}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.08);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+/* カバレッジバー */
+.cov-bar{display:flex;align-items:center;gap:10px;font-size:12px;font-family:'JetBrains Mono',monospace;margin:6px 0}
+.cov-bar .label{min-width:90px;font-weight:600;color:var(--accent)}
+.cov-bar .track{flex:1;height:16px;background:#eee;border-radius:3px;overflow:hidden;position:relative}
+.cov-bar .fill{height:100%;background:linear-gradient(to right,#386a3d,#5da55c)}
+.cov-bar .pct{min-width:50px;text-align:right;color:var(--ink);font-weight:600}
+.cov-bar .fill.low{background:linear-gradient(to right,#c43030,#e66060)}
+.cov-bar .fill.mid{background:linear-gradient(to right,var(--accent-3),#d1b485)}
+/* 表 */
+.cov-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+.cov-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:left;padding:8px 10px;letter-spacing:0.1em;border-bottom:1px solid var(--line)}
+.cov-table td{padding:7px 10px;border-bottom:1px dashed var(--line);vertical-align:top}
+.cov-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;width:130px}
+/* レポート風 */
+.report{background:#fff;border:1px solid var(--line);padding:14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.7}
+.report .h{font-size:11px;color:var(--muted);letter-spacing:0.15em;margin-bottom:8px;display:block;font-weight:700}
+.report .row{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1fr;gap:8px;padding:4px 0;border-bottom:1px dashed #ddd;font-size:11px}
+.report .row.head{font-weight:700;color:var(--accent);border-bottom:1px solid var(--ink)}
+.report .ok{color:#386}.report .ng{color:#a44}.report .warn{color:#a47b30}
+/* 警告ボックス */
+.warn-box{background:rgba(247,168,216,0.12);border-left:3px solid #c43030;padding:12px 16px;margin:8px 0;font-size:12.5px}
+.warn-box .head{color:#c43030;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:0.15em;display:block;margin-bottom:4px}
+.page-footer{border-top:2px solid var(--ink);margin-top:80px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:180px}.report .row{grid-template-columns:1fr 1fr 1fr}.report .row > *:nth-child(n+4){display:none}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="vol-tag">VOL.08 / 10</span>
+  <h1>カバレッジ・品質測定編</h1>
+  <div class="subtitle">エンジニアリングテスト編 — COVERAGE & QUALITY METRICS</div>
+  <p class="lead">
+    テストの「量」だけでなく「質」を測る巻です。<b>ラインカバレッジ・ブランチカバレッジ・条件カバレッジ・MC/DC・ミューテーションテスト</b>。何を測ると何が分かるのか、そしてカバレッジ100%でも信用ならない理由まで踏み込みます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 カバレッジとは</a></li>
+    <li><a href="#sec02">02 ラインカバレッジ</a></li>
+    <li><a href="#sec03">03 ブランチカバレッジ</a></li>
+    <li><a href="#sec04">04 条件カバレッジ・MC/DC</a></li>
+    <li><a href="#sec05">05 カバレッジレポートの読み方</a></li>
+    <li><a href="#sec06">06 ミューテーションテスト</a></li>
+    <li><a href="#sec07">07 適切な目標値</a></li>
+    <li><a href="#sec08">08 カバレッジの罠</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>カバレッジとは</h2>
+    <span class="en">WHAT IS COVERAGE</span>
+  </div>
+  <p class="pattern-desc">
+    カバレッジ（coverage、網羅率）とは<b>「テストがコードのどれだけを実行したか」</b>を測る指標です。書いたテストの「量」ではなく「届く範囲」を見える化します。複数の測り方があり、どれを使うかで意味も精度も変わります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">coverage</span>
+      <span class="tag-desc">テストが触れた範囲を測る指標</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// カバレッジの種類</div>
+        <table class="cov-table">
+          <tr><th>種類</th><th>何を測る</th></tr>
+          <tr><td>ライン</td><td>実行された行</td></tr>
+          <tr><td>ブランチ</td><td>条件分岐の各方向</td></tr>
+          <tr><td>条件</td><td>各条件式の真偽</td></tr>
+          <tr><td>MC/DC</td><td>各条件の独立性 (厳格)</td></tr>
+          <tr><td>関数</td><td>呼び出された関数</td></tr>
+          <tr><td>パス</td><td>実行経路の全パターン</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          下に行くほど<b style="color:var(--ink)">精度が高い</b>が、達成も困難。実用上は「ライン+ブランチ」の組合せが定番。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// カバレッジ測定の流れ</span>
+
+<span class="kw">①</span> コードに計測コードを埋め込む
+   (テストランナーが自動でやる)
+
+<span class="kw">②</span> テストを実行する
+   どの行・分岐が通ったか記録
+
+<span class="kw">③</span> レポート生成
+   通った/通らなかった箇所を可視化
+
+       <span class="comment">↓</span>
+
+<span class="comment">// 主なツール</span>
+<span class="ann">JaCoCo</span>  — Java
+<span class="ann">Istanbul</span> — JavaScript (Jestに同梱)
+<span class="ann">coverage.py</span> — Python
+<span class="ann">SimpleCov</span> — Ruby
+<span class="ann">go cover</span> — Go (標準)
+
+<span class="comment">// 実行例</span>
+$ jest --coverage
+$ pytest --cov
+$ mvn test (JaCoCo)</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    カバレッジは<b>「テストが弱い場所」を教えてくれる強力なヒント</b>。ただし「カバレッジが高い=品質が高い」ではない点に注意。地図編Vol.8で「測る」とは何かを構造的に読み解きます。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>ラインカバレッジ</h2>
+    <span class="en">LINE COVERAGE</span>
+  </div>
+  <p class="pattern-desc">
+    ラインカバレッジは<b>最も基本的で、最も使われる指標</b>です。「コードの全行のうち、テスト実行で通った行は何%か」を測ります。シンプルで分かりやすく、すべてのカバレッジツールが必ず対応しています。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">line coverage</span>
+      <span class="tag-desc">実行された行の割合</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 色分け表示の例</div>
+        <div class="report">
+          <span class="h">SOURCE: discount.js</span>
+<div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.9">
+<span style="background:#dff4d6;display:block;padding:0 4px">  1│ function discount(p, r) {</span>
+<span style="background:#dff4d6;display:block;padding:0 4px">  2│   if (r &lt; 0 || r &gt; 1) {</span>
+<span style="background:#fce0e0;display:block;padding:0 4px">  3│     throw new Error("range");</span>
+<span style="background:#fce0e0;display:block;padding:0 4px">  4│   }</span>
+<span style="background:#dff4d6;display:block;padding:0 4px">  5│   return p * (1 - r);</span>
+<span style="background:#dff4d6;display:block;padding:0 4px">  6│ }</span>
+</div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <span style="background:#dff4d6;padding:0 4px">緑</span>=通った、<span style="background:#fce0e0;padding:0 4px">赤</span>=通っていない。<br>6行中4行通過 → <b style="color:var(--ink)">ライン率 67%</b>
+        </p>
+      </div>
+      <div class="code"><span class="comment">// JSのカバレッジ出力例</span>
+
+% Statements Branches Functions Lines
+discount.js
+  67.0%      50.0%    100%      67.0%
+
+<span class="comment">// テストが通った行と通らない行を</span>
+<span class="comment">// HTML/JSONで詳細レポート</span>
+
+<span class="comment">// HTMLレポート例</span>
+<span class="comment">// coverage/index.html を開くと</span>
+<span class="comment">// → ファイル一覧</span>
+<span class="comment">// → クリックで行レベル可視化</span>
+
+<span class="comment">// CI連携で閾値チェック</span>
+<span class="comment">// jest.config.js</span>
+{
+  coverageThreshold: {
+    global: {
+      lines:     <span class="num">80</span>,
+      functions: <span class="num">80</span>,
+      branches:  <span class="num">75</span>,
+    }
+  }
+}
+
+<span class="comment">// 閾値割れでビルド失敗にできる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    ラインカバレッジは<b>「測りやすさ」と「分かりやすさ」</b>が魅力。ただしこれだけでは不十分なケースがあります。次に紹介するブランチカバレッジと組み合わせるのが定番です。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>ブランチカバレッジ</h2>
+    <span class="en">BRANCH COVERAGE</span>
+  </div>
+  <p class="pattern-desc">
+    ブランチ（分岐）カバレッジは<b>「if文の真の側・偽の側、両方を通ったか」</b>を測ります。ライン100%でも、分岐の片側しか試していないことは普通にあります。これを見抜くのがブランチカバレッジの仕事です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">branch coverage</span>
+      <span class="tag-desc">条件分岐の両方向を網羅</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ライン100%でもブランチ50%</div>
+        <div class="report">
+          <span class="h">テスト: max(3,5)のみ</span>
+<div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.9">
+<span style="background:#dff4d6;display:block;padding:0 4px">  1│ function max(a, b) {</span>
+<span style="background:#dff4d6;display:block;padding:0 4px">  2│   if (a &gt; b) <span style="background:#fce0e0">return a;</span></span>
+<span style="background:#dff4d6;display:block;padding:0 4px">  3│   return b;</span>
+<span style="background:#dff4d6;display:block;padding:0 4px">  4│ }</span>
+</div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          全行通過しているが、<b style="color:var(--ink)">「a&gt;bがtrueの場合」が試されていない</b>。ライン=100% / ブランチ=50%
+        </p>
+        <div class="cov-bar" style="margin-top:10px">
+          <span class="label">ライン</span>
+          <div class="track"><div class="fill" style="width:100%"></div></div>
+          <span class="pct">100%</span>
+        </div>
+        <div class="cov-bar">
+          <span class="label">ブランチ</span>
+          <div class="track"><div class="fill mid" style="width:50%"></div></div>
+          <span class="pct">50%</span>
+        </div>
+      </div>
+      <div class="code"><span class="comment">// ブランチが見るもの</span>
+
+<span class="kw">if</span> (a &gt; b) {
+  ...
+}
+<span class="comment">// ブランチは2つ</span>
+<span class="comment">//   ① a &gt; b が true の場合</span>
+<span class="comment">//   ② a &gt; b が false の場合</span>
+
+<span class="comment">// 両方通って初めて 100%</span>
+
+<span class="comment">// 三項演算子も同じ</span>
+<span class="kw">return</span> a &gt; b ? a : b;
+<span class="comment">// 2ブランチ</span>
+
+<span class="comment">// switch文</span>
+<span class="kw">switch</span> (kind) {
+  <span class="kw">case</span> <span class="str">"A"</span>: ...;  <span class="ann">// ブランチ1</span>
+  <span class="kw">case</span> <span class="str">"B"</span>: ...;  <span class="ann">// ブランチ2</span>
+  <span class="kw">default</span>: ...;    <span class="ann">// ブランチ3</span>
+}
+
+<span class="comment">// → 各caseを試さないと未達</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    <b>「ライン100%だから安心」は典型的な錯覚</b>。ブランチカバレッジまで見て初めて「分岐の取りこぼし」を発見できます。本気で品質を測るなら、最低でもブランチカバレッジまで見るのが現場の常識です。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>条件カバレッジ・MC/DC</h2>
+    <span class="en">CONDITION & MC/DC</span>
+  </div>
+  <p class="pattern-desc">
+    複合条件（&amp;&amp; や || で複数の真偽を組み合わせる式）は、ブランチカバレッジでも見落としが出ます。<b>条件カバレッジ</b>と<b>MC/DC</b>はこの隙間を埋める指標。航空宇宙・医療など極めて高い信頼性が必要な現場で使われます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">condition coverage</span>
+      <span class="tag-desc">複合条件の各要素を網羅</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 例: if (a &gt; 0 && b &gt; 0)</div>
+        <table class="cov-table">
+          <tr><th>a&gt;0</th><th>b&gt;0</th><th>結果</th></tr>
+          <tr><td>true</td><td>true</td><td>true</td></tr>
+          <tr><td>true</td><td>false</td><td>false</td></tr>
+          <tr><td>false</td><td>true</td><td>false</td></tr>
+          <tr><td>false</td><td>false</td><td>false</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">条件カバレッジ</b>: 各条件 (a&gt;0, b&gt;0) が両方の真偽を取ること<br>
+          <b style="color:var(--ink)">MC/DC</b>: さらに「各条件が独立して結果に影響する」ことを確認
+        </p>
+      </div>
+      <div class="code"><span class="comment">// ブランチカバレッジでは見落とす例</span>
+
+<span class="kw">if</span> (a &gt; <span class="num">0</span> &amp;&amp; b &gt; <span class="num">0</span>) {
+  ...
+}
+
+<span class="comment">// テスト1: a=5, b=5 → true</span>
+<span class="comment">// テスト2: a=-1, b=5 → false</span>
+
+<span class="comment">// ブランチカバレッジ 100%</span>
+<span class="comment">// (true側もfalse側も通った)</span>
+
+<span class="comment">// しかし条件カバレッジは不足</span>
+<span class="comment">// → b≤0 のケースが試されていない</span>
+
+<span class="ann">MC/DC (Modified Condition / Decision Coverage)</span>:
+  各条件が単独で結果を決められる
+  ことを示す厳格な指標
+
+  ・航空宇宙: DO-178B/C 規格
+  ・医療機器: IEC 62304
+  これらの規格で要求される
+
+<span class="comment">// 一般のWebアプリでは過剰</span>
+<span class="comment">// 命に関わるソフトで採用される水準</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    一般的なWebアプリでMC/DCは過剰です。<b>「ライン+ブランチで十分」</b>と覚えておけば現場の8割は問題ありません。MC/DCは「人命が関わるソフトウェア」の世界の話、と頭の片隅に置いておけば十分です。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>カバレッジレポートの読み方</h2>
+    <span class="en">READING REPORTS</span>
+  </div>
+  <p class="pattern-desc">
+    カバレッジツールはHTMLレポートを出します。<b>ファイル単位の数字 → 行レベルの色分け</b>と掘り下げられる構造。読み方の基本を覚えれば、品質改善のホットスポットがすぐ見つかります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">reading reports</span>
+      <span class="tag-desc">レポートから改善ポイントを読む</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// カバレッジレポートのサマリ</div>
+        <div class="report">
+          <span class="h">SUMMARY</span>
+          <div class="row head"><span>File</span><span>%Stmts</span><span>%Branch</span><span>%Lines</span><span>Uncovered</span></div>
+          <div class="row"><span>order.js</span><span class="ok">92.5</span><span class="ok">85.7</span><span class="ok">92.5</span><span>42-45</span></div>
+          <div class="row"><span>payment.js</span><span class="warn">68.0</span><span class="ng">42.1</span><span class="warn">68.0</span><span>10-30</span></div>
+          <div class="row"><span>user.js</span><span class="ok">95.0</span><span class="ok">88.0</span><span class="ok">95.0</span><span>67</span></div>
+          <div class="row"><span>cart.js</span><span class="ok">100</span><span class="ok">100</span><span class="ok">100</span><span>-</span></div>
+          <div class="row" style="border-top:1px solid var(--ink);margin-top:4px;padding-top:8px;font-weight:700"><span>ALL</span><span>87.3</span><span>72.4</span><span>87.3</span><span>-</span></div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">payment.jsが弱い</b>と一目でわかる。10-30行が未カバー → ここから着手。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// レポートを読む3つの観点</span>
+
+<span class="kw">①</span> 全体率より個別率
+   全体87%でも特定ファイルが
+   30%なら、そこが弱点
+
+<span class="kw">②</span> ライン率よりブランチ率
+   ブランチが大きく下回るなら
+   分岐の見落としあり
+
+<span class="kw">③</span> 重要度で重み付け
+   payment.js が低い → 致命的
+   util.js が低い → 影響小
+
+       <span class="comment">↓</span>
+
+<span class="comment">// 改善の優先順位を決める</span>
+
+<span class="kw">最優先</span>:
+  ビジネス重要 + 低カバレッジ
+
+<span class="kw">後回し</span>:
+  あまり呼ばれない + 低カバレッジ
+
+<span class="comment">// 数字を眺めるだけでは無意味</span>
+<span class="comment">// 「重要なところが弱いか」を見る</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    レポートを毎日眺めるのは現実的ではありません。CIに組み込んで<b>「閾値を割ったらビルド失敗」</b>にすると自動で品質を守れます。さらに<b>「PRで下がったら警告」</b>のような差分チェックも便利です。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ミューテーションテスト</h2>
+    <span class="en">MUTATION TESTING</span>
+  </div>
+  <p class="pattern-desc">
+    カバレッジの根本的な弱点は<b>「実行しただけ」を測る点</b>です。実行されても検証が甘ければ意味がない。これを解決するのがミューテーションテスト。<b>「コードに変異を加えて、テストが気づくか」</b>を測る究極の指標です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">mutation testing</span>
+      <span class="tag-desc">コードを壊してテストの真価を測る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ミューテーションの仕組み</div>
+        <table class="cov-table">
+          <tr><th>変異の例</th><th>意味</th></tr>
+          <tr><td>&gt; → &gt;=</td><td>境界をずらす</td></tr>
+          <tr><td>+ → -</td><td>演算を変える</td></tr>
+          <tr><td>true → false</td><td>真偽逆転</td></tr>
+          <tr><td>0 → 1</td><td>定数を変える</td></tr>
+          <tr><td>削除</td><td>文を消す</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          自動で<b style="color:var(--ink)">数百〜数千の変異</b>を作り、テストを走らせる。テストが落ちれば「気づいた=殺した」と言う。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// ミューテーションテストの実行</span>
+
+<span class="comment">// 元のコード</span>
+<span class="kw">function</span> <span class="fn">isAdult</span>(age) {
+  <span class="kw">return</span> age &gt;= <span class="num">18</span>;
+}
+
+<span class="comment">// 自動生成される変異</span>
+<span class="ann">Mutant 1:</span> age &gt; 18
+<span class="ann">Mutant 2:</span> age &lt;= 18
+<span class="ann">Mutant 3:</span> age == 18
+<span class="ann">Mutant 4:</span> age &gt;= 19
+...
+
+<span class="comment">// テストを走らせる</span>
+<span class="comment">// Mutant 1: 失敗を捕まえる ✓殺害</span>
+<span class="comment">// Mutant 2: 失敗を捕まえる ✓殺害</span>
+<span class="comment">// Mutant 3: 通ってしまう ✗生存</span>
+<span class="comment">// Mutant 4: 失敗を捕まえる ✓殺害</span>
+
+<span class="comment">// Mutation Score = 殺害率</span>
+<span class="comment">// (殺害 / 全変異)</span>
+
+<span class="comment">// 生存した変異 = テストの穴</span>
+
+<span class="comment">// 代表ツール</span>
+<span class="comment">// Stryker (JS/TS)</span>
+<span class="comment">// PIT (Java)</span>
+<span class="comment">// mutmut (Python)</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">超便利</div>
+    ミューテーションテストは<b>「ライン100%でも生存変異があれば、それはテストの穴」</b>と教えてくれます。カバレッジでは見えなかった「実行はしているが検証していない」コードを暴く強力な道具。実行時間がかかるので、CIではなく週次/月次で回すのが現実的です。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>適切な目標値</h2>
+    <span class="en">TARGET COVERAGE</span>
+  </div>
+  <p class="pattern-desc">
+    「カバレッジは何%が良いか」は誰もが気になる疑問です。<b>100%は現実的ではないし、追うべきでもない</b>。プロジェクトの性質と限界費用効果で決まる、というのが現場の答えです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target</span>
+      <span class="tag-desc">プロジェクトに応じた目標値</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 目安値</div>
+        <table class="cov-table">
+          <tr><th>プロジェクト</th><th>ライン目安</th></tr>
+          <tr><td>趣味・実験</td><td>気にしない</td></tr>
+          <tr><td>業務Webアプリ</td><td>70〜80%</td></tr>
+          <tr><td>OSSライブラリ</td><td>85〜95%</td></tr>
+          <tr><td>金融・決済</td><td>95%以上</td></tr>
+          <tr><td>航空宇宙・医療</td><td>MC/DC 100%</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          一般的なWebアプリでは<b style="color:var(--ink)">「ライン80%+ブランチ70%」</b>が現実的な落とし所。<b style="color:var(--ink)">100%は手段の目的化</b>。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// なぜ100%を目指してはいけないか</span>
+
+<span class="kw">80% → 90%</span>:
+  改善コスト = 中
+  バグ検出効果 = 中
+  → 投資対効果◎
+
+<span class="kw">90% → 95%</span>:
+  改善コスト = 高
+  バグ検出効果 = 小
+  → 投資対効果△
+
+<span class="kw">95% → 100%</span>:
+  改善コスト = <span class="ann">膨大</span>
+  バグ検出効果 = <span class="ann">ほぼゼロ</span>
+  → 投資対効果✗
+
+       <span class="comment">↓</span>
+
+<span class="comment">// 最後の数%は</span>
+<span class="comment">//   ・エラーハンドリング</span>
+<span class="comment">//   ・到達困難な分岐</span>
+<span class="comment">//   ・自動生成コード</span>
+<span class="comment">// に消費される</span>
+
+<span class="comment">// その時間で別の検証をした方が</span>
+<span class="comment">// 全体の品質は上がる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">鉄則</div>
+    <b>「カバレッジ100%を目指す」は宗教</b>。手段が目的化した状態です。意味のないテストでカバレッジを稼ぐと、テストコードが負債になります。<b>「重要な部分の検証密度」と「全体のカバレッジ率」の両立</b>が現場の知恵。
+  </div>
+</section>
+
+<section id="sec08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>カバレッジの罠</h2>
+    <span class="en">PITFALLS</span>
+  </div>
+  <p class="pattern-desc">
+    最後にカバレッジ運用で<b>よく陥る罠</b>をまとめます。数字に振り回されると、テストの本来の目的を見失います。罠を知っておけば回避できます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pitfalls</span>
+      <span class="tag-desc">カバレッジ運用のアンチパターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4つの罠</div>
+        <div class="warn-box">
+          <span class="head">罠1 — カバレッジ目当てのテスト</span>
+          検証のない実行だけのテスト。assertが無い・弱い
+        </div>
+        <div class="warn-box">
+          <span class="head">罠2 — 100%強要</span>
+          手段が目的化し、価値のないテストが量産される
+        </div>
+        <div class="warn-box">
+          <span class="head">罠3 — 数字盲信</span>
+          80%の意味を理解せず、見せかけの安心感
+        </div>
+        <div class="warn-box">
+          <span class="head">罠4 — 重要度無視</span>
+          コアロジックが30%でユーティリティが100%
+        </div>
+      </div>
+      <div class="code"><span class="comment">// 罠1: 検証のないテスト</span>
+
+<span class="ann">// NG</span>
+<span class="fn">test</span>(<span class="str">"カバレッジ稼ぎ"</span>, () =&gt; {
+  <span class="fn">process</span>(input);
+  <span class="comment">// → 実行はしている</span>
+  <span class="comment">// → だが何も検証していない</span>
+  <span class="comment">// → カバレッジは上がる</span>
+  <span class="comment">// → 品質は上がっていない</span>
+});
+
+<span class="ann">// OK</span>
+<span class="fn">test</span>(<span class="str">"正しく動く"</span>, () =&gt; {
+  <span class="kw">const</span> result = <span class="fn">process</span>(input);
+  <span class="fn">expect</span>(result).<span class="fn">toEqual</span>(expected);
+  <span class="fn">expect</span>(db.<span class="fn">find</span>(...)).<span class="fn">toBeDefined</span>();
+});
+
+<span class="comment">// 罠2の対策</span>
+
+<span class="comment">// 強制せず推奨レベルに留める</span>
+<span class="comment">// 100%でなく80%目標</span>
+<span class="comment">// 一律ではなくファイル別に</span>
+
+<span class="comment">// 罠4の対策</span>
+
+<span class="comment">// 重要モジュールは高めの閾値</span>
+<span class="comment">// 単なるDTOは閾値除外</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">結論</div>
+    カバレッジは<b>「便利な道具」だが「目的ではない」</b>。テストの目的は「バグを見つける」ことで、カバレッジは目的に近づいているかを示す<b>道しるべの1つ</b>に過ぎません。地図編Vol.8で「測る」という行為そのものの本質を読み解きます。
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  次は<b>本編Vol.9「CI/CD・テスト自動化編」</b>。テストを「自動で常に走らせる仕組み」を学びます。地図編Vol.1で出てきた継続的統合の話、その実装編です。<b>地図編Vol.8「『測る』を読み解く編」</b>では、量と質の関係を構造的に整理。「100%でも信用ならない」の根本理由が見えてきます。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST REFERENCE — VOL.08</span>
+  <span>COVERAGE & QUALITY METRICS</span>
+</footer>
+
+</body>
+</html>

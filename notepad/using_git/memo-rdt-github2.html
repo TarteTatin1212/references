@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕GitHub版 Vol.2 ブランチ運用とトレーサビリティ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2f38;
+  --paper:#f0ede4;
+  --paper-2:#e2ddc8;
+  --accent:#c95444;
+  --accent-2:#5a6270;
+  --accent-3:#2da44e;
+  --muted:#6a7080;
+  --line:#cac4b2;
+  --code-bg:#1c2026;
+  --code-text:#e8e4dc;
+  --panel-bg:#faf5e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"⎇";position:absolute;right:-10px;top:-30px;font-size:300px;color:var(--accent);opacity:0.17;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-2);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.prompt{color:#7eb87e}
+.gh-out{color:#a8b8c8}
+.branch-main{color:#3fb950}
+.branch-feat{color:#f78166}
+.key{background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(201,84,68,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-2);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff;font-size:12.5px}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-2);font-family:'JetBrains Mono',monospace}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.gh-mock{background:#0d1117;color:#c9d1d9;border:1px solid #2a313a;border-radius:6px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.75;margin:8px 0}
+.gh-mock .gh-bar{color:#7d8590;border-bottom:1px solid #2a313a;padding-bottom:6px;margin-bottom:8px;font-size:11px}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.GH2</span>
+    <span class="kind-tag">GitHub版 ── BRANCH &amp; TRACE</span>
+    <span class="rdt-tag">TRACEABILITY</span>
+  </div>
+  <h1>ブランチ運用と<br>トレーサビリティ</h1>
+  <div class="subtitle">GH.02 ── BRANCH WORKFLOW &amp; ISSUE TRACEABILITY</div>
+  <p class="lead">本編Vol.2 で<b>US-001 のメモCRUD</b>を実装しました。これを<b>feature ブランチで管理</b>し、<b>コミットを Issue #1 に紐付け</b>ます。「<b>この要求が、どのブランチの、どのコミットで実現されたか</b>」を追跡可能にする。<b>要求→実装のトレーサビリティ</b>を GitHub で実際に繋ぐ回です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 GitHub版の赤線対策</div>
+    <p>Vol.GH2で出るエラー：<code>pathspec 'feature/...' did not match</code>（ブランチ未作成）、<code>You have unstaged changes</code>（コミット忘れで切替）、<code>Updates were rejected</code>（pull忘れ）。<b>Section 07 で対処法を用意</b>しています。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 この巻のミッション</a></li>
+    <li><a href="#s02">02 完成イメージ</a></li>
+    <li><a href="#s03">03 準備とブランチ戦略</a></li>
+    <li><a href="#s04">04 ハンズオン（CLI版）</a></li>
+    <li><a href="#s05">05 Eclipse EGit 版</a></li>
+    <li><a href="#s06">06 Issue 紐付けとトレーサビリティ</a></li>
+    <li><a href="#s07">07 ハマりどころ＋NEXT</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>この巻のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">Vol.GH2 のゴールは2つ。<b>①feature ブランチで機能を作る</b>、<b>②コミットを Issue に紐付けてトレーサビリティを繋ぐ</b>。①は基本マナー、②が<b>RDT版の核心</b>。<b>「要求→ブランチ→コミット→クローズ」を一本の線にする</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">トレーサビリティとは何か</span><span class="tag-desc">要求と実装を線で結ぶ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// トレーサビリティ＝追跡可能性</div>
+        <p>別冊S1で学んだ要求工学の「管理」。その重要概念が<b>トレーサビリティ（追跡可能性）</b>。「<b>この要求は、どのコードで実現されたか</b>」「<b>このコードは、どの要求のためか</b>」を双方向に辿れること。</p>
+
+        <div class="panel-head" style="margin-top:18px">// なぜ追跡できると嬉しいか</div>
+        <ul>
+          <li><b>「なぜこのコードがある？」</b>→ Issue を辿れば要求が分かる</li>
+          <li><b>「US-001 は完成した？」</b>→ Issue の Close 状態で分かる</li>
+          <li><b>変更時の影響範囲</b>が辿れる</li>
+          <li><b>監査・引き継ぎ</b>が楽になる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH2 で繋ぐ「線」</span>
+<span class="comment">// ─── 要求から完了までの一本の線 ───</span>
+
+US-001（本編Vol.1で定義）
+  ↓
+Issue #1（GitHub版Vol.1で起票）
+  ↓
+<span class="branch-feat">feature/memo-crud</span>（このVol.GH2で作成）
+  ↓
+コミット（Refs #1 で紐付け）
+  ├ feat(entity): Memo追加
+  ├ feat(mapper): MemoMapper
+  ├ feat(service): MemoService
+  ├ feat(controller): MemoController
+  ├ feat(view): メモ画面3つ
+  └ test: 受入条件AC1-4のテスト
+  ↓
+PR（Vol.GH3で作成予定）
+  ↓
+Closes #1 でマージ
+  ↓
+Issue #1 が自動Close
+= US-001 完成 ★★★
+
+
+<span class="comment">// → 「要求が、いつ、どう実現されたか」</span>
+<span class="comment">//   が GitHub 上で完全に追跡できる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — RDT版のブランチ名は要求と対応させる</div>
+    <p>本シリーズでは<b>ブランチ名を US と対応</b>させます。<code>feature/memo-crud</code>（US-001）、<code>feature/category-crud</code>（US-002）。ブランチ名を見れば<b>「どの要求の作業中か」</b>が分かる。<b>ブランチも要求トレーサビリティの一部</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>完成イメージ</h2><span class="en">FINAL STATE</span></div>
+  <p class="pattern-desc">Vol.GH2 終了時、<b>「Issue #1 から辿れるコミット履歴」</b>がある状態がゴール。GitHub の Issue 画面を開くと、<b>関連コミットが自動でリンク</b>されているのが理想形です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Issue とコミットが繋がった画面</span><span class="tag-desc">これが見えたら成功</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Issue #1 の画面に出るもの</div>
+        <ul>
+          <li>US-001 のストーリーと受入条件</li>
+          <li><b>「○○ referenced this issue」</b>＝紐付いたコミット</li>
+          <li>受入条件のチェックボックスが埋まっていく</li>
+          <li>（Vol.GH3 でマージすると）Closes で自動Close</li>
+        </ul>
+        <p style="margin-top:10px"><b>Issue を見れば、その要求の実装状況が全部分かる</b>。これがトレーサビリティの完成形です。</p>
+      </div>
+      <div class="code"><span class="code-head">// 完成時の git log --graph</span>
+<div class="gh-mock">
+<div class="gh-bar">$ git log --graph --oneline --all</div>
+*   <span class="branch-main">a1b2c3</span> (main) Merge feature/memo-crud
+|\
+| * <span class="branch-feat">f6e5d4</span> test: 受入条件AC1-4の
+|             テスト追加 (Refs #1)
+| * <span class="branch-feat">c3b2a1</span> feat(view): メモ画面3つ
+|             (Refs #1)
+| * <span class="branch-feat">9z8y7x</span> feat(controller):
+|             MemoController (Refs #1)
+| * <span class="branch-feat">6w5v4u</span> feat(service):
+|             MemoService (Refs #1)
+| * <span class="branch-feat">3t2s1r</span> feat(mapper):
+|             MemoMapper (Refs #1)
+| * <span class="branch-feat">0q9p8o</span> feat(entity):
+|             Memo追加 (Refs #1)
+|/
+* <span class="branch-main">m7n6o5</span> chore: プロジェクト初期化
+</div>
+
+<span class="comment">// → 全コミットに (Refs #1)</span>
+<span class="comment">// → Issue #1 を開くと</span>
+<span class="comment">//   これら全部がリンク表示される ★★★</span>
+<span class="comment">// → 「US-001の実装」が一目で追える</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">TIP — コミット粒度は受入条件・層と対応</div>
+    <p>本シリーズのコミット分割は<b>「層 or 受入条件」単位</b>。entity/mapper/service/controller/view を別コミットにし、テストも独立コミット。<b>1コミット1意味</b>を守ると、後で「どのコミットで何をしたか」が完全に追える。<b>履歴が開発の物語</b>になります。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>準備とブランチ戦略</h2><span class="en">BRANCH STRATEGY</span></div>
+  <p class="pattern-desc">本シリーズのブランチ戦略は<b>シンプルな GitHub Flow</b>。<b>main は常に動く、機能は feature ブランチで作る</b>。小規模個人開発に過剰な Git Flow は<b>採用しません</b>（別冊S2の「過剰設計を避ける」と同じ思想）。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">GitHub Flow を採用する理由</span><span class="tag-desc">規模に合った戦略</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ブランチ戦略の選択</div>
+        <table class="compare-tbl">
+          <thead><tr><th>戦略</th><th>複雑さ</th><th>向き</th></tr></thead>
+          <tbody>
+            <tr><td><b>GitHub Flow</b></td><td>低</td><td>小〜中規模・継続デプロイ</td></tr>
+            <tr><td>Git Flow</td><td>高</td><td>大規模・リリース管理厳格</td></tr>
+            <tr><td>trunk-based</td><td>低</td><td>CI/CD成熟チーム</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>本シリーズは GitHub Flow</b>。main + feature だけ。<b>メモ帳に Git Flow は過剰</b>（別冊S2の判断軸）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// GitHub Flow の3ルール</div>
+        <ol style="margin-left:20px">
+          <li>main は<b>常にデプロイ可能</b>（動く状態）</li>
+          <li>作業は<b>feature ブランチ</b>で</li>
+          <li>完成したら<b>PR経由で main へ</b>（Vol.GH3）</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// 使うコマンド（予習）</span>
+<span class="prompt">$</span> <span class="kw">git switch -c</span> feature/X  <span class="comment">// 作成＋切替</span>
+<span class="prompt">$</span> <span class="kw">git switch</span> main         <span class="comment">// 切替</span>
+<span class="prompt">$</span> <span class="kw">git branch</span>              <span class="comment">// 一覧・現在地</span>
+<span class="prompt">$</span> <span class="kw">git merge</span> feature/X     <span class="comment">// 取り込み</span>
+<span class="prompt">$</span> <span class="kw">git branch -d</span> feature/X  <span class="comment">// 削除</span>
+<span class="prompt">$</span> <span class="kw">git log --graph</span>         <span class="comment">// 履歴グラフ</span>
+
+
+<span class="comment">// ─── ブランチ命名規則 ───</span>
+feature/memo-crud      <span class="comment">// US-001</span>
+feature/category-crud  <span class="comment">// US-002</span>
+feature/tag-crud       <span class="comment">// US-003</span>
+fix/title-validation   <span class="comment">// バグ修正</span>
+
+<span class="comment">// → 「種類/対象」の形</span>
+<span class="comment">// → 要求(US)と対応 ★★★</span>
+
+
+<span class="comment">// ─── switch vs checkout ───</span>
+<span class="comment">// switch = ブランチ切替専用（新しい・推奨）</span>
+<span class="comment">// checkout = 切替＋ファイル復元（混乱しやすい）</span>
+<span class="comment">// → 本シリーズは switch 採用</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — ブランチ戦略も「過剰設計を避ける」</div>
+    <p>Git Flow は<b>develop/release/hotfix</b> など多数のブランチを使う重厚な戦略。大規模には有効ですが、<b>メモ帳の個人開発には過剰</b>。別冊S2の<b>YAGNI・規模に合った構造</b>と同じ判断で、<b>シンプルな GitHub Flow</b> を選びます。<b>道具は規模に合わせる</b>。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>ハンズオン（コマンドライン版）</h2><span class="en">CLI HANDS-ON</span></div>
+  <p class="pattern-desc">本編Vol.2 の Memo CRUD を、<b>feature ブランチで作り、Issue #1 に紐付けながらコミット</b>します。<b>受入条件・層ごとにコミットを分ける</b>のがポイントです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">手順 — feature ブランチで実装管理</span><span class="tag-desc">Issue紐付きコミット</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <ol class="step-list">
+          <li>main から <code>feature/memo-crud</code> を作成＆切替</li>
+          <li>Memo Entity を作成 → add → commit（<code>Refs #1</code>）</li>
+          <li>Mapper を作成 → add → commit（<code>Refs #1</code>）</li>
+          <li>Service を作成 → add → commit（<code>Refs #1</code>）</li>
+          <li>Controller を作成 → add → commit（<code>Refs #1</code>）</li>
+          <li>View 3画面 → add → commit（<code>Refs #1</code>）</li>
+          <li>テスト（受入条件） → add → commit（<code>Refs #1</code>）</li>
+          <li>feature ブランチを push</li>
+        </ol>
+        <p style="margin-top:10px"><b>すべてのコミットに <code>Refs #1</code></b>。Issue #1 と紐付き、トレーサビリティが繋がります。</p>
+      </div>
+      <div class="code"><span class="code-head">// CLI 手順</span>
+<span class="comment">// Step 1: ブランチ作成＆切替</span>
+<span class="prompt">$</span> <span class="kw">git switch -c</span> feature/memo-crud
+<span class="gh-out">Switched to a new branch
+  'feature/memo-crud'</span>
+
+
+<span class="comment">// Step 2: Entity コミット</span>
+<span class="prompt">$</span> <span class="kw">git add</span> src/main/java/.../entity/Memo.java
+<span class="prompt">$</span> <span class="kw">git commit -m</span> <span class="str">"feat(entity): Memoクラス追加
+
+- @NotBlank/@Size でバリデーション
+  （受入条件 AC2-4 に対応）
+- 5フィールド（id/title/content/
+  createdAt/updatedAt）
+
+Refs #1"</span>
+       <span class="comment">// ↑ Refs #1 で Issue #1 に紐付く ★★★</span>
+
+
+<span class="comment">// Step 3-6: 同様に層ごとコミット</span>
+<span class="prompt">$</span> <span class="kw">git commit -m</span> <span class="str">"feat(mapper): MemoMapper追加
+
+Refs #1"</span>
+<span class="prompt">$</span> <span class="kw">git commit -m</span> <span class="str">"feat(service): MemoService追加
+
+- create時にcreatedAt/updatedAtをセット
+
+Refs #1"</span>
+<span class="prompt">$</span> <span class="kw">git commit -m</span> <span class="str">"feat(controller): MemoController追加
+
+- @Validated + BindingResult で
+  バリデーション（AC2対応）
+- PRGパターン
+
+Refs #1"</span>
+<span class="prompt">$</span> <span class="kw">git commit -m</span> <span class="str">"feat(view): メモ画面3つ追加
+
+Refs #1"</span>
+
+
+<span class="comment">// Step 7: テストコミット（RDT版の肝）</span>
+<span class="prompt">$</span> <span class="kw">git add</span> src/test/
+<span class="prompt">$</span> <span class="kw">git commit -m</span> <span class="str">"test: US-001の受入条件をテスト化
+
+- MemoValidationTest（AC2-4）
+- MemoServiceTest（日時セット）
+- MemoControllerTest（AC1 MockMvc）
+- 6 tests, all green
+
+Refs #1"</span>
+       <span class="comment">// ↑ テストも独立コミット ★★★</span>
+
+
+<span class="comment">// Step 8: push</span>
+<span class="prompt">$</span> <span class="kw">git push -u</span> origin feature/memo-crud</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — テストを独立コミットにする意味</div>
+    <p>RDT版では<b>テストを独立したコミット</b>にします（or 実装とセット）。「<b>どの受入条件を、いつテスト化したか</b>」が履歴に残る。理想は<b>テストファースト</b>（テストを先にコミット → 実装で緑に）。これが<b>Red-Green-Refactor</b>の履歴版。<b>テストの存在が履歴で証明される</b>のが業務でも重要です。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>Eclipse EGit 版</h2><span class="en">EGIT VERSION</span></div>
+  <p class="pattern-desc">EGit でも同じことができます。<b>Issue 紐付け（Refs #1）はコミットメッセージに書くだけ</b>なので、EGit でも全く同様に機能します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">EGit でのブランチ＆コミット</span><span class="tag-desc">GUI で完結</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ブランチ作成＆切替</div>
+        <ol class="step-list">
+          <li>プロジェクト右クリック → <span class="menu-code">Team</span> → <span class="menu-code">Switch To</span> → <span class="menu-code">New Branch...</span></li>
+          <li>Branch name：<b>feature/memo-crud</b></li>
+          <li><span class="menu-code">Check out new branch</span> → <span class="menu-code">Finish</span></li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// コミット（Git Staging）</div>
+        <ol style="margin-left:20px">
+          <li>Git Staging ビューを開く</li>
+          <li>層ごとにファイルを Staged へ（個別に ＋）</li>
+          <li>メッセージ欄に <code>feat(...): ...</code> ＋空行 ＋ <code>Refs #1</code></li>
+          <li><span class="menu-code">Commit</span>（push は後でまとめて）</li>
+          <li>これを層ごと・テストごとに繰り返す</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// History で確認</div>
+        <p>Team → Show in History で、<b>Refs #1 付きコミットが層ごとに並ぶ</b>のを視覚的に確認できます。</p>
+      </div>
+      <div class="code"><span class="code-head">// EGit でのコミットメッセージ入力</span>
+<span class="comment">// Git Staging ビューのメッセージ欄に：</span>
+
+┌────────────────────────────┐
+│ feat(entity): Memoクラス追加 │ ← 1行目（要約）
+│                             │ ← 空行（必須）
+│ - @NotBlank/@Size           │ ← 本文
+│ - 受入条件 AC2-4 に対応      │
+│                             │ ← 空行
+│ Refs #1                     │ ← Issue紐付け ★
+└────────────────────────────┘
+
+<span class="comment">// → 1行目・空行・本文・空行・Refs</span>
+<span class="comment">// → この構造は CLI も EGit も同じ ★★★</span>
+
+
+<span class="comment">// ─── コマンド ↔ EGit 対応 ───</span>
+git switch -c X
+  → Team → Switch To → New Branch
+git add（個別）
+  → Git Staging で個別に ＋
+git commit
+  → Git Staging で Commit
+git merge X
+  → Team → Merge
+git log --graph
+  → Team → Show in History
+
+
+<span class="comment">// ─── Refs #1 の威力は GUI でも同じ ───</span>
+<span class="comment">// メッセージに #1 と書けば</span>
+<span class="comment">// push後に GitHub で自動リンク</span>
+<span class="comment">// → EGit でもトレーサビリティOK ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">TIP — EGit は履歴の可視化が強い</div>
+    <p>EGit の <b>History ビュー</b>は、<b>Refs #1 付きコミットが層ごとに積み上がる</b>様子が視覚的に見えます。各コミットをクリックすれば diff も確認できる。<b>「どの層で何を変えたか」を目で追える</b>のが EGit の強み。コマンドの <code>git log --graph</code> より直感的です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>Issue 紐付けとトレーサビリティ</h2><span class="en">ISSUE LINKING</span></div>
+  <p class="pattern-desc"><b>RDT版の核心</b>。<code>Refs #1</code> と <code>Closes #1</code> の使い分け、GitHub上での自動リンク、双方向トレーサビリティの実現方法を学びます。<b>要求と実装が GitHub 上で一本の線になる</b>瞬間です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Refs と Closes の使い分け</span><span class="tag-desc">紐付けとクローズ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つのキーワード</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">Refs #1</span>
+            <div class="name">参照（紐付けのみ）</div>
+            <div class="desc">Issue #1 に<b>リンクを張る</b>。Issueは開いたまま。作業途中のコミットに。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">Closes #1</span>
+            <div class="name">クローズ</div>
+            <div class="desc">マージ時に Issue #1 を<b>自動Close</b>。完成を表すコミット/PRに。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// 使い分けの方針</div>
+        <ul>
+          <li><b>作業途中の各コミット</b> → <code>Refs #1</code>（紐付けだけ）</li>
+          <li><b>完成を表すPR or 最終コミット</b> → <code>Closes #1</code>（自動Close）</li>
+          <li>Closes は <b>main にマージされた時</b>に発動</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 他のキーワード</div>
+        <p><code>Closes</code> / <code>Fixes</code> / <code>Resolves</code> は同じ（自動Close）。<code>Refs</code> / <code>See</code> は参照のみ。</p>
+      </div>
+      <div class="code"><span class="code-head">// 双方向トレーサビリティ</span>
+<span class="comment">// ─── 要求 → 実装（前向き）───</span>
+<span class="comment">// Issue #1 を開くと…</span>
+<div class="gh-mock">
+<div class="gh-bar">Issue #1 — US-001 メモ作成</div>
+## ユーザーストーリー
+As a ... I want ... so that ...
+
+## 受入条件
+- [x] AC1 保存→一覧表示
+- [x] AC2 空タイトルエラー
+- [x] AC3 200文字OK
+- [x] AC4 201文字エラー
+
+──────────────
+yourname referenced this issue
+  · feat(entity): Memo追加
+  · feat(mapper): MemoMapper
+  · feat(service): MemoService
+  · test: 受入条件AC1-4
+  ← Refs #1 のコミットが
+    全部リンク表示される ★★★
+</div>
+
+<span class="comment">// ─── 実装 → 要求（後ろ向き）───</span>
+<span class="comment">// コミットメッセージを見れば</span>
+<span class="comment">// "Refs #1" → Issue #1 → US-001</span>
+<span class="comment">// 「このコードは何のため？」が分かる ★★★</span>
+
+
+<span class="comment">// ─── 完成時（Vol.GH3のPRで）───</span>
+<span class="comment">// PR本文に：</span>
+Closes #1
+<span class="comment">// → マージすると Issue #1 が</span>
+<span class="comment">//   自動的に Closed に</span>
+<span class="comment">// → US-001 完成が記録される</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">要求工学の「管理」フェーズの完成形</span><span class="tag-desc">理論が実体になる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <table class="compare-tbl">
+          <thead><tr><th>要求工学</th><th>GitHub での実体</th></tr></thead>
+          <tbody>
+            <tr><td>要求(US)</td><td>Issue 本文</td></tr>
+            <tr><td>受入条件</td><td>チェックボックス</td></tr>
+            <tr><td>実装の対応付け</td><td>Refs #1 コミット</td></tr>
+            <tr><td>完了の記録</td><td>Closes #1</td></tr>
+            <tr><td>トレーサビリティ</td><td>Issue↔コミット双方向リンク</td></tr>
+            <tr><td>変更管理</td><td>新規Issue（CR票）</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>別冊S1で学んだ「管理」フェーズの理論</b>が、GitHub の Issue/コミット紐付けで<b>実体</b>になりました。</p>
+      </div>
+      <div class="code"><span class="code-head">// 完成：要求から完了までの全トレース</span>
+<span class="comment">// ─── 1本の線（再掲・完成版）───</span>
+
+本編Vol.1
+  US-001 を定義
+  「メモを作成したい」
+       ↓
+GitHub版Vol.1
+  Issue #1 起票
+  受入条件をチェックボックス化
+       ↓
+本編Vol.2
+  実装＋テスト（受入条件→JUnit）
+       ↓
+GitHub版Vol.2（今ここ）
+  feature/memo-crud で
+  Refs #1 コミット6個
+       ↓
+GitHub版Vol.3（次回）
+  PR作成 → Closes #1 → マージ
+       ↓
+  Issue #1 自動Close
+  = US-001 完成 ★★★
+
+
+<span class="comment">// → 「誰が・いつ・なぜ・どう」</span>
+<span class="comment">//   作ったかが全部 GitHub に残る</span>
+<span class="comment">// → これがトレーサビリティの完成 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — トレーサビリティは「未来の自分」への手紙</div>
+    <p>半年後、「<b>なんでこのコードこう書いたんだっけ</b>」となったとき。コミットの <code>Refs #1</code> から Issue #1 を開けば、<b>当時の要求・受入条件・判断</b>が全部読める。<b>トレーサビリティは未来の自分（と引き継ぎ相手）への手紙</b>。書くのは少し手間ですが、<b>受け取る価値は計り知れません</b>。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>ハマりどころ＋NEXT STEP</h2><span class="en">PITFALLS &amp; NEXT</span></div>
+  <p class="pattern-desc">ブランチ＋Issue紐付けで踏みやすい地雷を5つ。<b>★★★ 印は特に頻発</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.GH2 ハマりどころ 5選</span><span class="tag-desc">先に知れば回避できる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 未コミットでブランチ切替できない ★★★</b></p>
+        <ul>
+          <li>エラー：<code>Your local changes would be overwritten</code></li>
+          <li>対処：<code>git stash</code> で退避 → 切替 → <code>git stash pop</code></li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② Refs #1 を書いてもリンクされない</b></p>
+        <ul>
+          <li>原因：push していない（ローカルのみ）／番号違い</li>
+          <li>対処：push 後に GitHub で確認。Issue 番号を再確認（#1 が正しいか）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ Closes #1 を途中コミットに書いてしまった ★★★</b></p>
+        <ul>
+          <li>問題：まだ完成してないのに Issue がCloseされる（マージ時）</li>
+          <li>対処：途中は <code>Refs #1</code>、完成PRだけ <code>Closes #1</code></li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ main で作業してしまった</b></p>
+        <ul>
+          <li>状況：feature を切り忘れて main にコミット</li>
+          <li>対処：<code>git reset --soft HEAD~1</code> → <code>git switch -c feature/X</code> → commit し直し</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ push 時に rejected（pull忘れ）</b></p>
+        <ul>
+          <li>原因：リモートが先行（Web編集など）</li>
+          <li>対処：<code>git pull</code> → コンフリクト解決 → push</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 主要エラーの対処</span>
+<span class="comment">// ─── ① stash で退避 ───</span>
+<span class="prompt">$</span> <span class="kw">git stash</span>
+<span class="prompt">$</span> <span class="kw">git switch</span> main
+<span class="prompt">$</span> <span class="kw">git switch</span> feature/memo-crud
+<span class="prompt">$</span> <span class="kw">git stash pop</span>
+
+
+<span class="comment">// ─── ④ main で誤コミット ───</span>
+<span class="prompt">$</span> <span class="kw">git log --oneline -1</span>
+<span class="gh-out">abc123 (main) feat: Memo追加 ← main!!</span>
+
+<span class="prompt">$</span> <span class="kw">git reset --soft HEAD~1</span>
+<span class="comment">// → mainを1つ戻す（変更は残る）</span>
+<span class="prompt">$</span> <span class="kw">git switch -c</span> feature/memo-crud
+<span class="comment">// → 新ブランチへ（変更を持っていく）</span>
+<span class="prompt">$</span> <span class="kw">git commit -m</span> <span class="str">"feat: Memo追加
+
+Refs #1"</span>
+<span class="comment">// → 正しいブランチでコミットし直し ★★★</span>
+
+
+<span class="comment">// ─── ③ Refs と Closes の使い分け ───</span>
+途中コミット → <span class="kw">Refs #1</span>   （紐付けのみ）
+完成のPR     → <span class="kw">Closes #1</span> （自動Close）
+
+<span class="comment">// 途中で Closes を書くと、マージ時に</span>
+<span class="comment">// まだ完成してない Issue が閉じる ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">GH2 達成チェック</span><span class="tag-desc">トレーサビリティ完了</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェック</div>
+        <ul class="check-list">
+          <li><code>git switch -c</code> でブランチ作成＆切替できる</li>
+          <li>feature ブランチ名を US と対応させた</li>
+          <li>層・テストごとにコミットを分けた</li>
+          <li>各コミットに <code>Refs #1</code> を書いた</li>
+          <li>feature ブランチを push できた</li>
+          <li>Issue #1 にコミットがリンク表示された</li>
+          <li>Refs と Closes の使い分けを理解した</li>
+          <li>GitHub Flow の3ルールを言える</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH2 で手に入れた力</span>
+✓ <span class="str">"feature ブランチで機能を作れる"</span>
+
+✓ <span class="str">"ブランチ名を要求(US)と対応させられる"</span>
+
+✓ <span class="str">"コミットを Issue に紐付けられる</span>
+   <span class="str"> （Refs #1）"</span>
+
+✓ <span class="str">"要求→実装の双方向トレーサビリティ</span>
+   <span class="str"> を実現できる"</span>
+
+✓ <span class="str">"要求工学の「管理」フェーズを</span>
+   <span class="str"> GitHub で回せる"</span>
+
+
+<span class="comment">// → 「トレーサビリティを繋げる人」へ ★★★</span>
+
+<span class="comment">// 次回 Vol.GH3：</span>
+<span class="comment">//   Pull Request 入門</span>
+<span class="comment">//   Closes #1 で Issue を自動Close</span>
+<span class="comment">//   = US-001 を完成として記録</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.GH3 へ</div>
+    <p>Vol.GH2 で<b>「ブランチ運用＋Issue紐付け」</b>ができ、要求と実装が線で繋がりました。次は Vol.GH3「<b>Pull Request 入門編</b>」。feature ブランチを<b>PR経由でマージ</b>し、<b>Closes #1 で Issue #1 を自動Close</b>します。これで<b>「US-001 完成」</b>が GitHub に記録され、トレーサビリティが完結。本編Vol.3「カテゴリ管理」で作るコードを題材に進めます。<b>本編Vol.3 → Vol.GH3 の順</b>で進めるとスムーズです。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>GH.02 / 14 ── BRANCH &amp; TRACEABILITY（GitHub版）</span>
+</footer>
+
+</body>
+</html>

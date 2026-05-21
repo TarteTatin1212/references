@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.5 補足 ── フォーム・POST・リダイレクトの仕組み</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3d2817;
+  --paper:#f4ecd8;
+  --paper-2:#e8dcc0;
+  --accent:#c0863f;
+  --accent-2:#d8a560;
+  --accent-3:#6b4423;
+  --accent-4:#2d5f3f;
+  --muted:#7a6952;
+  --line:#c9b896;
+  --code-bg:#2a1f15;
+  --code-text:#f0e4cc;
+  --panel-bg:#faf3e0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'?';position:absolute;right:0px;top:-30px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+.add-tag{display:inline-block;background:#c43;color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:40px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid #c43;padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--accent-3);border-bottom-color:var(--accent-3)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}
+.tag{color:#a3c9ff}
+.attr{color:#ffc88a}
+.bad{color:#ff8a7a;font-weight:600}
+.good{color:#b5e8b0;font-weight:600}
+
+/* WHAT/HOW/WHY */
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+
+/* 用語カード */
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+
+/* 思考ステップカード */
+.think-step{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;position:relative;padding-left:60px;min-height:60px}
+.think-step::before{content:attr(data-step);position:absolute;left:14px;top:14px;background:var(--accent);color:var(--paper);width:36px;height:36px;line-height:36px;text-align:center;border-radius:50%;font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700}
+.think-step-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.think-step-body{font-size:13.5px;line-height:1.8}
+
+/* アナロジー */
+.analogy{background:#fffdf6;border:1px dashed var(--accent);border-left:4px solid var(--accent);padding:14px 18px;margin:12px 0}
+.analogy-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px}
+.analogy-title::before{content:'📮 ';margin-right:4px}
+.analogy p{font-size:13.5px;line-height:1.85}
+
+/* NG/OK 対比 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.compare-box{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:13.5px}
+.compare-ng{border-top:3px solid #c43}
+.compare-ok{border-top:3px solid var(--accent-4)}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px}
+.compare-ng .compare-label{color:#c43}
+.compare-ok .compare-label{color:var(--accent-4)}
+
+.tip{margin:18px 0;padding:14px 20px;background:rgba(192,134,63,0.10);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+
+/* 図解用 */
+.flow-diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;background:#fff;border:1px solid var(--line);padding:14px 18px;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+/* role-card */
+.role-card{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;display:grid;grid-template-columns:90px 1fr;gap:14px;align-items:start}
+.role-card-icon{font-family:'Shippori Mincho',serif;font-size:36px;color:var(--accent);text-align:center;line-height:1;padding-top:6px}
+.role-card-name{font-family:'Shippori Mincho',serif;font-size:16px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.role-card-job{font-size:13.5px;line-height:1.7}
+
+/* チェックリスト */
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:220px}
+  h1{font-size:28px}
+  .toc ul{flex-direction:column;gap:8px}
+  .whw{grid-template-columns:1fr}
+  .compare{grid-template-columns:1fr}
+  .term-grid{grid-template-columns:1fr}
+  .role-card{grid-template-columns:60px 1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.05 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <span class="add-tag">+ ADD</span>
+  <h1>フォーム・POST・<br>リダイレクトの仕組み</h1>
+  <p class="subtitle">VOL.5 SUPPLEMENT — THE REASONING BEHIND THE FORM</p>
+  <p class="lead">Vol.5本編で<b>新規登録機能</b>が動くようになりました。フォームに入力 → 送信ボタン → DB登録 → 一覧へ自動遷移── スムーズに動いているように見える裏側では、<b>たくさんの仕組み</b>が連携して働いています。<b>「なぜTaskFormとTaskを分けるのか?」「PRGの本質は?」「th:fieldは何をしているのか?」</b>── こうした<b>「なぜ」</b>を1つ1つ解明することで、Vol.6以降の編集・削除・バリデーションに<b>応用できる土台</b>が手に入ります。本編で手を動かした今こそ、仕組みを覗くベストタイミングです。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">💡 この補足の位置づけ</div>
+    <p style="font-size:13.5px">本編は「<b>実装の手順書</b>」、本補足は「<b>仕組みの解説書</b>」。新しいコードは書きませんが、<b>本編で書いたコードの裏側</b>を覗きます。「フォーム送信の瞬間に何が起きているか」「Springはどうやってフォーム値をJavaオブジェクトに詰めるか」「リダイレクトとフォワードはどう違うか」── ブラックボックスだった部分が透けて見えるようになると、<b>応用力</b>が一気に上がります。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.05 ADD</div>
+  <ul>
+    <li><a href="#purpose">01 この補足の目的</a></li>
+    <li><a href="#form-submission">02 そもそも「フォーム送信」とは何が起きているか</a></li>
+    <li><a href="#get-vs-post">03 なぜGETとPOSTを分けるのか</a></li>
+    <li><a href="#form-vs-entity">04 なぜTaskFormとTaskを分けるのか</a></li>
+    <li><a href="#term-dto">05 用語カード：DTO</a></li>
+    <li><a href="#prg-deep">06 PRGパターンの本質</a></li>
+    <li><a href="#same-url">07 「同じURL」で違う処理を呼び分ける仕組み</a></li>
+    <li><a href="#th-magic">08 th:object と th:field の魔法</a></li>
+    <li><a href="#model-attribute">09 @ModelAttribute はどう動くか</a></li>
+    <li><a href="#redirect-vs-forward">10 リダイレクト vs フォワードの違い</a></li>
+    <li><a href="#crud-template">11 「画面付きCRUD」を書くためのテンプレート</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="purpose">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この補足の目的</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">Vol.5本編で「動く」を達成したあなたに、<b>「動いている仕組み」</b>を見せます。仕組みが見えると、Vol.6以降の機能追加が<b>応用問題</b>として解けるようになります。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を解説するか</div>
+      <div class="whw-desc">
+        Vol.5で扱った<b>「フォーム」「POST」「リダイレクト」</b>の仕組み。HTTPレベルの動き、Form/Entity分離の理由、ThymeleafとSpringの連携、PRGパターンの背景。
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう解説するか</div>
+      <div class="whw-desc">
+        ① <b>HTTPレベル</b>で何が起きているか<br>
+        ② <b>Spring/Thymeleafの内部</b>が何をしているか<br>
+        ③ <b>業務開発の慣習</b>と<b>背景にある思想</b><br>
+        ④ <b>応用</b>のためのテンプレート
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜ別冊で深掘るか</div>
+      <div class="whw-desc">
+        本編で「動かす」だけだと、<b>編集・削除・バリデーションの時に応用できない</b>。仕組みが見えれば<b>「あ、ここは同じパターンだ」</b>と気付け、Vol.6以降が楽になる。
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>Vol.5本編のコードはVol.6・7でほぼそのままパターン再利用します。<b>パターン認識ができる状態で次に進めば</b>、編集機能や削除機能で<b>「初めて見るコードはほぼゼロ」</b>になるはず。この補足はその<b>応用力の基礎工事</b>です。</p>
+  </div>
+</section>
+
+<section id="form-submission">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>そもそも「フォーム送信」とは何が起きているか</h2>
+    <span class="en">WHAT HAPPENS ON SUBMIT</span>
+  </div>
+  <p class="pattern-desc">「登録ボタンを押す」── たった1秒の操作の裏側で、ブラウザとサーバが<b>HTTPプロトコル</b>を使って細かい会話をしています。仕組みを<b>イベントの連鎖</b>として追います。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">submit-mechanism</span>
+      <span class="tag-desc">送信ボタンクリック時の連鎖反応</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 「登録」ボタンクリックの瞬間に起きること</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">ブラウザがform要素を見る</div>
+          <div class="think-step-body">
+            ボタンが押されたformの <code>action</code> 属性（送信先URL）と <code>method</code> 属性（HTTPメソッド）を読む。Vol.5なら <code>action="/tasks"</code> と <code>method="post"</code>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">入力値を集める</div>
+          <div class="think-step-body">
+            form内の全ての入力要素（input, textarea, select等）の<b><code>name</code>属性と入力値</b>のペアを収集。<code>title=新しいタスク</code> のような形式に整形。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">HTTPリクエストを組み立てる</div>
+          <div class="think-step-body">
+            <b>POSTの場合</b>：リクエストボディに <code>title=新しいタスク</code> 形式（URL-encoded）で詰め、Content-Type は <code>application/x-www-form-urlencoded</code>。<br>
+            <b>GETの場合</b>：URLの末尾に <code>?title=新しいタスク</code> としてクエリ文字列にする。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">サーバに送信</div>
+          <div class="think-step-body">
+            TCP/IPでサーバ（localhost:8080）にリクエスト送信。サーバが受信。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="5">
+          <div class="think-step-title">Springがリクエストを解析</div>
+          <div class="think-step-body">
+            DispatcherServletがHTTPメソッドとURLを見て、<code>@PostMapping("/tasks")</code> のメソッドにマッチ。リクエストボディの <code>title=...</code> を解析して、<code>TaskForm</code> のフィールドに詰める。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="6">
+          <div class="think-step-title">レスポンスを返す</div>
+          <div class="think-step-body">
+            <code>create()</code> メソッドが処理を実行し、リダイレクト指示（HTTP 302）をブラウザに返す。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 実際のHTTPリクエスト（送信ボタンクリック時）</span>
+
+POST /tasks HTTP/1.1
+Host: localhost:8080
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 32
+Cookie: JSESSIONID=...
+
+title=%E6%96%B0%E3%81%97%E3%81%84%E3%82%BF%E3%82%B9%E3%82%AF
+<span class="comment">// ↑ "新しいタスク" を URL-encoded したもの</span>
+
+
+<span class="code-head" style="margin-top:18px">// HTMLフォームと送信内容の対応</span>
+
+<span class="comment">&lt;!-- このHTML --&gt;</span>
+<span class="tag">&lt;form</span> <span class="attr">action</span>=<span class="str">"/tasks"</span> <span class="attr">method</span>=<span class="str">"post"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;input</span>
+    <span class="attr">type</span>=<span class="str">"text"</span>
+    <span class="attr">name</span>=<span class="str">"title"</span>
+    <span class="attr">value</span>=<span class="str">"新しいタスク"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="str">"submit"</span><span class="tag">&gt;</span>登録<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/form&gt;</span>
+
+<span class="comment">// が、送信ボタンクリックで:</span>
+
+POST /tasks
+  ↑ action 属性
+  ↑ method 属性
+
+body: title=新しいタスク
+       ↑ name属性 = 入力値
+
+
+<span class="code-head" style="margin-top:18px">// なぜ name 属性が重要か</span>
+
+<span class="comment">// name="title" の場合</span>
+<span class="comment">// → 送信データ: title=新しいタスク</span>
+<span class="comment">// → サーバは「titleパラメータ」と認識</span>
+<span class="comment">// → TaskForm.setTitle() が呼ばれる</span>
+
+<span class="comment">// name属性なし、または name="memo" だと</span>
+<span class="comment">// → TaskForm.title に値が入らない！</span>
+
+<span class="comment">// name属性は「サーバへのキー」</span>
+<span class="comment">// Vol.5で th:field="*{title}" を書くと</span>
+<span class="comment">// 自動で name="title" が出力される</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── 郵送の伝票</div>
+    <p>フォーム送信は<b>郵便での書類送付</b>に似ています。<br>
+    <b>action属性</b> = 宛先住所、<b>method属性</b> = 配送方法（速達か普通か）、<b>name属性</b> = 書類の項目名、<b>入力値</b> = 書類の中身。送信ボタンは「<b>ポストに投函</b>」。郵便屋さん（HTTPプロトコル）が宛先まで届け、受け取った側が項目名で書類を整理する── これがフォーム送信の本質です。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「ブラウザは賢い郵便屋」</div>
+    <p>ブラウザは<b>HTMLフォームを見て、HTTPリクエストに変換するエンジン</b>。あなたが書いた<code>&lt;form&gt;</code>と<code>&lt;input&gt;</code>の組み合わせから、適切なHTTPリクエストを<b>自動的に組み立てて</b>送信してくれます。Springはその逆をやる── 受け取ったHTTPリクエストを<b>Javaオブジェクトに復元</b>する。両者の<b>境界</b>がHTTPプロトコルです。</p>
+  </div>
+</section>
+
+<section id="get-vs-post">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>なぜGETとPOSTを分けるのか</h2>
+    <span class="en">WHY GET AND POST</span>
+  </div>
+  <p class="pattern-desc">HTTPには8種類のメソッドがありますが、Webアプリ開発で<b>9割使う</b>のはGETとPOSTです。<b>なぜ分かれているのか</b>、その<b>性質の違い</b>を深掘ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">get-vs-post-essence</span>
+      <span class="tag-desc">GETとPOSTの本質的な違い</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 性質の違い一覧</div>
+
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px">
+          <thead>
+            <tr style="background:var(--paper-2)">
+              <th style="border:1px solid var(--line);padding:8px;text-align:left">観点</th>
+              <th style="border:1px solid var(--line);padding:8px;text-align:left;color:var(--accent-4)">GET</th>
+              <th style="border:1px solid var(--line);padding:8px;text-align:left;color:#c43">POST</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">意図</td>
+              <td style="border:1px solid var(--line);padding:6px">情報を<b>取得</b>する</td>
+              <td style="border:1px solid var(--line);padding:6px">情報を<b>送信・変更</b>する</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">パラメータの置き場所</td>
+              <td style="border:1px solid var(--line);padding:6px">URL末尾（?key=value）</td>
+              <td style="border:1px solid var(--line);padding:6px">リクエストボディ</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">冪等性</td>
+              <td style="border:1px solid var(--line);padding:6px"><b>冪等</b>（何回叩いても同じ）</td>
+              <td style="border:1px solid var(--line);padding:6px"><b>非冪等</b>（叩くたび新タスク追加）</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">ブックマーク可能</td>
+              <td style="border:1px solid var(--line);padding:6px">OK</td>
+              <td style="border:1px solid var(--line);padding:6px">NG</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">URL履歴に残る</td>
+              <td style="border:1px solid var(--line);padding:6px">パラメータごと残る</td>
+              <td style="border:1px solid var(--line);padding:6px">URLのみ（値は残らない）</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">リロード時の挙動</td>
+              <td style="border:1px solid var(--line);padding:6px">そのまま再取得</td>
+              <td style="border:1px solid var(--line);padding:6px">警告「再送しますか?」</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>核心は「冪等性」</b>。GETは何度叩いてもサーバの状態は変わらない（一覧を取るだけ）。POSTは叩くたびに変更が発生する（新タスクが増える）。<b>この性質の違い</b>から、ブラウザの扱いや業界慣習の違いが派生します。</p>
+      </div>
+      <div class="code"><span class="code-head">// 冪等性（idempotency）とは</span>
+
+<span class="comment">// GETの場合（冪等）</span>
+
+GET /tasks   ← 1回目: 一覧3件取得
+GET /tasks   ← 2回目: 一覧3件取得
+GET /tasks   ← 3回目: 一覧3件取得
+            ↑ サーバ状態は変わらない
+            ↑ 結果も毎回同じ
+
+
+<span class="comment">// POSTの場合（非冪等）</span>
+
+POST /tasks (title=A)  ← 1回目: 1件追加(計4件)
+POST /tasks (title=A)  ← 2回目: 1件追加(計5件)
+POST /tasks (title=A)  ← 3回目: 1件追加(計6件)
+                        ↑ 叩くたび状態変化
+                        ↑ 結果も毎回違う
+
+
+<span class="code-head" style="margin-top:18px">// 業界の鉄則</span>
+
+<span class="comment">// 鉄則1: 副作用ある操作は POST</span>
+<span class="comment">//   INSERT/UPDATE/DELETE → POST</span>
+<span class="comment">//   SELECT → GET</span>
+
+<span class="comment">// 鉄則2: GETで状態を変えてはいけない</span>
+<span class="comment">//   /tasks/delete?id=1 のような</span>
+<span class="comment">//   GETでDELETEする設計は</span>
+<span class="comment">//   業界では大NG</span>
+
+<span class="comment">// 鉄則3: 機密情報は POST</span>
+<span class="comment">//   パスワード等 → URLに乗せない</span>
+<span class="comment">//   GETだとブラウザ履歴/サーバログに残る</span>
+
+
+<span class="code-head" style="margin-top:18px">// 「冪等性違反」の実例</span>
+
+<span class="comment">// もし「削除」をGETにしたら…</span>
+
+<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="str">"/tasks/delete?id=1"</span><span class="tag">&gt;</span>
+  削除
+<span class="tag">&lt;/a&gt;</span>
+
+<span class="bad">// 問題1: Googleのクローラーが</span>
+<span class="bad">//        全リンク辿ってDELETE実行</span>
+
+<span class="bad">// 問題2: ブラウザのプレビュー機能で</span>
+<span class="bad">//        マウスホバーだけで削除実行</span>
+
+<span class="bad">// 問題3: 戻るボタンで再実行</span>
+
+<span class="comment">// → 必ず POST で実装する</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「設計の原則」と「実装の手段」</div>
+    <p>GETとPOSTは単に「<b>HTTPメソッドの違い</b>」ではなく、<b>「Webアプリ設計の根本原則」</b>を体現しています。<b>「読み取りはGET、書き込みはPOST」</b>── これを徹底するだけで、検索エンジン対策、リロード対策、セキュリティ対策が同時に成立します。Vol.6で削除機能を作る時も<b>必ずPOST</b>で実装します（GETでの削除はあり得ない）。</p>
+  </div>
+</section>
+
+<section id="form-vs-entity">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>なぜTaskFormとTaskを分けるのか</h2>
+    <span class="en">FORM vs ENTITY</span>
+  </div>
+  <p class="pattern-desc">本編で<b>「画面用とDB用は別物」</b>と書きましたが、深い理由は<b>3つ</b>あります。それぞれ業務開発の<b>実例</b>と照らし合わせて見ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">three-reasons</span>
+      <span class="tag-desc">分離する3つの理由</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 分離の3つの根拠</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">理由① 「画面に必要な項目」と「DBに必要な項目」が違う</div>
+          <div class="think-step-body">
+            DBにはあるけど画面に不要なもの：<code>id</code>（自動採番）、<code>created_at</code>（自動設定）。<br>
+            画面にあるけどDBに不要なもの：「パスワード確認入力」「利用規約同意チェックボックス」「reCAPTCHAトークン」。<br>
+            <b>両者を1クラスにすると、どちらかが歪む</b>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">理由② バリデーションは「画面入力」に対するもの</div>
+          <div class="think-step-body">
+            <code>@NotBlank</code>「タイトルは必須」というルールは<b>画面入力に対する制約</b>。Entityに付けると、DBから読み取った値にもチェックがかかって変な挙動になる。<br>
+            <b>バリデーションは Form の責任</b>── これがVol.8の伏線。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">理由③ Mass Assignment（一括代入）脆弱性の防止</div>
+          <div class="think-step-body">
+            もしControllerが直接<code>Task</code>を引数で受けたら── 悪意あるユーザーが<b>普通のフォームに「<code>id=999</code>」「<code>done=true</code>」を細工して送信</b>すると、それらの値もJavaオブジェクトに入ってしまう（編集権限が破られる）。<br>
+            <b>Formに「画面用フィールドだけ」を定義</b>すれば、フォーム入力できる項目が物理的に制限される── これが<b>セキュリティ防御</b>になる。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 理由③ Mass Assignment攻撃の例</span>
+
+<span class="comment">// === もしFormを使わなかったら ===</span>
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(<span class="type">Task</span> task) {
+  taskMapper.<span class="fn">insert</span>(task);
+}
+
+<span class="comment">// 通常のフォーム送信:</span>
+<span class="comment">// title=新タスク</span>
+<span class="comment">// → task.title に "新タスク" が入る</span>
+
+<span class="bad">// 攻撃者がブラウザのDevToolsで</span>
+<span class="bad">// フォームを編集:</span>
+<span class="comment">// title=ハック&done=true&id=999</span>
+
+<span class="bad">// → task.title = "ハック"</span>
+<span class="bad">// → task.done = true (本来は false)</span>
+<span class="bad">// → task.id = 999 (本来DB採番)</span>
+<span class="bad">// → 不正なデータがDBに混入</span>
+
+
+<span class="code-head" style="margin-top:18px">// === Formを使うと防げる ===</span>
+
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+  <span class="kw">private</span> <span class="type">String</span> title;  <span class="comment">// titleのみ</span>
+}
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(<span class="type">TaskForm</span> form) {
+  taskService.<span class="fn">register</span>(form);
+}
+
+<span class="comment">// 攻撃者が title=ハック&done=true&id=999 送信</span>
+<span class="comment">// → form.title = "ハック" だけ入る</span>
+<span class="comment">// → done と id は無視される</span>
+<span class="comment">//   （Formに対応するフィールドがない）</span>
+
+<span class="good">// Service側で安全に値を選んでTaskにコピー:</span>
+<span class="kw">public void</span> <span class="fn">register</span>(<span class="type">TaskForm</span> form) {
+  <span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+  task.<span class="fn">setTitle</span>(form.<span class="fn">getTitle</span>());
+  <span class="comment">// done と id は Service が制御</span>
+  taskMapper.<span class="fn">insert</span>(task);
+}
+
+<span class="good">// → 攻撃者は title しか送れない</span>
+<span class="good">// → 不正フィールドは入らない</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業務開発の鉄則</span>
+
+<span class="comment">// 鉄則: 外部からの入力は</span>
+<span class="comment">//       必ず専用のFormで受け取る</span>
+
+<span class="comment">// 「Entityを直接受ける」設計は</span>
+<span class="comment">// セキュリティ的にも保守的にも</span>
+<span class="comment">// アウト</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── 受付窓口と内部書類</div>
+    <p>役所の窓口を想像してください。<b>「住民票の請求書」</b>（Form）には<b>名前と住所欄</b>しかなく、利用者はその欄しか書けません。役所内部では<b>「住民票」</b>（Entity）に<b>受付番号、職員サイン、発行日</b>等の項目が追加される── これが業務の正しい流れ。<br><br>
+    もし窓口の請求書に「受付番号」「職員サイン」欄まで載っていたら？ 悪意ある人が偽の番号やサインを書いて偽造申請できる。<b>「外部に出す書類」と「内部の正式書類」を分ける</b>のは、行政も Web アプリも同じ思想です。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「分離」は将来への投資</div>
+    <p>「今は項目が同じだから一緒で良くない?」── これに対する業界の答えは<b>「ダメ。最初から分けろ」</b>です。<b>Vol.8のバリデーション、Vol.9の例外処理</b>を経た時、分離していたコードと統合していたコードでは<b>保守性が天と地</b>。<b>「最初の少しの面倒」</b>が「<b>後の大きな安心</b>」を生むのが、業務開発の鉄則です。</p>
+  </div>
+</section>
+
+<section id="term-dto">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>用語カード：DTO</h2>
+    <span class="en">TERM — DATA TRANSFER OBJECT</span>
+  </div>
+  <p class="pattern-desc">業界で頻出する<b>DTO</b>という用語。Form もこの DTO の<b>一種</b>です。データの流れを整理するために役立つ概念を押さえます。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD</span>
+    <div class="term-card-title">DTO（Data Transfer Object）</div>
+    <div class="term-card-sub">データを運ぶための入れ物クラス</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>「<b>層と層の間でデータを運ぶための入れ物</b>」となるクラスの総称。フィールドとgetter/setterだけを持ち、<b>業務ロジックは持たない</b>のが特徴。</dd>
+      <dt>構造</dt>
+      <dd>普通のJavaクラス（POJO）。Lombokの<code>@Data</code>でgetter/setterを自動生成するのが業界の慣習。<b>アノテーションは付かない</b>（Bean登録不要）。</dd>
+      <dt>種類</dt>
+      <dd><b>Form</b> ── 画面 → Controller の入口で使う DTO（本書のTaskForm）<br>
+        <b>View Model</b> ── Controller → 画面 の出口で使う DTO<br>
+        <b>Request DTO</b> ── REST APIの受信用 DTO<br>
+        <b>Response DTO</b> ── REST APIの返却用 DTO<br>
+        <b>共通点</b>：層間でデータを運ぶ「入れ物」<br>
+        <b>違い</b>：どの層からどの層へ運ぶか
+      </dd>
+      <dt>Entity との違い</dt>
+      <dd><b>Entity</b>はDBテーブルに対応する「正式な業務データ」。<b>DTO</b>はそれを<b>切り取って運ぶ箱</b>。Entityはアプリ内で長く生き、DTOは1リクエスト内で短命。</dd>
+      <dt>嬉しさ</dt>
+      <dd>① <b>層の独立性</b>（画面の要件変更でEntityが影響を受けない）<br>
+        ② <b>セキュリティ</b>（不要な項目を外部から受け取らない）<br>
+        ③ <b>柔軟性</b>（複数Entityをまとめた画面用DTOを作れる）
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">dto-flow</span>
+      <span class="tag-desc">データの流れの中でのDTO</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// データの流れと各「入れ物」の役割</div>
+
+<div class="flow-diagram" style="border:none;padding:0">[Browser]
+    ↓ POST title=新タスク
+    ↓
+[Controller]
+    ↓ TaskForm を受け取る
+    ↓ (Form = 入口用DTO)
+    ↓
+[Service]
+    ↓ TaskForm → Task に変換
+    ↓ (業務ロジック)
+    ↓
+[Mapper]
+    ↓ Task で INSERT
+    ↓ (Entity = 業務データ)
+    ↓
+[DB]
+    ↓ tasks テーブル
+
+逆方向（取得）:
+
+[DB] → Mapper → Service → Controller → Browser
+       Task(Entity)     Task(Entity)
+                        または
+                        TaskViewModel(出口用DTO)</div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>Vol.5の現状</b>：取得時は<b>Task（Entity）をそのまま画面に渡している</b>。これは小規模なら問題ないが、業務規模が大きくなると<b>出口用DTO</b>（TaskViewModelなど）を別に作ることもある。Vol.5は<b>「Form だけ分離」</b>でシンプルさを優先しています。</p>
+      </div>
+      <div class="code"><span class="code-head">// 業界でよく見る DTO の例</span>
+
+<span class="comment">// === 入口用 DTO（Form） ===</span>
+<span class="comment">// Vol.5で作成</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="comment">// バリデーション用フィールド等</span>
+}
+
+
+<span class="comment">// === 出口用 DTO（View Model） ===</span>
+<span class="comment">// Vol.5では作っていないが…</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskListItem</span> {
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">String</span> doneLabel;
+  <span class="comment">// "完了" or "未完了" の文字列</span>
+  <span class="kw">private</span> <span class="type">String</span> createdAtJp;
+  <span class="comment">// "2026年5月18日 15:30" 形式</span>
+}
+
+<span class="comment">// → 画面表示用の整形済みデータ</span>
+<span class="comment">// → Thymeleafで条件分岐や整形を</span>
+<span class="comment">//   書かなくて良くなる</span>
+
+
+<span class="comment">// === Request DTO（REST API） ===</span>
+<span class="comment">// API化したら…</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">CreateTaskRequest</span> {
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">String</span> dueDate;
+}
+
+
+<span class="comment">// === Response DTO（REST API） ===</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskResponse</span> {
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+}
+
+
+<span class="comment">// === Entity（DB ↔ 業務） ===</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Task</span> {
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+  <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+}
+
+<span class="comment">// Entityはアプリの中核</span>
+<span class="comment">// DTOはEntityを「切り取って」運ぶ箱</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「DTOは1回切り」</div>
+    <p>DTOは<b>1リクエスト内で使われて捨てられる</b>のが普通です。Entityは「<b>業務の中核データ</b>」なのでアプリ内で長く生きますが、DTOは「<b>その瞬間にデータを運ぶための紙袋</b>」。<b>運び終わったらゴミ箱</b>でOK。この使い分け感覚が、業界でDTOを語る時の前提です。</p>
+  </div>
+</section>
+
+<section id="prg-deep">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>PRGパターンの本質</h2>
+    <span class="en">PRG IN DEPTH</span>
+  </div>
+  <p class="pattern-desc">本編で「<b>POST後はリダイレクト</b>」と覚えました。なぜそうするのか、<b>仕組みのレベル</b>で深掘ります。「リロードで二重登録」が起きる<b>本当の原因</b>を見ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prg-essence</span>
+      <span class="tag-desc">PRGの仕組み</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ブラウザの「リロード」の正体</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>ブラウザのリロード（F5）</b>は<b>「直前のリクエストを再実行する」</b>動作です。直前がGETならGETを再実行、POSTならPOSTを再実行。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:12px"><b>POST後にHTMLを返す設計</b>では、ブラウザのURL欄は<code>POST /tasks</code>のまま。リロードすると<b>同じPOSTを再送信</b>してしまう── これが<b>二重登録の正体</b>。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:12px"><b>PRGの解決策</b>：POST処理後、サーバは<b>HTML（200 OK）ではなく、リダイレクト指示（302 Found）</b>を返す。ブラウザはこれを受けて<b>自動的に別のURLにGET</b>を投げ直す。結果、URL欄が<code>GET /tasks</code>になり、リロードしても<b>GETの再実行</b>になるだけで安全。</p>
+
+        <div style="background:rgba(192,134,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent)">
+          <b>POINT</b>：「Post → Redirect → Get」の3ステップで、<b>「ユーザーがリロードした時の最後のリクエスト」がGETになる</b>のが PRG の核心。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// PRGなしの場合（HTTPの会話）</span>
+
+[Browser]                  [Server]
+
+POST /tasks (title=A)
+            →→→→→→
+                          create()処理
+                          1件INSERT実行
+                          一覧HTMLを返す
+            ←←←←←← HTTP 200 OK
+                          + HTMLボディ
+
+URL欄: /tasks (POSTのまま)
+画面表示: 一覧 (4件)
+
+
+★ユーザーがF5
+
+POST /tasks (title=A)     ← 同じPOST再送！
+            →→→→→→
+                          create()処理
+                          ★1件INSERT実行
+                          (2件目の同じタスク)
+                          一覧HTMLを返す
+            ←←←←←← HTTP 200 OK
+
+画面表示: 一覧 (5件)
+<span class="bad">→ 同じタスクが2件登録！</span>
+
+
+<span class="code-head" style="margin-top:18px">// PRGありの場合</span>
+
+[Browser]                  [Server]
+
+POST /tasks (title=A)
+            →→→→→→
+                          create()処理
+                          1件INSERT実行
+                          リダイレクト指示
+            ←←←←←← HTTP 302 Found
+                          Location: /tasks
+                          (HTMLボディなし)
+
+<span class="comment">// ブラウザが自動でGET実行</span>
+GET /tasks
+            →→→→→→
+                          list()処理
+                          SELECT発行
+                          一覧HTMLを返す
+            ←←←←←← HTTP 200 OK
+                          + HTMLボディ
+
+URL欄: /tasks (GETに変わった)
+画面表示: 一覧 (4件)
+
+
+★ユーザーがF5
+
+GET /tasks                ← GETを再実行
+            →→→→→→
+                          list()処理
+                          SELECT発行
+                          一覧HTMLを返す
+            ←←←←←← HTTP 200 OK
+
+画面表示: 一覧 (4件)
+<span class="good">→ 何度F5しても件数は変わらない</span></div>
+    </div>
+  </div>
+
+  <p style="font-size:14.5px;margin:24px 0 12px"><b>PRGが解決する3つの問題：</b></p>
+
+  <div class="think-step" data-step="1">
+    <div class="think-step-title">リロードによる二重登録</div>
+    <div class="think-step-body">
+      <b>これがPRGの主目的</b>。決済処理など重要な場面では<b>必須</b>。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="2">
+    <div class="think-step-title">ブラウザ「戻る」での再送信警告</div>
+    <div class="think-step-body">
+      PRGなしだと「戻る」で<b>「フォームを再送信しますか?」</b>警告が出る。ユーザー体験を損なう。PRGありなら警告なしで普通に戻れる。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="3">
+    <div class="think-step-title">URLの整合性</div>
+    <div class="think-step-body">
+      ユーザーが「<b>URLをコピペして友達に送る</b>」場合、PRGなしだと <code>POST /tasks</code> がURL欄にあって意味不明。PRGありなら <code>GET /tasks</code>（一覧画面のURL）でブックマーク可能。
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「PRG＝Webアプリの大前提」</div>
+    <p>PRGは「<b>選択肢の1つ</b>」ではなく「<b>Webアプリの大前提</b>」です。業務系のレビューでは<b>「POSTの後にredirectしてない」</b>はほぼ100%指摘されます。<code>return "redirect:/xxx";</code>の1行を忘れないだけで、品質が大きく変わります。</p>
+  </div>
+</section>
+
+<section id="same-url">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>「同じURL」で違う処理を呼び分ける仕組み</h2>
+    <span class="en">SAME URL, DIFFERENT HANDLERS</span>
+  </div>
+  <p class="pattern-desc">Vol.5では <code style="font-family:'JetBrains Mono'">GET /tasks</code>（一覧）と <code style="font-family:'JetBrains Mono'">POST /tasks</code>（登録）が<b>同じURL</b>ですが<b>別の処理</b>になりました。Springはどうやって見分けているのか── <b>ルーティングの仕組み</b>を解明します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">routing-mechanism</span>
+      <span class="tag-desc">Springのルーティング表</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// アプリ起動時に作られる対応表</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>Springは起動時</b>、<code>@Controller</code>のクラスをスキャンし、各メソッドのアノテーション（<code>@GetMapping</code>、<code>@PostMapping</code>等）を読み取って<b>対応表</b>を作ります。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px">対応表のキーは<b>「（HTTPメソッド, URLパス）」のペア</b>。値は<b>「呼び出すControllerメソッド」</b>。同じURLパスでもHTTPメソッドが違えば<b>別のキー</b>として登録されます。</p>
+
+        <div style="background:rgba(192,134,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent)">
+          <b>核心</b>：URLだけでなく<b>「HTTPメソッド + URL」</b>でルーティングする。だから<code>GET /tasks</code>と<code>POST /tasks</code>を別物として扱える。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.5完成時のルーティング表（イメージ）</span>
+
+URL ROUTING TABLE
+──────────────────────────────────
+キー                           処理
+──────────────────────────────────
+(GET, "/")                     HelloController.hello()
+(GET, "/tasks")                TaskController.list()
+(GET, "/tasks/new")            TaskController.newForm()
+(POST, "/tasks")               TaskController.create()
+──────────────────────────────────
+
+<span class="comment">// 同じ "/tasks" でも</span>
+<span class="comment">// GET と POST で別エントリー</span>
+
+
+<span class="code-head" style="margin-top:18px">// リクエスト処理の流れ</span>
+
+[Browser]
+   ↓ POST /tasks (title=A)
+
+[Tomcat]
+   ↓ リクエスト受信
+   ↓ DispatcherServlet に渡す
+
+[Spring DispatcherServlet]
+   ↓ HTTPメソッド: POST
+   ↓ URLパス: /tasks
+   ↓ 対応表検索
+   ↓ → (POST, "/tasks") を引く
+
+[HandlerMapping]
+   ↓ TaskController.create()
+   ↓ にマッチ
+
+[Argument Resolver]
+   ↓ メソッドの引数 TaskForm を見て
+   ↓ リクエストボディから値抽出
+   ↓ TaskForm インスタンスを作って
+   ↓ title フィールドに値をセット
+
+[TaskController]
+   ↓ create(taskForm) 呼び出し
+   ↓ taskService.register(taskForm)
+   ↓ return "redirect:/tasks"
+
+[ViewResolver]
+   ↓ "redirect:" 検出
+   ↓ HTTP 302 + Location: /tasks
+   ↓ をレスポンスに
+
+[Browser]
+   ↓ レスポンス受信
+   ↓ Location ヘッダーを見て
+   ↓ GET /tasks を自動実行</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「アノテーションは目印」(Vol.2 ADDの再確認)</div>
+    <p><code>@GetMapping</code>や<code>@PostMapping</code>は<b>Springに「これが何の処理か」を教える目印</b>。これを起動時に集めて対応表を作る── このパターンはVol.2 ADDで学んだ<b>「アノテーションは目印」</b>の原則そのものです。<b>新しい機能を追加する時</b>も同じ：適切な目印を貼る → Springが自動で対応表に登録 → リクエストが来たら呼ばれる。<b>この感覚があれば、Vol.6以降の機能追加も同じパターンで応用</b>できます。</p>
+  </div>
+</section>
+
+<section id="th-magic">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>th:object と th:field の魔法</h2>
+    <span class="en">TH:OBJECT &amp; TH:FIELD MAGIC</span>
+  </div>
+  <p class="pattern-desc">本編の new.html で書いた <code style="font-family:'JetBrains Mono'">th:object="${taskForm}"</code> と <code style="font-family:'JetBrains Mono'">th:field="*{title}"</code>── たった2つの属性で、<b>JavaオブジェクトとHTMLフォームが繋がる</b>仕組みを解明します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">th-attrs-mechanism</span>
+      <span class="tag-desc">Thymeleafが生成するHTML</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Thymeleafの内部動作</div>
+
+        <p style="font-size:13.5px;line-height:1.85">Thymeleafは<b>サーバ側でHTMLを動的に生成するテンプレートエンジン</b>。<code>th:</code>から始まる属性を見て、<b>実際にブラウザに送るHTML</b>を作り変えます。<code>th:object</code>と<code>th:field</code>はその<b>魔法の一種</b>です。</p>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">th:object="${taskForm}" の役割</div>
+          <div class="think-step-body">
+            「<b>このフォーム内では、Modelに載っている<code>taskForm</code>を基準にして<code>th:field</code>を解釈する</b>」とThymeleafに伝える。<b>form タグ全体のコンテキスト宣言</b>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">th:field="*{title}" の役割</div>
+          <div class="think-step-body">
+            「<b>このinputは<code>taskForm.title</code>と紐付ける</b>」と宣言。<code>*</code>は「<code>th:object</code>で指定したオブジェクトの」の略記。Thymeleafがこれを見て<b>id・name・value の3属性を自動生成</b>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">生成されるHTMLの3点セット</div>
+          <div class="think-step-body">
+            <code>id="title"</code>（label の for と紐付け用）<br>
+            <code>name="title"</code>（<b>フォーム送信時のキー</b>に使われる）<br>
+            <code>value="${taskForm.title}"</code>（編集時に既存値を表示）<br>
+            この<b>3つを手動で書くのは面倒</b>。<code>th:field</code>1つで済むのが魔法。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// あなたが書いた new.html</span>
+
+<span class="tag">&lt;form</span> <span class="attr">th:action</span>=<span class="str">"@{/tasks}"</span>
+      <span class="attr">th:object</span>=<span class="str">"${taskForm}"</span>
+      <span class="attr">method</span>=<span class="str">"post"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span>
+         <span class="attr">th:field</span>=<span class="str">"*{title}"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/form&gt;</span>
+
+
+<span class="code-head" style="margin-top:18px">// Thymeleafが生成するHTML</span>
+
+<span class="tag">&lt;form</span> <span class="attr">action</span>=<span class="str">"/tasks"</span> <span class="attr">method</span>=<span class="str">"post"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span>
+         <span class="attr">id</span>=<span class="str">"title"</span>          <span class="comment">// 自動生成</span>
+         <span class="attr">name</span>=<span class="str">"title"</span>        <span class="comment">// 自動生成</span>
+         <span class="attr">value</span>=<span class="str">""</span><span class="tag">&gt;</span>           <span class="comment">// 自動生成</span>
+<span class="tag">&lt;/form&gt;</span>
+
+<span class="comment">// taskForm.title が null なので value="" </span>
+<span class="comment">// 編集画面なら value="既存値" になる</span>
+
+
+<span class="code-head" style="margin-top:18px">// もしth:fieldを使わなかったら</span>
+
+<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span>
+       <span class="attr">id</span>=<span class="str">"title"</span>
+       <span class="attr">name</span>=<span class="str">"title"</span>
+       <span class="attr">th:value</span>=<span class="str">"${taskForm.title}"</span><span class="tag">&gt;</span>
+
+<span class="comment">// id, name, th:value を全部手で書く必要あり</span>
+<span class="comment">// しかも編集画面で値を保つには</span>
+<span class="comment">// th:value を必ず付ける（忘れがち）</span>
+
+
+<span class="code-head" style="margin-top:18px">// th:field の真の威力</span>
+
+<span class="comment">// 編集画面で使うと…</span>
+
+<span class="comment">// Controller側で:</span>
+<span class="type">TaskForm</span> form = <span class="kw">new</span> <span class="type">TaskForm</span>();
+form.<span class="fn">setTitle</span>(<span class="str">"既存タイトル"</span>);
+model.<span class="fn">addAttribute</span>(<span class="str">"taskForm"</span>, form);
+
+<span class="comment">// Thymeleafが自動で:</span>
+<span class="tag">&lt;input</span> <span class="attr">value</span>=<span class="str">"既存タイトル"</span><span class="tag">&gt;</span>
+
+<span class="comment">// 編集画面で既存値が表示される</span>
+<span class="comment">// → Vol.6 編集機能で活きる仕掛け</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「<code>name</code> 属性が連携の鍵」</div>
+    <p>HTMLフォームとSpringの連携は<b><code>name</code>属性</b>を介して行われます。フォーム送信時、ブラウザは<code>name=値</code>の形でデータを送り、Springは<code>name</code>を見て<b>Javaオブジェクトの対応フィールド</b>に値を詰める。<code>th:field</code>はこの<b>name属性を自動生成</b>してくれる便利機能。「<b>name属性こそがフォームの連携の核心</b>」と覚えておけば、混乱した時に立ち戻れます。</p>
+  </div>
+</section>
+
+<section id="model-attribute">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>@ModelAttribute はどう動くか</h2>
+    <span class="en">HOW @MODELATTRIBUTE WORKS</span>
+  </div>
+  <p class="pattern-desc">Vol.5本編で <code style="font-family:'JetBrains Mono'">create(TaskForm taskForm)</code> と書いたら、引数の <code style="font-family:'JetBrains Mono'">taskForm</code> に<b>勝手にフォーム値が入っていた</b>── この魔法の正体を解明します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">model-attribute-mechanism</span>
+      <span class="tag-desc">暗黙の @ModelAttribute</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Springのデータバインディング</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>Spring MVC</b>は、Controllerメソッドの<b>引数の型</b>を見て、<b>「何をどこから取り出して渡すか」</b>を判断します。これを<b>引数リゾルバ（Argument Resolver）</b>と呼びます。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>POSTメソッドの引数</b>に普通のクラス（<code>TaskForm</code>のような）が現れたら、Springは<b>暗黙的に<code>@ModelAttribute</code>と解釈</b>します。これにより：</p>
+
+        <ol style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><code>new TaskForm()</code>でインスタンスを作る</li>
+          <li>リクエストパラメータ（<code>title=...</code>）の<b>名前</b>を見て、TaskFormの<b>同名フィールド</b>に値をセット</li>
+          <li>完成したTaskFormを引数として渡す</li>
+        </ol>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>「リクエストパラメータの名前」と「フィールド名」が一致</b>することが鍵。だから<code>th:field</code>でname属性を<code>title</code>にし、TaskFormにも<code>title</code>フィールドがある── これで自動的に繋がります。</p>
+      </div>
+      <div class="code"><span class="code-head">// Controllerの引数バインディング</span>
+
+<span class="comment">// あなたが書いたコード</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+    <span class="type">TaskForm</span> taskForm) {   <span class="comment">// ← Spring が自動で詰める</span>
+  taskService.<span class="fn">register</span>(taskForm);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+
+
+<span class="code-head" style="margin-top:18px">// Springが裏でやっていること</span>
+
+<span class="comment">// 1. リクエストパラメータ抽出</span>
+<span class="type">String</span> titleParam =
+  request.<span class="fn">getParameter</span>(<span class="str">"title"</span>);
+<span class="comment">// → "新しいタスク" を得る</span>
+
+<span class="comment">// 2. TaskFormインスタンス生成</span>
+<span class="type">TaskForm</span> form = <span class="kw">new</span> <span class="type">TaskForm</span>();
+
+<span class="comment">// 3. setter経由で値セット</span>
+form.<span class="fn">setTitle</span>(titleParam);
+<span class="comment">// → リフレクションで setter を呼ぶ</span>
+<span class="comment">// → @Data が生成した setTitle が動く</span>
+
+<span class="comment">// 4. メソッドに渡す</span>
+controller.<span class="fn">create</span>(form);
+
+<span class="comment">// あなたは「引数を書く」だけで</span>
+<span class="comment">// 中身が満たされて渡される</span>
+
+
+<span class="code-head" style="margin-top:18px">// 暗黙の @ModelAttribute</span>
+
+<span class="comment">// 以下の2つは同じ意味</span>
+
+<span class="comment">// 省略形（よく使う）</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(<span class="type">TaskForm</span> form) {...}
+
+<span class="comment">// 明示形</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+    <span class="ann">@ModelAttribute</span> <span class="type">TaskForm</span> form) {...}
+
+<span class="comment">// POSTメソッドの普通のクラス引数は</span>
+<span class="comment">// 自動的に @ModelAttribute 扱い</span>
+<span class="comment">// → 省略するのが業界の慣習</span>
+
+
+<span class="code-head" style="margin-top:18px">// バインディングが失敗するケース</span>
+
+<span class="comment">// ケース1: setterがない</span>
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="comment">// @Data なし、setTitle なし</span>
+}
+<span class="bad">// → 値がセットされない（null のまま）</span>
+
+<span class="comment">// ケース2: フィールド名が違う</span>
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+  <span class="kw">private</span> <span class="type">String</span> taskTitle;
+  <span class="comment">// name属性が title だと不一致</span>
+}
+<span class="bad">// → 値がセットされない（null のまま）</span>
+
+<span class="comment">// ケース3: 型が変換できない</span>
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> title;
+}
+<span class="bad">// → "新しいタスク" を Integer に変換不可</span>
+<span class="bad">// → BindException 発生</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「Springは型と名前で動く」</div>
+    <p>Springの<b>自動化の仕掛けは「型と名前」</b>を頼りに動きます。引数の<b>型</b>を見て「何を作るか」を決め、リクエストパラメータの<b>名前</b>とフィールドの<b>名前</b>を照合して値を詰める。<b>「規約による設定」</b>と呼ばれるこの設計思想は、<b>命名規則を守ればコードが少なく済む</b>代わりに、<b>名前を1文字でも間違えると静かに失敗する</b>恐ろしさを併せ持ちます。<b>命名統一</b>こそが Spring 業務開発の要です。</p>
+  </div>
+</section>
+
+<section id="redirect-vs-forward">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>リダイレクト vs フォワードの違い</h2>
+    <span class="en">REDIRECT vs FORWARD</span>
+  </div>
+  <p class="pattern-desc">Vol.5で <code style="font-family:'JetBrains Mono'">"redirect:/tasks"</code> を使いました。実は対になる <code style="font-family:'JetBrains Mono'">"forward:/xxx"</code> もあります。<b>2つの「画面遷移」の違い</b>を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">redirect-vs-forward</span>
+      <span class="tag-desc">2つの遷移方法</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 仕組みの違い</div>
+
+        <div class="role-card">
+          <div class="role-card-icon">→</div>
+          <div>
+            <div class="role-card-name">リダイレクト（redirect）</div>
+            <div class="role-card-job"><b>仕組み</b>：サーバが<b>「次はこのURLに行ってね」</b>とブラウザに指示（HTTP 302）。<b>ブラウザが改めてリクエストを送る</b>。<br>
+            <b>URL欄</b>：変わる（遷移先のURLに）<br>
+            <b>HTTPやりとり</b>：2往復<br>
+            <b>業界用語</b>：「クライアントリダイレクト」とも言う</div>
+          </div>
+        </div>
+
+        <div class="role-card">
+          <div class="role-card-icon">⇒</div>
+          <div>
+            <div class="role-card-name">フォワード（forward）</div>
+            <div class="role-card-job"><b>仕組み</b>：サーバ内部で<b>別のControllerに処理を渡す</b>。ブラウザは何も知らない。<br>
+            <b>URL欄</b>：変わらない（元のURLのまま）<br>
+            <b>HTTPやりとり</b>：1往復<br>
+            <b>業界用語</b>：「サーバサイドフォワード」とも言う</div>
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>使い分けの原則</b>：</p>
+
+        <div class="compare">
+          <div class="compare-box compare-ok">
+            <div class="compare-label">redirect 使うべき場面</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65">・POST処理の後（PRG）<br>・処理完了後の画面遷移<br>・URL変更が必要な時<br>・<b>業務開発では9割こちら</b></p>
+          </div>
+          <div class="compare-box compare-ng" style="border-top-color:var(--accent-2)">
+            <div class="compare-label" style="color:var(--accent-2)">forward 使うべき場面</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65">・エラー画面表示時（バリデーション失敗 → 同URLでフォーム再表示）<br>・実は<b>普通の<code>return "テンプレート名"</code>もフォワードの一種</b><br>・<b>明示的に書くケースは稀</b></p>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 仕組みの違い（HTTPやりとり）</span>
+
+<span class="comment">// === redirect の場合 ===</span>
+
+[Browser]              [Server]
+
+POST /tasks
+            →→→→
+                       create()
+                       INSERT実行
+                       return "redirect:/tasks"
+            ←←←← HTTP 302
+                       Location: /tasks
+
+(URL欄が /tasks に書き換わる)
+
+GET /tasks (自動)
+            →→→→
+                       list()
+                       SELECT実行
+                       一覧HTMLを返す
+            ←←←← HTTP 200 + HTML
+
+<span class="comment">// → 2往復</span>
+<span class="comment">// → URL欄は最終的に /tasks</span>
+
+
+<span class="code-head" style="margin-top:18px">// === forward の場合 ===</span>
+
+[Browser]              [Server]
+
+POST /tasks
+            →→→→
+                       create()
+                       INSERT実行
+                       return "forward:/tasks"
+                       <span class="comment">// ↑ サーバ内部で別の処理へ</span>
+                       list()が呼ばれる
+                       SELECT実行
+                       一覧HTMLを返す
+            ←←←← HTTP 200 + HTML
+
+(URL欄は /tasks のまま、POST送信時のまま)
+
+<span class="comment">// → 1往復</span>
+<span class="comment">// → URL欄は POST /tasks のまま</span>
+<span class="comment">// → リロードで二重登録の罠</span>
+
+
+<span class="code-head" style="margin-top:18px">// Springでの書き方</span>
+
+<span class="comment">// redirect（推奨）</span>
+<span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+<span class="comment">// HTTP 302 を返す</span>
+
+<span class="comment">// forward（稀）</span>
+<span class="kw">return</span> <span class="str">"forward:/tasks"</span>;
+<span class="comment">// サーバ内で別のハンドラへ</span>
+
+<span class="comment">// 暗黙のforward（毎回これ）</span>
+<span class="kw">return</span> <span class="str">"tasks/list"</span>;
+<span class="comment">// テンプレート名指定もforwardの一種</span>
+<span class="comment">// → サーバ内でテンプレートを描画</span>
+
+
+<span class="code-head" style="margin-top:18px">// 使い分けの実例</span>
+
+<span class="comment">// 一覧表示（普通のフォワード）</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(...) {
+  ...
+  <span class="kw">return</span> <span class="str">"tasks/list"</span>;
+  <span class="comment">// 暗黙のforward (テンプレート描画)</span>
+}
+
+<span class="comment">// 登録処理（明示のリダイレクト）</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(...) {
+  ...
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+  <span class="comment">// 明示のリダイレクト (PRG)</span>
+}
+
+<span class="comment">// バリデーション失敗時（暗黙のforward）</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(...) {
+  <span class="kw">if</span> (errors) {
+    <span class="kw">return</span> <span class="str">"tasks/new"</span>;
+    <span class="comment">// 同じURLでフォーム再表示</span>
+    <span class="comment">// → エラーメッセージと共に</span>
+    <span class="comment">// → Vol.8 で詳しく扱う</span>
+  }
+  ...
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「書き込み後はredirect、表示はそのままテンプレート名」</div>
+    <p>業務開発の<b>シンプルなルール</b>：書き込み（INSERT/UPDATE/DELETE）処理を含むメソッドの最後は<b>必ず <code>redirect:</code></b>。表示専用メソッドの最後は<b>テンプレート名のみ</b>。この使い分けを守るだけで、PRG パターンが自然に成立し、ユーザー体験も保たれます。</p>
+  </div>
+</section>
+
+<section id="crud-template">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>「画面付きCRUD」を書くためのテンプレート</h2>
+    <span class="en">CRUD TEMPLATE</span>
+  </div>
+  <p class="pattern-desc">本補足の集大成。<b>Vol.6以降に再利用できる思考のテンプレート</b>を整理します。新しいエンティティで CRUD を作る時、このフローに沿えば<b>迷わず実装</b>できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">crud-template</span>
+      <span class="tag-desc">画面付きCRUD実装テンプレート</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 「新規登録」を実装する6ステップ</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">Form クラスを作る（com.example.todo.form）</div>
+          <div class="think-step-body">
+            画面入力に対応するフィールドのみ。<code>@Data</code>を付ける。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">Mapper に <code>@Insert</code> メソッドを追加</div>
+          <div class="think-step-body">
+            <code>INSERT INTO ... VALUES (#{...}, ...)</code> 形式。返り値は <code>void</code> でOK。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">Service に書き込みメソッドを追加</div>
+          <div class="think-step-body">
+            <code>@Transactional</code> を付ける（クラスの<code>readOnly=true</code>を上書き）。Form → Entity 変換 → Mapper呼び出しの流れ。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">Controller に 2 メソッド追加</div>
+          <div class="think-step-body">
+            <code>@GetMapping("/xxx/new")</code> でフォーム表示（空のFormをModelに載せる）。<br>
+            <code>@PostMapping("/xxx")</code> で登録実行（<code>redirect:</code> を返す）。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="5">
+          <div class="think-step-title">テンプレート（new.html）を作る</div>
+          <div class="think-step-body">
+            <code>th:action="@{/xxx}"</code>, <code>th:object="${xxxForm}"</code>, <code>method="post"</code> をformに付ける。各input に <code>th:field="*{...}"</code>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="6">
+          <div class="think-step-title">一覧画面に「新規登録」リンクを追加</div>
+          <div class="think-step-body">
+            <code>&lt;a th:href="@{/xxx/new}"&gt;新規登録&lt;/a&gt;</code> を一覧テンプレートの上部に。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// このテンプレートをVol.6に応用</span>
+
+<span class="comment">// 例: Vol.6「編集機能」を作る時</span>
+
+<span class="comment">// ① 編集Formを作る</span>
+<span class="kw">public class</span> <span class="type">TaskEditForm</span> {
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+}
+
+<span class="comment">// ② Mapperに@Update追加</span>
+<span class="ann">@Update</span>(<span class="str">"UPDATE tasks SET title = #{title}, "</span> +
+        <span class="str">"done = #{done} WHERE id = #{id}"</span>)
+<span class="kw">void</span> <span class="fn">update</span>(<span class="type">Task</span> task);
+
+<span class="comment">// ③ Service に update メソッド</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">update</span>(<span class="type">TaskEditForm</span> form) {
+  <span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+  task.<span class="fn">setId</span>(form.<span class="fn">getId</span>());
+  task.<span class="fn">setTitle</span>(form.<span class="fn">getTitle</span>());
+  task.<span class="fn">setDone</span>(form.<span class="fn">getDone</span>());
+  taskMapper.<span class="fn">update</span>(task);
+}
+
+<span class="comment">// ④ Controllerに2メソッド</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+    <span class="type">Model</span> model) {
+  <span class="comment">// 既存タスクをFormにコピーして渡す</span>
+  ...
+  <span class="kw">return</span> <span class="str">"tasks/edit"</span>;
+}
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">update</span>(...) {
+  taskService.<span class="fn">update</span>(form);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+
+<span class="comment">// ⑤ edit.html を作る (new.htmlと同パターン)</span>
+<span class="comment">// ⑥ list.html に「編集」リンク追加</span>
+
+<span class="good">// Vol.5と同じ6ステップで実装できる！</span></div>
+    </div>
+  </div>
+
+  <p style="font-size:14.5px;margin:24px 0 12px"><b>新しいCRUD機能を作る時のチェックリスト：</b></p>
+
+  <ul class="checklist">
+    <li>Formクラスを作った（画面用フィールドのみ、<code>@Data</code>付き）</li>
+    <li>Mapperに <code>@Insert</code> / <code>@Update</code> / <code>@Delete</code> メソッドを追加した</li>
+    <li>Serviceに業務メソッドを追加した（<code>@Transactional</code>付き）</li>
+    <li>Service内で <b>Form → Entity</b> 変換を行っている</li>
+    <li>ControllerにGET（フォーム表示）とPOST（実行）の2メソッドを追加した</li>
+    <li>POSTメソッドの最後は <code>return "redirect:/...";</code> になっている</li>
+    <li>テンプレートに <code>th:object</code> と <code>th:field</code> を使った</li>
+    <li>一覧画面にナビゲーションリンクを追加した</li>
+    <li>動作確認した（CRUDの該当機能が動く + リロード問題が起きない）</li>
+  </ul>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「パターンを掌握すれば応用は早い」</div>
+    <p>Vol.5で身につけた「<b>Form作成 → Mapper追加 → Service追加 → Controller追加 → テンプレート作成 → ナビ追加</b>」の6ステップは、<b>編集・削除・検索・絞り込み</b>等あらゆるCRUD系機能の<b>共通テンプレート</b>です。Vol.6以降の機能追加は<b>このパターンの応用問題</b>として進められます。<b>パターン認識ができれば、業務開発の速度が一気に上がります</b>。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+  <div class="tip-label">この補足を読み終えたあなたへ</div>
+  <p>お疲れさまでした。Vol.5本編で「動かす」を達成し、本補足で「<b>なぜ動くのか</b>」を解明しました。<b>HTTP の仕組み、Form/Entity の役割分担、PRG の本質、Thymeleaf の魔法、Spring のデータバインディング</b>── 1つ1つの<b>「ブラックボックスだった部分」が透けて見える</b>状態になっているはずです。<br><br>
+  この補足のもう1つの目玉は<b>「CRUD実装テンプレート」</b>。Vol.6 編集機能、Vol.7 削除機能── これらは<b>このテンプレートの応用</b>で書けます。<b>「新しいコード」</b>として身構える必要はなく、<b>「同じパターンの繰り返し」</b>として淡々と実装できる── これがパターン認識の力です。<br><br>
+  次のVol.6では<b>編集機能・完了切替</b>を作ります。<b>CRUDのU（Update）</b>に挑みます。<code>@PathVariable</code>でURLからID取得、<b>編集Formで既存値を保持</b>、ボタン一発で完了切替── Vol.5の応用問題として、テンプレートに沿って実装します。お楽しみに。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.05 ADD ── FORM / POST / REDIRECT MECHANICS</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.10 別冊 統計画面のUX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a302a;
+  --paper:#e8eae3;
+  --paper-2:#d4d8ce;
+  --accent:#aeb798;
+  --accent-2:#bdc4a8;
+  --accent-3:#666c54;
+  --muted:#737a72;
+  --line:#b8c0b1;
+  --code-bg:#1f231f;
+  --code-text:#e8eae3;
+  --panel-bg:#f0f2eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✧';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#9aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(174,183,152,0.12);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.bad-good{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.bad-good .b,.bad-good .g{background:#fff;border:1px solid var(--line);padding:12px 14px}
+.bad-good .b{border-left:3px solid #b05050}
+.bad-good .g{border-left:3px solid var(--accent)}
+.bad-good .ph{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.15em;margin-bottom:6px}
+.bad-good .b .ph{color:#b05050}
+.bad-good .g .ph{color:var(--accent)}
+.bad-good .ttl{font-family:'Shippori Mincho',serif;font-size:14px;font-weight:700;color:var(--accent-3);margin-bottom:6px}
+.bad-good p{font-size:13px}
+
+.color-swatch{display:inline-block;width:16px;height:16px;border-radius:3px;vertical-align:middle;margin-right:6px;border:1px solid #999}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .bad-good{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.10 / 15</span>
+    <span class="kind-tag">別冊</span>
+  </div>
+  <h1>統計画面の<br>UX</h1>
+  <div class="subtitle">DASHBOARD UX ── FROM NUMBERS TO STORIES</div>
+  <p class="lead">
+    本編Vol.10で<b>カード型UI＋進捗バー</b>のダッシュボードを作りました。別冊S10では、業務開発で<b>「数字を効果的に見せる」</b>ためのUX設計を深掘ります。<br>
+    キーワードは<b>「情報密度」「視覚化の作法」「色の意味」「ダッシュボード設計の原則」「数字から物語へ」</b>。<br>
+    Cの中で<b>「画面の質を上げる感性」</b>を磨く別冊。プログラミングだけでなく<b>UXに踏み込む</b>のは Cで初めて。<br>
+    ※ デザイナー的な感性ではなく、<b>エンジニアが知っておくべき UX の最低限</b>に絞ります。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#theme">01 この別冊のテーマ</a></li>
+    <li><a href="#dashboard-design">02 ダッシュボード設計の原則</a></li>
+    <li><a href="#density">03 情報密度のバランス</a></li>
+    <li><a href="#visualization">04 視覚化の作法</a></li>
+    <li><a href="#color">05 色の意味</a></li>
+    <li><a href="#story">06 「数字」から「物語」へ</a></li>
+    <li><a href="#layer">07 Mapper用DTO vs 画面用DTO 再論</a></li>
+    <li><a href="#trouble">08 統計画面の罠</a></li>
+    <li><a href="#next">09 次の本編へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="theme">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この別冊のテーマ</h2>
+    <span class="en">THEME</span>
+  </div>
+  <p class="pattern-desc">統計画面・ダッシュボードは<b>「数字を並べるだけ」</b>では業務で評価されません。<b>「見ただけで意味が伝わる」</b>のが理想。本巻ではエンジニアが押さえておくべき UX の基本を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-ux-matters</span>
+      <span class="tag-desc">なぜエンジニアもUXを知るべきか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// エンジニアがUXを知る理由</div>
+        <div class="role-card">
+          <span class="label">理由1</span>
+          <div class="name">画面の品質を自分で判断できる</div>
+          <div class="desc">「デザイナー任せ」では業務で困る場面が多い。<b>「これで分かりやすいか？」を自問できる</b>感性が必要。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">理由2</span>
+          <div class="name">仕様書を読み解く深さが上がる</div>
+          <div class="desc">「合計を表示」「割合を出す」── 同じ仕様でも<b>10通りの表現</b>がある。設計者の意図を推し量れる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">理由3</span>
+          <div class="name">ユーザーフィードバックを活かせる</div>
+          <div class="desc">「分かりにくい」と言われた時、<b>「どこをどう直せばいいか」</b>の選択肢を持てる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">理由4</span>
+          <div class="name">技術的な意思決定が正しくなる</div>
+          <div class="desc">「ここはサーバ側で集計？クライアント側で計算？」── UX を踏まえると<b>正解</b>が見える。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で答える5つの問い</span>
+
+<span class="comment">// 問1: ダッシュボード設計の原則は？</span>
+<span class="comment">//   → 重要なものから上に・1画面1テーマ</span>
+
+<span class="comment">// 問2: どれだけ情報を詰めていいか？</span>
+<span class="comment">//   → 「読める量」を超えない</span>
+
+<span class="comment">// 問3: グラフはいつ使う？</span>
+<span class="comment">//   → 「比較」「推移」「割合」が見たい時</span>
+
+<span class="comment">// 問4: 色はどう使う？</span>
+<span class="comment">//   → 意味を持たせる・派手すぎない</span>
+
+<span class="comment">// 問5: なぜ「数字を見せる」だけではダメ？</span>
+<span class="comment">//   → 数字単体には文脈がない</span>
+
+
+<span class="comment">// 結論を先に：</span>
+<span class="comment">// ・「最重要を最上部」</span>
+<span class="comment">// ・「視覚化＞表」が原則</span>
+<span class="comment">// ・「色で情報を伝える」</span>
+<span class="comment">// ・「比較対象を必ず示す」</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="dashboard-design">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>ダッシュボード設計の原則</h2>
+    <span class="en">DASHBOARD PRINCIPLES</span>
+  </div>
+  <p class="pattern-desc">業務ダッシュボードの設計には<b>4つの確立された原則</b>があります。Vol.10 で作った画面も、これらを意識すると一段良くなる。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">4-principles</span>
+      <span class="tag-desc">設計の4原則</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ダッシュボード4原則</div>
+        <div class="role-card">
+          <span class="label">原則1</span>
+          <div class="name">「最重要」が最上部・最大表示</div>
+          <div class="desc">「全体合計」「今月の数字」など、<b>ユーザーが最初に見たい数字</b>を画面の一番目立つ位置に。フォントサイズで強弱を付ける。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">原則2</span>
+          <div class="name">1画面 = 1テーマ</div>
+          <div class="desc">「科目別」「日別」「タグ別」を1画面に混在させない。<b>テーマごとにページを分ける</b>。「あれもこれも」は分かりにくくなる元凶。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">原則3</span>
+          <div class="name">階層構造を持たせる</div>
+          <div class="desc">「全体合計 → 各カテゴリ → 詳細」のような<b>ドリルダウン</b>構造。<b>視線の流れ</b>に沿う。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">原則4</span>
+          <div class="name">「比較対象」を必ず示す</div>
+          <div class="desc">「6時間勉強した」だけでは多いか少ないか分からない。「<b>先月比 +30%</b>」「<b>目標達成率 80%</b>」など<b>比較</b>を入れて初めて意味が出る。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 原則を Vol.10 の画面に当てはめる</span>
+
+<span class="comment">// ─── 現在の画面 ───</span>
+
+[ 科目別 学習統計 ]
+全体合計: 10時間 30分      <span class="comment">// ← 原則1 OK（最上部・目立つ）</span>
+
+Java         6時間 15分 (59%)
+[████████████░░░░░░░░]
+5件 / 平均 75分
+
+Spring Boot   4時間 15分 (40%)
+[█████████░░░░░░░░░░░]
+3件 / 平均 85分
+
+...
+
+
+<span class="comment">// ─── どこが良いか ───</span>
+
+<span class="comment">// 原則1: 「全体合計」が一番上 ✓</span>
+<span class="comment">// 原則2: 「科目別」だけ ✓</span>
+<span class="comment">// 原則3: 「全体 → 各科目」階層 ✓</span>
+<span class="comment">// 原則4: 「割合」が比較対象 ✓</span>
+
+
+<span class="comment">// ─── 改善ポイント ───</span>
+
+<span class="comment">// 原則4を強化：</span>
+<span class="comment">// ・「先週比」「目標時間 vs 実績」</span>
+<span class="comment">// ・「学習日数 / 月の日数」</span>
+<span class="comment">// → さらに「比較対象」を増やす余地あり</span>
+
+
+<span class="comment">// Vol.12 で「日別推移」を追加すると</span>
+<span class="comment">// 比較がさらに豊富になる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>1画面に詰め込みすぎ問題</b>」は業務でよく起きます。「あの数字も見たい・この比較も欲しい」と要望が積み重なり、画面がカオス化する。<b>「1画面1テーマ」を守る</b>勇気が、結果的にユーザーを助けます。</p>
+  </div>
+</section>
+
+<section id="density">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>情報密度のバランス</h2>
+    <span class="en">INFORMATION DENSITY</span>
+  </div>
+  <p class="pattern-desc">画面に<b>「どれだけ情報を詰めるか」</b>は永遠の課題。「<b>余白を取りすぎても・詰めすぎても</b>」見にくい。バランス感覚を整理。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">density-balance</span>
+      <span class="tag-desc">情報密度のスペクトラム</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 密度の3段階</div>
+        <div class="role-card">
+          <span class="label">低密度</span>
+          <div class="name">「広告風」── 余白多め・大文字</div>
+          <div class="desc">「<b>1画面1KPI</b>」型。スマートフォン向け、エグゼクティブ向け。<b>業務管理</b>系にはやや物足りない。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">中密度</span>
+          <div class="name">「業務ダッシュボード風」── バランス重視</div>
+          <div class="desc">複数の指標を一目で把握。<b>Vol.10 のカード型UI はこのゾーン</b>。業務での標準。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">高密度</span>
+          <div class="name">「Excel風」── 表形式・小さい文字</div>
+          <div class="desc">大量データを一覧。<b>分析担当</b>者向け。一般ユーザーには情報過多。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>判断軸</b>：<b>ユーザーの「画面の前で過ごす時間」</b>。短時間なら低密度、長時間使うなら高密度可。</p>
+      </div>
+      <div class="code"><span class="code-head">// 密度の例</span>
+
+<span class="comment">// ─── 低密度（広告風）───</span>
+
+╔════════════════════════════╗
+║                            ║
+║      今月の学習時間          ║
+║                            ║
+║      <span class="num">10時間 30分</span>             ║
+║                            ║
+║      先月比 +25%             ║
+║                            ║
+╚════════════════════════════╝
+
+
+<span class="comment">// ─── 中密度（Vol.10）───</span>
+
+[ 全体合計: <span class="num">10時間 30分</span> ]
+
+[ Java         <span class="num">6時間 15分</span> (59%) ]
+[ ████████████░░░░░░░░       ]
+[ 5件 / 平均 75分               ]
+
+[ Spring Boot   <span class="num">4時間 15分</span> (40%) ]
+[ █████████░░░░░░░░░░░       ]
+[ 3件 / 平均 85分               ]
+
+
+<span class="comment">// ─── 高密度（Excel風）───</span>
+
+科目    件数 合計  平均  最大  最小  標準偏差
+Java      5  375  75.0  120  45   28.6
+Spring    3  255  85.0  120  45   30.0
+SQL       1   30  30.0   30  30    0.0
+HTML      0    0   0.0    -   -     -
+
+
+<span class="comment">// ─── 結論 ───</span>
+<span class="comment">// Vol.10 は「中密度」を目指した設計</span>
+<span class="comment">// → 大半の業務ユーザーに最適</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>業務開発で「<b>情報密度をどうするか</b>」迷ったら、<b>「中密度から始める」</b>が安全。ユーザーから「もっと情報が欲しい」と言われたら密度を上げ、「ごちゃごちゃする」と言われたら下げる。<b>始点として中密度</b>が一番フィードバックを得やすい。</p>
+  </div>
+</section>
+
+<section id="visualization">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>視覚化の作法</h2>
+    <span class="en">VISUALIZATION CRAFT</span>
+  </div>
+  <p class="pattern-desc">「グラフ」「進捗バー」「色」など<b>視覚要素</b>には、それぞれ<b>得意な見せ方</b>があります。「<b>何を伝えたいか</b>」に応じて使い分けます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">viz-types</span>
+      <span class="tag-desc">視覚化要素の使い分け</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 視覚化要素 6種</div>
+        <table class="compare-tbl">
+          <tr><th>要素</th><th>得意な見せ方</th></tr>
+          <tr><td>棒グラフ</td><td>カテゴリ別の比較</td></tr>
+          <tr><td>折れ線グラフ</td><td>時系列の推移</td></tr>
+          <tr><td>円グラフ</td><td>構成比（カテゴリ数 4以下）</td></tr>
+          <tr><td>進捗バー</td><td>「達成率」「割合」のシンプル表現</td></tr>
+          <tr><td>ヒートマップ</td><td>2軸の相関（曜日×時間 等）</td></tr>
+          <tr><td>数字の大きさ強調</td><td>「最も重要な1指標」</td></tr>
+        </table>
+        <div style="margin-top:14px;font-size:13.5px"><b>Vol.10 で使った進捗バーが効くケース</b>：「比較対象が同じカテゴリ内の他項目」「割合（パーセンテージ）の感覚的把握」。</div>
+      </div>
+      <div class="code"><span class="code-head">// 視覚化の選択ガイド</span>
+
+<span class="comment">// ─── 「科目別の合計時間」── 比較したい ───</span>
+
+<span class="comment">// ✓ 棒グラフ：科目数 5前後で最適</span>
+<span class="comment">// ✓ 進捗バー：手軽でCSSだけで描ける ← Vol.10</span>
+<span class="comment">// △ 円グラフ：5科目だと「Java大、その他」</span>
+<span class="comment">//             になりがちで個別比較が苦手</span>
+
+
+<span class="comment">// ─── 「日別の学習時間推移」── 時系列 ───</span>
+
+<span class="comment">// ✓ 折れ線グラフ：時系列の王道</span>
+<span class="comment">// ✓ 棒グラフ：日付軸でも可</span>
+<span class="comment">// ✗ 円グラフ：時系列には不向き</span>
+
+
+<span class="comment">// ─── 「全体合計」── 1つの数字 ───</span>
+
+<span class="comment">// ✓ 大きい数字＋ラベル：シンプルが一番</span>
+<span class="comment">// ✓ + 比較（先月比）：意味を強化</span>
+
+
+<span class="comment">// ─── ライブラリ ───</span>
+
+<span class="comment">// Cでは CSS だけで進捗バーを描いた。</span>
+<span class="comment">// 業務ではグラフライブラリを使う：</span>
+<span class="comment">// ・Chart.js（軽量・JS）</span>
+<span class="comment">// ・ApexCharts</span>
+<span class="comment">// ・D3.js（高機能）</span>
+
+
+<span class="comment">// → Vol.10〜12 では「CSS 進捗バー」</span>
+<span class="comment">// グラフライブラリは Cの範囲外</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="color">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>色の意味</h2>
+    <span class="en">COLOR SEMANTICS</span>
+  </div>
+  <p class="pattern-desc">色は<b>「意味を持つ情報」</b>です。色の選び方ひとつで、ユーザーの理解速度が変わる。エンジニアが押さえるべき色の基本ルール。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">color-semantics</span>
+      <span class="tag-desc">色が持つ業界共通の意味</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 業界共通の色の意味</div>
+        <table class="compare-tbl">
+          <tr><th>色</th><th>意味</th><th>用途</th></tr>
+          <tr><td><span class="color-swatch" style="background:#3fa84a"></span>緑</td><td>正常・成功</td><td>正常稼働・OK・達成</td></tr>
+          <tr><td><span class="color-swatch" style="background:#e0a020"></span>黄/橙</td><td>注意・警告</td><td>警告・要確認</td></tr>
+          <tr><td><span class="color-swatch" style="background:#c43030"></span>赤</td><td>異常・エラー</td><td>失敗・危険・停止</td></tr>
+          <tr><td><span class="color-swatch" style="background:#3070c0"></span>青</td><td>情報・中性</td><td>通常情報・リンク</td></tr>
+          <tr><td><span class="color-swatch" style="background:#666"></span>グレー</td><td>無効・非アクティブ</td><td>休止・データなし</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>Vol.10 でやったこと</b>：記録なし科目を<b>グレー（opacity 0.5）</b>に。これは「非アクティブ」を表す典型例。<b>業界の慣習に従っている</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 色使いの3原則</span>
+
+<span class="comment">// ─── 原則1: 色に意味を持たせる ───</span>
+
+<span class="comment">// ✓ OK：</span>
+<span class="comment">// 緑＝順調、赤＝遅延、黄＝注意</span>
+
+
+<span class="comment">// ✗ NG：</span>
+<span class="comment">// 科目別に色を変える</span>
+<span class="comment">// → なぜその色か根拠なし</span>
+<span class="comment">// → ユーザーが意味を推測しにくい</span>
+
+
+<span class="comment">// ─── 原則2: 色だけに依存しない ───</span>
+
+<span class="comment">// 色覚多様性（色覚異常）の方は</span>
+<span class="comment">// 緑と赤の区別がつきにくい</span>
+
+
+<span class="comment">// ✓ OK：</span>
+<span class="comment">// 色 + テキスト/アイコン で表現</span>
+<span class="comment">// 「✓ OK」「⚠ 警告」「✗ NG」</span>
+
+
+<span class="comment">// ✗ NG：</span>
+<span class="comment">// 色だけで「OK/NG」を表現</span>
+
+
+<span class="comment">// ─── 原則3: 色数を絞る ───</span>
+
+<span class="comment">// ✓ OK：</span>
+<span class="comment">// 1〜3色のアクセント色 + グレー系</span>
+<span class="comment">// （Cのモスグリーン＋アクセント）</span>
+
+
+<span class="comment">// ✗ NG：</span>
+<span class="comment">// 「ロゴの色」「ボタンの色」</span>
+<span class="comment">// 「グラフの色」が全部違う</span>
+<span class="comment">// → 統一感がなくなる</span>
+
+
+<span class="comment">// ─── Cでの実践 ───</span>
+
+<span class="comment">// 全15巻でカラーパレット統一</span>
+<span class="comment">// 本編：モスグリーン</span>
+<span class="comment">// 別冊：セージグレー</span>
+
+<span class="comment">// → 「シリーズ感」が保たれている理由</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>色覚多様性</b>」は世界人口の<b>約8%（男性の約12%、女性の約0.5%）</b>と言われます。業務システムを作るなら<b>必ず考慮</b>すべき配慮。「色だけに頼らない」がアクセシビリティの基本。<b>テキストとアイコンも併用</b>するのが鉄則です。</p>
+  </div>
+</section>
+
+<section id="story">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>「数字」から「物語」へ</h2>
+    <span class="en">FROM NUMBERS TO STORIES</span>
+  </div>
+  <p class="pattern-desc">統計画面の<b>最終的なゴール</b>は「数字を見せる」ではなく「<b>物語を伝える</b>」こと。ユーザーが画面を見て、<b>「次に何をするか」</b>が分かる状態を作るのが理想です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">numbers-to-story</span>
+      <span class="tag-desc">数字を物語化する3段階</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 物語化の3段階</div>
+        <div class="role-card">
+          <span class="label">段階1</span>
+          <div class="name">生データ表示（最低限）</div>
+          <div class="desc">「Java: 375 分」だけ。これでは<b>多いか少ないか分からない</b>。Vol.9 はここに近い。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">段階2</span>
+          <div class="name">比較・割合を添える（業務標準）</div>
+          <div class="desc">「Java: 6時間 15分（全体の 59%）」のように、<b>比較対象・割合・分かりやすい単位</b>を添える。Vol.10 はここ。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">段階3</span>
+          <div class="name">解釈・示唆を出す（上級）</div>
+          <div class="desc">「<b>先週比 +20% で順調に学習中</b>」「<b>Spring Boot を増やすと達成バランスが良いかも</b>」など、<b>システムからの提案</b>。AI/ML を絡めることも。Cの範囲外。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>段階2まで実現できれば</b>、業務ダッシュボードとしては及第点。段階3 は中級〜上級の領域。</p>
+      </div>
+      <div class="code"><span class="code-head">// 物語化の実例</span>
+
+<span class="comment">// ─── 段階1: 数字だけ（Vol.9）───</span>
+
+科目      件数  合計  平均
+Java        5   375   75
+Spring      3   255   85
+SQL         1    30   30
+
+
+<span class="comment">// ─── 段階2: 比較・割合（Vol.10）───</span>
+
+全体合計: 10時間 30分
+
+Java          6時間 15分 (59%)
+████████████░░░░░░░░
+5件 / 平均 75分
+
+Spring Boot    4時間 15分 (40%)
+█████████░░░░░░░░░░░
+3件 / 平均 85分
+
+
+<span class="comment">// ─── 段階3: 解釈・示唆（業務上級）───</span>
+
+全体合計: 10時間 30分
+   ↗ 先週比 +25% で順調に上昇中 ⭐
+
+学習スタイル：「集中型」
+（少数の科目に時間を投入）
+
+提案：
+   ・「Spring Boot」も並行で進めると
+     バランスが良くなりそうです
+   ・5/14 が最長学習日（120分）でした
+
+
+<span class="comment">// ─── ポイント ───</span>
+
+<span class="comment">// 段階3 を実現するには：</span>
+
+<span class="comment">// 1. 比較データ（履歴）の蓄積</span>
+<span class="comment">// 2. ルールベースの解釈ロジック</span>
+<span class="comment">// 3. （理想）機械学習による提案</span>
+
+
+<span class="comment">// Cでは段階2を目標</span>
+<span class="comment">// 業界では Saas 系で段階3 が普及中</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>数字だけのダッシュボード</b>」が業務でよく作られますが、<b>ユーザーは数字を解釈する手間を嫌います</b>。「これは多いの？少ないの？」「先月と比べてどう？」── これらを<b>システム側で答えてあげる</b>のがUX向上の核心。<b>「データはあるのに使えていない」</b>のは業務システムの典型的な失敗パターンです。</p>
+  </div>
+</section>
+
+<section id="layer">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>Mapper用DTO vs 画面用DTO 再論</h2>
+    <span class="en">DTO LAYERING REVISITED</span>
+  </div>
+  <p class="pattern-desc">本編Vol.10 で<b>「DTOを2つに分けた」</b>件、UX観点から再整理。<b>「画面が増えても破綻しない設計」</b>の核心です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">dto-layering</span>
+      <span class="tag-desc">DTO分離の業務価値</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 「画面用DTO」の業務価値</div>
+        <div class="role-card">
+          <span class="label">価値1</span>
+          <div class="name">画面が変わってもDBは無影響</div>
+          <div class="desc">「カード型UI」「グラフ表示」「PDF出力」── 画面ごとに別の <code>View</code> DTO を作る。<b>Mapper はそのまま使える</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">価値2</span>
+          <div class="name">同じDBデータから多様な見せ方</div>
+          <div class="desc"><code>SubjectStat</code> から、<code>SubjectStatView</code>（カード）、<code>SubjectChartView</code>（グラフ）、<code>SubjectExportView</code>（CSV出力）などを作る。<b>Mapper 1個に View 多数</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">価値3</span>
+          <div class="name">画面固有の表示ロジックを集約</div>
+          <div class="desc">「N時間M分」「+25%」「⭐順調」など、<b>表示用文字列を View に持たせる</b>。Service が責任を持つ。<b>Template はただ表示するだけ</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">価値4</span>
+          <div class="name">テストしやすい</div>
+          <div class="desc">「Service の変換ロジック」だけを単体テスト可能。<b>DBもHTMLも要らない</b>。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 業務での View DTO 多様化</span>
+
+<span class="comment">// ─── 同じ Mapper 出力から複数 View ───</span>
+
+<span class="comment">// Mapper</span>
+<span class="type">List</span>&lt;<span class="type">SubjectStat</span>&gt; stats =
+    subjectMapper.<span class="fn">findSubjectStats</span>();
+
+
+<span class="comment">// Service が画面別に変換</span>
+
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">SubjectStatView</span>&gt;
+       <span class="fn">findSubjectStatViews</span>() {
+  <span class="comment">// Vol.10: カード型UI 用</span>
+  <span class="comment">// → totalTimeText / percentage 付き</span>
+}
+
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">SubjectChartData</span>&gt;
+       <span class="fn">findChartData</span>() {
+  <span class="comment">// 将来: グラフ表示用</span>
+  <span class="comment">// → 数値だけ / フォーマットなし</span>
+}
+
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">SubjectExportRow</span>&gt;
+       <span class="fn">findExportRows</span>() {
+  <span class="comment">// 将来: CSV出力用</span>
+  <span class="comment">// → カンマ区切り済み / エスケープ済み</span>
+}
+
+
+<span class="comment">// ─── 3画面・3 View・1 Mapper ───</span>
+
+<span class="comment">// ・Mapper は変更なし</span>
+<span class="comment">// ・XML / SQL は変更なし</span>
+<span class="comment">// ・新画面追加 = 新 View + 新変換メソッド</span>
+
+
+<span class="comment">// → 「最小限の変更」で機能拡張</span>
+
+
+<span class="code-head" style="margin-top:14px">// 業務でのアンチパターン</span>
+
+<span class="comment">// ─── ✗ NG: Mapper戻り値を直接画面に渡す ───</span>
+
+<span class="comment">// Service:</span>
+<span class="kw">return</span> mapper.<span class="fn">findSubjectStats</span>();
+<span class="comment">// → 画面側で「N時間M分」を計算</span>
+<span class="comment">// → Thymeleaf に複雑なロジックが入る</span>
+<span class="comment">// → テストしにくい</span>
+
+
+<span class="comment">// ─── ✗ NG: Mapper戻り値を画面用に流用 ───</span>
+
+<span class="comment">// SubjectStat に totalTimeText を追加</span>
+<span class="comment">// → Mapper 出力に画面用フィールドが混入</span>
+<span class="comment">// → 「DBから取った」と「画面用に計算した」</span>
+<span class="comment">//   が同じ DTO に混在 → 役割が曖昧</span>
+
+
+<span class="comment">// ─── ✓ OK: 役割で分ける ───</span>
+<span class="comment">// Mapper用 = DBの素材</span>
+<span class="comment">// View用 = 料理済みの画面用</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>統計画面の罠</h2>
+    <span class="en">DASHBOARD PITFALLS</span>
+  </div>
+  <p class="pattern-desc">業務での統計画面でやりがちな<b>4つの罠</b>。Vol.10 で押さえた設計と対比して見ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">dashboard-pitfalls</span>
+      <span class="tag-desc">統計画面の罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4つの罠</div>
+        <div class="role-card">
+          <span class="label">PITFALL 1</span>
+          <div class="name">「単位がない数字」だけを並べる</div>
+          <div class="desc"><b>原因</b>：「<code>375</code>」「<code>10.5</code>」とだけ表示。「分？時間？個数？」<br><b>対処</b>：必ず「<code>分</code>」「<code>時間</code>」「<code>件</code>」「<code>%</code>」を併記。Vol.10 では「<code>N時間 M分</code>」で対応済み。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 2</span>
+          <div class="name">「ゼロの場合」を考慮しない</div>
+          <div class="desc"><b>原因</b>：データが0件の時に画面がエラー、または不気味な空欄。<br><b>対処</b>：「<b>0件</b>」「<b>記録なし</b>」を明示。Vol.10 では薄いカード（opacity 0.5）で表現。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 3</span>
+          <div class="name">過剰な小数点表示</div>
+          <div class="desc"><b>原因</b>：「<code>59.2727...%</code>」「<code>375.0 分</code>」など。<br><b>対処</b>：業務に応じた精度に丸める。<b>「分」レベルなら小数不要</b>、お金なら2桁、科学計算なら桁が増える。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 4</span>
+          <div class="name">PDF や CSV エクスポートで崩れる</div>
+          <div class="desc"><b>原因</b>：画面向けの表示文字列を CSV にもそのまま出力。<code>「6時間 15分」</code>を Excel で扱えない。<br><b>対処</b>：エクスポート用は<b>別 View DTO</b>。生数値で出す。前セクションの実装パターン。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// PITFALL 1 の比較</span>
+
+<span class="comment">// ─── ✗ NG ───</span>
+
+科目      合計    平均
+Java      375    75
+Spring    255    85
+
+<span class="comment">// → 「375 って何の単位？」</span>
+
+
+<span class="comment">// ─── ✓ OK ───</span>
+
+科目        合計時間    平均
+Java       6時間15分    1時間15分
+Spring     4時間15分    1時間25分
+
+<span class="comment">// → 単位 + 業務に最適な単位</span>
+
+
+<span class="code-head" style="margin-top:14px">// PITFALL 3 の対処</span>
+
+<span class="comment">// ─── ✗ NG: 過剰な小数 ───</span>
+
+Java 平均: 75.0000 分
+割合: 59.27272727272727%
+
+
+<span class="comment">// ─── ✓ OK: 業務に応じて丸める ───</span>
+
+Java 平均: 1時間15分    <span class="comment">// 整数</span>
+割合: 59%                 <span class="comment">// 整数</span>
+
+
+<span class="comment">// 業務の精度別ガイド:</span>
+<span class="comment">// ・時間（時:分）   → 整数</span>
+<span class="comment">// ・割合           → 整数 or 小数1桁</span>
+<span class="comment">// ・金額（円）     → 整数</span>
+<span class="comment">// ・金額（ドル）   → 小数2桁</span>
+<span class="comment">// ・科学計算       → 桁数大</span>
+
+
+<span class="comment">// → Vol.10 で setScale / RoundingMode</span>
+<span class="comment">// を意識したのはこれ</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次の本編へ</h2>
+    <span class="en">TO THE NEXT VOLUME</span>
+  </div>
+  <p class="pattern-desc">別冊S10お疲れさまでした。<b>「数字を見せる UX」</b>の感性が育ちました。次のVol.11 は集計クエリの応用篇、<b>HAVING</b> を学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">この別冊のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 持ち帰る5つの知見</div>
+        <div class="role-card">
+          <span class="label">知見1</span>
+          <div class="name">ダッシュボード4原則</div>
+          <div class="desc">最重要を最上部・1画面1テーマ・階層・比較対象</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見2</span>
+          <div class="name">情報密度は「中密度」が業務標準</div>
+          <div class="desc">広告風と Excel 風の間でバランス</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見3</span>
+          <div class="name">色には意味を持たせる</div>
+          <div class="desc">色だけに依存しない・色覚多様性に配慮</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見4</span>
+          <div class="name">数字より物語</div>
+          <div class="desc">比較・割合・解釈で「次の行動」を見せる</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見5</span>
+          <div class="name">View DTO は画面ごと</div>
+          <div class="desc">Mapper戻り値を直接画面に渡さない</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.11 本編で起きること</span>
+
+<span class="comment">// タイトル：</span>
+<span class="comment">// 「HAVING で集計に絞り込み」</span>
+
+<span class="comment">// やること：</span>
+<span class="comment">// 1. S9 で予告した HAVING の本格利用</span>
+<span class="comment">// 2. 「合計60分以上の科目だけ」表示</span>
+<span class="comment">// 3. WHERE と HAVING の併用パターン</span>
+<span class="comment">// 4. 統計画面に「閾値フィルタ」追加</span>
+<span class="comment">// 5. Service 層でのフィルタリングとの比較</span>
+
+<span class="comment">// 獲得スキル：</span>
+<span class="comment">// → 集計の応用</span>
+
+
+<span class="comment">// Vol.9（基礎）→ Vol.10（UI化）→</span>
+<span class="comment">// Vol.11（応用）→ Vol.12（時系列）</span>
+<span class="comment">// 統計フェーズの4段ロケット</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(102,108,84,0.12)">
+    <div class="tip-label">NEXT STEP ── VOL.11 本編</div>
+    <p>別冊S10で<b>UX の感性</b>を磨きました。次のVol.11 本編「<b>HAVING で集計に絞り込み</b>」では、S9 で予告した<b>HAVING 句</b>を本格活用。「合計60分以上の科目だけ」のような<b>集計後の絞り込み</b>を実装します。<br>「<b>SQL でやるか・Java でやるか</b>」の判断軸も整理。本編Vol.11 へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.10 / 15 ── DASHBOARD UX（別冊）</span>
+</footer>
+
+</body>
+</html>

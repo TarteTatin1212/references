@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git/GitHub探源編 ブランチという発明 Vol.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1814;--paper:#e7e1d6;--paper-2:#d1cab9;--accent:#b04830;--accent-2:#c2a585;--accent-3:#3a342a;--muted:#7a7368;--line:#ab9c8a;--code-bg:#16140f;--code-text:#d8d3c6;--panel-bg:#d9d2c1}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;font-size:15px;line-height:1.95}
+body{max-width:1180px;margin:0 auto;padding:48px 40px 80px}
+.page-header{position:relative;padding:42px 32px 48px;border-bottom:2px solid var(--ink);margin-bottom:52px;overflow:hidden}
+.page-header::before{content:"∴";position:absolute;right:20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.10;font-family:"Shippori Mincho",serif;line-height:1;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;margin-right:8px}
+.companion-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--paper-2);color:var(--accent-3);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;border:1px solid var(--line)}
+h1{font-family:"Shippori Mincho",serif;font-size:44px;font-weight:700;margin:22px 0 12px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;letter-spacing:0.18em;font-family:"JetBrains Mono",monospace;margin-bottom:24px}
+.lead{max-width:660px;font-size:15px;line-height:2.05;color:var(--ink)}
+.lead b{color:var(--accent)}
+.toc{background:#fff;padding:26px 30px;margin-bottom:64px;border:1px solid var(--line);border-left:4px solid var(--accent)}
+.toc-title{font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:0.25em;margin-bottom:14px;color:var(--accent);font-weight:700}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13.5px;font-family:"JetBrains Mono",monospace}
+.toc a::before{content:"∴ ";color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:80px}
+.section-header{display:flex;align-items:baseline;gap:18px;border-bottom:1px solid var(--accent-3);padding-bottom:12px;margin-bottom:20px}
+.section-num{font-family:"JetBrains Mono",monospace;font-size:15px;color:var(--accent);font-weight:700;letter-spacing:0.05em}
+.section-header h2{font-family:"Shippori Mincho",serif;font-size:27px;font-weight:700;flex:1;color:var(--ink)}
+.en{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.25em;color:var(--muted)}
+.pattern-desc{max-width:760px;margin-bottom:22px;color:var(--ink);font-size:14.5px;line-height:2.05}
+.pattern-desc b{color:var(--accent)}
+.terms{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:20px 26px;margin-bottom:26px;max-width:780px}
+.terms-head{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:0.25em;color:var(--accent);margin-bottom:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.terms-head::before{content:"∴";color:var(--accent);font-size:16px}
+.term{margin-bottom:16px;padding-left:2px}
+.term:last-child{margin-bottom:0}
+.t1{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--ink);font-weight:600;line-height:1.5}
+.t1 .slash{color:var(--accent);margin:0 6px}
+.t2{margin-left:18px;font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.6}
+.t2::before{content:"└ ";color:var(--line)}
+.t3{margin-left:18px;font-size:13.5px;color:var(--accent-3);margin-top:2px;line-height:1.7;font-weight:500}
+.t3::before{content:"└ ";color:var(--line)}
+.t3 b{color:var(--accent)}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:18px}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-family:"Shippori Mincho",serif;font-weight:700;color:var(--accent-3);font-size:14px}
+.tag-desc{font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:0.1em}
+.demo-body{display:grid;grid-template-columns:340px 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.12em}
+.text{background:#fff;padding:28px 30px;font-size:14.5px;line-height:2.1}
+.text p{margin-bottom:16px}
+.text p:last-child{margin-bottom:0}
+.text h3{font-family:"Shippori Mincho",serif;font-size:17px;margin:24px 0 12px;color:var(--accent-3);font-weight:700;letter-spacing:0.02em}
+.text h3:first-child{margin-top:0}
+.text b{color:var(--accent)}
+.quote{border-left:3px solid var(--accent);padding:14px 18px;margin:18px 0;background:#f5f0e6;font-family:"Shippori Mincho",serif;font-size:14.5px;line-height:1.95;color:var(--accent-3)}
+.quote .source{display:block;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-top:8px;font-style:normal;letter-spacing:0.05em}
+@media(max-width:720px){body{padding:24px 18px 60px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.text{padding:22px}h1{font-size:32px}.page-header::before{font-size:200px}.toc ul{gap:6px 14px}.terms{padding:16px 18px}}
+.timeline{font-family:"JetBrains Mono",monospace;font-size:11.5px;line-height:1.85;background:#fff;border:1px solid var(--line);padding:14px}
+.timeline .year{color:var(--accent);font-weight:700;font-size:11px;letter-spacing:0.1em}
+.timeline .event{color:var(--ink);margin-bottom:8px;padding-left:6px;border-left:1px solid var(--line);margin-left:2px;padding-top:1px}
+.timeline .event:last-child{margin-bottom:0}
+.box{background:#fff;border:1px solid var(--line);padding:14px 16px;margin-bottom:10px}
+.box .box-title{font-family:"Shippori Mincho",serif;font-size:13px;color:var(--accent);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.box p{font-size:13px;line-height:1.85}
+.diagram{background:#fff;border:1px solid var(--line);padding:18px;font-family:"JetBrains Mono",monospace;font-size:11.5px;line-height:1.75;white-space:pre;overflow-x:auto;color:var(--ink)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.compare > div{background:#fff;border:1px solid var(--line);padding:12px}
+.compare .heading{font-family:"Shippori Mincho",serif;font-size:12px;font-weight:700;color:var(--accent);margin-bottom:6px;letter-spacing:0.05em}
+.compare ul{list-style:none;font-size:12px;line-height:1.7}
+.compare li{padding:1px 0;padding-left:12px;position:relative}
+.compare li::before{content:"・";position:absolute;left:0;color:var(--accent)}
+.tip{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);padding:18px 24px;margin:20px 0;max-width:880px}
+.tip-title{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:0.2em;color:var(--accent);font-weight:700;margin-bottom:8px}
+.tip p{font-size:14px;line-height:2}
+.tip b{color:var(--accent-3)}
+.page-footer{margin-top:72px;padding-top:28px;border-top:1px solid var(--accent-3);display:flex;justify-content:space-between;align-items:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+.page-footer .right{text-align:right}
+code.inline{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 6px;font-size:12.5px;color:var(--accent-3);border-radius:2px}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">GIT / GITHUB</span>
+  <span class="companion-tag">探源編 ORIGINS</span>
+  <span class="vol-tag">VOL.03 / 09</span>
+  <h1>ブランチという発明</h1>
+  <div class="subtitle">THE INVENTION OF LIGHTWEIGHT BRANCHES</div>
+  <p class="lead">
+    Gitの真の革新は、<b>「ブランチを一瞬で作れる」</b>こと。
+    一見、当たり前のように見えるこの機能こそ、
+    Linus Torvalds が他のツールから決定的に差別化した発明でした。
+    本巻では、<b>「分岐」という人類の比喩</b>から、<b>軽量ブランチを可能にしたGitの内部設計</b>まで、
+    一気に駆け抜けます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01. 「ブランチ」という比喩</a></li>
+    <li><a href="#s02">02. 旧来ツールの重いブランチ</a></li>
+    <li><a href="#s03">03. 軽量ブランチの発明</a></li>
+    <li><a href="#s04">04. HEAD という哲学</a></li>
+    <li><a href="#s05">05. マージという数学</a></li>
+    <li><a href="#s06">06. コンフリクトの本質</a></li>
+    <li><a href="#s07">07. ブランチモデルの進化</a></li>
+    <li><a href="#s08">08. 自由としてのブランチ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>「ブランチ」という比喩</h2>
+    <span class="en">METAPHOR OF BRANCH</span>
+  </div>
+  <p class="pattern-desc">
+    Gitに限らず、ソフトウェアの世界には<b>「ブランチ(枝)」</b>という言葉が頻繁に登場します。
+    なぜ「枝」なのか? この比喩はどこから来たのか? 
+    実は<b>木という形が、人類が「分岐」を理解する最古の構造</b>の一つだったのです。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">branch <span class="slash">/</span> branch metaphor</div>
+      <div class="t2">ブランチ / 分岐の比喩</div>
+      <div class="t3"><b>「木の枝のように、一つの幹から枝分かれする」イメージ</b>。版管理に限らず、データ構造、議論の分岐、人類の系図など広く使われる古い比喩</div>
+    </div>
+    <div class="term">
+      <div class="t1">tree <span class="slash">/</span> tree structure</div>
+      <div class="t2">ツリー / 木構造</div>
+      <div class="t3"><b>「一つの根から枝分かれしていく構造」</b>。コンピュータ科学では基本的なデータ構造の一つで、ファイルシステムも家系図もこの形をしている</div>
+    </div>
+    <div class="term">
+      <div class="t1">fork <span class="slash">/</span> branching</div>
+      <div class="t2">フォーク / 枝分かれ</div>
+      <div class="t3"><b>「分岐する瞬間そのもの」</b>。「<code style="font-family:'JetBrains Mono',monospace">fork</code>」は元々「(道や川の)分岐点」を指す英単語。プロセスもプロジェクトも、ここから「枝分かれ」する</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">人類は枝が大好き</span>
+      <span class="tag-desc">METAPHORS WE LIVE BY</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 木の比喩の系譜</div>
+        <div class="timeline">
+          <div class="year">古代</div>
+          <div class="event">家系図・系統樹<br>「血筋」を木で表現</div>
+          <div class="year">中世</div>
+          <div class="event">スコラ哲学の論理樹<br>知識を分類する木</div>
+          <div class="year">19世紀</div>
+          <div class="event">ダーウィン「種の起源」<br>進化系統樹</div>
+          <div class="year">20世紀中盤</div>
+          <div class="event">コンピュータ科学誕生<br>「木構造」が基本概念に</div>
+          <div class="year">1970年代〜</div>
+          <div class="event">版管理に「ブランチ」<br>用語が定着</div>
+        </div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">なぜ木が選ばれるのか</div>
+          <p>● <b>視覚的に直感</b>: 誰でも木を知っている<br>
+          ● <b>非対称な分岐</b>: 中心(幹)があって枝が伸びる<br>
+          ● <b>階層性</b>: 親と子の関係が明確<br>
+          ● <b>方向性</b>: 過去から未来へ、根から葉へ</p>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>人類は古くから「枝」で考えてきた</h3>
+<p>家系図、系統樹、論理学の分類木、組織図——人間は<b>「分岐するもの」を木の形で描く</b>強い習性があります。これは偶然ではありません。私たちが日常的に目にしている自然物の中で、「<b>一つの根から無限に枝分かれする</b>」構造として、木が最も身近で分かりやすいからです。</p>
+
+<p>17世紀のスコラ哲学では、概念を分類する時に<b>「ポルピュリオスの樹」</b>と呼ばれる図がよく使われました。19世紀、ダーウィンが「種の起源」で進化を説明する時、彼が描いたのも一本の枝分かれする木でした。「<b>すべての生物は共通の祖先から枝分かれした</b>」というイメージを、彼は紙の上で木として可視化したのです。</p>
+
+<h3>コンピュータ科学への移植</h3>
+<p>1950-60年代、コンピュータ科学が学問として成立する時、「木構造(tree structure)」は<b>基本中の基本</b>のデータ構造として定着しました。ファイルシステムは木構造。ディレクトリの中にディレクトリがあり、その中にファイルがある——これは一本の幹から枝分かれする形そのものです。</p>
+
+<p>探索木(search tree)、構文木(syntax tree)、決定木(decision tree)——コンピュータ科学のあらゆる分野で「木」は使われます。プログラマにとって、<b>「木」は最も馴染みのある抽象構造</b>の一つになりました。</p>
+
+<div class="quote">
+「我々は世界を分類し、整理する時、自然と木の形に描く。これはおそらく、人間の認知の根本的な性質なのだろう」
+<span class="source">— Lakoff &amp; Johnson "Metaphors We Live By"</span>
+</div>
+
+<h3>版管理に「ブランチ」が来た日</h3>
+<p>1970年代、最初の版管理ツール SCCS が登場した時、すでに「<b>枝</b>」という比喩が使われていました。ある版から派生して、独立に進化する別の系列——これを「ブランチ」と呼ぶのは、ほとんど自明の選択でした。プログラマの頭の中に既に「木」のイメージが染み付いていたのです。</p>
+
+<p>ただし、初期のツールでは「ブランチ」は<b>例外的な操作</b>でした。製品版の保守のために、リリース済みの版から別系統を立てる——これはチームで合意して行う重大な手続きで、日常的には起きないことでした。<b>「ブランチを切る = 何か特別なことをする」</b>という時代が長く続いたのです。</p>
+
+<h3>「軽量ブランチ」が変えたもの</h3>
+<p>この常識を破ったのが、後に Git が採用する<b>「軽量ブランチ(lightweight branch)」</b>という発想です。ブランチを<b>例外的な手続き</b>ではなく、<b>日常的な作業単位</b>に変えてしまった。<code class="inline">git switch -c feature/new</code> と打つだけで、誰でも一瞬で新しい枝を作れる——この変化は、開発文化そのものを変える革命でした。</p>
+
+<p>本巻のテーマは、この革命がいかに可能になったのかを辿ることです。「<b>ブランチ</b>」という言葉の重みを軽くした技術的な発明、そしてそれが解放した思考の自由——一つ一つ見ていきましょう。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ POINT</div>
+    <p><b>「ブランチ」という言葉は、何百年も前から人類が分岐を理解する道具だった</b>。Git が革命的だったのは、この比喩を再発明したのではなく、<b>「比喩通りに、軽やかに使える」</b>道具を作ったことです。<b>言葉が現実に追いついた瞬間</b>と言えるかもしれません。</p>
+  </div>
+</section>
+
+<section id="s02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>旧来ツールの重いブランチ</h2>
+    <span class="en">HEAVYWEIGHT BRANCHES</span>
+  </div>
+  <p class="pattern-desc">
+    Git 以前のツールでは、ブランチを切るのは<b>大事業</b>でした。
+    なぜ Subversion 等のツールでブランチが重かったのか?
+    その答えは、彼らがブランチを<b>「ファイルやディレクトリのコピー」</b>として実装していたという、
+    根本的な設計上の決断にあります。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">copy <span class="slash">/</span> file copy</div>
+      <div class="t2">コピー / ファイル複製</div>
+      <div class="t3"><b>「元のファイル群をもう一式、別の場所に複製すること」</b>。古いツールでは、ブランチを作る = ファイル全部をコピーすることだった</div>
+    </div>
+    <div class="term">
+      <div class="t1">cheap copy</div>
+      <div class="t2">チープコピー / 安価な複製</div>
+      <div class="t3"><b>「実際にはファイルを複製せず、参照だけを作る賢い複製」</b>。Subversion が採用した工夫だが、それでも操作は重かった</div>
+    </div>
+    <div class="term">
+      <div class="t1">heavyweight</div>
+      <div class="t2">ヘビーウェイト / 重量級</div>
+      <div class="t3"><b>「コストが大きく、気軽にやれない」操作の性質</b>。Git 以前のブランチはこれ。物理的なコストと心理的なコストの両方が重かった</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">なぜブランチが重かったか</span>
+      <span class="tag-desc">PRE-GIT WORLD</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// SVN のブランチ操作</div>
+        <div class="diagram">[ SVN のリポジトリ構造 ]
+
+repo/
+├─ trunk/        本流
+│   └─ src/
+│       └─ ...
+├─ branches/     枝分かれ
+│   ├─ release-1.0/
+│   │   └─ src/  ←本流の複製
+│   └─ release-1.1/
+│       └─ src/  ←本流の複製
+└─ tags/         印
+    └─ v1.0.0/
+
+ブランチ = ディレクトリ複製
+"svn copy trunk branches/x"</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">SVNでの実際のコスト</div>
+          <p>● <b>サーバー側で複製</b>(チープコピーでも構造作成は要る)<br>
+          ● <b>権限設定の更新</b>が必要<br>
+          ● <b>誰がいつ作ったか</b>を記録<br>
+          ● 後の整理(削除)も大事業</p>
+        </div>
+        <div class="quote">
+"In Subversion, creating a branch was an event."
+<span class="source">— SVN時代の典型的な感想</span>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>SVN はブランチを「ディレクトリ」と見なした</h3>
+<p>Subversion(SVN)の設計者たちは、ブランチを<b>「ファイル群のコピー」</b>として実装しました。具体的には、リポジトリ内に <code class="inline">trunk/</code>(本流)、<code class="inline">branches/</code>(枝)、<code class="inline">tags/</code>(印)という<b>特別なディレクトリ</b>を置く慣習を作ったのです。</p>
+
+<p>新しいブランチを作るには、<code class="inline">svn copy trunk branches/feature-x</code> という具合に、trunk の中身をまるごと branches の下にコピーする。<b>つまり「ブランチを作る」は「ファイルを複製する」とほぼ同義</b>だったのです。</p>
+
+<h3>「cheap copy」の工夫</h3>
+<p>もちろん、本当にファイルを物理的に全コピーしていたら、大規模リポジトリでは時間もディスクも持ちません。SVN はこれを賢く回避していて、<b>cheap copy(チープコピー)</b>という技術を使っていました。これは「<b>新しい場所に参照だけを作り、実体は元のファイルを使い回す</b>」工夫で、いわばシンボリックリンクに近い発想です。</p>
+
+<p>これによって、ブランチ作成自体はファイルサイズに関係なく速くなりました。しかし、それでも<b>ディレクトリ構造を作る、メタデータを更新する、リポジトリ全体のリビジョン番号を進める</b>——これらの処理が必要で、Git の軽量ブランチに比べれば<b>桁違いに重い</b>操作でした。</p>
+
+<h3>心理的な重み</h3>
+<p>技術的なコストよりも大きかったのが、<b>心理的なコスト</b>です。SVN でブランチを作ることは、<b>リポジトリ全体の構造に変更を加える</b>行為でした。<code class="inline">branches/</code> ディレクトリは<b>「みんなが見る公共の場所」</b>。あなたが個人的な実験のためにブランチを作っても、それは全員から見える。</p>
+
+<p>その結果、開発者は<b>「ブランチを作ることに躊躇する」</b>習性が育ちました。「<b>大きな機能のために、チームで合意してから作るもの</b>」という感覚です。日常的な思いつきや実験のためにブランチを切るなど、考えもしなかった——それが SVN 時代の感覚でした。</p>
+
+<div class="quote">
+「SVN では、ブランチは『重大な決断』だった。Git では、ブランチは『今日のお昼に何を食べるか』くらいの軽さで決められる」
+<span class="source">— SVN から Git に移行した多くのエンジニアの感想</span>
+</div>
+
+<h3>マージはさらに地獄だった</h3>
+<p>ブランチ作成より、もっと大変だったのが<b>マージ</b>でした。SVN 初期のバージョンでは、マージ操作には<b>「どこからどこまでをマージするか」</b>を人間が手動で指定する必要がありました。バージョン番号を覚えておいて、 <code class="inline">svn merge -r 100:200</code> のように指定する。指定を間違えると、変更が二重に適用されたり、抜け落ちたりする悪夢が起きました。</p>
+
+<p>SVN 1.5 以降、これは<b>マージ追跡(merge tracking)</b>機能で改善されましたが、根本的な「ファイル複製ベースのブランチ」というモデルがある限り、Git の軽快さには程遠かったのです。「<b>SVN ではマージしたくない</b>」が現場の合言葉でした。</p>
+
+<h3>その結果、ブランチが使われなくなる</h3>
+<p>ブランチ作成もマージも重いと、開発者の行動はどう変わるか。答えは単純で、<b>「ブランチを使わなくなる」</b>のです。皆が trunk(本流)で直接作業し、互いに変更を上書きしないようコミュニケーションする——そんな運用が一般的でした。</p>
+
+<p>これは Linus が「<b>SVN はダメだ</b>」と切り捨てた根本的な理由の一つでもあります。ブランチが使えないということは、<b>並行開発の自由を制限される</b>ということだからです。次の節で、彼がどうやってこれを解決したかを見ていきます。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>SVN 等のブランチが重かったのは、それを<b>「ファイル群のコピー」</b>として実装したからです。物理的なコストは工夫で減らせたものの、概念モデル自体が重く、結果として<b>心理的にも重い操作</b>になってしまった。<b>道具のコストは、技術と概念の両方に宿る</b>のです。</p>
+  </div>
+</section>
+
+<section id="s03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>軽量ブランチの発明</h2>
+    <span class="en">LIGHTWEIGHT BRANCHES</span>
+  </div>
+  <p class="pattern-desc">
+    Git が革命的だったのは、<b>「ブランチ = ポインタ1つ」</b>と再定義したことです。
+    具体的には、<b>「あるコミットの ID を記録した41バイトのテキストファイル」</b>。
+    これだけで、SVN が大事業だった操作が一瞬になりました。
+    <b>設計思想を変えれば、コストは劇的に減る</b>——その教科書のような事例です。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">pointer <span class="slash">/</span> reference</div>
+      <div class="t2">ポインタ / 参照</div>
+      <div class="t3"><b>「実体を指す『矢印』のような小さなデータ」</b>。実体ではなく、実体の在り処を持つ。Git のブランチの正体はこれ</div>
+    </div>
+    <div class="term">
+      <div class="t1">ref <span class="slash">/</span> refs</div>
+      <div class="t2">レフ / 参照群</div>
+      <div class="t3"><b>「Git で使う『名前付きの参照』全般」</b>。ブランチもタグも、本質的には全部 ref。<code style="font-family:'JetBrains Mono',monospace">.git/refs/</code> という場所に保存される</div>
+    </div>
+    <div class="term">
+      <div class="t1">commit hash <span class="slash">/</span> commit ID</div>
+      <div class="t2">コミットハッシュ / コミットID</div>
+      <div class="t3"><b>「あるコミットを一意に特定する40文字の文字列」</b>。ブランチは、この ID を1つ書いたファイルとして存在している</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">41バイトの革命</span>
+      <span class="tag-desc">BRANCH = ONE FILE</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ブランチの実体</div>
+        <div class="diagram">[ ファイルシステム上 ]
+
+.git/
+├─ HEAD          ← 現在地
+├─ refs/
+│   ├─ heads/
+│   │   ├─ main
+│   │   ├─ feature
+│   │   └─ develop
+│   └─ tags/
+│       └─ v1.0.0
+└─ objects/
+
+[ main ファイルの中身 ]
+
+a3f2c1d8b7e5a92...
+↑ たった40文字 + 改行
+  = 41バイトのテキスト!
+
+これがブランチの「正体」</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">確認してみる</div>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:11.5px">$ cat .git/refs/heads/main<br>
+a3f2c1d8b7e5a92f...<br><br>
+$ ls -la .git/refs/heads/main<br>
+... 41 bytes ...</p>
+        </div>
+        <div class="quote">
+"A branch in Git is just a tiny file containing a SHA-1 hash."
+<span class="source">— Pro Git book</span>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>発想の転換</h3>
+<p>Linus の天才性は、ブランチを<b>「ファイル群のコピー」ではなく「コミットへの参照」</b>と定義し直したことにあります。SVN は「ブランチ = ファイルの集まり」と考えていました。Git は「ブランチ = ある時点を指す1個の印」と考えたのです。</p>
+
+<p>この発想転換の意味は深い。<b>「最新のコミット」だけを記憶しておけば、そこから過去のすべての履歴を辿れる</b>——なぜなら、各コミットは自分の親コミットを覚えているからです。終端の1点を覚えれば、線全体が分かる。<b>ブランチを表現するのに、終端の1点で十分</b>なのです。</p>
+
+<h3>refs/heads/ という発明</h3>
+<p>具体的に Git リポジトリの中を覗いてみましょう。<code class="inline">.git/refs/heads/</code> というディレクトリがあります。ここに、あなたのリポジトリの全ブランチが、それぞれ<b>1つの小さなテキストファイル</b>として存在しています。</p>
+
+<p>たとえば <code class="inline">.git/refs/heads/main</code> というファイルを開くと、中身は <code class="inline">a3f2c1d8b7e5a92f...</code> という40文字のハッシュ値が1行書かれているだけ。これが main ブランチの<b>「正体」</b>です。改行を含めても41バイト——フロッピーディスクの時代の感覚で言えば、無視できるほど小さい。</p>
+
+<p>新しいブランチを作るとは、<b>このような小さなファイルを1つ作るだけ</b>の操作です。「ブランチを切る」が「ファイルを1個作る」と等価——だから一瞬で終わるのです。</p>
+
+<div class="quote">
+「Git のブランチは、ファイルの集合ではなく、ある時点へのラベルである」
+<span class="source">— Git の内部設計を語る典型的な解釈</span>
+</div>
+
+<h3>HEAD という指揮棒</h3>
+<p>もう一つ重要なファイルが <code class="inline">.git/HEAD</code> です。これも単純なテキストファイルで、中身は <code class="inline">ref: refs/heads/main</code> のように、<b>「今、自分はどのブランチにいるか」</b>を示しているだけ。</p>
+
+<p><code class="inline">git switch develop</code> でブランチを切り替える操作は、本質的には <code class="inline">.git/HEAD</code> の中身を <code class="inline">ref: refs/heads/develop</code> に書き換えるだけです。これに付随してワーキングディレクトリのファイルが入れ替わりますが、概念的な操作は<b>「1個のテキストファイルを更新する」</b>ことに集約されます。</p>
+
+<h3>ブランチ削除が一瞬な理由</h3>
+<p>削除も同じく、ものすごく簡単です。<code class="inline">git branch -d feature</code> という操作は、本質的には <code class="inline">.git/refs/heads/feature</code> という1つのファイルを削除する操作です。中身のコミットや、過去の履歴が消えるわけではない——<b>ただ「ポインタ」が消えるだけ</b>です。</p>
+
+<p>これは重要な性質です。ブランチを消しても、そこから辿れたコミット群は Git のオブジェクトストア(<code class="inline">.git/objects/</code>)にしばらく残ります。一定期間が経つとガベージコレクションで消えますが、それまでは <code class="inline">git reflog</code> 等で復元可能。<b>「軽く作って、軽く消せる」</b>が成立しているのです。</p>
+
+<h3>「ファイルシステムを使う」という素朴な選択</h3>
+<p>もう一つ感心するのは、Git がこれらを<b>普通のファイルシステム上の普通のファイル</b>として実装していることです。専用のデータベースも、複雑なバイナリ形式も使っていない。<code class="inline">cat</code> や <code class="inline">ls</code> で中身を見られる。これも UNIX 哲学の表れです。<b>「テキストファイルでできることは、テキストファイルで」</b>という、極めて素朴な選択。</p>
+
+<p>その結果、Git の内部は<b>「ハッキングしやすい」</b>性質を持っています。何かおかしいと思ったら、ファイルを直接覗ける。場合によっては手で編集することすらできる。これが<b>「Git は透明な道具」</b>と呼ばれる理由でもあります。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>Git の軽量ブランチは、<b>「ブランチとは何か」の定義そのものを変えた</b>発明です。SVN が「ファイル群のコピー」と考えていたものを、Git は「1個のテキストファイル」に再定義した。<b>抽象を変えれば、コストは劇的に変わる</b>——ソフトウェア設計の真髄が、ここに凝縮されています。</p>
+  </div>
+</section>
+
+<section id="s04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>HEAD という哲学</h2>
+    <span class="en">PHILOSOPHY OF HEAD</span>
+  </div>
+  <p class="pattern-desc">
+    Git に <code class="inline">HEAD</code> という概念があるのを知っていますか?
+    リファレンス本編で「現在地を指すポインタ」と学びましたが、
+    これは単なる技術的な仕組みではなく、<b>「『今』をデータとして扱う」</b>という、
+    かなり深い哲学的選択の表れです。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">HEAD</div>
+      <div class="t2">ヘッド / 先頭</div>
+      <div class="t3"><b>「いま自分が立っている地点」を指す特別な参照</b>。通常はあるブランチを指していて、そのブランチの先端のコミットが「現在地」になる</div>
+    </div>
+    <div class="term">
+      <div class="t1">detached HEAD</div>
+      <div class="t2">デタッチト・ヘッド / 切り離されたヘッド</div>
+      <div class="t3"><b>「どのブランチにも属さない、宙ぶらりんの状態」</b>。コミット ID を直接指定して移動した時に起きる。慌てる必要はないが、そのままコミットすると迷子になる</div>
+    </div>
+    <div class="term">
+      <div class="t1">symbolic ref</div>
+      <div class="t2">シンボリックレフ / 名前による参照</div>
+      <div class="t3"><b>「他の参照を指す参照」</b>。HEAD は普通、特定のブランチ名を指している。直接コミット ID を指す形式も可能(これが detached の状態)</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">「今」を表現する</span>
+      <span class="tag-desc">HEAD AS DATA</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// HEAD の2つの状態</div>
+        <div class="diagram">[ 通常状態: ブランチを指す ]
+
+HEAD
+  ↓
+"ref: refs/heads/main"
+  ↓
+main
+  ↓
+a3f2c1d... (コミット)
+
+[ detached HEAD: 直接指す ]
+
+HEAD
+  ↓
+"a3f2c1d..." (コミットID)
+
+* この場合、コミットしても
+  どのブランチにも属さない</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">確認してみる</div>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:11.5px">$ cat .git/HEAD<br>
+ref: refs/heads/main<br><br>
+$ git checkout a3f2c1d<br>
+Note: switching to 'a3f2c1d'.<br>
+You are in 'detached HEAD' state.<br><br>
+$ cat .git/HEAD<br>
+a3f2c1d8b7e5a92f...</p>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>「今」を変数として扱う</h3>
+<p>多くのソフトウェアでは、「現在の状態」は<b>暗黙的</b>に管理されます。エディタなら「いま開いているファイル」、ブラウザなら「いま表示しているページ」——これらは内部的にどこかで覚えられていますが、ユーザーが直接アクセスできる概念ではありません。</p>
+
+<p>Git は違います。「現在いる場所」を <code class="inline">HEAD</code> という<b>名前のある変数</b>として明示的に扱います。ユーザーは <code class="inline">git log HEAD</code> や <code class="inline">git show HEAD~3</code> のように、<b>「今」を起点にした操作を自由に行える</b>のです。</p>
+
+<h3>HEAD の柔軟性</h3>
+<p>HEAD の表現力は思ったより豊かです:</p>
+
+<p>● <code class="inline">HEAD</code> = 現在のコミット<br>
+● <code class="inline">HEAD~1</code> または <code class="inline">HEAD^</code> = 1つ前のコミット<br>
+● <code class="inline">HEAD~5</code> = 5つ前のコミット<br>
+● <code class="inline">HEAD@{1}</code> = 1操作前の HEAD(reflog ベース)<br>
+● <code class="inline">HEAD@{yesterday}</code> = 昨日の HEAD</p>
+
+<p>「現在地」を起点に、時間軸・操作軸の両方で過去を辿れる。これは<b>「今」を一級市民として扱う</b>設計の力です。</p>
+
+<div class="quote">
+「Git は『今』を抽象化した。これによって、過去への参照が無限に組み立てられるようになった」
+<span class="source">— Git の設計を分析した解釈の一つ</span>
+</div>
+
+<h3>detached HEAD の意味</h3>
+<p>リファレンス本編で「<b>detached HEAD</b>」(切り離された HEAD)という状態を扱いました。これは初学者を一番驚かせる概念ですが、HEAD の設計を理解すると自然に納得できます。</p>
+
+<p>通常、HEAD は<b>ブランチを指している</b>(間接参照)。<code class="inline">ref: refs/heads/main</code> のように。これだと「いま main ブランチにいる」ということになります。</p>
+
+<p>でも、HEAD は<b>コミット ID を直接指す</b>こともできる。たとえば <code class="inline">git checkout a3f2c1d</code> のように特定のコミットを指定すると、HEAD は <code class="inline">a3f2c1d</code> という値そのものを持つようになります。これが detached HEAD の状態です。</p>
+
+<h3>なぜ「迷子」になるのか</h3>
+<p>detached HEAD でコミットすると、<b>新しいコミットがどのブランチにも属さない</b>状態で誕生します。例えるなら、住所のない建物を建てたようなものです。建物自体は存在しますが、地図上には載っていない——だから他のブランチに移動した瞬間、たどり着く手段がなくなる。これが「迷子のコミット」と呼ばれる現象です。</p>
+
+<p>解決は単純で、<code class="inline">git switch -c new-branch</code> で<b>その場所からブランチを切る</b>。これによってコミットに住所(ブランチ名)が与えられ、世界に正式に存在することになる。<b>ブランチとは、コミットに住所を与える仕組み</b>でもあるのです。</p>
+
+<h3>「移動可能な現在地」という発想</h3>
+<p>HEAD の真の哲学は、<b>「現在地は固定されない」</b>ということです。あなたは過去のコミットに「移動」できる(detached HEAD)。別のブランチに「移動」できる。マージで複数の歴史を「合流」できる。コミット ID を書き換えれば「<b>歴史を改変</b>」することすらできる。</p>
+
+<p>これは時間を扱う非常に柔軟なモデルです。プログラム本体は時間の中で動いていますが、その「<b>どこから見るか</b>」を、HEAD という1つの変数で表現している。Git は<b>「視点」を明示的なデータにした</b>道具なのです。</p>
+
+<h3>哲学としての HEAD</h3>
+<p>HEAD の設計には、もう少し深い思想が見えます。<b>「今」を不可侵の絶対座標ではなく、可動な相対座標として扱う</b>——これは現代的な時間観です。私たちが日常で「今」と呼んでいるものは、実は常に「<b>何かを基準にした今</b>」であり、視点が変われば変わる。</p>
+
+<p>Git はこの観念をデータ構造として実装しました。<b>「今いるブランチ」「今の HEAD」「今のステージング」</b>——これらは全て、「<b>あなたの視点</b>」を構成する変数です。視点を変えれば、見えるものも、できる操作も変わる。<b>Git の操作とは、視点の操作である</b>と言えるかもしれません。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>HEAD は単なる技術的概念ではなく、<b>「視点を一級市民にする」</b>哲学の表現です。これによって、過去の任意の地点から世界を見て、操作することが可能になった。<b>Git は時間を扱う道具であると同時に、視点を扱う道具</b>でもあるのです。</p>
+  </div>
+</section>
+
+<section id="s05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>マージという数学</h2>
+    <span class="en">MATHEMATICS OF MERGE</span>
+  </div>
+  <p class="pattern-desc">
+    Git のマージは、実は<b>「数学的な操作」</b>です。
+    Fast-forward と 3-way マージの違いには、明確な数学的理由があります。
+    そして 3-way マージというアルゴリズムは、Git が発明したものではなく、
+    <b>1980年代から練り上げられてきた集合論的な解</b>でした。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">3-way merge</div>
+      <div class="t2">スリーウェイマージ / 3点合流</div>
+      <div class="t3"><b>「共通の祖先と、2つの変更を見比べてマージする方式」</b>。各変更が共通祖先からどう変わったかを見ることで、賢く統合できる</div>
+    </div>
+    <div class="term">
+      <div class="t1">common ancestor <span class="slash">/</span> merge base</div>
+      <div class="t2">共通祖先 / マージベース</div>
+      <div class="t3"><b>「2つのブランチが最後に共有していたコミット」</b>。3-way マージで「基準点」として使われる</div>
+    </div>
+    <div class="term">
+      <div class="t1">fast-forward</div>
+      <div class="t2">ファストフォワード / 早送り</div>
+      <div class="t3"><b>「片方のブランチが、もう片方の延長線上にある時の特殊な合流」</b>。マージコミットを作らず、ポインタを前進させるだけで済む</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">合流のアルゴリズム</span>
+      <span class="tag-desc">3-WAY MERGE</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Fast-forward の構造</div>
+        <div class="diagram">[ FF が可能な状況 ]
+
+main:    A───B
+              ↑
+feature: A───B───C───D
+                  ↑
+
+   main は feature の祖先
+   → main を D まで進めるだけ
+
+   結果:
+main:    A───B───C───D</div>
+        <div class="panel-head" style="margin-top:14px">// 3-way merge の構造</div>
+        <div class="diagram">[ 3-way が必要な状況 ]
+
+main:    A───B───X───Y
+feature:      └─C───D
+
+  共通祖先 = B (merge base)
+  main側変更:    B → Y
+  feature側変更: B → D
+
+  3点を見比べて合流
+
+main:    A───B───X───Y───M
+              └─C───D────┘
+                         (Mがマージコミット)</div>
+      </div>
+      <div class="text">
+
+<h3>マージとは「2つの変更の統合」</h3>
+<p>マージという操作を抽象的に言えば、<b>「同じ起点から派生した2つの変更を、1つに統合する」</b>ことです。プログラマには馴染みのある操作ですが、これは数学的・論理的にはなかなか難しい問題を含んでいます。</p>
+
+<p>たとえば、共通の出発点から、ある人は A 行目を変えた。別の人は B 行目を変えた。これを統合するには「A 行目の変更と B 行目の変更、両方を反映した結果」を作ればよい。これは比較的シンプルです。</p>
+
+<p>しかし、もし<b>「同じ行に対して、両方が違う変更をした」</b>としたら? ここで初めて<b>コンフリクト</b>が発生します。次節で詳しく扱いますが、コンフリクトの本質は「<b>機械的に決められない選択</b>」が現れる瞬間なのです。</p>
+
+<h3>Fast-forward の条件</h3>
+<p>マージの中でも特殊で美しいのが、<b>Fast-forward(早送り)</b>と呼ばれるケースです。これが起きる条件は明確で、<b>「合流先のブランチが、合流元の祖先である」</b>こと。つまり、片方のブランチが、もう片方の延長線上にある状況です。</p>
+
+<p>この場合、本当の意味で「マージ」する必要はありません。<b>合流先のポインタを、合流元の最新コミットまで進めるだけ</b>で済みます。これが Fast-forward という名前の由来です——テープを早送りするように、ポインタが進む。</p>
+
+<p>具体的には、main ブランチで作業せず、ずっと feature ブランチだけで開発していたなら、feature を main にマージする時、main には新しいコミットが何もないので、Fast-forward が成立します。<b>マージコミットすら作られない</b>——「合流」ではなく「移動」なのです。</p>
+
+<h3>3-way merge の発見</h3>
+<p>Fast-forward が使えない状況——両方のブランチに独立した変更があるケース——では、<b>3-way merge</b> という別のアルゴリズムが必要になります。これは Git の発明ではなく、<b>1980年代に diff3 というツールで定式化された</b>古典的な手法です。</p>
+
+<p>3-way の「3」は、<b>「3つの状態を見比べる」</b>から来ています:</p>
+
+<p><b>① 共通祖先(merge base)</b>: 2つのブランチが最後に同じだった点<br>
+<b>② ブランチA の最新</b><br>
+<b>③ ブランチB の最新</b></p>
+
+<p>この3点を見比べることで、<b>「A がどう変えたか」「B がどう変えたか」を独立に判定</b>できる。同じ場所に違う変更が来ていなければ、自動で統合できる。これが 3-way merge の仕組みです。</p>
+
+<div class="quote">
+「diff3 という古いツールが、3-way merge の数学的基礎を作った。Git はその上に立っている」
+<span class="source">— マージアルゴリズム史の一般的な見解</span>
+</div>
+
+<h3>共通祖先を探すアルゴリズム</h3>
+<p>3-way merge の鍵は、<b>「共通祖先をどう特定するか」</b>です。Git は、コミット履歴を辿って<b>「2つのブランチの両方から到達可能な、最も新しいコミット」</b>を探します。これを<b>merge base</b>と呼びます。</p>
+
+<p>履歴が DAG(有向非巡回グラフ)構造になっているので、これは<b>「最大共通祖先」</b>を求める典型的なグラフ問題です。Git は効率的なアルゴリズムでこれを高速に求めています。あなたが <code class="inline">git merge</code> を打った瞬間、内部でこの計算が走っているのです。</p>
+
+<h3>マージコミットの特殊性</h3>
+<p>3-way merge の結果として生まれる<b>マージコミット</b>は、Git の中で唯一<b>「2つの親を持つコミット」</b>です。普通のコミットは親が1つだけ——直前のコミットを指しています。マージコミットだけが例外で、<b>「これとこれを合流させた」という事実</b>を、2本の親リンクで表現します。</p>
+
+<p>これによって、後から履歴を辿る時、<b>「ここでマージが起きた」</b>ことが明確に分かります。<code class="inline">git log --graph</code> で表示される枝分かれ図は、マージコミットの「2親構造」を視覚化したものです。<b>「合流の歴史」が、データとして残る</b>——これはチーム開発の透明性にとって極めて重要な性質です。</p>
+
+<h3>マージという協調の儀式</h3>
+<p>マージは技術的な操作であると同時に、<b>協調の儀式</b>でもあります。「私の変更とあなたの変更を、ここで合わせる」——これは社会的な意味を持つ瞬間です。GitHub の Pull Request も、本質はこの「合流の儀式」を可視化したものに他なりません。</p>
+
+<p>3-way merge という数学的仕組みは、こうした<b>「合流の必然性と困難さ」</b>を、ソフトウェア工学の問題として体系化したものです。50年に近い研究の蓄積の上に、現在の Git のマージが成り立っているのです。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>マージは単なる「ファイルの結合」ではなく、<b>数学的に定義された統合操作</b>です。Fast-forward と 3-way merge の違い、共通祖先の特定アルゴリズム、マージコミットの2親構造——これら全てが、<b>「変化を統合する」という普遍的問題</b>への、人類の知恵の蓄積です。</p>
+  </div>
+</section>
+
+<section id="s06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>コンフリクトの本質</h2>
+    <span class="en">NATURE OF CONFLICTS</span>
+  </div>
+  <p class="pattern-desc">
+    コンフリクトは初学者を最も怖がらせる現象ですが、本質を理解すると<b>怖くなくなります</b>。
+    コンフリクトとは「Git が壊れた」ではなく、「<b>機械では決められない選択がある</b>」と Git が言っているだけ。
+    本節では、その情報学的な本質を解き明かします。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">conflict <span class="slash">/</span> merge conflict</div>
+      <div class="t2">コンフリクト / マージ衝突</div>
+      <div class="t3"><b>「同じ場所に対して、2つの異なる変更が来た時に発生する競合」</b>。機械的には決められないので、人間に判断を仰ぐ</div>
+    </div>
+    <div class="term">
+      <div class="t1">conflict marker</div>
+      <div class="t2">コンフリクトマーカー / 衝突印</div>
+      <div class="t3"><b>「コンフリクトが起きた場所をファイル内に示す目印」</b>。<code style="font-family:'JetBrains Mono',monospace">&lt;&lt;&lt;</code> <code style="font-family:'JetBrains Mono',monospace">===</code> <code style="font-family:'JetBrains Mono',monospace">&gt;&gt;&gt;</code> の3記号で構成される</div>
+    </div>
+    <div class="term">
+      <div class="t1">resolution <span class="slash">/</span> conflict resolution</div>
+      <div class="t2">レゾリューション / 衝突解決</div>
+      <div class="t3"><b>「人間が判断してコンフリクトを解消すること」</b>。マーカーを取り除いて正しい形にし、<code style="font-family:'JetBrains Mono',monospace">git add</code> で解決を宣言する</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">情報の限界としてのコンフリクト</span>
+      <span class="tag-desc">WHY MACHINE CAN'T DECIDE</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3-way merge と判断の限界</div>
+        <div class="diagram">[ 共通祖先 ]
+function greet() {
+  return "Hello";
+}
+
+[ main側の変更 ]
+function greet() {
+  return "Hello, World";
+}
+
+[ feature側の変更 ]
+function greet() {
+  return "Hi, World";
+}
+
+       ↓ 機械的に判断不能
+
+[ コンフリクト発生 ]
+function greet() {
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+  return "Hello, World";
+=======
+  return "Hi, World";
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature
+}</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">コンフリクトが起きない例</div>
+          <p>● 違うファイルへの変更<br>
+          ● 違う行への変更<br>
+          ● 同じ行でも、片方は無変更<br><br>
+          → これらは自動マージで解決</p>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>コンフリクトはエラーではない</h3>
+<p>初心者の多くが、コンフリクトを<b>「Git のエラー」「やってはいけないこと」</b>と誤解します。しかし、これは誤解です。コンフリクトは<b>「Git が正しく動作している」</b>証拠であり、むしろ Git が賢いからこそ発生する現象です。</p>
+
+<p>機械的な自動マージで全てを処理してしまう設計だと、<b>「機械が間違った選択をしても気づけない」</b>ことになります。Git はそうではなく、<b>「機械では判断できない場面は、必ず人間に判断を仰ぐ」</b>設計を選びました。これは設計者の誠実さの現れです。</p>
+
+<h3>「同じ場所、違う変更」</h3>
+<p>コンフリクトが発生する条件は、極めて明確です。3-way merge の3点を見比べた時、<b>同じ場所(同じ行とその周辺)に対して、両方のブランチが異なる変更</b>を加えていた——この時にコンフリクトが起きます。</p>
+
+<p>例えるなら、家族で買い物リストを共同編集している状況です。元のリストに「<b>牛乳</b>」とあった。あなたは「<b>低脂肪牛乳</b>」に書き換えた。同時に、家族は「<b>豆乳</b>」に書き換えた。これを統合する時、システムは<b>「結局どっちにすればいいのか」</b>を判断できません。両方の意図を尊重する自動解はないのです。</p>
+
+<h3>コンフリクトマーカーの読み方</h3>
+<p>Git がコンフリクトを検出すると、ファイルに<b>コンフリクトマーカー</b>を埋め込みます:</p>
+
+<p><code class="inline">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> から <code class="inline">=======</code> までが <b>現在のブランチ(HEAD 側)の変更</b>。<br>
+<code class="inline">=======</code> から <code class="inline">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature</code> までが <b>取り込もうとしているブランチの変更</b>。</p>
+
+<p>つまり、Git は「<b>こちらにはこれが、あちらにはあれが書いてある。どちらが正しいか、あなたが決めてくれ</b>」と言っているのです。あなたの仕事は、マーカーを取り除いて、<b>「正しい最終的な形」</b>を書くこと——それが解決(resolution)です。</p>
+
+<div class="quote">
+「コンフリクトとは、機械が解けない問題を、人間に正しく譲渡する仕組みである」
+<span class="source">— ある熟練エンジニアの教え</span>
+</div>
+
+<h3>第3の選択肢の発見</h3>
+<p>コンフリクト解決の時、ありがちな判断は「<b>こっちかあっちか、どちらを取るか</b>」です。が、優れた解決は<b>第3の道</b>を見つけることもあります。</p>
+
+<p>先ほどの例なら、main は「Hello, World」、feature は「Hi, World」。<b>そもそも、両方とも「挨拶」を変えたかったのではないか?</b> もしかして真の意図は「もっと丁寧に」だったのかもしれない。それなら「<b>Good morning, World</b>」が正解かもしれない——</p>
+
+<p>これはコードでも同じです。コンフリクトは、しばしば<b>「2人の開発者が、同じ問題を別の角度から解こうとしていた」</b>ことを示しています。それを統合する時、両者の意図を汲んだ<b>新しい解</b>を作れることもある。コンフリクトは、創造的な機会でもあるのです。</p>
+
+<h3>情報学的な視点</h3>
+<p>もう少し抽象的な視点で捉えると、コンフリクトは<b>「並行操作の情報的限界」</b>を示しています。並行して進む2つの作業が、最後に統合される時——両者の意図が完全に独立であれば、機械的に統合可能です。両者が同じ場所に重なれば、追加情報(=人間の判断)が必要になる。</p>
+
+<p>これは、Git に限らず<b>分散システム全般で起きる本質的な問題</b>です。データベースの分散レプリケーション、複数編集者によるドキュメント同時編集——どこにも「同じ場所への並行変更」の問題は付き纏います。Git のコンフリクトは、その典型的・教科書的な例なのです。</p>
+
+<h3>恐れるのは無知の所産</h3>
+<p>コンフリクトを恐れる気持ちは、それが<b>「分からないもの」</b>だから生まれます。仕組みが分かれば、コンフリクトは怖くない。<b>「2つの変更が同じ場所にぶつかった、人間が判断する」</b>——それだけのことだと分かれば、淡々と解決できます。</p>
+
+<p>むしろ、コンフリクトを<b>「Git との対話」</b>と捉える人もいます。Git が「ここをどうしますか?」と聞いてきた。あなたは選択肢を理解し、判断する。判断したら <code class="inline">git add</code> で「これで決まり」と告げ、<code class="inline">git commit</code> で確定する——これは、機械と人間の役割分担の、極めて美しい例だと言えます。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>コンフリクトは<b>エラーではなく、機能</b>です。Git が「機械的には判断できない」と正しく伝えてくれる仕組みであり、人間の判断を尊重する設計の現れ。<b>コンフリクトを恐れるな、それは Git からの対話の招きである</b>——この視点を持てた瞬間、Git との関係が変わります。</p>
+  </div>
+</section>
+
+<section id="s07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブランチモデルの進化</h2>
+    <span class="en">EVOLUTION OF MODELS</span>
+  </div>
+  <p class="pattern-desc">
+    Git が軽量ブランチを実現したことで、現場では<b>「ブランチをどう使うか」</b>の流儀が次々と発明されました。
+    Git Flow、GitHub Flow、Trunk-based Development——
+    これらは技術ではなく、<b>チームの社会的な合意のパターン</b>です。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">Git Flow</div>
+      <div class="t2">ギットフロー(モデル名)</div>
+      <div class="t3"><b>「複数のブランチを役割分担させた、しっかりした運用モデル」</b>。2010年に Vincent Driessen が提案。リリース・開発・本番を厳密に分ける</div>
+    </div>
+    <div class="term">
+      <div class="t1">GitHub Flow</div>
+      <div class="t2">ギットハブフロー(モデル名)</div>
+      <div class="t3"><b>「main と機能ブランチだけのシンプルなモデル」</b>。GitHub が2011年に提唱。継続的にデプロイする Web サービス向け</div>
+    </div>
+    <div class="term">
+      <div class="t1">Trunk-based Development</div>
+      <div class="t2">トランクベース開発</div>
+      <div class="t3"><b>「ほぼ1本のブランチ(trunk = main)で開発する流儀」</b>。短命なブランチだけ作り、1日以内に main へ統合する。大規模・高頻度デプロイ向け</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">3つの主要モデル</span>
+      <span class="tag-desc">SOCIAL CONVENTIONS</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// モデルの位置づけ</div>
+        <div class="box">
+          <div class="box-title">Git Flow (2010)</div>
+          <p>● <b>厳密な役割分担</b><br>
+          ● 製品の正式リリース重視<br>
+          ● パッケージソフト向け</p>
+        </div>
+        <div class="box">
+          <div class="box-title">GitHub Flow (2011)</div>
+          <p>● <b>シンプル(main + feature)</b><br>
+          ● 継続的デプロイ向け<br>
+          ● Webサービス・SaaS向け</p>
+        </div>
+        <div class="box">
+          <div class="box-title">Trunk-based (2010s後半)</div>
+          <p>● <b>ほぼ1本の main で開発</b><br>
+          ● 短命な機能ブランチのみ<br>
+          ● 大規模・高頻度デプロイ向け</p>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>軽量ブランチが解放したもの</h3>
+<p>SVN 時代、ブランチは「特別な操作」でした。誰もブランチを多用しないので、運用モデルもシンプルでした——「<b>本流で開発し、リリース時に枝を切る</b>」程度。</p>
+
+<p>Git が軽量ブランチを実現すると、状況は一変します。「<b>機能ごとに枝を切る</b>」「<b>個人実験で枝を切る</b>」「<b>修正のために枝を切る</b>」——あらゆる作業がブランチを伴う日常になりました。すると今度は、<b>「ブランチをどう使えば混乱しないか」</b>という新しい問題が浮上したのです。</p>
+
+<h3>Git Flow の誕生(2010年)</h3>
+<p>2010年、オランダのエンジニア <b>ヴィンセント・ドリッセン</b>が、ブログ記事 "A successful Git branching model" を公開します。彼が提案したのは、<b>5種類のブランチを役割で分ける</b>厳密なモデルでした:</p>
+
+<p>● <code class="inline">main</code>: 本番にリリースされた状態<br>
+● <code class="inline">develop</code>: 次のリリースに向けた統合先<br>
+● <code class="inline">feature/*</code>: 個別機能の開発<br>
+● <code class="inline">release/*</code>: リリース準備中<br>
+● <code class="inline">hotfix/*</code>: 緊急修正</p>
+
+<p>これは、当時のソフトウェア開発の典型——<b>「数ヶ月に一度の正式リリース」</b>を前提とした設計でした。記事は瞬く間に世界中で読まれ、Git Flow は<b>「ベストプラクティス」</b>として広く採用されました。</p>
+
+<h3>GitHub Flow の対抗(2011年)</h3>
+<p>Git Flow から1年後、GitHub 自身が異なるモデルを提唱します。GitHub の創業者 <b>スコット・チャコン</b>のブログ記事で、後に "GitHub Flow" と呼ばれるシンプルなモデルです:</p>
+
+<p>● <code class="inline">main</code> は常にデプロイ可能な状態<br>
+● 機能ごとに <code class="inline">main</code> から枝を切る<br>
+● PR でレビュー<br>
+● マージしたら即デプロイ</p>
+
+<p>これだけです。<code class="inline">develop</code> も <code class="inline">release</code> もありません。<b>シンプルさが特徴</b>でした。これは、<b>「継続的にデプロイする Web サービス」</b>には完璧にフィットしました。月に1回ではなく、1日に何度もデプロイする時代——重い手続きはもう要らないのです。</p>
+
+<h3>Trunk-based Development の台頭</h3>
+<p>2010年代後半、Google や Facebook のような巨大な開発組織から、もう一つの流儀が広まります。<b>Trunk-based Development</b>(トランクベース開発)です。これは GitHub Flow をさらに極端にして、<b>「ブランチは1日以内に main へ統合する」</b>を徹底するもの。</p>
+
+<p>この方式の特徴は、<b>「長く生きるブランチを許さない」</b>こと。長期ブランチがあると、後でマージが大変になる(コンフリクトが大量発生する)からです。代わりに、未完成の機能は<b>「フィーチャーフラグ」</b>という仕組みで制御し、コードはマージしつつ、ユーザーには見せない方式を取ります。</p>
+
+<p>Google は内部的にこの方式を採用しており、<b>毎日数万件のコミットが、ほぼリアルタイムで main に統合される</b>と言われています。これは Git Flow の対極にある運用です。</p>
+
+<div class="quote">
+「Git Flow は『製品』のためのモデル、GitHub Flow は『サービス』のためのモデル、Trunk-based は『規模』のためのモデルだ」
+<span class="source">— 業界の通説的な解釈</span>
+</div>
+
+<h3>なぜモデルが分裂したのか</h3>
+<p>3つのモデルが共存しているのは、<b>「現代のソフトウェア開発が一様ではない」</b>からです。半年に一度パッケージをリリースするオフィスソフト、毎日新機能をデプロイする Web サービス、数万人のエンジニアが同時に動く巨大組織——それぞれに最適な運用は違います。</p>
+
+<p>面白いのは、これら全てが<b>「同じ Git の上で実現される」</b>ことです。Git は特定の運用モデルを強制しません。<b>軽量ブランチという技術的な土台</b>の上に、各組織が自分たちに合った社会的な合意を築く。Git は「<b>運用を選ばせる柔軟性</b>」を提供する道具だと言えます。</p>
+
+<h3>道具と文化の循環、再び</h3>
+<p>本シリーズ Vol.1 で見たように、Git は<b>「道具と文化が互いを生み出す」</b>循環の中で発展してきました。ブランチモデルもまた、その循環の一例です。軽量ブランチという技術が、新しい運用モデルを可能にし、運用モデルが新しいツール(GitHub、GitLab、Bitbucket)を要求し、ツールがさらに新しい運用モデルを支える——終わらない循環。</p>
+
+<p>あなたが現場で「<b>うちのチームは GitHub Flow です</b>」「<b>Git Flow を採用しています</b>」と聞く時、それは<b>「単なる技術選択」ではなく、「文化的な選択」</b>でもあるのです。チームの規模、リリース頻度、顧客との関係——これら全てが背景にある。<b>道具は、それを使う人々の社会を映す</b>のです。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>ブランチモデルは<b>技術ではなく、社会的な合意</b>です。Git Flow、GitHub Flow、Trunk-based——それぞれは、特定の組織と時代の合理性を反映した運用の結晶。<b>あなたの現場のモデルは、あなたの現場の社会を映している</b>。それを意識して使えば、より良い選択ができるはずです。</p>
+  </div>
+</section>
+
+<section id="s08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>自由としてのブランチ</h2>
+    <span class="en">BRANCH AS FREEDOM</span>
+  </div>
+  <p class="pattern-desc">
+    Git の軽量ブランチが本当にもたらしたものは何か?
+    速さや効率ではありません——それは<b>「実験する自由」</b>でした。
+    気軽に失敗できる、気軽に捨てられる、気軽にやり直せる。
+    この<b>心理的安全性</b>こそが、Git が開発文化に与えた最大の贈り物です。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">psychological safety</div>
+      <div class="t2">サイコロジカル・セーフティ / 心理的安全性</div>
+      <div class="t3"><b>「失敗を恐れずに行動できる環境の性質」</b>。組織心理学の用語だが、開発ツールの設計にも当てはまる重要な概念</div>
+    </div>
+    <div class="term">
+      <div class="t1">throwaway branch</div>
+      <div class="t2">スローアウェイ・ブランチ / 使い捨て枝</div>
+      <div class="t3"><b>「気軽に作って、気軽に捨てるブランチ」</b>。Git の軽量さがあるからこそ可能になった文化。実験・調査・遊び心の表現</div>
+    </div>
+    <div class="term">
+      <div class="t1">refactor <span class="slash">/</span> refactoring</div>
+      <div class="t2">リファクタ / リファクタリング</div>
+      <div class="t3"><b>「動作を変えずにコードの構造だけを改善すること」</b>。ブランチで気軽に試せるようになり、現代の開発で当たり前の作業に</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">自由が解放する創造性</span>
+      <span class="tag-desc">FREEDOM TO EXPERIMENT</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// SVN時代 vs Git時代の発想</div>
+        <div class="compare">
+          <div>
+            <div class="heading">SVN時代</div>
+            <ul>
+              <li>「これ動くかな…」</li>
+              <li>怖いから本流で慎重に</li>
+              <li>大きな変更は避ける</li>
+              <li>実験は別途用意</li>
+              <li>「失敗できない」緊張</li>
+            </ul>
+          </div>
+          <div>
+            <div class="heading">Git時代</div>
+            <ul>
+              <li>「ちょっと枝で試そう」</li>
+              <li>失敗しても枝を消すだけ</li>
+              <li>大胆な変更も可</li>
+              <li>常に複数アイデア並行</li>
+              <li>「失敗できる」自由</li>
+            </ul>
+          </div>
+        </div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">よくある軽量ブランチの使い方</div>
+          <p>● <b>spike/xxx</b> — 技術調査用<br>
+          ● <b>experiment/xxx</b> — 実験用<br>
+          ● <b>poc/xxx</b> — 概念実証用<br>
+          ● <b>scratch/xxx</b> — 落書き用<br><br>
+          → どれも捨てる前提の「使い捨て」</p>
+        </div>
+        <div class="quote">
+"Branching is freedom."
+<span class="source">— Linus Torvalds 風の格言として広まる言葉</span>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>「失敗できる」という贅沢</h3>
+<p>軽量ブランチがもたらした最大の革命は、技術的なものではなく<b>心理的なもの</b>です。具体的に言えば、<b>「失敗を恐れずに試せる」</b>環境の創出です。</p>
+
+<p>SVN 時代、開発者は本流で慎重に作業していました。なぜなら、大きな変更を加えて失敗した時、<b>取り消すコストが大きすぎる</b>からです。「<b>あれ、これダメだった…どこから戻せばいいんだ</b>」が、現実の悪夢でした。</p>
+
+<p>Git では違います。<code class="inline">git switch -c experiment</code> で枝を切り、好きなだけ実験する。うまくいったら main にマージ、ダメなら <code class="inline">git branch -D experiment</code> で枝ごと削除。<b>「失敗が消える」</b>のです。これは思考の自由を解放しました。</p>
+
+<h3>心理的安全性という概念</h3>
+<p>組織心理学の世界に、<b>「心理的安全性(psychological safety)」</b>という概念があります。これは、ハーバード大学の<b>エイミー・エドモンドソン</b>教授が提唱した、<b>「失敗や異論を表明しても安全だと感じられる環境の性質」</b>です。チームの生産性に決定的な影響を与える要素として、近年注目されています。</p>
+
+<p>軽量ブランチは、技術によって心理的安全性を提供する仕組みだと言えます。<b>「失敗できる、捨てられる、やり直せる」</b>——この三拍子が揃っていることが、開発者の創造性に直接影響します。Git 以前の世界では、開発者は無意識にリスク回避的になっていた。Git は、その重しを取り除いたのです。</p>
+
+<div class="quote">
+「ブランチを切るコストがゼロに近づくと、思考のコストもゼロに近づく」
+<span class="source">— Git 時代の開発文化を表す典型的な感想</span>
+</div>
+
+<h3>使い捨てブランチの文化</h3>
+<p>軽量ブランチが定着すると、面白い文化が生まれました。<b>「使い捨てブランチ」</b>です。spike(スパイク = 短い調査)、experiment(実験)、poc(proof of concept = 概念実証)、scratch(落書き)——どれも<b>「作っては捨てる」</b>前提のブランチに付ける慣習的な名前です。</p>
+
+<p>これらのブランチは、本流に統合される予定がありません。<b>「思考のメモ」</b>のような存在です。何かを試してみる。動くか確認する。動かないなら、何が悪かったか考える。納得したら、ブランチごと削除する——これは<b>「コードを書きながら考える」</b>新しいスタイルの誕生でした。</p>
+
+<h3>リファクタリングという文化</h3>
+<p>もう一つ、軽量ブランチが解放した重要な営みが<b>リファクタリング</b>です。リファクタリングは「<b>動作を変えずにコードの構造を改善する</b>」作業ですが、これには大きな勇気が要ります。「<b>改善のつもりが、壊してしまったらどうしよう</b>」という不安が付き纏うからです。</p>
+
+<p>軽量ブランチがあれば、この不安は劇的に軽減されます。<code class="inline">refactor/restructure-auth</code> ブランチを切り、自由に大改造する。テストが全部通れば、main にマージ。通らなければ、改良するか、ブランチごと捨てる。<b>「壊しても元に戻せる」</b>という安心感が、大規模な改善を可能にします。</p>
+
+<p>Martin Fowler の名著 "Refactoring"(1999年)が広く読まれるようになったのも、Git の普及と無縁ではありません。<b>道具が文化を支え、文化が道具を活かす</b>——この循環は、ここでも見られます。</p>
+
+<h3>並行思考の解放</h3>
+<p>もう一つ、軽量ブランチが可能にした重要なことが、<b>「複数のアイデアを並行に試す」</b>習慣です。1つの問題に対して、解法 A と解法 B と解法 C を思いついた時、SVN 時代なら<b>「どれか1つだけ選んで進める」</b>しかなかった。</p>
+
+<p>Git では、3つのブランチを切って、それぞれで試す。全部試してから比較し、最良のものを採用する。これは<b>科学的な仮説検証</b>に似ています。<b>「コードによる思考実験」</b>と言ってもいい。Git は、この並行思考を技術的に支えるインフラを提供したのです。</p>
+
+<h3>「ブランチ = 自由」というスローガン</h3>
+<p>本巻全体を貫く問いは、「ブランチがなぜ Git を革命的にしたのか」でした。答えは技術的なものを超えて、<b>哲学的</b>です。</p>
+
+<p>軽量ブランチは、開発者から<b>「変化することへの恐れ」</b>を取り除きました。失敗を恐れずに、大胆な変更を試みる。複数の方向性を並行に探る。気になることがあれば、すぐに実験する。納得できなければ、迷わず捨てる——これらすべてが、ブランチが軽くなったことで可能になりました。</p>
+
+<p>Git が生んだのは、単なる版管理ツールではなく、<b>「変化に対する自由」</b>を支えるインフラだったのです。あなたが今、何の躊躇もなく <code class="inline">git switch -c</code> と打てる、その指の動きの中に、20年に渡る思考の自由化の歴史が宿っているのです。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ FINAL THOUGHT</div>
+    <p>軽量ブランチが解放したのは、速度ではなく<b>自由</b>です。失敗できる自由、捨てられる自由、やり直せる自由——これらの自由が、現代の開発文化の前提を形作りました。<b>道具の革新は、しばしば心の革新でもある</b>のです。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:56px">
+  <div class="tip-title">∴ NEXT VOLUME</div>
+  <p>第3巻では、Git の<b>軽量ブランチという発明</b>を、内部設計から運用文化までを通して見てきました。次巻 Vol.4「<b>分散と中央集権</b>」では、視野をさらに広げます。なぜ Git は<b>「分散型」</b>でなければならなかったのか? 中央サーバーがある世界と、ない世界——両者の<b>哲学的な違い</b>を辿ります。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <div>GIT / GITHUB ORIGINS — VOL.03</div>
+  <div class="right">THE INVENTION OF LIGHTWEIGHT BRANCHES / ブランチという発明</div>
+</footer>
+
+</body>
+</html>

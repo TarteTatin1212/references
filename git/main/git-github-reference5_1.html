@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git/GitHub編 履歴操作とコンフリクト Vol.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2520;
+  --paper:#e8dec7;
+  --paper-2:#d6c8aa;
+  --accent:#ac7948;
+  --accent-2:#c9a876;
+  --accent-3:#604734;
+  --muted:#7a6e5d;
+  --line:#b4a288;
+  --code-bg:#181410;
+  --code-text:#e8dfcc;
+  --panel-bg:#ddd0b3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;font-size:15px;line-height:1.85}
+body{max-width:1180px;margin:0 auto;padding:48px 40px 80px}
+
+.page-header{position:relative;padding:36px 32px 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"↶";position:absolute;right:0px;top:-50px;font-size:300px;color:var(--accent);opacity:0.18;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em}
+h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin:18px 0 10px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;letter-spacing:0.15em;font-family:"JetBrains Mono",monospace;margin-bottom:20px}
+.lead{max-width:640px;font-size:15px;line-height:2;color:var(--ink)}
+
+.toc{background:var(--paper-2);padding:22px 28px;margin-bottom:56px;border:1px solid var(--line)}
+.toc-title{font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:0.2em;margin-bottom:12px;color:var(--accent-3)}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc a{color:var(--ink);text-decoration:none;font-size:14px;font-family:"JetBrains Mono",monospace}
+.toc a::before{content:"— ";color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
+.section-num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;flex:1}
+.en{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted)}
+.pattern-desc{max-width:740px;margin-bottom:22px;color:var(--ink)}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-family:"JetBrains Mono",monospace;font-weight:600;color:var(--accent-3);font-size:13px}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line)}
+.panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:"JetBrains Mono",monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}
+.num{color:#f7a8d8}.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}.step{color:#c9a876;font-weight:600}
+.cmd{color:#b5e8b0}.flag{color:#f7c08a}.branch{color:#f7a8d8}
+.added{color:#7fc97f}.removed{color:#f08080}.conflict{color:#ffaa66}
+
+@media(max-width:720px){
+  body{padding:24px 18px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  h1{font-size:32px}
+  .page-header::before{font-size:180px}
+  .toc ul{gap:6px 14px}
+}
+
+.box{background:#fff;border:1px solid var(--line);padding:12px 14px;margin-bottom:10px}
+.box .box-title{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-bottom:6px;letter-spacing:0.1em}
+.box p{font-size:13px;line-height:1.7}
+
+.diagram{background:#fff;border:1px solid var(--line);padding:18px;font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.8;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+.tbl{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
+.tbl th,.tbl td{padding:8px 10px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{background:var(--paper-2);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.1em;font-weight:600}
+.tbl td code{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12px;color:var(--accent-3)}
+
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:12px;margin:0 1px}
+
+.tip{background:rgba(172,121,72,0.08);border-left:3px solid var(--accent);padding:16px 20px;margin:18px 0}
+.tip-title{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.15em;color:var(--accent-3);font-weight:600;margin-bottom:6px}
+.tip p{font-size:14px;line-height:1.9}
+.tip b{color:var(--accent-3)}
+
+.page-footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+.page-footer .right{text-align:right}
+
+code.inline{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12.5px;color:var(--accent-3)}
+
+.warn-box{background:#fff5e6;border:1px solid #d4a060;padding:12px 14px;margin-bottom:10px}
+.warn-box .warn-title{font-family:"JetBrains Mono",monospace;font-size:11px;color:#b04030;font-weight:700;margin-bottom:6px;letter-spacing:0.1em}
+.warn-box p{font-size:13px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">GIT / GITHUB</span>
+  <span class="vol-tag">VOL.05 / 09</span>
+  <h1>履歴操作とコンフリクト編</h1>
+  <div class="subtitle">REWRITING HISTORY &amp; CONFLICTS</div>
+  <p class="lead">
+    Gitの真価は<b>「過去を編集できる」</b>ことにあります。
+    間違えたコミットの取り消し、コミットの結合・分割、避けて通れないコンフリクト解消——
+    本巻でこの<b>「やり直しの作法」</b>を身につければ、Gitに振り回される側を卒業できます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01. git restore — 変更の破棄</a></li>
+    <li><a href="#s02">02. git reset — 履歴の巻き戻し</a></li>
+    <li><a href="#s03">03. git revert — 安全な取消</a></li>
+    <li><a href="#s04">04. git stash — 一時退避</a></li>
+    <li><a href="#s05">05. git rebase — 履歴の整形</a></li>
+    <li><a href="#s06">06. コンフリクトの解消</a></li>
+    <li><a href="#s07">07. git cherry-pick</a></li>
+    <li><a href="#s08">08. reflog — 最後の救済</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>git restore — 変更の破棄</h2>
+    <span class="en">RESTORE</span>
+  </div>
+  <p class="pattern-desc">
+    まだコミットしていない変更を<b>「なかったことに」</b>するコマンド。
+    ワーキングディレクトリの編集を捨てる、ステージから降ろす——どちらも<code class="inline">restore</code>でできます。
+    <b>commit前の取り消しならコレ</b>と覚えればOK。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git restore</span>
+      <span class="tag-desc">★★★ コミット前の取消</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// どこを取り消すか</div>
+        <table class="tbl">
+          <tr><th>コマンド</th><th>効果</th></tr>
+          <tr><td><code>restore file.js</code></td><td>ワーキングの変更を破棄</td></tr>
+          <tr><td><code>restore --staged file.js</code></td><td>ステージから降ろす</td></tr>
+          <tr><td><code>restore .</code></td><td>すべての変更を破棄</td></tr>
+          <tr><td><code>restore -s HEAD~1 file.js</code></td><td>1つ前の状態に戻す</td></tr>
+        </table>
+        <div class="warn-box" style="margin-top:14px">
+          <div class="warn-title">⚠ 危険 —</div>
+          <p><code style="font-family:'JetBrains Mono',monospace">restore</code> で破棄した変更は<b>ほぼ復元不能</b>(ステージに乗せていなければ)。実行前に <code style="font-family:'JetBrains Mono',monospace">git diff</code> で内容確認を。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- ワーキングの変更を破棄 ---</span>
+$ <span class="cmd">git status</span>
+modified: src/app.js
+<span class="comment">  ↑ さっき編集したけどやっぱり戻したい</span>
+
+$ <span class="cmd">git restore</span> src/app.js
+$ <span class="cmd">git status</span>
+nothing to commit, working tree clean
+<span class="comment">  ↑ 編集前に戻った</span>
+
+<span class="comment"># --- ステージから降ろす ---</span>
+$ <span class="cmd">git add</span> src/app.js
+$ <span class="cmd">git status</span>
+Changes to be committed:
+  modified: src/app.js
+<span class="comment">  ↑ 間違えてaddした!</span>
+
+$ <span class="cmd">git restore</span> <span class="flag">--staged</span> src/app.js
+<span class="comment">  ↑ ワーキングの変更は残る</span>
+<span class="comment">    ステージから降ろすだけ</span>
+
+<span class="comment"># --- 全部まとめて取消 ---</span>
+$ <span class="cmd">git restore</span> .
+
+<span class="comment"># --- 過去のコミットからファイル復元 ---</span>
+$ <span class="cmd">git restore</span> <span class="flag">-s</span> HEAD~3 src/app.js
+<span class="comment">         ↑ 3つ前のコミットの状態に</span>
+
+<span class="comment"># 旧式 (今も動く)</span>
+$ <span class="cmd">git checkout</span> -- src/app.js</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p>Git 2.23以降は <code class="inline">checkout -- file</code> でなく <code class="inline">restore</code> が推奨です。「<b>変更の取り消しは restore</b>」と覚えれば、ブランチ切り替えの <code class="inline">switch</code> と用途が分かれて分かりやすい。</p>
+  </div>
+</section>
+
+<section id="s02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>git reset — 履歴の巻き戻し</h2>
+    <span class="en">RESET</span>
+  </div>
+  <p class="pattern-desc">
+    <b>コミット済みの履歴を巻き戻す</b>強力なコマンド。
+    3つのモード(<code class="inline">--soft</code> / <code class="inline">--mixed</code> / <code class="inline">--hard</code>)があり、それぞれ<b>影響範囲が違う</b>のがポイント。
+    使いどころを間違えると変更が吹き飛ぶので、<b>違いの理解必須</b>。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git reset</span>
+      <span class="tag-desc">★★★ 3モードを使い分け</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3モードの影響範囲</div>
+        <table class="tbl">
+          <tr><th>モード</th><th>HEAD</th><th>ステージ</th><th>ワーキング</th></tr>
+          <tr><td><code>--soft</code></td><td>戻す</td><td>そのまま</td><td>そのまま</td></tr>
+          <tr><td><code>--mixed</code><br>(デフォルト)</td><td>戻す</td><td>戻す</td><td>そのまま</td></tr>
+          <tr><td><code>--hard</code></td><td>戻す</td><td>戻す</td><td><b style="color:#b04030">破棄</b></td></tr>
+        </table>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">使い分けの目安</div>
+          <p><b>soft:</b> コミットだけ取り消して再コミットしたい時<br>
+          <b>mixed:</b> ステージも含めて状態を戻したい時(普通)<br>
+          <b>hard:</b> ファイルごと完全に消したい時(<b style="color:#b04030">要注意</b>)</p>
+        </div>
+        <div class="warn-box" style="margin-top:14px">
+          <div class="warn-title">⚠ 厳重注意 —</div>
+          <p><code style="font-family:'JetBrains Mono',monospace">--hard</code> は<b>未コミットの変更を全消去</b>。実行前に必ず <code style="font-family:'JetBrains Mono',monospace">git status</code> で確認!</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- soft: コミットだけ取消 ---</span>
+$ <span class="cmd">git reset</span> <span class="flag">--soft</span> HEAD~1
+
+<span class="comment"># 直前のコミットがほどけて</span>
+<span class="comment"># 変更はステージに残る (再コミット可)</span>
+
+<span class="comment"># --- mixed (デフォルト) ---</span>
+$ <span class="cmd">git reset</span> HEAD~1
+
+<span class="comment"># コミット取消 + ステージ降ろす</span>
+<span class="comment"># 変更はワーキングに残る</span>
+
+<span class="comment"># --- hard: 完全削除 (危険) ---</span>
+$ <span class="cmd">git reset</span> <span class="flag">--hard</span> HEAD~1
+
+<span class="comment"># 直前のコミット + 変更全部消える</span>
+<span class="comment"># 戻すなら git reflog (本巻 08)</span>
+
+<span class="comment"># --- 特定のコミットまで戻す ---</span>
+$ <span class="cmd">git reset</span> <span class="flag">--hard</span> <span class="num">a3f2c1d</span>
+
+<span class="comment"># --- pushしたコミットを戻したら? ---</span>
+
+<span class="comment">resetは履歴を改変するため、</span>
+<span class="comment">既にpush済みなら push --force が必要。</span>
+<span class="comment">→ チーム開発では事故の元。</span>
+<span class="comment">→ そんな時は revert (本巻 03) を使う</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">鉄則 —</div>
+    <p><code class="inline">git reset --hard</code> を打つ前に<b>「3秒待ってstatus確認」</b>。これだけで多くの事故が防げます。やってしまっても <code class="inline">git reflog</code>(本巻08)で復活できることが多いので、慌てずに。</p>
+  </div>
+</section>
+
+<section id="s03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>git revert — 安全な取消</h2>
+    <span class="en">REVERT</span>
+  </div>
+  <p class="pattern-desc">
+    <b>「過去のコミットを打ち消す新しいコミット」</b>を作るコマンド。
+    履歴を改変しないので、<b>共有済み(push済み)のコミットを取り消す時</b>はこれ一択。
+    resetが「過去を消す」なら、revertは「<b>過去にダメ出ししただけ</b>」。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git revert</span>
+      <span class="tag-desc">★★★ push済みの取消</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// reset vs revert</div>
+        <div class="diagram">[ reset の場合 ]
+●───●───●───●
+              ↑ 最新
+$ git reset --hard HEAD~1
+●───●───●        (1つ消える)
+
+[ revert の場合 ]
+●───●───●───●
+              ↑ 最新
+$ git revert HEAD
+●───●───●───●───●'
+                  ↑ "取消コミット"が追加</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">どっちを使う?</div>
+          <p><b>個人のローカル</b>(未push)→ reset でOK<br>
+          <b>共有済み</b>(pushした)→ <b style="color:#3a7050">必ず revert</b><br>
+          <b>mainブランチ</b>→ 例外なく revert</p>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">POINT —</div>
+          <p>revertは<b>履歴を書き換えない</b>ので、他人とのコンフリクトを起こさない。チーム開発の救世主。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- 直前のコミットを取消 ---</span>
+$ <span class="cmd">git revert</span> HEAD
+
+<span class="comment"># コミットメッセージ編集画面が開く</span>
+Revert <span class="str">"feat: ログイン機能追加"</span>
+
+This reverts commit <span class="num">a3f2c1d8...</span>
+
+<span class="comment"># 保存して閉じると新コミット作成</span>
+[main <span class="num">b7e5a92</span>] Revert "feat: ..."
+
+<span class="comment"># --- 特定のコミットを取消 ---</span>
+$ <span class="cmd">git revert</span> <span class="num">a3f2c1d</span>
+
+<span class="comment"># --- 複数まとめて取消 ---</span>
+$ <span class="cmd">git revert</span> <span class="num">a3f2c1d..b7e5a92</span>
+
+<span class="comment"># --- マージコミットを取消 ---</span>
+$ <span class="cmd">git revert</span> <span class="flag">-m</span> <span class="num">1</span> &lt;merge-commit&gt;
+<span class="comment">       ↑ -m 1 = mainブランチ側を残す</span>
+
+<span class="comment"># --- コミットなしで変更だけ取込 ---</span>
+$ <span class="cmd">git revert</span> <span class="flag">-n</span> &lt;commit&gt;
+<span class="comment">  まとめて1コミットにしたい時</span>
+
+<span class="comment"># --- 取消の取消 ---</span>
+$ <span class="cmd">git revert</span> &lt;revert-commit&gt;
+<span class="comment">  revertコミット自体をrevertすれば</span>
+<span class="comment">  元の変更が復活</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">現場で —</div>
+    <p>本番障害を起こしたコミットの巻き戻しは<b>必ずrevert</b>。「reset --hardしてpush --force」は、<b>他のメンバーのローカルを壊す</b>世紀の事故になります。<b>共有済みのものは revert</b>、これは鉄則中の鉄則。</p>
+  </div>
+</section>
+
+<section id="s04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>git stash — 一時退避</h2>
+    <span class="en">STASH</span>
+  </div>
+  <p class="pattern-desc">
+    作業途中で<b>「ちょっとだけ別ブランチに行きたい」</b>時に使う一時退避コマンド。
+    変更を<b>引き出しにしまっておく</b>イメージ。後で取り出せます。
+    緊急のバグ対応で頻出する<b>超便利機能</b>です。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git stash</span>
+      <span class="tag-desc">★★★ 作業の一時退避</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある使用シーン</div>
+        <div class="box">
+          <div class="box-title">シーン: 緊急対応</div>
+          <p>feature/x で開発中 → 本番障害発生 → mainで緊急修正したい → でもまだコミットできる状態じゃない → stashで退避!</p>
+        </div>
+        <div class="diagram" style="margin-top:14px">[ 開発中 ]
+feature/x で編集中
+src/app.js (未コミット変更あり)
+
+  ↓ git stash
+
+[ 退避完了 ]
+ワーキング: クリーンな状態
+stash@{0}: 退避された変更
+
+  ↓ 別作業 (緊急修正等)
+
+  ↓ feature/x に戻ってきた
+  ↓ git stash pop
+
+[ 復元 ]
+src/app.js (変更が戻った)</div>
+      </div>
+      <div class="code"><span class="comment"># --- 退避 ---</span>
+$ <span class="cmd">git stash</span>
+Saved working directory and index
+state WIP on feature/x: <span class="num">a3f2c1d</span> ...
+
+<span class="comment"># 名前付きで退避 (分かりやすい)</span>
+$ <span class="cmd">git stash</span> push <span class="flag">-m</span> <span class="str">"login form WIP"</span>
+
+<span class="comment"># --- 退避一覧 ---</span>
+$ <span class="cmd">git stash</span> list
+stash@{0}: On feature/x: login form WIP
+stash@{1}: WIP on main: a3f2c1d ...
+
+<span class="comment"># --- 取り出す ---</span>
+$ <span class="cmd">git stash</span> pop
+<span class="comment">  ↑ 最新を取り出して、stashから消す</span>
+
+<span class="comment"># 特定のを指定して取り出し</span>
+$ <span class="cmd">git stash</span> pop stash@{1}
+
+<span class="comment"># 取り出すけどstashにも残す</span>
+$ <span class="cmd">git stash</span> apply
+
+<span class="comment"># --- 中身を確認 ---</span>
+$ <span class="cmd">git stash</span> show stash@{0}
+$ <span class="cmd">git stash</span> show <span class="flag">-p</span> stash@{0}
+<span class="comment">                ↑ 差分も表示</span>
+
+<span class="comment"># --- 不要なstashを削除 ---</span>
+$ <span class="cmd">git stash</span> drop stash@{0}
+$ <span class="cmd">git stash</span> clear     <span class="comment"># 全削除</span>
+
+<span class="comment"># --- 新規ファイルも含める ---</span>
+$ <span class="cmd">git stash</span> <span class="flag">-u</span>
+<span class="comment">         ↑ Untrackedも退避対象に</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">あるある —</div>
+    <p>stashにため込んで<b>「あれ、何を退避したっけ?」</b>状態になりがち。これを防ぐには <code class="inline">git stash push -m "用途"</code> で<b>必ず名前を付ける</b>。長期間放置するくらいなら、いったんコミットしておくのも手です。</p>
+  </div>
+</section>
+
+<section id="s05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>git rebase — 履歴の整形</h2>
+    <span class="en">REBASE</span>
+  </div>
+  <p class="pattern-desc">
+    分岐したブランチを<b>「最新のmainからやり直したことにする」</b>強力なコマンド。
+    マージとの違いは<b>「履歴が一直線になる」</b>こと。
+    対話モード(<code class="inline">-i</code>)を使えば、コミットの並べ替え・結合・編集まで自由自在。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git rebase</span>
+      <span class="tag-desc">★★★ 履歴を一直線に</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// merge vs rebase</div>
+        <div class="diagram">[ merge の場合 ]
+   ●───●───●───●  (main)
+        \       \
+         ●───●───●'  (merge commit)
+
+  → 分岐が履歴に残る
+
+[ rebase の場合 ]
+   ●───●───●───●  (main)
+                \
+                 ●'──●'  (再生成)
+
+  → 履歴が一直線に</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">rebase のお約束</div>
+          <p><b>◯ 個人ブランチ</b>では自由に使う<br>
+          <b>✗ 共有ブランチ</b>でやると<b style="color:#b04030">大事故</b><br>
+          → 「<b>自分しか触らないブランチ</b>」が原則</p>
+        </div>
+        <div class="warn-box" style="margin-top:14px">
+          <div class="warn-title">⚠ 黄金律 —</div>
+          <p><b>push済みのコミットを rebase してはいけない</b>。他人のローカルとの整合性が崩れます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- 基本: mainの最新を取り込む ---</span>
+$ <span class="cmd">git switch</span> <span class="branch">feature/x</span>
+$ <span class="cmd">git rebase</span> main
+
+First, rewinding head to replay your work
+on top of it...
+Applying: feat: ログイン追加
+Applying: fix: バリデーション
+
+<span class="comment"># 履歴が main の先に並び直る</span>
+
+<span class="comment"># --- 対話モード (神機能) ---</span>
+$ <span class="cmd">git rebase</span> <span class="flag">-i</span> HEAD~5
+<span class="comment">                  ↑ 直近5コミットを対象</span>
+
+<span class="comment"># エディタが開く:</span>
+pick <span class="num">a3f2c1d</span> feat: ログイン追加
+pick <span class="num">9b8e4a2</span> fix: typo修正
+pick <span class="num">5d6f3a8</span> fix: typo修正2
+pick <span class="num">2c1b0e9</span> feat: ログアウト追加
+pick <span class="num">b7e5a92</span> typo修正
+
+<span class="comment"># 操作キーワード:</span>
+<span class="comment">  pick   そのまま採用</span>
+<span class="comment">  reword メッセージ書き換え</span>
+<span class="comment">  edit   コミット内容を修正</span>
+<span class="comment">  squash 直前のコミットに結合</span>
+<span class="comment">  fixup  squashと同じ(メッセージ捨)</span>
+<span class="comment">  drop   削除</span>
+
+<span class="comment"># 例: typo修正コミットをまとめる</span>
+pick <span class="num">a3f2c1d</span> feat: ログイン追加
+fixup <span class="num">9b8e4a2</span>
+fixup <span class="num">5d6f3a8</span>
+pick <span class="num">2c1b0e9</span> feat: ログアウト追加
+fixup <span class="num">b7e5a92</span>
+
+<span class="comment"># --- 途中で中止 ---</span>
+$ <span class="cmd">git rebase</span> <span class="flag">--abort</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">裏技 —</div>
+    <p>PR出す前に <code class="inline">git rebase -i</code> でコミットを綺麗に整形するのが<b>プロのお作法</b>。「typo修正」「ちょっと修正」みたいなコミットを <code class="inline">fixup</code> でまとめて、レビュアーに読みやすい履歴を渡す。<b>これができると評価が一段上がります</b>。</p>
+  </div>
+</section>
+
+<section id="s06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>コンフリクトの解消</h2>
+    <span class="en">RESOLVING CONFLICTS</span>
+  </div>
+  <p class="pattern-desc">
+    <b>同じファイルの同じ行を両方で編集</b>すると発生するのがコンフリクト。
+    Gitが「どっちが正解か判断できないので、人間が決めて」と頼ってくる状態です。
+    <b>慌てる必要なし</b>、手順を踏めば必ず解決できます。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">conflict resolution</span>
+      <span class="tag-desc">★★★ 避けられぬ通過儀礼</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// コンフリクトマーカー</div>
+        <div class="diagram">function greet() {
+<span class="conflict">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>
+  return "Hello, World";
+<span class="conflict">=======</span>
+  return "Hi, World";
+<span class="conflict">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/x</span>
+}
+
+↑ HEAD側 (現在のブランチ)
+↓ 取り込み元 (feature/x側)
+
+これを人間が判断して、
+正しい形に書き換える</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">解消の流れ</div>
+          <p><span class="step">①</span> <code>git status</code> で衝突ファイルを確認<br>
+          <span class="step">②</span> エディタで開く<br>
+          <span class="step">③</span> <code>&lt;&lt;&lt;</code> <code>===</code> <code>&gt;&gt;&gt;</code> マーカーを見つける<br>
+          <span class="step">④</span> 正しい形に書き換え(マーカーも消す)<br>
+          <span class="step">⑤</span> <code>git add</code> で「解決済み」を宣言<br>
+          <span class="step">⑥</span> <code>git commit</code> または <code>rebase --continue</code></p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- マージ時にコンフリクト発生 ---</span>
+$ <span class="cmd">git merge</span> <span class="branch">feature/x</span>
+Auto-merging src/app.js
+<span class="removed">CONFLICT</span> (content): Merge conflict in src/app.js
+Automatic merge failed; fix conflicts
+and then commit the result.
+
+<span class="comment"># --- どこが衝突したか確認 ---</span>
+$ <span class="cmd">git status</span>
+Unmerged paths:
+  (use "git add ..." to mark resolution)
+        both modified:   src/app.js
+
+<span class="comment"># --- ファイルを開いて修正 ---</span>
+<span class="comment"># &lt;&lt;&lt; === &gt;&gt;&gt; マーカーを消し、</span>
+<span class="comment"># 正しい内容に整える</span>
+
+<span class="comment"># --- 解決を宣言 ---</span>
+$ <span class="cmd">git add</span> src/app.js
+$ <span class="cmd">git commit</span>
+<span class="comment"># マージコミットメッセージが自動生成</span>
+
+<span class="comment"># --- rebase中なら ---</span>
+$ <span class="cmd">git add</span> src/app.js
+$ <span class="cmd">git rebase</span> <span class="flag">--continue</span>
+
+<span class="comment"># --- マージを諦めて中止 ---</span>
+$ <span class="cmd">git merge</span> <span class="flag">--abort</span>
+
+<span class="comment"># --- 便利: マージツール ---</span>
+$ <span class="cmd">git mergetool</span>
+<span class="comment"># VS Code、IntelliJ等の統合可</span>
+
+<span class="comment"># 片側だけを採用</span>
+$ <span class="cmd">git checkout</span> <span class="flag">--ours</span>   file
+$ <span class="cmd">git checkout</span> <span class="flag">--theirs</span> file</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">鉄則 —</div>
+    <p>コンフリクトを見て<b>パニックにならない</b>。手順は決まっています。①statusで確認 → ②マーカーを見つけて修正 → ③addでcontinue。それだけ。<b>「コンフリクトは敵じゃない、Gitが助けを求めているだけ」</b>と思えば気が楽です。</p>
+  </div>
+</section>
+
+<section id="s07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>git cherry-pick — 特定コミットの取込</h2>
+    <span class="en">CHERRY-PICK</span>
+  </div>
+  <p class="pattern-desc">
+    別のブランチから<b>「特定のコミット1個だけ」</b>を今のブランチに取り込むコマンド。
+    「あのバグ修正だけ先に本番ブランチに当てたい」みたいな時の<b>救世主</b>。
+    名前の通り、<b>サクランボを摘むように</b>美味しい部分だけ持ってきます。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git cherry-pick</span>
+      <span class="tag-desc">★★ ピンポイント取込</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動作イメージ</div>
+        <div class="diagram">[ feature/x ]
+●───A───B───C───D
+     ↑
+     bug fix
+     これだけ main に欲しい!
+
+[ main ]
+●───●───●───●
+
+  $ git switch main
+  $ git cherry-pick A
+
+[ 取込後 ]
+●───●───●───●───A'
+                 ↑ コピーされたコミット</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">よくある使い道</div>
+          <p>① 本番ブランチに緊急修正だけ当てたい<br>
+          ② 他人のPRから1コミットだけ拝借<br>
+          ③ 間違って消したコミットの復活</p>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">注意 —</div>
+          <p>cherry-pickは<b>「新しいコミット」</b>として作られるため、ハッシュは変わります。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- 1コミットを取込 ---</span>
+$ <span class="cmd">git switch</span> <span class="branch">main</span>
+$ <span class="cmd">git cherry-pick</span> <span class="num">a3f2c1d</span>
+
+[main <span class="num">b7e5a92</span>] fix: 認証バグ修正
+ Date: Wed May 13 10:23:45 2026
+ 1 file changed, 3 insertions(+)
+
+<span class="comment"># --- 複数コミットを取込 ---</span>
+$ <span class="cmd">git cherry-pick</span> <span class="num">a3f2c1d</span> <span class="num">9b8e4a2</span>
+
+<span class="comment"># 範囲指定 (..は除く、^..は含む)</span>
+$ <span class="cmd">git cherry-pick</span> <span class="num">a3f2c1d^..9b8e4a2</span>
+
+<span class="comment"># --- コミットせず変更のみ取込 ---</span>
+$ <span class="cmd">git cherry-pick</span> <span class="flag">-n</span> <span class="num">a3f2c1d</span>
+<span class="comment">                ↑ ステージに乗るだけ</span>
+<span class="comment">  自分でメッセージ書いて commit</span>
+
+<span class="comment"># --- コンフリクト発生時 ---</span>
+$ <span class="cmd">git cherry-pick</span> <span class="num">a3f2c1d</span>
+CONFLICT (content): ...
+
+$ <span class="cmd">git status</span>          <span class="comment"># 確認</span>
+<span class="comment"># 解消 → add</span>
+$ <span class="cmd">git cherry-pick</span> <span class="flag">--continue</span>
+
+<span class="comment"># 諦める</span>
+$ <span class="cmd">git cherry-pick</span> <span class="flag">--abort</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">現場で —</div>
+    <p>cherry-pickは便利ですが<b>多用は禁物</b>。「同じ修正が複数ブランチにある」状態は<b>履歴が辿りにくくなる</b>原因です。本来はマージで解決するのが基本、cherry-pickは「どうしてもこの1個だけ」の最終手段と心得ましょう。</p>
+  </div>
+</section>
+
+<section id="s08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>reflog — 最後の救済</h2>
+    <span class="en">REFLOG</span>
+  </div>
+  <p class="pattern-desc">
+    <code class="inline">git reflog</code> はあなたの<b>「HEAD移動の全履歴」</b>。
+    reset --hard で消したコミットも、間違ってrebaseで失ったコミットも、<b>ここから復活できることが多い</b>。
+    <b>「Gitに最終救済策あり」</b>と覚えておけば、いざという時に冷静でいられます。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git reflog</span>
+      <span class="tag-desc">★★★ Gitの命綱</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// reflogの中身</div>
+        <div class="diagram">$ git reflog
+
+a3f2c1d HEAD@{0}: commit: feat: 追加
+9b8e4a2 HEAD@{1}: reset: --hard HEAD~1
+5d6f3a8 HEAD@{2}: commit: fix: 修正  ← これ
+2c1b0e9 HEAD@{3}: checkout: from main
+...
+
+ここから HEAD@{2} を救出可能!
+$ git reset --hard 5d6f3a8</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">reflogが救うもの</div>
+          <p>◯ <code>reset --hard</code> で消えたコミット<br>
+          ◯ rebase で書き換える前のコミット<br>
+          ◯ ブランチを削除してしまった<br>
+          ◯ amendで上書きされた古いコミット<br>
+          ✗ <b>未コミットの変更</b>(これだけは救えない!)</p>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">保持期間 —</div>
+          <p>reflog は<b>デフォルト90日</b>残る。それまでなら救出可能。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- reflog を確認 ---</span>
+$ <span class="cmd">git reflog</span>
+<span class="num">a3f2c1d</span> HEAD@{0}: commit: feat: 追加
+<span class="num">9b8e4a2</span> HEAD@{1}: reset: --hard HEAD~1
+<span class="num">5d6f3a8</span> HEAD@{2}: commit: fix: 修正
+<span class="num">2c1b0e9</span> HEAD@{3}: checkout: ...
+
+<span class="comment"># 「あれ?5d6f3a8 を消しちゃった!」</span>
+
+<span class="comment"># --- 救出: コミットを取り戻す ---</span>
+$ <span class="cmd">git reset</span> <span class="flag">--hard</span> <span class="num">5d6f3a8</span>
+HEAD is now at <span class="num">5d6f3a8</span> fix: 修正
+
+<span class="comment"># または別ブランチに復元</span>
+$ <span class="cmd">git branch</span> recovered <span class="num">5d6f3a8</span>
+
+<span class="comment"># --- 特定ブランチのreflog ---</span>
+$ <span class="cmd">git reflog</span> show main
+$ <span class="cmd">git reflog</span> show <span class="branch">feature/x</span>
+
+<span class="comment"># --- やった、復活できた! ---</span>
+
+<span class="comment"># --- reflog の覚え方 ---</span>
+
+HEAD@{0}  最新
+HEAD@{1}  1つ前
+HEAD@{2}  2つ前
+HEAD@{n}  n操作前
+
+<span class="comment"># 時刻指定もできる</span>
+$ <span class="cmd">git reflog</span> <span class="str">"HEAD@{1 hour ago}"</span>
+$ <span class="cmd">git reflog</span> <span class="str">"HEAD@{yesterday}"</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">最後に —</div>
+    <p>Git歴の長い人は<b>「reflog があるから安心して壊せる」</b>と言います。失敗を恐れずに <code class="inline">reset --hard</code> や <code class="inline">rebase</code> を使えるのは、この命綱があるから。<b>reflog は Git からの最大の贈り物</b>です。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px">
+  <div class="tip-title">NEXT STEP —</div>
+  <p>第5巻でGitの<b>「過去を編集する」</b>強力な技を一通り押さえました。コンフリクトもreflogも、もう怖くないはずです。<br>
+  Vol.6「<b>GitHub実践編</b>」では舞台を<b>GitHubのWeb画面</b>に移します。Pull Request、Issue、コードレビュー——<b>チーム開発の本番</b>が始まります。コマンドだけでは知れない、GitHub特有の「お作法」を身につけましょう。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <div>GIT / GITHUB REFERENCE — VOL.05</div>
+  <div class="right">REWRITING HISTORY &amp; CONFLICTS / 履歴操作とコンフリクト編</div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕GitHub版 Vol.6 コミット規約とブランチ保護</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2f38;
+  --paper:#f0ede4;
+  --paper-2:#e2ddc8;
+  --accent:#c95444;
+  --accent-2:#5a6270;
+  --accent-3:#2da44e;
+  --muted:#6a7080;
+  --line:#cac4b2;
+  --code-bg:#1c2026;
+  --code-text:#e8e4dc;
+  --panel-bg:#faf5e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"⎇";position:absolute;right:-10px;top:-30px;font-size:300px;color:var(--accent);opacity:0.17;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-2);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.prompt{color:#7eb87e}
+.gh-out{color:#a8b8c8}
+.feat{color:#7ee787}
+.fix{color:#ff7b72}
+.docs{color:#79c0ff}
+.key{background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(201,84,68,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-2);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff;font-size:12.5px}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-2);font-family:'JetBrains Mono',monospace}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.gh-mock{background:#0d1117;color:#c9d1d9;border:1px solid #2a313a;border-radius:6px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.75;margin:8px 0}
+.gh-mock .gh-bar{color:#7d8590;border-bottom:1px solid #2a313a;padding-bottom:6px;margin-bottom:8px;font-size:11px}
+.gh-mock .gh-lock{color:#e3b341}
+.gh-mock .gh-check{color:#3fb950}
+.gh-mock .gh-x{color:#f85149}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.GH6</span>
+    <span class="kind-tag">GitHub版 ── CONVENTION</span>
+    <span class="rdt-tag">QUALITY GATE</span>
+  </div>
+  <h1>コミット規約と<br>ブランチ保護</h1>
+  <div class="subtitle">GH.06 ── CONVENTIONAL COMMITS &amp; BRANCH PROTECTION</div>
+  <p class="lead">これまで何となく使ってきた<b>コミットメッセージの型（feat/fix/docs）</b>を、正式な規約<b>Conventional Commits</b>として整理します。さらに <b>main ブランチを保護</b>し、「<b>直接pushを禁止、PR必須</b>」のルールを設定。<b>品質のゲート</b>を仕組みで作ります。チーム開発・将来のCI連携の土台です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 GitHub版の赤線対策</div>
+    <p>Vol.GH6で詰まる場面：ブランチ保護を設定したら<b>自分も main に直接pushできなくなる</b>（これは正常）、保護ルールの設定場所が分からない（Settings → Branches）、commitlint 等のツールは任意。<b>Section 07 で対処</b>。GitHub UI は更新されるので<b>名称が違っても役割で読み替え</b>を。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 この巻のミッション</a></li>
+    <li><a href="#s02">02 Conventional Commits</a></li>
+    <li><a href="#s03">03 type の使い分け</a></li>
+    <li><a href="#s04">04 良いコミットメッセージ</a></li>
+    <li><a href="#s05">05 ブランチ保護とは</a></li>
+    <li><a href="#s06">06 main を保護する</a></li>
+    <li><a href="#s07">07 ハマりどころ＋NEXT</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>この巻のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">Vol.GH6 のゴールは<b>「品質を仕組みで守る」</b>こと。① コミットメッセージを<b>規約化</b>して履歴を読みやすく、② main を<b>保護</b>して「壊れたコードが直接入る」のを防ぐ。<b>人の注意力ではなく、ルールと仕組み</b>で品質を保ちます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">「気をつける」から「仕組みで防ぐ」へ</span><span class="tag-desc">品質のゲート</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの仕組み</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">仕組み1</span>
+            <div class="name">コミット規約</div>
+            <div class="desc"><b>feat/fix/docs</b> の型で統一。履歴が読みやすく、自動分類も可能に。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">仕組み2</span>
+            <div class="name">ブランチ保護</div>
+            <div class="desc">main への<b>直接pushを禁止</b>。PR・レビュー・テスト通過を必須に。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// なぜ「仕組み」が要るか</div>
+        <p>「気をつけてコミットする」「壊れたコードはpushしない」は<b>人の注意力頼み</b>。疲れていたり急いでいると破綻する。<b>ルールを仕組みに落とす</b>と、注意力に関係なく守られます。</p>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH6 で作る品質ゲート</span>
+<span class="comment">// ─── これまで（Vol.GH1-5）───</span>
+コミット：何となく feat: / fix: を使用
+main：直接 push できてしまう状態
+  ↓
+<span class="comment">// ─── Vol.GH6 で整備 ───</span>
+
+① コミット規約（Conventional Commits）
+   feat / fix / docs / test / refactor...
+   → 履歴が構造化される
+   → 「何のコミットか」が型で分かる ★
+
+② ブランチ保護
+   main は直接 push 禁止
+   PR 経由のみ
+   （将来）テスト通過を必須に
+   → 壊れたコードが main に入らない ★★★
+
+
+<span class="comment">// ─── 効果 ───</span>
+<span class="comment">// 履歴：feat だけ並べれば「追加機能」一覧</span>
+<span class="comment">// main：常に「動く・レビュー済み」状態</span>
+<span class="comment">// → 個人開発でも品質が保てる</span>
+<span class="comment">// → チーム開発・CI連携の土台に</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 個人開発でも「仕組み化」する意味</div>
+    <p>「1人なのに規約や保護は大げさ」と思うかもですが、<b>1人だからこそ仕組みが効く</b>。レビューしてくれる他人がいないので、<b>ルールと仕組みが代わりの番人</b>になる。さらに<b>業務に入ったときに身についている</b>のが大きい。Conventional Commits もブランチ保護も<b>現場の標準</b>。今のうちに習慣化しておきましょう。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>Conventional Commits</h2><span class="en">CONVENTIONAL COMMITS</span></div>
+  <p class="pattern-desc"><b>Conventional Commits</b> は、コミットメッセージの<b>業界標準フォーマット</b>。<code>type(scope): 要約</code> の形で書きます。本シリーズでこれまで使ってきた <code>feat(memo): ...</code> が、実はこの規約でした。正式に整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Conventional Commits の構造</span><span class="tag-desc">type(scope): 要約</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 基本構造</div>
+        <p><code>type(scope): 要約</code> の3要素：</p>
+        <ul>
+          <li><b>type</b>：変更の種類（feat/fix/docs等）</li>
+          <li><b>scope</b>：変更の範囲（memo/category等・任意）</li>
+          <li><b>要約</b>：何をしたか（簡潔に）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 本文とフッター</div>
+        <ul>
+          <li><b>本文</b>：詳細（なぜ・どう）</li>
+          <li><b>フッター</b>：<code>Refs #1</code> <code>Closes #1</code>（トレーサビリティ）</li>
+        </ul>
+        <p style="margin-top:8px">本シリーズで使ってきた形そのもの。<b>無意識に規約に従っていた</b>のです。</p>
+      </div>
+      <div class="code"><span class="code-head">// Conventional Commits の形</span>
+<span class="comment">// ─── 基本形 ───</span>
+<span class="feat">type</span>(scope): 要約
+
+本文（なぜ・どうしたか）
+
+フッター（Refs #1 など）
+
+
+<span class="comment">// ─── 本シリーズの実例 ───</span>
+<span class="feat">feat</span>(memo): メモ作成機能を追加
+
+US-001 を実装。
+- @NotBlank/@Size でバリデーション
+- 単体テスト4件（受入条件AC1-4）
+
+Refs #1
+└─────────────────────────┘
+ ↑ これがConventional Commits ★★★
+
+
+<span class="comment">// ─── 各部の意味 ───</span>
+<span class="feat">feat</span>          → 変更の種類（新機能）
+(<span class="fix">memo</span>)        → 範囲（メモ機能）
+メモ作成...    → 要約（50字以内が目安）
+
+本文          → 詳細（72字で改行が慣習）
+
+Refs #1       → Issue 紐付け（Vol.GH2で学習）
+
+
+<span class="comment">// ─── なぜこの形が良いか ───</span>
+<span class="comment">// ・type で変更の種類が一目</span>
+<span class="comment">// ・履歴を type で分類・集計できる</span>
+<span class="comment">// ・自動でCHANGELOG生成も可能</span>
+<span class="comment">// ・チームで統一感が出る ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 本シリーズは最初から規約に従っていた</div>
+    <p>振り返ると、本シリーズの GitHub版は Vol.GH1 から <code>chore: プロジェクト初期化</code>、<code>feat(memo): ...</code>、<code>test: ...</code>、<code>docs: README作成</code> と<b>すべて Conventional Commits</b> で書いてきました。Vol.GH6 で「実はこれが業界標準の規約だった」と種明かし。<b>良い習慣を自然に身につけていた</b>のです。あとは type の使い分けを正確にするだけです。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>type の使い分け</h2><span class="en">COMMIT TYPES</span></div>
+  <p class="pattern-desc">Conventional Commits の<b>type</b>は数種類。<code>feat / fix / docs / test / refactor / chore</code> など。それぞれ<b>「どんな変更か」</b>を表します。正しく使い分けると、履歴が<b>「変更の種類別」</b>に読めるようになります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">主要な type 一覧</span><span class="tag-desc">これだけ覚えれば十分</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <table class="compare-tbl">
+          <thead><tr><th>type</th><th>意味</th><th>例</th></tr></thead>
+          <tbody>
+            <tr><td><code>feat</code></td><td>新機能</td><td>メモ作成</td></tr>
+            <tr><td><code>fix</code></td><td>バグ修正</td><td>空タイトル不具合</td></tr>
+            <tr><td><code>docs</code></td><td>ドキュメント</td><td>README更新</td></tr>
+            <tr><td><code>test</code></td><td>テスト</td><td>テスト追加</td></tr>
+            <tr><td><code>refactor</code></td><td>リファクタ</td><td>挙動変えず整理</td></tr>
+            <tr><td><code>chore</code></td><td>雑務</td><td>設定・依存更新</td></tr>
+            <tr><td><code>style</code></td><td>整形</td><td>インデント等</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 迷いやすい区別</div>
+        <ul>
+          <li><b>feat vs fix</b>：新しく作る vs 壊れたのを直す</li>
+          <li><b>refactor</b>：挙動を変えずコードを整える（機能追加・修正でない）</li>
+          <li><b>chore</b>：ビルド設定・依存関係など雑務</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// type 別のコミット例</span>
+<span class="feat">feat</span>(search): キーワード検索を追加
+  <span class="comment">// → 新機能（US-004・本編Vol.7）</span>
+
+<span class="fix">fix</span>(memo): 空タイトルで500エラーを修正
+  <span class="comment">// → バグ修正</span>
+
+<span class="docs">docs</span>: READMEにセットアップ手順を追加
+  <span class="comment">// → ドキュメント（GitHub版Vol.5）</span>
+
+test: タグ付けのロールバックテスト追加
+  <span class="comment">// → テスト（本編Vol.6）</span>
+
+refactor(service): 検索ロジックを整理
+  <span class="comment">// → 挙動は変えず、コードを綺麗に</span>
+
+chore: H2をテスト依存に追加
+  <span class="comment">// → 設定・依存関係（本編Vol.3）</span>
+
+
+<span class="comment">// ─── type で履歴を絞り込む ───</span>
+<span class="prompt">$</span> <span class="kw">git log --oneline --grep</span>=<span class="str">"^feat"</span>
+<span class="gh-out">a1b2 feat(search): キーワード検索
+3c4d feat(memo): タグ付け
+5e6f feat(memo): メモ作成</span>
+  <span class="comment">// → 追加機能だけ一覧（CHANGELOG的）★★★</span>
+
+<span class="prompt">$</span> <span class="kw">git log --oneline --grep</span>=<span class="str">"^fix"</span>
+  <span class="comment">// → バグ修正だけ一覧</span>
+
+
+<span class="comment">// ─── 迷ったときの判断 ───</span>
+<span class="comment">// 「機能が増えた？」→ feat</span>
+<span class="comment">// 「バグを直した？」→ fix</span>
+<span class="comment">// 「動きは同じでコード整理？」→ refactor</span>
+<span class="comment">// 「ドキュメントだけ？」→ docs</span>
+<span class="comment">// 「テストだけ？」→ test</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — refactor は「挙動を変えない」が定義</div>
+    <p>初学者が迷いやすいのが <b>refactor</b>。これは<b>「機能を変えず、コードを綺麗にする」</b>変更専用。「リファクタついでにバグも直した」は<b>fix と refactor を分ける</b>べき。なぜなら<b>「refactor なのに挙動が変わった＝予期せぬ影響」</b>を防ぐため。refactor のコミットは<b>テストが通ったまま</b>であることが保証になります（本シリーズのテストが効く）。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>良いコミットメッセージ</h2><span class="en">GOOD COMMIT MESSAGE</span></div>
+  <p class="pattern-desc">type だけでなく、<b>要約の書き方</b>も重要。「何をしたか」を<b>簡潔・具体的</b>に。良いメッセージは<b>未来の自分とチームへの説明</b>です。RDT版では<b>要求(US)との対応</b>も書きます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">良い要約・悪い要約</span><span class="tag-desc">具体的に・命令形で</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 要約のルール</div>
+        <ul>
+          <li><b>50字以内</b>を目安</li>
+          <li><b>「何をしたか」を具体的に</b></li>
+          <li>命令形・現在形（「追加する」より「追加」）</li>
+          <li>句点で終わらない</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 本文に書くこと</div>
+        <ul>
+          <li><b>なぜ</b>その変更をしたか（背景）</li>
+          <li><b>どう</b>変えたか（要点）</li>
+          <li><b>US/受入条件</b>との対応（RDT版）</li>
+          <li><code>Refs #1</code> でトレーサビリティ</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 良い例・悪い例</span>
+<span class="comment">// ─── 悪い要約 ───</span>
+<span class="fix">✗</span> fix: 修正
+<span class="fix">✗</span> feat: いろいろ追加
+<span class="fix">✗</span> update
+<span class="fix">✗</span> wip
+<span class="comment">// → 何をしたか分からない ★</span>
+<span class="comment">// → 後で履歴を見ても役に立たない</span>
+
+
+<span class="comment">// ─── 良い要約 ───</span>
+<span class="feat">✓</span> feat(search): キーワード検索を追加
+<span class="feat">✓</span> fix(memo): 空タイトルで500エラーを修正
+<span class="feat">✓</span> test(category): 重複名のテストを追加
+<span class="comment">// → 何をしたか一目 ★★★</span>
+
+
+<span class="comment">// ─── RDT版の理想形（本文付き）───</span>
+<span class="feat">feat</span>(search): キーワード検索を実装
+
+US-004 の前半を実装。
+- title/content のLIKE検索
+- 動的SQL（&lt;if&gt;&lt;where&gt;）で
+  条件の有無に対応
+- 全て #{} で安全に（SQLi対策）
+- 結合テスト3件追加
+
+Refs #4
+└──────────────────────┘
+ ↑ なぜ・どう・US対応・紐付け ★★★
+
+
+<span class="comment">// ─── 「3か月後の自分」テスト ───</span>
+<span class="comment">// このメッセージを3か月後に読んで</span>
+<span class="comment">// 「何をしたか」分かるか？</span>
+<span class="comment">// 分からなければ書き直す</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「なぜ」は本文に、「何を」は要約に</div>
+    <p>コミットメッセージの黄金律：<b>要約に「何を」、本文に「なぜ」</b>。コードの diff を見れば「どう変えたか（How）」は分かるので、<b>コミットメッセージには「なぜ変えたか（Why）」</b>を残すのが最も価値が高い。「空タイトルで500エラーが出ていたため修正」のように<b>背景</b>を書く。これは要求工学（別冊S1）やドキュメント（GitHub版Vol.5）の WHY 重視と一貫しています。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>ブランチ保護とは</h2><span class="en">BRANCH PROTECTION</span></div>
+  <p class="pattern-desc"><b>ブランチ保護</b>は、<b>main などの重要ブランチに「ルール」を課す</b>機能。「直接pushを禁止」「PR必須」「テスト通過必須」などを設定。<b>壊れたコードが main に入るのを仕組みで防ぐ</b>ガードレールです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ブランチ保護で何ができるか</span><span class="tag-desc">main を守るルール</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 設定できる主なルール</div>
+        <ul>
+          <li><b>直接pushを禁止</b>：main へは PR 経由のみ</li>
+          <li><b>PRレビュー必須</b>：承認なしにマージ不可</li>
+          <li><b>ステータスチェック必須</b>：テスト（CI）通過が条件（Vol.GH8で連携）</li>
+          <li><b>会話の解決必須</b>：レビューコメント未解決ではマージ不可</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// なぜ main を守るか</div>
+        <p>main は<b>「常に動く状態」</b>であるべき（GitHub Flow＝Vol.GH2）。直接pushを許すと<b>未テスト・未レビューのコードが入る</b>リスク。保護で<b>「ゲートを通った変更だけ」</b>を main に。</p>
+      </div>
+      <div class="code"><span class="code-head">// ブランチ保護の効果</span>
+<span class="comment">// ─── 保護なし（これまで）───</span>
+<span class="prompt">$</span> <span class="kw">git push</span> origin main
+<span class="comment">// → 誰でも直接 push できる</span>
+<span class="comment">// → 未テストのコードも入る</span>
+<span class="comment">// → main が壊れるリスク ★</span>
+
+
+<span class="comment">// ─── 保護あり（Vol.GH6で設定）───</span>
+<span class="prompt">$</span> <span class="kw">git push</span> origin main
+<span class="gh-out">remote: error: GH006: Protected
+  branch update failed.
+remote: error: Required status check
+  ... or pull request required.</span>
+<span class="comment">// → 直接 push が拒否される ★★★</span>
+<span class="comment">// → PR 経由でしか main を変更できない</span>
+
+
+<span class="comment">// ─── 守られる開発フロー ───</span>
+feature ブランチで作業
+  ↓
+push（feature は自由）
+  ↓
+PR 作成
+  ↓
+[ゲート] レビュー承認 + テスト通過
+  ↓ クリアして初めて
+main にマージ可能 ★★★
+
+<span class="comment">// → main は常に「ゲートを通った」状態</span>
+<span class="comment">// → 「動く・レビュー済み・テスト通過」</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 保護は「自分も縛る」のが正しい</div>
+    <p>ブランチ保護を設定すると<b>自分も main に直接pushできなくなります</b>。「不便」と感じるかもですが、<b>それが目的</b>。「急いでるから今回だけ直接push」が事故の元。<b>自分すら縛る</b>ことで、品質が一貫して保たれる。設定で「管理者は例外」にもできますが、<b>個人開発こそ自分を縛る練習</b>として、例外なしを推奨します。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>main を保護する</h2><span class="en">PROTECT MAIN</span></div>
+  <p class="pattern-desc">実際に main ブランチを保護します。GitHub の <b>Settings → Branches</b> で設定。本シリーズでは<b>「PR必須・直接push禁止」</b>を基本に、将来のCI（Vol.GH8）に備えてステータスチェックの土台も作ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ブランチ保護ルールの設定</span><span class="tag-desc">Settings → Branches</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 設定手順</div>
+        <ol class="step-list">
+          <li>リポジトリの <b>Settings</b> タブ</li>
+          <li>左メニュー <b>Branches</b></li>
+          <li><b>Add branch protection rule</b></li>
+          <li>Branch name pattern に <code>main</code></li>
+          <li>下記のチェックを入れる</li>
+          <li><b>Create / Save</b></li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// 本シリーズで入れる設定</div>
+        <ul class="check-list">
+          <li>Require a pull request before merging（PR必須）</li>
+          <li>Require approvals（承認必須・1人）</li>
+          <li>Require conversation resolution（会話解決必須）</li>
+          <li>（将来）Require status checks（テスト通過必須・Vol.GH8）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 保護ルールの設定イメージ</span>
+<div class="gh-mock">
+<div class="gh-bar">Settings / Branches / Add rule</div>
+Branch name pattern: <span class="gh-check">main</span>
+
+Protect matching branches:
+<span class="gh-check">☑</span> Require a pull request
+   before merging
+   <span class="gh-check">☑</span> Require approvals: 1
+
+<span class="gh-check">☑</span> Require conversation
+   resolution before merging
+
+<span class="gh-lock">☐</span> Require status checks to pass
+   （Vol.GH8 で CI 設定後に有効化）
+
+<span class="gh-check">☑</span> Do not allow bypassing
+   the above settings
+   （管理者も例外なし）
+
+  [ Create ]
+</div>
+
+<span class="comment">// ─── 設定後の動作確認 ───</span>
+<span class="prompt">$</span> <span class="kw">git switch</span> main
+<span class="prompt">$</span> <span class="kw">echo</span> <span class="str">"test"</span> >> README.md
+<span class="prompt">$</span> <span class="kw">git commit -am</span> <span class="str">"docs: test"</span>
+<span class="prompt">$</span> <span class="kw">git push</span>
+<span class="gh-x">! [remote rejected] main -> main
+  (protected branch hook declined)</span>
+<span class="comment">// → 直接push が拒否される ★★★</span>
+<span class="comment">// → 正しく保護されている証拠</span>
+
+
+<span class="comment">// ─── 正しいフロー（保護後）───</span>
+<span class="prompt">$</span> <span class="kw">git switch -c</span> docs/update-readme
+<span class="prompt">$</span> <span class="kw">git commit -am</span> <span class="str">"docs: READMEを更新"</span>
+<span class="prompt">$</span> <span class="kw">git push -u</span> origin docs/update-readme
+<span class="comment">// → feature ブランチは自由</span>
+<span class="comment">// → PR を作ってマージ ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 1人開発でも「承認1人」は自分でできる</div>
+    <p>「承認必須・1人」を設定すると、<b>自分のPRを自分で承認</b>することになります。「自作自演では？」と思うかもですが、<b>これが Vol.GH3 のセルフレビュー</b>そのもの。PRの Files changed を見て、受入条件を確認して、承認ボタンを押す。<b>承認という明示的なステップ</b>が、雑なマージを防ぐ。<b>1人でもゲートを通る習慣</b>が、業務での質を作ります。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>ハマりどころ＋NEXT STEP</h2><span class="en">PITFALLS &amp; NEXT</span></div>
+  <p class="pattern-desc">コミット規約・ブランチ保護で陥りやすい地雷を5つ。<b>★★★ 印は特に頻発</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.GH6 ハマりどころ 5選</span><span class="tag-desc">先に知れば回避できる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 保護後に自分が push できず焦る ★★★</b></p>
+        <ul>
+          <li>これは<b>正常な動作</b>（保護が効いている）</li>
+          <li>対処：feature ブランチ→PR の正規フローで</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② 既存の作業中変更が main にコミット済み</b></p>
+        <ul>
+          <li>保護前に main で作業していた</li>
+          <li>対処：別冊…ではなく Vol.GH2 の <code>reset --soft</code>＋feature 移動</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ type を間違える（feat と fix の混同）</b></p>
+        <ul>
+          <li>新機能なのに fix、など</li>
+          <li>対処：「機能が増えた→feat、壊れたのを直した→fix」</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 要約が抽象的すぎる ★★★</b></p>
+        <ul>
+          <li>「fix: 修正」「update」など中身不明</li>
+          <li>対処：「何を」を具体的に（Section 04）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 1コミットに複数の変更を詰める</b></p>
+        <ul>
+          <li>feat と fix と docs が1コミットに</li>
+          <li>対処：1コミット1目的（type も1つに決まる）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 主要な対処</span>
+<span class="comment">// ─── ① 保護後の正しいフロー ───</span>
+<span class="comment">// 「pushできない！」は正常</span>
+<span class="prompt">$</span> <span class="kw">git switch -c</span> feature/xxx  <span class="comment">// ブランチ作成</span>
+<span class="prompt">$</span> <span class="kw">git push -u</span> origin feature/xxx
+<span class="comment">// → PR を作ってマージ ★</span>
+
+
+<span class="comment">// ─── ⑤ 1コミット1目的 ───</span>
+<span class="ann">NG:</span> feat: 検索追加とバグ修正とREADME更新
+<span class="comment">// → 3つの目的が混在</span>
+<span class="comment">// → type が決まらない・revertしにくい</span>
+
+<span class="ann">OK:</span> 3つに分ける
+  feat(search): キーワード検索を追加
+  fix(memo): 空タイトルエラーを修正
+  docs: READMEに検索機能を追記
+<span class="comment">// → 各コミットが1目的 ★★★</span>
+<span class="comment">// → 後で個別にrevert・参照できる</span>
+
+
+<span class="comment">// ─── ③ type 判断フロー ───</span>
+機能が増えた？        → feat
+バグを直した？        → fix
+ドキュメントだけ？     → docs
+テストだけ？          → test
+挙動変えず整理？       → refactor
+設定・依存？          → chore
+
+
+<span class="comment">// ─── コミット規約をdocsに残す ───</span>
+<span class="comment">// CONTRIBUTING.md に規約を書くと</span>
+<span class="comment">// チームで共有できる（Doc as Code）</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">GH6 達成チェック</span><span class="tag-desc">品質ゲート完成</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェック</div>
+        <ul class="check-list">
+          <li>Conventional Commits の構造を説明できる</li>
+          <li>feat/fix/docs/test/refactor/chore を使い分けられる</li>
+          <li>要約を具体的に書ける</li>
+          <li>本文に「なぜ」を書ける</li>
+          <li>1コミット1目的を守れる</li>
+          <li>main にブランチ保護を設定できた</li>
+          <li>直接pushが拒否されることを確認した</li>
+          <li>「仕組みで品質を守る」意義を理解した</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH6 で手に入れた力</span>
+✓ <span class="str">"Conventional Commits で履歴を構造化"</span>
+
+✓ <span class="str">"type を正しく使い分けられる"</span>
+
+✓ <span class="str">"なぜを残すコミットメッセージ"</span>
+
+✓ <span class="str">"1コミット1目的"</span>
+
+✓ <span class="str">"main をブランチ保護で守れる"</span>
+
+✓ <span class="str">"人の注意力でなく仕組みで品質を保つ"</span>
+
+
+<span class="comment">// → 品質ゲートが仕組みで完成 ★★★</span>
+<span class="comment">// → チーム開発・CI連携の土台</span>
+
+<span class="comment">// 次回 Vol.GH7：</span>
+<span class="comment">//   .gitignore とシークレット管理</span>
+<span class="comment">//   または CONTRIBUTING / Issue テンプレート</span>
+<span class="comment">//   本編Vol.8 の全文検索と連動</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.GH7 へ</div>
+    <p>Vol.GH6 で<b>「コミット規約とブランチ保護」</b>により、品質を仕組みで守れるようになりました。main は常に「ゲートを通った状態」です。次は Vol.GH7「<b>シークレット管理とテンプレート編</b>」。<b>DB接続情報などの機密を Git に載せない</b>方法（.gitignore・環境変数）と、<b>Issue/PRテンプレート</b>でチームの記述を統一する方法を学びます。本編Vol.8「全文検索」と並行して進めましょう。<b>本編Vol.8 → Vol.GH7 の順</b>がおすすめです。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>GH.06 / 14 ── COMMITS &amp; BRANCH PROTECTION（GitHub版）</span>
+</footer>
+
+</body>
+</html>

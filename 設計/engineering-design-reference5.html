@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリング設計編 アーキテクチャパターン Vol.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#291a0e;
+    --paper:#ebdab6;
+    --paper-2:#d8be8c;
+    --accent:#723a20;
+    --accent-2:#a86640;
+    --accent-3:#522410;
+    --muted:#6b563e;
+    --line:#a98a5e;
+    --code-bg:#211608;
+    --code-text:#f0e4cf;
+    --panel-bg:#f6ebd2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;line-height:1.75;font-size:15px}
+  body{max-width:1180px;margin:0 auto;padding:0 28px 80px}
+
+  .page-header{position:relative;padding:48px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+  .page-header::before{content:"△";position:absolute;right:-10px;top:-30px;font-size:280px;color:var(--accent);opacity:.18;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+  .page-header > *{position:relative;z-index:1}
+  .series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace;margin-right:8px}
+  .vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace}
+  h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin-top:18px;letter-spacing:.04em}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;font-family:"JetBrains Mono",monospace;letter-spacing:.08em}
+  .lead{max-width:640px;margin-top:22px;font-size:15px}
+  .lead b{color:var(--accent-3)}
+
+  .toc{background:var(--paper-2);padding:18px 22px;margin:32px 0 48px;border-left:3px solid var(--accent)}
+  .toc-title{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:.2em;color:var(--accent-3);margin-bottom:10px}
+  .toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px}
+  .toc li{font-size:13px}
+  .toc a{color:var(--ink);text-decoration:none;font-family:"JetBrains Mono",monospace}
+  .toc a::before{content:"— ";color:var(--accent)}
+  .toc a:hover{color:var(--accent)}
+
+  section{margin:64px 0}
+  .section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .section-num{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent);font-weight:600}
+  .section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;letter-spacing:.04em;flex:1}
+  .section-header .en{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:.15em}
+  .pattern-desc{max-width:680px;margin-bottom:20px;font-size:14.5px}
+  .pattern-desc b{color:var(--accent-3)}
+
+  .demo-card{border:1px solid var(--line);background:#fff;margin:18px 0}
+  .demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .tag-name{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+  .tag-desc{font-size:12px;color:var(--muted)}
+  .demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+  .panel{background:var(--panel-bg);padding:20px;border-right:1px solid var(--line);font-size:14px}
+  .panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:.1em}
+  .code{background:var(--code-bg);color:var(--code-text);padding:20px;font-family:"JetBrains Mono",monospace;font-size:12.5px;line-height:1.85;overflow-x:auto;white-space:pre-wrap}
+  @media(max-width:720px){
+    .demo-body{grid-template-columns:1fr}
+    .panel{border-right:none;border-bottom:1px solid var(--line)}
+  }
+
+  .kw{color:#ffc88a}
+  .type{color:#c2a3ff}
+  .fn{color:#a3c9ff}
+  .str{color:#b5e8b0}
+  .num{color:#f7a8d8}
+  .comment{color:#998aaa;font-style:italic}
+  .ann{color:#f7c08a}
+  .menu-code{color:#f7c08a;font-weight:600}
+  .step{color:#ffc88a;font-weight:600}
+
+  .tip{background:rgba(114,58,32,.09);border-left:3px solid var(--accent);padding:14px 18px;margin:18px 0;font-size:14px}
+  .tip-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);letter-spacing:.18em;margin-bottom:6px;font-weight:600}
+  .tip b{color:var(--accent-3)}
+
+  .key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:11.5px}
+
+  .panel ul{list-style:none;margin:8px 0}
+  .panel li{padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .panel li:last-child{border-bottom:none}
+  .panel .label{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-right:6px}
+  .panel strong{color:var(--accent-3);font-weight:600}
+
+  .diagram{padding:14px;background:#fff;border:1px dashed var(--line);font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.6;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+  .compare{width:100%;font-size:13px;margin:10px 0}
+  .compare th{background:var(--paper-2);text-align:left;padding:8px;border-bottom:1px solid var(--line);font-family:"Shippori Mincho",serif;font-size:13px}
+  .compare td{padding:8px;border-bottom:1px dashed var(--line);vertical-align:top}
+  .compare .ng{color:#b04848}
+  .compare .ok{color:#4a7848}
+
+  .stars{color:var(--accent);font-weight:700;letter-spacing:.05em}
+  .arch-badge{display:inline-block;background:var(--accent-3);color:var(--paper);padding:3px 10px;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.1em;margin-right:8px;border-radius:2px}
+
+  .page-footer{margin-top:80px;padding-top:24px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.1em}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">ENGINEERING DESIGN</span>
+  <span class="vol-tag">VOL.05</span>
+  <h1>アーキテクチャパターン</h1>
+  <div class="subtitle">ARCHITECTURE PATTERNS — SYSTEM-LEVEL DESIGN</div>
+  <p class="lead">クラス設計が「町の中」の話なら、アーキテクチャは<b>「町の区画割り」</b>の話です。どの機能をどこに置くか、依存はどう流すか。これを決めるのがアーキテクチャ。本巻ではレイヤード、ヘキサゴナル、クリーンアーキテクチャ、そしてマイクロサービスを扱います。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — 本巻の目次</div>
+  <ul>
+    <li><a href="#s1">01 アーキテクチャとは何か</a></li>
+    <li><a href="#s2">02 レイヤードアーキテクチャ</a></li>
+    <li><a href="#s3">03 MVC / MVP / MVVM</a></li>
+    <li><a href="#s4">04 ヘキサゴナルアーキテクチャ</a></li>
+    <li><a href="#s5">05 クリーンアーキテクチャ</a></li>
+    <li><a href="#s6">06 モノリスとマイクロサービス</a></li>
+    <li><a href="#s7">07 イベント駆動とCQRS</a></li>
+    <li><a href="#s8">08 アーキテクチャの選び方</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>アーキテクチャとは何か</h2>
+    <span class="en">WHAT IS ARCHITECTURE</span>
+  </div>
+  <p class="pattern-desc">アーキテクチャは<b>「変更コストの大きい決定」</b>の集合です。フレームワーク選定、レイヤ構成、データの流れ、デプロイ単位。これらは後から変えるのに膨大なコストがかかります。逆に言えば<b>「最初に決めておくべき大きな線引き」</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">what-is-architecture</span>
+      <span class="tag-desc">設計の3階層</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 抽象度と変更コスト</div>
+        <div class="diagram">[マクロ] アーキテクチャ
+   • レイヤ分割
+   • サービス境界
+   • 通信方式
+   • DB分割
+   → 変更コスト: 極大
+
+[ミドル] モジュール設計
+   • クラス分割
+   • インターフェース
+   • パッケージ構成
+   → 変更コスト: 中
+
+[ミクロ] 実装
+   • 関数の中身
+   • 変数名
+   • アルゴリズム
+   → 変更コスト: 小</div>
+        <p style="margin-top:14px;font-size:13px"><b>上に行くほど決定が重い</b>。だからこそ最初に時間をかけて考える価値があります。</p>
+      </div>
+      <div class="code"><span class="comment">// アーキテクチャ判断の代表例</span>
+
+<span class="ann">[1] モノリス vs マイクロサービス?</span>
+  → 後で分割は可能だが大変
+  → 最初に統合は不可能に近い
+
+<span class="ann">[2] RDB vs NoSQL?</span>
+  → 移行コストは数ヶ月単位
+  → トランザクション特性で決まる
+
+<span class="ann">[3] 同期 vs 非同期通信?</span>
+  → 全体の設計思想が変わる
+  → 後で全部書き換えになる
+
+<span class="ann">[4] サーバーサイドレンダ vs SPA?</span>
+  → ユーザー体験/SEOに直結
+  → フロント全部作り直し
+
+<span class="ann">[5] 認証方式?</span>
+  → セッション/JWT/OAuth
+  → 後から差し替え地獄
+
+<span class="comment">// アーキテクトの仕事 = この大判断</span>
+<span class="comment">// 「迷ったら専門家に相談」と</span>
+<span class="comment">// 「迷う前にトレードオフを書き出す」</span>
+<span class="comment">// が現場の鉄則。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — アーキテクチャの本質</div>
+    <b>「Architecture is about the important stuff. Whatever that is.」</b>（Ralph Johnson）。重要なことはプロジェクトによって違う。だから万能のアーキテクチャは存在せず、<b>「このシステムにとって重要なこと」</b>を見極めるのがアーキテクトの仕事になります。
+  </div>
+</section>
+
+<section id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>レイヤードアーキテクチャ</h2>
+    <span class="en">LAYERED ARCHITECTURE</span>
+  </div>
+  <p class="pattern-desc"><span class="arch-badge">Layered</span><b>最も伝統的かつ最も広く使われる</b>アーキテクチャ。上から「プレゼンテーション → アプリケーション → ドメイン → インフラ」と層を分け、依存は<b>上から下にだけ</b>流します。多くの業務アプリの土台がこれ。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">layered-architecture</span>
+      <span class="tag-desc">4層モデルの定番</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4つの層</div>
+        <div class="diagram">┌────────────────────┐
+│  プレゼンテーション   │ ← UI/API
+├────────────────────┤
+│  アプリケーション    │ ← ユースケース
+├────────────────────┤
+│  ドメイン           │ ← ビジネスルール
+├────────────────────┤
+│  インフラ           │ ← DB/外部API
+└────────────────────┘
+
+依存は上→下のみ。
+下が上を参照してはいけない。</div>
+        <p style="margin-top:14px;font-size:13px"><b>原則</b>: 各層は<b>1つ下の層しか呼ばない</b>。プレゼンが直接DBを触ると即破綻します。</p>
+      </div>
+      <div class="code"><span class="comment">// 典型的なフォルダ構成</span>
+
+src/
+├─ presentation/    <span class="comment">// UI/API</span>
+│   ├─ controllers/
+│   │   └─ <span class="type">OrderController</span>.ts
+│   └─ views/
+│
+├─ application/     <span class="comment">// ユースケース</span>
+│   └─ usecases/
+│       └─ <span class="type">PlaceOrderUseCase</span>.ts
+│
+├─ domain/          <span class="comment">// ビジネスルール</span>
+│   ├─ entities/
+│   │   └─ <span class="type">Order</span>.ts
+│   └─ services/
+│       └─ <span class="type">DiscountService</span>.ts
+│
+└─ infrastructure/  <span class="comment">// DB/外部API</span>
+    ├─ repositories/
+    │   └─ <span class="type">OrderRepository</span>.ts
+    └─ clients/
+        └─ <span class="type">StripeClient</span>.ts
+
+<span class="comment">// 呼び出しの流れ</span>
+<span class="type">OrderController</span>          <span class="comment">// 受付</span>
+   ↓
+<span class="type">PlaceOrderUseCase</span>        <span class="comment">// 流れ制御</span>
+   ↓
+<span class="type">Order</span> + <span class="type">DiscountService</span> <span class="comment">// 計算</span>
+   ↓
+<span class="type">OrderRepository</span>          <span class="comment">// 保存</span>
+   ↓
+DB</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">TIP — 詰まりポイント</div>
+    レイヤードは<b>「下層が上層を知らない」のが鉄則</b>。Repositoryクラスの中でController用のレスポンス型を扱い始めたら黄信号。これを許すと依存が逆流して、テストが書けないコードに堕ちます。
+  </div>
+</section>
+
+<section id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>MVC / MVP / MVVM</h2>
+    <span class="en">MVC / MVP / MVVM</span>
+  </div>
+  <p class="pattern-desc"><span class="arch-badge">UI Architecture</span>UIまわりで定番の3つの構成。<b>「画面・ロジック・データの分離」</b>という目的は共通ですが、責務の分け方が違います。フレームワークによってどれを採用しているかが変わります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">mvc-mvp-mvvm</span>
+      <span class="tag-desc">UI層の3兄弟</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの違い</div>
+        <table class="compare">
+          <tr><th>名称</th><th>特徴</th><th>採用例</th></tr>
+          <tr><td><b>MVC</b></td><td>Controllerが司令塔。Viewはモデルを直接読む</td><td>Rails<br>Spring MVC</td></tr>
+          <tr><td><b>MVP</b></td><td>Presenterが全て仲介。Viewは受動的</td><td>Android<br>(旧)WinForms</td></tr>
+          <tr><td><b>MVVM</b></td><td>ViewModelとViewが双方向バインド</td><td>Vue<br>WPF</td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:13px"><b>共通の目的</b>: View（見た目）とビジネスロジックを混ぜないこと。これを<b>守らないと画面ごとにコピペが量産</b>されます。</p>
+      </div>
+      <div class="code"><span class="comment">// MVC の例（Spring風）</span>
+
+<span class="ann">[Model]</span> データとビジネスルール
+<span class="kw">class</span> <span class="type">Order</span> {
+  total: <span class="type">number</span>;
+  <span class="fn">calculateTotal</span>() { ... }
+}
+
+<span class="ann">[View]</span> 描画担当
+<span class="comment">// order.html (Thymeleaf等)</span>
+&lt;<span class="kw">div</span>&gt;合計: {{ order.total }}&lt;/<span class="kw">div</span>&gt;
+
+<span class="ann">[Controller]</span> 司令塔
+<span class="kw">class</span> <span class="type">OrderController</span> {
+  <span class="fn">show</span>(id) {
+    <span class="kw">const</span> order = repo.<span class="fn">find</span>(id);
+    <span class="kw">return</span> view(<span class="str">"order.html"</span>, { order });
+  }
+}
+
+<span class="comment">// MVVM の例（Vue風）</span>
+
+<span class="ann">[View]</span>
+&lt;<span class="kw">input</span> <span class="ann">v-model</span>=<span class="str">"name"</span>&gt;
+&lt;<span class="kw">p</span>&gt;こんにちは {{ name }}&lt;/<span class="kw">p</span>&gt;
+
+<span class="ann">[ViewModel]</span>
+<span class="kw">data</span>() {
+  <span class="kw">return</span> { name: <span class="str">""</span> };
+}
+
+<span class="comment">// 入力 → 自動的に画面更新</span>
+<span class="comment">// 双方向バインディングが特徴</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — フレームワークが決める</div>
+    MVC/MVP/MVVMは<b>自分で選ぶというより、フレームワークで決まる</b>ことが多いです。Reactは強いて言えばMVVM寄り（Hooks時代はもっと自由）、Angularは構造としてMVVM、Spring MVCは名前の通りMVC。<b>フレームワークの流儀に逆らわない</b>のが鉄則です。
+  </div>
+</section>
+
+<section id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>ヘキサゴナルアーキテクチャ</h2>
+    <span class="en">HEXAGONAL / PORTS AND ADAPTERS</span>
+  </div>
+  <p class="pattern-desc"><span class="arch-badge">Hexagonal</span>別名「<b>ポートとアダプタ</b>」。アプリケーションの<b>中心（コア）</b>を<b>外部世界（DB / UI / 外部API）</b>から切り離す思想。コアは「ポート」（インターフェース）だけを知り、具体実装はアダプタとして外側に置きます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">hexagonal-architecture</span>
+      <span class="tag-desc">中心を外界から守る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 中心と外側</div>
+        <div class="diagram">       ┌──────────┐
+   UI →│ Port  IN │
+       │          │
+       │   Core   │← Application
+       │ Domain   │
+       │          │
+       │ Port OUT │→ DB / API
+       └──────────┘
+
+Coreは外側のことを知らない。
+外側は「Port」だけを通じて
+中と接続する。</div>
+        <p style="margin-top:14px;font-size:13px"><b>テストで超強力</b>: Coreは外部依存ゼロなので、純粋な単体テストが書ける。<b>DB/UI/APIをモックすら必要としない</b>形が理想。</p>
+      </div>
+      <div class="code"><span class="comment">// ヘキサゴナルの実装イメージ</span>
+
+<span class="comment">// === Core （中心） ===</span>
+
+<span class="comment">// ポート: 外部の窓口を抽象として定義</span>
+<span class="kw">interface</span> <span class="type">OrderRepository</span> {   <span class="comment">// OUT</span>
+  <span class="fn">save</span>(order: <span class="type">Order</span>): <span class="type">void</span>;
+}
+<span class="kw">interface</span> <span class="type">Notifier</span> {          <span class="comment">// OUT</span>
+  <span class="fn">notify</span>(msg: <span class="type">string</span>): <span class="type">void</span>;
+}
+
+<span class="comment">// コアのビジネスロジック</span>
+<span class="kw">class</span> <span class="type">PlaceOrderUseCase</span> {  <span class="comment">// IN</span>
+  <span class="kw">constructor</span>(
+    <span class="kw">private</span> repo: <span class="type">OrderRepository</span>,
+    <span class="kw">private</span> notifier: <span class="type">Notifier</span>,
+  ) {}
+  <span class="fn">execute</span>(order: <span class="type">Order</span>) {
+    <span class="kw">this</span>.repo.<span class="fn">save</span>(order);
+    <span class="kw">this</span>.notifier.<span class="fn">notify</span>(<span class="str">"確定"</span>);
+  }
+}
+
+<span class="comment">// === Adapter （外側） ===</span>
+
+<span class="comment">// 外側で具体実装を提供</span>
+<span class="kw">class</span> <span class="type">PostgresOrderRepo</span>
+  <span class="kw">implements</span> <span class="type">OrderRepository</span> { ... }
+
+<span class="kw">class</span> <span class="type">SlackNotifier</span>
+  <span class="kw">implements</span> <span class="type">Notifier</span> { ... }
+
+<span class="comment">// テスト時</span>
+<span class="kw">new</span> <span class="type">PlaceOrderUseCase</span>(
+  <span class="kw">new</span> <span class="type">InMemoryOrderRepo</span>(),  <span class="comment">// 差し替え</span>
+  <span class="kw">new</span> <span class="type">FakeNotifier</span>(),
+);
+
+<span class="comment">// → 本物のDB/Slack不要でテスト可能</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — DIPの最大の応用例</div>
+    ヘキサゴナルは<b>SOLIDのDIP（依存性逆転）をシステム全体に適用したもの</b>と捉えると理解が早いです。中心が外側に依存しない=外側が抽象に依存する。Vol.3で学んだDIPが、ここで本領発揮します。
+  </div>
+</section>
+
+<section id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>クリーンアーキテクチャ</h2>
+    <span class="en">CLEAN ARCHITECTURE</span>
+  </div>
+  <p class="pattern-desc"><span class="arch-badge">Clean</span>ボブおじさん（Robert C. Martin）が提唱した<b>同心円型のアーキテクチャ</b>。ヘキサゴナルをさらに整理した形。<b>依存性の流れは必ず外から内へ</b>という強い規律で、変更耐性とテスト容易性が極めて高くなります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">clean-architecture</span>
+      <span class="tag-desc">同心円の4層</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 内側ほど安定・抽象</div>
+        <div class="diagram">  ┌──────────────────────────┐
+  │  Frameworks & Drivers     │ 外
+  │  (Web / DB / Devices)     │
+  │ ┌──────────────────────┐ │
+  │ │ Interface Adapters    │ │
+  │ │ (Controllers/Gateways)│ │
+  │ │ ┌──────────────────┐ │ │
+  │ │ │ Use Cases         │ │ │
+  │ │ │ (アプリケーション)  │ │ │
+  │ │ │ ┌──────────────┐ │ │ │
+  │ │ │ │ Entities      │ │ │ │
+  │ │ │ │ (ビジネス) 内 │ │ │ │
+  │ │ │ └──────────────┘ │ │ │
+  │ │ └──────────────────┘ │ │
+  │ └──────────────────────┘ │
+  └──────────────────────────┘
+
+依存の方向: 外 → 内 のみ</div>
+        <p style="margin-top:14px;font-size:13px"><b>The Dependency Rule</b>: 依存は<b>必ず内向き</b>。内側は外側のことを知らない。これだけ守れば、フレームワークもDBもUIも交換可能になります。</p>
+      </div>
+      <div class="code"><span class="comment">// 各層の役割</span>
+
+<span class="ann">[Entities]</span> 企業横断のビジネスルール
+  <span class="kw">class</span> <span class="type">Order</span> {
+    <span class="fn">calculateTotal</span>() { ... }
+    <span class="fn">applyDiscount</span>() { ... }
+  }
+  <span class="comment">// → 最も安定。10年変わらない。</span>
+
+<span class="ann">[Use Cases]</span> アプリケーション固有の流れ
+  <span class="kw">class</span> <span class="type">PlaceOrderUseCase</span> {
+    <span class="fn">execute</span>(...) { ... }
+  }
+  <span class="comment">// → このアプリ特有の業務手順</span>
+
+<span class="ann">[Interface Adapters]</span> 変換層
+  <span class="kw">class</span> <span class="type">OrderController</span> { ... }
+  <span class="kw">class</span> <span class="type">OrderGateway</span> { ... }
+  <span class="comment">// → HTTP/DBの言葉と内部の言葉を変換</span>
+
+<span class="ann">[Frameworks &amp; Drivers]</span> 最外側
+  Express / TypeORM / React
+  <span class="comment">// → ツール群。差し替え可能。</span>
+
+<span class="comment">// 例: 「DB を PostgreSQL から</span>
+<span class="comment">//      DynamoDB に変える」</span>
+<span class="comment">// → Adaptersと最外層だけ修正</span>
+<span class="comment">// → Entities/UseCasesは無傷</span>
+
+<span class="comment">// 例: 「Web API を gRPC に変える」</span>
+<span class="comment">// → 同じく最外層のみ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 万能ではない</div>
+    クリーンアーキテクチャは<b>規模の大きい長期保守システム</b>で真価を発揮します。小規模CRUDアプリには<b>過剰設計</b>になりがち。「3画面の管理ツール」までならレイヤードで十分です。<b>システム規模に対する仕掛けの量</b>を見極めるのがプロの判断です。
+  </div>
+</section>
+
+<section id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>モノリスとマイクロサービス</h2>
+    <span class="en">MONOLITH VS MICROSERVICES</span>
+  </div>
+  <p class="pattern-desc">「全部1つのアプリ」か「機能ごとにサービス分割」か。2010年代後半に<b>マイクロサービス熱</b>が高まりましたが、近年は<b>「最初はモノリスから」</b>に揺り戻しています。サイズと組織で選び分けるのが正解。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">monolith-vs-microservices</span>
+      <span class="tag-desc">2つの極とトレードオフ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 比較表</div>
+        <table class="compare">
+          <tr><th></th><th class="ok">モノリス</th><th class="ng">マイクロサービス</th></tr>
+          <tr><td>開発速度</td><td>速い</td><td>初期は遅い</td></tr>
+          <tr><td>デプロイ</td><td>1つ</td><td>サービス毎</td></tr>
+          <tr><td>スケール</td><td>全体</td><td>個別に可</td></tr>
+          <tr><td>技術選定</td><td>統一</td><td>個別可</td></tr>
+          <tr><td>運用</td><td>シンプル</td><td>複雑</td></tr>
+          <tr><td>分散トランザクション</td><td>不要</td><td>苦行</td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)">"<b>Monolith First</b>"（Martin Fowler）: まずモノリスで作り、必要になったら分割するのが安全。</p>
+      </div>
+      <div class="code"><span class="comment">// マイクロサービスが向く条件</span>
+
+<span class="ann">[Yes な条件]</span>
+✓ チームが <span class="num">50</span>人 超
+✓ 機能ごとに <span class="kw">スケール特性</span> が違う
+   （検索は重い、注文は軽い、等）
+✓ サービス毎に <span class="kw">技術スタック</span> を分けたい
+✓ 独立したデプロイ頻度が必要
+✓ 障害分離が要件
+
+<span class="ann">[No な条件]</span>
+✗ チームが <span class="num">10</span>人 未満
+✗ ドメインがまだ固まってない
+   （境界の引き方を間違える）
+✗ 分散トランザクションが頻発
+✗ DevOps体制が未整備
+
+<span class="comment">// マイクロサービスの隠れコスト</span>
+- ネットワーク呼び出しの不安定さ
+- 分散デバッグの困難
+- データ整合性（結果整合性が前提）
+- 監視/トレーシングの基盤構築
+- サービス間の契約管理
+
+<span class="comment">// 結論</span>
+<span class="comment">// 「マイクロサービスは贅沢品」</span>
+<span class="comment">// 必要になってから移行で遅くない。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">TIP — モジュラーモノリス</div>
+    最近の流行は<b>「モジュラーモノリス」</b>。1つのアプリだが、内部は厳密にモジュール分割されている形。<b>モノリスの運用簡単さ × マイクロサービスの境界明確さ</b>のいいとこ取り。後から分割もしやすいので、現実解として有力です。
+  </div>
+</section>
+
+<section id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>イベント駆動とCQRS</h2>
+    <span class="en">EVENT-DRIVEN & CQRS</span>
+  </div>
+  <p class="pattern-desc"><span class="arch-badge">EDA</span><b>「ある出来事が起きた」をきっかけに処理が連鎖していく</b>アーキテクチャ。リアルタイム性、疎結合、スケーラビリティで威力を発揮。CQRSは「読み」と「書き」を別モデルに分けるパターンで、組み合わせて使われることが多いです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">event-driven-cqrs</span>
+      <span class="tag-desc">イベントを軸にした設計</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// イベント駆動の流れ</div>
+        <div class="diagram">[Service A]
+   発火 →「OrderPlaced」
+            ↓
+       [Event Bus]
+       (Kafka/SQS等)
+            ↓
+   ┌────┬────┬────┐
+   ↓    ↓    ↓    ↓
+[在庫] [課金] [通知] [分析]
+ 各サービスが並列で反応</div>
+        <p style="margin-top:14px;font-size:13px"><b>CQRS（Command Query Responsibility Segregation）</b>:<br>書き込み（Command）と読み取り（Query）を<b>別モデルに分離</b>。書きは正規化、読みは非正規化、と最適化を分けられる。</p>
+      </div>
+      <div class="code"><span class="comment">// イベント駆動の例</span>
+
+<span class="comment">// Command側: 注文を確定</span>
+<span class="kw">class</span> <span class="type">PlaceOrderCommand</span> {
+  <span class="fn">execute</span>(order: <span class="type">Order</span>) {
+    db.<span class="fn">save</span>(order);
+    eventBus.<span class="fn">publish</span>({
+      type: <span class="str">"OrderPlaced"</span>,
+      orderId: order.id,
+      items: order.items,
+      total: order.total,
+    });
+  }
+}
+
+<span class="comment">// 購読側: 各サービスが反応</span>
+eventBus.<span class="fn">subscribe</span>(<span class="str">"OrderPlaced"</span>, (e) =&gt; {
+  inventory.<span class="fn">reserve</span>(e.items);
+});
+
+eventBus.<span class="fn">subscribe</span>(<span class="str">"OrderPlaced"</span>, (e) =&gt; {
+  payment.<span class="fn">charge</span>(e.orderId, e.total);
+});
+
+eventBus.<span class="fn">subscribe</span>(<span class="str">"OrderPlaced"</span>, (e) =&gt; {
+  mailer.<span class="fn">sendConfirmation</span>(e.orderId);
+});
+
+<span class="comment">// CQRS の例</span>
+
+<span class="ann">[書き込みモデル]</span> 正規化された業務DB
+  orders, order_items, customers
+  → 一貫性とトランザクション重視
+
+<span class="ann">[読み取りモデル]</span> 非正規化された参照用
+  order_summary_view
+  → JOINなしで一発取得
+  → ユーザー体験のため高速</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — Event Sourcing</div>
+    さらに進めると<b>Event Sourcing</b>に到達します。「現在の状態」をDBに保存する代わりに「イベントの履歴」だけを保存し、状態は履歴から再構成。<b>監査・取消し・時間旅行が自由自在</b>になる強力な手法ですが、複雑度も跳ね上がるので採用は慎重に。
+  </div>
+</section>
+
+<section id="s8">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>アーキテクチャの選び方</h2>
+    <span class="en">HOW TO CHOOSE</span>
+  </div>
+  <p class="pattern-desc">アーキテクチャ選びの<b>銀の弾丸はありません</b>。プロジェクトの規模、チームの習熟度、変更頻度、寿命によって最適解は変わります。<b>「過剰設計を避け、必要十分を選ぶ」</b>のが現場の知恵です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">choosing-architecture</span>
+      <span class="tag-desc">規模と特性で判断</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 規模別の目安</div>
+        <table class="compare">
+          <tr><th>規模/特性</th><th>推奨</th></tr>
+          <tr><td>個人/3画面以下</td><td>MVC + シンプル分割</td></tr>
+          <tr><td>小〜中規模Web</td><td>レイヤード</td></tr>
+          <tr><td>長期業務アプリ</td><td>レイヤード + DDD</td></tr>
+          <tr><td>テスト最重視</td><td>ヘキサゴナル</td></tr>
+          <tr><td>巨大長寿命システム</td><td>クリーンアーキ</td></tr>
+          <tr><td>組織分割大規模</td><td>マイクロサービス</td></tr>
+          <tr><td>リアルタイム/分析</td><td>イベント駆動</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// 判断フローの例</span>
+
+<span class="ann">Q1.</span> 寿命は?
+  &lt;<span class="num">1</span>年   → MVC でOK
+  <span class="num">1-3</span>年  → レイヤード
+  &gt;<span class="num">3</span>年   → クリーン検討
+
+<span class="ann">Q2.</span> チーム規模は?
+  <span class="num">1-5</span>人   → モノリス
+  <span class="num">5-20</span>人  → モジュラーモノリス
+  &gt;<span class="num">20</span>人  → マイクロサービス検討
+
+<span class="ann">Q3.</span> ドメインは複雑か?
+  Yes → DDD + クリーン/ヘキサ
+  No  → レイヤードで十分
+
+<span class="ann">Q4.</span> リアルタイム要件は?
+  Yes → イベント駆動 + CQRS
+  No  → 同期処理 で問題なし
+
+<span class="comment">// 一番ダメなアーキテクト</span>
+<span class="comment">// 「クリーンアーキ最強だから常に使う」</span>
+<span class="comment">// ← 過剰設計の典型</span>
+
+<span class="comment">// 良いアーキテクト</span>
+<span class="comment">// 「このプロジェクトには</span>
+<span class="comment">//  これが必要十分」と言える人</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">NEXT STEP — Vol.6 へ</div>
+    アーキテクチャの大枠が決まったら、次は具体的な<b>データ設計</b>です。Vol.6では<b>データベース・データ設計</b>を扱います。ER設計、正規化、インデックス、トランザクション境界。<b>後から最も変更しにくい層</b>なので、ここを外すと致命傷になります。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING DESIGN SERIES — VOL.05</span>
+  <span>△ ARCHITECTURE</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト編 テストダブル編 Vol.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;--paper:#e8eaee;--paper-2:#d4d7df;
+  --accent:#3d4f7c;--accent-2:#5a6b94;--accent-3:#8a98b8;
+  --muted:#5a6480;--line:#b8bccc;
+  --code-bg:#1c2138;--code-text:#e8eaee;--panel-bg:#f4f5f8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"✓";position:absolute;top:-30px;right:-10px;font-size:280px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:640px;margin-top:20px;color:var(--ink);font-size:15px}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em}
+.pattern-desc{max-width:680px;font-size:14px;margin-bottom:20px;color:var(--ink)}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:16px}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+.panel{background:var(--panel-bg);padding:20px 24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:20px 24px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}.code .type{color:#c2a3ff}.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}.code .ann{color:#f7c08a}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.08);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+/* テストダブル分類表 */
+.double-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+.double-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:left;padding:8px 10px;letter-spacing:0.1em;border-bottom:1px solid var(--line)}
+.double-table td{padding:8px 10px;border-bottom:1px dashed var(--line);vertical-align:top}
+.double-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;width:80px}
+/* 図 */
+.diagram{font-family:'JetBrains Mono',monospace;font-size:12px;background:#fff;padding:14px;border:1px solid var(--line);line-height:1.7}
+.diagram .node{display:inline-block;background:var(--accent);color:#fff;padding:4px 10px;font-size:11px;margin:2px}
+.diagram .node.real{background:#386a3d}
+.diagram .node.fake{background:var(--accent-3);color:var(--ink)}
+.diagram .node.target{background:#c43030}
+.diagram .arrow{color:var(--accent);font-weight:700;padding:0 4px}
+/* 用途リスト */
+.use-list{font-size:13px}
+.use-list .item{padding:10px 12px;background:#fff;border-left:3px solid var(--accent-3);margin-bottom:6px}
+.use-list .item b{color:var(--accent)}
+/* 並列構造 */
+.parallel{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12.5px;margin:10px 0}
+.parallel > div{background:#fff;border:1px solid var(--line);padding:12px}
+.parallel .h{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+.page-footer{border-top:2px solid var(--ink);margin-top:80px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:180px}.parallel{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="vol-tag">VOL.04 / 10</span>
+  <h1>テストダブル編</h1>
+  <div class="subtitle">エンジニアリングテスト編 — TEST DOUBLES</div>
+  <p class="lead">
+    本物の代わりに使う「偽物」を扱う巻です。<b>Mock・Stub・Spy・Fake・Dummy</b>の5種類を区別し、依存性の注入（DI）と組み合わせて<b>外部依存を切り離す</b>技を身につけます。これができればテストの書ける範囲が一気に広がります。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 テストダブルとは</a></li>
+    <li><a href="#sec02">02 なぜダブルを使うのか</a></li>
+    <li><a href="#sec03">03 5種類の分類(Meszaros)</a></li>
+    <li><a href="#sec04">04 Stubの使い方</a></li>
+    <li><a href="#sec05">05 Mockの使い方</a></li>
+    <li><a href="#sec06">06 Spy・Fake・Dummy</a></li>
+    <li><a href="#sec07">07 依存性注入(DI)</a></li>
+    <li><a href="#sec08">08 やりすぎ問題</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>テストダブルとは</h2>
+    <span class="en">WHAT IS TEST DOUBLE</span>
+  </div>
+  <p class="pattern-desc">
+    テストダブル（test double）とは、<b>本物の代わりにテストで使う「偽物」</b>の総称です。映画のスタント代役（stunt double）から取った名前で、Gerard Meszarosが命名しました。DB、外部API、時刻、ファイル、メール送信など、<b>テストで本物を使うと困るもの</b>を置き換えます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">test double</span>
+      <span class="tag-desc">本物の振りをする代役オブジェクト</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 何を「置き換える」のか</div>
+        <div class="use-list">
+          <div class="item"><b>DB</b> 実DBの代わりにメモリ上の偽物</div>
+          <div class="item"><b>外部API</b> ネット越しの呼び出しを擬似応答に</div>
+          <div class="item"><b>時刻</b> 「今」を固定値にする</div>
+          <div class="item"><b>ランダム</b> 予測できない値を予測可能に</div>
+          <div class="item"><b>メール送信</b> 実送信せず記録だけ</div>
+          <div class="item"><b>決済</b> 実カード処理せず成功を装う</div>
+        </div>
+      </div>
+      <div class="code"><span class="comment">// 本物との置き換え図</span>
+
+<span class="ann">テスト対象</span>
+   <span class="comment">↓ 依存</span>
+<span class="kw">本物のDB</span>      ← 遅い・準備が大変
+<span class="kw">本物のAPI</span>     ← ネット必要・課金
+<span class="kw">本物の時計</span>    ← 結果が時刻依存
+<span class="kw">本物の決済</span>    ← 実際に課金される
+
+       <span class="comment">↓ 置き換え</span>
+
+<span class="ann">テスト対象</span>
+   <span class="comment">↓ 依存</span>
+<span class="kw">DBダブル</span>      ← 一瞬・どこでも動く
+<span class="kw">APIダブル</span>     ← 自由に結果を作れる
+<span class="kw">時計ダブル</span>    ← 「2024-01-15」に固定
+<span class="kw">決済ダブル</span>    ← 成功 / 失敗を選べる</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    テストダブルは<b>「テストできない」を「テストできる」に変える</b>道具です。実際の業務コードはほぼ必ず何かに依存しているので、ダブルを使いこなせるかどうかでテスト可能な範囲が大きく変わります。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>なぜダブルを使うのか</h2>
+    <span class="en">WHY USE DOUBLES</span>
+  </div>
+  <p class="pattern-desc">
+    ダブルが必要な理由は<b>4つの「困った事情」</b>に集約されます。遅い・不安定・副作用・不可制御。本物がこのうち1つでも持っていれば、ダブルへの置き換えを検討します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why</span>
+      <span class="tag-desc">本物が持つ4つの困った性質</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4つの困った事情</div>
+        <table class="double-table">
+          <tr><th>事情</th><th>例</th></tr>
+          <tr><td>遅い</td><td>DB問い合わせ、HTTP通信</td></tr>
+          <tr><td>不安定</td><td>外部APIの調子、ネット切断</td></tr>
+          <tr><td>副作用</td><td>本物のメール送信、本物の決済</td></tr>
+          <tr><td>不可制御</td><td>現在時刻、ランダム値、エラー再現</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">特に「不可制御」</b>が重要。エラーケースを試したくても、本物のAPIにエラーを返してもらうのは難しい。ダブルなら自由自在です。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// ダブルなしのテスト</span>
+<span class="fn">test</span>(<span class="str">"決済が失敗したらキャンセル"</span>, () =&gt; {
+  service.<span class="fn">order</span>(...);
+  <span class="comment">// 失敗を起こすには…</span>
+  <span class="comment">// 本物のカード会社にエラー</span>
+  <span class="comment">// を返してもらう必要</span>
+  <span class="comment">// → そんなの無理</span>
+});
+
+<span class="comment">// ダブルありのテスト</span>
+<span class="fn">test</span>(<span class="str">"決済が失敗したらキャンセル"</span>, () =&gt; {
+  payment.<span class="fn">charge</span> = () =&gt; {
+    <span class="kw">throw new</span> <span class="type">Error</span>(<span class="str">"declined"</span>);
+  };
+  <span class="kw">const</span> result = service.<span class="fn">order</span>(...);
+  <span class="fn">expect</span>(result.status).<span class="fn">toBe</span>(<span class="str">"cancelled"</span>);
+});
+
+<span class="comment">// 自分でエラーを起こせる</span>
+<span class="comment">// → テストできる範囲が広がる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    ダブルの真価は<b>「ハッピーパス以外を試せること」</b>。正常系だけでなく、エラー・タイムアウト・部分失敗を自由に再現できるのが最大の価値です。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>5種類の分類(Meszaros)</h2>
+    <span class="en">FIVE TYPES</span>
+  </div>
+  <p class="pattern-desc">
+    テストダブルには<b>5つの種類</b>があります。Meszarosの分類が業界標準です。実は「Mock」という言葉が広く使われがちですが、厳密には<b>Mockは5つのうちの1つ</b>でしかありません。役割が違うので、適切に使い分けると有用です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">5 types</span>
+      <span class="tag-desc">Meszarosによる5分類</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 5種類の比較</div>
+        <table class="double-table">
+          <tr><th>種類</th><th>役割</th></tr>
+          <tr><td>Dummy</td><td>引数を埋めるだけの空っぽ。中身は使われない</td></tr>
+          <tr><td>Stub</td><td>決まった値を返す。問い合わせ系</td></tr>
+          <tr><td>Spy</td><td>呼び出しを記録する。後から確認</td></tr>
+          <tr><td>Mock</td><td>「こう呼ばれるはず」を事前定義して検証</td></tr>
+          <tr><td>Fake</td><td>軽量な動く実装。例: メモリ上DB</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">「Mock」</b>は本来狭い意味だが、現場では総称的に使われがち。フレームワークが <code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 4px">jest.fn()</code> や <code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 4px">@Mock</code> を「mock」と呼ぶ影響もあり。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 比較イメージ</span>
+
+<span class="ann">Dummy</span>:
+  <span class="kw">const</span> u = <span class="kw">new</span> <span class="type">User</span>(<span class="kw">null</span>, <span class="kw">null</span>);
+  <span class="comment">// nullは使われないがコンパイル用</span>
+
+<span class="ann">Stub</span>:
+  repo.<span class="fn">find</span> = () =&gt; <span class="kw">return</span> { id:<span class="num">1</span> };
+  <span class="comment">// 問い合わせると決まった値を返す</span>
+
+<span class="ann">Spy</span>:
+  <span class="kw">const</span> spy = <span class="fn">jest.fn</span>();
+  ...あとで...
+  <span class="fn">expect</span>(spy).<span class="fn">toHaveBeenCalled</span>();
+
+<span class="ann">Mock</span>:
+  expect(notifier)
+    .toReceive(<span class="str">"send"</span>)
+    .with(<span class="str">"hello"</span>);
+  <span class="comment">// 事前に期待を定義</span>
+
+<span class="ann">Fake</span>:
+  <span class="kw">class</span> <span class="type">InMemoryRepo</span> {
+    <span class="comment">// メモリ上に動く実装</span>
+  }</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">注意</div>
+    現場ではこの5分類を厳格に使い分けるチームは少なく、<b>「Stub」と「Mock」だけは区別する</b>のが現実的なライン。残り3つは「ダブルの一種」と理解しておけば十分です。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>Stubの使い方</h2>
+    <span class="en">USING STUB</span>
+  </div>
+  <p class="pattern-desc">
+    Stub（スタブ）は<b>「決まった値を返す」</b>偽物です。テスト対象が情報を「問い合わせる」相手として使います。最も使用頻度が高く、まずこれから慣れるのがオススメです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">stub</span>
+      <span class="tag-desc">問い合わせに決まった答えを返す</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Stubの典型構造</div>
+        <div class="diagram">
+          <div><span class="node target">テスト対象</span><span class="arrow">→</span><span class="node fake">Stub: repository</span></div>
+          <div style="margin-top:8px;color:var(--muted);font-size:11px">「IDを渡してユーザー情報を取得」を問い合わせる</div>
+          <div style="margin-top:8px"><span class="node fake">Stub</span><span class="arrow">→</span><span class="node target">テスト対象</span></div>
+          <div style="margin-top:8px;color:var(--muted);font-size:11px">あらかじめ仕込んだUser{name:"佐藤"}を返す</div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          ポイントは<b style="color:var(--ink)">「返り値」</b>を制御すること。呼ばれたかどうかは気にしない。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// Jest — 単純なStub</span>
+<span class="fn">test</span>(<span class="str">"ユーザー名を表示する"</span>, () =&gt; {
+  <span class="kw">const</span> repo = {
+    <span class="fn">find</span>: () =&gt; ({ name: <span class="str">"佐藤"</span> }),
+  };
+  <span class="kw">const</span> view = <span class="kw">new</span> <span class="type">UserView</span>(repo);
+
+  <span class="fn">expect</span>(view.<span class="fn">render</span>(<span class="num">1</span>))
+    .<span class="fn">toBe</span>(<span class="str">"こんにちは佐藤さん"</span>);
+});
+
+<span class="comment">// jest.fn().mockReturnValue で楽に</span>
+<span class="kw">const</span> repo = {
+  find: <span class="fn">jest.fn</span>().<span class="fn">mockReturnValue</span>({
+    name: <span class="str">"佐藤"</span>,
+  }),
+};
+
+<span class="comment">// 引数で返り値を変える</span>
+repo.find.<span class="fn">mockImplementation</span>((id) =&gt; {
+  <span class="kw">if</span> (id === <span class="num">1</span>) <span class="kw">return</span> { name: <span class="str">"佐藤"</span> };
+  <span class="kw">if</span> (id === <span class="num">2</span>) <span class="kw">return</span> { name: <span class="str">"鈴木"</span> };
+  <span class="kw">return</span> <span class="kw">null</span>;
+});</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">超便利</div>
+    Stubを使えば<b>異常系のテストが格段に書きやすくなります</b>。「エラーを返すStub」「nullを返すStub」「空配列を返すStub」を仕込めば、本物では再現困難な状況も自由に作れます。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>Mockの使い方</h2>
+    <span class="en">USING MOCK</span>
+  </div>
+  <p class="pattern-desc">
+    Mock（モック）は<b>「呼び出されたかどうか」「どんな引数で呼ばれたか」を検証する</b>偽物です。Stubが「問い合わせ系」だったのに対し、Mockは「指示系」を検証します。メール送信・ログ出力・通知など、<b>呼ばれたこと自体が重要</b>な場面で使います。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">mock</span>
+      <span class="tag-desc">「呼ばれたか」を検証する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// MockとStubの違い</div>
+        <div class="parallel">
+          <div>
+            <div class="h">STUB</div>
+            <b>返り値</b>に注目<br>
+            「何を返すか」を仕込む<br>
+            呼ばれたか問わない
+          </div>
+          <div>
+            <div class="h">MOCK</div>
+            <b>呼び出し</b>に注目<br>
+            「どう呼ばれたか」を検証<br>
+            返り値は気にしない場合も
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          英語では <b style="color:var(--ink)">"State verification" vs "Behavior verification"</b> と呼び分けられる。状態検証 vs 振る舞い検証。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// Mockの典型例</span>
+<span class="fn">test</span>(<span class="str">"購入時にメールが送られる"</span>, () =&gt; {
+  <span class="kw">const</span> mailer = {
+    send: <span class="fn">jest.fn</span>(),  <span class="ann">// Mock</span>
+  };
+  <span class="kw">const</span> service = <span class="kw">new</span> <span class="type">OrderService</span>(mailer);
+
+  service.<span class="fn">purchase</span>({ user: <span class="str">"u1"</span>, item: <span class="str">"X"</span> });
+
+  <span class="comment">// 呼ばれたかを検証</span>
+  <span class="fn">expect</span>(mailer.send).<span class="fn">toHaveBeenCalled</span>();
+
+  <span class="comment">// 引数まで検証</span>
+  <span class="fn">expect</span>(mailer.send).<span class="fn">toHaveBeenCalledWith</span>(
+    <span class="str">"u1@example.com"</span>,
+    <span class="str">"ご購入ありがとうございます"</span>
+  );
+
+  <span class="comment">// 回数まで検証</span>
+  <span class="fn">expect</span>(mailer.send).<span class="fn">toHaveBeenCalledTimes</span>(<span class="num">1</span>);
+});</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">使い分けの目安</div>
+    対象オブジェクトが情報を<b>「取りに行く」</b>相手 → <b>Stub</b>。情報を<b>「渡す」</b>相手・通知する相手 → <b>Mock</b>。これがざっくりした使い分けの指針です。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>Spy・Fake・Dummy</h2>
+    <span class="en">SPY, FAKE, DUMMY</span>
+  </div>
+  <p class="pattern-desc">
+    残り3種類もざっくり押さえましょう。<b>Spyは「実物に記録機能を追加」、Fakeは「動く軽量実装」、Dummyは「形だけ」</b>。それぞれ向く場面が異なります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">spy fake dummy</span>
+      <span class="tag-desc">残り3種類のダブル</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3種類の役割</div>
+        <div class="use-list">
+          <div class="item">
+            <b>Spy</b> 本物の動きはそのまま、ただし呼び出し履歴を記録。後から「何回呼ばれたか」を検証できる
+          </div>
+          <div class="item">
+            <b>Fake</b> 本物の代わりに動く軽量実装。例: メモリ上で動くRepository、テスト用の偽SMTPサーバ
+          </div>
+          <div class="item">
+            <b>Dummy</b> 中身が使われないので、引数を埋めるためだけの空のオブジェクト
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          現場での出現頻度は<b style="color:var(--ink)">Stub &gt; Mock &gt; Spy &gt; Fake &gt; Dummy</b>。Dummyはほぼ意識せず使っていることも多い。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// Spy — 本物 + 記録</span>
+<span class="kw">const</span> realLogger = <span class="kw">new</span> <span class="type">Logger</span>();
+<span class="kw">const</span> spy = <span class="fn">jest.spyOn</span>(realLogger, <span class="str">"info"</span>);
+
+service.<span class="fn">doSomething</span>(realLogger);
+
+<span class="fn">expect</span>(spy).<span class="fn">toHaveBeenCalledWith</span>(<span class="str">"started"</span>);
+<span class="comment">// 本物のLoggerはそのまま動く</span>
+<span class="comment">// 加えて記録もされる</span>
+
+<span class="comment">// Fake — メモリ上で動くDB</span>
+<span class="kw">class</span> <span class="type">InMemoryUserRepo</span> {
+  <span class="kw">constructor</span>() { <span class="kw">this</span>.data = <span class="kw">new</span> <span class="type">Map</span>(); }
+  <span class="fn">save</span>(u) { <span class="kw">this</span>.data.<span class="fn">set</span>(u.id, u); }
+  <span class="fn">find</span>(id) { <span class="kw">return</span> <span class="kw">this</span>.data.<span class="fn">get</span>(id); }
+}
+<span class="comment">// 本物のDBと同じインターフェース</span>
+<span class="comment">// メモリ上で動くので超高速</span>
+
+<span class="comment">// Dummy — 形だけ</span>
+<span class="kw">const</span> dummyUser = <span class="kw">new</span> <span class="type">User</span>(<span class="kw">null</span>, <span class="kw">null</span>);
+service.<span class="fn">process</span>(dummyUser, <span class="num">10</span>);
+<span class="comment">// userの中身は使われない</span>
+<span class="comment">// 引数のために形だけ用意</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    <b>Fakeは特に強力</b>です。「メモリ上で動くDB」「テスト用の偽SMTPサーバ」のように、本物と同じインターフェースで動くため、StubやMockより自然なテストが書けます。複雑なテストでは積極的に検討する価値があります。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>依存性注入(DI)</h2>
+    <span class="en">DEPENDENCY INJECTION</span>
+  </div>
+  <p class="pattern-desc">
+    テストダブルを使うには、<b>「外から依存を差し込める」</b>設計が必要です。これを<b>依存性注入（Dependency Injection、DI）</b>と呼びます。複雑なフレームワークを使わなくても、コンストラクタや引数で渡すだけで実現できます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">DI</span>
+      <span class="tag-desc">ダブルを差し込めるようにする設計</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// DIの効果</div>
+        <div class="parallel">
+          <div>
+            <div class="h">DIなし</div>
+            内部で<b>new</b><br>
+            ↓<br>
+            置き換え不可<br>
+            ↓<br>
+            <span style="color:#a44">テスト困難</span>
+          </div>
+          <div>
+            <div class="h">DIあり</div>
+            外から<b>受け取る</b><br>
+            ↓<br>
+            置き換え可能<br>
+            ↓<br>
+            <span style="color:#386">テスト容易</span>
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          DIは<b style="color:var(--ink)">テスト容易性を実現する設計原則</b>。本番では本物を、テストではダブルを、同じ場所に差し込みます。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// === DIなし(NG) ===</span>
+<span class="kw">class</span> <span class="type">OrderService</span> {
+  <span class="kw">constructor</span>() {
+    <span class="kw">this</span>.mailer = <span class="kw">new</span> <span class="type">SmtpMailer</span>();
+    <span class="comment">// ↑ 内部でnew = 置換不可</span>
+  }
+}
+
+<span class="comment">// === DIあり(OK) ===</span>
+<span class="kw">class</span> <span class="type">OrderService</span> {
+  <span class="kw">constructor</span>(mailer) {
+    <span class="kw">this</span>.mailer = mailer;
+    <span class="comment">// ↑ 外から受け取る = 置換可</span>
+  }
+}
+
+<span class="comment">// 本番</span>
+<span class="kw">const</span> service = <span class="kw">new</span> <span class="type">OrderService</span>(
+  <span class="kw">new</span> <span class="type">SmtpMailer</span>()
+);
+
+<span class="comment">// テスト</span>
+<span class="kw">const</span> service = <span class="kw">new</span> <span class="type">OrderService</span>(
+  { <span class="fn">send</span>: <span class="fn">jest.fn</span>() }  <span class="ann">// Mock</span>
+);</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    DIは<b>SpringやDIコンテナを使うことだけを指す言葉ではありません</b>。「外から渡す」というだけのシンプルな概念です。コンストラクタ・関数引数で渡すだけでも立派なDI。これだけでテスト容易性は大きく向上します。
+  </div>
+</section>
+
+<section id="sec08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>やりすぎ問題</h2>
+    <span class="en">MOCK OVERUSE</span>
+  </div>
+  <p class="pattern-desc">
+    テストダブルは強力な道具ですが、<b>使いすぎは害になります</b>。何でもかんでもMock化すると、「実装の写経テスト」になり、リファクタリング耐性を失います。現場で頻発する典型的なアンチパターンを押さえましょう。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">overuse</span>
+      <span class="tag-desc">過剰なMockが招く問題</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのアンチパターン</div>
+        <div class="use-list">
+          <div class="item">
+            <b>過剰Mock</b> すべての依存をMockに。実装の細部を写経したテストになり、リファクタで全部壊れる
+          </div>
+          <div class="item">
+            <b>連鎖Mock</b> <code style="font-family:'JetBrains Mono',monospace;font-size:11px">a.getB().getC().getD()</code> のような深い連鎖を全てMock化。複雑で読めない
+          </div>
+          <div class="item">
+            <b>戻り値の型偽装</b> Mockが本物と異なる型を返してしまい、本番で型エラー発覚
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          目安: <b style="color:var(--ink)">1テストで2〜3個</b>までのMock。それ以上は設計の見直し時かも。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// === NG: 過剰Mock ===</span>
+<span class="fn">test</span>(<span class="str">"処理"</span>, () =&gt; {
+  <span class="kw">const</span> a = <span class="fn">mock</span>();
+  <span class="kw">const</span> b = <span class="fn">mock</span>();
+  <span class="kw">const</span> c = <span class="fn">mock</span>();
+  <span class="kw">const</span> d = <span class="fn">mock</span>();
+  <span class="kw">const</span> e = <span class="fn">mock</span>();
+  <span class="comment">// 5個もMock?</span>
+  <span class="comment">// → 対象が依存しすぎ</span>
+  <span class="comment">// → 設計の問題</span>
+});
+
+<span class="comment">// === NG: 実装写経 ===</span>
+<span class="fn">test</span>(<span class="str">"処理"</span>, () =&gt; {
+  service.<span class="fn">do</span>();
+  <span class="fn">expect</span>(a.<span class="fn">step1</span>).<span class="fn">toHaveBeenCalled</span>();
+  <span class="fn">expect</span>(a.<span class="fn">step2</span>).<span class="fn">toHaveBeenCalled</span>();
+  <span class="fn">expect</span>(a.<span class="fn">step3</span>).<span class="fn">toHaveBeenCalled</span>();
+  <span class="comment">// → 内部手順を全部検証</span>
+  <span class="comment">// → リファクタで全壊</span>
+});
+
+<span class="comment">// === OK: 結果を検証 ===</span>
+<span class="fn">test</span>(<span class="str">"処理"</span>, () =&gt; {
+  <span class="kw">const</span> result = service.<span class="fn">do</span>();
+  <span class="fn">expect</span>(result).<span class="fn">toEqual</span>(...);
+  <span class="comment">// → 内部手順は不問</span>
+  <span class="comment">// → 振る舞いだけ確認</span>
+});</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">鉄則</div>
+    Mockは<b>「外との境目」だけ</b>に使うのが現場の知恵。内部のクラス同士までMock化し始めたら、設計を疑うサインです。<b>地図編Vol.4で「依存」という概念を構造的に整理</b>するので、合わせて読むと使い分けが見えてきます。
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  次は<b>本編Vol.5「テスト設計技法編」</b>へ。「どんなテストケースを書くべきか」を体系的に考える技法を学びます。同値分割・境界値分析・デシジョンテーブル・ペアワイズ。<b>地図編Vol.4「本物と偽物の地図編」</b>では、依存という概念そのものを左右軸で読み解きます。Vol.4で「ダブルを使えば」と語った話の根拠が、地図編でクリアになります。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST REFERENCE — VOL.04</span>
+  <span>TEST DOUBLES</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git/GitHub編 入門・全体像 Vol.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2520;
+  --paper:#f4ede0;
+  --paper-2:#e8dfcc;
+  --accent:#8b5e3c;
+  --accent-2:#c9a876;
+  --accent-3:#5c4a3a;
+  --muted:#7a6e5d;
+  --line:#c4b8a0;
+  --code-bg:#1f1a14;
+  --code-text:#e8dfcc;
+  --panel-bg:#ebe2cf;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;font-size:15px;line-height:1.85}
+body{max-width:1180px;margin:0 auto;padding:48px 40px 80px}
+
+.page-header{position:relative;padding:36px 32px 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"⎇";position:absolute;right:-20px;top:-30px;font-size:280px;color:var(--accent);opacity:0.18;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em}
+h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin:18px 0 10px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;letter-spacing:0.15em;font-family:"JetBrains Mono",monospace;margin-bottom:20px}
+.lead{max-width:640px;font-size:15px;line-height:2;color:var(--ink)}
+
+.toc{background:var(--paper-2);padding:22px 28px;margin-bottom:56px;border:1px solid var(--line)}
+.toc-title{font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:0.2em;margin-bottom:12px;color:var(--accent-3)}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc a{color:var(--ink);text-decoration:none;font-size:14px;font-family:"JetBrains Mono",monospace}
+.toc a::before{content:"— ";color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
+.section-num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;flex:1}
+.en{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted)}
+.pattern-desc{max-width:740px;margin-bottom:22px;color:var(--ink)}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-family:"JetBrains Mono",monospace;font-weight:600;color:var(--accent-3);font-size:13px}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line)}
+.panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:"JetBrains Mono",monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#f7c08a;font-weight:600}
+.step{color:#c9a876;font-weight:600}
+.cmd{color:#b5e8b0}
+.flag{color:#f7c08a}
+
+@media(max-width:720px){
+  body{padding:24px 18px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  h1{font-size:32px}
+  .page-header::before{font-size:180px}
+  .toc ul{gap:6px 14px}
+}
+
+.flow{display:flex;flex-direction:column;gap:10px}
+.flow-item{background:#fff;border:1px solid var(--line);padding:10px 14px;font-size:13px}
+.flow-item .label{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em;display:block;margin-bottom:4px}
+.flow-arrow{text-align:center;color:var(--accent);font-size:18px;font-weight:600}
+
+.box{background:#fff;border:1px solid var(--line);padding:12px 14px;margin-bottom:10px}
+.box .box-title{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-bottom:6px;letter-spacing:0.1em}
+.box p{font-size:13px;line-height:1.7}
+
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.compare > div{background:#fff;border:1px solid var(--line);padding:12px}
+.compare .heading{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.15em;margin-bottom:6px;font-weight:600;color:#3a7050}
+.compare ul{list-style:none;font-size:12.5px}
+.compare li{padding:2px 0;padding-left:14px;position:relative}
+.compare li::before{content:"・";position:absolute;left:0;color:var(--muted)}
+
+.diagram{background:#fff;border:1px solid var(--line);padding:18px;font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.8;white-space:pre;overflow-x:auto}
+
+.tbl{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
+.tbl th,.tbl td{padding:8px 10px;border:1px solid var(--line);text-align:left}
+.tbl th{background:var(--paper-2);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.1em;font-weight:600}
+
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:12px;margin:0 1px}
+
+.tip{background:rgba(139,94,60,0.08);border-left:3px solid var(--accent);padding:16px 20px;margin:18px 0}
+.tip-title{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.15em;color:var(--accent-3);font-weight:600;margin-bottom:6px}
+.tip p{font-size:14px;line-height:1.9}
+.tip b{color:var(--accent-3)}
+
+.page-footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+.page-footer .right{text-align:right}
+
+code.inline{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12.5px;color:var(--accent-3)}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">GIT / GITHUB</span>
+  <span class="vol-tag">VOL.01 / 09</span>
+  <h1>入門・全体像編</h1>
+  <div class="subtitle">INTRODUCTION &amp; BIG PICTURE</div>
+  <p class="lead">
+    バージョン管理とは何か。なぜGitが世界標準なのか。GitHubはGitとどう違うのか。
+    第1巻では、その「全体地図」を一気に俯瞰します。
+    <b>仕組みを掴めば、後の巻のコマンドが「ただの暗記」ではなく「意味のある操作」になります。</b>
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01. バージョン管理とは</a></li>
+    <li><a href="#s02">02. GitとGitHubの違い</a></li>
+    <li><a href="#s03">03. インストールと初期設定</a></li>
+    <li><a href="#s04">04. 3つのエリア</a></li>
+    <li><a href="#s05">05. はじめてのコミット</a></li>
+    <li><a href="#s06">06. GitHubに繋ぐ</a></li>
+    <li><a href="#s07">07. シリーズ全体マップ</a></li>
+    <li><a href="#s08">08. 学習の進め方</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>バージョン管理とは</h2>
+    <span class="en">VERSION CONTROL</span>
+  </div>
+  <p class="pattern-desc">
+    一言で言えば<b>「ファイルの履歴を全部保存しておく仕組み」</b>です。
+    「やっぱり前の状態に戻したい」「誰がいつ何を変えたかを知りたい」「複数人で同じファイルを編集したい」——
+    こうした<b>あるあるの困りごと</b>を全部解決してくれます。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">version-control</span>
+      <span class="tag-desc">なぜ必要か</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// バージョン管理がない世界</div>
+        <div class="diagram">report.docx
+report_v2.docx
+report_v2_最新.docx
+report_v2_最新_修正.docx
+report_v2_最新_修正_本当.docx
+report_最終版_FINAL.docx
+report_最終版_FINAL_2.docx</div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">あるある —</div>
+          <p>こうなった経験、ありませんか? <b>「最終版」が一番古い</b>という悲劇も。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># Gitがある世界</span>
+$ git log --oneline
+
+<span class="num">a3f2c1d</span> <span class="str">レビュー指摘を反映</span>
+<span class="num">9b8e4a2</span> <span class="str">序章を加筆</span>
+<span class="num">5d6f3a8</span> <span class="str">図表を差し替え</span>
+<span class="num">2c1b0e9</span> <span class="str">初稿完成</span>
+
+<span class="comment"># すべてが1つのファイルで管理され、</span>
+<span class="comment"># いつでも過去の状態に戻れる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p>バージョン管理は<b>「タイムマシン付きのファイル管理」</b>と覚えればOK。コードでも文書でも、変化するものすべてに有効です。</p>
+  </div>
+</section>
+
+<section id="s02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>GitとGitHubの違い</h2>
+    <span class="en">GIT vs GITHUB</span>
+  </div>
+  <p class="pattern-desc">
+    初学者が<b>一番最初に混乱するポイント</b>です。
+    結論から言うと、<b>Git=ツール、GitHub=サービス</b>。
+    料理で言えば「包丁(Git)」と「セントラルキッチン(GitHub)」のような関係です。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git ≠ github</span>
+      <span class="tag-desc">混同しないこと</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 役割の違い</div>
+        <div class="compare">
+          <div>
+            <div class="heading">GIT (ツール)</div>
+            <ul>
+              <li>あなたのPCにインストール</li>
+              <li>履歴を記録する本体</li>
+              <li>コマンドラインで動く</li>
+              <li>無料・オフライン動作</li>
+              <li>2005年 Linus Torvalds 作</li>
+            </ul>
+          </div>
+          <div>
+            <div class="heading">GITHUB (サービス)</div>
+            <ul>
+              <li>Web上のホスティングサービス</li>
+              <li>Gitリポジトリを保管</li>
+              <li>ブラウザで操作・閲覧</li>
+              <li>無料枠あり (一部有料)</li>
+              <li>2008年〜 Microsoft傘下</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># Git だけでも履歴管理はできる</span>
+$ <span class="cmd">git init</span>
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"changes"</span>
+
+<span class="comment"># でも… 同僚に共有したい!</span>
+<span class="comment"># PCが壊れたら全部消える!</span>
+<span class="comment"># そこで GitHub の出番</span>
+
+$ <span class="cmd">git push</span> origin main
+<span class="comment">       ↑ GitHub に送る</span>
+
+<span class="comment"># GitHub以外にも</span>
+<span class="comment">#   ・GitLab</span>
+<span class="comment">#   ・Bitbucket</span>
+<span class="comment"># といった選択肢があります</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">TIP —</div>
+    <p>面接で<b>「GitとGitHubの違いを説明して」</b>は鉄板の質問。「Gitは分散型バージョン管理システムというツール本体で、GitHubはそのGitリポジトリをホスティングするWebサービス」と答えれば満点です。</p>
+  </div>
+</section>
+
+<section id="s03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>インストールと初期設定</h2>
+    <span class="en">INSTALL &amp; CONFIG</span>
+  </div>
+  <p class="pattern-desc">
+    Gitは<b>OSによってインストール方法が違います</b>。
+    インストール後、最初に必ずやることは<b>名前とメールアドレスの設定</b>。これがコミットの「署名」になります。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">install</span>
+      <span class="tag-desc">OSごとの導入手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// OS別インストール</div>
+        <div class="box">
+          <div class="box-title">WINDOWS</div>
+          <p><code class="inline">git-scm.com</code> から「Git for Windows」を落としてインストール。<b>Git Bash</b>という黒い画面が付いてきます。</p>
+        </div>
+        <div class="box">
+          <div class="box-title">macOS</div>
+          <p>ターミナルで <code class="inline">brew install git</code> 一発。Homebrewが入っていなければ先にそれを導入。</p>
+        </div>
+        <div class="box">
+          <div class="box-title">LINUX (Ubuntu系)</div>
+          <p><code class="inline">sudo apt install git</code> でOK。たいていは最初から入っています。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># インストール確認</span>
+$ <span class="cmd">git --version</span>
+git version 2.43.0
+
+<span class="comment"># --- 初期設定 (一度だけ) ---</span>
+
+<span class="comment"># 名前 (コミットに表示される)</span>
+$ <span class="cmd">git config</span> <span class="flag">--global</span> user.name <span class="str">"Taro Yamada"</span>
+
+<span class="comment"># メールアドレス</span>
+$ <span class="cmd">git config</span> <span class="flag">--global</span> user.email <span class="str">"taro@example.com"</span>
+
+<span class="comment"># デフォルトブランチ名を main に</span>
+$ <span class="cmd">git config</span> <span class="flag">--global</span> init.defaultBranch main
+
+<span class="comment"># 設定確認</span>
+$ <span class="cmd">git config</span> <span class="flag">--list</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p>GitHubで使うメールアドレスと<b>同じものを設定すること</b>。これが揃っていないと、GitHub上で「アバターが出ない」「貢献度カウンタに反映されない」といった地味な不都合が起きます。</p>
+  </div>
+</section>
+
+<section id="s04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>3つのエリア</h2>
+    <span class="en">THREE TREES</span>
+  </div>
+  <p class="pattern-desc">
+    Gitの仕組みを理解する<b>最重要コンセプト</b>がこれ。ファイルは <b>ワーキングディレクトリ → ステージング → リポジトリ</b> の3段階を経て記録されます。
+    このイメージが頭に入っていれば、Gitコマンドは8割理解できたと言ってもいいくらいです。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">working / staging / repository</span>
+      <span class="tag-desc">★★★ 必修コンセプト</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのエリアの流れ</div>
+        <div class="flow">
+          <div class="flow-item">
+            <span class="label">① WORKING DIRECTORY</span>
+            あなたが普段編集している作業フォルダ。<br>
+            <span style="font-size:12px;color:var(--muted)">エディタで開くあの場所</span>
+          </div>
+          <div class="flow-arrow">↓ git add</div>
+          <div class="flow-item">
+            <span class="label">② STAGING AREA</span>
+            「次にコミットしたい変更」を一時的に置く場所。<br>
+            <span style="font-size:12px;color:var(--muted)">荷物を運ぶ前の積み込み場</span>
+          </div>
+          <div class="flow-arrow">↓ git commit</div>
+          <div class="flow-item">
+            <span class="label">③ REPOSITORY (.git)</span>
+            履歴として正式に記録される場所。<br>
+            <span style="font-size:12px;color:var(--muted)">ここに入ったら戻せる</span>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># たとえばこんな流れ</span>
+
+<span class="comment"># 1. ファイルを編集</span>
+$ <span class="cmd">echo</span> <span class="str">"Hello"</span> &gt; hello.txt
+
+<span class="comment"># 2. 状態を確認</span>
+$ <span class="cmd">git status</span>
+Untracked files:
+  hello.txt   <span class="comment"># まだ①の段階</span>
+
+<span class="comment"># 3. ステージに上げる</span>
+$ <span class="cmd">git add</span> hello.txt
+
+$ <span class="cmd">git status</span>
+Changes to be committed:
+  new file: hello.txt   <span class="comment"># ②へ移動</span>
+
+<span class="comment"># 4. コミットして記録</span>
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"add hello"</span>
+[main a3f2c1d] add hello
+                       <span class="comment"># ③に正式記録</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p><b>なぜステージングが挟まるのか?</b> 答えは「コミット単位を自分で選べるから」。10ファイル変更しても、「この3つだけ先にコミット」が可能。これが<b>git の柔軟さ</b>の源です。</p>
+  </div>
+</section>
+
+<section id="s05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>はじめてのコミット</h2>
+    <span class="en">HELLO COMMIT</span>
+  </div>
+  <p class="pattern-desc">
+    理屈はここまで。実際に手を動かして、<b>「git の世界の Hello World」</b>であるはじめてのコミットをしてみます。
+    たった5コマンドで、あなたのフォルダがリポジトリになります。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">first-commit</span>
+      <span class="tag-desc">手を動かす最初の儀式</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ファイル状態の遷移</div>
+        <div class="diagram">my-project/
+├─ .git/          ← git init で誕生
+│   └─ (内部の管理ファイル群)
+└─ hello.txt      ← あなたが作るファイル
+
+[ git init ]
+    ↓
+[ ファイル作成 ]
+    ↓
+[ git add . ]
+    ↓
+[ git commit -m "..." ]
+    ↓
+✓ 最初のコミットが
+  履歴に刻まれる</div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">注意 —</div>
+          <p><code class="inline">.git</code> フォルダは<b>絶対に手で触らない</b>こと。中身が壊れるとリポジトリが死にます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># ① 新しいフォルダを作る</span>
+$ <span class="cmd">mkdir</span> my-project
+$ <span class="cmd">cd</span> my-project
+
+<span class="comment"># ② リポジトリとして初期化</span>
+$ <span class="cmd">git init</span>
+Initialized empty Git repository in
+  .../my-project/.git/
+
+<span class="comment"># ③ ファイルを作る</span>
+$ <span class="cmd">echo</span> <span class="str">"Hello, Git!"</span> &gt; hello.txt
+
+<span class="comment"># ④ ステージに乗せる (. は全ファイル)</span>
+$ <span class="cmd">git add</span> .
+
+<span class="comment"># ⑤ コミット!</span>
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"first commit"</span>
+[main (root-commit) <span class="num">a3f2c1d</span>] first commit
+ 1 file changed, 1 insertion(+)
+ create mode 100644 hello.txt
+
+<span class="comment"># ⑥ 履歴を確認</span>
+$ <span class="cmd">git log</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">TIP —</div>
+    <p><b>コミットメッセージ</b>は未来の自分への手紙。「修正」「変更」のような中身のない言葉は避け、<b>「ログインフォームのバリデーションを追加」</b>のように<b>「何をやったか」が一目でわかる</b>文に。詳しくはVol.8で扱います。</p>
+  </div>
+</section>
+
+<section id="s06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>GitHubに繋ぐ</h2>
+    <span class="en">CONNECT TO GITHUB</span>
+  </div>
+  <p class="pattern-desc">
+    ローカルのリポジトリをGitHubに<b>「アップロード」</b>します。これで、PCが壊れてもコードは消えず、世界中どこからでもアクセスでき、他人と共有もできるようになります。
+    <b>ここから本格的にGitの威力が発揮されます。</b>
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">push to github</span>
+      <span class="tag-desc">ローカル → クラウド</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 全体イメージ</div>
+        <div class="diagram">  [ あなたのPC ]
+  ┌──────────────┐
+  │  my-project  │
+  │    .git/     │
+  └──────┬───────┘
+         │ git push
+         ↓
+  ┌──────────────────┐
+  │ github.com/      │
+  │  taro/my-project │
+  └──────────────────┘
+         ↑ git pull
+         │
+  [ 同僚のPC ]
+  ┌──────────────┐
+  │  my-project  │
+  └──────────────┘</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">手順 (GitHub側)</div>
+          <p><span class="step">①</span> github.com にログイン<br>
+          <span class="step">②</span> 右上 <span style="color:var(--accent-3);font-weight:600">+</span> → <span style="color:var(--accent-3);font-weight:600">New repository</span><br>
+          <span class="step">③</span> リポジトリ名を入力 → Create<br>
+          <span class="step">④</span> 表示されるURLをコピー</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># ローカル → GitHub に繋ぐ</span>
+
+<span class="comment"># ① リモートを登録</span>
+$ <span class="cmd">git remote add</span> origin <span class="str">https://github.com/taro/my-project.git</span>
+<span class="comment">#                  ↑名前   ↑URL</span>
+
+<span class="comment"># ② ブランチ名を main に</span>
+$ <span class="cmd">git branch</span> <span class="flag">-M</span> main
+
+<span class="comment"># ③ プッシュ (アップロード)</span>
+$ <span class="cmd">git push</span> <span class="flag">-u</span> origin main
+
+Enumerating objects: 3, done.
+Writing objects: 100% (3/3), done.
+To https://github.com/taro/my-project.git
+ * [new branch]  main -&gt; main
+
+<span class="comment"># これでGitHub上に表示される!</span>
+
+<span class="comment"># --- 別PCから取ってくるなら ---</span>
+$ <span class="cmd">git clone</span> <span class="str">https://github.com/taro/my-project.git</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">ハマりどころ —</div>
+    <p>2021年以降、GitHubは<b>パスワード認証を廃止</b>しています。pushしようとして「Authentication failed」で固まる初学者が大量発生中。解決策は<b>「Personal Access Token (PAT)」</b>か<b>「SSH鍵」</b>。詳しくはVol.4で。</p>
+  </div>
+</section>
+
+<section id="s07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>シリーズ全体マップ</h2>
+    <span class="en">SERIES MAP</span>
+  </div>
+  <p class="pattern-desc">
+    この第1巻で<b>「Gitの世界地図」</b>を眺めました。ここから先の8巻で、その地図の各地域を順に深掘りしていきます。
+    どの巻で何を学ぶか、先に俯瞰しておくと迷子になりません。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.01 - vol.09</span>
+      <span class="tag-desc">全9巻 学習ロードマップ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 巻ごとの位置づけ</div>
+        <div class="box">
+          <div class="box-title">▼ 基礎の段 (Vol.1-3)</div>
+          <p>Gitの仕組みと日常コマンド。<b>ここを抜ければ「個人プロジェクト」は問題なく回せます</b>。</p>
+        </div>
+        <div class="box">
+          <div class="box-title">▼ 連携の段 (Vol.4-6)</div>
+          <p>GitHubとの連携、履歴の手直し、PR・レビューといったチーム作業の基本。<b>業務で必須の領域</b>。</p>
+        </div>
+        <div class="box">
+          <div class="box-title">▼ 応用の段 (Vol.7-8)</div>
+          <p>GitHub Actionsで自動化、チーム運用のお作法。<b>「使える人」から「頼れる人」へ</b>。</p>
+        </div>
+        <div class="box">
+          <div class="box-title">▼ 救済の段 (Vol.9)</div>
+          <p>困った時に開く辞書。<b>全エンジニアが何度もお世話になる</b>巻。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment">＝＝ Git/GitHub編 全9巻 ＝＝</span>
+
+<span class="step">Vol.1</span> 入門・全体像編     <span class="comment">← 今ここ</span>
+<span class="step">Vol.2</span> 基本コマンド編
+<span class="step">Vol.3</span> ブランチとマージ編
+<span class="step">Vol.4</span> リモートリポジトリ編
+<span class="step">Vol.5</span> 履歴操作とコンフリクト編
+<span class="step">Vol.6</span> GitHub実践編 (PR/Issue)
+<span class="step">Vol.7</span> GitHub Actions編
+<span class="step">Vol.8</span> チーム運用編
+<span class="step">Vol.9</span> 困った時のGit編
+
+<span class="comment">＝＝ 想定読者 ＝＝</span>
+
+<span class="ann">★</span> プログラミング学習を始めて
+   間もない人
+<span class="ann">★</span> Gitを「なんとなく」で使って
+   いる人
+<span class="ann">★</span> チーム開発に初めて加わる人
+<span class="ann">★</span> 詰まった時の辞書が欲しい人</div>
+    </div>
+  </div>
+</section>
+
+<section id="s08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>学習の進め方</h2>
+    <span class="en">HOW TO STUDY</span>
+  </div>
+  <p class="pattern-desc">
+    最後に、このシリーズを<b>最も効率よく自分のものにする使い方</b>を提案します。
+    Gitは<b>「読むだけでは絶対に身につかない」</b>技術。手を動かす前提で進めてください。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">how-to-master</span>
+      <span class="tag-desc">挫折しないための鉄則</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 推奨スタイル</div>
+        <table class="tbl">
+          <tr><th>段階</th><th>やること</th></tr>
+          <tr><td><span class="step">1</span> 一読</td><td>該当の巻をざっと眺める</td></tr>
+          <tr><td><span class="step">2</span> 写経</td><td>コマンドを自分のPCで実行</td></tr>
+          <tr><td><span class="step">3</span> 改変</td><td>少し条件を変えて試す</td></tr>
+          <tr><td><span class="step">4</span> 失敗</td><td>わざとエラーを起こして観察</td></tr>
+          <tr><td><span class="step">5</span> 復習</td><td>3日後に該当章を見返す</td></tr>
+        </table>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">鉄則 —</div>
+          <p><b>練習用リポジトリを1つ作って、そこで自由に壊す</b>。本番リポジトリで実験すると事故ります。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># 推奨: 練習用フォルダを用意</span>
+
+$ <span class="cmd">mkdir</span> git-playground
+$ <span class="cmd">cd</span> git-playground
+$ <span class="cmd">git init</span>
+
+<span class="comment"># ここで好きなだけ実験</span>
+<span class="comment"># 失敗してもダメージなし</span>
+
+<span class="comment"># --- このシリーズの読み方 ---</span>
+
+<span class="ann">★★★</span> ぜったい押さえる
+<span class="ann">★★</span>  業務で頻出
+<span class="ann">★</span>   余裕があれば
+
+<span class="comment"># マーク付きの項目を優先!</span>
+
+<span class="comment"># --- つまずいたら ---</span>
+
+<span class="ann">→</span> Vol.9 (困った時のGit編) を引く
+<span class="ann">→</span> エラーメッセージで検索
+<span class="ann">→</span> git help &lt;command&gt; を見る
+
+<span class="comment"># Gitは公式ドキュメントが優秀!</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">最後に —</div>
+    <p>Gitは<b>「最初の山が高い」</b>けれど、一度越えれば一生使える武器になります。今この瞬間つまずいても、3週間後には平気で <code class="inline">git rebase -i</code> を叩いているはず。<b>焦らず、毎日少しずつ</b>。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px">
+  <div class="tip-title">NEXT STEP —</div>
+  <p>第1巻ではGit/GitHubの<b>全体像と最初のコミット</b>までを掴みました。<br>
+  Vol.2「<b>基本コマンド編</b>」では <code class="inline">init / clone / add / commit / status / log / diff</code> という<b>毎日使う基本コマンド7種</b>を、ファイル状態遷移と合わせて深掘りします。ここを完全に身につければ、もう日常のGit操作で迷うことはなくなります。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <div>GIT / GITHUB REFERENCE — VOL.01</div>
+  <div class="right">INTRODUCTION &amp; BIG PICTURE / 入門・全体像編</div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕別冊S7 例外設計とエラーハンドリングの理論</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a3540;
+  --paper:#ece8de;
+  --paper-2:#d8d4c6;
+  --accent:#6a8590;
+  --accent-2:#8aa0a8;
+  --accent-3:#a07050;
+  --muted:#707a82;
+  --line:#c2c0b4;
+  --code-bg:#252a32;
+  --code-text:#e6e2d6;
+  --panel-bg:#f3eee2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✧";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.18;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.tip{background:rgba(106,133,144,0.10);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.S7</span>
+    <span class="kind-tag">別冊 ── SUB</span>
+    <span class="rdt-tag">EXCEPTION THEORY</span>
+  </div>
+  <h1>例外設計と<br>エラーハンドリング</h1>
+  <div class="subtitle">SUB.07 ── EXCEPTION DESIGN &amp; ERROR HANDLING</div>
+  <p class="lead">本編Vol.12 で<b>バリデーションと例外設計</b>を本格的に実装します。別冊S7では、その土台となる<b>例外とエラー処理の理論</b>を深掘りします。<b>例外とは何か</b>、<b>チェック例外と非チェック例外</b>、<b>どこで捕まえるか</b>、<b>ユーザーに何を見せるか</b>。「<b>壊れたときに正しく振る舞う</b>」設計を学びます。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 別冊S7で腑に落とす3つの問い</div>
+    <p>① <b>例外</b>はなぜ「戻り値でエラーを返す」より良いのか／② <b>どこで例外を捕まえる</b>べきか／③ <b>ユーザー</b>に技術的なエラーをそのまま見せてはいけないのはなぜか — この3問に自分の言葉で答えられたらS7卒業です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 別冊S7のミッション</a></li>
+    <li><a href="#s02">02 例外とは何か</a></li>
+    <li><a href="#s03">03 チェック例外と非チェック例外</a></li>
+    <li><a href="#s04">04 どこで捕まえるか</a></li>
+    <li><a href="#s05">05 ユーザーに何を見せるか</a></li>
+    <li><a href="#s06">06 Springの例外ハンドリング</a></li>
+    <li><a href="#s07">07 ログとの付き合い方</a></li>
+    <li><a href="#s08">08 例外設計あるある失敗</a></li>
+    <li><a href="#s09">09 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>別冊S7のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">別冊S7は<b>「壊れたときの振る舞いを設計する」</b>回。これまでは<b>正常系（うまくいく場合）</b>を中心に作ってきました。でも実際は<b>「存在しないメモを開く」「DB接続が切れる」「不正な入力」</b>など、必ず異常が起きます。<b>異常時にどう振る舞うか</b>が、アプリの品質を決めます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">「正常系」だけでは半人前</span><span class="tag-desc">異常系こそ実力</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// これまで先送りにしてきたこと</div>
+        <p>本編では何度か<b>「例外処理は Vol.12 で」</b>と先送りしました：</p>
+        <ul>
+          <li>Vol.3：UNIQUE違反の500エラー</li>
+          <li>Vol.6：トランザクション失敗時</li>
+          <li>「存在しないIDのメモを開く」</li>
+        </ul>
+        <p style="margin-top:8px">YAGNI（別冊S2）で先送りしてきた<b>例外処理</b>を、いよいよ理論から固めます。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 別冊S7のゴール</div>
+        <ul class="check-list">
+          <li>例外の仕組みと使い分けが分かる</li>
+          <li>どこで捕まえるか判断できる</li>
+          <li>ユーザー向けエラー表示を設計できる</li>
+          <li>ログとの付き合い方が分かる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 正常系と異常系</span>
+<span class="comment">// ─── 正常系（これまで中心）───</span>
+メモを保存 → 成功 → 一覧へ
+<span class="comment">// → うまくいく前提</span>
+
+
+<span class="comment">// ─── 異常系（S7で扱う）───</span>
+存在しないメモを開く
+  → 404? 500? 一覧へ戻す?
+
+DB接続が切れる
+  → ユーザーに何を見せる?
+
+カテゴリ名が重複
+  → 「既に存在します」と親切に?
+    それとも500エラー画面?
+
+不正なURL（/memos/abc）
+  → 数字でないIDをどう扱う?
+
+
+<span class="comment">// ─── 異常時の振る舞いが品質を決める ───</span>
+<span class="comment">// 良いアプリ：</span>
+<span class="comment">//   「メモが見つかりません」と親切に表示</span>
+<span class="comment">//   一覧に戻るリンクを出す</span>
+<span class="comment">// 悪いアプリ：</span>
+<span class="comment">//   真っ白な500エラー画面</span>
+<span class="comment">//   技術的なスタックトレースを露出 ★</span>
+<span class="comment">// → 異常系の設計が「使えるアプリ」を作る</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「異常系の設計」がプロとアマの分かれ目</div>
+    <p>初学者は<b>正常系（うまくいく場合）</b>を作って満足しがち。でも実務では<b>「異常時にどう振る舞うか」</b>が品質の大半を占めます。「存在しないデータ」「不正入力」「外部の障害」——これらに<b>きちんと対応できるか</b>がプロの証。本編Vol.12 で実装する例外設計は、<b>「壊れても優雅に振る舞う」</b>ための準備です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>例外とは何か</h2><span class="en">WHAT IS EXCEPTION</span></div>
+  <p class="pattern-desc"><b>例外（Exception）</b>とは、<b>「正常な処理を続けられない事態」を伝える仕組み</b>。エラーを<b>戻り値で返す</b>のではなく、<b>処理を中断して呼び出し元に投げ上げる</b>。これにより、エラー処理を集約できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">例外 vs 戻り値でのエラー</span><span class="tag-desc">なぜ例外が良いか</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 戻り値でエラーを返す方式の問題</div>
+        <p>古い方式：エラーを<b>戻り値（-1, null, false）</b>で表す。問題：</p>
+        <ul>
+          <li>毎回<b>戻り値チェックが必要</b>（忘れると素通り）</li>
+          <li>正常な戻り値とエラー値が<b>混ざる</b></li>
+          <li>エラー処理が<b>あちこちに散らばる</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 例外方式の利点</div>
+        <ul>
+          <li>エラー時は<b>自動で処理が中断</b>（チェック忘れがない）</li>
+          <li>正常な値とエラーが<b>分離</b></li>
+          <li>エラー処理を<b>1か所に集約</b>できる（Section 04,06）</li>
+          <li><b>「何が起きたか」を型で表現</b>（例外クラス）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 戻り値方式 vs 例外方式</span>
+<span class="comment">// ─── 戻り値でエラー（古い・NG）───</span>
+<span class="type">Memo</span> memo = mapper.<span class="fn">findById</span>(id);
+<span class="kw">if</span> (memo == <span class="kw">null</span>) {  <span class="comment">// 毎回チェック必須</span>
+  <span class="comment">// エラー処理…忘れたら NPE ★</span>
+  <span class="kw">return</span> <span class="str">"error"</span>;
+}
+<span class="comment">// → チェック忘れで素通り → バグ</span>
+<span class="comment">// → エラー処理が散らばる</span>
+
+
+<span class="comment">// ─── 例外方式（推奨）───</span>
+<span class="type">Memo</span> memo = service.<span class="fn">findById</span>(id);
+<span class="comment">// もし見つからなければ Service が例外を投げる</span>
+<span class="comment">// → ここに到達した時点でmemoは必ず存在</span>
+<span class="comment">// → チェック不要、コードが素直 ★★★</span>
+
+<span class="comment">// Service 内：</span>
+<span class="kw">public</span> <span class="type">Memo</span> <span class="fn">findById</span>(<span class="type">Long</span> id) {
+  <span class="type">Memo</span> memo = mapper.<span class="fn">findById</span>(id);
+  <span class="kw">if</span> (memo == <span class="kw">null</span>) {
+    <span class="kw">throw new</span> <span class="type">MemoNotFoundException</span>(id);
+    <span class="comment">// → 例外を投げる ★</span>
+  }
+  <span class="kw">return</span> memo;
+}
+
+
+<span class="comment">// ─── 例外の流れ ───</span>
+throw（投げる）
+  ↓ 処理が中断され、呼び出し元へ
+catch（捕まえる）or 上へ伝播
+  ↓ どこかで処理される
+<span class="comment">// → エラー処理を1か所に集約できる ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 例外は「正常系のコードを汚さない」ための仕組み</div>
+    <p>例外の最大の価値は<b>「正常系のコードがエラーチェックで埋もれない」</b>こと。戻り値方式だと <code>if (result == null)</code> が随所に挟まり、<b>本来やりたい処理が見えなくなる</b>。例外なら<b>正常系をまっすぐ書き、エラーは投げて集約処理</b>に任せる。「<b>うまくいく道を素直に書く</b>」のが例外の思想。本シリーズで既に <code>DataIntegrityViolationException</code> 等に触れてきました。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>チェック例外と非チェック例外</h2><span class="en">CHECKED VS UNCHECKED</span></div>
+  <p class="pattern-desc">Java の例外は<b>2種類</b>。<b>チェック例外</b>（コンパイラが処理を強制）と<b>非チェック例外（RuntimeException）</b>（強制しない）。別冊S5のトランザクションでも触れた重要な区別。<b>使い分けの方針</b>を理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">2種類の例外と使い分け</span><span class="tag-desc">RuntimeException 中心が今風</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <table class="compare-tbl">
+          <thead><tr><th></th><th>チェック例外</th><th>非チェック例外</th></tr></thead>
+          <tbody>
+            <tr><td>親</td><td>Exception</td><td>RuntimeException</td></tr>
+            <tr><td>処理</td><td>強制（try/throws必須）</td><td>任意</td></tr>
+            <tr><td>例</td><td>IOException</td><td>NullPointer等</td></tr>
+            <tr><td>用途</td><td>回復可能な異常</td><td>プログラムの誤り・回復困難</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 現代の主流</div>
+        <p>Spring など現代のフレームワークは<b>非チェック例外（RuntimeException）中心</b>。理由：チェック例外は<b>throws の伝播でコードが汚れる</b>から。Spring の例外（DataAccessException等）は全て RuntimeException。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 別冊S5との接続</div>
+        <p>@Transactional のロールバックは<b>デフォルトで RuntimeException のみ</b>（別冊S5）。これも「RuntimeException 中心」の設計思想の表れ。</p>
+      </div>
+      <div class="code"><span class="code-head">// チェック例外と非チェック例外</span>
+<span class="comment">// ─── チェック例外（処理を強制）───</span>
+<span class="kw">public void</span> <span class="fn">read</span>() <span class="kw">throws</span> <span class="type">IOException</span> {
+  <span class="comment">// IOException は Exception の子</span>
+  <span class="comment">// → 呼び出し側は try/catch か</span>
+  <span class="comment">//   throws が必須（コンパイラが強制）★</span>
+}
+
+<span class="comment">// 呼び出し側：</span>
+<span class="kw">try</span> {
+  read();
+} <span class="kw">catch</span> (<span class="type">IOException</span> e) {
+  <span class="comment">// 処理が強制される</span>
+}
+
+
+<span class="comment">// ─── 非チェック例外（任意）───</span>
+<span class="kw">public void</span> <span class="fn">process</span>() {
+  <span class="kw">throw new</span> <span class="type">IllegalArgumentException</span>();
+  <span class="comment">// RuntimeException の子</span>
+  <span class="comment">// → try/catch も throws も不要 ★</span>
+}
+
+
+<span class="comment">// ─── 本シリーズの方針 ───</span>
+<span class="comment">// 独自例外は RuntimeException を継承</span>
+<span class="kw">public class</span> <span class="type">MemoNotFoundException</span>
+    <span class="kw">extends</span> <span class="type">RuntimeException</span> {  <span class="comment">// ← 非チェック</span>
+  <span class="kw">public</span> <span class="fn">MemoNotFoundException</span>(<span class="type">Long</span> id) {
+    <span class="kw">super</span>(<span class="str">"メモが見つかりません: "</span> + id);
+  }
+}
+<span class="comment">// → throws を書かなくていい</span>
+<span class="comment">// → コードが汚れない ★★★</span>
+<span class="comment">// → Spring の流儀に合う</span>
+
+
+<span class="comment">// ─── 別冊S5 の復習 ───</span>
+<span class="comment">// @Transactional はデフォルトで</span>
+<span class="comment">// RuntimeException のみロールバック</span>
+<span class="comment">// → 独自例外もRuntimeExceptionなら</span>
+<span class="comment">//   自動でロールバックされる ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 独自例外は RuntimeException を継承する</div>
+    <p>アプリ独自の例外（<code>MemoNotFoundException</code> など）を作るときは、<b>RuntimeException を継承</b>するのが現代の主流。理由：①throws の伝播でコードが汚れない、②Spring の例外と統一感、③@Transactional が自動でロールバック（別冊S5）。チェック例外は「回復可能で、呼び出し側に対処を強制したい」稀なケースのみ。<b>迷ったら RuntimeException</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>どこで捕まえるか</h2><span class="en">WHERE TO CATCH</span></div>
+  <p class="pattern-desc">例外設計で最も重要な判断<b>「どこで catch するか」</b>。原則は<b>「投げるのは発生箇所、捕まえるのは対処できる場所」</b>。やみくもに try-catch を散らすのは逆効果。<b>集約して捕まえる</b>のが定石です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">例外を捕まえる場所の設計</span><span class="tag-desc">層と責務で決める</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 原則：投げる場所と捕まえる場所</div>
+        <ul>
+          <li><b>投げる</b>：異常を検知した場所（Service/Mapper）</li>
+          <li><b>捕まえる</b>：対処できる場所（多くは最上位＝Controller層の外側）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 3層での流れ（別冊S2）</div>
+        <table class="compare-tbl">
+          <thead><tr><th>層</th><th>例外の扱い</th></tr></thead>
+          <tbody>
+            <tr><td>Mapper</td><td>DB例外が発生</td></tr>
+            <tr><td>Service</td><td>業務的な例外を投げる（基本catchしない）</td></tr>
+            <tr><td>Controller</td><td>基本素通り</td></tr>
+            <tr><td>集約ハンドラ</td><td><b>ここで一括catch</b></td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 集約の利点</div>
+        <p>各所で try-catch せず、<b>1か所（集約ハンドラ）で捕まえる</b>。エラー処理が散らばらない（Section 06）。</p>
+      </div>
+      <div class="code"><span class="code-head">// 例外を捕まえる場所</span>
+<span class="comment">// ─── NG：あちこちで try-catch ───</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/{id}"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">show</span>(<span class="ann">@PathVariable</span> <span class="type">Long</span> id) {
+  <span class="kw">try</span> {
+    <span class="type">Memo</span> m = service.<span class="fn">findById</span>(id);
+    ...
+  } <span class="kw">catch</span> (<span class="type">Exception</span> e) {
+    <span class="comment">// 全メソッドで同じcatch…重複 ★</span>
+  }
+}
+<span class="comment">// → 全Controllerメソッドにtry-catch</span>
+<span class="comment">// → コードが重複・汚れる</span>
+
+
+<span class="comment">// ─── OK：集約して捕まえる ───</span>
+<span class="comment">// Controllerは素直に書く</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/{id}"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">show</span>(<span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+                   <span class="type">Model</span> model) {
+  model.<span class="fn">addAttribute</span>(<span class="str">"memo"</span>,
+    service.<span class="fn">findById</span>(id));
+  <span class="comment">// 例外は投げっぱなしでOK</span>
+  <span class="kw">return</span> <span class="str">"memos/show"</span>;
+}
+<span class="comment">// → try-catch なし、素直 ★</span>
+
+<span class="comment">// 集約ハンドラで一括catch（Section 06）</span>
+<span class="ann">@ExceptionHandler</span>(<span class="type">MemoNotFoundException</span>.<span class="kw">class</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">handleNotFound</span>(...) {
+  <span class="comment">// 全Controllerの NotFound をここで処理 ★★★</span>
+  <span class="kw">return</span> <span class="str">"error/404"</span>;
+}
+
+
+<span class="comment">// ─── 捕まえる場所の判断基準 ───</span>
+<span class="comment">// 「ここで対処できるか?」</span>
+<span class="comment">//   できない → 投げて上へ</span>
+<span class="comment">//   できる   → catch して対処</span>
+<span class="comment">// → 多くは「最上位で集約」が答え ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「とりあえず try-catch」は最悪のパターン</div>
+    <p>初学者がやりがちな<b>「不安だからとりあえず全部 try-catch」</b>は最悪。①コードが try-catch だらけで読めない、②catch して<b>握りつぶす</b>とエラーが消える（別冊S5の罠）、③エラー処理が散らばる。正しくは<b>「対処できない例外は投げて、最上位で集約処理」</b>。本シリーズは Spring の <code>@ExceptionHandler / @ControllerAdvice</code> で集約します（Section 06）。<b>catch は「対処できるときだけ」</b>。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>ユーザーに何を見せるか</h2><span class="en">WHAT TO SHOW USERS</span></div>
+  <p class="pattern-desc">例外が起きたとき、<b>ユーザーに見せるもの</b>と<b>開発者が記録するもの</b>を分けます。<b>技術的な詳細（スタックトレース）をユーザーに見せてはいけない</b>。セキュリティとUXの両面で重要です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ユーザー向け表示 vs ログ記録</span><span class="tag-desc">見せるものを分ける</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ユーザーに見せてはいけないもの</div>
+        <ul>
+          <li><b>スタックトレース</b>（クラス名・行番号）</li>
+          <li><b>SQL文・テーブル構造</b></li>
+          <li><b>内部のファイルパス</b></li>
+          <li>→ 攻撃者へのヒント＋ユーザーには無意味</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// ユーザーに見せるべきもの</div>
+        <ul>
+          <li><b>分かりやすいメッセージ</b>「メモが見つかりません」</li>
+          <li><b>次の行動</b>「一覧に戻る」リンク</li>
+          <li>必要なら<b>問い合わせ番号</b>（ログと紐付け）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 開発者向け（ログ）</div>
+        <p>技術的詳細は<b>ログに記録</b>（Section 07）。ユーザーには見せず、開発者だけが見る。</p>
+      </div>
+      <div class="code"><span class="code-head">// ユーザー表示とログの分離</span>
+<span class="comment">// ─── NG：例外をそのまま露出 ───</span>
+<div style="background:#3a1c1c;padding:8px;margin:4px 0;border-radius:3px;font-size:11px;color:#ff9b94">
+HTTP 500 Internal Server Error
+
+java.lang.NullPointerException
+  at com.example.memo.service
+     .MemoService.findById(MemoService.java:42)
+  at com.example.memo.controller
+     ...
+SELECT * FROM memos WHERE id=999
+</div>
+<span class="comment">// → ユーザーは意味不明 ★</span>
+<span class="comment">// → 攻撃者にDB構造のヒント ★★★</span>
+<span class="comment">// → 「壊れてる」印象</span>
+
+
+<span class="comment">// ─── OK：親切なエラー画面 ───</span>
+<div style="background:#1c2d2a;padding:8px;margin:4px 0;border-radius:3px;font-size:11px;color:#9be8c8">
+😢 メモが見つかりませんでした
+
+お探しのメモは削除されたか、
+URLが間違っている可能性があります。
+
+[ メモ一覧に戻る ]
+</div>
+<span class="comment">// → 何が起きたか分かる ★</span>
+<span class="comment">// → 次の行動が示される ★</span>
+<span class="comment">// → 技術詳細は隠す ★★★</span>
+
+
+<span class="comment">// ─── 裏ではログに記録 ───</span>
+log.<span class="fn">warn</span>(<span class="str">"メモ未検出: id={}"</span>, id);
+<span class="comment">// → 開発者はログで原因を追える</span>
+<span class="comment">// → ユーザーには見せない</span>
+
+
+<span class="comment">// ─── 分離の原則 ───</span>
+ユーザー向け: 分かりやすく・行動を示す
+開発者向け（ログ）: 技術的詳細・原因究明用
+<span class="comment">// → 「見せる相手」で内容を変える ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — スタックトレースの露出はセキュリティリスク</div>
+    <p>エラー画面に<b>スタックトレースやSQL文</b>が出るのは、単に「見栄えが悪い」だけでなく<b>セキュリティリスク</b>。攻撃者に<b>「使っている技術・テーブル構造・脆弱性のヒント」</b>を与えてしまう。本番環境では<b>必ず技術的詳細を隠し</b>、ユーザーには親切なメッセージだけ。詳細は<b>ログに記録</b>（Section 07）。これは別冊S6のSQLインジェクション対策と並ぶ、基本のセキュリティ意識です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>Springの例外ハンドリング</h2><span class="en">SPRING EXCEPTION HANDLING</span></div>
+  <p class="pattern-desc">Spring は<b>例外を集約処理する仕組み</b>を持ちます。<b>@ExceptionHandler</b>（コントローラ単位）と <b>@ControllerAdvice</b>（全体）。これで「例外→親切なエラー画面」を<b>1か所で</b>実現。本編Vol.12 で実装します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">@ControllerAdvice で集約</span><span class="tag-desc">全体の例外を1か所で</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの仕組み</div>
+        <ul>
+          <li><b>@ExceptionHandler</b>：特定の例外を処理するメソッド</li>
+          <li><b>@ControllerAdvice</b>：全コントローラ横断で例外を集約</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 集約の流れ</div>
+        <ol style="margin-left:20px">
+          <li>Service が例外を投げる</li>
+          <li>Controller は素通り（catchしない）</li>
+          <li>@ControllerAdvice が捕まえる</li>
+          <li>例外の種類に応じたエラー画面を返す</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// 例外と画面の対応</div>
+        <ul>
+          <li>NotFound → 404 画面</li>
+          <li>その他 → 500 画面（詳細は隠す）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// @ControllerAdvice（本編Vol.12で実装）</span>
+<span class="kw">import</span> org.springframework.web.bind
+         .annotation.*;
+
+<span class="ann">@ControllerAdvice</span>  <span class="comment">// 全Controller横断 ★★★</span>
+<span class="kw">public class</span> <span class="type">GlobalExceptionHandler</span> {
+
+  <span class="comment">// メモ未検出 → 404画面</span>
+  <span class="ann">@ExceptionHandler</span>(
+    <span class="type">MemoNotFoundException</span>.<span class="kw">class</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">handleNotFound</span>(
+      <span class="type">MemoNotFoundException</span> e,
+      <span class="type">Model</span> model) {
+    log.<span class="fn">warn</span>(e.<span class="fn">getMessage</span>());  <span class="comment">// ログに記録</span>
+    model.<span class="fn">addAttribute</span>(<span class="str">"message"</span>,
+      <span class="str">"メモが見つかりませんでした"</span>);
+    <span class="kw">return</span> <span class="str">"error/404"</span>;  <span class="comment">// 親切な画面</span>
+  }
+
+  <span class="comment">// 重複エラー → 専用メッセージ</span>
+  <span class="ann">@ExceptionHandler</span>(
+    <span class="type">DataIntegrityViolationException</span>.<span class="kw">class</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">handleDuplicate</span>(
+      <span class="type">Model</span> model) {
+    model.<span class="fn">addAttribute</span>(<span class="str">"message"</span>,
+      <span class="str">"既に同じ名前が存在します"</span>);
+    <span class="kw">return</span> <span class="str">"error/conflict"</span>;
+  }
+
+  <span class="comment">// 想定外 → 500画面（詳細隠す）</span>
+  <span class="ann">@ExceptionHandler</span>(<span class="type">Exception</span>.<span class="kw">class</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">handleAll</span>(
+      <span class="type">Exception</span> e, <span class="type">Model</span> model) {
+    log.<span class="fn">error</span>(<span class="str">"想定外エラー"</span>, e);  <span class="comment">// 詳細はログ</span>
+    model.<span class="fn">addAttribute</span>(<span class="str">"message"</span>,
+      <span class="str">"エラーが発生しました"</span>);  <span class="comment">// ユーザーには簡潔に</span>
+    <span class="kw">return</span> <span class="str">"error/500"</span>;
+  }
+}
+
+
+<span class="comment">// ─── 効果 ───</span>
+<span class="comment">// 全Controllerの例外がここに集約 ★★★</span>
+<span class="comment">// → Controller は try-catch 不要</span>
+<span class="comment">// → エラー処理が1か所に</span>
+<span class="comment">// → ログ記録とユーザー表示を分離</span>
+<span class="comment">// → 別冊S2の「関心の分離」の実践</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — @ControllerAdvice は「例外処理の関心を分離」する</div>
+    <p>@ControllerAdvice の本質は<b>「エラー処理という関心事を1か所に集約」</b>すること（別冊S2の関心の分離）。各 Controller は<b>正常系だけ</b>を書き、エラー処理は @ControllerAdvice に任せる。これで「Controller は本来の仕事に集中」「エラー処理は統一」が両立。<b>例外を投げる側（Service）と処理する側（Advice）が分離</b>され、それぞれが単純になります。本編Vol.12 の中心的な仕組みです。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>ログとの付き合い方</h2><span class="en">LOGGING</span></div>
+  <p class="pattern-desc">例外を捕まえたら<b>ログに記録</b>します。ログは<b>開発者が後で原因を追う</b>ための記録。<b>ログレベル</b>の使い分けと、<b>「何を記録し、何を記録しないか」</b>を理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ログレベルと記録の指針</span><span class="tag-desc">開発者向けの記録</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ログレベル（重要度順）</div>
+        <table class="compare-tbl">
+          <thead><tr><th>レベル</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td><b>ERROR</b></td><td>想定外・要対応の異常</td></tr>
+            <tr><td><b>WARN</b></td><td>想定内の異常（未検出等）</td></tr>
+            <tr><td><b>INFO</b></td><td>通常の動作記録</td></tr>
+            <tr><td><b>DEBUG</b></td><td>開発時の詳細</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 記録の指針</div>
+        <ul>
+          <li>例外は<b>スタックトレース付き</b>で記録（原因究明用）</li>
+          <li><b>パスワード・個人情報は記録しない</b>（漏洩リスク）</li>
+          <li>WARN/ERROR を使い分け（想定内/外）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// ログの使い分け</span>
+<span class="kw">import</span> lombok.extern.slf4j.Slf4j;
+
+<span class="ann">@Slf4j</span>  <span class="comment">// Lombokでloggerを自動生成</span>
+<span class="ann">@Service</span>
+<span class="kw">public class</span> <span class="type">MemoService</span> {
+
+  <span class="kw">public</span> <span class="type">Memo</span> <span class="fn">findById</span>(<span class="type">Long</span> id) {
+    <span class="type">Memo</span> m = mapper.<span class="fn">findById</span>(id);
+    <span class="kw">if</span> (m == <span class="kw">null</span>) {
+      <span class="comment">// 想定内の異常 → WARN</span>
+      log.<span class="fn">warn</span>(<span class="str">"メモ未検出: id={}"</span>, id);
+      <span class="kw">throw new</span> <span class="type">MemoNotFoundException</span>(id);
+    }
+    <span class="kw">return</span> m;
+  }
+}
+
+
+<span class="comment">// ─── ハンドラでのログ ───</span>
+<span class="ann">@ExceptionHandler</span>(<span class="type">Exception</span>.<span class="kw">class</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">handleAll</span>(<span class="type">Exception</span> e) {
+  <span class="comment">// 想定外 → ERROR（スタックトレース付き）</span>
+  log.<span class="fn">error</span>(<span class="str">"想定外エラー発生"</span>, e);
+  <span class="comment">// → 第2引数に例外を渡すと</span>
+  <span class="comment">//   スタックトレースも記録される ★</span>
+  <span class="kw">return</span> <span class="str">"error/500"</span>;
+}
+
+
+<span class="comment">// ─── レベルの使い分け ───</span>
+log.<span class="fn">error</span>(...)  <span class="comment">// 想定外・対応必要（DB障害等）</span>
+log.<span class="fn">warn</span>(...)   <span class="comment">// 想定内の異常（未検出・重複）</span>
+log.<span class="fn">info</span>(...)   <span class="comment">// 通常動作（起動・重要処理）</span>
+log.<span class="fn">debug</span>(...)  <span class="comment">// 開発時のみ（本番は出さない）</span>
+
+
+<span class="comment">// ─── 記録してはいけないもの ───</span>
+<span class="comment">// ✗ パスワード</span>
+<span class="comment">// ✗ 個人情報（不必要に）</span>
+<span class="comment">// ✗ クレジットカード番号等</span>
+<span class="comment">// → ログ漏洩時のリスク ★★★</span>
+<span class="comment">// → 「ログに何を残すか」も設計</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — ログは「未来の自分のデバッグ」のため</div>
+    <p>ログの目的は<b>「本番で問題が起きたとき、原因を追えること」</b>。エラーが起きても、ログがなければ<b>「何が起きたか分からない」</b>。逆に適切なログがあれば<b>「いつ・どこで・何が」</b>が追える。ただし<b>パスワードや個人情報は記録しない</b>（漏洩リスク）。「<b>原因究明に必要な情報だけ</b>を、<b>機密は除いて</b>記録」が鉄則。GitHub版Vol.5 のドキュメントと同じく、<b>未来への記録</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>例外設計あるある失敗</h2><span class="en">EXCEPTION PITFALLS</span></div>
+  <p class="pattern-desc">例外処理で<b>初心者が踏みやすい失敗</b>を5つ。<b>握りつぶし・とりあえずcatch・詳細露出</b>など。別冊S5・S7の知識で確実に回避できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">例外設計あるある 5選</span><span class="tag-desc">先人の轍を踏まない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 例外の握りつぶし ★★★</b></p>
+        <ul>
+          <li>catch して何もしない→エラーが消える（別冊S5）</li>
+          <li>対処：必ず記録or再スロー。空catchは禁止</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② スタックトレースをユーザーに露出 ★★★</b></p>
+        <ul>
+          <li>500エラー画面に技術詳細</li>
+          <li>対処：詳細はログ、ユーザーには簡潔なメッセージ（Section 05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ とりあえず全部 try-catch</b></p>
+        <ul>
+          <li>コードが try-catch だらけ</li>
+          <li>対処：集約ハンドラで一括処理（Section 04,06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ catch (Exception e) で何でも捕まえる</b></p>
+        <ul>
+          <li>想定外の例外まで握って隠す</li>
+          <li>対処：具体的な例外型でcatch、想定外は上へ</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 例外メッセージが不親切</b></p>
+        <ul>
+          <li>「エラー」だけでは原因不明</li>
+          <li>対処：「何が・なぜ」を含める（id等の文脈）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// あるある失敗の対処</span>
+<span class="comment">// ─── ① 握りつぶし（最悪）───</span>
+<span class="ann">NG:</span>
+<span class="kw">try</span> {
+  service.<span class="fn">save</span>(memo);
+} <span class="kw">catch</span> (<span class="type">Exception</span> e) {
+  <span class="comment">// 何もしない ★★★</span>
+}
+<span class="comment">// → エラーが闇に消える</span>
+<span class="comment">// → 「保存できてないのに成功扱い」</span>
+<span class="comment">// → 別冊S5：ロールバックもされない</span>
+
+<span class="ann">OK:</span>
+<span class="comment">// catch せず投げる（集約処理に任せる）</span>
+service.<span class="fn">save</span>(memo);
+<span class="comment">// または記録して再スロー</span>
+
+
+<span class="comment">// ─── ⑤ 不親切な例外メッセージ ───</span>
+<span class="ann">NG:</span> throw new RuntimeException("エラー");
+<span class="comment">// → 何のエラーか不明 ★</span>
+
+<span class="ann">OK:</span> throw new MemoNotFoundException(
+       "メモが見つかりません: id=" + id);
+<span class="comment">// → 「何が・どのid」が分かる ★★★</span>
+<span class="comment">// → ログを見れば原因究明できる</span>
+
+
+<span class="comment">// ─── 良い例外設計の条件 ───</span>
+✓ 握りつぶさない（記録or投げる）
+✓ ユーザーには簡潔・行動を示す
+✓ 開発者にはログで詳細
+✓ 集約ハンドラで一括処理
+✓ メッセージに文脈（何が・なぜ）★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「握りつぶし」は最も罪深いアンチパターン</div>
+    <p>例外処理で<b>絶対にやってはいけない</b>のが<b>握りつぶし</b>（catch して何もしない）。エラーが<b>静かに消え</b>、「動いているように見えて実は壊れている」最悪の状態を作る。別冊S5では<b>トランザクションのロールバックも発動しなく</b>なる。デバッグも不可能。<b>「捕まえたら、最低でも記録する」</b>。空の catch ブロックを見たら、それは<b>バグの温床</b>だと疑いましょう。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">別冊S7 で<b>例外設計の理論</b>が頭に入りました。本編Vol.12 で<b>バリデーションと例外設計</b>を実装するとき、@ControllerAdvice の「なぜ」が見えるはずです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">S7 達成チェック</span><span class="tag-desc">異常系を語れる人になった</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>例外が戻り値方式より良い理由を説明できる</li>
+          <li>チェック例外と非チェック例外の違いを言える</li>
+          <li>独自例外は RuntimeException 継承と分かる</li>
+          <li>「どこで捕まえるか」を判断できる</li>
+          <li>集約ハンドラの利点を理解</li>
+          <li>ユーザー表示とログを分離できる</li>
+          <li>スタックトレース露出の危険を知っている</li>
+          <li>ログレベルを使い分けられる</li>
+          <li>握りつぶしの罪深さを理解した</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 別冊S7 で手に入れた例外理論</span>
+✓ <span class="str">"例外は正常系のコードを汚さない"</span>
+
+✓ <span class="str">"独自例外は RuntimeException 継承"</span>
+
+✓ <span class="str">"対処できない例外は投げて集約処理"</span>
+
+✓ <span class="str">"@ControllerAdvice で一括ハンドリング"</span>
+
+✓ <span class="str">"ユーザーには簡潔・行動を、</span>
+   <span class="str"> 開発者にはログで詳細"</span>
+
+✓ <span class="str">"スタックトレース露出は危険"</span>
+
+✓ <span class="str">"握りつぶしは絶対禁止"</span>
+
+
+<span class="comment">// あなたは「異常系を語れる」</span>
+<span class="comment">// エンジニアに近づいた ★★★</span>
+
+<span class="comment">// 本編Vol.12 で実装：</span>
+<span class="comment">//   バリデーション＆例外設計</span>
+<span class="comment">//   @ControllerAdvice</span>
+<span class="comment">//   親切なエラー画面</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── 本編 VOL.8 へ（理論はVol.12で実装）</div>
+    <p>別冊S7 で<b>「例外設計とエラーハンドリングの理論」</b>を獲得しました。この理論は<b>本編Vol.12「バリデーション＆例外設計」</b>で実装に使います。@ControllerAdvice で例外を集約し、親切なエラー画面を作る——その「なぜ」が今なら分かるはず。直近の本編は Vol.8「<b>全文検索（FULLTEXT）</b>」で、Vol.7 の検索を高速化し US-004 を完成させます。本編は順番に Vol.8 へ、別冊S7の知識は Vol.12 で回収。<b>本編Vol.8 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>SUB.07 / 14 ── EXCEPTION DESIGN &amp; ERROR HANDLING（別冊）</span>
+</footer>
+
+</body>
+</html>

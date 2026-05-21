@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.4 本編 resultMapで関連を取得しよう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1f2c25;
+  --paper:#e6ebe2;
+  --paper-2:#cfd9cc;
+  --accent:#466e54;
+  --accent-2:#638a6c;
+  --accent-3:#1f3829;
+  --muted:#697867;
+  --line:#b2c0ad;
+  --code-bg:#14201a;
+  --code-text:#e6ebe2;
+  --panel-bg:#edf2eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(70,110,84,0.08);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.04 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>resultMap で<br>関連を取得しよう</h1>
+  <div class="subtitle">RESULTMAP & COLLECTION ── ONE SQL, MANY OBJECTS</div>
+  <p class="lead">
+    Vol.4は<b>「resultMap + collection」</b>の獲得です。Cの中でも<b>最初の山場</b>。<br>
+    Vol.2で<b>「2回SQL方式（実際は1+N回）」</b>で実装した <code style="font-family:'JetBrains Mono'">findAllWithRecords()</code> を、<b>「1回のJOINで全部取る方式」</b>に進化させます。<br>
+    技術的には：<code style="font-family:'JetBrains Mono'">LEFT JOIN</code> で親子を結合し、<code style="font-family:'JetBrains Mono'">&lt;resultMap&gt;</code> で<b>「冗長な行を Subject オブジェクトに組み立てる」</b>処理をMyBatisに伝えます。<br>
+    Vol.3で用意したXML Mapper の<b>箱</b>に、いよいよ<b>JOINを書き込む</b>巻です。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>この巻ではXMLが主舞台。XML側のtypoはJavaの赤線では分かりません。<b>Eclipseの <code>Problems</code> ビュー</b>と<b>起動時のコンソールエラー</b>を両方見るのが鉄則。<br>
+    起動時に <code>Cause: ...</code> から始まる長いエラーが出たら、<b>「ResultMap」「namespace」「property」「column」</b>のキーワードを探してください。8割の問題はここで分かります。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#join">04 LEFT JOIN の動きを理解する</a></li>
+    <li><a href="#resultmap">05 resultMap と collection の構造</a></li>
+    <li><a href="#create">06 XMLとService の改修</a></li>
+    <li><a href="#run">07 ブラウザで動かして確認</a></li>
+    <li><a href="#trouble">08 ハマりどころと対処</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.4の主役は<b>「1回のSQLで親子オブジェクトを組み立てる技術」</b>。S2で学んだ <b>「一括取得（Eager Join）」</b> を、いよいよ実装します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.4-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">SubjectMapper.xml に findAllWithRecords を追加</div>
+          <div class="desc">LEFT JOIN を含む1つのSQLと、<code>&lt;resultMap&gt;</code> + <code>&lt;collection&gt;</code> を書く。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">SubjectService を「1回JOIN方式」に置き換える</div>
+          <div class="desc">Vol.2で書いた<code>for</code>ループを削除し、<code>subjectMapper.findAllWithRecords()</code> 一発で済むようにする。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">画面は同じ・SQLは1回に減ることを確認</div>
+          <div class="desc">画面表示は完全に同じ。コンソールログに流れるSQLが<b>6回 → 1回</b>になっていればOK。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.2 → Vol.4 の進化</span>
+
+<span class="comment">// ─── Vol.2 (Before) ───</span>
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>() {
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; subjects =
+      subjectMapper.<span class="fn">findAll</span>();      <span class="comment">// SQL ①</span>
+  <span class="kw">for</span> (<span class="type">Subject</span> s : subjects) {
+    <span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt; records =
+        studyRecordMapper
+            .<span class="fn">findBySubjectId</span>(s.<span class="fn">getId</span>()); <span class="comment">// SQL ②×N</span>
+    s.<span class="fn">setRecords</span>(records);
+  }
+  <span class="kw">return</span> subjects;
+}
+<span class="comment">// → 全部で 1+5=6回 のSQL</span>
+
+
+<span class="comment">// ─── Vol.4 (After) ───</span>
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>() {
+  <span class="kw">return</span> subjectMapper
+             .<span class="fn">findAllWithRecords</span>();  <span class="comment">// SQL 1回</span>
+}
+<span class="comment">// → 全部で 1回 のSQL</span>
+<span class="comment">// → SQL 6回 → 1回（83%削減）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>Vol.4は<b>「コードの行数は減るが、概念は増える」</b>巻です。Javaのコードはむしろ<b>すっきりする</b>のに、XMLの中で<b>resultMap という新概念</b>を理解する必要がある。SQL職人の腕の見せどころが「JOIN」と「resultMap」に集中するのは、この後の全てのCで顔を出します。</p>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── 画面は同じ・中身は劇的に変わる</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.4の<b>「ゴール画面」はVol.2・Vol.3と同じ</b>。違うのは<b>「コンソールに流れるSQLが1本だけ」</b>になることです。これがVol.4の<b>誇るべき成果</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-screen</span>
+      <span class="tag-desc">変わるところ・変わらないところ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 変わらないこと</div>
+        <ul class="check-list">
+          <li><code>http://localhost:8080/subjects</code> で同じ入れ子表示</li>
+          <li>5科目、それぞれの学習記録</li>
+          <li>「（記録なし）」表示も同じ</li>
+        </ul>
+        <div class="panel-head" style="margin-top:18px">// 変わること</div>
+        <ul class="check-list">
+          <li>コンソールに流れるSQLが <b>6回 → 1回</b></li>
+          <li>SQLの中身が <code>SELECT ... LEFT JOIN ...</code></li>
+          <li>SubjectMapper.xmlに <code>&lt;resultMap&gt;</code> が登場</li>
+          <li>SubjectServiceから <code>for</code>ループが消える</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>SQL 6回→1回</b>は、画面1つ表示するために<br>
+          「DBサーバへの通信5回分」を削減できたということ。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// プロジェクト構造の変化</span>
+
+todo/
+├ src/main/java/com/example/todo/
+│  ├ mapper/
+│  │  ├ SubjectMapper.java     <span class="comment">// 改修</span>
+│  │  │   <span class="kw">// + findAllWithRecords()</span>
+│  │  │   <span class="kw">//   メソッド宣言追加</span>
+│  │  └ StudyRecordMapper.java <span class="comment">// 変更なし</span>
+│  └ service/
+│     └ SubjectService.java    <span class="comment">// 改修</span>
+│         <span class="kw">// findAllWithRecords を書き換え</span>
+└ src/main/resources/
+   ├ application.properties    <span class="comment">// 変更なし</span>
+   ├ mybatis/
+   │  └ SubjectMapper.xml      <span class="comment">// 改修</span>
+   │      <span class="kw">// + &lt;resultMap&gt;</span>
+   │      <span class="kw">// + &lt;select id="findAllWithRecords"&gt;</span>
+   └ templates/
+      └ subjects/list.html     <span class="comment">// 変更なし</span>
+
+
+<span class="comment">// 触るのは Mapper / Service / XML</span>
+<span class="comment">// Controller / Entity / HTMLは変えない</span>
+<span class="comment">// → 「画面に影響しない裏側の改善」</span>
+<span class="comment">// = リファクタリング</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.4は<b>JOIN と resultMap の2大概念</b>がメイン。<b>SQLの JOIN は A v2 では扱っていない</b>ので、本巻が初登場です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">前提知識と新しく学ぶこと</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前提知識</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>該当箇所</th></tr>
+          <tr><td>1対多取得（基礎・2回SQL方式）</td><td>本編 M2</td></tr>
+          <tr><td>XML Mapper の基本構造</td><td>本編 M3</td></tr>
+          <tr><td>namespace / id / resultType</td><td>本編 M3</td></tr>
+          <tr><td>取得戦略の選び方</td><td>別冊 S2</td></tr>
+          <tr><td>使い分け原則</td><td>別冊 S3</td></tr>
+        </table>
+        <div style="margin-top:16px;font-size:13.5px"><b>新しく学ぶこと</b>：</div>
+        <ol class="step-list" style="margin-top:6px">
+          <li>SQL の <code>LEFT JOIN</code> 構文</li>
+          <li><code>&lt;resultMap&gt;</code> でオブジェクトを組み立てる</li>
+          <li><code>&lt;collection&gt;</code> で子のリストを構築</li>
+          <li>列の <code>AS</code> エイリアスで列名衝突を回避</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// 概念マップ</span>
+
+<span class="comment">// ── DB側 ──</span>
+<span class="kw">LEFT JOIN</span>
+  ↓
+<span class="comment">// 親×子の組み合わせを行で返す</span>
+<span class="comment">// 親に子が複数あれば行が重複する</span>
+<span class="comment">// 親に子がいなくても親は返る</span>
+
+
+<span class="comment">// ── MyBatis側 ──</span>
+&lt;<span class="kw">resultMap</span>&gt;
+  ↓
+<span class="comment">// 「列名 → Javaプロパティ」の対応表</span>
+<span class="comment">// id（主キー）の列で行をグループ化</span>
+
+
+<span class="comment">// ── ネストされた ──</span>
+&lt;<span class="kw">collection</span> <span class="ann">ofType</span>=<span class="str">"..."</span>&gt;
+  ↓
+<span class="comment">// 親に紐づく子を List に詰める指示</span>
+<span class="comment">// ofType は List の中身の型</span>
+
+
+<span class="comment">// 3つが揃って初めて「1回のSQLで</span>
+<span class="comment">// 親子オブジェクトを構築」が成立</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="join">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>LEFT JOIN の動きを理解する</h2>
+    <span class="en">UNDERSTAND LEFT JOIN</span>
+  </div>
+  <p class="pattern-desc"><b>JOIN（結合）</b>は「2つのテーブルを関連で繋いで取得する」SQL構文。Vol.4では<b>LEFT JOIN</b>を使います。「<b>左側のテーブルを基準に、右側のテーブルから一致する行を引っ張ってくる</b>」のが LEFT JOIN。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">join-basics</span>
+      <span class="tag-desc">LEFT JOIN の基本</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// JOIN の3種類（基本だけ）</div>
+        <div class="role-card">
+          <span class="label">INNER JOIN</span>
+          <div class="name">両方にデータがある行だけ</div>
+          <div class="desc">記録のない科目（HTML/CSS, JavaScript）は<b>結果に出ない</b>。今回は使わない。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">LEFT JOIN</span>
+          <div class="name">左テーブル基準・右が無くても左を返す</div>
+          <div class="desc">記録のない科目も結果に<b>残る</b>（右側列は NULL）。<b>今回はこれを使う</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">RIGHT JOIN</span>
+          <div class="name">右テーブル基準</div>
+          <div class="desc">LEFT の鏡像。実務ではあまり使わない（LEFT で書く方が読みやすい）。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>結論</b>：本編Vol.4では<b>LEFT JOIN</b>。HTML/CSSとJavaScriptの「（記録なし）」表示を成立させるため。</p>
+      </div>
+      <div class="code"><span class="code-head">// LEFT JOIN の SQL</span>
+
+<span class="kw">SELECT</span>
+  s.id          <span class="kw">AS</span> subject_id,
+  s.name        <span class="kw">AS</span> subject_name,
+  s.color,
+  s.created_at  <span class="kw">AS</span> subject_created_at,
+  r.id          <span class="kw">AS</span> record_id,
+  r.subject_id  <span class="kw">AS</span> record_subject_id,
+  r.studied_on,
+  r.minutes,
+  r.memo,
+  r.created_at  <span class="kw">AS</span> record_created_at
+<span class="kw">FROM</span> subjects s
+<span class="kw">LEFT JOIN</span> study_records r
+  <span class="kw">ON</span> s.id = r.subject_id
+<span class="kw">ORDER BY</span> s.id, r.studied_on
+
+
+<span class="comment">// ─── 結果イメージ ───</span>
+<span class="comment">// sid|sname|color  |rid |stud      |min</span>
+<span class="comment">// ─────────────────</span>
+<span class="comment">//  1 |Java |#c43030|  1 |2026-05-08| 60</span>
+<span class="comment">//  1 |Java |#c43030|  2 |2026-05-10| 60</span>
+<span class="comment">//  1 |Java |#c43030|  3 |2026-05-12| 90</span>
+<span class="comment">//  1 |Java |#c43030|  4 |2026-05-14|120</span>
+<span class="comment">//  1 |Java |#c43030|  5 |2026-05-16| 45</span>
+<span class="comment">//  2 |Spr  |#5a8a4a|  6 |2026-05-11| 45</span>
+<span class="comment">//  2 |Spr  |#5a8a4a|  7 |2026-05-13|120</span>
+<span class="comment">//  2 |Spr  |#5a8a4a|  8 |2026-05-15| 90</span>
+<span class="comment">//  3 |SQL  |#2e6090|  9 |2026-05-09| 30</span>
+<span class="comment">//  4 |HTML |#c4862e|null|null      |null</span>
+<span class="comment">//  5 |JS   |#d6b020|null|null      |null</span>
+
+
+<span class="comment">// 親の行が子の数だけ「冗長に重複」</span>
+<span class="comment">// 子のない親は1行だけで右側がNULL</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><b>LEFT JOIN の重要ポイント</b>：「親側の id（<code>subjects.id</code>）が同じ値の行は、Java側では<b>1つのSubjectオブジェクトに纏める</b>」べき。これがresultMapで<b>「親のidをグループ化キー」</b>に使う理由です。</p>
+  </div>
+</section>
+
+<section id="resultmap">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>resultMap と collection の構造</h2>
+    <span class="en">RESULTMAP & COLLECTION</span>
+  </div>
+  <p class="pattern-desc">JOINで得た<b>冗長な行</b>を、MyBatisが<b>「親オブジェクト + 子のList」</b>に組み立て直してくれる仕組みが <code>&lt;resultMap&gt;</code> + <code>&lt;collection&gt;</code> です。<b>resultMapはCの中で最も重要な概念</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">resultmap-structure</span>
+      <span class="tag-desc">resultMap の構造</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// resultMap の構成要素</div>
+        <div class="role-card">
+          <span class="label">PART 1</span>
+          <div class="name">&lt;resultMap id="..." type="..."&gt;</div>
+          <div class="desc"><code>id</code>はこのマップの名前（XML内で使う識別子）。<code>type</code>は組み立てる対象クラスのフルパス。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PART 2</span>
+          <div class="name">&lt;id property="..." column="..."/&gt;</div>
+          <div class="desc"><b>グループ化のキー</b>。同じ <code>column</code> の値の行は、同じ Subject にまとめられる。<b>これが超重要</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PART 3</span>
+          <div class="name">&lt;result property="..." column="..."/&gt;</div>
+          <div class="desc">通常の列マッピング。Javaのプロパティ名 ↔ SQLの列名。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PART 4</span>
+          <div class="name">&lt;collection property="..." ofType="..."&gt;</div>
+          <div class="desc">親に紐づく<b>子のリストの組み立て指示</b>。<code>ofType</code>はリストの中身の型。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// resultMap の完成形（次セクションで実装）</span>
+
+&lt;<span class="kw">resultMap</span>
+  <span class="ann">id</span>=<span class="str">"subjectWithRecords"</span>
+  <span class="ann">type</span>=<span class="str">"com.example.todo.entity.Subject"</span>&gt;
+
+  <span class="comment">&lt;!-- PART 2: 親の主キー（グループ化キー）--&gt;</span>
+  &lt;<span class="kw">id</span>     <span class="ann">property</span>=<span class="str">"id"</span>
+          <span class="ann">column</span>=<span class="str">"subject_id"</span>/&gt;
+
+  <span class="comment">&lt;!-- PART 3: 親の通常プロパティ --&gt;</span>
+  &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"name"</span>
+          <span class="ann">column</span>=<span class="str">"subject_name"</span>/&gt;
+  &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"color"</span>
+          <span class="ann">column</span>=<span class="str">"color"</span>/&gt;
+  &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"createdAt"</span>
+          <span class="ann">column</span>=<span class="str">"subject_created_at"</span>/&gt;
+
+  <span class="comment">&lt;!-- PART 4: 子のリスト --&gt;</span>
+  &lt;<span class="kw">collection</span>
+    <span class="ann">property</span>=<span class="str">"records"</span>
+    <span class="ann">ofType</span>=<span class="str">"com.example.todo.entity.StudyRecord"</span>&gt;
+    &lt;<span class="kw">id</span>     <span class="ann">property</span>=<span class="str">"id"</span>
+            <span class="ann">column</span>=<span class="str">"record_id"</span>/&gt;
+    &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"subjectId"</span>
+            <span class="ann">column</span>=<span class="str">"record_subject_id"</span>/&gt;
+    &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"studiedOn"</span>
+            <span class="ann">column</span>=<span class="str">"studied_on"</span>/&gt;
+    &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"minutes"</span>
+            <span class="ann">column</span>=<span class="str">"minutes"</span>/&gt;
+    &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"memo"</span>
+            <span class="ann">column</span>=<span class="str">"memo"</span>/&gt;
+    &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"createdAt"</span>
+            <span class="ann">column</span>=<span class="str">"record_created_at"</span>/&gt;
+  &lt;/<span class="kw">collection</span>&gt;
+
+&lt;/<span class="kw">resultMap</span>&gt;</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">なぜ AS でエイリアスを付けるのか</div>
+    <p>JOIN すると <code>subjects.id</code> と <code>study_records.id</code> の<b>列名が衝突</b>します。<code>created_at</code> も両テーブルにあって衝突する。これを <code>AS subject_id</code>／<code>AS record_id</code> などで<b>別名にして区別</b>します。<br>resultMap の <code>column="..."</code> はこの<b>エイリアス側</b>を指定。<b>列名衝突対策がJOIN実装の超ハマりどころ</b>です。</p>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">grouping-mechanism</span>
+      <span class="tag-desc">グループ化の動き（重要）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// MyBatisが裏で何をしているか</div>
+        <p>JOINで得た冗長な行（Java=5行、Spring Boot=3行、SQL=1行、HTML=1行 NULL、JS=1行 NULL の合計11行）を、MyBatisは以下のルールで<b>「親オブジェクト + 子List」</b>に組み立て直します：</p>
+        <ol class="step-list" style="margin-top:10px">
+          <li>各行を順番に見る</li>
+          <li><code>&lt;id&gt;</code> の column（subject_id）の値で<b>グループ化</b></li>
+          <li>同じ subject_id の行は<b>同じSubjectにまとめる</b></li>
+          <li>各行から <code>&lt;collection&gt;</code> の指示で StudyRecord を作って親の <code>records</code> に追加</li>
+          <li>子側の <code>&lt;id&gt;</code>（record_id）が NULL なら子は追加しない（記録なし科目）</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// グループ化のイメージ</span>
+
+<span class="comment">// ── 入力：JOIN後の11行 ──</span>
+sid=1, sname=Java, rid=1, stud=05-08
+sid=1, sname=Java, rid=2, stud=05-10
+sid=1, sname=Java, rid=3, stud=05-12
+sid=1, sname=Java, rid=4, stud=05-14
+sid=1, sname=Java, rid=5, stud=05-16
+sid=2, sname=Spr,  rid=6, stud=05-11
+sid=2, sname=Spr,  rid=7, stud=05-13
+sid=2, sname=Spr,  rid=8, stud=05-15
+sid=3, sname=SQL,  rid=9, stud=05-09
+sid=4, sname=HTML, rid=null
+sid=5, sname=JS,   rid=null
+
+
+<span class="comment">// ── 出力：5つのSubjectオブジェクト ──</span>
+[
+  Subject{id=<span class="num">1</span>, name=<span class="str">"Java"</span>,
+    records=[<span class="num">5</span>件]},
+  Subject{id=<span class="num">2</span>, name=<span class="str">"Spring Boot"</span>,
+    records=[<span class="num">3</span>件]},
+  Subject{id=<span class="num">3</span>, name=<span class="str">"SQL"</span>,
+    records=[<span class="num">1</span>件]},
+  Subject{id=<span class="num">4</span>, name=<span class="str">"HTML/CSS"</span>,
+    records=[]},
+  Subject{id=<span class="num">5</span>, name=<span class="str">"JavaScript"</span>,
+    records=[]}
+]
+
+
+<span class="comment">// → これがVol.2で「2回SQL」で作っていた</span>
+<span class="comment">//   オブジェクトと同じ形！</span>
+<span class="comment">// → MyBatisがJOIN結果から組み立てた</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>XMLとService の改修</h2>
+    <span class="en">MODIFY XML & SERVICE</span>
+  </div>
+  <p class="pattern-desc">3つのファイルを改修します。<b>SubjectMapper.java</b>（メソッド宣言追加）／<b>SubjectMapper.xml</b>（resultMap と select 追加）／<b>SubjectService.java</b>（for ループを削除）。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-mapper-java</span>
+      <span class="tag-desc">① SubjectMapper.java にメソッド宣言追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectMapper.java</code> を開く</li>
+          <li>既存の <code>findAll()</code> の下に <code>findAllWithRecords()</code> を追加</li>
+          <li>保存</li>
+        </ol>
+        <p style="margin-top:12px;font-size:13.5px"><b>たった1行の追加</b>です。SQLの本体はXML側に書きます。</p>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.java（改修後）</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> com.example.todo.entity.Subject;
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>();
+
+  <span class="comment">// ★ Vol.4で追加</span>
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>();
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・@Select は付けない（XML側で書く）</span>
+<span class="comment">// ・戻り値の型が「List&lt;Subject&gt;」</span>
+<span class="comment">// ・Subject の中に records (List)</span>
+<span class="comment">//   が詰まる構造</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-mapper-xml</span>
+      <span class="tag-desc">② SubjectMapper.xml に resultMap と select 追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectMapper.xml</code> を開く</li>
+          <li>既存の <code>&lt;select id="findAll"&gt;</code> の<b>後ろに</b>、<code>&lt;resultMap&gt;</code> と <code>&lt;select id="findAllWithRecords"&gt;</code> を追加</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">resultMap 名は何でもいい？</div>
+          <p>はい、ID名は自由。慣習的に <b>「{エンティティ名}{修飾子}」</b>のキャメルケース。例：<code>subjectWithRecords</code>。<br>
+          <code>&lt;select&gt;</code> 側で <code>resultMap="subjectWithRecords"</code> と参照して使います。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.xml（改修後・全体）</span>
+
+&lt;?xml version=<span class="str">"1.0"</span> encoding=<span class="str">"UTF-8"</span>?&gt;
+&lt;!DOCTYPE mapper PUBLIC
+  <span class="str">"-//mybatis.org//DTD Mapper 3.0//EN"</span>
+  <span class="str">"http://mybatis.org/dtd/mybatis-3-mapper.dtd"</span>&gt;
+
+&lt;<span class="kw">mapper</span> <span class="ann">namespace</span>=
+  <span class="str">"com.example.todo.mapper.SubjectMapper"</span>&gt;
+
+  <span class="comment">&lt;!-- Vol.3で書いた既存の select --&gt;</span>
+  &lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findAll"</span>
+          <span class="ann">resultType</span>=<span class="str">"com.example.todo.entity.Subject"</span>&gt;
+    SELECT * FROM subjects ORDER BY id
+  &lt;/<span class="kw">select</span>&gt;
+
+
+  <span class="comment">&lt;!-- ★ Vol.4で追加：resultMap --&gt;</span>
+  &lt;<span class="kw">resultMap</span> <span class="ann">id</span>=<span class="str">"subjectWithRecords"</span>
+             <span class="ann">type</span>=<span class="str">"com.example.todo.entity.Subject"</span>&gt;
+    &lt;<span class="kw">id</span>     <span class="ann">property</span>=<span class="str">"id"</span>
+            <span class="ann">column</span>=<span class="str">"subject_id"</span>/&gt;
+    &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"name"</span>
+            <span class="ann">column</span>=<span class="str">"subject_name"</span>/&gt;
+    &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"color"</span>
+            <span class="ann">column</span>=<span class="str">"color"</span>/&gt;
+    &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"createdAt"</span>
+            <span class="ann">column</span>=<span class="str">"subject_created_at"</span>/&gt;
+    &lt;<span class="kw">collection</span> <span class="ann">property</span>=<span class="str">"records"</span>
+                <span class="ann">ofType</span>=<span class="str">"com.example.todo.entity.StudyRecord"</span>&gt;
+      &lt;<span class="kw">id</span>     <span class="ann">property</span>=<span class="str">"id"</span>
+              <span class="ann">column</span>=<span class="str">"record_id"</span>/&gt;
+      &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"subjectId"</span>
+              <span class="ann">column</span>=<span class="str">"record_subject_id"</span>/&gt;
+      &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"studiedOn"</span>
+              <span class="ann">column</span>=<span class="str">"studied_on"</span>/&gt;
+      &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"minutes"</span>
+              <span class="ann">column</span>=<span class="str">"minutes"</span>/&gt;
+      &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"memo"</span>
+              <span class="ann">column</span>=<span class="str">"memo"</span>/&gt;
+      &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"createdAt"</span>
+              <span class="ann">column</span>=<span class="str">"record_created_at"</span>/&gt;
+    &lt;/<span class="kw">collection</span>&gt;
+  &lt;/<span class="kw">resultMap</span>&gt;
+
+
+  <span class="comment">&lt;!-- ★ Vol.4で追加：select --&gt;</span>
+  &lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findAllWithRecords"</span>
+          <span class="ann">resultMap</span>=<span class="str">"subjectWithRecords"</span>&gt;
+    SELECT
+      s.id          AS subject_id,
+      s.name        AS subject_name,
+      s.color       AS color,
+      s.created_at  AS subject_created_at,
+      r.id          AS record_id,
+      r.subject_id  AS record_subject_id,
+      r.studied_on  AS studied_on,
+      r.minutes     AS minutes,
+      r.memo        AS memo,
+      r.created_at  AS record_created_at
+    FROM subjects s
+    LEFT JOIN study_records r
+      ON s.id = r.subject_id
+    ORDER BY s.id, r.studied_on
+  &lt;/<span class="kw">select</span>&gt;
+
+&lt;/<span class="kw">mapper</span>&gt;</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-service</span>
+      <span class="tag-desc">③ SubjectService の改修</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectService.java</code> を開く</li>
+          <li><code>findAllWithRecords()</code> メソッドの中身を<b>たった1行に</b>置き換え</li>
+          <li><code>StudyRecordMapper</code> の <code>@Autowired</code> は<b>今は残しておく</b>（Vol.5以降で使う場面があるかも）</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">劇的にシンプルになる</div>
+          <p>Vol.2で書いた <code>for</code> ループ全体が消え、<b>Mapperを1回呼ぶだけ</b>に。「<b>業務ロジックがMapper側に集約された</b>」とも言えます。<br>これは<b>SQLの力を最大限に活かす</b>設計。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectService.java（改修後・全体）</span>
+
+<span class="kw">package</span> com.example.todo.service;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Service;
+<span class="kw">import</span> org.springframework.transaction.annotation.Transactional;
+<span class="kw">import</span> com.example.todo.entity.Subject;
+<span class="kw">import</span> com.example.todo.mapper.SubjectMapper;
+<span class="kw">import</span> com.example.todo.mapper.StudyRecordMapper;
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public class</span> <span class="type">SubjectService</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectMapper</span> subjectMapper;
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">StudyRecordMapper</span> studyRecordMapper;
+  <span class="comment">// 今は使わないが、Vol.5以降で復活予定</span>
+
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>() {
+    <span class="kw">return</span> subjectMapper.<span class="fn">findAll</span>();
+  }
+
+  <span class="comment">// ★ Vol.4で改修：劇的に短くなる</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>() {
+    <span class="kw">return</span> subjectMapper.<span class="fn">findAllWithRecords</span>();
+  }
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・for ループが完全に消えた</span>
+<span class="comment">// ・1行で全てが完結する</span>
+<span class="comment">// ・MyBatisが裏で resultMap を使って</span>
+<span class="comment">//   Subject + records List を構築</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かして確認</h2>
+    <span class="en">RUN IN BROWSER</span>
+  </div>
+  <p class="pattern-desc">作業後、起動して<b>画面は同じ・SQLは1回</b>を確認します。<b>SQLログの劇的な変化</b>が今巻の見どころ。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">browser-check</span>
+      <span class="tag-desc">起動と動作確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>アプリ起動中なら停止</li>
+          <li><code>TodoApplication.java</code> を右クリック → <span class="menu-code" style="color:var(--accent-3)">Run As</span> → <span class="menu-code" style="color:var(--accent-3)">Spring Boot App</span></li>
+          <li><code>Started TodoApplication</code> を確認</li>
+          <li>ブラウザで <code>http://localhost:8080/subjects</code> を開く</li>
+          <li>Vol.3と同じ画面が出る</li>
+          <li><b>コンソールで「SELECT ... LEFT JOIN」が1回だけ流れる</b>のを確認</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ ここまで動けばVol.4クリア！</p>
+        <p style="margin-top:6px;font-size:13px"><b>SQL 6回→1回</b>。Cの最初の山を越えました。</p>
+      </div>
+      <div class="code"><span class="code-head">// コンソールに出るSQLログ（劇的変化）</span>
+
+<span class="comment">// ─── Vol.4 ─── たった1行のSQL！</span>
+
+==&gt;  Preparing:
+  SELECT
+    s.id          AS subject_id,
+    s.name        AS subject_name,
+    s.color       AS color,
+    s.created_at  AS subject_created_at,
+    r.id          AS record_id,
+    r.subject_id  AS record_subject_id,
+    r.studied_on  AS studied_on,
+    r.minutes     AS minutes,
+    r.memo        AS memo,
+    r.created_at  AS record_created_at
+  FROM subjects s
+  LEFT JOIN study_records r
+    ON s.id = r.subject_id
+  ORDER BY s.id, r.studied_on
+
+==&gt; Parameters:
+&lt;==      Total: 11
+
+
+<span class="comment">// ─── Vol.2 と比較 ───</span>
+<span class="comment">// Vol.2: 6回のSQL（1+5回）</span>
+<span class="comment">// Vol.4: 1回のSQL</span>
+<span class="comment">// → DB通信が 6→1（83%削減）</span>
+
+
+<span class="comment">// 「Total: 11」は JOIN後の行数</span>
+<span class="comment">// （Java=5 + Spr=3 + SQL=1 + HTML=1NULL + JS=1NULL）</span>
+<span class="comment">// → MyBatisがこの11行から</span>
+<span class="comment">//   5つのSubject + 子Listを組み立てた</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>たった1行のSQLで全部入りの結果が出る</b>」── これがSQLの真の威力です。<b>SQLは「最強のデータ操作言語」</b>。学ぶ価値があります。Cの15巻で、あなたはこのSQLの力を引き出す技術を継続的に身につけていきます。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">Vol.4は<b>resultMap初登場</b>なのでハマりどころが多めです。よくあるトラブル6選を整理しました。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">troubles</span>
+      <span class="tag-desc">起きやすいトラブル6選</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card">
+          <span class="label">TROUBLE 1</span>
+          <div class="name">列名衝突エラー（Column 'id' in field list is ambiguous）</div>
+          <div class="desc"><b>原因</b>：JOIN先のテーブルにも <code>id</code>／<code>created_at</code> がある。<br><b>対処</b>：<b>必ず <code>AS</code> でエイリアス</b>。<code>s.id AS subject_id</code>／<code>r.id AS record_id</code>。SELECT句に列名を全部書き出し、AS を付けるのが鉄則。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 2</span>
+          <div class="name">子のリストが全部同じ件数になる</div>
+          <div class="desc"><b>原因</b>：<code>&lt;id property="id" column="subject_id"/&gt;</code> を書き忘れ／間違い。MyBatisがグループ化できず、全行を別オブジェクト扱いする。<br><b>対処</b>：resultMap の中の <code>&lt;id&gt;</code> 要素を<b>必ず書く</b>。column は親の主キー（<code>subject_id</code>）に対応するエイリアス。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 3</span>
+          <div class="name">記録なし科目に「記録1件（中身NULL）」が出る</div>
+          <div class="desc"><b>原因</b>：<code>&lt;collection&gt;</code> 内の <code>&lt;id property="id" column="record_id"/&gt;</code> 不足／記載漏れ。MyBatisが「子のidがNULLなら子は無し」と判定できない。<br><b>対処</b>：<code>&lt;collection&gt;</code> 内にも<b>必ず <code>&lt;id&gt;</code></b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 4</span>
+          <div class="name">画面のメモが文字化けする</div>
+          <div class="desc"><b>原因</b>：MySQLの文字コード設定不一致。<br><b>対処</b>：<code>application.properties</code> の <code>spring.datasource.url</code> に <code>?useUnicode=true&amp;characterEncoding=utf8</code> を付ける。A v2 で設定済みのはず。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 5</span>
+          <div class="name">resultMap 'subjectWithRecords' not found</div>
+          <div class="desc"><b>原因</b>：<code>&lt;select resultMap="..."&gt;</code> のID指定 typo／同じXML内に定義していない。<br><b>対処</b>：<code>id="subjectWithRecords"</code> と <code>resultMap="subjectWithRecords"</code> が完全一致するか確認。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 6</span>
+          <div class="name">アプリ起動でクラッシュ</div>
+          <div class="desc"><b>原因</b>：XML構文エラー／DOCTYPE typo。<br><b>対処</b>：起動時のコンソールエラーの末尾「Caused by:」を探す。<b>XMLの行番号が出る</b>のでその行を確認。Eclipse の Problems ビューも有効。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// TROUBLE 1 の典型出力</span>
+
+ERROR <span class="num">1052</span> (<span class="num">23000</span>):
+Column 'id' in field list is ambiguous
+
+<span class="comment">// → SELECTで <span class="kw">id</span> と書いたが</span>
+<span class="comment">//   s.id か r.id か曖昧</span>
+
+<span class="comment">// ── 直し方 ──</span>
+SELECT
+  <span class="comment">// ✗ ダメ</span>
+  id,
+
+  <span class="comment">// ✓ OK</span>
+  s.id AS subject_id,
+  r.id AS record_id,
+  ...
+
+
+<span class="code-head" style="margin-top:14px">// TROUBLE 2 のチェックポイント</span>
+
+<span class="comment">// resultMap で &lt;id&gt; を書き忘れた場合：</span>
+<span class="comment">// MyBatisは「行ごとに別のSubject」と判定</span>
+<span class="comment">// → 5+3+1+1+1 = 11個のSubjectが返る</span>
+<span class="comment">// → 各 records は 1件ずつ</span>
+
+
+<span class="comment">// 正しく書いた場合：</span>
+<span class="comment">// 同じ subject_id の行は同じSubject</span>
+<span class="comment">// → 5個のSubjectが返る</span>
+<span class="comment">// → Java=5件, Spr=3件, ...</span>
+
+
+<span class="comment">// 「件数がおかしい」と感じたら</span>
+<span class="comment">// まず &lt;id&gt; をチェック</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">TIP ──</div>
+    <p>resultMap デバッグの<b>定番テクニック</b>：「<b>まず resultType="java.util.HashMap" でJOIN結果をそのまま見る</b>」── これでJOIN自体が動くか確認できます。動けばresultMapに移行、動かなければSQLを直す。<b>切り分けを段階的に</b>するのが詰まらないコツ。</p>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.4本編の<b>完了チェックリスト</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol4-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li><code>SubjectMapper.java</code> に <code>findAllWithRecords()</code> 宣言が追加</li>
+          <li><code>SubjectMapper.xml</code> に <code>&lt;resultMap id="subjectWithRecords"&gt;</code> がある</li>
+          <li>resultMap の中に <code>&lt;id property="id" column="subject_id"/&gt;</code> がある</li>
+          <li><code>&lt;collection&gt;</code> の中にも <code>&lt;id property="id" column="record_id"/&gt;</code> がある</li>
+          <li><code>&lt;select id="findAllWithRecords" resultMap="subjectWithRecords"&gt;</code> がある</li>
+          <li>SQLに <code>LEFT JOIN study_records r ON s.id = r.subject_id</code> がある</li>
+          <li>SELECT 句の全列に <code>AS</code> エイリアスが付いている</li>
+          <li><code>SubjectService.findAllWithRecords()</code> から for ループが消えた</li>
+          <li>アプリ起動時にエラーが出ない</li>
+          <li><code>/subjects</code> で Vol.3 と同じ画面が出る</li>
+          <li><b>コンソールに JOIN 入りの SQL が 1回だけ</b>流れる</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.4本編完了！</b><br>
+          <b>resultMap + collection</b> の獲得です。Cの最初の山場を越えました。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で獲得したスキル</span>
+
+★ <span class="kw">resultMap + collection</span> ── 獲得！
+
+  <span class="comment">// できるようになったこと:</span>
+  <span class="comment">// ・LEFT JOIN で複数テーブルを取得</span>
+  <span class="comment">// ・AS エイリアスで列名衝突を回避</span>
+  <span class="comment">// ・&lt;resultMap&gt; でオブジェクト組み立て</span>
+  <span class="comment">// ・&lt;id&gt; でグループ化</span>
+  <span class="comment">// ・&lt;collection ofType&gt; で子List構築</span>
+  <span class="comment">// ・1回SQLで親子取得</span>
+  <span class="comment">// ・N+1問題の「一段解消」</span>
+
+
+<span class="code-head" style="margin-top:14px">// 次にやること</span>
+
+<span class="comment">// ① 別冊 S4 を読む</span>
+<span class="comment">//   タイトル: 「resultMapが裏で何をしているか」</span>
+<span class="comment">//   内容: MyBatis内部・リフレクション・</span>
+<span class="comment">//        typeHandler の役割</span>
+
+
+<span class="comment">// ② Vol.5 本編：</span>
+<span class="comment">//   タイトル:「N+1問題を体験して直そう」</span>
+<span class="comment">//   獲得スキル: N+1の発見と修正</span>
+<span class="comment">//   内容: 改めてN+1問題の正体を整理し、</span>
+<span class="comment">//        Cで出会う他のN+1パターンも体験</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(31,56,41,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S4</div>
+    <p>本編Vol.4お疲れさまでした。<b>「動くresultMap」</b>を手に入れた今、別冊S4「<b>resultMapが裏で何をしているか</b>」では、<b>MyBatis内部の仕組み</b>を覗きます。「リフレクション」「typeHandler」「ResultSetHandler」── 普段見えない裏側を知ると、エラーの原因が見える目になります。<b>続けて別冊S4へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.04 / 15 ── RESULTMAP & COLLECTION（本編）</span>
+</footer>
+
+</body>
+</html>

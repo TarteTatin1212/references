@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリング設計編 データベース・データ設計 Vol.6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#241809;
+    --paper:#e8d4ac;
+    --paper-2:#d1b27e;
+    --accent:#6a3416;
+    --accent-2:#9a5832;
+    --accent-3:#481e08;
+    --muted:#604c34;
+    --line:#9e7e50;
+    --code-bg:#1e1206;
+    --code-text:#f0e4cf;
+    --panel-bg:#f5e8cb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;line-height:1.75;font-size:15px}
+  body{max-width:1180px;margin:0 auto;padding:0 28px 80px}
+
+  .page-header{position:relative;padding:48px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+  .page-header::before{content:"△";position:absolute;right:-10px;top:-30px;font-size:280px;color:var(--accent);opacity:.18;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+  .page-header > *{position:relative;z-index:1}
+  .series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace;margin-right:8px}
+  .vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace}
+  h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin-top:18px;letter-spacing:.04em}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;font-family:"JetBrains Mono",monospace;letter-spacing:.08em}
+  .lead{max-width:640px;margin-top:22px;font-size:15px}
+  .lead b{color:var(--accent-3)}
+
+  .toc{background:var(--paper-2);padding:18px 22px;margin:32px 0 48px;border-left:3px solid var(--accent)}
+  .toc-title{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:.2em;color:var(--accent-3);margin-bottom:10px}
+  .toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px}
+  .toc li{font-size:13px}
+  .toc a{color:var(--ink);text-decoration:none;font-family:"JetBrains Mono",monospace}
+  .toc a::before{content:"— ";color:var(--accent)}
+  .toc a:hover{color:var(--accent)}
+
+  section{margin:64px 0}
+  .section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .section-num{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent);font-weight:600}
+  .section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;letter-spacing:.04em;flex:1}
+  .section-header .en{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:.15em}
+  .pattern-desc{max-width:680px;margin-bottom:20px;font-size:14.5px}
+  .pattern-desc b{color:var(--accent-3)}
+
+  .demo-card{border:1px solid var(--line);background:#fff;margin:18px 0}
+  .demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .tag-name{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+  .tag-desc{font-size:12px;color:var(--muted)}
+  .demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+  .panel{background:var(--panel-bg);padding:20px;border-right:1px solid var(--line);font-size:14px}
+  .panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:.1em}
+  .code{background:var(--code-bg);color:var(--code-text);padding:20px;font-family:"JetBrains Mono",monospace;font-size:12.5px;line-height:1.85;overflow-x:auto;white-space:pre-wrap}
+  @media(max-width:720px){
+    .demo-body{grid-template-columns:1fr}
+    .panel{border-right:none;border-bottom:1px solid var(--line)}
+  }
+
+  .kw{color:#ffc88a}
+  .type{color:#c2a3ff}
+  .fn{color:#a3c9ff}
+  .str{color:#b5e8b0}
+  .num{color:#f7a8d8}
+  .comment{color:#998aaa;font-style:italic}
+  .ann{color:#f7c08a}
+  .menu-code{color:#f7c08a;font-weight:600}
+  .step{color:#ffc88a;font-weight:600}
+
+  .tip{background:rgba(106,52,22,.09);border-left:3px solid var(--accent);padding:14px 18px;margin:18px 0;font-size:14px}
+  .tip-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);letter-spacing:.18em;margin-bottom:6px;font-weight:600}
+  .tip b{color:var(--accent-3)}
+
+  .key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:11.5px}
+
+  .panel ul{list-style:none;margin:8px 0}
+  .panel li{padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .panel li:last-child{border-bottom:none}
+  .panel .label{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-right:6px}
+  .panel strong{color:var(--accent-3);font-weight:600}
+
+  .diagram{padding:14px;background:#fff;border:1px dashed var(--line);font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.6;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+  .compare{width:100%;font-size:13px;margin:10px 0}
+  .compare th{background:var(--paper-2);text-align:left;padding:8px;border-bottom:1px solid var(--line);font-family:"Shippori Mincho",serif;font-size:13px}
+  .compare td{padding:8px;border-bottom:1px dashed var(--line);vertical-align:top}
+  .compare .ng{color:#b04848}
+  .compare .ok{color:#4a7848}
+
+  .stars{color:var(--accent);font-weight:700;letter-spacing:.05em}
+
+  .page-footer{margin-top:80px;padding-top:24px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.1em}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">ENGINEERING DESIGN</span>
+  <span class="vol-tag">VOL.06</span>
+  <h1>データベース・データ設計</h1>
+  <div class="subtitle">DATABASE AND DATA MODELING</div>
+  <p class="lead">DBは<b>「後から最も変更しにくい層」</b>です。テーブル定義を間違えると、リリース後に全機能を巻き込んで作り直しになります。本巻ではER設計、正規化と非正規化の判断、インデックス、トランザクション境界、論理削除、マイグレーションを扱います。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — 本巻の目次</div>
+  <ul>
+    <li><a href="#s1">01 ER設計の基本</a></li>
+    <li><a href="#s2">02 正規化</a></li>
+    <li><a href="#s3">03 非正規化の判断</a></li>
+    <li><a href="#s4">04 主キーと自然キー</a></li>
+    <li><a href="#s5">05 インデックス設計</a></li>
+    <li><a href="#s6">06 トランザクション境界</a></li>
+    <li><a href="#s7">07 論理削除と監査</a></li>
+    <li><a href="#s8">08 マイグレーション戦略</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>ER設計の基本</h2>
+    <span class="en">ER MODELING</span>
+  </div>
+  <p class="pattern-desc">ER（Entity-Relationship）設計は<b>「現実世界のモノとモノの関係を表に落とす」</b>作業です。エンティティ（実体）、属性、関連（リレーション）、多重度の4要素を押さえれば、ほぼあらゆる業務をモデル化できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">er-basics</span>
+      <span class="tag-desc">エンティティと関連</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ER図の基本要素</div>
+        <ul>
+          <li><span class="label">エンティティ</span><strong>名詞 = 実体</strong><br>ユーザー / 注文 / 商品 / 配送</li>
+          <li><span class="label">属性</span><strong>性質</strong><br>名前 / メール / 価格 / 数量</li>
+          <li><span class="label">関連</span><strong>動詞 = 関係</strong><br>注文する / 所有する</li>
+          <li><span class="label">多重度</span><strong>個数</strong><br>1:1 / 1:N / N:N</li>
+        </ul>
+        <div class="diagram" style="margin-top:10px">[User] 1 ────── N [Order]
+       ユーザーは注文を持つ
+
+[Order] N ────── N [Product]
+        → 中間テーブル必要
+[Order] 1 ── N [OrderItem] N ── 1 [Product]</div>
+      </div>
+      <div class="code"><span class="comment">// ECサイトの基本テーブル</span>
+
+<span class="kw">CREATE TABLE</span> users (
+  id         <span class="type">BIGSERIAL</span> <span class="kw">PRIMARY KEY</span>,
+  email      <span class="type">VARCHAR</span>(<span class="num">255</span>) <span class="kw">NOT NULL UNIQUE</span>,
+  name       <span class="type">VARCHAR</span>(<span class="num">100</span>) <span class="kw">NOT NULL</span>,
+  created_at <span class="type">TIMESTAMPTZ</span> <span class="kw">DEFAULT</span> <span class="fn">NOW</span>()
+);
+
+<span class="kw">CREATE TABLE</span> products (
+  id    <span class="type">BIGSERIAL</span> <span class="kw">PRIMARY KEY</span>,
+  name  <span class="type">VARCHAR</span>(<span class="num">200</span>) <span class="kw">NOT NULL</span>,
+  price <span class="type">INTEGER</span> <span class="kw">NOT NULL CHECK</span>(price &gt;= <span class="num">0</span>)
+);
+
+<span class="kw">CREATE TABLE</span> orders (
+  id         <span class="type">BIGSERIAL</span> <span class="kw">PRIMARY KEY</span>,
+  user_id    <span class="type">BIGINT</span> <span class="kw">NOT NULL</span>
+             <span class="kw">REFERENCES</span> users(id),
+  status     <span class="type">VARCHAR</span>(<span class="num">20</span>) <span class="kw">NOT NULL</span>,
+  total      <span class="type">INTEGER</span> <span class="kw">NOT NULL</span>,
+  created_at <span class="type">TIMESTAMPTZ</span> <span class="kw">DEFAULT</span> <span class="fn">NOW</span>()
+);
+
+<span class="comment">// N:N を解決する中間テーブル</span>
+<span class="kw">CREATE TABLE</span> order_items (
+  order_id   <span class="type">BIGINT</span> <span class="kw">REFERENCES</span> orders(id),
+  product_id <span class="type">BIGINT</span> <span class="kw">REFERENCES</span> products(id),
+  quantity   <span class="type">INTEGER</span> <span class="kw">NOT NULL</span>,
+  unit_price <span class="type">INTEGER</span> <span class="kw">NOT NULL</span>,
+  <span class="kw">PRIMARY KEY</span> (order_id, product_id)
+);</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — N:Nには中間テーブル</div>
+    多対多（N:N）は<b>必ず中間テーブルで解決</b>します。「注文と商品はN:N」ならOrderItemテーブルを作る。<b>中間テーブルに『関連の属性』（数量・単価など）が乗ることが多い</b>のもポイント。
+  </div>
+</section>
+
+<section id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>正規化</h2>
+    <span class="en">NORMALIZATION</span>
+  </div>
+  <p class="pattern-desc">正規化は<b>「データの重複と矛盾をなくす」</b>ための定石。第1〜第3正規形まで覚えれば、業務システムの9割はカバーできます。<b>正規化されていないテーブルは、データ更新のたびに不整合の温床</b>になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">normalization</span>
+      <span class="tag-desc">第1正規形〜第3正規形</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 正規化の段階</div>
+        <ul>
+          <li><span class="label">1NF</span><strong>1セルに1つの値</strong><br>カンマ区切りなどを排除</li>
+          <li><span class="label">2NF</span><strong>主キー全体に依存</strong><br>主キーの一部にだけ依存する列を別表に</li>
+          <li><span class="label">3NF</span><strong>主キー以外に依存しない</strong><br>「主キー → 他列 → さらに他列」を排除</li>
+        </ul>
+        <p style="margin-top:10px;font-size:13px"><b>覚え方</b>: <br>「<b>キーに、キーの全部に、キーだけに</b>」<br>(One key, the whole key, and nothing but the key)</p>
+      </div>
+      <div class="code"><span class="comment">// 正規化前: 何もかも1枚のテーブル</span>
+
+orders
+| id | user_name | user_email | products      |
+|----|-----------|-----------|----------------|
+| 1  | 田中     | t@x.com   | りんご,バナナ  |
+| 2  | 田中     | t@x.com   | みかん        |
+
+問題:
+- products列にカンマ区切り → <span class="ann">1NF違反</span>
+- user_nameが重複 → 更新時の不整合
+- メアド変更時、複数行を直す必要
+
+<span class="comment">// 正規化後</span>
+
+<span class="ann">users</span>
+| id | name | email   |
+|----|------|---------|
+| 1  | 田中 | t@x.com |
+
+<span class="ann">orders</span>
+| id | user_id |
+|----|---------|
+| 1  | 1       |
+| 2  | 1       |
+
+<span class="ann">order_items</span>
+| order_id | product_id | qty |
+|----------|------------|-----|
+| 1        | 101        | 1   |
+| 1        | 102        | 1   |
+| 2        | 103        | 1   |
+
+<span class="ann">products</span>
+| id  | name   |
+|-----|--------|
+| 101 | りんご |
+| 102 | バナナ |
+| 103 | みかん |
+
+<span class="comment">// 重複ゼロ、更新は1箇所で済む</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">TIP — 第3正規形まででOK</div>
+    第4・第5正規形まで習った人もいるかもしれませんが、<b>業務システムでは第3正規形まで</b>で実用上ほぼ十分です。それ以上は学術的な話。<b>「3NFを守って、必要なら戦略的に崩す」</b>が現場の正解です。
+  </div>
+</section>
+
+<section id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>非正規化の判断</h2>
+    <span class="en">DENORMALIZATION</span>
+  </div>
+  <p class="pattern-desc">正規化が常に正解とは限りません。<b>パフォーマンスのために意図的にデータを冗長化する</b>のが非正規化。やみくもにではなく、<b>「測定して、必要な箇所だけ」</b>適用するのが鉄則です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">denormalization</span>
+      <span class="tag-desc">パフォーマンスのための冗長化</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 非正規化の使い所</div>
+        <ul>
+          <li><strong>集計値のキャッシュ</strong><br>注文の合計金額をorders.totalに保持</li>
+          <li><strong>スナップショット</strong><br>注文時の商品名・価格を残す（価格改定対策）</li>
+          <li><strong>JOIN削減</strong><br>頻繁に表示する項目を別テーブルで保持</li>
+          <li><strong>履歴の固定化</strong><br>「過去の事実」は変わらないので冗長保持OK</li>
+        </ul>
+        <p style="margin-top:10px;font-size:13px"><b>注意</b>: 非正規化は<b>更新時に複数箇所を同期する</b>責任を負います。設計時に「誰がどう同期するか」を必ず決めること。</p>
+      </div>
+      <div class="code"><span class="comment">// 非正規化の代表例: 注文スナップショット</span>
+
+<span class="ann">[NG: 正規化に固執]</span>
+<span class="kw">CREATE TABLE</span> order_items (
+  order_id   <span class="type">BIGINT</span>,
+  product_id <span class="type">BIGINT</span>,
+  quantity   <span class="type">INTEGER</span>
+);
+<span class="comment">// 商品の現在価格でJOINして金額計算</span>
+<span class="kw">SELECT</span> SUM(p.price * oi.quantity)
+<span class="kw">FROM</span> order_items oi
+<span class="kw">JOIN</span> products p <span class="kw">ON</span> p.id = oi.product_id;
+
+<span class="comment">// 問題: 価格改定すると過去の注文金額が変わる!</span>
+
+<span class="ann">[OK: 戦略的に非正規化]</span>
+<span class="kw">CREATE TABLE</span> order_items (
+  order_id        <span class="type">BIGINT</span>,
+  product_id      <span class="type">BIGINT</span>,
+  quantity        <span class="type">INTEGER</span>,
+  <span class="comment">-- スナップショット (注文時点の事実)</span>
+  product_name    <span class="type">VARCHAR</span>(<span class="num">200</span>) <span class="kw">NOT NULL</span>,
+  unit_price      <span class="type">INTEGER</span> <span class="kw">NOT NULL</span>,
+  subtotal        <span class="type">INTEGER</span> <span class="kw">NOT NULL</span>
+);
+
+<span class="comment">// メリット:</span>
+<span class="comment">// - 商品マスタを変更しても過去注文は不変</span>
+<span class="comment">// - JOINなしで一覧表示が高速</span>
+<span class="comment">// - 商品削除しても注文履歴が壊れない</span>
+
+<span class="comment">// 「事実は時点で確定する」</span>
+<span class="comment">// 業務系のDB設計では超重要な視点</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 計測してから非正規化</div>
+    「速くなりそうだから」と<b>推測で非正規化するのは禁物</b>。先にEXPLAIN ANALYZEで遅いクエリを特定し、インデックスやクエリ改善で解決できないと確認してから非正規化に手を出すこと。順番を間違えるとデータの一貫性だけ犠牲になります。
+  </div>
+</section>
+
+<section id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>主キーと自然キー</h2>
+    <span class="en">PRIMARY KEY DESIGN</span>
+  </div>
+  <p class="pattern-desc">主キーの選び方には流派があります。<b>サロゲートキー</b>（連番・UUID）と<b>自然キー</b>（業務的に意味のある値）。<b>現代の主流はサロゲートキー</b>ですが、それぞれの長所短所を理解しておく必要があります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">primary-key</span>
+      <span class="tag-desc">3つの選択肢</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主キーの3タイプ</div>
+        <table class="compare">
+          <tr><th>タイプ</th><th>長所</th><th>短所</th></tr>
+          <tr><td><b>連番 BIGINT</b></td><td>軽い、速い、インデックス効率良</td><td>推測可能、移行時の衝突</td></tr>
+          <tr><td><b>UUID</b></td><td>衝突なし、分散生成可</td><td>サイズ大、インデックス効率低</td></tr>
+          <tr><td><b>自然キー</b><br>(メアド等)</td><td>意味が明確</td><td>変更時に大事故、長くて遅い</td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)"><b>結論</b>: 多くの場合は<b>連番BIGINTがベター</b>。分散環境や外部公開IDが必要ならUUIDv7。</p>
+      </div>
+      <div class="code"><span class="comment">// 自然キーの落とし穴</span>
+
+<span class="ann">[NG] 自然キーを主キーに</span>
+<span class="kw">CREATE TABLE</span> users (
+  email <span class="type">VARCHAR</span>(<span class="num">255</span>) <span class="kw">PRIMARY KEY</span>,
+  name  <span class="type">VARCHAR</span>(<span class="num">100</span>)
+);
+<span class="kw">CREATE TABLE</span> orders (
+  id         <span class="type">BIGSERIAL</span>,
+  user_email <span class="type">VARCHAR</span>(<span class="num">255</span>)
+             <span class="kw">REFERENCES</span> users(email)
+);
+
+<span class="comment">// 問題: メアド変更要望が来た</span>
+<span class="comment">// → users 1行、orders 数千行、</span>
+<span class="comment">//   logs 数万行を全部更新</span>
+<span class="comment">// → 関連テーブル増えるほど地獄</span>
+
+<span class="ann">[OK] サロゲートキー + ユニーク制約</span>
+<span class="kw">CREATE TABLE</span> users (
+  id    <span class="type">BIGSERIAL</span> <span class="kw">PRIMARY KEY</span>,
+  email <span class="type">VARCHAR</span>(<span class="num">255</span>) <span class="kw">UNIQUE NOT NULL</span>,
+  name  <span class="type">VARCHAR</span>(<span class="num">100</span>)
+);
+
+<span class="comment">// メアド変更: users 1行更新で完了</span>
+<span class="comment">// 他テーブルは user_id 参照なので無傷</span>
+
+<span class="comment">// 外部公開用には UUID も併用すると安心</span>
+<span class="kw">CREATE TABLE</span> users (
+  id          <span class="type">BIGSERIAL</span> <span class="kw">PRIMARY KEY</span>,    <span class="comment">// 内部用</span>
+  public_id   <span class="type">UUID</span> <span class="kw">UNIQUE NOT NULL</span>     <span class="comment">// API用</span>
+              <span class="kw">DEFAULT</span> <span class="fn">gen_random_uuid</span>(),
+  email       <span class="type">VARCHAR</span>(<span class="num">255</span>) <span class="kw">UNIQUE</span>
+);
+
+<span class="comment">// URLに連番IDを晒すと推測攻撃の餌食</span>
+<span class="comment">// → public_id で隠すのが安全</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — UUIDv7という選択肢</div>
+    昔のUUIDv4はランダムすぎてインデックス効率が悪かったですが、<b>UUIDv7（時刻ベース）</b>なら連番に近いインデックス効率を保ちつつ、衝突なしのユニーク性が手に入ります。新規プロジェクトの公開IDには有力な選択肢です。
+  </div>
+</section>
+
+<section id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>インデックス設計</h2>
+    <span class="en">INDEX DESIGN</span>
+  </div>
+  <p class="pattern-desc">インデックスは<b>「検索を速くする辞書のしおり」</b>です。ただし<b>付ければ付けるほど書き込みが遅くなる</b>のがクセモノ。必要な列だけに、効果を測りながら張るのがプロの仕事。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">index-design</span>
+      <span class="tag-desc">どこに張るか / 張らないか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// インデックスを張るべき場所</div>
+        <ul>
+          <li><span class="stars">★★★</span> <strong>外部キー列</strong><br>JOINの高速化に必須</li>
+          <li><span class="stars">★★★</span> <strong>WHERE で頻出する列</strong><br>WHERE status = ... 等</li>
+          <li><span class="stars">★★</span> <strong>ORDER BY の列</strong><br>ソート処理を省略</li>
+          <li><span class="stars">★</span> <strong>UNIQUE制約の列</strong><br>自動でインデックス付与</li>
+        </ul>
+        <p style="margin-top:10px;font-size:13px"><b>避けるべき</b>: 性別・フラグ等の<b>カーディナリティが低い列</b>。値が2〜3種類しかない列にインデックスを張っても、ほぼ無意味で書き込みコストだけ増えます。</p>
+      </div>
+      <div class="code"><span class="comment">// インデックスの基本</span>
+
+<span class="kw">CREATE INDEX</span> idx_orders_user_id
+  <span class="kw">ON</span> orders(user_id);
+
+<span class="kw">CREATE INDEX</span> idx_orders_created_at
+  <span class="kw">ON</span> orders(created_at <span class="kw">DESC</span>);
+
+<span class="comment">// 複合インデックス: 順序が重要!</span>
+<span class="kw">CREATE INDEX</span> idx_orders_status_created
+  <span class="kw">ON</span> orders(status, created_at);
+
+<span class="comment">// この場合効くクエリ:</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> orders
+  <span class="kw">WHERE</span> status = <span class="str">'PAID'</span>;                <span class="comment">// OK</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> orders
+  <span class="kw">WHERE</span> status = <span class="str">'PAID'</span>
+    <span class="kw">AND</span> created_at &gt; <span class="str">'2026-01-01'</span>;   <span class="comment">// OK</span>
+
+<span class="comment">// 効かないクエリ:</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> orders
+  <span class="kw">WHERE</span> created_at &gt; <span class="str">'2026-01-01'</span>;    <span class="comment">// NG</span>
+<span class="comment">// → 先頭列 status が指定されてない</span>
+
+<span class="comment">// 効果測定の必須コマンド</span>
+<span class="kw">EXPLAIN ANALYZE</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> orders <span class="kw">WHERE</span> ...;
+
+<span class="comment">// Seq Scan → Index Scan に変われば成功</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — インデックスの代償</div>
+    インデックスは<b>「読み速く、書き遅く」</b>の典型的トレードオフ。1テーブルにインデックス10個張れば、INSERTのたびに10個全部を更新する必要があります。<b>書き込み主体のテーブル</b>では特に慎重に。
+  </div>
+</section>
+
+<section id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>トランザクション境界</h2>
+    <span class="en">TRANSACTION BOUNDARIES</span>
+  </div>
+  <p class="pattern-desc">トランザクションの<b>「どこからどこまでで囲むか」</b>を決めるのは、見過ごされがちですが超重要。広すぎるとロック競合で詰まり、狭すぎるとデータ不整合が起きます。<b>ユースケース1つ = 1トランザクション</b>が基本ルールです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">transaction-boundary</span>
+      <span class="tag-desc">ACIDと境界の設計</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ACID 4原則</div>
+        <ul>
+          <li><span class="label">A</span><strong>Atomicity</strong> 全部成功 or 全部巻き戻し</li>
+          <li><span class="label">C</span><strong>Consistency</strong> 制約を満たした状態を維持</li>
+          <li><span class="label">I</span><strong>Isolation</strong> 並行実行でも独立</li>
+          <li><span class="label">D</span><strong>Durability</strong> 確定後は消えない</li>
+        </ul>
+        <p style="margin-top:10px;font-size:13px"><b>分離レベル</b>: READ COMMITTED / REPEATABLE READ / SERIALIZABLE。<br>RDBのデフォルトは多くの場合READ COMMITTED。在庫管理などはより厳しい分離が必要。</p>
+      </div>
+      <div class="code"><span class="comment">// トランザクション境界の例</span>
+
+<span class="ann">[NG] 境界が広すぎる</span>
+<span class="kw">BEGIN</span>;
+  <span class="comment">// ユーザー入力を待つ…</span>
+  <span class="comment">// ← この間ロックが残る</span>
+  <span class="kw">UPDATE</span> users <span class="kw">SET</span> ...;
+<span class="kw">COMMIT</span>;
+<span class="comment">// → 他ユーザーが待たされる</span>
+
+<span class="ann">[NG] 境界が狭すぎる</span>
+<span class="kw">BEGIN</span>; <span class="kw">UPDATE</span> stock ...; <span class="kw">COMMIT</span>;
+<span class="kw">BEGIN</span>; <span class="kw">INSERT INTO</span> orders ...; <span class="kw">COMMIT</span>;
+<span class="comment">// → 在庫減ったが注文記録なし、の事故</span>
+
+<span class="ann">[OK] ユースケース単位で囲む</span>
+<span class="kw">BEGIN</span>;
+  <span class="kw">SELECT</span> stock <span class="kw">FROM</span> products
+    <span class="kw">WHERE</span> id = <span class="num">1</span>
+    <span class="kw">FOR UPDATE</span>;   <span class="comment">// 行ロック</span>
+
+  <span class="kw">UPDATE</span> products
+    <span class="kw">SET</span> stock = stock - <span class="num">1</span>
+    <span class="kw">WHERE</span> id = <span class="num">1</span>;
+
+  <span class="kw">INSERT INTO</span> orders (...) <span class="kw">VALUES</span> (...);
+
+  <span class="kw">INSERT INTO</span> order_items (...) <span class="kw">VALUES</span> (...);
+<span class="kw">COMMIT</span>;
+
+<span class="comment">// 全部成功 or 全部失敗</span>
+<span class="comment">// 並行注文での在庫過剰販売も防げる</span>
+
+<span class="comment">// 重要: トランザクション内で</span>
+<span class="comment">// 外部API呼び出ししないこと!</span>
+<span class="comment">// → タイムアウトでDBが詰まる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — 楽観ロックと悲観ロック</div>
+    <b>悲観ロック</b>（<code style="background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">SELECT ... FOR UPDATE</code>）は確実だが詰まりやすい。<b>楽観ロック</b>（バージョン列で衝突検出）は競合が少ない場面で高速。在庫など競合が頻発する箇所は悲観、編集画面など競合が稀な箇所は楽観、と使い分けます。
+  </div>
+</section>
+
+<section id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>論理削除と監査</h2>
+    <span class="en">SOFT DELETE & AUDIT</span>
+  </div>
+  <p class="pattern-desc">業務システムでは<b>「データを物理削除しない」</b>のがほぼ鉄則。削除フラグだけ立てる「論理削除」と、変更履歴を残す「監査ログ」を組み合わせるのが定番です。<b>「過去の事実は消さない」</b>のが基本姿勢。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">soft-delete-audit</span>
+      <span class="tag-desc">削除と変更履歴の設計</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 論理削除のパターン</div>
+        <table class="compare">
+          <tr><th>方式</th><th>特徴</th></tr>
+          <tr><td><b>deleted_at列</b></td><td>NULL=有効, 時刻=削除済み。一般的</td></tr>
+          <tr><td><b>status列</b></td><td>ACTIVE/DELETED等。複数状態の表現に</td></tr>
+          <tr><td><b>履歴テーブル</b></td><td>削除時に履歴表に移送。クエリは速いが手間</td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:13px"><b>注意点</b>: 論理削除を使うと<b>全クエリにWHERE deleted_at IS NULLが必要</b>。漏れるとバグの温床になります。ORM側でデフォルトフィルタ設定がほぼ必須。</p>
+      </div>
+      <div class="code"><span class="comment">// 論理削除の典型実装</span>
+
+<span class="kw">CREATE TABLE</span> users (
+  id         <span class="type">BIGSERIAL</span> <span class="kw">PRIMARY KEY</span>,
+  name       <span class="type">VARCHAR</span>(<span class="num">100</span>),
+  email      <span class="type">VARCHAR</span>(<span class="num">255</span>),
+  created_at <span class="type">TIMESTAMPTZ</span> <span class="kw">DEFAULT</span> <span class="fn">NOW</span>(),
+  updated_at <span class="type">TIMESTAMPTZ</span> <span class="kw">DEFAULT</span> <span class="fn">NOW</span>(),
+  deleted_at <span class="type">TIMESTAMPTZ</span>          <span class="comment">// NULLなら有効</span>
+);
+
+<span class="comment">// 削除: 物理削除しない</span>
+<span class="kw">UPDATE</span> users <span class="kw">SET</span> deleted_at = <span class="fn">NOW</span>()
+  <span class="kw">WHERE</span> id = <span class="num">123</span>;
+
+<span class="comment">// 取得: 削除済みを除外</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users
+  <span class="kw">WHERE</span> deleted_at <span class="kw">IS NULL</span>;
+
+<span class="comment">// 監査ログテーブル</span>
+
+<span class="kw">CREATE TABLE</span> audit_logs (
+  id         <span class="type">BIGSERIAL</span> <span class="kw">PRIMARY KEY</span>,
+  table_name <span class="type">VARCHAR</span>(<span class="num">50</span>),
+  record_id  <span class="type">BIGINT</span>,
+  action     <span class="type">VARCHAR</span>(<span class="num">10</span>),  <span class="comment">// CREATE/UPDATE/DELETE</span>
+  changed_by <span class="type">BIGINT</span>,       <span class="comment">// 操作したユーザー</span>
+  old_value  <span class="type">JSONB</span>,        <span class="comment">// 変更前</span>
+  new_value  <span class="type">JSONB</span>,        <span class="comment">// 変更後</span>
+  created_at <span class="type">TIMESTAMPTZ</span> <span class="kw">DEFAULT</span> <span class="fn">NOW</span>()
+);
+
+<span class="comment">// アプリ層 or DBトリガで全変更を記録</span>
+<span class="comment">// → 「いつ誰が何を変えたか」を全て追跡</span>
+
+<span class="comment">// 業務系ではほぼ必須</span>
+<span class="comment">// (金融/医療系では法的にも必須)</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 個人情報の扱いだけ別</div>
+    GDPR・改正個人情報保護法では<b>「忘れられる権利」</b>があり、削除要求があれば<b>物理的にデータを消す必要</b>があります。論理削除と「マスキング（個人情報部分だけ匿名化）」を組み合わせるのが現代的なやり方。<b>「全部残す」がデフォルト、個人情報だけ例外</b>と覚えましょう。
+  </div>
+</section>
+
+<section id="s8">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>マイグレーション戦略</h2>
+    <span class="en">DB MIGRATION STRATEGY</span>
+  </div>
+  <p class="pattern-desc">DBスキーマは<b>必ず変わります</b>。「変えない」のではなく「<b>安全に変える仕組み</b>」を最初から組むのが現代的アプローチ。マイグレーションツール（Flyway、Liquibase、Prisma、TypeORM等）を使い、<b>全変更をコードで管理</b>しましょう。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">migration-strategy</span>
+      <span class="tag-desc">無停止デプロイの基本</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// マイグレーションの鉄則</div>
+        <ul>
+          <li><span class="stars">★★★</span> <strong>変更は必ず追加から</strong><br>列削除や名前変更は2段階で</li>
+          <li><span class="stars">★★★</span> <strong>後方互換を保つ</strong><br>旧アプリでも動く形に</li>
+          <li><span class="stars">★★</span> <strong>巨大テーブルは分割実行</strong><br>1000万行UPDATEは即障害</li>
+          <li><span class="stars">★★</span> <strong>ロールバック計画</strong><br>戻せないマイグレは禁止</li>
+        </ul>
+      </div>
+      <div class="code"><span class="comment">// 列の名前変更を安全にやる手順</span>
+
+<span class="ann">[Step 1]</span> 新列を追加
+<span class="kw">ALTER TABLE</span> users
+  <span class="kw">ADD COLUMN</span> full_name <span class="type">VARCHAR</span>(<span class="num">200</span>);
+
+<span class="ann">[Step 2]</span> アプリ更新
+<span class="comment">// 書込: 旧列・新列の両方に書く</span>
+<span class="comment">// 読込: 新列を優先、無ければ旧列</span>
+
+<span class="ann">[Step 3]</span> 既存データをコピー
+<span class="kw">UPDATE</span> users <span class="kw">SET</span> full_name = name
+  <span class="kw">WHERE</span> full_name <span class="kw">IS NULL</span>;
+<span class="comment">// (巨大テーブルなら分割実行)</span>
+
+<span class="ann">[Step 4]</span> アプリ更新
+<span class="comment">// 書込: 新列のみ</span>
+<span class="comment">// 読込: 新列のみ</span>
+
+<span class="ann">[Step 5]</span> 旧列を削除（時間を置いてから）
+<span class="kw">ALTER TABLE</span> users <span class="kw">DROP COLUMN</span> name;
+
+<span class="comment">// この5段階のおかげで:</span>
+<span class="comment">// - 旧バージョンのアプリも動き続ける</span>
+<span class="comment">// - 無停止デプロイが可能</span>
+<span class="comment">// - 問題発覚時に各段階で戻せる</span>
+
+<span class="comment">// 1発で名前変更 = 即障害の道</span>
+<span class="comment">// ALTER TABLE users RENAME ...</span>
+<span class="comment">// (絶対やめましょう)</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">NEXT STEP — Vol.7 へ</div>
+    データ設計が終わったら、それをどう公開するかの番です。Vol.7では<b>API設計</b>を扱います。RESTの原則、リソース設計、URI命名、エラー設計、バージョニング、ページネーション。<b>使われ続けるAPI</b>を作るための定石を一気に学びましょう。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING DESIGN SERIES — VOL.06</span>
+  <span>△ DATA</span>
+</footer>
+
+</body>
+</html>

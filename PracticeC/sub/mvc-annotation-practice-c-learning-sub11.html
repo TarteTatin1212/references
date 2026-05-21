@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.11 別冊 HAVING vs WHERE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a302a;
+  --paper:#e9ebe4;
+  --paper-2:#d6dace;
+  --accent:#b8c1a2;
+  --accent-2:#c5cdb0;
+  --accent-3:#6a7158;
+  --muted:#737a72;
+  --line:#bbc3b3;
+  --code-bg:#1f231f;
+  --code-text:#e9ebe4;
+  --panel-bg:#f1f3ec;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✧';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.2;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--ink);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent-3)}
+.toc a:hover{color:var(--accent-3)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent-3);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#9aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(184,193,162,0.18);border-left:3px solid var(--accent-3);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent-3);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent-3);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.order-flow{margin:14px 0}
+.order-step{display:flex;align-items:center;gap:12px;margin:6px 0;background:#fff;border:1px solid var(--line);padding:8px 14px;border-left:4px solid var(--accent)}
+.order-step .no{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--accent-3);min-width:24px}
+.order-step .nm{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--accent-3);min-width:90px}
+.order-step .ds{font-size:12.5px;color:var(--ink)}
+
+.bad-good{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.bad-good .b,.bad-good .g{background:#fff;border:1px solid var(--line);padding:12px 14px}
+.bad-good .b{border-left:3px solid #b05050}
+.bad-good .g{border-left:3px solid var(--accent-3)}
+.bad-good .ph{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.15em;margin-bottom:6px}
+.bad-good .b .ph{color:#b05050}
+.bad-good .g .ph{color:var(--accent-3)}
+.bad-good .ttl{font-family:'Shippori Mincho',serif;font-size:14px;font-weight:700;color:var(--accent-3);margin-bottom:6px}
+.bad-good p{font-size:13px}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .bad-good{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.11 / 15</span>
+    <span class="kind-tag">別冊</span>
+  </div>
+  <h1>HAVING vs<br>WHERE</h1>
+  <div class="subtitle">EXECUTION ORDER ── WHY WHERE CAN'T USE AGGREGATES</div>
+  <p class="lead">
+    本編Vol.11で <code style="font-family:'JetBrains Mono'">HAVING</code> を使い、「集計後の絞り込み」を実装しました。しかし<b>「なぜ WHERE では集計関数が使えないのか」</b>を原理から理解できているでしょうか。<br>
+    別冊S11では、<b>SQLの実行順序</b>を起点に、HAVING と WHERE の違いを<b>根本から</b>解き明かします。キーワードは<b>「SQL論理実行順序」「パフォーマンス比較」「サブクエリとの関係」「複雑な集計条件」</b>。<br>
+    Cの中で<b>「SQLを原理から理解する目」</b>を最も育てる別冊。技術面接でも頻出のテーマです。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#theme">01 この別冊のテーマ</a></li>
+    <li><a href="#exec-order">02 SQLの論理実行順序</a></li>
+    <li><a href="#why-where">03 なぜWHEREで集計関数が使えないか</a></li>
+    <li><a href="#decision">04 使い分けの判断フロー</a></li>
+    <li><a href="#perf">05 パフォーマンス比較</a></li>
+    <li><a href="#subquery">06 サブクエリとの関係</a></li>
+    <li><a href="#complex">07 複雑な集計条件</a></li>
+    <li><a href="#trouble">08 ハマりどころ集</a></li>
+    <li><a href="#next">09 次の本編へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="theme">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この別冊のテーマ</h2>
+    <span class="en">THEME</span>
+  </div>
+  <p class="pattern-desc">「WHERE と HAVING は集計の前後で使い分け」── 本編で学びました。別冊S11では<b>「なぜそうなるのか」</b>を <b>SQL の論理実行順序</b>から理解します。原理が分かれば<b>応用が効く</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-principle</span>
+      <span class="tag-desc">原理を理解する価値</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 原理理解の価値</div>
+        <div class="role-card">
+          <span class="label">価値1</span>
+          <div class="name">エラーの原因が分かる</div>
+          <div class="desc">「Invalid use of group function」が出た時、<b>「あ、WHEREで集計関数使ったな」</b>と即座に原因特定できる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">価値2</span>
+          <div class="name">最適な書き方を選べる</div>
+          <div class="desc">「WHERE で絞れることを HAVING でやって遅い」を避けられる。<b>実行順序を知っていれば最適化できる</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">価値3</span>
+          <div class="name">複雑なクエリも組み立てられる</div>
+          <div class="desc">サブクエリ・ウィンドウ関数など発展技術も、<b>実行順序の理解が土台</b>になる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">価値4</span>
+          <div class="name">技術面接で評価される</div>
+          <div class="desc">「WHERE と HAVING の違いは？」は<b>SQL面接の定番</b>。原理から説明できると高評価。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で答える4つの問い</span>
+
+<span class="comment">// 問1: SQLはどの順序で実行される？</span>
+<span class="comment">//   → FROM→WHERE→GROUP BY→HAVING→...</span>
+
+<span class="comment">// 問2: なぜWHEREで集計関数が使えない？</span>
+<span class="comment">//   → WHEREの時点でまだ集計してないから</span>
+
+<span class="comment">// 問3: どちらが速い？</span>
+<span class="comment">//   → 早い段階で絞るWHEREが有利</span>
+
+<span class="comment">// 問4: 両方使うときの順序は？</span>
+<span class="comment">//   → WHERE（集計前）→ HAVING（集計後）</span>
+
+
+<span class="comment">// 結論を先に：</span>
+<span class="comment">// ・SQLは「書く順」と「実行順」が違う</span>
+<span class="comment">// ・WHEREは集計前・HAVINGは集計後</span>
+<span class="comment">// ・できるだけWHEREで早く絞る</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="exec-order">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>SQLの論理実行順序</h2>
+    <span class="en">LOGICAL EXECUTION ORDER</span>
+  </div>
+  <p class="pattern-desc">SQL は<b>「書く順序」と「実行される順序」が違う</b>。これが全ての鍵。<code>SELECT</code> を最初に書くのに、実行は後半。この<b>論理実行順序</b>を理解すれば全てが繋がります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">exec-order</span>
+      <span class="tag-desc">書く順序 vs 実行順序</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 論理実行順序（7段階）</div>
+        <div class="order-flow">
+          <div class="order-step"><span class="no">1</span><span class="nm">FROM/JOIN</span><span class="ds">テーブルを読み・結合する</span></div>
+          <div class="order-step"><span class="no">2</span><span class="nm">WHERE</span><span class="ds">個別行をフィルタ（集計前）</span></div>
+          <div class="order-step"><span class="no">3</span><span class="nm">GROUP BY</span><span class="ds">行をグループにまとめる</span></div>
+          <div class="order-step"><span class="no">4</span><span class="nm">HAVING</span><span class="ds">グループをフィルタ（集計後）</span></div>
+          <div class="order-step"><span class="no">5</span><span class="nm">SELECT</span><span class="ds">列を選ぶ・集計関数を評価</span></div>
+          <div class="order-step"><span class="no">6</span><span class="nm">ORDER BY</span><span class="ds">並び替える</span></div>
+          <div class="order-step"><span class="no">7</span><span class="nm">LIMIT</span><span class="ds">件数を絞る</span></div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>注目</b>：<code>WHERE</code>（2番目）は <code>GROUP BY</code>（3番目）<b>より前</b>。だから WHERE の時点では<b>まだ集計されていない</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 書く順序 vs 実行順序</span>
+
+<span class="comment">// ─── 人が書く順序 ───</span>
+SELECT    subject_id, SUM(minutes)  <span class="comment">// 1番目に書く</span>
+FROM      study_records             <span class="comment">// 2番目</span>
+WHERE     studied_on &gt;= '2026-05-01'<span class="comment">// 3番目</span>
+GROUP BY  subject_id                <span class="comment">// 4番目</span>
+HAVING    SUM(minutes) &gt;= 60        <span class="comment">// 5番目</span>
+ORDER BY  SUM(minutes) DESC;        <span class="comment">// 6番目</span>
+
+
+<span class="comment">// ─── DBが実行する順序 ───</span>
+<span class="num">1.</span> FROM study_records
+   <span class="comment">// テーブルを読む</span>
+
+<span class="num">2.</span> WHERE studied_on &gt;= '2026-05-01'
+   <span class="comment">// 5月以降の行だけ残す（集計前）</span>
+
+<span class="num">3.</span> GROUP BY subject_id
+   <span class="comment">// 科目ごとにグループ化</span>
+
+<span class="num">4.</span> HAVING SUM(minutes) &gt;= 60
+   <span class="comment">// 合計60分以上のグループだけ（集計後）</span>
+
+<span class="num">5.</span> SELECT subject_id, SUM(minutes)
+   <span class="comment">// 列を選ぶ</span>
+
+<span class="num">6.</span> ORDER BY SUM(minutes) DESC
+   <span class="comment">// 並び替え</span>
+
+
+<span class="comment">// ─── ここが核心 ───</span>
+
+<span class="comment">// WHERE（2番目）の時点では</span>
+<span class="comment">// GROUP BY（3番目）がまだ実行されてない</span>
+<span class="comment">// → SUM はまだ計算されていない</span>
+<span class="comment">// → WHERE で SUM は使えない！</span>
+
+<span class="comment">// HAVING（4番目）の時点では</span>
+<span class="comment">// GROUP BY（3番目）が済んでいる</span>
+<span class="comment">// → SUM が計算済み</span>
+<span class="comment">// → HAVING で SUM が使える！</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>この<b>論理実行順序</b>は、<b>SQL の全ての挙動を説明する万能の鍵</b>です。「なぜ SELECT の別名（AS）が WHERE で使えないのか」「なぜ ORDER BY では AS が使えるのか」── 全部この順序で説明できます（ORDER BY は SELECT より後なので AS を知っている）。<b>困ったらこの順序を思い出す</b>。</p>
+  </div>
+</section>
+
+<section id="why-where">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>なぜWHEREで集計関数が使えないか</h2>
+    <span class="en">WHY WHERE CAN'T USE AGGREGATES</span>
+  </div>
+  <p class="pattern-desc">本編Vol.11 でも触れた「<code>WHERE SUM(...) &gt;= 60</code> はエラー」の<b>真の理由</b>を、実行順序から説明します。これが理解できれば<b>HAVING を完全マスター</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-where-fails</span>
+      <span class="tag-desc">エラーの原理</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜエラーになるか</div>
+        <p>SQL実行順序で <code>WHERE</code>（2番目）は <code>GROUP BY</code>（3番目）<b>より前</b>。</p>
+        <p style="margin-top:8px"><code>WHERE</code> が評価される時点では、まだ<b>行が個別に存在</b>している状態。「グループ」も「集計値（SUM）」も<b>まだ生まれていない</b>。</p>
+        <p style="margin-top:8px">だから <code>WHERE SUM(minutes) &gt;= 60</code> と書くと、<b>「まだ存在しない SUM を参照しようとした」</b>のでエラーになる。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">時系列で考える</div>
+          <p><b>WHERE は「集計が始まる前」</b>の関所。一行ずつ通過させるかどうかを判断する。集計値はまだ計算されていないので、SUM を条件にできない。<b>HAVING は「集計が終わった後」</b>の関所。集計済みの値で判断できる。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 時系列で見る</span>
+
+<span class="comment">// ─── 元データ ───</span>
+<span class="comment">// id | subject_id | minutes</span>
+<span class="comment">//  1 |     1      |   60</span>
+<span class="comment">//  2 |     1      |   90</span>
+<span class="comment">//  3 |     2      |   45</span>
+
+
+<span class="comment">// ─── WHERE の時点（集計前）───</span>
+<span class="comment">// 行は個別のまま：</span>
+<span class="comment">// id | subject_id | minutes</span>
+<span class="comment">//  1 |     1      |   60</span>
+<span class="comment">//  2 |     1      |   90</span>
+<span class="comment">//  3 |     2      |   45</span>
+<span class="comment"></span>
+<span class="comment">// この時点で「SUM」は存在しない</span>
+<span class="comment">// → WHERE で SUM は参照不可能</span>
+
+
+<span class="comment">// ─── GROUP BY の後（集計済み）───</span>
+<span class="comment">// subject_id | SUM(minutes)</span>
+<span class="comment">//     1      |    150</span>
+<span class="comment">//     2      |     45</span>
+<span class="comment"></span>
+<span class="comment">// この時点で「SUM」が確定</span>
+<span class="comment">// → HAVING で SUM を参照可能</span>
+
+
+<span class="comment">// ─── 結論 ───</span>
+
+<span class="comment">// ✗ WHERE SUM(minutes) &gt;= 60</span>
+<span class="comment">//   → SUM がまだ無い → エラー</span>
+
+<span class="comment">// ✓ HAVING SUM(minutes) &gt;= 60</span>
+<span class="comment">//   → SUM が計算済み → OK</span>
+
+
+<span class="comment">// ─── 個別の minutes は WHERE で使える ───</span>
+
+<span class="comment">// ✓ WHERE minutes &gt;= 60</span>
+<span class="comment">//   → 個別の行の minutes 列 → OK</span>
+<span class="comment">//   （これは集計関数ではなく素の列）</span>
+
+<span class="comment">// 「個別の列」と「集計関数」を区別</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="decision">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>使い分けの判断フロー</h2>
+    <span class="en">DECISION FLOW</span>
+  </div>
+  <p class="pattern-desc">実務で「WHERE か HAVING か」迷った時の<b>判断フロー</b>を整理します。たった1つの問いで決まります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">decision-flow</span>
+      <span class="tag-desc">1問で決まる判断</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 判断は1問だけ</div>
+        <div style="background:#fff;border:1px solid var(--line);padding:16px;margin:8px 0">
+          <div style="font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:10px">Q. その条件は「集計値」を使う？</div>
+          <div style="padding-left:14px;border-left:3px solid var(--accent);margin-bottom:8px">
+            <b style="color:var(--accent-3)">YES（SUM/COUNT/AVG等を条件に）</b><br>
+            <span style="font-size:13px">→ <b>HAVING</b></span>
+          </div>
+          <div style="padding-left:14px;border-left:3px solid var(--accent)">
+            <b style="color:var(--accent-3)">NO（個別の列を条件に）</b><br>
+            <span style="font-size:13px">→ <b>WHERE</b></span>
+          </div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>原則の補足</b>：両方必要なら両方使う。<b>「WHEREで早く絞り、HAVINGで集計後に絞る」</b>が最速。</p>
+      </div>
+      <div class="code"><span class="code-head">// 判断フローの実例</span>
+
+<span class="comment">// ─── ケース1: 「5月の記録だけ」───</span>
+<span class="comment">// 条件: studied_on（個別の列）</span>
+<span class="comment">// → 集計値じゃない → WHERE</span>
+
+WHERE studied_on &gt;= '2026-05-01'
+
+
+<span class="comment">// ─── ケース2: 「合計60分以上の科目」───</span>
+<span class="comment">// 条件: SUM(minutes)（集計値）</span>
+<span class="comment">// → 集計値 → HAVING</span>
+
+HAVING SUM(minutes) &gt;= 60
+
+
+<span class="comment">// ─── ケース3: 「3件以上記録がある科目」───</span>
+<span class="comment">// 条件: COUNT(*)（集計値）</span>
+<span class="comment">// → 集計値 → HAVING</span>
+
+HAVING COUNT(*) &gt;= 3
+
+
+<span class="comment">// ─── ケース4: 「60分以上の記録が対象」───</span>
+<span class="comment">// 条件: minutes（個別の列）</span>
+<span class="comment">// → 集計値じゃない → WHERE</span>
+
+WHERE minutes &gt;= 60
+
+
+<span class="comment">// ─── ケース5: 「5月の記録で、合計120分以上」───</span>
+<span class="comment">// 条件1: studied_on（個別）→ WHERE</span>
+<span class="comment">// 条件2: SUM（集計値）→ HAVING</span>
+<span class="comment">// → 両方使う</span>
+
+WHERE studied_on &gt;= '2026-05-01'  <span class="comment">// 個別</span>
+GROUP BY subject_id
+HAVING SUM(minutes) &gt;= 120        <span class="comment">// 集計</span>
+
+
+<span class="comment">// ─── 紛らわしいケース ───</span>
+<span class="comment">// 「minutes が 60以上の記録だけを集計」</span>
+<span class="comment">//   → 個別の minutes で絞る → WHERE</span>
+<span class="comment"></span>
+<span class="comment">// 「合計が 60以上の科目だけ表示」</span>
+<span class="comment">//   → 集計の SUM で絞る → HAVING</span>
+<span class="comment"></span>
+<span class="comment">// 同じ「60」でも意味が全然違う！</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="perf">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>パフォーマンス比較</h2>
+    <span class="en">PERFORMANCE</span>
+  </div>
+  <p class="pattern-desc">WHERE と HAVING は<b>「処理する行数」が違う</b>のでパフォーマンスに差が出ます。「できるだけ早く絞る」が鉄則。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">perf-compare</span>
+      <span class="tag-desc">早く絞るほど速い</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ WHERE が速いか</div>
+        <p><code>WHERE</code> は<b>集計前（GROUP BYより前）</b>に絞り込む。<b>絞り込んでから集計</b>するので、<b>集計対象が少なくて済む</b>。</p>
+        <p style="margin-top:8px"><code>HAVING</code> は<b>集計後</b>に絞り込む。<b>全部集計してから捨てる</b>ので、無駄な集計が発生する場合がある。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">原則</div>
+          <p><b>「WHEREで絞れる条件は WHEREで絞る」</b>。集計値の条件だけ HAVING に回す。両方使えるケースで HAVING に寄せると遅くなる。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// パフォーマンスの違い</span>
+
+<span class="comment">// ─── 想定: 100万行のテーブル ───</span>
+<span class="comment">// うち5月のデータは 1万行</span>
+
+
+<span class="comment">// ─── ✓ 良い: WHERE で先に絞る ───</span>
+SELECT subject_id, SUM(minutes)
+FROM study_records
+WHERE studied_on &gt;= '2026-05-01'  <span class="comment">// 1万行に絞る</span>
+GROUP BY subject_id               <span class="comment">// 1万行を集計</span>
+HAVING SUM(minutes) &gt;= 60;
+
+<span class="comment">// 処理の流れ：</span>
+<span class="comment">// 100万行 → WHERE → 1万行 → 集計</span>
+<span class="comment">// → 集計対象は1万行だけ → 速い</span>
+
+
+<span class="comment">// ─── ✗ 悪い: HAVING で日付を絞ろうとする ───</span>
+<span class="comment">// （そもそも書けないが、概念的に）</span>
+<span class="comment">// もし全件集計してから日付で絞ると：</span>
+
+<span class="comment">// 100万行 → 集計 → その後絞る</span>
+<span class="comment">// → 集計対象が100万行 → 遅い</span>
+
+
+<span class="comment">// ─── 鉄則 ───</span>
+
+<span class="comment">// 1. 個別行で絞れるものは WHERE</span>
+<span class="comment">//    → 集計前に行数を減らす</span>
+
+<span class="comment">// 2. 集計値の条件だけ HAVING</span>
+<span class="comment">//    → これは HAVING でしか書けない</span>
+
+
+<span class="comment">// ─── 検証 ───</span>
+<span class="comment">// EXPLAIN で実行計画を確認</span>
+EXPLAIN
+SELECT subject_id, SUM(minutes)
+FROM study_records
+WHERE studied_on &gt;= '2026-05-01'
+GROUP BY subject_id
+HAVING SUM(minutes) &gt;= 60;
+
+<span class="comment">// ・WHERE がインデックスを使えているか</span>
+<span class="comment">// ・rows（処理行数）が小さいか</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="subquery">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>サブクエリとの関係</h2>
+    <span class="en">SUBQUERIES</span>
+  </div>
+  <p class="pattern-desc">HAVING でできることの一部は<b>サブクエリ</b>でも書けます。両者の関係と使い分けを整理。発展的な内容ですが、業務で役立つ知識です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">subquery-relation</span>
+      <span class="tag-desc">HAVING とサブクエリ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// サブクエリでの代替</div>
+        <p>「集計結果を絞り込む」は、HAVING でも<b>サブクエリ</b>でも書ける。</p>
+        <p style="margin-top:8px"><b>HAVING</b>：シンプル・読みやすい。同じ集計に対する絞り込み。</p>
+        <p style="margin-top:8px"><b>サブクエリ</b>：柔軟。「集計結果をさらに別の条件で処理」など複雑なケース。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">使い分け</div>
+          <p>シンプルな「集計値の閾値」なら<b>HAVING</b>。「集計結果を別テーブルと結合」「集計のさらに集計」など複雑なら<b>サブクエリ</b>。Vol.11 のケースは HAVING で十分。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// HAVING vs サブクエリ</span>
+
+<span class="comment">// ─── HAVING版（Vol.11採用・シンプル）───</span>
+SELECT subject_id, SUM(minutes) AS total
+FROM study_records
+GROUP BY subject_id
+HAVING SUM(minutes) &gt;= 60;
+
+
+<span class="comment">// ─── サブクエリ版（同じ結果）───</span>
+SELECT * FROM (
+  SELECT subject_id,
+         SUM(minutes) AS total
+  FROM study_records
+  GROUP BY subject_id
+) AS agg
+WHERE agg.total &gt;= 60;
+
+<span class="comment">// サブクエリで一度集計し、</span>
+<span class="comment">// 外側の WHERE で絞る</span>
+<span class="comment">// （集計済みなので WHERE で total 使える）</span>
+
+
+<span class="comment">// ─── サブクエリが有利なケース ───</span>
+
+<span class="comment">// 「合計が平均以上の科目」</span>
+<span class="comment">// （集計の集計が必要）</span>
+
+SELECT subject_id, total
+FROM (
+  SELECT subject_id,
+         SUM(minutes) AS total
+  FROM study_records
+  GROUP BY subject_id
+) AS agg
+WHERE total &gt;= (
+  <span class="comment">// 全科目の平均合計</span>
+  SELECT AVG(t) FROM (
+    SELECT SUM(minutes) AS t
+    FROM study_records
+    GROUP BY subject_id
+  ) AS inner_agg
+);
+
+<span class="comment">// → HAVING だけでは書きにくい</span>
+<span class="comment">// → サブクエリの出番</span>
+
+
+<span class="comment">// ─── 結論 ───</span>
+<span class="comment">// 単純な閾値: HAVING</span>
+<span class="comment">// 複雑な集計の集計: サブクエリ</span>
+<span class="comment">// Cの範囲では HAVING で十分</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="complex">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>複雑な集計条件</h2>
+    <span class="en">COMPLEX CONDITIONS</span>
+  </div>
+  <p class="pattern-desc">HAVING には<b>複数の条件</b>や<b>複数の集計関数</b>を組み合わせられます。業務でよく使うパターンを整理。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">complex-having</span>
+      <span class="tag-desc">複雑な HAVING</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// HAVING の応用パターン</div>
+        <div class="role-card">
+          <span class="label">パターン1</span>
+          <div class="name">複数条件（AND / OR）</div>
+          <div class="desc"><code>HAVING SUM(minutes) &gt;= 60 AND COUNT(*) &gt;= 2</code>。「合計60分以上 かつ 2件以上」。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">パターン2</span>
+          <div class="name">複数の集計関数を組み合わせ</div>
+          <div class="desc"><code>HAVING AVG(minutes) &gt;= 60</code>。「1回あたり平均60分以上の科目」。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">パターン3</span>
+          <div class="name">範囲指定</div>
+          <div class="desc"><code>HAVING SUM(minutes) BETWEEN 60 AND 300</code>。「合計が60〜300分の科目」。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>注意</b>：複雑になりすぎたら、Service層のロジックに分けることも検討。「SQLに何でも詰め込まない」バランス感覚。</p>
+      </div>
+      <div class="code"><span class="code-head">// 複雑な HAVING の例</span>
+
+<span class="comment">// ─── 複数条件（AND）───</span>
+SELECT subject_id,
+       SUM(minutes) AS total,
+       COUNT(*) AS cnt
+FROM study_records
+GROUP BY subject_id
+HAVING SUM(minutes) &gt;= 60
+   AND COUNT(*) &gt;= 2;
+<span class="comment">// 「合計60分以上 かつ 2件以上」</span>
+
+
+<span class="comment">// ─── 平均で絞る ───</span>
+SELECT subject_id, AVG(minutes) AS avg
+FROM study_records
+GROUP BY subject_id
+HAVING AVG(minutes) &gt;= 60;
+<span class="comment">// 「1回平均60分以上の集中科目」</span>
+
+
+<span class="comment">// ─── 範囲指定 ───</span>
+SELECT subject_id, SUM(minutes) AS total
+FROM study_records
+GROUP BY subject_id
+HAVING SUM(minutes) BETWEEN 60 AND 300;
+<span class="comment">// 「合計60〜300分の科目」</span>
+
+
+<span class="comment">// ─── 動的SQLで複雑条件を組み立て ───</span>
+<span class="comment">// （Vol.8の動的SQLとの合わせ技）</span>
+
+GROUP BY s.id, s.name
+&lt;<span class="kw">if</span> test=<span class="str">"minMinutes != null
+         or minCount != null"</span>&gt;
+  HAVING <span class="num">1</span>=<span class="num">1</span>
+  &lt;<span class="kw">if</span> test=<span class="str">"minMinutes != null"</span>&gt;
+    AND COALESCE(SUM(r.minutes), 0)
+        &gt;= #{minMinutes}
+  &lt;/<span class="kw">if</span>&gt;
+  &lt;<span class="kw">if</span> test=<span class="str">"minCount != null"</span>&gt;
+    AND COUNT(r.id) &gt;= #{minCount}
+  &lt;/<span class="kw">if</span>&gt;
+&lt;/<span class="kw">if</span>&gt;
+
+<span class="comment">// HAVING 1=1 のトリック：</span>
+<span class="comment">// 後続の AND を綺麗に繋ぐため</span>
+<span class="comment">// （&lt;where&gt;のHAVING版がないので手動）</span>
+
+
+<span class="comment">// ─── やりすぎ注意 ───</span>
+<span class="comment">// 条件が増えすぎたら</span>
+<span class="comment">// Service層でフィルタも検討</span>
+<span class="comment">// 「SQLとJavaの役割分担」</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><code>HAVING 1=1</code> のトリックは、動的SQL で HAVING に複数の <code>&lt;if&gt;</code> を繋ぐ時の定番技。<code>&lt;where&gt;</code> タグは WHERE 専用で HAVING には使えないため、<b>常に真の <code>1=1</code> を先頭に置いて</b>、後続の <code>AND</code> を綺麗に繋ぎます。業務でも見かける手法です。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころ集</h2>
+    <span class="en">PITFALLS</span>
+  </div>
+  <p class="pattern-desc">HAVING / WHERE まわりの<b>業務でよくある罠</b>を4つ。原理を理解していれば回避できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pitfalls</span>
+      <span class="tag-desc">よくある罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある罠</div>
+        <div class="role-card">
+          <span class="label">PITFALL 1</span>
+          <div class="name">SELECT の別名を WHERE で使う</div>
+          <div class="desc"><b>原因</b>：<code>SELECT SUM(m) AS total ... WHERE total &gt; 60</code>。WHERE は SELECT より前なので <code>total</code> を知らない。<br><b>対処</b>：WHERE では元の式を書く、または HAVING / サブクエリを使う。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 2</span>
+          <div class="name">HAVING で個別列を絞ろうとする</div>
+          <div class="desc"><b>原因</b>：<code>HAVING studied_on &gt;= '2026-05-01'</code>。動くこともあるが、本来は WHERE の役割。<br><b>対処</b>：個別列は WHERE。「早く絞る」原則にも反する。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 3</span>
+          <div class="name">GROUP BY なしで HAVING を使う</div>
+          <div class="desc"><b>原因</b>：GROUP BY がないと全体が1グループ扱い。<code>HAVING</code> は使えるが意図しない動作になりがち。<br><b>対処</b>：HAVING は基本 GROUP BY とセット。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 4</span>
+          <div class="name">NULL を含む集計の HAVING で混乱</div>
+          <div class="desc"><b>原因</b>：<code>HAVING SUM(minutes) &gt;= 60</code> で、SUM が NULL の行が消える（NULL は条件偽）。<br><b>対処</b>：<code>COALESCE(SUM(minutes), 0)</code> で NULL を 0 に。本編Vol.11 で採用済み。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// PITFALL 1 の詳細</span>
+
+<span class="comment">// ─── ✗ NG ───</span>
+SELECT subject_id, SUM(minutes) AS total
+FROM study_records
+WHERE total &gt;= 60       <span class="comment">// エラー</span>
+GROUP BY subject_id;
+
+<span class="comment">// ERROR: Unknown column 'total'</span>
+<span class="comment">// WHERE（2番目）は</span>
+<span class="comment">// SELECT（5番目）より前なので</span>
+<span class="comment">// total という別名をまだ知らない</span>
+
+
+<span class="comment">// ─── ✓ OK: HAVING で元の式 ───</span>
+SELECT subject_id, SUM(minutes) AS total
+FROM study_records
+GROUP BY subject_id
+HAVING SUM(minutes) &gt;= 60;
+<span class="comment">// HAVING（4番目）も SELECT より前だが</span>
+<span class="comment">// 集計値そのものは使える</span>
+<span class="comment">// （多くのDBで別名 total も HAVING で使える）</span>
+
+
+<span class="comment">// ─── 別名が使える場所・使えない場所 ───</span>
+
+<span class="comment">// WHERE   : ✗ 別名不可（SELECTより前）</span>
+<span class="comment">// GROUP BY: △ DB依存</span>
+<span class="comment">// HAVING  : △ DB依存（MySQLは使える）</span>
+<span class="comment">// ORDER BY: ✓ 別名OK（SELECTより後）</span>
+
+
+<span class="comment">// 「実行順序」で全部説明できる：</span>
+<span class="comment">// SELECT より後の ORDER BY だけが</span>
+<span class="comment">// 確実に別名を使える</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次の本編へ</h2>
+    <span class="en">TO THE NEXT VOLUME</span>
+  </div>
+  <p class="pattern-desc">別冊S11お疲れさまでした。<b>SQL を原理から理解する目</b>が育ちました。次のVol.12 では<b>時系列集計</b>を学び、統計フェーズの最終段に入ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">この別冊のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 持ち帰る5つの知見</div>
+        <div class="role-card">
+          <span class="label">知見1</span>
+          <div class="name">SQLは書く順と実行順が違う</div>
+          <div class="desc">FROM→WHERE→GROUP BY→HAVING→SELECT→ORDER BY</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見2</span>
+          <div class="name">WHEREは集計前なので集計関数不可</div>
+          <div class="desc">SUMがまだ存在しないから</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見3</span>
+          <div class="name">判断は「集計値を使うか」の1問</div>
+          <div class="desc">YESならHAVING・NOならWHERE</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見4</span>
+          <div class="name">早く絞るほど速い</div>
+          <div class="desc">WHEREで絞れるものはWHEREで</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見5</span>
+          <div class="name">複雑なら サブクエリ</div>
+          <div class="desc">集計の集計などはサブクエリの出番</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.12 本編で起きること</span>
+
+<span class="comment">// タイトル：</span>
+<span class="comment">// 「統計画面・第2段（日別＋達成率）」</span>
+
+<span class="comment">// やること：</span>
+<span class="comment">// 1. 日別の学習時間集計</span>
+<span class="comment">// 2. GROUP BY studied_on</span>
+<span class="comment">// 3. 日別の推移を視覚化（棒グラフ風）</span>
+<span class="comment">// 4. 目標時間に対する達成率</span>
+<span class="comment">// 5. 時系列データの扱い</span>
+
+<span class="comment">// 獲得スキル：</span>
+<span class="comment">// → 時系列集計</span>
+
+
+<span class="comment">// 統計フェーズの4段ロケット：</span>
+<span class="comment">// Vol.9（基礎）→ Vol.10（UI）→</span>
+<span class="comment">// Vol.11（応用）→ Vol.12（時系列）</span>
+<span class="comment">// いよいよ統計フェーズの最終段</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(106,113,88,0.14)">
+    <div class="tip-label">NEXT STEP ── VOL.12 本編</div>
+    <p>別冊S11で<b>SQLを原理から理解する目</b>を得ました。次のVol.12 本編「<b>統計画面・第2段（日別＋達成率）</b>」では、<b>時系列集計</b>を学びます。「日ごとの学習時間」を <code>GROUP BY studied_on</code> で集計し、推移を視覚化。目標に対する達成率も計算します。<b>統計フェーズの最終段</b>。本編Vol.12 へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.11 / 15 ── HAVING vs WHERE（別冊）</span>
+</footer>
+
+</body>
+</html>

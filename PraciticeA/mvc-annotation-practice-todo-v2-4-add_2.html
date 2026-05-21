@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.4 補足 ── なぜService層を作るのか</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3d2817;
+  --paper:#f4ecd8;
+  --paper-2:#e8dcc0;
+  --accent:#b67d3a;
+  --accent-2:#d4a460;
+  --accent-3:#6b4423;
+  --accent-4:#2d5f3f;
+  --muted:#7a6952;
+  --line:#c9b896;
+  --code-bg:#2a1f15;
+  --code-text:#f0e4cc;
+  --panel-bg:#faf3e0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'?';position:absolute;right:0px;top:-30px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+.add-tag{display:inline-block;background:#c43;color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:40px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid #c43;padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--accent-3);border-bottom-color:var(--accent-3)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}
+.bad{color:#ff8a7a;font-weight:600}
+.good{color:#b5e8b0;font-weight:600}
+
+/* WHAT/HOW/WHY */
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+
+/* 用語カード */
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+
+/* 思考ステップカード */
+.think-step{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;position:relative;padding-left:60px;min-height:60px}
+.think-step::before{content:attr(data-step);position:absolute;left:14px;top:14px;background:var(--accent);color:var(--paper);width:36px;height:36px;line-height:36px;text-align:center;border-radius:50%;font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700}
+.think-step-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.think-step-body{font-size:13.5px;line-height:1.8}
+
+/* アナロジーボックス */
+.analogy{background:#fffdf6;border:1px dashed var(--accent);border-left:4px solid var(--accent);padding:14px 18px;margin:12px 0}
+.analogy-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px}
+.analogy-title::before{content:'🏛 ';margin-right:4px}
+.analogy p{font-size:13.5px;line-height:1.85}
+
+/* before/after コード対比 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.compare-box{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:13.5px}
+.compare-ng{border-top:3px solid #c43}
+.compare-ok{border-top:3px solid var(--accent-4)}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px}
+.compare-ng .compare-label{color:#c43}
+.compare-ok .compare-label{color:var(--accent-4)}
+
+.tip{margin:18px 0;padding:14px 20px;background:rgba(182,125,58,0.10);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+
+/* 図解用 */
+.flow-diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;background:#fff;border:1px solid var(--line);padding:14px 18px;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+/* role-card */
+.role-card{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;display:grid;grid-template-columns:90px 1fr;gap:14px;align-items:start}
+.role-card-icon{font-family:'Shippori Mincho',serif;font-size:36px;color:var(--accent);text-align:center;line-height:1;padding-top:6px}
+.role-card-name{font-family:'Shippori Mincho',serif;font-size:16px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.role-card-job{font-size:13.5px;line-height:1.7}
+
+/* チェックリスト */
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:220px}
+  h1{font-size:28px}
+  .toc ul{flex-direction:column;gap:8px}
+  .whw{grid-template-columns:1fr}
+  .compare{grid-template-columns:1fr}
+  .term-grid{grid-template-columns:1fr}
+  .role-card{grid-template-columns:60px 1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.04 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <span class="add-tag">+ ADD</span>
+  <h1>なぜService層を<br>作るのか</h1>
+  <p class="subtitle">VOL.4 SUPPLEMENT — THE REASONING BEHIND THE SERVICE LAYER</p>
+  <p class="lead">Vol.4本編で<b>Service層を作る手順</b>を学びました。動くようになった── けれど、<b>「動きは同じなのに、わざわざ層を増やす意味って？」</b>という素朴な疑問が残った方も多いはず。この補足版は、その疑問に<b>業務開発の哲学レベル</b>から答えます。Vol.2 ADDが「なぜこのコードか」をControllerとMapperで解明したように、本補足は<b>Service層の存在意義</b>を深掘りします。読み終えた時、あなたは<b>「Service層なしの設計はあり得ない」と確信</b>できるはずです。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">💡 この補足の位置づけ</div>
+    <p style="font-size:13.5px">本編が「<b>実装の手順書</b>」なら、本補足は「<b>設計の思想書</b>」です。新しいコードは書きません。すでに作ったTaskServiceを<b>「なぜそこに置いたか」</b>「<b>何を守るためか</b>」「<b>業界がこの形を選んだ理由</b>」という観点で見直します。Vol.5以降で<b>登録・更新・バリデーション</b>が入る前に、<b>「Service層がそこにあるべき必然性」</b>を腹に落としておくと、後の理解が早くなります。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.04 ADD</div>
+  <ul>
+    <li><a href="#purpose">01 この補足の目的</a></li>
+    <li><a href="#what-is-layer">02 そもそも「層を分ける」とは何か</a></li>
+    <li><a href="#fat-controller">03 Controllerだけで全部やってはダメか?</a></li>
+    <li><a href="#three-worlds">04 役割の階層 ── HTTP/業務/DB</a></li>
+    <li><a href="#srp">05 「変わる理由」で分ける思考法</a></li>
+    <li><a href="#transactional-deep">06 @Transactional が何を守るのか</a></li>
+    <li><a href="#di-revisit">07 DIの再訪 ── 3つのBeanの繋がり</a></li>
+    <li><a href="#fat-service">08 Fat Service / Thin Controller パターン</a></li>
+    <li><a href="#testability">09 テスタビリティ ── 何が嬉しいか</a></li>
+    <li><a href="#timing">10 なぜVol.4でServiceを入れるか</a></li>
+    <li><a href="#judgement">11 自分で書くための判断基準</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="purpose">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この補足の目的</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">本編で残した<b>「で、結局なぜ？」</b>の疑問に、思想・歴史・実例の3方向から答えます。新しいコードは書きませんが、<b>すでに書いたコードの見え方が変わる</b>のがゴールです。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を解説するか</div>
+      <div class="whw-desc">
+        <b>Service層の存在意義</b>を、思想（設計原則）・歴史（業界の経験則）・実例（具体的な得失）の3方向から。Vol.5以降で<b>「ああ、Service層があって良かった」</b>と感じる土台を作ります。
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう解説するか</div>
+      <div class="whw-desc">
+        ① <b>「層を分ける」概念の根本</b>から<br>
+        ② <b>Fat Controllerの悪夢</b>を見てもらう<br>
+        ③ <b>「変わる理由で分ける」</b>原則を紹介<br>
+        ④ <b>業務開発のパターン</b>と<b>テスト容易性</b>を解説
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜ別冊で深掘るか</div>
+      <div class="whw-desc">
+        本編で<b>哲学を詰め込むと長くなる</b>から。「動く」をまず本編で達成した後、<b>「なぜそうするか」</b>を別冊でじっくり。<b>2段階の学習</b>が深い定着を生みます。
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>Service層は<b>「ただの中間層」</b>に見えて、実は<b>業務開発の思想を体現した装置</b>です。これを腹に落とすと、Vol.5以降の<b>登録機能・バリデーション・例外処理</b>の<b>置き場所</b>が自然に決まるようになります。設計判断ができるエンジニアへの<b>分岐点</b>がこの補足です。</p>
+  </div>
+</section>
+
+<section id="what-is-layer">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>そもそも「層を分ける」とは何か</h2>
+    <span class="en">WHAT IS LAYERING</span>
+  </div>
+  <p class="pattern-desc">「Service層」を語る前に、「<b>層（レイヤー）</b>」という考え方そのものを見直します。これは<b>ソフトウェア設計史</b>の中で繰り返し発明された<b>根源的なアイデア</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">layering-concept</span>
+      <span class="tag-desc">層の本質</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 層とは「役割の境界」</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>層（レイヤー）</b>とは<b>「責任の境界」</b>です。建物が階で分かれているように、ソフトウェアも<b>役割ごとに横の線を引く</b>。各層は<b>「上の層が呼ぶサービス」</b>を提供し、<b>「下の層が提供するサービス」</b>を使う── この<b>一方向の依存関係</b>が層の核心です。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:12px"><b>身近な例：インターネット通信</b>。あなたがブラウザで「YouTube」と打った時、内部では<b>4つの層</b>が動いています：</p>
+
+        <ol style="padding-left:24px;font-size:13.5px;line-height:1.85;margin-top:6px">
+          <li><b>アプリケーション層</b>（ブラウザ）</li>
+          <li><b>トランスポート層</b>（TCP）</li>
+          <li><b>ネットワーク層</b>（IP）</li>
+          <li><b>物理層</b>（電気信号）</li>
+        </ol>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px">ブラウザはTCPの中身を知らない。TCPはIPの中身を知らない。<b>各層が独立して進化</b>できる── これが層の威力です。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px">Webアプリも全く同じ。Controllerは「HTTPの世界」、Serviceは「業務の世界」、Mapperは「DBの世界」── <b>同じ思想</b>がここでも働いています。</p>
+      </div>
+      <div class="code"><span class="code-head">// 「層」の本質的なルール</span>
+
+<span class="comment">// ルール①: 一方向の依存</span>
+
+  [上の層]
+     ↓ 知っている／呼ぶ
+  [下の層]
+     ↑ 知らない／呼ばれるだけ
+
+<span class="comment">// 下の層は上の層を知らない</span>
+<span class="comment">// → 下の層は独立して進化できる</span>
+
+
+<span class="comment">// ルール②: 各層は責任が違う</span>
+
+  HTTP受付   ← Controllerの仕事
+  業務処理   ← Serviceの仕事
+  DBアクセス ← Mapperの仕事
+
+<span class="comment">// それぞれが「何を担当しているか」</span>
+<span class="comment">// が明確になっている</span>
+
+
+<span class="comment">// ルール③: 隣接層しか呼ばない</span>
+
+  Controller → Service → Mapper
+
+  Controllerが直接Mapperを呼ぶのは
+  「層を飛ばす」アンチパターン
+  （Vol.3まではそうしていた）
+
+
+<span class="code-head" style="margin-top:18px">// インターネットを支える4層</span>
+
+  ┌──────────────────┐
+  │ アプリケーション層    │ HTTPなど
+  ├──────────────────┤
+  │ トランスポート層      │ TCP/UDP
+  ├──────────────────┤
+  │ ネットワーク層        │ IP
+  ├──────────────────┤
+  │ 物理層               │ Ethernet等
+  └──────────────────┘
+
+<span class="comment">// 4層のおかげで:</span>
+<span class="comment">// ・無線LANもLANケーブルも</span>
+<span class="comment">//   上の層を変えずに使える</span>
+<span class="comment">// ・HTTPS化してもTCPは無修正</span>
+
+<span class="comment">// Web開発の3層も全く同じ思想</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── レストランの厨房</div>
+    <p>高級レストランの厨房は<b>厳密に層が分かれて</b>います：<br>
+    <b>ホール係</b>（お客対応） → <b>シェフ</b>（料理の組み立て） → <b>素材係</b>（食材の準備）。<br>
+    ホール係はお客への対応を覚え、シェフはレシピを覚え、素材係は野菜の切り方を覚える。<b>誰も他人の仕事を覚えない</b>── これが分業の力。<br><br>
+    もしホール係がいきなり鍋を振り始めたら？ あるいはシェフが客席で接客を始めたら？ <b>店は回らなくなる</b>。Web開発もまったく同じ。<b>各層が自分の専門に集中する</b>から、複雑なシステムが回ります。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>層は<b>「物理的な分離」ではなく「論理的な役割分担」</b>です。同じパソコンの上で動いていても、Controllerクラス・Serviceクラス・Mapperインタフェースとして<b>役割が分けてある</b>── これだけで層は成立します。<b>「クラスを分けるだけで層になる」</b>のがソフトウェア設計の不思議で美しいところです。</p>
+  </div>
+</section>
+
+<section id="fat-controller">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>Controllerだけで全部やってはダメか?</h2>
+    <span class="en">WHY NOT FAT CONTROLLER</span>
+  </div>
+  <p class="pattern-desc"><b>素朴な疑問</b>です。Vol.3まではControllerがMapperを直接呼んで動いていました。<b>なぜわざわざService層を入れるのか?</b> 「動くからいいじゃん」では何が不味いのか、具体的に見ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">fat-controller-trap</span>
+      <span class="tag-desc">Fat Controller の悪夢</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Service無しの未来予想</div>
+
+        <p style="font-size:13.5px;line-height:1.85">Vol.3の<code>TaskController</code>はシンプルでした。<b>でも</b> Vol.5以降で機能を追加していくと、Service無しならController内に<b>業務ロジックが詰め込まれていく</b>ことになります。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>3〜4ヶ月後の Controller の姿（想像）：</b></p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li>新規登録メソッド ── 重複チェック、空欄チェック、保存処理</li>
+          <li>編集メソッド ── 存在チェック、権限チェック、更新処理</li>
+          <li>削除メソッド ── 関連レコード確認、ソフトデリート判定</li>
+          <li>完了切替メソッド ── 状態遷移ルール、関連通知処理</li>
+          <li>一括処理メソッド ── トランザクション制御、エラー集約</li>
+        </ul>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px">一つのControllerクラスが<b>数百行〜千行</b>に膨らみ、<b>HTTPの世界の話と業務ロジックが混在</b>する。これを<b>「Fat Controller」アンチパターン</b>と呼びます。読みにくく、変更しづらく、テストできない<b>負の遺産</b>になります。</p>
+      </div>
+      <div class="code"><span class="code-head">// もしService無しで Vol.5〜Vol.10 を作ったら…</span>
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">TaskController</span> {
+
+  <span class="kw">private final</span> <span class="type">TaskMapper</span> mapper;
+
+  <span class="comment">// 一覧</span>
+  <span class="ann">@GetMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> m) { ... }
+
+  <span class="comment">// 登録</span>
+  <span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(<span class="type">TaskForm</span> f) {
+
+    <span class="comment">// 入力検証</span>
+    <span class="kw">if</span> (f.<span class="fn">getTitle</span>() == <span class="kw">null</span>) {...}
+
+    <span class="comment">// 重複チェック</span>
+    <span class="type">List</span>&lt;<span class="type">Task</span>&gt; existing =
+      mapper.<span class="fn">findByTitle</span>(...);
+    <span class="kw">if</span> (!existing.<span class="fn">isEmpty</span>()) {...}
+
+    <span class="comment">// エンティティ変換</span>
+    <span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+    task.<span class="fn">setTitle</span>(f.<span class="fn">getTitle</span>());
+    ...
+
+    <span class="comment">// 保存</span>
+    mapper.<span class="fn">insert</span>(task);
+
+    <span class="comment">// ログ出力</span>
+    log.<span class="fn">info</span>(<span class="str">"task created"</span>);
+
+    <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+  }
+
+  <span class="comment">// 編集</span>
+  <span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">update</span>(...) {
+    <span class="comment">// 存在チェック・権限チェック</span>
+    <span class="comment">// 値変換・保存処理…</span>
+    <span class="comment">// (さらに30行)</span>
+  }
+
+  <span class="comment">// 削除・完了切替…</span>
+  <span class="comment">// あと200行続く</span>
+}
+
+<span class="bad">// 1ファイル 500行超え</span>
+<span class="bad">// HTTPの話と業務ロジックが混在</span>
+<span class="bad">// 「修正したい場所」を探すだけで一苦労</span></div>
+    </div>
+  </div>
+
+  <p style="font-size:14.5px;margin:24px 0 12px"><b>Fat Controller の何が問題か、具体的に：</b></p>
+
+  <div class="think-step" data-step="1">
+    <div class="think-step-title">読みにくい</div>
+    <div class="think-step-body">
+      <b>HTTPの話</b>（URL、リダイレクト、Model）と<b>業務の話</b>（重複チェック、保存ルール）が混在する。「このメソッドは何をしているか」を1分で把握できない。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="2">
+    <div class="think-step-title">変更が他に波及しやすい</div>
+    <div class="think-step-body">
+      「ログ出力のフォーマット変えて」と頼まれた時、<b>全メソッドを修正</b>することになる。本来1箇所で済むはずの変更が、Controller全体に散らばる。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="3">
+    <div class="think-step-title">テストできない</div>
+    <div class="think-step-body">
+      Controllerの業務ロジックを単体テストするには、<b>HTTPリクエスト・Modelの偽物・DB</b>を全部用意する必要がある。<b>「業務ルールだけ」をテストする手段がない</b>。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="4">
+    <div class="think-step-title">同じ業務ロジックを再利用できない</div>
+    <div class="think-step-body">
+      たとえば「Webからの登録」と「バッチ処理からの登録」で同じ業務ロジックを使いたい時、<b>Controllerから抜き出せない</b>のでコピペになる。<b>同じバグが2箇所に発生</b>する恐怖。
+    </div>
+  </div>
+
+  <div class="compare">
+    <div class="compare-box compare-ng">
+      <div class="compare-label">✗ Fat Controller</div>
+      <p style="font-size:12.5px;margin-top:6px;line-height:1.65">・1ファイル数百行<br>・HTTPと業務が混在<br>・変更コスト爆発<br>・テスト困難<br>・再利用不可<br>・誰も触りたくない</p>
+    </div>
+    <div class="compare-box compare-ok">
+      <div class="compare-label">○ Thin Controller + Service</div>
+      <p style="font-size:12.5px;margin-top:6px;line-height:1.65">・Controller数十行<br>・業務はServiceに集約<br>・変更範囲が明確<br>・Service単体でテスト可能<br>・別の入口（API/バッチ）からも呼べる<br>・読みやすい</p>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「動く」と「保守できる」は違う</div>
+    <p>Service無しでも<b>動くコード</b>は書けます。でも<b>「半年後に自分が読んで理解できるか」「他人がバグ修正できるか」「業務ルールが変わった時に対応できるか」</b>── これらの問いに答えられるのが<b>「保守できるコード」</b>。Service層は「<b>動く</b>」を「<b>保守できる</b>」に変える装置です。</p>
+  </div>
+</section>
+
+<section id="three-worlds">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>役割の階層 ── HTTP / 業務 / DB</h2>
+    <span class="en">THREE WORLDS</span>
+  </div>
+  <p class="pattern-desc">3層アーキテクチャの本質は<b>「3つの世界が存在する」</b>と理解することです。それぞれの世界には<b>固有の語彙</b>があり、<b>関心事</b>が違う。混ぜると思考が混乱します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">three-worlds-of-code</span>
+      <span class="tag-desc">3つの世界とその語彙</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの世界、それぞれの語彙</div>
+
+        <div class="role-card">
+          <div class="role-card-icon">🌐</div>
+          <div>
+            <div class="role-card-name">HTTPの世界（Controller）</div>
+            <div class="role-card-job">
+              <b>語彙</b>：URL、HTTPメソッド、リクエスト、レスポンス、ステータスコード、Cookie、ヘッダー、リダイレクト、Model、テンプレート<br>
+              <b>関心事</b>：「どのURLでどんな入力を受け、何を返すか」
+            </div>
+          </div>
+        </div>
+
+        <div class="role-card">
+          <div class="role-card-icon">⚙</div>
+          <div>
+            <div class="role-card-name">業務の世界（Service）</div>
+            <div class="role-card-job">
+              <b>語彙</b>：タスクを取得する、登録する、検証する、状態遷移、業務ルール、整合性チェック、通知、トランザクション<br>
+              <b>関心事</b>：「業務として何をすべきか、どんなルールがあるか」
+            </div>
+          </div>
+        </div>
+
+        <div class="role-card">
+          <div class="role-card-icon">🗄</div>
+          <div>
+            <div class="role-card-name">DBの世界（Mapper）</div>
+            <div class="role-card-job">
+              <b>語彙</b>：SELECT、INSERT、テーブル、カラム、JOIN、インデックス、トランザクション分離レベル<br>
+              <b>関心事</b>：「データをどう永続化し、どう取り出すか」
+            </div>
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>注意：トランザクションは両方の世界に現れる</b>のがポイント。業務の世界では「<b>意味的な単位</b>」（送金処理全体）、DBの世界では「<b>技術的な単位</b>」（START TRANSACTION〜COMMIT）。Serviceが両者をつなぐ役目を果たします。</p>
+      </div>
+      <div class="code"><span class="code-head">// 世界ごとの語彙の違い（具体例）</span>
+
+<span class="comment">// HTTPの世界での表現</span>
+GET /tasks
+POST /tasks
+HTTP 200 OK
+HTTP 404 Not Found
+&lt;a href="/tasks/1/edit"&gt;
+Model.addAttribute("tasks", ...)
+return "tasks/list";
+
+<span class="comment">// 業務の世界での表現</span>
+findAll() / register() / complete()
+タスクを完了状態にする
+重複したタイトルは登録できない
+未完了タスクは削除前に警告
+1日のタスク数は100件まで
+
+<span class="comment">// DBの世界での表現</span>
+SELECT id, title FROM tasks
+INSERT INTO tasks VALUES(...)
+UPDATE tasks SET done = true
+DELETE FROM tasks WHERE id = ?
+CREATE INDEX idx_tasks_done
+
+
+<span class="code-head" style="margin-top:18px">// 「業務ルール」はどの世界に書くか？</span>
+
+<span class="comment">// 例: 「タイトル重複は不可」</span>
+
+<span class="comment">// ✗ Controllerに書くと…</span>
+<span class="ann">@PostMapping</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(...) {
+  <span class="kw">if</span> (mapper.<span class="fn">findByTitle</span>(...)) {...}
+  <span class="comment">// ← 業務ルールがHTTPの世界に</span>
+}
+
+<span class="comment">// ✗ Mapperに書くと…</span>
+<span class="ann">@Insert</span>(<span class="str">"INSERT ... "</span>)
+<span class="comment">// SQLレベルで重複チェックは不自然</span>
+
+<span class="comment">// ○ Serviceに書くと…</span>
+<span class="kw">public void</span> <span class="fn">register</span>(<span class="type">Task</span> task) {
+  <span class="kw">if</span> (mapper.<span class="fn">findByTitle</span>(...)) {
+    <span class="kw">throw new</span> <span class="type">DuplicateException</span>(...);
+  }
+  mapper.<span class="fn">insert</span>(task);
+}
+<span class="comment">// 業務ルールが業務の世界に</span>
+<span class="comment">// 正しい場所に正しいコード</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── 会社の組織</div>
+    <p>会社には<b>営業</b>（HTTP相当：顧客と直接話す）、<b>企画</b>（業務相当：判断する）、<b>経理</b>（DB相当：記録する）がいます。<br><br>
+    営業マンが顧客から契約の話を聞いた時、<b>その場で会社の方針を決める</b>のは越権です。「<b>持ち帰って検討します</b>」と一旦企画に渡す。企画が判断し、経理に記録を依頼する── これが組織の正しい流れ。<br><br>
+    もし営業マンが全部一人でやろうとしたら（Fat Controller）、会社のルールがバラバラになり、組織として機能しません。<b>役割を分けて、それぞれの専門に集中する</b>── ソフトウェアも組織と同じ原理で動きます。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「コードを読む時、3つの世界のどれを読んでいるか意識する」</div>
+    <p>業務コードを読む時、<b>「今読んでいる行はどの世界の話か」</b>を意識すると、構造が立体的に見えてきます。「これはHTTP」「これは業務」「これはDB」── この<b>切り替え意識</b>が、設計判断ができるエンジニアの基礎力です。</p>
+  </div>
+</section>
+
+<section id="srp">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>「変わる理由」で分ける思考法</h2>
+    <span class="en">SINGLE RESPONSIBILITY</span>
+  </div>
+  <p class="pattern-desc">「役割で分ける」と言いましたが、もう一段深い原則は<b>「変わる理由で分ける」</b>です。これは<b>単一責任の原則（SRP）</b>と呼ばれる<b>ソフトウェア設計の鉄則</b>。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD</span>
+    <div class="term-card-title">単一責任の原則（SRP）</div>
+    <div class="term-card-sub">Single Responsibility Principle</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd>「<b>クラスは、たった1つの理由でしか変更されるべきでない</b>」（ロバート・C・マーティン）。逆に言えば、<b>変わる理由が違うものは違うクラス</b>にすべき。</dd>
+      <dt>言い換え</dt>
+      <dd><b>「同じタイミングで変わるもの同士を集める／違うタイミングで変わるものは分ける」</b>。これが「責任」の意味。</dd>
+      <dt>適用例</dt>
+      <dd><b>Controller</b> ── HTTPの仕様変更（URL設計・新エンドポイント追加）で変わる<br>
+        <b>Service</b> ── 業務ルール変更（重複チェック追加・ルール変更）で変わる<br>
+        <b>Mapper</b> ── DB構造変更（カラム追加・テーブル変更）で変わる<br>
+        この<b>「変わる理由が3つ違う」</b>からこそ、<b>3層に分ける合理性</b>が生まれる。
+      </dd>
+      <dt>嬉しさ</dt>
+      <dd>① <b>変更の影響範囲が限定される</b>（HTTPの仕様変更でMapperに手を入れる事故が起きない）<br>
+        ② <b>テストが楽</b>（責任が1つだけなら検証も1観点）<br>
+        ③ <b>並列開発できる</b>（チーム内で「私は業務、君はHTTP」と分担可能）
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">change-reasons</span>
+      <span class="tag-desc">変更要望ごとの修正範囲</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 「変更要望」と「修正範囲」のマトリクス</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>3層構成（Service有り）</b>の場合、変更要望によって修正範囲がきれいに分かれます：</p>
+
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px">
+          <thead>
+            <tr style="background:var(--paper-2)">
+              <th style="border:1px solid var(--line);padding:8px;text-align:left">変更要望</th>
+              <th style="border:1px solid var(--line);padding:8px;text-align:center">Controller</th>
+              <th style="border:1px solid var(--line);padding:8px;text-align:center">Service</th>
+              <th style="border:1px solid var(--line);padding:8px;text-align:center">Mapper</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">URL変更<br>(/tasks → /todo-list)</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center;color:var(--accent);font-weight:700">✓</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center">─</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center">─</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">業務ルール追加<br>(重複チェック)</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center">─</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center;color:var(--accent);font-weight:700">✓</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center">─</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">テーブル変更<br>(カラム追加)</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center">─</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center">─</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center;color:var(--accent);font-weight:700">✓</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--line);padding:6px">画面デザイン変更</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center;color:var(--accent);font-weight:700">✓</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center">─</td>
+              <td style="border:1px solid var(--line);padding:6px;text-align:center">─</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:12px"><b>各行に1つだけ ✓ が立つ</b>のが理想形。これが達成されていれば、<b>修正範囲が予測できる＝レビューしやすい＝バグが減る</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// SRP適用前 vs 適用後</span>
+
+<span class="comment">// ✗ SRP違反（Fat Controller）</span>
+
+<span class="kw">class</span> <span class="type">TaskController</span> {
+  <span class="kw">void</span> <span class="fn">create</span>(...) {
+    <span class="comment">// HTTPの判断</span>
+    <span class="comment">// 業務ルール</span>
+    <span class="comment">// DB操作</span>
+  }
+}
+
+<span class="bad">// 変更要望が来た時:</span>
+<span class="bad">// 「URL変更」も、「業務ルール変更」も、</span>
+<span class="bad">// 「テーブル変更」も、全部この</span>
+<span class="bad">// クラスをいじることになる。</span>
+<span class="bad">// → 「同じファイルが何度も変わる」</span>
+
+
+<span class="code-head" style="margin-top:18px">// ○ SRP遵守（3層）</span>
+
+<span class="kw">class</span> <span class="type">TaskController</span> {
+  <span class="comment">// HTTPの世界だけ</span>
+}
+
+<span class="kw">class</span> <span class="type">TaskService</span> {
+  <span class="comment">// 業務の世界だけ</span>
+}
+
+<span class="kw">interface</span> <span class="type">TaskMapper</span> {
+  <span class="comment">// DBの世界だけ</span>
+}
+
+<span class="good">// 変更要望が来た時:</span>
+<span class="good">// 該当する層のクラスだけ修正。</span>
+<span class="good">// 他の層は手を触れない。</span>
+<span class="good">// → 「修正範囲が予測可能」</span>
+
+
+<span class="code-head" style="margin-top:18px">// SRPの威力</span>
+
+<span class="comment">// 業務ルールが3年で5回変わったとする</span>
+
+<span class="comment">// Fat Controller: 5回ともクラス全体をいじる</span>
+<span class="comment">//   → コミット履歴が複雑、衝突しやすい</span>
+
+<span class="comment">// 3層構成: 5回ともServiceだけいじる</span>
+<span class="comment">//   → 履歴が単純、レビューが楽、衝突しにくい</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「同時に変わるか？」を問う</div>
+    <p>クラス設計に迷ったら<b>「これとこれは同じタイミングで変わるか？」</b>と自問してください。<b>YES</b>なら同じクラスに、<b>NO</b>なら別クラスに。たったこの問い1つで、SRPに沿った設計判断ができます。「役割」より「<b>変わる理由</b>」を基準にすると、迷いが減ります。</p>
+  </div>
+</section>
+
+<section id="transactional-deep">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>@Transactional が何を守るのか</h2>
+    <span class="en">WHAT @TRANSACTIONAL PROTECTS</span>
+  </div>
+  <p class="pattern-desc">本編で出てきた<code style="font-family:'JetBrains Mono'">@Transactional</code>を<b>もう一段深く</b>見ます。Vol.4では「読み取り専用」なのでありがたみが薄いですが、<b>本質はVol.5の登録機能で発揮</b>されます。先取りで理解しておきましょう。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">transaction-essence</span>
+      <span class="tag-desc">トランザクションの本質</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// トランザクションが守るもの</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>トランザクション</b>とは「<b>全部成功するか、全部失敗するか</b>」の保証です。中途半端な状態（一部成功・一部失敗）を絶対に作らない仕組み。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:12px"><b>古典的な例：銀行送金</b>。「Aさんの口座から1万円減らす」「Bさんの口座に1万円足す」の2操作。<b>片方だけ成功</b>したら<b>世界からお金が消える</b>（または増える）── 絶対に許されない。だから<b>2操作を「1つの単位」</b>として扱う必要がある。これがトランザクション。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:12px">TODOアプリでも同じ。例えばVol.5以降で「<b>タスクを登録 + 通知ログを記録</b>」のような複合操作が出てきた時：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li>INSERT 1: tasks テーブルに登録</li>
+          <li>INSERT 2: notification_logs テーブルに記録</li>
+        </ul>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:8px"><b>1だけ成功して2が失敗</b>したら── タスクは登録されたのに通知ログがない不整合状態に。<code>@Transactional</code>がついていれば、<b>2の失敗を検知して1も自動的に巻き戻す</b>（ロールバック）。<b>不整合は決して残らない</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// @Transactional 無しの恐怖（Vol.5予告）</span>
+
+<span class="kw">public void</span> <span class="fn">register</span>(<span class="type">Task</span> task) {
+
+  <span class="comment">// ① タスク登録</span>
+  taskMapper.<span class="fn">insert</span>(task);
+                       <span class="comment">// ↑成功</span>
+
+  <span class="comment">// ② 通知ログ記録</span>
+  logMapper.<span class="fn">log</span>(<span class="str">"task created"</span>);
+                       <span class="comment">// ↑失敗（DB障害など）</span>
+
+  <span class="comment">// 結果: tasksには新タスクがあるが</span>
+  <span class="comment">// logには何もない</span>
+  <span class="bad">// → データ不整合</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// @Transactional ありの安心</span>
+
+<span class="ann">@Transactional</span>  <span class="comment">// この目印を付けるだけ</span>
+<span class="kw">public void</span> <span class="fn">register</span>(<span class="type">Task</span> task) {
+
+  taskMapper.<span class="fn">insert</span>(task);
+  logMapper.<span class="fn">log</span>(<span class="str">"task created"</span>);
+  <span class="comment">// ②で例外発生</span>
+}
+                  <span class="comment">// ↓</span>
+<span class="good">// Springが例外を検知</span>
+<span class="good">// → ①のINSERTを自動ロールバック</span>
+<span class="good">// → tasksテーブルも元の状態に</span>
+<span class="good">// → データ整合性が保たれる</span>
+
+
+<span class="code-head" style="margin-top:18px">// Vol.4でreadOnly=trueを付ける意味</span>
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>(readOnly = <span class="kw">true</span>)
+<span class="kw">public class</span> <span class="type">TaskService</span> { ... }
+
+<span class="comment">// Vol.4の意図:</span>
+<span class="comment">// 「このクラスのメソッドは全部読み取り」</span>
+<span class="comment">// と宣言しておく</span>
+
+<span class="comment">// Vol.5以降で書き込みメソッドが</span>
+<span class="comment">// 加わったら、そのメソッドだけ</span>
+<span class="comment">// @Transactional で上書きする</span>
+
+<span class="comment">// → 書き込みメソッドが「目立つ」</span>
+<span class="comment">// → 「ここは書き込みだぞ」と意識できる</span>
+<span class="comment">// → うっかり読み取りメソッドから</span>
+<span class="comment">//   書き換える事故を防げる</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── レジ袋の中身チェック</div>
+    <p>スーパーのレジで「<b>3点お買い上げ</b>」と言われた時、店員さんは<b>3点全部が袋に入っているか</b>を確認します。もし1点でも入れ忘れがあったら、<b>レジ打ち全部やり直し</b>（ロールバック）。<b>「2点だけ袋詰めして退店」は絶対NG</b>。<br><br>
+    トランザクションも同じ。<b>「複数のDB操作」</b>を1つの単位として扱い、全部揃わなければ全部やり直す。<code>@Transactional</code>はこの<b>「全部か無しか」</b>のルールをコードに宣言する目印です。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「Service層 = トランザクション境界」</div>
+    <p>業務開発の鉄則：<b>「トランザクションはService層で開始・終了する」</b>。Controllerやmapperに<code>@Transactional</code>を付けることもできますが、<b>業務的に1つの単位</b>はService層のメソッドが表現するから── トランザクションも自然にそこで定義する。<b>「業務処理 = 1トランザクション」</b>という対応がきれいに成立します。</p>
+  </div>
+</section>
+
+<section id="di-revisit">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>DIの再訪 ── 3つのBeanがどう繋がっているか</h2>
+    <span class="en">DI REVISITED — 3 BEANS</span>
+  </div>
+  <p class="pattern-desc">Vol.2 ADDで<b>「ControllerとMapperのDI」</b>を解説しました。Vol.4でService層が加わり、<b>3つのBean</b>が連鎖する形になりました。改めて<b>「Springの中で何が起きているか」</b>を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">three-beans</span>
+      <span class="tag-desc">3つのBeanの繋がり</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 起動時、Springは何をしているか</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">クラスを全部スキャン</div>
+          <div class="think-step-body">
+            <code>@SpringBootApplication</code>がついた<code>TodoApplication</code>から、<b><code>com.example.todo</code>以下を再帰的に探索</b>。<code>@Controller</code>、<code>@Service</code>、<code>@Mapper</code>等の目印を付けたクラスを<b>全部見つける</b>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">「依存の地図」を作る</div>
+          <div class="think-step-body">
+            各クラスのコンストラクタの引数を見て、<b>「誰が誰を必要としているか」</b>を集計。<br>
+            ・<code>TaskController</code> は <code>TaskService</code> が必要<br>
+            ・<code>TaskService</code> は <code>TaskMapper</code> が必要<br>
+            ・<code>TaskMapper</code> は外部依存なし
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">依存の少ない順に生成</div>
+          <div class="think-step-body">
+            <b>依存が少ないBean</b>から先に作る。<br>
+            ① <code>TaskMapper</code>（実装はMyBatisが動的生成）<br>
+            ② <code>TaskService</code>（コンストラクタに完成済みの<code>TaskMapper</code>を渡す）<br>
+            ③ <code>TaskController</code>（コンストラクタに完成済みの<code>TaskService</code>を渡す）
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">DIコンテナに保管</div>
+          <div class="think-step-body">
+            完成した3つのBeanを<b>DIコンテナ</b>（Springの内部の「Beanの倉庫」）に保管。リクエストが来た時、必要に応じて呼び出す。
+          </div>
+        </div>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>: あなたは「<code>new</code> でBeanを作る」コードを書かなかった。Springが<b>自動的に組み立ててくれた</b>。これがDIの威力。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 起動完了後のDIコンテナ（イメージ）</span>
+
+DIコンテナ
+─────────────────────────────
+[Bean] TaskMapper (proxy)
+  - 外部依存: なし
+  - MyBatis製の動的プロキシ
+
+[Bean] TaskService
+  - taskMapper field = ↑のproxy
+  - @Transactional(readOnly=true)
+
+[Bean] TaskController
+  - taskService field = ↑のService
+  - @Controller (routes: /tasks)
+
+[Bean] HelloController
+[Bean] DataSource
+[Bean] DispatcherServlet
+... (Spring本体のBean多数)
+─────────────────────────────
+
+
+<span class="code-head" style="margin-top:18px">// 依存の依存（Indirect dependency）</span>
+
+<span class="comment">// TaskControllerの視点</span>
+<span class="kw">public class</span> <span class="type">TaskController</span> {
+  <span class="kw">private final</span> <span class="type">TaskService</span> taskService;
+  <span class="comment">// ↑ TaskMapperは知らない！</span>
+}
+
+<span class="comment">// TaskServiceの視点</span>
+<span class="kw">public class</span> <span class="type">TaskService</span> {
+  <span class="kw">private final</span> <span class="type">TaskMapper</span> taskMapper;
+  <span class="comment">// ↑ TaskControllerは知らない！</span>
+}
+
+<span class="comment">// TaskMapperの視点</span>
+<span class="kw">public interface</span> <span class="type">TaskMapper</span> {
+  <span class="comment">// 誰も知らない、純粋なDB窓口</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// この設計の威力</span>
+
+<span class="comment">// TaskMapperを別の実装に差し替えたい？</span>
+<span class="comment">// (例: テスト用の偽物に)</span>
+
+<span class="comment">// → TaskServiceは「TaskMapper型」しか</span>
+<span class="comment">//   知らないので、別実装でも動く</span>
+
+<span class="comment">// → TaskControllerは「TaskService型」</span>
+<span class="comment">//   しか知らないので、それ以下が</span>
+<span class="comment">//   何に変わっても影響なし</span>
+
+<span class="good">// これが「疎結合」の本当の意味</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「自分で組み立てない」設計の美しさ</div>
+    <p><code>new TaskService(new TaskMapper())</code>のように<b>自分で組み立てるコード</b>は、Vol.1〜Vol.4のソースコードには<b>1行も登場していません</b>。全てSpringが裏で組み立ててくれています。これにより<b>「使う側は中身を知らなくて良い」</b>世界が成立する── これが現代フレームワークの根本思想です。</p>
+  </div>
+</section>
+
+<section id="fat-service">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>Fat Service / Thin Controller パターン</h2>
+    <span class="en">FAT SERVICE / THIN CONTROLLER</span>
+  </div>
+  <p class="pattern-desc">業務開発でよく語られる<b>「Fat Service / Thin Controller」</b>という設計指針があります。<b>「Controllerは薄く、Serviceは厚く」</b>という意味。<b>なぜこのバランスが推奨</b>されるのか、根拠を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">balance-pattern</span>
+      <span class="tag-desc">層ごとの「太さ」のバランス</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 推奨される「太さ」のバランス</div>
+
+<div class="flow-diagram" style="border:none;padding:0">  [Controller]   ← 薄い（Thin）
+       │       HTTPの受付・委譲のみ
+       ↓
+  [Service]     ← 厚い（Fat）
+       │       業務ロジックの本体
+       ↓
+  [Mapper]      ← 薄い（Thin）
+                SQLとマッピングのみ</div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>各層のあるべき太さ：</b></p>
+
+        <div class="role-card">
+          <div class="role-card-icon">薄</div>
+          <div>
+            <div class="role-card-name">Controller ── Thin（薄い）</div>
+            <div class="role-card-job"><b>仕事</b>：リクエスト受領／引数の検証（バリデーション開始）／Serviceに委譲／レスポンス整形<br>
+            <b>書くべきでないもの</b>：業務ロジック、複雑な計算、DB操作の組み立て</div>
+          </div>
+        </div>
+
+        <div class="role-card">
+          <div class="role-card-icon">厚</div>
+          <div>
+            <div class="role-card-name">Service ── Fat（厚い）</div>
+            <div class="role-card-job"><b>仕事</b>：業務ルールの判断／複数のMapperの組み合わせ／トランザクション制御／例外の業務的変換<br>
+            <b>業務ロジックの「本体」が住む場所</b></div>
+          </div>
+        </div>
+
+        <div class="role-card">
+          <div class="role-card-icon">薄</div>
+          <div>
+            <div class="role-card-name">Mapper ── Thin（薄い）</div>
+            <div class="role-card-job"><b>仕事</b>：SQLの発行／結果のオブジェクトマッピング<br>
+            <b>書くべきでないもの</b>：業務判断、複数テーブルにまたがる業務処理</div>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 推奨される実装パターン（Vol.5以降の予告）</span>
+
+<span class="comment">// === Controller（薄い） ===</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+    <span class="ann">@Valid</span> <span class="type">TaskForm</span> form,
+    <span class="type">BindingResult</span> br) {
+
+  <span class="kw">if</span> (br.<span class="fn">hasErrors</span>()) {
+    <span class="kw">return</span> <span class="str">"tasks/new"</span>;
+  }
+
+  taskService.<span class="fn">register</span>(form);  <span class="comment">// 委譲</span>
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+<span class="comment">// 10行程度。HTTPの作法だけ</span>
+
+
+<span class="comment">// === Service（厚い） ===</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">register</span>(<span class="type">TaskForm</span> form) {
+
+  <span class="comment">// 業務ルール: タイトル重複チェック</span>
+  <span class="kw">if</span> (taskMapper.<span class="fn">existsByTitle</span>(
+      form.<span class="fn">getTitle</span>())) {
+    <span class="kw">throw new</span> <span class="type">DuplicateTaskException</span>(...);
+  }
+
+  <span class="comment">// 業務ルール: 締切日の検証</span>
+  <span class="kw">if</span> (form.<span class="fn">getDeadline</span>()
+      .<span class="fn">isBefore</span>(<span class="type">LocalDate</span>.<span class="fn">now</span>())) {
+    <span class="kw">throw new</span> <span class="type">InvalidDeadlineException</span>(...);
+  }
+
+  <span class="comment">// フォーム → エンティティ変換</span>
+  <span class="type">Task</span> task = <span class="kw">new</span> <span class="type">Task</span>();
+  task.<span class="fn">setTitle</span>(form.<span class="fn">getTitle</span>());
+  ...
+
+  <span class="comment">// 保存</span>
+  taskMapper.<span class="fn">insert</span>(task);
+
+  <span class="comment">// 関連処理</span>
+  notificationService.<span class="fn">sendCreated</span>(task);
+}
+<span class="comment">// 業務ロジックが集約されている</span>
+
+
+<span class="comment">// === Mapper（薄い） ===</span>
+<span class="ann">@Insert</span>(<span class="str">"INSERT INTO tasks (...) "</span> +
+        <span class="str">"VALUES (...)"</span>)
+<span class="kw">void</span> <span class="fn">insert</span>(<span class="type">Task</span> task);
+<span class="comment">// 1メソッド = 1 SQL</span></div>
+    </div>
+  </div>
+
+  <p style="font-size:14.5px;margin:24px 0 12px"><b>なぜこのバランスなのか、3つの理由：</b></p>
+
+  <div class="think-step" data-step="1">
+    <div class="think-step-title">ロジックの「再利用性」</div>
+    <div class="think-step-body">
+      業務ロジックがServiceに集まると、<b>同じServiceを別のController</b>（Web画面用、API用、バッチ用）から呼べる。Controllerに書いてしまうと<b>WebからしかBQI業務が呼べない</b>。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="2">
+    <div class="think-step-title">変更時の影響範囲</div>
+    <div class="think-step-body">
+      業務ルールが変わった時、Service内の修正で済む。Controllerに分散していると、<b>「あちこち触らないといけない」</b>状態になる。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="3">
+    <div class="think-step-title">テストの容易さ</div>
+    <div class="think-step-body">
+      Service単体のテストには<b>HTTPが要らない</b>。<code>new TaskService(mockMapper)</code>でインスタンス化してメソッドを直接呼べる。Controllerに業務ロジックがあると、テストにHTTPサーバが必要になる。
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「業務ロジックの居場所」を作る思想</div>
+    <p>Service層の本当の役目は<b>「業務ロジックの居場所を作る」</b>こと。居場所があると、業務ロジックは自然にそこに集まります。居場所がないと、業務ロジックは<b>Controllerに散らばる</b>か、<b>Mapperにこぼれ落ちる</b>か── どちらも悪い形になります。Vol.4で<b>薄いService</b>を先に作っておいたのは、<b>来るべき業務ロジックの居場所</b>を先回りで用意した、ということなのです。</p>
+  </div>
+</section>
+
+<section id="testability">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>テスタビリティ ── 何が嬉しいか</h2>
+    <span class="en">TESTABILITY</span>
+  </div>
+  <p class="pattern-desc">Service層を作ると<b>「テストしやすい」</b>とよく言われます。具体的に何がどう嬉しいのか、業務開発の<b>テスト戦略</b>と合わせて見ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">testability-benefit</span>
+      <span class="tag-desc">Service層のテスト容易性</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 「業務ロジックだけ」をテストできる</div>
+
+        <p style="font-size:13.5px;line-height:1.85">業務開発では<b>「業務ルールが正しく実装されているか」</b>を検証する単体テストが重要です。例えば「タイトル重複チェック」が正しく動くかを確認したい。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>Service層がない場合</b>── 業務ロジックがControllerにあるので、テストには<b>「HTTPサーバを起動」</b>「<b>HTTPリクエストを送る</b>」「<b>レスポンスを検証</b>」という大掛かりな仕掛けが必要。<b>1ケース実行に数秒</b>かかる。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>Service層がある場合</b>── <code>new TaskService(mockMapper)</code>で<b>偽物のMapper</b>を渡してインスタンス化し、メソッドを直接呼ぶ。<b>HTTPもDBも不要</b>。<b>1ケース実行はミリ秒</b>。<b>100ケース動かしても1秒で終わる</b>。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>この差は単なる時短ではなく、「テストを書く意欲」を左右する</b>。テストが速いと開発者はテストを書きたくなる → コード品質が上がる、という好循環が生まれます。</p>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>: <b>Mock（モック）</b>とは「<b>偽物</b>」のこと。本物のMapperをDBに繋ぐ代わりに、「<code>findByTitle("foo")</code>が呼ばれたら空リストを返す」と<b>指示された通りに動く偽物</b>を作ってテストに使う。これにより<b>DBなしでService単体のロジックを検証</b>できる。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// テストの書き方の対比（イメージ）</span>
+
+<span class="comment">// === Service層なし（NG） ===</span>
+
+<span class="ann">@SpringBootTest</span>
+<span class="kw">class</span> <span class="type">TaskControllerTest</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">MockMvc</span> mvc;
+
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">タイトル重複なら登録不可</span>() {
+
+    <span class="comment">// 重い: HTTPリクエスト組み立て</span>
+    mvc.<span class="fn">perform</span>(post(<span class="str">"/tasks"</span>)
+        .param(<span class="str">"title"</span>, <span class="str">"既存タイトル"</span>))
+
+      <span class="comment">// HTTPレスポンスを検証</span>
+      .andExpect(status().<span class="fn">is4xxClientError</span>());
+
+    <span class="comment">// 実行時間: 数秒（Spring起動含む）</span>
+    <span class="comment">// 必要なもの: DB or Mock DataSource</span>
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// === Service層あり（OK） ===</span>
+
+<span class="kw">class</span> <span class="type">TaskServiceTest</span> {
+
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">タイトル重複なら例外</span>() {
+
+    <span class="comment">// 偽物のMapperを用意</span>
+    <span class="type">TaskMapper</span> mockMapper = mock(...);
+    when(mockMapper.<span class="fn">existsByTitle</span>(<span class="str">"foo"</span>))
+      .thenReturn(<span class="kw">true</span>);
+
+    <span class="comment">// Service単体で組み立て</span>
+    <span class="type">TaskService</span> service =
+      <span class="kw">new</span> <span class="type">TaskService</span>(mockMapper);
+
+    <span class="comment">// メソッドを直接呼んで例外を検証</span>
+    assertThrows(
+      <span class="type">DuplicateTaskException</span>.<span class="kw">class</span>,
+      () -&gt; service.<span class="fn">register</span>(...)
+    );
+
+    <span class="comment">// 実行時間: ミリ秒</span>
+    <span class="comment">// 必要なもの: なし（HTTPもDBも不要）</span>
+  }
+}
+
+<span class="good">// この軽さが「テスト書く意欲」を支える</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── 車のエンジン単体テスト</div>
+    <p>新しい車のエンジンを開発する時、<b>車を1台組み立ててから動作確認</b>するのは効率が悪いです。だから<b>エンジン単体</b>を<b>試験台</b>に載せて、車体やタイヤなしで<b>エンジン部分だけ</b>を検証する。<br><br>
+    Service層のテストも同じ。<b>業務ロジックだけ</b>を取り出して、HTTPやDBという「車体やタイヤ」を外して検証する。<b>必要な部分だけに集中</b>できるから、テストが速くて確実。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「テスタブル設計」は将来への投資</div>
+    <p>Vol.4ではテストコードは書きませんが、<b>テスタビリティを意識した設計</b>を体に染み込ませることが重要です。<b>「Service層を作る ＝ テストできる設計を選ぶ」</b>と覚えてください。本気の業務開発では<b>JUnitやMockitoでService層に単体テストを書く</b>のが標準。テストのないコードは<b>レビューを通らない</b>現場も多いです。</p>
+  </div>
+</section>
+
+<section id="timing">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>なぜVol.4でServiceを入れるか</h2>
+    <span class="en">WHY VOL.4 IS THE RIGHT TIME</span>
+  </div>
+  <p class="pattern-desc">Service層は<b>もっと早く入れるべきだった</b>のでは? あるいは<b>もっと後でも良かった</b>のでは? 教材設計上の<b>「時期の判断」</b>を共有します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">timing-decision</span>
+      <span class="tag-desc">「いつService層を入れるか」の設計判断</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 候補となるタイミング3つ</div>
+
+        <div class="compare">
+          <div class="compare-box compare-ng">
+            <div class="compare-label">✗ Vol.1〜Vol.2 から導入</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65">プロジェクト作成と同時にServiceを作る。<br>
+            <b>欠点</b>：用語が多すぎて初学者の認知負荷が爆発。「動くもの」より「概念」が先行し、<b>挫折リスク</b>が高い。</p>
+          </div>
+          <div class="compare-box compare-ok">
+            <div class="compare-label">○ Vol.4 で導入（本書の選択）</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65">Controller・Mapper・Entityで「動くもの」を完成させた後、<b>業務ロジックが入る前夜</b>に追加。<br>
+            <b>利点</b>：必要性が腹落ちしやすく、認知負荷も適度。</p>
+          </div>
+        </div>
+
+        <div class="compare" style="margin-top:8px">
+          <div class="compare-box compare-ng">
+            <div class="compare-label">✗ Vol.6以降に先送り</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65">登録・更新・削除を全部Controllerに書いてから、後で分離。<br>
+            <b>欠点</b>：Fat Controllerの悪夢を一度作ってからリファクタリングするので、<b>「同じ作業の二度手間」</b>が発生。教材として効率悪い。</p>
+          </div>
+          <div class="compare-box" style="border-top:3px solid var(--muted)">
+            <div class="compare-label" style="color:var(--muted)">※ 実務での選択</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65">実務では<b>プロジェクト最初からService層を作る</b>のが標準。本書は「<b>必要性を体感させてから導入</b>」という教材的判断でVol.4配置。</p>
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>Vol.4配置の意図</b>：Vol.3まで「Service無しでも動く」を体験し、Vol.4で「これからService層が必要になる」と納得して導入する。<b>「ありがたみを実感してから道具を渡す」</b>という教材設計です。</p>
+      </div>
+      <div class="code"><span class="code-head">// 学習者の認知発達と教材構成</span>
+
+Vol.1: プロジェクト作成
+       <span class="comment">// 動くものへの興奮</span>
+
+Vol.2: DB繋ぎ込み
+       <span class="comment">// データが見える喜び</span>
+
+Vol.3: Entity + Thymeleaf
+       <span class="comment">// 構造化への進化</span>
+
+Vol.4: Service層 ← ★ココ
+       <span class="comment">// 業務開発の標準形に到達</span>
+
+Vol.5〜: 登録・更新・削除・例外
+       <span class="comment">// Serviceに業務ロジックが集まる</span>
+       <span class="comment">// → ありがたみが体感できる</span>
+
+
+<span class="code-head" style="margin-top:18px">// 実務との違い</span>
+
+<span class="comment">// 実務での進め方:</span>
+
+Day 1: プロジェクト雛形作成
+       <span class="comment">// → 最初からControllerもServiceも</span>
+       <span class="comment">// MapperもEntityも空のクラスで配置</span>
+Day 2〜: 業務要件を順次実装
+       <span class="comment">// 各層に書き込んでいく</span>
+
+<span class="comment">// 本書（教材）での進め方:</span>
+
+Vol.1〜3: 必要最小限で動かす
+       <span class="comment">// 「動く」を最優先</span>
+Vol.4: 構造を整える
+       <span class="comment">// 「保守できる」へ進化</span>
+Vol.5〜: 業務ロジック追加
+       <span class="comment">// 整えた構造の上に積み上げる</span>
+
+<span class="comment">// 教材は「必要性の体感」を重視</span>
+<span class="comment">// 実務は「最初から正解の形」を採用</span>
+<span class="comment">// どちらも正しい、目的が違うだけ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「学習教材」と「実務」のギャップ</div>
+    <p>本書はあえて<b>Vol.3まで Service 無し</b>で進めましたが、<b>実務ではプロジェクト最初からService層を作る</b>のが普通です。実務に行ったら「<b>Service無しの選択肢</b>」は基本ありません。教材は「<b>段階的な理解</b>」のために緩い設計から始め、<b>必要性を体感した瞬間に正しい設計に進化</b>する── という構成を取っているだけです。実務では迷わず最初からService層を作りましょう。</p>
+  </div>
+</section>
+
+<section id="judgement">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>自分で書くための判断基準</h2>
+    <span class="en">JUDGEMENT CRITERIA</span>
+  </div>
+  <p class="pattern-desc">最後に、<b>「自分でSpring Boot アプリを設計する時」</b>に役立つ判断基準をまとめます。本補足の集大成として、明日から使える<b>意思決定フロー</b>を提示します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">decision-flow</span>
+      <span class="tag-desc">設計判断のフローチャート</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 「このロジックはどこに置く?」フロー</div>
+
+        <div class="think-step" data-step="Q1">
+          <div class="think-step-title">そのロジックは「HTTPの世界」のもの?</div>
+          <div class="think-step-body">
+            <b>YES</b>（URL設計、リダイレクト、Modelの組み立て、リクエスト検証）<br>
+            → <b>Controllerに書く</b><br>
+            <b>NO</b> → 次の質問へ
+          </div>
+        </div>
+
+        <div class="think-step" data-step="Q2">
+          <div class="think-step-title">そのロジックは「DBアクセスの世界」のもの?</div>
+          <div class="think-step-body">
+            <b>YES</b>（SQL、テーブル操作、結果のオブジェクトマッピング）<br>
+            → <b>Mapperに書く</b><br>
+            <b>NO</b> → 次の質問へ
+          </div>
+        </div>
+
+        <div class="think-step" data-step="Q3">
+          <div class="think-step-title">そのロジックは「業務ルール」のもの?</div>
+          <div class="think-step-body">
+            <b>YES</b>（重複チェック、状態遷移、業務的な検証、複数Mapperの組み合わせ）<br>
+            → <b>Serviceに書く</b><br>
+            <b>NO</b> → 別の置き場所（Utility、Component等）を検討
+          </div>
+        </div>
+
+        <div class="think-step" data-step="Q4">
+          <div class="think-step-title">そのロジックは「複数のテーブル操作」を含む?</div>
+          <div class="think-step-body">
+            <b>YES</b> → <b>必ずServiceに書く</b>（トランザクション境界として）<br>
+            <b>NO</b> → Mapperのみで完結可能
+          </div>
+        </div>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>: 迷ったら<b>「Serviceに書く」</b>のが基本。後から「これはControllerでも良かった」と気付いて移すのは簡単。逆は難しい。<b>Service寄りに倒す</b>と安全です。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 業務開発の「鉄板テンプレート」</span>
+
+<span class="comment">// === Controller ===</span>
+<span class="ann">@Controller</span> / <span class="ann">@RestController</span>
+<span class="kw">public class</span> <span class="type">XxxController</span> {
+
+  <span class="kw">private final</span> <span class="type">XxxService</span> service;
+
+  <span class="comment">// コンストラクタ注入</span>
+  <span class="kw">public</span> <span class="fn">XxxController</span>(...) {...}
+
+  <span class="ann">@GetMapping</span> / <span class="ann">@PostMapping</span>
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">xxx</span>(...) {
+    <span class="comment">// 1. 入力検証</span>
+    <span class="comment">// 2. service.xxx() に委譲</span>
+    <span class="comment">// 3. 結果をModelに載せる</span>
+    <span class="comment">// 4. テンプレート名を返す</span>
+  }
+}
+
+
+<span class="comment">// === Service ===</span>
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>(readOnly = <span class="kw">true</span>)
+<span class="kw">public class</span> <span class="type">XxxService</span> {
+
+  <span class="kw">private final</span> <span class="type">XxxMapper</span> mapper;
+  <span class="comment">// 他のMapperやServiceも依存可能</span>
+
+  <span class="kw">public</span> <span class="fn">XxxService</span>(...) {...}
+
+  <span class="comment">// 読み取り（クラス指定が効く）</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Xxx</span>&gt; <span class="fn">findAll</span>() {
+    <span class="kw">return</span> mapper.<span class="fn">findAll</span>();
+  }
+
+  <span class="comment">// 書き込み（メソッド指定で上書き）</span>
+  <span class="ann">@Transactional</span>
+  <span class="kw">public void</span> <span class="fn">register</span>(...) {
+    <span class="comment">// 業務ルール検証</span>
+    <span class="comment">// 必要な変換</span>
+    <span class="comment">// mapperの呼び出し</span>
+  }
+}
+
+
+<span class="comment">// === Mapper ===</span>
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">XxxMapper</span> {
+
+  <span class="ann">@Select</span>(<span class="str">"..."</span>)
+  <span class="type">List</span>&lt;<span class="type">Xxx</span>&gt; <span class="fn">findAll</span>();
+
+  <span class="ann">@Insert</span>(<span class="str">"..."</span>)
+  <span class="kw">void</span> <span class="fn">insert</span>(<span class="type">Xxx</span> x);
+
+  <span class="comment">// 各メソッド = 1 SQL</span>
+  <span class="comment">// 業務判断は持たない</span>
+}
+
+
+<span class="good">// この形を覚えれば、明日から</span>
+<span class="good">// 新しいエンティティでも同じパターンで</span>
+<span class="good">// 書ける</span></div>
+    </div>
+  </div>
+
+  <p style="font-size:14.5px;margin:24px 0 12px"><b>新しい機能を作る時のチェックリスト：</b></p>
+
+  <ul class="checklist">
+    <li>そのテーブル用のEntityクラスを作った（<code>com.example.todo.entity</code>）</li>
+    <li>そのテーブル用のMapperインタフェースを作った（<code>com.example.todo.mapper</code>、<code>@Mapper</code>付き）</li>
+    <li>業務ロジック用のServiceクラスを作った（<code>com.example.todo.service</code>、<code>@Service</code>＋<code>@Transactional</code>付き）</li>
+    <li>HTTPアクセス用のControllerクラスを作った（<code>com.example.todo.controller</code>、<code>@Controller</code>または<code>@RestController</code>付き）</li>
+    <li>各クラスは<b>private final + コンストラクタ注入</b>で依存を受け取っている</li>
+    <li>Controllerに業務ロジックを書いていない</li>
+    <li>Mapperに業務判断を書いていない</li>
+    <li>Service に HTTP関連のコード（Model等）を書いていない</li>
+    <li>書き込みメソッドには <code>@Transactional</code> が付いている</li>
+  </ul>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「迷ったらService」を覚える</div>
+    <p>新しい処理を書く時、<b>「Controllerに書こうか、Serviceに書こうか」</b>と迷ったら<b>Service</b>を選ぶのが鉄則。Controllerに置いて困るケースは多いが、<b>Serviceに置いて困るケースはほとんどない</b>。<b>「迷ったらService」</b>── これだけ覚えておけば、業務開発の99%は乗り切れます。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+  <div class="tip-label">この補足を読み終えたあなたへ</div>
+  <p>お疲れさまでした。<b>「なぜService層を作るのか」</b>という素朴な疑問から、<b>レイヤードアーキテクチャの本質</b>、<b>単一責任の原則</b>、<b>Fat Service / Thin Controller</b>、<b>テスタビリティ</b>、そして<b>判断基準</b>まで一気に駆け抜けました。<br><br>
+  本補足を読む前と読んだ後では、Vol.4本編で書いた<code>TaskService</code>クラスの<b>見え方が変わっている</b>はずです。「<b>動きは同じなのに、なぜ層を増やすのか</b>」── その答えは、<b>未来の自分と未来のチームメイトへの投資</b>です。今は薄いService層が、Vol.5以降で<b>業務ロジックの本拠地</b>に育っていきます。<br><br>
+  次はVol.5「<b>新規登録機能を作ろう</b>」。フォーム入力からPOSTでDB保存までを通して、<b>Service層が真価を発揮する瞬間</b>を体験します。Vol.4で作っておいた「居場所」が、ついに業務ロジックで埋まり始めます。お楽しみに。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.04 ADD ── THE REASONING BEHIND THE SERVICE LAYER</span>
+</footer>
+
+</body>
+</html>

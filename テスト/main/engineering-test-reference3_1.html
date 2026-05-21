@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト編 TDD・テストファースト編 Vol.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;--paper:#e8eaee;--paper-2:#d4d7df;
+  --accent:#3d4f7c;--accent-2:#5a6b94;--accent-3:#8a98b8;
+  --muted:#5a6480;--line:#b8bccc;
+  --code-bg:#1c2138;--code-text:#e8eaee;--panel-bg:#f4f5f8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"✓";position:absolute;top:-30px;right:-10px;font-size:280px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:640px;margin-top:20px;color:var(--ink);font-size:15px}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em}
+.pattern-desc{max-width:680px;font-size:14px;margin-bottom:20px;color:var(--ink)}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:16px}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+.panel{background:var(--panel-bg);padding:20px 24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:20px 24px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}.code .type{color:#c2a3ff}.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}.code .ann{color:#f7c08a}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.08);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+/* Red-Green-Refactor サイクル */
+.cycle{display:flex;justify-content:center;align-items:center;gap:0;font-family:'JetBrains Mono',monospace;font-size:12px;margin:10px 0}
+.cycle-step{padding:14px 18px;color:#fff;font-weight:700;letter-spacing:0.1em;text-align:center;min-width:90px}
+.cycle-step.red{background:#c43030}
+.cycle-step.green{background:#386a3d}
+.cycle-step.blue{background:var(--accent)}
+.cycle-arr{color:var(--accent);font-size:18px;padding:0 8px}
+.cycle-step small{display:block;font-size:9.5px;opacity:0.85;font-weight:400;margin-top:3px}
+.step-list{font-size:13px;line-height:1.9}
+.step-list .num{display:inline-block;background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;width:22px;height:22px;text-align:center;border-radius:50%;font-size:11px;line-height:22px;margin-right:8px}
+.law-box{background:#fff;border:1px solid var(--accent-3);padding:10px 14px;margin:6px 0;font-size:13px}
+.law-box .label{color:var(--accent);font-weight:600;font-size:11px;letter-spacing:0.15em;display:block;margin-bottom:4px;font-family:'JetBrains Mono',monospace}
+.flow-arrow{text-align:center;color:var(--accent);font-size:14px;margin:0}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;font-size:13px;margin:10px 0}
+.compare-grid > div{padding:12px 14px;border:1px solid var(--line);background:#fff}
+.compare-grid .head{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.1em}
+.compare-grid .left{border-right:none}
+.page-footer{border-top:2px solid var(--ink);margin-top:80px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:180px}.compare-grid{grid-template-columns:1fr}.cycle{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="vol-tag">VOL.03 / 10</span>
+  <h1>TDD・テストファースト編</h1>
+  <div class="subtitle">エンジニアリングテスト編 — TEST-DRIVEN DEVELOPMENT</div>
+  <p class="lead">
+    実装より<b>先にテストを書く</b>という発想を扱う巻です。Red-Green-Refactorの基本サイクル・ベイビーステップ・三角測量・リファクタリングの安心感。順序を逆転するだけで、設計の質も開発のリズムも変わります。TDDは習慣ですので、ここで体に染み込ませましょう。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 TDDとは何か</a></li>
+    <li><a href="#sec02">02 Red-Green-Refactorサイクル</a></li>
+    <li><a href="#sec03">03 ベイビーステップの原則</a></li>
+    <li><a href="#sec04">04 三角測量</a></li>
+    <li><a href="#sec05">05 リファクタリングの自信</a></li>
+    <li><a href="#sec06">06 TDDの3つの法則</a></li>
+    <li><a href="#sec07">07 はじめてのTDD実演</a></li>
+    <li><a href="#sec08">08 現場でのTDDの実情</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>TDDとは何か</h2>
+    <span class="en">WHAT IS TDD</span>
+  </div>
+  <p class="pattern-desc">
+    TDD（Test-Driven Development、テスト駆動開発）とは、<b>「失敗するテストを先に書き、それを通すコードを書く」</b>という手順を繰り返す開発手法です。1999年にKent Beckが体系化しました。実装→テスト という順序を、テスト→実装 に反転させる発想です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">test-driven development</span>
+      <span class="tag-desc">テストが実装を駆動する開発スタイル</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 順序の対比</div>
+        <div class="compare-grid">
+          <div class="head left">従来</div>
+          <div class="head">TDD</div>
+          <div class="left">1. 実装を書く</div>
+          <div>1. テストを書く</div>
+          <div class="left">2. テストを書く</div>
+          <div>2. 実装を書く</div>
+          <div class="left">3. 動作確認</div>
+          <div>3. 改善する</div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          「テストが <b style="color:var(--ink)">設計と実装を駆動する</b>」というのがTDDの本質。テスト=検証の道具、ではなく、テスト=作り方の指針、という捉え方です。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// TDDの基本リズム</span>
+
+<span class="kw">①</span> 何ができれば良いかをテストで書く
+   <span class="comment">→ まだ実装がないので失敗する</span>
+
+<span class="kw">②</span> テストを通す最小限のコードを書く
+   <span class="comment">→ テストが成功する</span>
+
+<span class="kw">③</span> 重複や読みづらさを整える
+   <span class="comment">→ テストは通ったままにする</span>
+
+<span class="kw">④</span> ①へ戻る (次の小さな機能)
+
+<span class="comment">// このリズムを1サイクル数分で回す</span>
+<span class="comment">// 1日に何十回も回るのが理想</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    TDDは<b>テストを書く技法</b>ではなく<b>コードを書く技法</b>です。「テストの書き方が上手くなる」のではなく、「テストを起点にすることで実装の質が上がる」のが目的。ここを取り違えると、TDDの効果は薄くなります。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>Red-Green-Refactorサイクル</h2>
+    <span class="en">RED-GREEN-REFACTOR</span>
+  </div>
+  <p class="pattern-desc">
+    TDDの中核となるのが<b>Red→Green→Refactor</b>の3ステップサイクルです。Red＝失敗、Green＝成功、Refactor＝整理。この3つを<b>必ずこの順番で、何度も繰り返す</b>のがTDDの作法です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">RGR cycle</span>
+      <span class="tag-desc">TDDの心臓部となる3ステップ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの色とサイクル</div>
+        <div class="cycle">
+          <div class="cycle-step red">RED<small>失敗</small></div>
+          <div class="cycle-arr">▶</div>
+          <div class="cycle-step green">GREEN<small>成功</small></div>
+          <div class="cycle-arr">▶</div>
+          <div class="cycle-step blue">REFACTOR<small>整理</small></div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">Red</b> = テストランナーが赤く失敗を示す状態。<br>
+          <b style="color:var(--ink)">Green</b> = 緑のPASSが並ぶ状態。<br>
+          <b style="color:var(--ink)">Refactor</b> = テストを通したままコードを整える。
+        </p>
+        <div class="step-list" style="margin-top:14px">
+          <div><span class="num">1</span>失敗するテストを書く</div>
+          <div><span class="num">2</span>最短で通る実装を書く</div>
+          <div><span class="num">3</span>テストを通したまま整理</div>
+          <div><span class="num">→</span> もう一周、別の小さなテストへ</div>
+        </div>
+      </div>
+      <div class="code"><span class="comment">// ── Step 1: RED ──</span>
+<span class="fn">test</span>(<span class="str">"add(1,2)=3"</span>, () =&gt; {
+  <span class="fn">expect</span>(<span class="fn">add</span>(<span class="num">1</span>, <span class="num">2</span>)).<span class="fn">toBe</span>(<span class="num">3</span>);
+});
+<span class="comment">// → add未定義 → ✗ FAIL (Red)</span>
+
+<span class="comment">// ── Step 2: GREEN ──</span>
+<span class="kw">function</span> <span class="fn">add</span>(a, b) {
+  <span class="kw">return</span> <span class="num">3</span>;  <span class="ann">// 最短で通す</span>
+}
+<span class="comment">// → ✓ PASS (Green)</span>
+
+<span class="comment">// ── Step 3: REFACTOR ──</span>
+<span class="kw">function</span> <span class="fn">add</span>(a, b) {
+  <span class="kw">return</span> a + b;  <span class="ann">// 本来の形へ</span>
+}
+<span class="comment">// → ✓ PASS のまま (Green維持)</span>
+
+<span class="comment">// 次のテストへ:</span>
+<span class="comment">// add(-1, -2) など</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">鉄則</div>
+    <b>Greenが先、Refactorは後</b>。動かないコードを綺麗にしようとしてはいけません。「とにかく通す→そのあとで整える」という順序を守ることで、常に動く状態を保ちながら進めます。これがTDDの安全網です。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>ベイビーステップの原則</h2>
+    <span class="en">BABY STEPS</span>
+  </div>
+  <p class="pattern-desc">
+    TDDでは<b>歩幅を極端に小さく</b>します。これを「ベイビーステップ」と呼びます。「数行書いて即テスト」を繰り返すスタイル。一見遠回りに見えますが、<b>常に動く状態</b>を保てるので、結果的に手戻りが減り早く進めます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">baby steps</span>
+      <span class="tag-desc">小さく進む方が速い、というパラドクス</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 大きな歩幅 vs 小さな歩幅</div>
+        <div class="compare-grid">
+          <div class="head left">大きな歩幅</div>
+          <div class="head">ベイビーステップ</div>
+          <div class="left">機能をまるごと実装</div>
+          <div>1機能を細かい単位に分割</div>
+          <div class="left">最後にテスト</div>
+          <div>各単位ごとにテスト</div>
+          <div class="left">失敗時に原因不明</div>
+          <div>失敗時は直前変更が原因</div>
+          <div class="left">デバッグ大変</div>
+          <div>デバッグ最小</div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          サイクル1回あたり<b style="color:var(--ink)">数分〜10分</b>が目安。これより長いなら、ステップが大きすぎるサイン。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// ベイビーステップで進める例</span>
+<span class="comment">// 「FizzBuzz」を作る場合</span>
+
+<span class="ann">[1]</span> 1を渡したら "1" を返す
+<span class="ann">[2]</span> 2を渡したら "2" を返す
+<span class="ann">[3]</span> 3を渡したら "Fizz" を返す
+<span class="ann">[4]</span> 5を渡したら "Buzz" を返す
+<span class="ann">[5]</span> 6を渡したら "Fizz"
+<span class="ann">[6]</span> 10を渡したら "Buzz"
+<span class="ann">[7]</span> 15を渡したら "FizzBuzz"
+
+<span class="comment">// 各 [N] でRed-Green-Refactorを1周</span>
+<span class="comment">// → 1周3〜5分</span>
+<span class="comment">// → 7周で完成</span>
+
+<span class="comment">// 「全部一気に作る」よりずっと安定</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">超便利</div>
+    ベイビーステップを徹底すると、<b>失敗した時の原因が必ず「直前の変更」</b>に限定されます。デバッグの探索範囲が極小化されるので、結果的に時間効率が上がる。これがTDDの「遠回りに見えて近道」というパラドクスの正体です。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>三角測量</h2>
+    <span class="en">TRIANGULATION</span>
+  </div>
+  <p class="pattern-desc">
+    三角測量（Triangulation）はTDDの中核技法のひとつ。<b>具体例を複数並べることで、一般化された実装を導き出す</b>方法です。1ケースだけだと「即値返し」で通ってしまいますが、複数ケースを並べることで自然と汎化が要求されます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">triangulation</span>
+      <span class="tag-desc">複数の具体例から一般則を導く</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 三角測量の流れ</div>
+        <div class="step-list">
+          <div><span class="num">1</span>1つ目のテストを書く</div>
+          <div><span class="num">2</span>即値を返して通す（Fakeする）</div>
+          <div><span class="num">3</span>2つ目のテストを書く</div>
+          <div><span class="num">4</span>即値では通らなくなる</div>
+          <div><span class="num">5</span>仕方なく一般化したコードを書く</div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">2点が決まれば直線が引ける</b>、3点が決まれば曲線が見えてくる。具体例を増やすことで実装の輪郭が浮かび上がります。これが三角測量の発想です。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// ── 1点目 ──</span>
+<span class="fn">test</span>(<span class="str">"add(1,2)=3"</span>, () =&gt;
+  <span class="fn">expect</span>(<span class="fn">add</span>(<span class="num">1</span>,<span class="num">2</span>)).<span class="fn">toBe</span>(<span class="num">3</span>));
+
+<span class="comment">// 実装(Fake)</span>
+<span class="kw">function</span> <span class="fn">add</span>(a, b) { <span class="kw">return</span> <span class="num">3</span>; }
+<span class="comment">// ✓ PASS (でも明らかに嘘)</span>
+
+<span class="comment">// ── 2点目 ──</span>
+<span class="fn">test</span>(<span class="str">"add(2,3)=5"</span>, () =&gt;
+  <span class="fn">expect</span>(<span class="fn">add</span>(<span class="num">2</span>,<span class="num">3</span>)).<span class="fn">toBe</span>(<span class="num">5</span>));
+
+<span class="comment">// 即値では通らない → 一般化が必要</span>
+<span class="kw">function</span> <span class="fn">add</span>(a, b) {
+  <span class="kw">return</span> a + b;  <span class="ann">// 仕方なく汎化</span>
+}
+<span class="comment">// ✓ PASS / ✓ PASS</span>
+
+<span class="comment">// このとき初めて「一般則」が見える</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    三角測量は<b>「最初から汎用コードを書こうとしない」</b>ための装置でもあります。具体から始めて一般化させるので、過剰設計（オーバーエンジニアリング）を防げます。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>リファクタリングの自信</h2>
+    <span class="en">CONFIDENT REFACTORING</span>
+  </div>
+  <p class="pattern-desc">
+    リファクタリングとは<b>「振る舞いを変えずにコードを綺麗にする」</b>作業のことです。テストがあれば、リファクタリングしても壊れていないか即確認できます。TDDで積み上げたテスト群は、後から振り返ると<b>変更への安全網</b>として機能します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">refactoring</span>
+      <span class="tag-desc">テストがある世界の特権</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// リファクタリングの定義</div>
+        <div class="law-box"><span class="label">DEFINITION</span>外から見た振る舞いを変えずに、内部構造を整えること</div>
+        <div class="law-box"><span class="label">REQUIRES</span>テストがGreenな状態で開始</div>
+        <div class="law-box"><span class="label">PROCEEDS</span>小さく変更→テスト→変更→テスト</div>
+        <div class="law-box"><span class="label">ENDS</span>テストが通ったまま終わる</div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          テストがない状態でコードを書き換えるのは<b style="color:var(--ink)">リファクタリングではなく「祈り」</b>と言われます。動くかどうかを祈っているだけ、という意味です。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// リファクタリングの例</span>
+
+<span class="comment">// === BEFORE ===</span>
+<span class="kw">function</span> <span class="fn">tax</span>(p, k) {
+  <span class="kw">if</span> (k == <span class="num">1</span>) <span class="kw">return</span> p * <span class="num">1.10</span>;
+  <span class="kw">if</span> (k == <span class="num">2</span>) <span class="kw">return</span> p * <span class="num">1.08</span>;
+  <span class="kw">return</span> p;
+}
+
+<span class="comment">// テスト ✓ ✓ ✓ 通っている</span>
+
+<span class="comment">// === AFTER ===</span>
+<span class="kw">const</span> RATES = {
+  STANDARD: <span class="num">0.10</span>,
+  REDUCED:  <span class="num">0.08</span>,
+  TAX_FREE: <span class="num">0</span>,
+};
+
+<span class="kw">function</span> <span class="fn">tax</span>(price, kind) {
+  <span class="kw">return</span> price * (<span class="num">1</span> + RATES[kind]);
+}
+
+<span class="comment">// テスト ✓ ✓ ✓ 同じく通る</span>
+<span class="comment">// → 振る舞いを保ちつつ整形完了</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    TDDで積み上げたテストの価値は<b>「将来のリファクタリングを可能にする」</b>ことにあります。書いた瞬間の検証だけでなく、半年後・1年後に安心して変更するための保険として効いてきます。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>TDDの3つの法則</h2>
+    <span class="en">THREE LAWS OF TDD</span>
+  </div>
+  <p class="pattern-desc">
+    Robert C. Martin（通称Uncle Bob）は、TDDを純化した<b>3つの法則</b>を提唱しました。厳格に守ると窮屈ですが、TDDの本質を理解するには最良の指針です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">3 laws</span>
+      <span class="tag-desc">Uncle Bobによる厳格な定式化</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの法則</div>
+        <div class="law-box"><span class="label">LAW 1</span>失敗するテストを書くまで、実装コードを書いてはいけない</div>
+        <div class="law-box"><span class="label">LAW 2</span>失敗を発生させる以上のテストを書いてはいけない（コンパイルエラーも失敗のうち）</div>
+        <div class="law-box"><span class="label">LAW 3</span>失敗中のテストを通す以上の実装を書いてはいけない</div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          要するに<b style="color:var(--ink)">「常にテストが先、常に最小限」</b>。これを徹底するとサイクルが極めて短くなります。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 3つの法則を破るとどうなるか</span>
+
+<span class="ann">違反 1:</span>
+  テストなしに実装を書き始める
+  → 後付けテストになりがち
+  → 結局TDDではない
+
+<span class="ann">違反 2:</span>
+  あれもこれもテストに書く
+  → 一気に大量の失敗
+  → どこから直すか分からない
+
+<span class="ann">違反 3:</span>
+  失敗以上のコードを実装
+  → テスト範囲を超えた実装
+  → 検証されない部分が生まれる
+
+<span class="comment">// 法則を守ると</span>
+<span class="comment">// → 自然にベイビーステップになる</span>
+<span class="comment">// → 自然に必要な実装だけになる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    現場では<b>厳格適用しないことが多い</b>です。研修や練習では3法則を意識し、業務では「テストファースト＋ベイビーステップ」程度に緩めるのが現実的なバランスです。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>はじめてのTDD実演</h2>
+    <span class="en">TDD HANDS-ON</span>
+  </div>
+  <p class="pattern-desc">
+    実際の流れを一気に追ってみましょう。題材は<b>「FizzBuzz」</b>。1〜数字を渡して、3の倍数は"Fizz"、5の倍数は"Buzz"、両方は"FizzBuzz"を返す古典的な練習問題です。TDDのリズムが体に伝わるはずです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">FizzBuzz with TDD</span>
+      <span class="tag-desc">7サイクルで完成させる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// サイクルごとの進化</div>
+        <div class="step-list" style="font-size:12px">
+          <div><span class="num">1</span><b>1→"1"</b>　即値で通す</div>
+          <div><span class="num">2</span><b>2→"2"</b>　文字列化に汎化</div>
+          <div><span class="num">3</span><b>3→"Fizz"</b>　3の分岐追加</div>
+          <div><span class="num">4</span><b>5→"Buzz"</b>　5の分岐追加</div>
+          <div><span class="num">5</span><b>6→"Fizz"</b>　倍数判定に汎化</div>
+          <div><span class="num">6</span><b>10→"Buzz"</b>　同上</div>
+          <div><span class="num">7</span><b>15→"FizzBuzz"</b>　優先順位調整</div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          1サイクル≒3〜5分。<b style="color:var(--ink)">7サイクル=約30分で完成</b>。各段階でテストが必ずGreenを保つ。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// ──── サイクル1 ────</span>
+<span class="fn">test</span>(<span class="str">"1→1"</span>, ()=&gt;<span class="fn">expect</span>(<span class="fn">fb</span>(<span class="num">1</span>)).<span class="fn">toBe</span>(<span class="str">"1"</span>));
+<span class="kw">function</span> <span class="fn">fb</span>(n) { <span class="kw">return</span> <span class="str">"1"</span>; }   <span class="ann">// Green</span>
+
+<span class="comment">// ──── サイクル3 ────</span>
+<span class="fn">test</span>(<span class="str">"3→Fizz"</span>, ()=&gt;<span class="fn">expect</span>(<span class="fn">fb</span>(<span class="num">3</span>)).<span class="fn">toBe</span>(<span class="str">"Fizz"</span>));
+<span class="kw">function</span> <span class="fn">fb</span>(n) {
+  <span class="kw">if</span> (n === <span class="num">3</span>) <span class="kw">return</span> <span class="str">"Fizz"</span>;
+  <span class="kw">return</span> <span class="type">String</span>(n);
+}
+
+<span class="comment">// ──── サイクル7・最終形 ────</span>
+<span class="kw">function</span> <span class="fn">fb</span>(n) {
+  <span class="kw">let</span> s = <span class="str">""</span>;
+  <span class="kw">if</span> (n % <span class="num">3</span> === <span class="num">0</span>) s += <span class="str">"Fizz"</span>;
+  <span class="kw">if</span> (n % <span class="num">5</span> === <span class="num">0</span>) s += <span class="str">"Buzz"</span>;
+  <span class="kw">return</span> s || <span class="type">String</span>(n);
+}
+<span class="comment">// 全7テスト ✓ ✓ ✓ ✓ ✓ ✓ ✓</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    FizzBuzzのTDD演習は<b>初学者の登竜門</b>です。文章だけで分かった気にならず、実際に手を動かして7サイクル回してみてください。<b>「テストが先」のリズム感は、書いて体得する以外に道がありません</b>。
+  </div>
+</section>
+
+<section id="sec08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>現場でのTDDの実情</h2>
+    <span class="en">TDD IN PRACTICE</span>
+  </div>
+  <p class="pattern-desc">
+    現場では<b>厳格なTDDを徹底するチームばかりではない</b>のが実情です。状況に応じてグラデーションがあります。100%TDDをやるべきかは議論が分かれますが、<b>「テストファースト」の意識を持つこと自体は普遍的に推奨</b>されます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">in practice</span>
+      <span class="tag-desc">どこまでTDDをやるかの現実解</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// TDD実践度のグラデーション</div>
+        <div class="law-box"><span class="label">100% TDD</span>常にテスト→実装の順を徹底</div>
+        <div class="flow-arrow">↑ 厳格</div>
+        <div class="law-box"><span class="label">テストファースト</span>新機能はまずテストから</div>
+        <div class="law-box"><span class="label">並走</span>テストと実装を行き来する</div>
+        <div class="law-box"><span class="label">テストラスト</span>実装後にテストを書く</div>
+        <div class="flow-arrow">↓ 緩い</div>
+        <div class="law-box" style="border-color:#a44"><span class="label">テストなし</span>動作確認だけ</div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          多くの現場は<b style="color:var(--ink)">「テストファースト〜並走」</b>のあたり。場面で使い分けるのが現実的です。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// TDDが特に効く場面</span>
+
+<span class="ann">★★★</span> 仕様が明確なロジック
+       (計算・変換・バリデーション)
+
+<span class="ann">★★★</span> リファクタリング前後
+       (テストが安全網に)
+
+<span class="ann">★★</span>  バグ修正
+       (再現テスト→修正の順)
+
+<span class="ann">★★</span>  ライブラリ・API設計
+       (使う側の視点で書ける)
+
+<span class="comment">// TDDが効きづらい場面</span>
+
+<span class="ann">△</span>   UI / 見た目の調整
+<span class="ann">△</span>   試行錯誤中の探索的コード
+<span class="ann">△</span>   仕様未確定の領域
+
+<span class="comment">// → 使い分けが大切</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">結論</div>
+    <b>TDDは万能ではないが、強力な道具です</b>。すべてに適用しようとせず、効く場面で確実に使う。これが業務で長く付き合うコツです。「バグ修正は必ず再現テストから書く」だけでも、品質改善効果は絶大です。
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  次は<b>本編Vol.4「テストダブル編」</b>へ。テストを書きやすくするための「偽物」の使い方を学びます。DBや外部APIに依存するコードを、いかに単独で試せる形にするか。その前に<b>地図編Vol.3「先に書く・後で書くの対比編」</b>で、なぜTDDという発想が登場したのかを左右軸と時間軸で読み解くと、Vol.3で学んだ手法の意義がより腑に落ちます。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST REFERENCE — VOL.03</span>
+  <span>TEST-DRIVEN DEVELOPMENT</span>
+</footer>
+
+</body>
+</html>

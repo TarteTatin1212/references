@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.7 補足 ── 状態を変えるアクションの設計</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3d2817;
+  --paper:#f4ecd8;
+  --paper-2:#e8dcc0;
+  --accent:#d29a4f;
+  --accent-2:#e6b878;
+  --accent-3:#6b4423;
+  --accent-4:#2d5f3f;
+  --muted:#7a6952;
+  --line:#c9b896;
+  --code-bg:#2a1f15;
+  --code-text:#f0e4cc;
+  --panel-bg:#faf3e0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'?';position:absolute;right:0px;top:-30px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+.add-tag{display:inline-block;background:#c43;color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:40px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid #c43;padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--accent-3);border-bottom-color:var(--accent-3)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}
+.tag{color:#a3c9ff}
+.attr{color:#ffc88a}
+.bad{color:#ff8a7a;font-weight:600}
+.good{color:#b5e8b0;font-weight:600}
+
+/* WHAT/HOW/WHY */
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+
+/* 用語カード */
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+
+/* 思考ステップ */
+.think-step{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;position:relative;padding-left:60px;min-height:60px}
+.think-step::before{content:attr(data-step);position:absolute;left:14px;top:14px;background:var(--accent);color:var(--paper);width:36px;height:36px;line-height:36px;text-align:center;border-radius:50%;font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700}
+.think-step-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.think-step-body{font-size:13.5px;line-height:1.8}
+
+/* アナロジー */
+.analogy{background:#fffdf6;border:1px dashed var(--accent);border-left:4px solid var(--accent);padding:14px 18px;margin:12px 0}
+.analogy-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px}
+.analogy-title::before{content:'🗝 ';margin-right:4px}
+.analogy p{font-size:13.5px;line-height:1.85}
+
+/* 比較 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.compare-box{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:13.5px}
+.compare-ng{border-top:3px solid #c43}
+.compare-ok{border-top:3px solid var(--accent-4)}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px}
+.compare-ng .compare-label{color:#c43}
+.compare-ok .compare-label{color:var(--accent-4)}
+
+.tip{margin:18px 0;padding:14px 20px;background:rgba(210,154,79,0.10);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+
+/* 図解 */
+.flow-diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;background:#fff;border:1px solid var(--line);padding:14px 18px;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+/* 新ルール: フロー図の専用スタイル（改善版） */
+.flow-v2{background:#fff;border:1px solid var(--line);padding:14px 16px;margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;color:var(--ink)}
+.flow-v2 .flow-step{display:block;background:var(--panel-bg);border-left:3px solid var(--line);padding:10px 14px;margin:8px 0;border-radius:3px;line-height:2.0}
+.flow-v2 .flow-step:has(.flow-label-call){border-left-color:var(--accent);background:rgba(210,154,79,0.10)}
+.flow-v2 .flow-step:has(.flow-label-return){border-left-color:var(--accent-4);background:rgba(45,95,63,0.07)}
+.flow-v2 .flow-actor{display:inline-block;background:#fff;color:var(--accent-3);padding:2px 10px;border:1px solid var(--line);border-radius:3px;font-weight:700;font-size:11.5px;margin:1px 2px;white-space:nowrap}
+.flow-v2 .flow-call{color:var(--accent);font-weight:700}
+.flow-v2 .flow-return{color:var(--accent-4);font-weight:700}
+.flow-v2 .flow-arg{color:var(--muted);font-size:11.5px;padding:4px 0 4px 14px;display:block;margin-top:6px;line-height:1.6;border-left:2px dashed var(--accent-2);margin-left:4px}
+.flow-v2 .flow-divider{border-top:1px dashed var(--line);margin:14px 0}
+.flow-v2 .flow-label-call,.flow-v2 .flow-label-return{display:inline-block;color:var(--paper);font-size:10px;padding:2px 8px;border-radius:2px;letter-spacing:0.05em;margin-left:6px;font-weight:700;vertical-align:1px}
+.flow-v2 .flow-label-call{background:var(--accent)}
+.flow-v2 .flow-label-return{background:var(--accent-4)}
+
+/* チェックリスト */
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:220px}
+  h1{font-size:28px}
+  .toc ul{flex-direction:column;gap:8px}
+  .whw{grid-template-columns:1fr}
+  .compare{grid-template-columns:1fr}
+  .term-grid{grid-template-columns:1fr}
+  .flow-v2 .flow-step{padding:12px 14px;line-height:2.2;font-size:13px}
+  .flow-v2 .flow-actor{font-size:12px;padding:3px 10px;margin:2px 3px}
+  .flow-v2 .flow-arg{font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.07 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <span class="add-tag">+ ADD</span>
+  <h1>状態を変える<br>アクションの設計</h1>
+  <p class="subtitle">VOL.7 SUPPLEMENT — DESIGN OF STATE-CHANGING ACTIONS</p>
+  <p class="lead">Vol.7本編で<b>完了切替と削除</b>が動くようになりました── そして、ついに<b>CRUD完全制覇</b>を達成しました。動かしている時には意識しなかったかもしれませんが、これらは<b>「状態を変えるアクション」</b>という、業務システムで<b>最も慎重に設計すべき機能群</b>です。なぜGETではダメなのか、削除は本当に削除して良いのか、確認ダイアログは本当に機能しているのか── <b>動くことと、安全に動くことは別物</b>です。本補足では、Vol.7本編の裏側にある<b>「設計の重み」</b>を解明し、業務開発で本当に必要な品質感覚を育てます。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">💡 この補足の位置づけ</div>
+    <p style="font-size:13.5px">本編は「<b>動かす手順書</b>」、本補足は「<b>慎重さの教科書</b>」。新しいコードは書きませんが、<b>「なぜPOSTか?」「物理削除と論理削除は?」「CSRFって何?」「確認ダイアログで本当に防げる?」</b>── こうした<b>「なぜ」</b>を1段深く解明します。<b>新ルール</b>として、フロー図は<b>「誰が・誰に・何を」</b>を明示する書き方に改善しました。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.07 ADD</div>
+  <ul>
+    <li><a href="#purpose">01 この補足の目的</a></li>
+    <li><a href="#what-is-action">02 「状態を変えるアクション」の本質</a></li>
+    <li><a href="#why-post">03 なぜGETではなくPOSTで状態変更するのか（再訪）</a></li>
+    <li><a href="#term-logical-delete">04 用語カード：論理削除 vs 物理削除</a></li>
+    <li><a href="#delete-irreversibility">05 削除の不可逆性 ── 復元できない設計の重み</a></li>
+    <li><a href="#confirm-limit">06 確認ダイアログの設計と限界</a></li>
+    <li><a href="#csrf-preview">07 CSRFの予告（Spring Securityへの伏線）</a></li>
+    <li><a href="#one-click-vs-form">08 「1クリックUI」vs「フォーム経由」のトレードオフ</a></li>
+    <li><a href="#prg-reapply">09 PRGパターンの再応用（書き込み3兄弟）</a></li>
+    <li><a href="#crud-and-beyond">10 CRUD完全制覇 ── そして次の挑戦へ</a></li>
+    <li><a href="#checklist">11 アクション系機能のチェックリスト</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="purpose">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この補足の目的</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">Vol.7本編で<b>「動く」</b>を達成。本補足は<b>「動くことの裏にある慎重さ」</b>を解明します。<b>削除という不可逆操作</b>、<b>状態変更の安全性</b>、<b>業界の慣習</b>── 業務開発者が当然身につけているべき感覚を育てます。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を解説するか</div>
+      <div class="whw-desc">
+        「<b>状態を変えるアクション</b>」の設計思想。なぜPOSTなのか、物理削除vs論理削除、削除の不可逆性、確認ダイアログの限界、CSRFという脅威、UIパターンの選択── <b>「動くこと」を「安全に動くこと」</b>に高める知識。
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう解説するか</div>
+      <div class="whw-desc">
+        ① <b>業務開発の現場感覚</b>で語る<br>
+        ② <b>新ルール</b>でフロー図を改善（誰が・誰に・何を）<br>
+        ③ <b>失敗事例</b>を仮想的に示す<br>
+        ④ <b>Vol.8以降への伏線</b>を張る<br>
+        ⑤ <b>CRUD完成後の景色</b>を見せる
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜ別冊で深掘るか</div>
+      <div class="whw-desc">
+        本編で「動く」を達成しても、<b>「安全に動かす感覚」</b>がないと業務システムは作れない。本補足は<b>業務開発者の品質感覚</b>を育てる回。Vol.8以降の<b>バリデーション・例外処理・ログ</b>の土台にもなります。
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>Vol.7までで<b>「動くアプリ」</b>は作れるようになりました。でも実は── ここからが<b>業務開発者としての本当のスタート</b>。Vol.8（バリデーション）、Vol.9（例外処理）、Vol.10（ログ）は、<b>「動くもの」を「業務で使える品質」</b>に磨き上げる工程です。本補足はその<b>橋渡し</b>として、必要な感覚を先取りで提供します。</p>
+  </div>
+</section>
+
+<section id="what-is-action">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>「状態を変えるアクション」の本質</h2>
+    <span class="en">NATURE OF STATE-CHANGING ACTIONS</span>
+  </div>
+  <p class="pattern-desc">完了切替、削除、編集── これら<b>3つの機能</b>には共通点があります。<b>「状態を変える」</b>こと。<b>「単に表示するだけ」</b>の機能と本質的に違う性質を持っています。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">action-essence</span>
+      <span class="tag-desc">アクションが持つ3つの性質</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 「読むだけ」と「変える」の違い</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>表示系の機能</b>（一覧、詳細、検索）：<b>何度実行しても影響なし</b>。叩くたびに同じ結果が返る（冪等）。<b>後戻りできる</b>（実害がない）。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>アクション系の機能</b>（登録、更新、削除、切替）：<b>叩くたびに世界が変わる</b>。同じボタンを2回押せば2回処理が走る（非冪等）。<b>後戻りできない</b>場合もある（特に削除）。</p>
+
+        <p style="font-size:14px;font-weight:700;margin-top:14px;color:var(--accent-3)">アクション系の3つの性質</p>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">非冪等性</div>
+          <div class="think-step-body">
+            同じ操作を複数回行うと<b>結果が変わる</b>。「いいね」を2回押せばカウントが2増える。「タスク登録」を3回押せば3件登録される。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">副作用の発生</div>
+          <div class="think-step-body">
+            DB・ファイル・外部APIなど、<b>システムの状態</b>が変わる。実行後の世界は実行前と<b>違う状態</b>になっている。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">影響の波及</div>
+          <div class="think-step-body">
+            他のユーザー・他のシステム・他の機能に<b>連鎖的に影響</b>する。タスク削除すれば、それを参照していた別画面も変わる。送金処理すれば、相手の口座も変わる。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 「読むだけ」と「変える」のSQL対比</span>
+
+<span class="comment">// === 読むだけ系 ===</span>
+
+SELECT id, title FROM tasks
+SELECT id, title FROM tasks WHERE id = 2
+SELECT COUNT(*) FROM tasks WHERE done = false
+
+<span class="comment">// 何回叩いてもDBは変わらない</span>
+<span class="comment">// 結果は同じ</span>
+<span class="comment">// → GETで実装してOK</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 状態を変える系 ===</span>
+
+INSERT INTO tasks (...) VALUES (...)
+UPDATE tasks SET title = ? WHERE id = ?
+UPDATE tasks SET done = true WHERE id = ?
+DELETE FROM tasks WHERE id = ?
+
+<span class="comment">// 叩くたびにDBが変わる</span>
+<span class="comment">// 連続実行で結果が累積（または消える）</span>
+<span class="comment">// → 必ずPOSTで実装</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業界の鉄則</span>
+
+<span class="comment">// SELECTのみ → GET (idempotent)</span>
+<span class="comment">// INSERT/UPDATE/DELETE → POST (非冪等)</span>
+
+<span class="comment">// これを破ると恐ろしいことが起きる</span>
+<span class="comment">// （次セクションで詳しく）</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── 図書館 vs 銀行</div>
+    <p><b>図書館</b>（読むだけ系）：何度も同じ本を読みに行っても、本は減らない。誰かが先に読んでいるからといって、あなたが読めなくなるわけではない。<b>「読む」は副作用がない</b>。<br><br>
+    <b>銀行</b>（変える系）：振込ボタンを2回押せば<b>2回送金される</b>。「あ、しまった」と思っても<b>取り戻せない</b>場合がある。だから銀行のATMは<b>確認画面</b>と<b>明確な操作ボタン</b>で慎重に作られている。<br><br>
+    Webアプリも同じ。<b>「読む系」と「変える系」では、必要な慎重さがまったく違う</b>。Vol.7の完了切替・削除は<b>後者</b>です。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「状態を変える=慎重に作る」</div>
+    <p>「読む」機能は<b>失敗しても見直すだけ</b>で済む。でも「変える」機能は<b>失敗が世界に残る</b>。だから業務開発では、状態を変える機能には<b>表示系の何倍もの慎重さ</b>を払います。POSTで送る、確認ダイアログを出す、@Transactional でくくる、ログを残す── これらは全部<b>「変える側の慎重さ」</b>の表れです。Vol.7の各実装はその慣習に従っています。</p>
+  </div>
+</section>
+
+<section id="why-post">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>なぜGETではなくPOSTで状態変更するのか（再訪）</h2>
+    <span class="en">WHY POST FOR STATE CHANGES</span>
+  </div>
+  <p class="pattern-desc">Vol.5 ADDでも触れた話を、<b>「もしGETで削除を実装したら何が起きるか」</b>という<b>具体的な悲劇のシナリオ</b>で深掘ります。これがGETで削除してはいけない<b>核心的な理由</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">get-delete-disaster</span>
+      <span class="tag-desc">GETで削除を実装した悲劇</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 仮想シナリオ：GETで削除を実装したら</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>もし</b>あなたが <code>GET /tasks/2/delete</code> という<b>GETエンドポイント</b>で削除を実装したら── 業務システムが<b>大事故</b>を起こします。具体的に何が起きるか見てみましょう。</p>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">クローラーが全削除</div>
+          <div class="think-step-body">
+            Google・Bing 等の<b>検索エンジンのクローラー</b>はWebサイトを巡回して<b>全リンクを辿る</b>。一覧ページに <code>&lt;a href="/tasks/2/delete"&gt;</code> があれば<b>クローラーが削除リクエストを送る</b>。<br>
+            <b>結果</b>：ある朝、全タスクが消滅。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">プリフェッチで誤削除</div>
+          <div class="think-step-body">
+            最近のブラウザは<b>「先読み」</b>機能を持つ。ユーザーがリンクにマウスホバーした瞬間に<b>「先読み」リクエスト</b>を送る場合がある。ホバーしただけで<b>削除実行</b>。<br>
+            <b>結果</b>：マウスを動かしただけでデータが消える。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">「戻る」「進む」で再削除</div>
+          <div class="think-step-body">
+            一度削除した後、ブラウザの「戻る」「進む」を使うと<b>同じGETが再実行</b>される。さらに削除しようとする（既に消えているので0件削除になるが、エラー表示が出るかも）。<br>
+            <b>結果</b>：UXが大混乱。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">ブックマーク・URLシェアで誤削除</div>
+          <div class="think-step-body">
+            「あれ、便利だな」と<b>削除URLをブックマーク</b>してしまう。SNSでURLをシェアすると<b>受け取った人が開いた瞬間に削除</b>される。<br>
+            <b>結果</b>：意図せず削除地獄。
+          </div>
+        </div>
+
+        <div style="background:#c43;color:#fff;padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>業界では「GETで削除」は「絶対NG」</b>として扱われる。実装してしまったら、レビューで即指摘・差し戻し。本番リリース前に必ず捕まる。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// ★絶対NG★ GETでDELETE</span>
+
+<span class="comment">// やってはいけない実装</span>
+
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}/delete"</span>)  <span class="bad">// ✗</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">delete</span>(...) {
+  taskService.<span class="fn">delete</span>(id);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+
+<span class="comment">// list.html で:</span>
+<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="str">"/tasks/2/delete"</span><span class="tag">&gt;</span>削除<span class="tag">&lt;/a&gt;</span>
+
+<span class="bad">// このリンクが存在するだけで:</span>
+<span class="bad">// ・クローラーがアクセスしてDELETE実行</span>
+<span class="bad">// ・ブラウザのプリフェッチでDELETE実行</span>
+<span class="bad">// ・誤クリック1回で復元不能</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 正しい実装（POST） ===</span>
+
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}/delete"</span>)  <span class="good">// ✓</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">delete</span>(...) {
+  taskService.<span class="fn">delete</span>(id);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+
+<span class="comment">// list.html で:</span>
+<span class="tag">&lt;form</span> <span class="attr">method</span>=<span class="str">"post"</span>
+      <span class="attr">action</span>=<span class="str">"/tasks/2/delete"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="str">"submit"</span><span class="tag">&gt;</span>削除<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/form&gt;</span>
+
+<span class="good">// POSTなら:</span>
+<span class="good">// ・クローラーは絶対にPOSTしない</span>
+<span class="good">// ・プリフェッチもPOSTは送らない</span>
+<span class="good">// ・URLシェアでも実行されない</span>
+<span class="good">// ・「明示的なボタン操作」が必須</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業界のルール（再確認）</span>
+
+GET    → 読み取り、副作用なし
+POST   → 状態変更、副作用あり
+
+DELETE → 状態変更だがHTMLフォーム
+         からは送れない
+PUT    → 同上
+
+<span class="comment">// HTMLフォーム制約下では:</span>
+<span class="comment">// 「読み取り = GET, 変更 = POST」</span>
+<span class="comment">// この鉄則だけ守れば事故は防げる</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">post-vs-get-flow</span>
+      <span class="tag-desc">クローラーの動きの違い（新ルール適用フロー図）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// GETの場合：クローラーが削除を実行</div>
+
+<div class="flow-v2"><span class="flow-step"><span class="flow-actor">クローラー</span> が <span class="flow-actor">サーバ</span> に <span class="flow-call">巡回リクエストを送る</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">送信内容: GET /tasks</span>
+
+<span class="flow-step"><span class="flow-actor">サーバ</span> が <span class="flow-actor">クローラー</span> に <span class="flow-return">HTMLを返す</span><span class="flow-label-return">帰り</span></span>
+<span class="flow-arg">内容: 一覧画面のHTML（削除リンク含む）</span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step"><span class="flow-actor">クローラー</span> が HTMLから<span class="flow-call">全リンクを抽出</span></span>
+<span class="flow-arg">発見: &lt;a href="/tasks/1/delete"&gt;、&lt;a href="/tasks/2/delete"&gt;...</span>
+
+<span class="flow-step"><span class="flow-actor">クローラー</span> が <span class="flow-actor">サーバ</span> に <span class="flow-call">削除リクエストを送る</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">送信内容: GET /tasks/1/delete</span>
+
+<span class="flow-step"><span class="flow-actor">サーバ</span> が <span class="flow-actor">DB</span> に <span class="flow-call">DELETE SQLを発行</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">SQL: DELETE FROM tasks WHERE id = 1</span>
+
+<span class="flow-step"><span class="flow-actor">DB</span> が <span class="flow-actor">サーバ</span> に <span class="flow-return">削除完了を返す</span><span class="flow-label-return">帰り</span></span>
+
+<span class="flow-step"><span class="bad">★タスク1が消失★</span></span>
+
+<span class="flow-step">同じことが /tasks/2/delete、/tasks/3/delete... と<b>全リンクで起きる</b></span></div>
+      </div>
+      <div class="code"><span class="code-head">// POSTの場合：クローラーは無視する</span>
+
+<div class="flow-v2" style="background:transparent;border:none;color:var(--code-text);padding:0">[クローラー]
+   |
+   ↓ クローラー が サーバ に
+   |  巡回リクエストを送る（行き）
+   |  GET /tasks
+   |
+[サーバ]
+   |
+   ↑ サーバ が クローラー に
+   |  HTMLを返す（帰り）
+   |  内容: 一覧HTML
+   |        削除ボタンは &lt;form&gt; 内
+   |
+[クローラー]
+   |
+   ↓ クローラーがHTMLを解析
+   |  &lt;form&gt; 要素は通常スキップ
+   |  &lt;a href="..."&gt; のみフォロー
+   |
+   ★ /tasks/X/delete は POST のみ
+   ★ クローラーはアクセスしない
+   ★ 削除されない！</div></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「POSTは『明示的な意志表示』」</div>
+    <p>POSTリクエストは<b>「ボタンを押す」「フォームを送信する」など、明示的なユーザー操作</b>でしか発生しません。GETは<b>「URLを開く」「リンクをクリック」「先読み」「クローラー」</b>など様々な経路で発生します。<b>「ユーザーが意図して操作した時だけ実行したい」処理は、POSTで実装する</b>のが鉄則。これだけ守れば、Vol.7のような<b>状態変更系</b>の機能が事故りません。</p>
+  </div>
+</section>
+
+<section id="term-logical-delete">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>用語カード：論理削除 vs 物理削除</h2>
+    <span class="en">TERM — LOGICAL VS PHYSICAL DELETE</span>
+  </div>
+  <p class="pattern-desc">業務システムで頻出する設計上の選択。<b>「DELETEで本当に消すか」</b>「<b>削除フラグを立てて見えなくするだけか</b>」── どちらを選ぶかは<b>業務要件の根本</b>に関わります。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD</span>
+    <div class="term-card-title">論理削除 vs 物理削除</div>
+    <div class="term-card-sub">削除の2つのアプローチ</div>
+    <dl class="term-grid">
+      <dt>物理削除</dt>
+      <dd><b>DELETE文でレコードを完全に消す</b>方式。Vol.7本編で採用。シンプル、テーブル肥大化なし。<b>復元不可能</b>。</dd>
+      <dt>論理削除</dt>
+      <dd>DELETE文を使わず、<b>「削除済みフラグ」を立てる</b>方式。<code>deleted_at</code>カラムに削除日時を入れる、または <code>is_deleted</code> フラグを <code>true</code> にする。<b>レコードはDBに残り続ける</b>が、画面に表示しないようにする。</dd>
+      <dt>共通点</dt>
+      <dd>どちらも<b>「ユーザーから見れば削除された」</b>状態。一覧から消える、検索しても出ない。</dd>
+      <dt>違い</dt>
+      <dd><b>物理削除</b>：DBから完全消去、テーブル軽量、復元不可<br>
+        <b>論理削除</b>：DBに残る、テーブル肥大化、<b>復元可能</b>、<b>削除履歴が残る</b>、すべてのSELECT文に <code>WHERE deleted_at IS NULL</code> 等の条件追加が必要
+      </dd>
+      <dt>選び方</dt>
+      <dd>業務要件で決める：<br>
+        <b>物理削除が向く</b>：本当に不要なデータ、個人情報保護（削除請求対応）、シンプルなアプリ<br>
+        <b>論理削除が向く</b>：監査が必要、誤削除復元したい、削除履歴を辿りたい、本格業務システム
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">logical-vs-physical</span>
+      <span class="tag-desc">2つの設計の実装比較</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テーブル設計の違い</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>物理削除のテーブル（Vol.7本編で使用）</b>：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">CREATE TABLE tasks (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(100),
+  done BOOLEAN,
+  created_at DATETIME
+);</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>論理削除のテーブル</b>：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">CREATE TABLE tasks (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(100),
+  done BOOLEAN,
+  created_at DATETIME,
+  <b>deleted_at DATETIME NULL  -- ★追加</b>
+);</pre>
+
+        <p style="font-size:13px;margin-top:6px;line-height:1.7"><code>deleted_at</code> が NULL = 削除されていない、値あり = 削除済み（その日時）。</p>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">論理削除の影響範囲</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:6px">論理削除を採用すると、<b>すべてのSELECT文に条件が増える</b>：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><code>findAll()</code> → <code>WHERE deleted_at IS NULL</code> 必須</li>
+          <li><code>findById(id)</code> → <code>WHERE id = ? AND deleted_at IS NULL</code></li>
+          <li>「削除済み」を見せたい画面 → <code>WHERE deleted_at IS NOT NULL</code></li>
+          <li>uniqueキー制約に注意（同じtitleを2回登録できなくなる罠）</li>
+        </ul>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px">つまり<b>「削除」だけでなく「読み取り全体」に影響</b>する大きな設計判断。Vol.7では学習しやすさ重視で<b>物理削除</b>を採用しています。</p>
+      </div>
+      <div class="code"><span class="code-head">// 物理削除の実装（Vol.7本編で採用）</span>
+
+<span class="ann">@Delete</span>(<span class="str">"DELETE FROM tasks WHERE id = #{id}"</span>)
+<span class="kw">void</span> <span class="fn">delete</span>(<span class="type">Long</span> id);
+
+<span class="comment">// SQL実行:</span>
+DELETE FROM tasks WHERE id = 2;
+<span class="comment">// → レコードが完全消失</span>
+<span class="comment">// → 復元するにはバックアップが必要</span>
+
+
+<span class="code-head" style="margin-top:18px">// 論理削除の実装</span>
+
+<span class="ann">@Update</span>(<span class="str">"UPDATE tasks SET "</span> +
+        <span class="str">"deleted_at = NOW() "</span> +
+        <span class="str">"WHERE id = #{id}"</span>)
+<span class="kw">void</span> <span class="fn">softDelete</span>(<span class="type">Long</span> id);
+
+<span class="comment">// SQL実行:</span>
+UPDATE tasks SET deleted_at = NOW()
+WHERE id = 2;
+<span class="comment">// → レコードは残る</span>
+<span class="comment">// → deleted_at に日時が入る</span>
+
+
+<span class="code-head" style="margin-top:18px">// 一覧取得もSQLが変わる</span>
+
+<span class="comment">// 物理削除採用なら（Vol.7まで）:</span>
+<span class="ann">@Select</span>(<span class="str">"SELECT ... FROM tasks "</span> +
+        <span class="str">"ORDER BY id"</span>)
+<span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>();
+
+
+<span class="comment">// 論理削除採用なら:</span>
+<span class="ann">@Select</span>(<span class="str">"SELECT ... FROM tasks "</span> +
+        <span class="str">"WHERE deleted_at IS NULL "</span> +
+        <span class="str">"ORDER BY id"</span>)
+<span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>();
+
+<span class="comment">// 全SELECT文に条件追加が必要</span>
+
+
+<span class="code-head" style="margin-top:18px">// 「削除済み一覧」も作れる</span>
+
+<span class="ann">@Select</span>(<span class="str">"SELECT ... FROM tasks "</span> +
+        <span class="str">"WHERE deleted_at IS NOT NULL "</span> +
+        <span class="str">"ORDER BY deleted_at DESC"</span>)
+<span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findDeleted</span>();
+
+<span class="comment">// 「ゴミ箱」のようなUI</span>
+<span class="comment">// → 復元機能を作れる</span>
+
+
+<span class="code-head" style="margin-top:18px">// 「復元」機能の実装</span>
+
+<span class="ann">@Update</span>(<span class="str">"UPDATE tasks SET "</span> +
+        <span class="str">"deleted_at = NULL "</span> +
+        <span class="str">"WHERE id = #{id}"</span>)
+<span class="kw">void</span> <span class="fn">restore</span>(<span class="type">Long</span> id);
+
+<span class="comment">// → 物理削除ではこれが不可能</span>
+<span class="comment">// → 論理削除の大きな利点</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── ゴミ箱に入れる vs 焼却炉に投げ込む</div>
+    <p><b>論理削除</b>はパソコンの「ゴミ箱に入れる」操作に似ています。デスクトップからは消えるが、<b>ゴミ箱を開けば復元できる</b>。<b>「いつ消したか」</b>もログとして残る。<br><br>
+    <b>物理削除</b>は「Shift+Deleteで完全消去」または「焼却炉に投げ込む」操作。<b>復元不可能</b>。スッキリするが、<b>「あれ、やっぱり要るかも」</b>と気付いた時には手遅れ。<br><br>
+    業務システムでは「ゴミ箱方式」（論理削除）が安全。Vol.7では学習しやすさ重視で「焼却炉方式」（物理削除）を採用しているだけです。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「業務システムは論理削除が標準」</div>
+    <p>本格的な業務システム── 顧客管理、受注管理、人事システム── では<b>論理削除が標準</b>。<b>「監査要件」</b>（履歴がないと法規に違反する業界がある）、<b>「誤削除復元」</b>（人間はミスする）、<b>「削除日時の追跡」</b>（いつ消えたかが重要）── これらが理由です。Vol.7のTODOアプリは個人用なので物理削除でOKですが、業務で書く場合は<b>論理削除をデフォルト</b>と考えましょう。</p>
+  </div>
+</section>
+
+<section id="delete-irreversibility">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>削除の不可逆性 ── 復元できない設計の重み</h2>
+    <span class="en">IRREVERSIBILITY OF DELETE</span>
+  </div>
+  <p class="pattern-desc">業界経験者が口を揃えて言う言葉── <b>「DELETE文だけは慎重に書く」</b>。なぜそこまで慎重なのか、<b>「失敗した時の代償」</b>を見ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">delete-disaster-stories</span>
+      <span class="tag-desc">業界に伝わる削除事故の典型</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある削除事故3つ</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">WHERE句忘れ事故</div>
+          <div class="think-step-body">
+            開発者がコンソールで <code>DELETE FROM customers WHERE</code> まで書いたところで Enter を誤入力。<br>
+            実行されるSQL: <code>DELETE FROM customers WHERE</code> ── 構文エラーで停止... <b>と思いきや</b>、ある状況では <code>WHERE</code> 句なしの <code>DELETE FROM customers</code> が走ることがある（実装による）。<br>
+            <b>結果</b>：顧客全データ消失。バックアップから復元するも、最新数時間分のデータは戻らない。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">本番DBにテスト用スクリプト誤実行</div>
+          <div class="think-step-body">
+            開発環境でテスト用に<code>DELETE FROM tasks</code>（全削除）を書いたスクリプト。間違って<b>本番環境</b>で実行してしまう。<br>
+            <b>結果</b>：本番データ全消失。リカバリーに数日。会社が大損害。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">カスケード削除の想定外</div>
+          <div class="think-step-body">
+            ユーザーを1人削除したつもりが、外部キー設定で<b>そのユーザーのタスク、メッセージ、ログ全部</b>が連鎖削除される。<br>
+            <b>結果</b>：「ちょっと整理したかっただけ」が、関係する全データを巻き込む大事故に。
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>これらの事故は実話ベース</b>です。業界では<b>「DELETE文を書く時は、心臓に手を当てて深呼吸してから書く」</b>と冗談半分でよく言われます。</p>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">本番DBで削除する時の業界ベストプラクティス</p>
+
+        <ol style="padding-left:24px;font-size:13px;line-height:1.85;margin-top:6px">
+          <li>事前に<b>SELECT</b>で削除対象を確認する</li>
+          <li><b>トランザクション開始</b>してから DELETE 実行</li>
+          <li>削除件数を確認</li>
+          <li><b>想定通り</b>ならCOMMIT、違ったらROLLBACK</li>
+          <li>必ず<b>バックアップを取ってから</b>実行</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// 本番DBで安全に削除する手順</span>
+
+<span class="comment">// === ステップ1: SELECTで確認 ===</span>
+SELECT COUNT(*) FROM tasks
+WHERE created_at &lt; '2020-01-01';
+<span class="comment">// → 削除対象件数を把握</span>
+
+
+<span class="code-head" style="margin-top:18px">// === ステップ2: トランザクション ===</span>
+BEGIN;  <span class="comment">-- トランザクション開始</span>
+
+
+<span class="code-head" style="margin-top:18px">// === ステップ3: DELETE実行 ===</span>
+DELETE FROM tasks
+WHERE created_at &lt; '2020-01-01';
+
+<span class="comment">// 影響行数: 1234 rows affected</span>
+
+
+<span class="code-head" style="margin-top:18px">// === ステップ4: 確認 ===</span>
+SELECT COUNT(*) FROM tasks;
+<span class="comment">// → 残ったレコード数を確認</span>
+
+
+<span class="code-head" style="margin-top:18px">// === ステップ5: 判断 ===</span>
+
+<span class="comment">// 期待通り？</span>
+COMMIT;  <span class="comment">-- 確定（取り消し不可）</span>
+
+<span class="comment">// 想定と違う？</span>
+ROLLBACK;  <span class="comment">-- 取り消し（救済可能）</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業界の格言</span>
+
+<span class="comment">// 1. DELETE文は WHERE 句から書く</span>
+<span class="comment">// 2. SELECT で確認してから DELETE</span>
+<span class="comment">// 3. トランザクションで囲む</span>
+<span class="comment">// 4. バックアップ前提で実行</span>
+<span class="comment">// 5. 不安なら誰かに見てもらう</span>
+
+
+<span class="code-head" style="margin-top:18px">// アプリ側の対策</span>
+
+<span class="comment">// ✓ 物理削除 → 論理削除に変える</span>
+<span class="comment">// ✓ DELETE実行前に必ずログを残す</span>
+<span class="comment">// ✓ 削除実行できるユーザーを制限</span>
+<span class="comment">// ✓ 一定件数以上の削除は禁止する</span>
+<span class="comment">// ✓ 重要レコードは「保護フラグ」を持たせる</span>
+
+<span class="comment">// Vol.7のTODOアプリは学習用なので</span>
+<span class="comment">// シンプルだが、業務系では上記対策が標準</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「削除の前に一呼吸」</div>
+    <p>業界で<b>10年・20年</b>働いている人ほど<b>「DELETE文を恐れる」</b>傾向があります。経験から、<b>削除事故の代償</b>を知っているから。あなたが業務開発の現場に出たら、<b>「DELETE文書く時は集中する」</b>習慣をつけてください。コーヒー片手にDELETE文を書く軽率さは、命取りになります。</p>
+  </div>
+</section>
+
+<section id="confirm-limit">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>確認ダイアログの設計と限界</h2>
+    <span class="en">CONFIRM DIALOG LIMITS</span>
+  </div>
+  <p class="pattern-desc">Vol.7本編で使った <code style="font-family:'JetBrains Mono'">confirm()</code> による確認ダイアログ。<b>これだけで本当に安全か?</b> 業務開発で求められる<b>より厳密な確認UI</b>を見ていきます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">confirm-evolution</span>
+      <span class="tag-desc">確認UIの進化段階</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 確認UIの4段階</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">Level 1: 確認なし（最悪）</div>
+          <div class="think-step-body">
+            <b>削除</b>ボタンをクリックしたら即削除。ユーザーが<b>気付かないうちに</b>データが消える。<br>
+            <b>使い所</b>：絶対にない。学習用にすらNG。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">Level 2: confirm() ダイアログ（Vol.7本編）</div>
+          <div class="think-step-body">
+            <code>confirm("削除しますか?")</code>でブラウザ標準のOK/キャンセル。<br>
+            <b>使い所</b>：個人用アプリ、小規模ツール、社内システム。<br>
+            <b>限界</b>：デザインが固定、誤クリックは防げない、重要度の伝達が弱い。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">Level 3: モーダルダイアログ</div>
+          <div class="think-step-body">
+            Bootstrap / Modal / カスタム要素で<b>独自デザインの確認画面</b>。「削除されます。よろしいですか?」と詳細メッセージ、対象データのプレビュー、明確なボタン2つ。<br>
+            <b>使い所</b>：本格的な業務システム、一般ユーザー向けサービス。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">Level 4: 「タイトルを入力して削除」型</div>
+          <div class="think-step-body">
+            GitHub の Repository 削除のような<b>「対象の名前を入力してください」</b>方式。<b>誤クリックがほぼ不可能</b>。<br>
+            <b>使い所</b>：超重要データ（顧客削除、リポジトリ削除等）。<br>
+            <b>例</b>：「タスク『買い物リスト』を削除します。タイトルを入力してください: ___」
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>重要度に応じて</b>段階を選ぶのが業務開発の流儀。重要なデータほど<b>「面倒な確認」</b>を入れます。</p>
+      </div>
+      <div class="code"><span class="code-head">// Level 2: Vol.7本編の実装</span>
+
+<span class="tag">&lt;form</span>
+  <span class="attr">onsubmit</span>=<span class="str">"return confirm('削除しますか?')"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;button</span><span class="tag">&gt;</span>削除<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/form&gt;</span>
+
+<span class="comment">// シンプル、1行で済む</span>
+<span class="comment">// 学習・小規模向け</span>
+
+
+<span class="code-head" style="margin-top:18px">// Level 3: モーダルダイアログ（業務系標準）</span>
+
+<span class="comment">// HTML</span>
+<span class="tag">&lt;button</span> <span class="attr">onclick</span>=<span class="str">"openModal(2)"</span><span class="tag">&gt;</span>
+  削除
+<span class="tag">&lt;/button&gt;</span>
+
+<span class="tag">&lt;div</span> <span class="attr">id</span>=<span class="str">"deleteModal"</span> <span class="attr">class</span>=<span class="str">"modal"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;h2&gt;</span>本当に削除しますか?<span class="tag">&lt;/h2&gt;</span>
+  <span class="tag">&lt;p&gt;</span>このタスク「<span class="tag">&lt;span</span> <span class="attr">id</span>=<span class="str">"taskName"</span><span class="tag">&gt;</span><span class="tag">&lt;/span&gt;</span>」<span class="tag">&lt;br&gt;</span>
+     を削除します。元に戻せません。<span class="tag">&lt;/p&gt;</span>
+  <span class="tag">&lt;form</span> <span class="attr">method</span>=<span class="str">"post"</span> <span class="attr">id</span>=<span class="str">"deleteForm"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="str">"submit"</span> <span class="attr">class</span>=<span class="str">"danger"</span><span class="tag">&gt;</span>
+      削除を実行
+    <span class="tag">&lt;/button&gt;</span>
+    <span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="str">"button"</span> <span class="attr">onclick</span>=<span class="str">"closeModal()"</span><span class="tag">&gt;</span>
+      キャンセル
+    <span class="tag">&lt;/button&gt;</span>
+  <span class="tag">&lt;/form&gt;</span>
+<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">// CSS で .modal の見た目を整える</span>
+<span class="comment">// JS で開閉制御</span>
+
+
+<span class="code-head" style="margin-top:18px">// Level 4: 名前入力型（超重要データ）</span>
+
+<span class="comment">// GitHubのリポジトリ削除等</span>
+
+<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"danger-zone"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;p&gt;</span>このアクションは元に戻せません。<span class="tag">&lt;/p&gt;</span>
+  <span class="tag">&lt;p&gt;</span>削除を確定するには、タスク名<br>
+     「<b>買い物リスト</b>」を入力してください:<span class="tag">&lt;/p&gt;</span>
+  <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span> <span class="attr">id</span>=<span class="str">"confirmText"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;button</span> <span class="attr">id</span>=<span class="str">"deleteBtn"</span> <span class="attr">disabled</span><span class="tag">&gt;</span>
+    削除する
+  <span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">// JSで入力値を監視</span>
+<span class="comment">// 一致したら deleteBtn を有効化</span>
+
+<span class="comment">// → 誤クリック・誤操作は完全に防げる</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業界の選び方</span>
+
+<span class="comment">// 個人タスク: Level 2 (confirm)</span>
+<span class="comment">// 業務システム一般: Level 3 (modal)</span>
+<span class="comment">// 顧客情報・会員情報: Level 3-4</span>
+<span class="comment">// アカウント削除: Level 4</span>
+<span class="comment">// 組織・支店削除: Level 4 + 上長承認</span>
+
+<span class="comment">// 「失われた時の影響度」に応じて選ぶ</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">confirm-flow</span>
+      <span class="tag-desc">confirm() の処理フロー（新ルール適用）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// confirm() の動作を分解</div>
+
+<div class="flow-v2"><span class="flow-step"><span class="flow-actor">ユーザー</span> が <span class="flow-actor">削除ボタン</span> を <span class="flow-call">クリック</span></span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">&lt;form&gt;</span> の <span class="flow-call">onsubmit を実行</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">実行内容: return confirm('このタスクを削除しますか?')</span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">ユーザー</span> に <span class="flow-call">ダイアログを表示</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">表示内容: 「このタスクを削除しますか?」 [OK] [キャンセル]</span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ユーザーが OK を押した場合</span>
+
+<span class="flow-step"><span class="flow-actor">ユーザー</span> が <span class="flow-actor">ダイアログ</span> の <span class="flow-call">OKを押す</span></span>
+
+<span class="flow-step"><span class="flow-actor">ダイアログ</span> が <span class="flow-actor">onsubmit</span> に <span class="flow-return">true を返す</span><span class="flow-label-return">帰り</span></span>
+<span class="flow-arg">戻り値: true</span>
+
+<span class="flow-step"><span class="flow-actor">onsubmit</span> が <span class="flow-actor">ブラウザ</span> に <span class="flow-return">true を返す</span><span class="flow-label-return">帰り</span></span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">サーバ</span> に <span class="flow-call">POST送信を実行</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">送信内容: POST /tasks/2/delete</span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ユーザーが キャンセル を押した場合</span>
+
+<span class="flow-step"><span class="flow-actor">ユーザー</span> が <span class="flow-actor">ダイアログ</span> の <span class="flow-call">キャンセルを押す</span></span>
+
+<span class="flow-step"><span class="flow-actor">ダイアログ</span> が <span class="flow-actor">onsubmit</span> に <span class="flow-return">false を返す</span><span class="flow-label-return">帰り</span></span>
+<span class="flow-arg">戻り値: false</span>
+
+<span class="flow-step"><span class="flow-actor">onsubmit</span> が <span class="flow-actor">ブラウザ</span> に <span class="flow-return">false を返す</span><span class="flow-label-return">帰り</span></span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-call">POST送信を中止</span></span>
+<span class="flow-arg">→ サーバには何も送られない、削除は実行されない</span></div>
+      </div>
+      <div class="code"><span class="code-head">// confirm() の本質</span>
+
+<span class="comment">// JavaScriptの組み込み関数</span>
+<span class="kw">function</span> <span class="fn">confirm</span>(message) {
+  <span class="comment">// 1. ダイアログ表示</span>
+  <span class="comment">// 2. ユーザーの選択を待つ（同期）</span>
+  <span class="comment">// 3. OKならtrue、キャンセルならfalse</span>
+  <span class="kw">return</span> userChoice;
+}
+
+
+<span class="code-head" style="margin-top:18px">// onsubmit属性の動き</span>
+
+<span class="tag">&lt;form</span> <span class="attr">onsubmit</span>=<span class="str">"return confirm(...)"</span><span class="tag">&gt;</span>
+
+<span class="comment">// onsubmit の戻り値で挙動が決まる</span>
+
+<span class="comment">// true → 送信続行</span>
+<span class="comment">// false → 送信中止</span>
+
+
+<span class="code-head" style="margin-top:18px">// returnを忘れた場合の悲劇</span>
+
+<span class="tag">&lt;form</span> <span class="attr">onsubmit</span>=<span class="str">"confirm('...')"</span><span class="tag">&gt;</span>
+                  <span class="comment">// ↑ return なし</span>
+
+<span class="comment">// 動き:</span>
+<span class="comment">// 1. ダイアログが出る</span>
+<span class="comment">// 2. ユーザーが選択</span>
+<span class="comment">// 3. 戻り値が捨てられる</span>
+<span class="comment">// 4. onsubmit は undefined を返す</span>
+<span class="comment">// 5. undefined は falseでないので</span>
+<span class="comment">//    フォーム送信が続行される！</span>
+<span class="comment">// → キャンセル押しても削除される</span>
+
+<span class="bad">// → returnは「絶対に書く」</span>
+
+
+<span class="code-head" style="margin-top:18px">// confirm() の限界</span>
+
+<span class="comment">// ✗ デザインを変えられない</span>
+<span class="comment">// ✗ ボタンの文字を変えられない（OK/Cancel固定）</span>
+<span class="comment">// ✗ 詳細情報を見せられない</span>
+<span class="comment">// ✗ ユーザーが「読まずに即OK」する習慣</span>
+
+<span class="comment">// → 重要な削除には弱い</span>
+<span class="comment">// → 業務システムではモーダル推奨</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「確認の重さを操作に合わせる」</div>
+    <p>確認の重さは<b>「失われたら困るデータの重さ」</b>に合わせます。Vol.7のTODOは復元可能（再登録すればOK）なので<code>confirm()</code>で十分。でも<b>本物の業務システムで「顧客情報を削除」</b>するなら、Level 3〜4の慎重なUIが必要。<b>「動く」と「業務で使える」の境目</b>がここにあります。</p>
+  </div>
+</section>
+
+<section id="csrf-preview">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>CSRFの予告（Spring Securityへの伏線）</h2>
+    <span class="en">CSRF PREVIEW</span>
+  </div>
+  <p class="pattern-desc">Vol.7で<b>「POSTで状態変更」</b>を学びました── でも実は、それだけでは<b>防げない攻撃</b>があります。<b>CSRF（クロスサイトリクエストフォージェリ）</b>と呼ばれる、業務開発者なら必ず知っておくべき脅威です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">csrf-attack</span>
+      <span class="tag-desc">CSRF攻撃の仕組み</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// CSRF攻撃のシナリオ</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>CSRF</b>は「<b>他サイトから勝手にPOSTリクエストを送らせる攻撃</b>」です。仕組みを順番に見ます。</p>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">前提：あなたはアプリにログイン中</div>
+          <div class="think-step-body">
+            あなたはTODOアプリにログイン済み。ブラウザに<b>セッションCookie</b>が保存されている。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">攻撃者の罠：偽サイトに誘導</div>
+          <div class="think-step-body">
+            攻撃者が<b>悪意あるWebサイト</b>を作る。あなたが何かのリンクからそのサイトを開く。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">罠の中身：自動POST送信</div>
+          <div class="think-step-body">
+            悪意あるサイトには<b>「ページを開いた瞬間に自動でPOSTを送るスクリプト」</b>が仕込まれている。<br>
+            送信先: <code>https://your-todo-app.com/tasks/1/delete</code><br>
+            ブラウザは<b>あなたのCookie付き</b>でリクエストを送る（同じドメインからのリクエストと区別なし）。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">結果：あなたのアプリで削除実行</div>
+          <div class="think-step-body">
+            TODOアプリのサーバは<b>正規のリクエストと判断</b>（Cookieが正しいから）して、削除を実行。<br>
+            <b>あなたは何もしていない</b>のに、自分のタスクが消える。
+          </div>
+        </div>
+
+        <div style="background:#c43;color:#fff;padding:10px 14px;margin-top:14px;font-size:13px">
+          これが<b>CSRF攻撃</b>。POSTで実装していても、<b>セッションCookieが自動送信される</b>のでこの攻撃が成立します。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// CSRF攻撃の例（悪意あるサイトのHTML）</span>
+
+<span class="comment">// 攻撃者が用意するサイト</span>
+<span class="comment">// https://evil-site.com/cat-pictures.html</span>
+
+<span class="tag">&lt;!DOCTYPE html&gt;</span>
+<span class="tag">&lt;html&gt;</span>
+<span class="tag">&lt;body&gt;</span>
+  <span class="tag">&lt;h1&gt;</span>かわいい猫の写真集<span class="tag">&lt;/h1&gt;</span>
+  <span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="str">"cat.jpg"</span><span class="tag">&gt;</span>
+
+  <span class="comment">&lt;!-- 隠しフォーム --&gt;</span>
+  <span class="tag">&lt;form</span> <span class="attr">id</span>=<span class="str">"evil"</span>
+        <span class="attr">action</span>=<span class="str">"https://your-todo.com/tasks/1/delete"</span>
+        <span class="attr">method</span>=<span class="str">"post"</span>
+        <span class="attr">style</span>=<span class="str">"display:none"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;/form&gt;</span>
+
+  <span class="tag">&lt;script&gt;</span>
+    <span class="comment">// ページ表示と同時に自動送信</span>
+    document.<span class="fn">getElementById</span>(<span class="str">"evil"</span>).<span class="fn">submit</span>();
+  <span class="tag">&lt;/script&gt;</span>
+<span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span>
+
+<span class="comment">// ユーザーがこのページを開いた瞬間:</span>
+<span class="comment">// 1. JavaScriptが自動でフォーム送信</span>
+<span class="comment">// 2. ブラウザがPOSTリクエスト送信</span>
+<span class="comment">// 3. ブラウザは自動でCookieを添付</span>
+<span class="comment">// 4. TODOサーバは正規ユーザーと認識</span>
+<span class="comment">// 5. 削除実行</span>
+
+<span class="bad">// → ユーザーは何もしていない</span>
+
+
+<span class="code-head" style="margin-top:18px">// 防御策：CSRFトークン</span>
+
+<span class="comment">// Spring Securityが標準で対応</span>
+
+<span class="comment">// 1. サーバが「秘密のトークン」を発行</span>
+<span class="comment">//    フォーム表示時にHTMLに埋め込む</span>
+
+<span class="tag">&lt;form&gt;</span>
+  <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"hidden"</span>
+         <span class="attr">name</span>=<span class="str">"_csrf"</span>
+         <span class="attr">value</span>=<span class="str">"a8s7df9as8df7a..."</span><span class="tag">&gt;</span>
+  ...
+<span class="tag">&lt;/form&gt;</span>
+
+<span class="comment">// 2. サーバはPOST受信時にトークン照合</span>
+<span class="comment">//    トークンが一致しなければ拒否</span>
+
+<span class="comment">// 3. 悪意あるサイトはトークンを知らない</span>
+<span class="comment">//    → 攻撃が成立しない</span>
+
+
+<span class="code-head" style="margin-top:18px">// 本書での扱い</span>
+
+<span class="comment">// Vol.7時点では CSRF 対策を入れていない</span>
+<span class="comment">// → 学習用、ローカル動作のみ</span>
+<span class="comment">// → セキュリティリスクは小さい</span>
+
+<span class="comment">// 本格的なアプリにする時は:</span>
+<span class="comment">// Spring Security を導入</span>
+<span class="comment">// （Vol.10付近で軽く触れる予定）</span>
+
+<span class="comment">// Spring Security は CSRF 対策を</span>
+<span class="comment">// デフォルトでONにする</span>
+<span class="comment">// → ほぼ自動で守られる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「POSTだけでは不十分」</div>
+    <p>「<b>POSTで実装したから安全</b>」と思いがちですが、それは<b>誤解</b>。POSTはクローラーやプリフェッチを防ぐだけで、<b>CSRF攻撃</b>には別の対策が必要です。業務に出る前に<b>「セキュリティは多層防御」</b>という言葉を覚えてください。<b>POST + CSRFトークン + 認証 + 認可</b> を組み合わせて、初めて<b>「業務に出せる安全性」</b>になります。<b>Spring Security</b>がこれを<b>ほぼ自動で守ってくれる</b>のがSpring Bootの強み。本書では Vol.10 付近で軽く触れる予定です。</p>
+  </div>
+</section>
+
+<section id="one-click-vs-form">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>「1クリックUI」vs「フォーム経由」のトレードオフ</h2>
+    <span class="en">ONE-CLICK vs FORM</span>
+  </div>
+  <p class="pattern-desc">Vol.7の完了切替は<b>「1クリックで状態変更」</b>。Vol.6の編集は<b>「フォームに遷移して送信」</b>。両者の<b>UXのトレードオフ</b>を整理します。業務開発での選択基準が見えてきます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">one-click-vs-form</span>
+      <span class="tag-desc">2つのUIパターンの比較</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つのUIパターンの本質的な違い</div>
+
+        <div class="compare">
+          <div class="compare-box">
+            <div class="compare-label" style="color:var(--accent-3)">1クリックUI（Vol.7）</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65"><b>例</b>：完了切替、削除、いいね、フォロー<br>
+            <b>UX</b>：速い、軽快、操作回数少ない<br>
+            <b>リスク</b>：誤クリック、確認なし</p>
+          </div>
+          <div class="compare-box">
+            <div class="compare-label" style="color:var(--accent-3)">フォーム経由UI（Vol.6）</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65"><b>例</b>：編集、登録、設定変更<br>
+            <b>UX</b>：丁寧、変更内容を見直せる<br>
+            <b>リスク</b>：操作が多い、面倒</p>
+          </div>
+        </div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">選び方の指針</p>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">変更が「1項目」かつ「軽い」 → 1クリックUI</div>
+          <div class="think-step-body">
+            完了切替、いいね、ブックマーク、フォロー解除── 1つの状態を反転させるだけの操作は1クリックで快適に。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">変更が「多項目」または「重要」 → フォーム経由</div>
+          <div class="think-step-body">
+            編集（複数項目）、設定変更、登録── 「内容を確認してから送信」したい場面はフォーム経由。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">変更が「不可逆」 → 確認ダイアログ追加</div>
+          <div class="think-step-body">
+            1クリックUIでも、<b>削除</b>のように戻せない操作には<code>confirm()</code>等の確認を入れる。Vol.7の削除はこのパターン。
+          </div>
+        </div>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>：<b>「気軽さ」と「慎重さ」</b>のトレードオフ。<b>失った時の代償</b>が大きいほど、慎重なUIにする。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 業界での選択例</span>
+
+<span class="comment">// === 1クリックUI ===</span>
+
+完了切替（Vol.7）
+   <span class="comment">// 元に戻せるので軽快に</span>
+
+「いいね」ボタン
+   <span class="comment">// 連打を許容、何度押してもOK</span>
+
+フォロー / フォロー解除
+   <span class="comment">// 即座に反映、簡単に元に戻せる</span>
+
+ブックマーク追加
+   <span class="comment">// 軽快さが価値</span>
+
+
+<span class="code-head" style="margin-top:18px">// === フォーム経由UI ===</span>
+
+タスク編集（Vol.6）
+   <span class="comment">// 複数項目変更、確認したい</span>
+
+ユーザー登録
+   <span class="comment">// 多項目、一度しか登録できない</span>
+
+パスワード変更
+   <span class="comment">// 慎重に、新旧両方入力</span>
+
+注文確定
+   <span class="comment">// 金銭関わる、明示的な意思</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 1クリック + 確認ダイアログ ===</span>
+
+削除（Vol.7）
+   <span class="comment">// 不可逆なので confirm() で確認</span>
+
+アカウント停止
+   <span class="comment">// 重要な状態変更</span>
+
+サブスク解約
+   <span class="comment">// 慎重に止める</span>
+
+
+<span class="code-head" style="margin-top:18px">// 選択フロー</span>
+
+<span class="kw">if</span> (操作が不可逆) {
+  <span class="kw">return</span> <span class="str">"確認ダイアログ必須"</span>;
+}
+<span class="kw">if</span> (変更項目が多い) {
+  <span class="kw">return</span> <span class="str">"フォーム経由"</span>;
+}
+<span class="kw">if</span> (頻繁に使われる) {
+  <span class="kw">return</span> <span class="str">"1クリックUI"</span>;
+}
+<span class="kw">return</span> <span class="str">"フォーム経由が無難"</span>;</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「UXは業務開発の品質指標」</div>
+    <p>UIパターンの選択は<b>「業務開発における品質判断」</b>です。同じ機能でも<b>UI設計が違うとユーザー体験は劇的に変わる</b>。「<b>動く</b>」だけのアプリと「<b>使いやすい</b>」アプリの境目はここにあります。Vol.7では完了切替と削除で<b>あえてUIパターンを分けた</b>のは、この判断を実体験してもらうためです。</p>
+  </div>
+</section>
+
+<section id="prg-reapply">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>PRGパターンの再応用（書き込み3兄弟）</h2>
+    <span class="en">PRG REUSED — CRUD WRITE TRIO</span>
+  </div>
+  <p class="pattern-desc">Vol.5でPRGパターンを学び、Vol.6・7でも同じパターンを使いました。<b>登録・更新・削除の「書き込み3兄弟」</b>はすべて<b>POST → DB変更 → redirect</b>の構造。あなたはすでにこの基本パターンをマスターしています。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">write-trio-pattern</span>
+      <span class="tag-desc">書き込み3兄弟の共通構造</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 書き込み3兄弟の共通骨格</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>登録（Vol.5）・更新（Vol.6）・削除（Vol.7）</b>── 機能は違いますが、Controllerの<b>骨格はまったく同じ</b>です。</p>
+
+        <p style="font-size:14px;font-weight:700;margin-top:14px;color:var(--accent-3)">3兄弟の共通パターン</p>
+
+        <ol style="padding-left:24px;font-size:13.5px;line-height:1.85;margin-top:6px">
+          <li><code>@PostMapping</code>でPOSTを受ける</li>
+          <li>必要な引数（フォームデータ または @PathVariable）を受け取る</li>
+          <li>Serviceのメソッドを呼ぶ（業務ロジックは丸投げ）</li>
+          <li><code>return "redirect:/...";</code>でリダイレクト</li>
+        </ol>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>パターンを意識</b>すると、<b>新しい書き込み機能</b>を作る時も同じ手順で進められます。Vol.8で<b>バリデーション</b>が入っても、この基本骨格は変わりません。</p>
+      </div>
+      <div class="code"><span class="code-head">// 書き込み3兄弟の比較</span>
+
+<span class="comment">// === 登録（Vol.5）===</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+    <span class="type">TaskForm</span> taskForm) {
+  taskService.<span class="fn">register</span>(taskForm);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+
+
+<span class="comment">// === 更新（Vol.6）===</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">update</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+    <span class="type">TaskEditForm</span> taskEditForm) {
+  taskService.<span class="fn">update</span>(taskEditForm);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+
+
+<span class="comment">// === 切替（Vol.7）===</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}/toggle"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">toggle</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id) {
+  taskService.<span class="fn">toggleDone</span>(id);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+
+
+<span class="comment">// === 削除（Vol.7）===</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}/delete"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">delete</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id) {
+  taskService.<span class="fn">delete</span>(id);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+
+
+<span class="code-head" style="margin-top:18px">// 共通骨格</span>
+
+<span class="ann">@PostMapping</span>(<span class="str">"/URL"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">action</span>(...) {
+  taskService.<span class="fn">業務メソッド</span>(...);
+  <span class="kw">return</span> <span class="str">"redirect:/..."</span>;
+}
+
+<span class="comment">// 3〜5行で全てのCRUD書き込みが実装できる</span>
+
+
+<span class="code-head" style="margin-top:18px">// PRGパターンが効く理由</span>
+
+<span class="comment">// 全ての書き込み処理が「redirect」で終わる</span>
+<span class="comment">// → リロード時に二重実行されない</span>
+<span class="comment">// → ブラウザ「戻る」で警告なし</span>
+<span class="comment">// → URLが意味的にきれい</span>
+
+<span class="comment">// 「POSTの後はredirect」は</span>
+<span class="comment">// CRUD書き込みの絶対法則</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prg-flow-trio</span>
+      <span class="tag-desc">書き込み3兄弟の共通フロー（新ルール適用）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// どの書き込みも基本フローは同じ</div>
+
+<div class="flow-v2"><span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">サーバ</span> に <span class="flow-call">POSTを送る</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">送信: POST /tasks（登録）または /tasks/{id}/edit（更新）または /tasks/{id}/delete（削除）</span>
+
+<span class="flow-step"><span class="flow-actor">Controller</span> が <span class="flow-actor">Service</span> の <span class="flow-call">業務メソッドを呼ぶ</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">呼ぶ: register(form) / update(form) / delete(id) など</span>
+
+<span class="flow-step"><span class="flow-actor">Service</span> が <span class="flow-actor">Mapper</span> に <span class="flow-call">SQL発行を依頼</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">依頼: insert / update / delete のSQL実行</span>
+
+<span class="flow-step"><span class="flow-actor">Mapper</span> が <span class="flow-actor">MySQL</span> に <span class="flow-call">SQLを送る</span><span class="flow-label-call">行き</span></span>
+
+<span class="flow-step"><span class="flow-actor">MySQL</span> が <span class="flow-actor">Mapper</span> に <span class="flow-return">完了応答を返す</span><span class="flow-label-return">帰り</span></span>
+
+<span class="flow-step"><span class="flow-actor">Mapper</span> が <span class="flow-actor">Service</span> に <span class="flow-return">制御を返す</span><span class="flow-label-return">帰り</span></span>
+
+<span class="flow-step"><span class="flow-actor">Service</span> が <span class="flow-actor">Controller</span> に <span class="flow-return">制御を返す</span><span class="flow-label-return">帰り</span></span>
+<span class="flow-arg">@Transactional がコミット実行</span>
+
+<span class="flow-step"><span class="flow-actor">Controller</span> が <span class="flow-actor">ブラウザ</span> に <span class="flow-return">リダイレクト指示を返す</span><span class="flow-label-return">帰り</span></span>
+<span class="flow-arg">レスポンス: HTTP 302 / Location: /tasks</span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ここからは「行き」が再開</span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">サーバ</span> に <span class="flow-call">GETを自動送信</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">送信: GET /tasks（再表示用）</span>
+
+<span class="flow-step"><span class="flow-actor">サーバ</span> が <span class="flow-actor">ブラウザ</span> に <span class="flow-return">更新後の一覧HTMLを返す</span><span class="flow-label-return">帰り</span></span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">ユーザー</span> に <span class="flow-call">画面を表示</span></span>
+<span class="flow-arg">表示: 変更が反映された一覧画面</span></div>
+      </div>
+      <div class="code"><span class="code-head">// このパターンを内面化する</span>
+
+<span class="comment">// 書き込み3兄弟は全て:</span>
+
+<span class="comment">// 1. POSTを受ける</span>
+<span class="ann">@PostMapping</span>
+
+<span class="comment">// 2. 必要な情報を受け取る</span>
+<span class="ann">@PathVariable</span>, <span class="type">Form</span>
+
+<span class="comment">// 3. Serviceに丸投げ</span>
+service.<span class="fn">someMethod</span>(...);
+
+<span class="comment">// 4. リダイレクト</span>
+<span class="kw">return</span> <span class="str">"redirect:/..."</span>;
+
+
+<span class="code-head" style="margin-top:18px">// 新しい機能を作る時の手順</span>
+
+<span class="comment">// 例: 「タスクのアーカイブ」機能を追加</span>
+
+<span class="comment">// Mapper: アーカイブ用SQL</span>
+<span class="ann">@Update</span>(<span class="str">"UPDATE tasks SET "</span> +
+        <span class="str">"archived = true WHERE id = #{id}"</span>)
+<span class="kw">void</span> <span class="fn">archive</span>(<span class="type">Long</span> id);
+
+<span class="comment">// Service: 業務ロジック</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">archive</span>(<span class="type">Long</span> id) {
+  taskMapper.<span class="fn">archive</span>(id);
+}
+
+<span class="comment">// Controller: 同じパターン</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/tasks/{id}/archive"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">archive</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id) {
+  taskService.<span class="fn">archive</span>(id);
+  <span class="kw">return</span> <span class="str">"redirect:/tasks"</span>;
+}
+
+<span class="comment">// list.html: 同じパターン</span>
+<span class="tag">&lt;form</span> <span class="attr">method</span>=<span class="str">"post"</span>
+      <span class="attr">th:action</span>=<span class="str">"@{/tasks/{id}/archive(...)}"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;button&gt;</span>アーカイブ<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/form&gt;</span>
+
+<span class="good">// パターン認識のおかげで即実装できる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「パターン認識が応用力」</div>
+    <p>同じパターンを3回（登録・更新・切替・削除）実装したことで、あなたは<b>「書き込み機能の作り方が体に染み込んだ」</b>はず。新しい機能の追加が頼まれた時、<b>「あ、これも書き込み系だな。じゃあパターンに当てはめれば...」</b>と<b>即座に設計</b>できる── これが業務開発で重宝されるスキルです。</p>
+  </div>
+</section>
+
+<section id="crud-and-beyond">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>CRUD完全制覇 ── そして次の挑戦へ</h2>
+    <span class="en">CRUD COMPLETE AND BEYOND</span>
+  </div>
+  <p class="pattern-desc">Vol.1〜Vol.7の長い旅で、あなたは<b>業務アプリの基本骨格</b>を作れる人になりました。<b>CRUD完全制覇</b>後の景色を確認し、<b>Vol.8以降への展望</b>を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">crud-and-beyond</span>
+      <span class="tag-desc">CRUD完成後の業務開発者の景色</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// CRUD完成 = スタートライン</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>CRUD完全制覇</b>は、<b>「動くアプリを作れる」</b>状態。これは「ゴール」ではなく<b>「スタートライン」</b>です。本物の業務システムには、ここから<b>さらに何層もの工程</b>があります。</p>
+
+        <p style="font-size:14px;font-weight:700;margin-top:14px;color:var(--accent-3)">あなたが今いる地点</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li>✅ Webアプリの基本骨格（CRUD）が作れる</li>
+          <li>✅ 3層アーキテクチャを理解している</li>
+          <li>✅ HTTPメソッドの使い分けができる</li>
+          <li>✅ SQL 4種を実装できる</li>
+          <li>✅ Thymeleafで画面が作れる</li>
+          <li>✅ Form / Entity の分離ができる</li>
+          <li>✅ PRGパターンで二重送信を防げる</li>
+          <li>✅ @Transactionalで一貫性を保てる</li>
+          <li>✅ @PathVariable / @PostMapping / @GetMapping を使いこなせる</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;margin-top:18px;color:var(--accent-3)">これから身につけること</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li>⏳ <b>Vol.8: バリデーション</b> ── 不正な入力を弾く</li>
+          <li>⏳ <b>Vol.9: 例外処理</b> ── 想定外を業務的に扱う</li>
+          <li>⏳ <b>Vol.10: ログ</b> ── 何が起きたかを残す</li>
+          <li>📚 Vol.10以降: テスト、セキュリティ、デプロイ、性能</li>
+        </ul>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>CRUD完成までの努力</b>と<b>これからの努力</b>はざっくり同じくらい。<b>「動くもの作り」</b>から<b>「業務で使えるもの作り」</b>への進化が、Vol.8以降の旅です。</p>
+      </div>
+      <div class="code"><span class="code-head">// CRUDの先にある世界</span>
+
+業務システムの完成度
+─────────────────────────
+Lv 1: 動く CRUD     ← ここまで到達
+Lv 2: 入力検証
+Lv 3: 例外処理
+Lv 4: ログ・監視
+Lv 5: テスト
+Lv 6: セキュリティ
+Lv 7: 性能チューニング
+Lv 8: デプロイ・運用
+Lv 9: スケーラビリティ
+Lv 10: マルチテナント等
+
+
+<span class="code-head" style="margin-top:18px">// 業務システムでの「品質」とは</span>
+
+<span class="comment">// 動くだけのCRUD（Lv1）:</span>
+<span class="kw">if</span> (動く) {
+  <span class="kw">return</span> OK;
+}
+
+<span class="comment">// 業務品質（Lv4以上）:</span>
+<span class="kw">if</span> (動く &amp;&amp;
+    不正入力を弾く &amp;&amp;
+    例外で落ちない &amp;&amp;
+    何が起きたか記録 &amp;&amp;
+    テストで保証 &amp;&amp;
+    セキュリティ対策 &amp;&amp;
+    十分速い) {
+  <span class="kw">return</span> OK;
+}
+
+<span class="comment">// → 業務品質は項目数が桁違い</span>
+
+
+<span class="code-head" style="margin-top:18px">// 心構え</span>
+
+<span class="comment">// Vol.1〜7で学んだことは:</span>
+<span class="comment">// → 業務開発の「基礎」</span>
+<span class="comment">// → 必須スキル</span>
+<span class="comment">// → どの言語/FWでも普遍的な考え方</span>
+
+<span class="comment">// Vol.8〜10で学ぶことは:</span>
+<span class="comment">// → 業務開発の「品質」</span>
+<span class="comment">// → 現場で評価される技術</span>
+<span class="comment">// → ここから差がつく</span>
+
+
+<span class="code-head" style="margin-top:18px">// 1つの真実</span>
+
+<span class="comment">// 業界で評価されるエンジニアは:</span>
+
+<span class="comment">// ✗ CRUDが速く書ける人</span>
+<span class="comment">//   （誰でもできる）</span>
+
+<span class="comment">// ○ 動くものを「業務で使えるもの」に</span>
+<span class="comment">//   仕上げられる人</span>
+<span class="comment">//   （Vol.8以降のスキル）</span>
+
+<span class="comment">// だからVol.8以降が本当に重要</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── 料理人の修行</div>
+    <p>「料理を作る」と「お店で出せる料理を作る」は<b>別物</b>です。料理を作るだけなら家庭料理でOK。でも<b>「お客さんに出す」</b>には：<br>
+    ・<b>食材の鮮度チェック</b>（バリデーション = Vol.8）<br>
+    ・<b>調理ミスへの対処</b>（例外処理 = Vol.9）<br>
+    ・<b>調理記録の管理</b>（ログ = Vol.10）<br>
+    ・<b>衛生管理</b>（セキュリティ）<br>
+    ・<b>提供時間</b>（性能）<br>
+    ── これらの<b>「外で出す品質」</b>が必要です。<br><br>
+    CRUD制覇は「自宅で料理が作れる」段階。Vol.8以降が「お店で出せるレベル」への修行です。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「ここまで来たあなたへ」</div>
+    <p>Vol.1の<b>「Hello World」</b>から、Vol.7の<b>「CRUD完全制覇」</b>── これは<b>本当に大きな旅</b>でした。途中で躓いた、調べた、考え直した、書き直した── そのすべてが<b>業務開発者としての血肉</b>になっています。Vol.8以降は<b>「動くもの」を「お客さんに出せるもの」</b>にする工程。学んだことを<b>振り返りつつ、堂々と次に進みましょう</b>。</p>
+  </div>
+</section>
+
+<section id="checklist">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>アクション系機能のチェックリスト</h2>
+    <span class="en">ACTION CHECKLIST</span>
+  </div>
+  <p class="pattern-desc">本補足の集大成。<b>「状態を変えるアクション」</b>を実装する時のチェックリスト。明日から使える実務指針です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">action-checklist</span>
+      <span class="tag-desc">アクション機能の実装チェックリスト</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実装前の設計判断</div>
+
+        <p style="font-size:14px;font-weight:700;margin-bottom:8px;color:var(--accent-3)">設計判断</p>
+        <ul class="checklist">
+          <li>その操作は<b>「状態を変える」</b>か（読むだけならGETでOK）</li>
+          <li>状態変更なら<b>必ずPOST</b>で実装する</li>
+          <li>1項目だけ変えるか、複数項目変えるか（→ 1クリックUI vs フォーム）</li>
+          <li>削除なら<b>物理削除 vs 論理削除</b>を選ぶ</li>
+          <li>不可逆な操作なら<b>確認ダイアログ</b>を入れる</li>
+          <li>重要な操作なら<b>Level 3〜4の確認UI</b>を検討する</li>
+          <li>本番ではCSRF対策（Spring Security）を入れる</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;margin:14px 0 8px;color:var(--accent-3)">実装</p>
+        <ul class="checklist">
+          <li><b>Mapper</b>に該当のSQL用メソッドを追加（<code>@Update</code> / <code>@Delete</code>）</li>
+          <li><b>WHERE句</b>を必ず入れる（DELETEは特に注意）</li>
+          <li><b>Service</b>に業務メソッドを追加</li>
+          <li><b>@Transactional</b>を付ける（書き込み処理）</li>
+          <li><b>Controller</b>に<code>@PostMapping</code>を追加</li>
+          <li>必要な引数（<code>@PathVariable</code> / Form）を受ける</li>
+          <li>最後は<code>return "redirect:/...";</code>（PRG）</li>
+          <li><b>テンプレート</b>に<code>&lt;form method="post"&gt;</code>のボタンを追加</li>
+          <li>削除には<code>onsubmit="return confirm('...')"</code>を入れる（重要な場合）</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;margin:14px 0 8px;color:var(--accent-3)">動作確認</p>
+        <ul class="checklist">
+          <li>ボタンクリックで<b>POSTリクエスト</b>が送られる（GETではない）</li>
+          <li>確認ダイアログでキャンセル → <b>何も起きない</b></li>
+          <li>確認ダイアログでOK → <b>処理が実行される</b></li>
+          <li>処理後<b>一覧（または別画面）にリダイレクト</b>する</li>
+          <li>リロードで<b>二重実行されない</b></li>
+          <li>ERRORログが出ていない</li>
+          <li>コンソールに想定通りのSQLが出ている</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// アクション機能スターターテンプレート</span>
+
+<span class="comment">// === 1. Mapper ===</span>
+<span class="ann">@Update</span>(<span class="str">"UPDATE ... SET ... "</span> +
+        <span class="str">"WHERE id = #{id}"</span>)
+<span class="kw">void</span> <span class="fn">someAction</span>(<span class="type">Type</span> arg);
+
+<span class="comment">// または</span>
+
+<span class="ann">@Delete</span>(<span class="str">"DELETE FROM ... "</span> +
+        <span class="str">"WHERE id = #{id}"</span>)
+<span class="kw">void</span> <span class="fn">delete</span>(<span class="type">Long</span> id);
+
+
+<span class="comment">// === 2. Service ===</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">someAction</span>(<span class="type">Long</span> id) {
+  <span class="comment">// 必要なら現状取得</span>
+  <span class="comment">// 業務判断</span>
+  <span class="comment">// Mapper呼び出し</span>
+  mapper.<span class="fn">someAction</span>(id);
+}
+
+
+<span class="comment">// === 3. Controller ===</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/xxx/{id}/action"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">action</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id) {
+  service.<span class="fn">someAction</span>(id);
+  <span class="kw">return</span> <span class="str">"redirect:/xxx"</span>;
+}
+
+
+<span class="comment">// === 4. テンプレート ===</span>
+
+<span class="comment">// 軽い操作（1クリック）</span>
+<span class="tag">&lt;form</span> <span class="attr">method</span>=<span class="str">"post"</span>
+      <span class="attr">th:action</span>=<span class="str">"@{/xxx/{id}/action(id=${x.id})}"</span>
+      <span class="attr">style</span>=<span class="str">"display:inline"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;button&gt;</span>アクション<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/form&gt;</span>
+
+
+<span class="comment">// 不可逆な操作（確認付き）</span>
+<span class="tag">&lt;form</span> <span class="attr">method</span>=<span class="str">"post"</span>
+      <span class="attr">th:action</span>=<span class="str">"@{/xxx/{id}/delete(id=${x.id})}"</span>
+      <span class="attr">style</span>=<span class="str">"display:inline"</span>
+      <span class="attr">onsubmit</span>=<span class="str">"return confirm('削除しますか?')"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;button&gt;</span>削除<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/form&gt;</span>
+
+
+<span class="good">// このパターンで業務の99%は対応可能</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「動くものから業務品質へ」</div>
+    <p>Vol.5・6・7で<b>「書き込み3兄弟」</b>のすべての実装パターンを身につけました。これらは業務開発のあらゆるアクション機能の<b>基礎</b>。Vol.8以降は、<b>このパターンに「品質」を上乗せ</b>する旅です。本補足のチェックリストを<b>「明日からの実務テンプレート」</b>として手元に置いてください。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+  <div class="tip-label">この補足を読み終えたあなたへ</div>
+  <p>お疲れさまでした。<b>状態を変えるアクション</b>の設計思想を一通り解明しました。GETではなくPOST、論理削除vs物理削除、削除の不可逆性、確認ダイアログの限界、CSRFという脅威、1クリックUIとフォーム経由のトレードオフ、PRGパターンの再応用── <b>業務開発者の品質感覚</b>の地図が手に入りました。<br><br>
+  <b>「動く」と「業務に出せる」の境目</b>に立つあなたは、Vol.1から始まった旅で<b>本当に多くのこと</b>を学びました。CRUD完全制覇は<b>「終わり」ではなく「次の章の始まり」</b>。Vol.8以降で<b>「品質を上げる」</b>3つの工程（バリデーション・例外処理・ログ）が待っています。<br><br>
+  次のVol.8では<b>バリデーション</b>を学びます。「空欄での登録を防ぐ」「文字数制限をかける」「数値範囲をチェック」── あらゆる業務システムで必須の<b>入力検証</b>。<code>@NotBlank</code>、<code>@Size</code>、<code>@Valid</code>、<code>BindingResult</code>── 新しい仲間が登場します。CRUD完成のお祝いをしながら、<b>業務品質への階段</b>を一段ずつ登っていきましょう。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.07 ADD ── DESIGN OF STATE-CHANGING ACTIONS</span>
+</footer>
+
+</body>
+</html>

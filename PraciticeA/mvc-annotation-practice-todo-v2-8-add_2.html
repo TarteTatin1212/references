@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.8 補足 ── バリデーション設計の思想</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#3d2817;--paper:#f4ecd8;--paper-2:#e8dcc0;--accent:#daa55a;--accent-2:#ecc283;--accent-3:#6b4423;--accent-4:#2d5f3f;--muted:#7a6952;--line:#c9b896;--code-bg:#2a1f15;--code-text:#f0e4cc;--panel-bg:#faf3e0}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'?';position:absolute;right:0px;top:-30px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+.add-tag{display:inline-block;background:#c43;color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:40px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid #c43;padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:#c43;font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--accent-3);border-bottom-color:var(--accent-3)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}.ann{color:#f7c08a}.tag{color:#a3c9ff}.attr{color:#ffc88a}
+.bad{color:#ff8a7a;font-weight:600}.good{color:#b5e8b0;font-weight:600}
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+.think-step{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;position:relative;padding-left:60px;min-height:60px}
+.think-step::before{content:attr(data-step);position:absolute;left:14px;top:14px;background:var(--accent);color:var(--paper);width:36px;height:36px;line-height:36px;text-align:center;border-radius:50%;font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700}
+.think-step-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.think-step-body{font-size:13.5px;line-height:1.8}
+.analogy{background:#fffdf6;border:1px dashed var(--accent);border-left:4px solid var(--accent);padding:14px 18px;margin:12px 0}
+.analogy-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px}
+.analogy-title::before{content:'🛡 ';margin-right:4px}
+.analogy p{font-size:13.5px;line-height:1.85}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.compare-box{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:13.5px}
+.compare-ng{border-top:3px solid #c43}
+.compare-ok{border-top:3px solid var(--accent-4)}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px}
+.compare-ng .compare-label{color:#c43}
+.compare-ok .compare-label{color:var(--accent-4)}
+.tip{margin:18px 0;padding:14px 20px;background:rgba(218,165,90,0.10);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+.flow-v2{background:#fff;border:1px solid var(--line);padding:14px 16px;margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;color:var(--ink)}
+.flow-v2 .flow-step{display:block;background:var(--panel-bg);border-left:3px solid var(--line);padding:10px 14px;margin:8px 0;border-radius:3px;line-height:2.0}
+.flow-v2 .flow-step:has(.flow-label-call){border-left-color:var(--accent);background:rgba(218,165,90,0.10)}
+.flow-v2 .flow-step:has(.flow-label-return){border-left-color:var(--accent-4);background:rgba(45,95,63,0.07)}
+.flow-v2 .flow-actor{display:inline-block;background:#fff;color:var(--accent-3);padding:2px 10px;border:1px solid var(--line);border-radius:3px;font-weight:700;font-size:11.5px;margin:1px 2px;white-space:nowrap}
+.flow-v2 .flow-call{color:var(--accent);font-weight:700}
+.flow-v2 .flow-return{color:var(--accent-4);font-weight:700}
+.flow-v2 .flow-arg{color:var(--muted);font-size:11.5px;padding:4px 0 4px 14px;display:block;margin-top:6px;line-height:1.6;border-left:2px dashed var(--accent-2);margin-left:4px}
+.flow-v2 .flow-divider{border-top:1px dashed var(--line);margin:14px 0}
+.flow-v2 .flow-label-call,.flow-v2 .flow-label-return{display:inline-block;color:var(--paper);font-size:10px;padding:2px 8px;border-radius:2px;letter-spacing:0.05em;margin-left:6px;font-weight:700;vertical-align:1px}
+.flow-v2 .flow-label-call{background:var(--accent)}
+.flow-v2 .flow-label-return{background:var(--accent-4)}
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){body{padding:0 20px 60px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.page-header::before{font-size:220px}h1{font-size:28px}.toc ul{flex-direction:column;gap:8px}.whw{grid-template-columns:1fr}.compare{grid-template-columns:1fr}.term-grid{grid-template-columns:1fr}.flow-v2 .flow-step{padding:12px 14px;line-height:2.2;font-size:13px}.flow-v2 .flow-actor{font-size:12px;padding:3px 10px;margin:2px 3px}.flow-v2 .flow-arg{font-size:12px}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.08 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <span class="add-tag">+ ADD</span>
+  <h1>バリデーション<br>設計の思想</h1>
+  <p class="subtitle">VOL.8 SUPPLEMENT — DESIGN PHILOSOPHY OF VALIDATION</p>
+  <p class="lead">Vol.8本編で<b>バリデーション</b>が動くようになりました。<code style="font-family:'JetBrains Mono'">@NotBlank</code>と<code style="font-family:'JetBrains Mono'">@Size</code>で空欄・長文を弾き、エラーメッセージを表示。動かしている時には意識しなかったかもしれませんが、「<b>そもそも何を守っているのか?</b>」「<b>クライアント側 vs サーバ側、どちらに書く?</b>」「<b>カスタムバリデーターって?</b>」「<b>業務ルールと入力検証の違いは?</b>」── これらは<b>業務開発で必ず迫られる設計判断</b>です。本補足では、Vol.8本編の裏側にある<b>「バリデーションの哲学」</b>を解明し、業務開発者として通用する設計感覚を育てます。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">💡 この補足の位置づけ</div>
+    <p style="font-size:13.5px">本編は「<b>動かす手順書</b>」、本補足は「<b>設計の地図</b>」。新しいコードは書きませんが、<b>「信頼境界」「クライアント vs サーバ」「業務ルール vs 入力検証」「カスタムバリデーター」</b>── こうした<b>「業務開発のための設計判断」</b>を解明します。<b>新ルール</b>（フロー図の「誰が・誰に・何を」明示）を継続適用。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.08 ADD</div>
+  <ul>
+    <li><a href="#purpose">01 この補足の目的</a></li>
+    <li><a href="#what-is-validation">02 そもそもバリデーションとは何を守るのか</a></li>
+    <li><a href="#term-trust-boundary">03 用語カード：信頼境界（Trust Boundary）</a></li>
+    <li><a href="#client-vs-server">04 クライアント側 vs サーバ側 ── どちらに書くべきか</a></li>
+    <li><a href="#bean-validation-internals">05 Bean Validation の仕組み（裏側の動き）</a></li>
+    <li><a href="#annotation-catalog">06 標準アノテーションのカタログ</a></li>
+    <li><a href="#custom-validator">07 カスタムバリデーターの作り方</a></li>
+    <li><a href="#business-vs-input">08 「業務ルール検証」と「単純な入力検証」の境界</a></li>
+    <li><a href="#error-lifecycle">09 バリデーションエラーのライフサイクル</a></li>
+    <li><a href="#messages-deep">10 多言語化と messages.properties の深掘り</a></li>
+    <li><a href="#checklist">11 自分でバリデーションを設計するためのチェックリスト</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="purpose">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この補足の目的</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">Vol.8本編で<b>「動く」</b>を達成。本補足は<b>「設計判断」</b>を解明します。<b>「業務開発のための感覚」</b>── これがVol.9以降の例外処理・ログにも繋がる重要な基盤です。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を解説するか</div>
+      <div class="whw-desc">
+        バリデーションの<b>目的・場所・実装パターン</b>。「信頼境界」「クライアント vs サーバ」「業務ルール vs 入力検証」「カスタムバリデーター」── <b>業務開発で本当に役立つ知識</b>。
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう解説するか</div>
+      <div class="whw-desc">
+        ① <b>「信頼境界」</b>から思想を語る<br>
+        ② <b>具体的なシナリオ</b>で判断基準を示す<br>
+        ③ <b>新ルール</b>でフロー図を描く<br>
+        ④ <b>業界の実例</b>を示す<br>
+        ⑤ <b>明日から使えるチェックリスト</b>を提供
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜ別冊で深掘るか</div>
+      <div class="whw-desc">
+        本編で「動く」だけだと、<b>「どこに何を書くべきか」</b>の判断ができない。新人エンジニアが業務で困るのは<b>設計判断</b>。本補足はその<b>判断基準の地図</b>を提供します。
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>バリデーションは「<b>動くコード</b>」を書くことより、「<b>どこに何を書くか</b>」の判断が遥かに重要です。本補足を読んだ後、<b>同じFormにバリデーションを足すスピードが3倍</b>になります。設計判断の<b>引き出し</b>が増えるからです。</p>
+  </div>
+</section>
+
+<section id="what-is-validation">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>そもそもバリデーションとは何を守るのか</h2>
+    <span class="en">WHAT DOES VALIDATION PROTECT</span>
+  </div>
+  <p class="pattern-desc">「バリデーション」と言う時、<b>何を何から守っているのか?</b> 表面的な「入力チェック」の奥にある<b>本当の目的</b>を見ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">what-protects</span>
+      <span class="tag-desc">バリデーションが守る3つの層</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// バリデーションは「3つの層」を守る</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">データ整合性</div>
+          <div class="think-step-body">
+            <b>DB</b>に入る値が、テーブル定義（型・サイズ・NULL許可）と<b>整合する</b>ことを保証。<br>
+            <b>例</b>：100文字までしか入らない<code>VARCHAR(100)</code>カラムに、101文字を入れようとして失敗する事故を防ぐ。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">業務ルール</div>
+          <div class="think-step-body">
+            業務的に<b>意味のある値</b>かをチェック。<br>
+            <b>例</b>：「タスクのタイトルは必須」「年齢は18歳以上」「メールアドレスは正しい形式」── 業務の暗黙的なルールを<b>明示的に</b>表現する。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">セキュリティ</div>
+          <div class="think-step-body">
+            悪意ある入力からシステムを<b>守る</b>。<br>
+            <b>例</b>：SQLインジェクション、XSS、巨大データ攻撃（DoS）── 不正な入力で破壊・侵入されないようにする。
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>Vol.8で書いた</b> <code>@NotBlank</code> と <code>@Size(max=100)</code> は、<b>3つの層すべてに同時に効く</b>強力な仕組みです。1行のアノテーションで、データ整合性・業務ルール・セキュリティの一部を守れる。</p>
+      </div>
+      <div class="code"><span class="code-head">// 守る3つの層の例</span>
+
+<span class="comment">// === 層1: データ整合性 ===</span>
+
+<span class="ann">@Size</span>(max = <span class="num">100</span>)
+<span class="kw">private</span> <span class="type">String</span> title;
+
+<span class="comment">// DB: title VARCHAR(100)</span>
+<span class="comment">// → アプリで先に弾けば</span>
+<span class="comment">//   DB側のエラーを未然に防げる</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 層2: 業務ルール ===</span>
+
+<span class="ann">@NotBlank</span>
+<span class="kw">private</span> <span class="type">String</span> title;
+
+<span class="comment">// 業務ルール: タスクは必ずタイトルが要る</span>
+<span class="comment">// → 空欄を弾く</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 層3: セキュリティ ===</span>
+
+<span class="ann">@Size</span>(max = <span class="num">100</span>)
+<span class="kw">private</span> <span class="type">String</span> title;
+
+<span class="comment">// 攻撃: 1GBの巨大文字列を送ってメモリ枯渇させる</span>
+<span class="comment">// → サイズ制限で防御</span>
+
+
+<span class="ann">@Pattern</span>(regexp = <span class="str">"^[0-9]+$"</span>)
+<span class="kw">private</span> <span class="type">String</span> userId;
+
+<span class="comment">// 攻撃: userId に SQL を混ぜる</span>
+<span class="comment">// → 数字のみ許可で防御</span>
+<span class="comment">// （+ PreparedStatementと合わせて多層防御）</span>
+
+
+<span class="code-head" style="margin-top:18px">// バリデーションは「最初の砦」</span>
+
+<span class="comment">// アプリの入り口で:</span>
+<span class="comment">// ・データ整合性</span>
+<span class="comment">// ・業務ルール</span>
+<span class="comment">// ・セキュリティ</span>
+<span class="comment">// を一気にチェック</span>
+
+<span class="comment">// 通過した値だけが</span>
+<span class="comment">// 業務ロジック（Service層）に届く</span>
+
+<span class="comment">// → 後続コードが「信頼できる値」を</span>
+<span class="comment">//   前提に書ける（複雑さが減る）</span></div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー ── 空港のセキュリティ検査</div>
+    <p>空港で<b>搭乗前のセキュリティ検査</b>がありますね。これは<b>バリデーション</b>そのもの。<br>
+    ・<b>身分証チェック</b>（必須項目チェック = @NotNull）<br>
+    ・<b>荷物サイズ制限</b>（@Size）<br>
+    ・<b>金属探知機</b>（不正な値の検出 = @Pattern）<br>
+    ・<b>液体物の制限</b>（業務ルール = @Min @Max）<br><br>
+    検査を通過した人だけが<b>搭乗エリア</b>に入れる。アプリでも同じ。バリデーションを通った値だけが<b>業務ロジック</b>に入る。これで内部のコードが<b>「正しい値が来る前提」</b>で書ける。<br><br>
+    もしセキュリティ検査がなかったら、搭乗エリア内の警備員が<b>各人を疑い続けない</b>といけない。アプリでも、バリデーションを省くと<b>Service層やMapper層で毎回チェック</b>することになり、コードが破綻します。</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「最初に守れば後が楽」</div>
+    <p>バリデーションを<b>入り口（Controller）</b>で済ませると、<b>後続のService層・Mapper層は信頼できる値だけ扱える</b>。これがバリデーションの<b>本当の価値</b>。<b>「データ整合性 + 業務ルール + セキュリティ」</b>の3層を最初にクリアしておけば、業務ロジックが<b>シンプルに書ける</b>── 業務開発の生産性が大きく変わります。</p>
+  </div>
+</section>
+
+<section id="term-trust-boundary">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>用語カード：信頼境界（Trust Boundary）</h2>
+    <span class="en">TERM — TRUST BOUNDARY</span>
+  </div>
+  <p class="pattern-desc">バリデーション設計の<b>核心概念</b>。<b>「どこまでが信頼できて、どこからが信頼できないか」</b>を線引きする考え方です。これを意識すると、<b>バリデーションを書くべき場所</b>が一発で見えるようになります。</p>
+
+  <div class="term-card">
+    <span class="term-card-label">TERM CARD</span>
+    <div class="term-card-title">信頼境界（Trust Boundary）</div>
+    <div class="term-card-sub">信頼できる領域と信頼できない領域の境目</div>
+    <dl class="term-grid">
+      <dt>定義</dt>
+      <dd><b>「ここまでは信頼できる、ここからは信頼できない」</b>という<b>境目</b>のこと。セキュリティとバリデーション設計の根本概念。</dd>
+      <dt>典型的な境界</dt>
+      <dd><b>サーバ ⇔ クライアント（ブラウザ）</b><br>
+        サーバ側は<b>信頼できる</b>（あなたが書いたコード）<br>
+        クライアント側は<b>信頼できない</b>（ユーザー側で改変可能）<br>
+        ↑ ここに「境界線」がある
+      </dd>
+      <dt>境界の特徴</dt>
+      <dd>境界を<b>越える時</b>に必ずチェックが必要。<b>「外から入ってきたデータ」</b>はすべて信頼できないと考える。</dd>
+      <dt>Webアプリでの境界</dt>
+      <dd>① <b>ブラウザ → サーバ</b>（ユーザー入力）<br>
+        ② <b>外部API → 自サーバ</b>（外部からのデータ）<br>
+        ③ <b>サーバ → DB</b>（書き込み時、PreparedStatementで防御）<br>
+        各境界で<b>適切な防御</b>が必要
+      </dd>
+      <dt>なぜこの概念が大事か</dt>
+      <dd>「どこにバリデーションを書くか」「何をチェックするか」が、<b>境界を意識すると自動的に決まる</b>から。<b>「境界の手前で必ず検証する」</b>のがセキュリティ・バリデーション設計の鉄則。
+      </dd>
+    </dl>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">trust-boundary-map</span>
+      <span class="tag-desc">Webアプリの信頼境界マップ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 信頼境界の図解</div>
+
+<div class="flow-v2"><span class="flow-step">★ Webアプリの信頼境界（左から右へ）</span>
+
+[<span class="bad">信頼できない領域</span>]               [<span class="good">信頼できる領域</span>]
+
+  <span class="flow-actor">ユーザー</span>                       <span class="flow-actor">サーバ内部</span>
+   |                                |
+   ↓ ブラウザで入力                |
+   |                                |
+  <span class="flow-actor">ブラウザ</span>                       |
+   |                                |
+   ↓ HTTPリクエスト送信            |
+   |          ★境界★              |
+   |  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   |          ↑バリデーション      |
+   |                                |
+   |                          <span class="flow-actor">Controller</span>
+   |                                ↓
+   |                           <span class="flow-actor">Service</span>
+   |                                ↓
+   |                            <span class="flow-actor">Mapper</span>
+   |                                ↓
+   |                              <span class="flow-actor">DB</span>
+
+<span class="flow-step"><b>境界を越える瞬間（Controllerに入る時）</b>に</span>
+<span class="flow-step">バリデーションで「信頼できる値だけ通す」</span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ 「クライアント側」のバリデーションは「補助」</span>
+
+<span class="flow-step">HTMLの required 属性や、JavaScriptの検証は</span>
+<span class="flow-step"><b>信頼できない領域内</b>での処理</span>
+<span class="flow-step">→ ユーザーが回避できる（DevTools等で書き換え）</span>
+<span class="flow-step">→ UX向上のため使うが、<b>セキュリティ目的では使えない</b></span></div>
+      </div>
+      <div class="code"><span class="code-head">// 信頼境界の意味</span>
+
+<span class="comment">// === 信頼できない領域 ===</span>
+
+[ブラウザ]
+  ├ HTMLフォーム
+  ├ JavaScript
+  ├ HTTPリクエスト
+  ↓
+  ↓ ユーザーが自由に改変可能
+  ↓ DevTools で書き換え
+  ↓ curl で偽リクエスト送信
+  ↓ POSTマンで攻撃ペイロード
+  ↓
+
+
+<span class="code-head" style="margin-top:18px">// ★ 信頼境界 ★ ──────</span>
+
+
+<span class="comment">// === 信頼できる領域 ===</span>
+
+[Controller]
+   |
+   ↓ ここからはあなたが書いたコード
+   ↓ 検証済みの値しか入らない
+   |
+[Service]
+   |
+   ↓ 業務ロジック
+   |
+[Mapper]
+   |
+   ↓ DBアクセス（PreparedStatementで保護）
+   |
+[DB]
+
+
+<span class="code-head" style="margin-top:18px">// 「外から来る値」は全部疑う</span>
+
+<span class="comment">// 1. ブラウザから来た値</span>
+<span class="comment">//    → @Valid でチェック</span>
+
+<span class="comment">// 2. 外部APIから来た値</span>
+<span class="comment">//    → 受信後にバリデーション</span>
+
+<span class="comment">// 3. ファイルから読み込んだ値</span>
+<span class="comment">//    → 読み込み後に検証</span>
+
+<span class="comment">// 4. クッキー、セッションストレージ</span>
+<span class="comment">//    → 改変可能なので検証必須</span>
+
+
+<span class="code-head" style="margin-top:18px">// 「信頼できる」前提のコード</span>
+
+<span class="comment">// Service層内では:</span>
+<span class="kw">public void</span> <span class="fn">register</span>(<span class="type">TaskForm</span> form) {
+  <span class="comment">// form.getTitle() は</span>
+  <span class="comment">// ・null ではない (@NotBlank保証)</span>
+  <span class="comment">// ・100文字以内 (@Size保証)</span>
+
+  <span class="comment">// この前提でロジックが書ける</span>
+  <span class="comment">// → if (title == null) チェック不要</span>
+  <span class="comment">// → 業務ロジックに集中できる</span>
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「境界を越える瞬間に検証」</div>
+    <p><b>「データが信頼できない領域から信頼できる領域へ入る瞬間」</b>に必ずバリデーションを置く── これが鉄則。Web アプリなら<b>Controller の入口</b>がその場所。<code>@Valid</code> はまさに<b>境界を越える瞬間の検査</b>です。<b>「境界を意識すれば、いつ何を検証すべきか自動的にわかる」</b>── これが業務開発者の設計感覚です。</p>
+  </div>
+</section>
+
+<section id="client-vs-server">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>クライアント側 vs サーバ側 ── どちらに書くべきか</h2>
+    <span class="en">CLIENT VS SERVER VALIDATION</span>
+  </div>
+  <p class="pattern-desc">バリデーション設計の<b>最も実務的な問い</b>。HTML5の<code>required</code>属性やJavaScriptでのチェック（クライアント側）と、Spring の <code>@Valid</code>（サーバ側）── <b>どちらに書くべきか?</b></p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">client-vs-server</span>
+      <span class="tag-desc">2種類のバリデーションの役割分担</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 結論：「サーバ側は必須、クライアント側はオプション」</div>
+
+        <div class="compare">
+          <div class="compare-box compare-ok">
+            <div class="compare-label">サーバ側（Vol.8で実装）</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.7"><b>絶対に書く</b>。信頼境界を越えた値を必ずチェック。<br>セキュリティの最後の砦。<br>HTMLフォーム以外（API、curl等）からも検証可能。<br>業務ルールの定義場所。</p>
+          </div>
+          <div class="compare-box compare-ng" style="border-top-color:var(--accent-2)">
+            <div class="compare-label" style="color:var(--accent-2)">クライアント側（オプション）</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.7"><b>UX向上のために書く</b>。ユーザーが入力中に即座にフィードバック。<br>サーバ通信せずに済むので速い。<br>ただし<b>セキュリティ目的では絶対不可</b>。<br>ブラウザのDevToolsで簡単に回避できる。</p>
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>「クライアント側だけ」の罠</b>：</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:6px">HTML5の <code>required</code> を付けて「これで大丈夫」と思うのは<b>初心者がやりがちな罠</b>。攻撃者はブラウザを使わずに<code>curl</code> や <code>POSTMan</code>で直接サーバにリクエストを送れます。クライアント側の検証は<b>完全に無視</b>されます。</p>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">業務開発の慣習</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li>サーバ側バリデーション ── <b>必ず実装</b>（Vol.8で学んだ）</li>
+          <li>クライアント側バリデーション ── <b>UXのため余裕があれば</b>実装</li>
+          <li>両方ある場合 ── <b>同じルール</b>を両側に書く（DRY違反だが業務では普通）</li>
+        </ul>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px">Vol.8では<b>サーバ側のみ</b>を実装しました。これが<b>業界標準の最低ライン</b>です。</p>
+      </div>
+      <div class="code"><span class="code-head">// クライアント側バリデーションの例</span>
+
+<span class="comment">// === HTML5 required ===</span>
+<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span>
+       <span class="attr">name</span>=<span class="str">"title"</span>
+       <span class="attr">required</span>
+       <span class="attr">maxlength</span>=<span class="str">"100"</span><span class="tag">&gt;</span>
+       <span class="comment">// ↑ ブラウザで弾く</span>
+
+
+<span class="code-head" style="margin-top:18px">// === JavaScript検証 ===</span>
+<span class="tag">&lt;script&gt;</span>
+form.<span class="fn">addEventListener</span>(<span class="str">"submit"</span>, e =&gt; {
+  <span class="kw">if</span> (titleInput.value.<span class="fn">trim</span>() === <span class="str">""</span>) {
+    e.<span class="fn">preventDefault</span>();
+    <span class="fn">alert</span>(<span class="str">"タイトル必須"</span>);
+  }
+});
+<span class="tag">&lt;/script&gt;</span>
+
+
+<span class="code-head" style="margin-top:18px">// ★ 攻撃者がDevToolsで回避 ★</span>
+
+<span class="comment">// 1. ブラウザのDevToolsを開く</span>
+<span class="comment">// 2. HTMLの required を削除</span>
+<span class="comment">//    <span class="bad">&lt;input ... required&gt;</span></span>
+<span class="comment">//    →</span>
+<span class="comment">//    <span class="good">&lt;input ...&gt;</span></span>
+<span class="comment">// 3. 空欄で送信</span>
+<span class="comment">// 4. サーバが受信</span>
+
+<span class="bad">// → サーバ側にバリデーションがないと</span>
+<span class="bad">// → 空欄が登録される</span>
+
+
+<span class="code-head" style="margin-top:18px">// curl での直接攻撃</span>
+
+curl -X POST <span class="str">"https://your-app.com/tasks"</span> \
+     -d <span class="str">"title="</span>
+     <span class="comment">// ↑ ブラウザを介さない</span>
+     <span class="comment">// ↑ クライアント側検証を完全無視</span>
+
+<span class="bad">// → サーバ側バリデーションがないと</span>
+<span class="bad">// → 空欄が登録される</span>
+
+
+<span class="code-head" style="margin-top:18px">// だから「サーバ側必須」</span>
+
+<span class="comment">// クライアント側だけだと:</span>
+<span class="comment">// 「正規ユーザーには優しいが</span>
+<span class="comment">//  攻撃者には無防備」</span>
+
+<span class="comment">// サーバ側があれば:</span>
+<span class="comment">// 「どんな攻撃にも対応可能」</span>
+
+
+<span class="code-head" style="margin-top:18px">// 両方書くパターン（推奨）</span>
+
+<span class="comment">// HTML側（UX）:</span>
+<span class="tag">&lt;input</span> <span class="attr">required</span> <span class="attr">maxlength</span>=<span class="str">"100"</span><span class="tag">&gt;</span>
+
+<span class="comment">// Java側（セキュリティ）:</span>
+<span class="ann">@NotBlank</span>
+<span class="ann">@Size</span>(max = <span class="num">100</span>)
+<span class="kw">private</span> <span class="type">String</span> title;
+
+<span class="comment">// → 同じルールを2か所</span>
+<span class="comment">// → クライアント側が即座にエラー表示（UX）</span>
+<span class="comment">// → サーバ側が最終防衛（セキュリティ）</span>
+
+<span class="good">// 業務開発では両方書くのが標準</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「サーバ側は絶対、クライアント側は補強」</div>
+    <p>「<b>サーバ側があれば、クライアント側はオプション</b>」── これが業界の基本ルール。クライアント側だけでバリデーションを済ませている設計を見たら<b>「危ない」</b>と思うのが業務開発者の感覚です。Vol.8のように<b>サーバ側 (Spring + Bean Validation)</b> をしっかり実装するのが<b>最重要</b>。クライアント側は<b>「ユーザー体験向上のため」</b>に後から足すもの、と覚えてください。</p>
+  </div>
+</section>
+
+<section id="bean-validation-internals">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>Bean Validation の仕組み（裏側の動き）</h2>
+    <span class="en">HOW BEAN VALIDATION WORKS</span>
+  </div>
+  <p class="pattern-desc">本編でアノテーション付けただけで動いたバリデーション。<b>Spring の中では何が起きているのか?</b> 内部動作を解明します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">validation-internals</span>
+      <span class="tag-desc">@Valid 実行の内部動作</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// バリデーション実行の4段階</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">フォームバインディング</div>
+          <div class="think-step-body">
+            Spring が HTTPリクエストの値を <b>Java オブジェクト (TaskForm) に詰める</b>。<br>
+            POST のフィールド <code>title=...</code> を <code>taskForm.setTitle(...)</code> でセット。Vol.5 ADDで学んだ「<code>@ModelAttribute</code> の暗黙動作」。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">バリデータの起動</div>
+          <div class="think-step-body">
+            <code>@Valid</code> を見たSpringが、<b>Hibernate Validator</b>（Bean Validation の実装）を起動。リフレクションでクラスのフィールドを走査。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">アノテーション検査</div>
+          <div class="think-step-body">
+            各フィールドに付いた制約アノテーション（<code>@NotBlank</code>等）を見つけ、<b>対応する検証ロジック</b>を実行。<br>
+            <code>@NotBlank</code>なら<code>NotBlankValidator.isValid()</code>が呼ばれる、<code>@Size</code>なら<code>SizeValidator</code>...
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">結果のBindingResult への格納</div>
+          <div class="think-step-body">
+            違反があれば<b>BindingResult にエラー情報を追加</b>。フィールド名・違反した制約・デフォルトメッセージ等を格納。<br>
+            違反がなければ何もしない（BindingResult は空のまま）。
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>ここまで全自動</b>。あなたが書くのは「アノテーション付ける」「<code>@Valid</code>引数追加」だけ。<b>Hibernate Validator</b>が裏で重い仕事を全部やってくれます。</p>
+      </div>
+      <div class="code"><span class="code-head">// 内部動作の擬似コード</span>
+
+<span class="kw">class</span> <span class="type">SpringFramework</span> {
+
+  <span class="kw">void</span> <span class="fn">handleRequest</span>(<span class="type">Request</span> req) {
+
+    <span class="comment">// === 1. フォームバインディング ===</span>
+    <span class="type">TaskForm</span> form = <span class="kw">new</span> <span class="type">TaskForm</span>();
+    form.<span class="fn">setTitle</span>(req.<span class="fn">getParameter</span>(<span class="str">"title"</span>));
+    <span class="comment">// ↑ HTTPリクエスト値をJavaに詰める</span>
+
+
+    <span class="comment">// === 2. @Validを発見 ===</span>
+    <span class="kw">if</span> (引数に @Valid あり) {
+      <span class="type">BindingResult</span> br = <span class="kw">new</span> <span class="type">BindingResult</span>();
+
+      <span class="comment">// === 3. リフレクションでフィールド走査 ===</span>
+      <span class="kw">for</span> (<span class="type">Field</span> f : form.<span class="fn">getClass</span>().<span class="fn">getFields</span>()) {
+
+        <span class="comment">// === 4. アノテーション検査 ===</span>
+        <span class="kw">if</span> (f.<span class="fn">hasAnnotation</span>(<span class="type">NotBlank</span>.<span class="kw">class</span>)) {
+          <span class="type">String</span> value = f.<span class="fn">get</span>(form);
+          <span class="kw">if</span> (value == <span class="kw">null</span> || value.<span class="fn">trim</span>().<span class="fn">isEmpty</span>()) {
+            br.<span class="fn">addError</span>(<span class="kw">new</span> <span class="type">FieldError</span>(
+              <span class="str">"taskForm"</span>,
+              f.<span class="fn">getName</span>(),
+              <span class="str">"must not be blank"</span>
+            ));
+          }
+        }
+
+        <span class="kw">if</span> (f.<span class="fn">hasAnnotation</span>(<span class="type">Size</span>.<span class="kw">class</span>)) {
+          <span class="type">String</span> value = f.<span class="fn">get</span>(form);
+          <span class="kw">int</span> max = f.<span class="fn">getAnnotation</span>(<span class="type">Size</span>.<span class="kw">class</span>).<span class="fn">max</span>();
+          <span class="kw">if</span> (value != <span class="kw">null</span> && value.<span class="fn">length</span>() > max) {
+            br.<span class="fn">addError</span>(...);
+          }
+        }
+      }
+
+      <span class="comment">// === 5. Controllerに渡す ===</span>
+      controller.<span class="fn">create</span>(form, br);
+    }
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// バリデーターの「中身」</span>
+
+<span class="comment">// Hibernate Validator のNotBlankValidator</span>
+<span class="kw">class</span> <span class="type">NotBlankValidator</span>
+    <span class="kw">implements</span> <span class="type">ConstraintValidator</span>&lt;<span class="type">NotBlank</span>, <span class="type">String</span>&gt; {
+
+  <span class="ann">@Override</span>
+  <span class="kw">public boolean</span> <span class="fn">isValid</span>(
+      <span class="type">String</span> value,
+      <span class="type">ConstraintValidatorContext</span> ctx) {
+    <span class="kw">return</span> value != <span class="kw">null</span>
+        && !value.<span class="fn">trim</span>().<span class="fn">isEmpty</span>();
+  }
+}
+
+<span class="comment">// → アノテーションごとに専用のクラスがある</span>
+<span class="comment">// → カスタムバリデーターも同じ方式で作れる</span>
+<span class="comment">// （次セクションで実例）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「リフレクションの威力」</div>
+    <p>Bean Validation の魔法は<b>「Javaのリフレクション」</b>に支えられています。クラスのフィールドを<b>実行時に走査</b>して、付いているアノテーションを<b>見て、対応する処理を呼ぶ</b>── これがJavaフレームワークの典型的な仕組み。Vol.2 ADDで学んだ<b>「アノテーションは目印」</b>の原則そのもの。Spring の<code>@Autowired</code>、MyBatisの<code>@Mapper</code>、Bean Validation の<code>@NotBlank</code>── すべて同じ思想で動いています。</p>
+  </div>
+</section>
+
+<section id="annotation-catalog">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>標準アノテーションのカタログ</h2>
+    <span class="en">STANDARD ANNOTATION CATALOG</span>
+  </div>
+  <p class="pattern-desc">Bean Validation には<b>20種類以上</b>の標準アノテーションがあります。Vol.8では<code>@NotBlank</code>と<code>@Size</code>のみでしたが、業務開発では他にも頻繁に使います。<b>「いつ何を使うか」</b>のカタログを用意します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">annotation-catalog</span>
+      <span class="tag-desc">業務でよく使うアノテーション</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// カテゴリ別カタログ</div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-bottom:8px">必須チェック系</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+          <tr style="background:var(--paper-2)">
+            <th style="border:1px solid var(--line);padding:5px;text-align:left">アノテーション</th>
+            <th style="border:1px solid var(--line);padding:5px;text-align:left">用途</th>
+            <th style="border:1px solid var(--line);padding:5px;text-align:left">適用先</th>
+          </tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@NotNull</code></td><td style="border:1px solid var(--line);padding:5px">null禁止</td><td style="border:1px solid var(--line);padding:5px">全型</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@NotEmpty</code></td><td style="border:1px solid var(--line);padding:5px">null・空禁止</td><td style="border:1px solid var(--line);padding:5px">String, Collection</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@NotBlank</code></td><td style="border:1px solid var(--line);padding:5px">null・空・空白禁止</td><td style="border:1px solid var(--line);padding:5px">String のみ</td></tr>
+        </table>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-bottom:8px">サイズ系</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+          <tr style="background:var(--paper-2)">
+            <th style="border:1px solid var(--line);padding:5px;text-align:left">アノテーション</th>
+            <th style="border:1px solid var(--line);padding:5px;text-align:left">用途</th>
+            <th style="border:1px solid var(--line);padding:5px;text-align:left">適用先</th>
+          </tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@Size(min, max)</code></td><td style="border:1px solid var(--line);padding:5px">サイズ範囲</td><td style="border:1px solid var(--line);padding:5px">String, Collection</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@Length(min, max)</code></td><td style="border:1px solid var(--line);padding:5px">文字列長（Hibernate拡張）</td><td style="border:1px solid var(--line);padding:5px">String</td></tr>
+        </table>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-bottom:8px">数値系</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+          <tr style="background:var(--paper-2)">
+            <th style="border:1px solid var(--line);padding:5px;text-align:left">アノテーション</th>
+            <th style="border:1px solid var(--line);padding:5px;text-align:left">用途</th>
+          </tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@Min(値)</code></td><td style="border:1px solid var(--line);padding:5px">最小値</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@Max(値)</code></td><td style="border:1px solid var(--line);padding:5px">最大値</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@Positive</code></td><td style="border:1px solid var(--line);padding:5px">正の数</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@PositiveOrZero</code></td><td style="border:1px solid var(--line);padding:5px">0以上</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@Negative</code></td><td style="border:1px solid var(--line);padding:5px">負の数</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@DecimalMin / @DecimalMax</code></td><td style="border:1px solid var(--line);padding:5px">小数の範囲</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@Digits(integer, fraction)</code></td><td style="border:1px solid var(--line);padding:5px">桁数</td></tr>
+        </table>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-bottom:8px">パターン系</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+          <tr style="background:var(--paper-2)">
+            <th style="border:1px solid var(--line);padding:5px;text-align:left">アノテーション</th>
+            <th style="border:1px solid var(--line);padding:5px;text-align:left">用途</th>
+          </tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@Email</code></td><td style="border:1px solid var(--line);padding:5px">メールアドレス形式</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@Pattern(regexp)</code></td><td style="border:1px solid var(--line);padding:5px">任意の正規表現</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@URL</code></td><td style="border:1px solid var(--line);padding:5px">URL形式（Hibernate拡張）</td></tr>
+        </table>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-bottom:8px">日付系</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <tr style="background:var(--paper-2)">
+            <th style="border:1px solid var(--line);padding:5px;text-align:left">アノテーション</th>
+            <th style="border:1px solid var(--line);padding:5px;text-align:left">用途</th>
+          </tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@Past</code></td><td style="border:1px solid var(--line);padding:5px">過去日付</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@Future</code></td><td style="border:1px solid var(--line);padding:5px">未来日付</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@PastOrPresent</code></td><td style="border:1px solid var(--line);padding:5px">過去または現在</td></tr>
+          <tr><td style="border:1px solid var(--line);padding:5px"><code>@FutureOrPresent</code></td><td style="border:1px solid var(--line);padding:5px">未来または現在</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// 実務での組み合わせ例</span>
+
+<span class="comment">// === ユーザー登録Form ===</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">UserRegistrationForm</span> {
+
+  <span class="ann">@NotBlank</span>
+  <span class="ann">@Size</span>(min = <span class="num">2</span>, max = <span class="num">30</span>)
+  <span class="kw">private</span> <span class="type">String</span> name;
+
+  <span class="ann">@NotBlank</span>
+  <span class="ann">@Email</span>
+  <span class="kw">private</span> <span class="type">String</span> email;
+
+  <span class="ann">@NotBlank</span>
+  <span class="ann">@Size</span>(min = <span class="num">8</span>, max = <span class="num">50</span>)
+  <span class="ann">@Pattern</span>(
+    regexp = <span class="str">"^(?=.*[A-Z])(?=.*[0-9]).+$"</span>,
+    message = <span class="str">"英大文字と数字を含む必要があります"</span>)
+  <span class="kw">private</span> <span class="type">String</span> password;
+
+  <span class="ann">@NotNull</span>
+  <span class="ann">@Min</span>(<span class="num">18</span>)
+  <span class="ann">@Max</span>(<span class="num">120</span>)
+  <span class="kw">private</span> <span class="type">Integer</span> age;
+
+  <span class="ann">@NotNull</span>
+  <span class="ann">@Past</span>
+  <span class="kw">private</span> <span class="type">LocalDate</span> birthDate;
+
+  <span class="ann">@AssertTrue</span>(message = <span class="str">"利用規約への同意が必要です"</span>)
+  <span class="kw">private</span> <span class="type">Boolean</span> agreedToTerms;
+}
+
+
+<span class="code-head" style="margin-top:18px">// === 商品Form ===</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">ProductForm</span> {
+
+  <span class="ann">@NotBlank</span>
+  <span class="ann">@Size</span>(max = <span class="num">100</span>)
+  <span class="kw">private</span> <span class="type">String</span> name;
+
+  <span class="ann">@NotNull</span>
+  <span class="ann">@PositiveOrZero</span>
+  <span class="ann">@DecimalMax</span>(<span class="str">"999999.99"</span>)
+  <span class="ann">@Digits</span>(integer = <span class="num">6</span>, fraction = <span class="num">2</span>)
+  <span class="kw">private</span> <span class="type">BigDecimal</span> price;
+
+  <span class="ann">@NotNull</span>
+  <span class="ann">@Min</span>(<span class="num">0</span>)
+  <span class="ann">@Max</span>(<span class="num">9999</span>)
+  <span class="kw">private</span> <span class="type">Integer</span> stock;
+
+  <span class="ann">@URL</span>
+  <span class="kw">private</span> <span class="type">String</span> imageUrl;
+}
+
+
+<span class="code-head" style="margin-top:18px">// 業務の典型パターン</span>
+
+<span class="comment">// 必須テキスト</span>
+<span class="ann">@NotBlank</span> <span class="ann">@Size</span>(max = N)
+
+<span class="comment">// 必須数値</span>
+<span class="ann">@NotNull</span> <span class="ann">@Min</span>(N) <span class="ann">@Max</span>(M)
+
+<span class="comment">// 必須メール</span>
+<span class="ann">@NotBlank</span> <span class="ann">@Email</span>
+
+<span class="comment">// 必須日付（過去）</span>
+<span class="ann">@NotNull</span> <span class="ann">@Past</span>
+
+<span class="comment">// 任意項目（null可）</span>
+<span class="comment">// @NotBlankを付けない</span>
+<span class="comment">// （Optionalなフィールド）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「組み合わせで業務ルールを表現」</div>
+    <p>1つのフィールドに<b>複数のアノテーションを付ける</b>のが業界の流儀。<code>@NotBlank @Size(max=100) @Email</code>のように積み重ねれば、複雑な業務ルールも宣言的に表現できます。<b>「@で始まる行を読めば、業務ルールが分かる」</b>── これがBean Validation の<b>「自己ドキュメント性」</b>です。</p>
+  </div>
+</section>
+
+<section id="custom-validator">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>カスタムバリデーターの作り方</h2>
+    <span class="en">CUSTOM VALIDATOR</span>
+  </div>
+  <p class="pattern-desc">標準アノテーションでは表現できない<b>独自の業務ルール</b>。例えば「<b>禁止ワードを含まない</b>」「<b>会員IDの形式</b>」「<b>カタカナのみ</b>」── これらを自分で実装する方法を見ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">custom-validator-example</span>
+      <span class="tag-desc">「禁止ワード」検証の自作例</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// カスタムバリデーター作成の3ステップ</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">アノテーションを定義</div>
+          <div class="think-step-body">
+            <code>@interface</code>で<b>独自アノテーション</b>を作る。<code>@Constraint</code> でバリデータークラスを紐付け。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">バリデーターを実装</div>
+          <div class="think-step-body">
+            <code>ConstraintValidator</code> インタフェースを実装。<code>isValid()</code> メソッドに検証ロジックを書く。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">Formに付ける</div>
+          <div class="think-step-body">
+            標準アノテーションと同じように、Formのフィールドに付ける。Spring が自動で検出して動かす。
+          </div>
+        </div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>業務開発でカスタムが必要な場面</b>：</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li>業界固有のID形式（医療コード、製品コード等）</li>
+          <li>禁止ワードチェック</li>
+          <li>複雑な営業時間チェック</li>
+          <li>会員ランクごとの上限チェック</li>
+          <li>DBの状態と連動した検証</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// === ステップ1: アノテーション定義 ===</span>
+
+<span class="kw">package</span> com.example.todo.validation;
+
+<span class="kw">import</span> jakarta.validation.Constraint;
+<span class="kw">import</span> jakarta.validation.Payload;
+<span class="kw">import</span> java.lang.annotation.*;
+
+<span class="ann">@Constraint</span>(validatedBy = <span class="type">NoNgWordValidator</span>.<span class="kw">class</span>)
+<span class="ann">@Target</span>({<span class="type">ElementType</span>.<span class="kw">FIELD</span>})
+<span class="ann">@Retention</span>(<span class="type">RetentionPolicy</span>.<span class="kw">RUNTIME</span>)
+<span class="kw">public</span> <span class="ann">@interface</span> <span class="type">NoNgWord</span> {
+
+  <span class="type">String</span> <span class="fn">message</span>() <span class="kw">default</span>
+    <span class="str">"禁止ワードを含んでいます"</span>;
+
+  <span class="type">Class</span>&lt;?&gt;[] <span class="fn">groups</span>() <span class="kw">default</span> {};
+  <span class="type">Class</span>&lt;? <span class="kw">extends</span> <span class="type">Payload</span>&gt;[] <span class="fn">payload</span>() <span class="kw">default</span> {};
+}
+
+
+<span class="code-head" style="margin-top:18px">// === ステップ2: バリデーター実装 ===</span>
+
+<span class="kw">package</span> com.example.todo.validation;
+
+<span class="kw">import</span> jakarta.validation.ConstraintValidator;
+<span class="kw">import</span> jakarta.validation.ConstraintValidatorContext;
+
+<span class="kw">public class</span> <span class="type">NoNgWordValidator</span>
+    <span class="kw">implements</span> <span class="type">ConstraintValidator</span>&lt;<span class="type">NoNgWord</span>, <span class="type">String</span>&gt; {
+
+  <span class="kw">private static final</span> <span class="type">String</span>[] NG_WORDS = {
+    <span class="str">"禁止1"</span>, <span class="str">"禁止2"</span>, <span class="str">"禁止3"</span>
+  };
+
+  <span class="ann">@Override</span>
+  <span class="kw">public boolean</span> <span class="fn">isValid</span>(
+      <span class="type">String</span> value,
+      <span class="type">ConstraintValidatorContext</span> ctx) {
+
+    <span class="kw">if</span> (value == <span class="kw">null</span>) <span class="kw">return</span> <span class="kw">true</span>;
+    <span class="comment">// nullは他の @NotNull が担当</span>
+
+    <span class="kw">for</span> (<span class="type">String</span> ng : NG_WORDS) {
+      <span class="kw">if</span> (value.<span class="fn">contains</span>(ng)) {
+        <span class="kw">return</span> <span class="kw">false</span>;
+      }
+    }
+    <span class="kw">return</span> <span class="kw">true</span>;
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// === ステップ3: Formに付ける ===</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">TaskForm</span> {
+
+  <span class="ann">@NotBlank</span>
+  <span class="ann">@Size</span>(max = <span class="num">100</span>)
+  <span class="ann">@NoNgWord</span>        <span class="comment">// ★追加</span>
+  <span class="kw">private</span> <span class="type">String</span> title;
+}
+
+
+<span class="code-head" style="margin-top:18px">// messages.properties で日本語化</span>
+
+NoNgWord.taskForm.title=不適切な単語が含まれています
+
+
+<span class="code-head" style="margin-top:18px">// これで業界固有ロジックも</span>
+<span class="comment">// 宣言的に書ける</span>
+
+<span class="comment">// チームで共有可能なルールにすれば</span>
+<span class="comment">// あらゆるFormに簡単に適用できる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「ルールを資産化する」</div>
+    <p>業務固有のチェックロジックを<b>カスタムバリデーター</b>にすると、<b>「チームの資産」</b>になります。例えば<code>@JapanesePhoneNumber</code>を作れば、すべての電話番号Formで使い回せる。<b>新人が書いたコードでもルールが同じ</b>。バリデーション資産化はチーム開発の品質保証として強力です。</p>
+  </div>
+</section>
+
+<section id="business-vs-input">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>「業務ルール検証」と「単純な入力検証」の境界</h2>
+    <span class="en">BUSINESS RULE VS INPUT CHECK</span>
+  </div>
+  <p class="pattern-desc">バリデーションには<b>2種類</b>あります。<b>「単純な入力検証」</b>（空欄禁止、長さ制限等）と<b>「業務ルール検証」</b>（在庫超過の注文不可、重複登録不可等）。<b>書く場所が違う</b>のがポイントです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">business-vs-input</span>
+      <span class="tag-desc">2種類の検証の役割分担</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2種類のバリデーションを比較</div>
+
+        <div class="compare">
+          <div class="compare-box">
+            <div class="compare-label" style="color:var(--accent-3)">単純な入力検証</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65"><b>場所</b>：Form（Bean Validation）<br>
+            <b>例</b>：必須、文字数、形式（メール・URL等）<br>
+            <b>特徴</b>：単一フィールドで完結、DB不要、シンプル<br>
+            <b>Vol.8で実装</b></p>
+          </div>
+          <div class="compare-box">
+            <div class="compare-label" style="color:var(--accent-3)">業務ルール検証</div>
+            <p style="font-size:12.5px;margin-top:6px;line-height:1.65"><b>場所</b>：Service層<br>
+            <b>例</b>：重複登録不可、在庫超過、関連レコード必要<br>
+            <b>特徴</b>：複数項目、DB参照、業務知識必要<br>
+            <b>Vol.8以降で必要になる</b></p>
+          </div>
+        </div>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">境界の判断基準</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:6px"><b>単純な入力検証</b>と判定：</p>
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:4px">
+          <li>そのフィールド単体で判定できる</li>
+          <li>DBアクセスが要らない</li>
+          <li>業務知識不要（誰でも理解できる）</li>
+        </ul>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>業務ルール検証</b>と判定：</p>
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:4px">
+          <li>複数フィールドを見て判定する</li>
+          <li>DBの状態を参照する必要がある</li>
+          <li>業務知識が必要（「在庫」「権限」等の概念）</li>
+        </ul>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>POINT</b>：両方を<b>1か所に書こうとしない</b>。Form（入口）で単純検証、Service（業務層）で業務検証── <b>役割分担が大切</b>。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// === Form（単純検証） ===</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">OrderForm</span> {
+
+  <span class="ann">@NotNull</span>
+  <span class="kw">private</span> <span class="type">Long</span> productId;
+
+  <span class="ann">@NotNull</span>
+  <span class="ann">@Min</span>(<span class="num">1</span>)
+  <span class="ann">@Max</span>(<span class="num">100</span>)
+  <span class="kw">private</span> <span class="type">Integer</span> quantity;
+
+  <span class="comment">// 入力検証だけ</span>
+  <span class="comment">// 「productIdが何か」「在庫があるか」</span>
+  <span class="comment">// はここでは判定しない</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// === Service（業務ルール検証） ===</span>
+
+<span class="ann">@Service</span>
+<span class="kw">public class</span> <span class="type">OrderService</span> {
+
+  <span class="ann">@Transactional</span>
+  <span class="kw">public void</span> <span class="fn">placeOrder</span>(<span class="type">OrderForm</span> form) {
+
+    <span class="comment">// ===== 業務ルール検証 =====</span>
+
+    <span class="comment">// 1. 商品が存在するか</span>
+    <span class="type">Product</span> p = productMapper.<span class="fn">findById</span>(form.<span class="fn">getProductId</span>());
+    <span class="kw">if</span> (p == <span class="kw">null</span>) {
+      <span class="kw">throw new</span> <span class="type">BusinessException</span>(<span class="str">"商品が存在しません"</span>);
+    }
+
+    <span class="comment">// 2. 在庫があるか</span>
+    <span class="kw">if</span> (p.<span class="fn">getStock</span>() &lt; form.<span class="fn">getQuantity</span>()) {
+      <span class="kw">throw new</span> <span class="type">BusinessException</span>(<span class="str">"在庫不足"</span>);
+    }
+
+    <span class="comment">// 3. 1日上限を超えていないか</span>
+    <span class="kw">int</span> todayOrders = orderMapper.<span class="fn">countToday</span>();
+    <span class="kw">if</span> (todayOrders &gt;= <span class="num">10</span>) {
+      <span class="kw">throw new</span> <span class="type">BusinessException</span>(<span class="str">"1日10件まで"</span>);
+    }
+
+    <span class="comment">// ===== 業務処理 =====</span>
+    <span class="comment">// 注文登録、在庫減算、メール送信...</span>
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// 業務ルール例</span>
+
+<span class="comment">// ・「同じメールアドレスでは登録できない」</span>
+<span class="comment">//   → DB参照必要 → Service</span>
+
+<span class="comment">// ・「会員ランクA以上のみ購入可能」</span>
+<span class="comment">//   → ユーザー情報参照 → Service</span>
+
+<span class="comment">// ・「24時間以内に同じ商品を5個以上注文不可」</span>
+<span class="comment">//   → 履歴参照 → Service</span>
+
+<span class="comment">// ・「メールアドレスが正しい形式」</span>
+<span class="comment">//   → 単一項目 → Form (@Email)</span>
+
+<span class="comment">// ・「年齢は18歳以上」</span>
+<span class="comment">//   → 単一項目 → Form (@Min)</span>
+
+
+<span class="code-head" style="margin-top:18px">// 例外設計の予告（Vol.9）</span>
+
+<span class="comment">// 業務ルール違反は</span>
+<span class="comment">// 「例外を投げる」のが業界標準</span>
+
+<span class="comment">// Vol.9で @ControllerAdvice を使って</span>
+<span class="comment">// この例外を画面表示するフローを学ぶ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「役割分担で複雑さを管理」</div>
+    <p>「<b>すべてFormに書けば良いのでは?</b>」と思うかもしれませんが、<b>業務ルール</b>はDB参照や複数項目の組合せが必要で、Form だけでは表現できません。<b>Form = 入口の門番</b>、<b>Service = 業務の判事</b>── 役割分担を守ると、<b>コードがシンプル</b>で<b>保守しやすく</b>なります。Vol.9で<b>業務例外の扱い方</b>を学ぶことで、この役割分担がさらに明確になります。</p>
+  </div>
+</section>
+
+<section id="error-lifecycle">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>バリデーションエラーのライフサイクル</h2>
+    <span class="en">VALIDATION ERROR LIFECYCLE</span>
+  </div>
+  <p class="pattern-desc">本編Vol.8で動かしたバリデーションエラー。<b>「誰が・誰に・何を」</b>で詳細フローを追います。「Modelに何が入っているか」「Thymeleafがどう描画するか」── 内部動作を完全解明します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">validation-error-flow</span>
+      <span class="tag-desc">バリデーションエラー時の完全フロー（新ルール適用）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// エラー発生から画面表示までの完全フロー</div>
+
+<div class="flow-v2"><span class="flow-step">★ シナリオ：ユーザーが空欄でPOST送信</span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">Spring</span> に <span class="flow-call">POSTリクエストを送る</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">送信: POST /tasks (title="")</span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ステップ1: フォームバインディング</span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">TaskForm</span> を <span class="flow-call">インスタンス化</span></span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">TaskForm</span> に <span class="flow-call">setTitle("") を呼ぶ</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">taskForm.title = "" の状態</span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ステップ2: バリデーション実行</span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">Hibernate Validator</span> に <span class="flow-call">検証を依頼</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">対象: taskForm の全フィールド</span>
+
+<span class="flow-step"><span class="flow-actor">Hibernate Validator</span> が <span class="flow-actor">NotBlankValidator</span> に <span class="flow-call">isValid("") を呼ぶ</span><span class="flow-label-call">行き</span></span>
+
+<span class="flow-step"><span class="flow-actor">NotBlankValidator</span> が <span class="flow-actor">Hibernate Validator</span> に <span class="flow-return">false を返す</span><span class="flow-label-return">帰り</span></span>
+<span class="flow-arg">空文字なので違反</span>
+
+<span class="flow-step"><span class="flow-actor">Hibernate Validator</span> が <span class="flow-actor">BindingResult</span> に <span class="flow-call">エラー情報を追加</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">追加内容: FieldError(field="title", code="NotBlank")</span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ステップ3: Controller での分岐</span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">Controller</span> の <span class="flow-call">create(taskForm, bindingResult) を呼ぶ</span><span class="flow-label-call">行き</span></span>
+
+<span class="flow-step"><span class="flow-actor">Controller</span> が <span class="flow-actor">BindingResult</span> の <span class="flow-call">hasErrors() を確認</span></span>
+
+<span class="flow-step"><span class="flow-actor">BindingResult</span> が <span class="flow-actor">Controller</span> に <span class="flow-return">true を返す</span><span class="flow-label-return">帰り</span></span>
+
+<span class="flow-step"><span class="flow-actor">Controller</span> が <span class="flow-actor">Spring</span> に <span class="flow-return">"tasks/new" を返す</span><span class="flow-label-return">帰り</span></span>
+<span class="flow-arg">redirect: なし → forward でテンプレート描画</span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ステップ4: テンプレートのレンダリング</span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">Thymeleaf</span> に <span class="flow-call">new.html の描画を依頼</span><span class="flow-label-call">行き</span></span>
+<span class="flow-arg">Model 内容: taskForm, BindingResult, messages.properties</span>
+
+<span class="flow-step"><span class="flow-actor">Thymeleaf</span> が <span class="flow-actor">Model</span> から <span class="flow-call">taskForm.title を取得</span></span>
+<span class="flow-arg">取得値: "" → input の value="" に展開</span>
+
+<span class="flow-step"><span class="flow-actor">Thymeleaf</span> が <span class="flow-actor">BindingResult</span> の <span class="flow-call">hasErrors("title") を確認</span></span>
+<span class="flow-arg">結果: true → エラー表示要素を描画</span>
+
+<span class="flow-step"><span class="flow-actor">Thymeleaf</span> が <span class="flow-actor">messages.properties</span> から <span class="flow-call">メッセージ取得</span></span>
+<span class="flow-arg">キー: NotBlank.taskForm.title</span>
+<span class="flow-arg">値: "タイトルは必須です"</span>
+
+<div class="flow-divider"></div>
+
+<span class="flow-step">★ ステップ5: 結果の返却</span>
+
+<span class="flow-step"><span class="flow-actor">Spring</span> が <span class="flow-actor">ブラウザ</span> に <span class="flow-return">HTMLを返す</span><span class="flow-label-return">帰り</span></span>
+<span class="flow-arg">内容: 入力値保持 + エラーメッセージ赤字</span>
+
+<span class="flow-step"><span class="flow-actor">ブラウザ</span> が <span class="flow-actor">ユーザー</span> に <span class="flow-call">フォームを表示</span></span>
+<span class="flow-arg">「タイトルは必須です」が赤字で見える</span></div>
+      </div>
+      <div class="code"><span class="code-head">// Modelの中身（エラー時）</span>
+
+<span class="comment">// 内部的にはこんな状態:</span>
+
+<span class="type">Model</span> {
+  <span class="str">"taskForm"</span>: <span class="type">TaskForm</span>{
+    title: <span class="str">""</span>
+  },
+
+  <span class="str">"org.springframework.validation.</span>
+<span class="str">  BindingResult.taskForm"</span>:
+  <span class="type">BindingResult</span>{
+    fieldErrors: [
+      <span class="type">FieldError</span>{
+        field: <span class="str">"title"</span>,
+        code: <span class="str">"NotBlank"</span>,
+        defaultMessage: <span class="str">"must not be blank"</span>,
+        codes: [
+          <span class="str">"NotBlank.taskForm.title"</span>,
+          <span class="str">"NotBlank.title"</span>,
+          <span class="str">"NotBlank.java.lang.String"</span>,
+          <span class="str">"NotBlank"</span>
+        ]
+      }
+    ]
+  }
+}
+
+
+<span class="code-head" style="margin-top:18px">// Thymeleafの処理</span>
+
+<span class="comment">// テンプレート:</span>
+<span class="tag">&lt;input</span> <span class="attr">th:field</span>=<span class="str">"*{title}"</span><span class="tag">&gt;</span>
+
+<span class="comment">// 描画後:</span>
+<span class="tag">&lt;input</span> <span class="attr">id</span>=<span class="str">"title"</span>
+       <span class="attr">name</span>=<span class="str">"title"</span>
+       <span class="attr">value</span>=<span class="str">""</span><span class="tag">&gt;</span>
+       <span class="comment">// ↑ taskForm.title が ""</span>
+
+
+<span class="tag">&lt;span</span> <span class="attr">th:if</span>=<span class="str">"${#fields.hasErrors('title')}"</span>
+      <span class="attr">th:errors</span>=<span class="str">"*{title}"</span><span class="tag">&gt;&lt;/span&gt;</span>
+
+<span class="comment">// 描画後:</span>
+<span class="tag">&lt;span</span><span class="tag">&gt;</span>タイトルは必須です<span class="tag">&lt;/span&gt;</span>
+<span class="comment">// ↑ codes の最初に一致した</span>
+<span class="comment">// NotBlank.taskForm.title から</span>
+<span class="comment">// 取得したメッセージ</span>
+
+
+<span class="code-head" style="margin-top:18px">// 「codes配列」のメッセージ検索</span>
+
+<span class="comment">// Spring は codes 配列を順に試す:</span>
+1. <span class="str">"NotBlank.taskForm.title"</span>  ← ヒット！
+2. <span class="str">"NotBlank.title"</span>
+3. <span class="str">"NotBlank.java.lang.String"</span>
+4. <span class="str">"NotBlank"</span>
+
+<span class="comment">// 最初にヒットしたキーで</span>
+<span class="comment">// messages.properties の値を使う</span>
+
+<span class="comment">// → 「具体的なキー」が優先される</span>
+<span class="comment">// → 細かいカスタマイズが可能</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「内部を知ると応用が利く」</div>
+    <p>このフローを<b>頭で再生</b>できるようになると、バリデーションのトラブルシューティングが楽になります。「<b>エラーメッセージが出ない → BindingResultが空? Modelに入ってない?</b>」「<b>日本語にならない → codes配列に該当キーがない?</b>」── <b>原因の当たりがつく</b>のは内部理解の力です。</p>
+  </div>
+</section>
+
+<section id="messages-deep">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>多言語化と messages.properties の深掘り</h2>
+    <span class="en">I18N WITH MESSAGES.PROPERTIES</span>
+  </div>
+  <p class="pattern-desc"><code style="font-family:'JetBrains Mono'">messages.properties</code> は<b>多言語対応</b>のための仕掛けでもあります。日本語・英語・中国語などを<b>切り替え</b>られる仕組みを覗きます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">i18n-deep</span>
+      <span class="tag-desc">多言語対応の仕組み</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 多言語化（i18n）の仕組み</div>
+
+        <p style="font-size:13.5px;line-height:1.85"><b>i18n</b> = Internationalization（国際化）の略。<b>i</b> から <b>n</b> までの間に<b>18文字</b>あるので「i18n」。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px">Spring の仕組み：<b>言語ごとに <code>messages.properties</code> ファイルを用意</b>すれば、自動で切り替わる。</p>
+
+        <ul style="font-size:13px;padding-left:24px;line-height:1.85;margin-top:6px">
+          <li><code>messages.properties</code> ── デフォルト</li>
+          <li><code>messages_ja.properties</code> ── 日本語</li>
+          <li><code>messages_en.properties</code> ── 英語</li>
+          <li><code>messages_zh.properties</code> ── 中国語</li>
+          <li><code>messages_ko.properties</code> ── 韓国語</li>
+        </ul>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:14px"><b>言語の判定</b>：ブラウザの <code>Accept-Language</code> ヘッダーから自動判別。あるいは <code>?lang=en</code> パラメータで切替可能（<code>LocaleResolver</code> 設定が必要）。</p>
+
+        <p style="font-size:14px;font-weight:700;color:var(--accent-3);margin-top:18px">プレースホルダの使い方</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:6px">メッセージに<b>動的な値</b>を埋め込む：</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">Size.taskForm.title=タイトルは{2}文字以内です</pre>
+
+        <p style="font-size:13px;margin-top:6px;line-height:1.7"><code>{0}</code>、<code>{1}</code>、<code>{2}</code>... に<b>制約の値</b>が入る。<code>@Size(max=100)</code>なら<code>{2}</code>が<code>100</code>に置換される。</p>
+      </div>
+      <div class="code"><span class="code-head">// 多言語対応の例</span>
+
+<span class="comment">// === messages.properties (デフォルト) ===</span>
+NotBlank.taskForm.title=Title is required
+Size.taskForm.title=Title must be within {2} characters
+
+
+<span class="code-head" style="margin-top:18px">// === messages_ja.properties (日本語) ===</span>
+NotBlank.taskForm.title=タイトルは必須です
+Size.taskForm.title=タイトルは{2}文字以内で入力してください
+
+
+<span class="code-head" style="margin-top:18px">// === messages_en.properties (英語) ===</span>
+NotBlank.taskForm.title=Title is required
+Size.taskForm.title=Title must be {2} chars or less
+
+
+<span class="code-head" style="margin-top:18px">// === messages_zh.properties (中国語) ===</span>
+NotBlank.taskForm.title=标题为必填项
+Size.taskForm.title=标题不能超过{2}个字符
+
+
+<span class="code-head" style="margin-top:18px">// ブラウザの言語が日本語の場合</span>
+
+<span class="comment">// Accept-Language: ja</span>
+<span class="comment">// → messages_ja.properties を選ぶ</span>
+<span class="comment">// → 日本語メッセージ表示</span>
+
+
+<span class="code-head" style="margin-top:18px">// 切替の仕組み（高度）</span>
+
+<span class="comment">// LocaleResolver の Bean を定義すると</span>
+<span class="comment">// より細かい制御が可能</span>
+
+<span class="ann">@Configuration</span>
+<span class="kw">public class</span> <span class="type">WebConfig</span>
+    <span class="kw">implements</span> <span class="type">WebMvcConfigurer</span> {
+
+  <span class="ann">@Bean</span>
+  <span class="kw">public</span> <span class="type">LocaleResolver</span> <span class="fn">localeResolver</span>() {
+    <span class="type">SessionLocaleResolver</span> r = <span class="kw">new</span>
+      <span class="type">SessionLocaleResolver</span>();
+    r.<span class="fn">setDefaultLocale</span>(<span class="type">Locale</span>.<span class="kw">JAPAN</span>);
+    <span class="kw">return</span> r;
+  }
+
+  <span class="ann">@Bean</span>
+  <span class="kw">public</span> <span class="type">LocaleChangeInterceptor</span>
+      <span class="fn">localeChangeInterceptor</span>() {
+    <span class="type">LocaleChangeInterceptor</span> i = <span class="kw">new</span>
+      <span class="type">LocaleChangeInterceptor</span>();
+    i.<span class="fn">setParamName</span>(<span class="str">"lang"</span>);
+    <span class="kw">return</span> i;
+  }
+}
+
+<span class="comment">// → ?lang=en でURL から切替可能に</span>
+
+
+<span class="code-head" style="margin-top:18px">// 業務開発での使い分け</span>
+
+<span class="comment">// 国内向けサービス:</span>
+<span class="comment">// → messages.properties（日本語固定）でOK</span>
+
+<span class="comment">// グローバルサービス:</span>
+<span class="comment">// → 各言語のpropertiesファイル必須</span>
+<span class="comment">// → 翻訳者と協業する場面も</span>
+
+<span class="comment">// Vol.8では日本語化のみ</span>
+<span class="comment">// → 多くの業務でこれが現実的</span>
+
+
+<span class="code-head" style="margin-top:18px">// 注意点：UTF-8</span>
+
+<span class="comment">// 全ファイル UTF-8 で保存</span>
+<span class="comment">// application.properties に:</span>
+spring.messages.encoding=UTF-8
+
+<span class="comment">// → 文字化けを防ぐ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「i18nは最初から考える」</div>
+    <p>多言語対応が必要かどうかは<b>プロジェクト開始時に決める</b>もの。後から導入するのは大変です。「<b>最初から messages.properties で書く習慣</b>」をつけておけば、後で多言語化が必要になった時に追加するだけで済みます。<b>「日本語をコードに直書きしない、messages.properties に書く」</b>── これが業務開発のベストプラクティスです。</p>
+  </div>
+</section>
+
+<section id="checklist">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>自分でバリデーションを設計するためのチェックリスト</h2>
+    <span class="en">CHECKLIST</span>
+  </div>
+  <p class="pattern-desc">本補足の集大成。<b>新しいFormを作る時</b>のチェックリスト。明日から使える実務テンプレートです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">validation-checklist</span>
+      <span class="tag-desc">バリデーション設計チェックリスト</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 設計時の判断項目</div>
+
+        <p style="font-size:14px;font-weight:700;margin-bottom:8px;color:var(--accent-3)">事前判断（設計）</p>
+        <ul class="checklist">
+          <li>この入力は<b>必須</b>か任意か</li>
+          <li><b>文字数制限</b>は？（DB定義と合っているか）</li>
+          <li><b>形式制限</b>はあるか？（メール、URL、電話番号等）</li>
+          <li><b>数値範囲</b>はあるか？（年齢、価格、数量等）</li>
+          <li><b>業務ルール</b>はあるか？（DB参照が必要なものは Service に書く）</li>
+          <li><b>カスタムバリデーター</b>が必要か？（業界固有のルール）</li>
+          <li>クライアント側にも書くか？（UX向上のため）</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;margin:14px 0 8px;color:var(--accent-3)">実装</p>
+        <ul class="checklist">
+          <li><b>pom.xml に <code>spring-boot-starter-validation</code></b> が入っているか確認</li>
+          <li>Form クラスのフィールドに<b>適切なアノテーション</b>を付ける</li>
+          <li>import は <code>jakarta.validation.*</code>（javax.* ではない）</li>
+          <li>Controllerの引数に <code>@Valid</code> を付ける</li>
+          <li>Controller の引数に <code>BindingResult</code> を <b>@Valid の直後</b>に置く</li>
+          <li>エラー時は <code>return "テンプレート名";</code>（redirectしない）</li>
+          <li>成功時は <code>return "redirect:/...";</code>（PRG）</li>
+          <li>テンプレートに <code>th:if="${#fields.hasErrors('...')}"</code> + <code>th:errors</code> を追加</li>
+          <li>messages.properties を作成（UTF-8で保存）</li>
+          <li>キー名は<b>制約名.Form名.フィールド名</b>のパターン</li>
+        </ul>
+
+        <p style="font-size:14px;font-weight:700;margin:14px 0 8px;color:var(--accent-3)">動作確認</p>
+        <ul class="checklist">
+          <li>空欄送信で<b>必須エラー</b>が出る</li>
+          <li>長文送信で<b>サイズエラー</b>が出る</li>
+          <li>エラー時に<b>入力値が保持</b>される</li>
+          <li>エラー時に<b>URL がフォームのまま</b>（redirect していない）</li>
+          <li>正常入力時のみ <b>DB登録 + redirect</b></li>
+          <li>メッセージが<b>日本語</b>で表示される（文字化けなし）</li>
+          <li>業務ルール違反は Service で<b>例外を投げる</b>（Vol.9 で扱う）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// バリデーション スターターテンプレート</span>
+
+<span class="comment">// === 1. Form ===</span>
+<span class="kw">package</span> com.example.app.form;
+
+<span class="kw">import</span> jakarta.validation.constraints.*;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">XxxForm</span> {
+
+  <span class="ann">@NotBlank</span>
+  <span class="ann">@Size</span>(max = <span class="num">100</span>)
+  <span class="kw">private</span> <span class="type">String</span> name;
+
+  <span class="ann">@NotBlank</span>
+  <span class="ann">@Email</span>
+  <span class="kw">private</span> <span class="type">String</span> email;
+
+  <span class="ann">@NotNull</span>
+  <span class="ann">@Min</span>(<span class="num">0</span>)
+  <span class="ann">@Max</span>(<span class="num">100</span>)
+  <span class="kw">private</span> <span class="type">Integer</span> quantity;
+
+  <span class="comment">// 業務ルール（DB参照が必要等）は</span>
+  <span class="comment">// ここに書かない → Service層に書く</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// === 2. Controller ===</span>
+
+<span class="ann">@PostMapping</span>(<span class="str">"/xxx"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+    <span class="ann">@Valid</span> <span class="type">XxxForm</span> form,
+    <span class="type">BindingResult</span> bindingResult) {
+                  <span class="comment">// ↑ @Validの直後！</span>
+
+  <span class="kw">if</span> (bindingResult.<span class="fn">hasErrors</span>()) {
+    <span class="kw">return</span> <span class="str">"xxx/new"</span>;
+    <span class="comment">// ↑ redirectしない</span>
+  }
+
+  service.<span class="fn">register</span>(form);
+  <span class="kw">return</span> <span class="str">"redirect:/xxx"</span>;
+}
+
+
+<span class="code-head" style="margin-top:18px">// === 3. テンプレート ===</span>
+
+<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span>
+       <span class="attr">th:field</span>=<span class="str">"*{name}"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;span</span>
+  <span class="attr">th:if</span>=<span class="str">"${#fields.hasErrors('name')}"</span>
+  <span class="attr">th:errors</span>=<span class="str">"*{name}"</span>
+  <span class="attr">style</span>=<span class="str">"color:red"</span><span class="tag">&gt;&lt;/span&gt;</span>
+
+
+<span class="code-head" style="margin-top:18px">// === 4. messages.properties ===</span>
+
+NotBlank.xxxForm.name=名前は必須です
+Size.xxxForm.name=名前は{2}文字以内で入力してください
+Email.xxxForm.email=有効なメールアドレスを入力してください
+NotNull.xxxForm.quantity=数量は必須です
+Min.xxxForm.quantity=数量は{1}以上を入力してください
+Max.xxxForm.quantity=数量は{1}以下を入力してください
+
+
+<span class="good">// このパターンで業務の80%は対応可能</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「明日からの実務テンプレート」</div>
+    <p>このチェックリストとスターターテンプレートを<b>「実務のおまもり」</b>として手元に置いてください。新しいFormを設計する時、項目を1つずつチェック・コピペすれば、<b>業務品質のバリデーション</b>が短時間で組めます。<b>「動くもの」</b>を超えて、<b>「業務で評価されるもの」</b>を作れるエンジニアの土台です。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+  <div class="tip-label">この補足を読み終えたあなたへ</div>
+  <p>お疲れさまでした。<b>バリデーション設計の思想</b>を一通り解明しました。<b>バリデーションが守るもの、信頼境界、クライアント vs サーバ、Bean Validation の内部動作、標準アノテーションのカタログ、カスタムバリデーター、業務ルールの境界、エラーライフサイクル、多言語化、チェックリスト</b>── <b>業務開発者として必要な設計感覚</b>の地図が手に入りました。<br><br>
+  <b>「動く」と「業務に出せる」の境界</b>を渡る最初の一歩を踏み出したあなたは、Vol.1から始まった旅で<b>本当に多くのこと</b>を学んできました。バリデーションは<b>「業務品質の3本柱（バリデーション・例外処理・ログ）」</b>の最初の柱。残り2本もVol.9・Vol.10で揃えます。<br><br>
+  次のVol.9では<b>例外処理</b>を学びます。「DBが落ちた」「存在しないIDで編集を試みた」「想定外のエラー」── これらを業務的に扱う仕組み。<b>業務ルール違反の例外</b>もここで本格的に扱います（Vol.8 ADD で予告した内容です）。<code>@ControllerAdvice</code>、<code>@ExceptionHandler</code>、独自例外クラス── <b>業務品質の2本目の柱</b>を立てる旅が始まります。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.08 ADD ── DESIGN PHILOSOPHY OF VALIDATION</span>
+</footer>
+
+</body>
+</html>

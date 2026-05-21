@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.13 本編 複数テーブル更新と@Transactional応用</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2c25;
+  --paper:#e2ece0;
+  --paper-2:#c7dcc8;
+  --accent:#98b89e;
+  --accent-2:#adc9b2;
+  --accent-3:#1f4634;
+  --muted:#697867;
+  --line:#acc0a9;
+  --code-bg:#13211a;
+  --code-text:#e2ece0;
+  --panel-bg:#ebf3e7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(152,184,158,0.10);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.flow-box{background:#fff;border:1px solid var(--line);padding:14px 16px;margin:12px 0}
+.flow-step{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px}
+.flow-step .ic{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono';font-size:11px;font-weight:700;flex-shrink:0}
+.flow-step.fail .ic{background:#c45a5a}
+.flow-arrow{color:var(--muted);text-align:center;font-size:14px}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.13 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>複数テーブル更新と<br>@Transactional応用</h1>
+  <div class="subtitle">TRANSACTION ── ALL OR NOTHING</div>
+  <p class="lead">
+    Vol.13は<b>「トランザクション応用」</b>のマイルストーン。Cの<b>「完成フェーズ」</b>の幕開けです。<br>
+    これまで何気なく付けていた <code style="font-family:'JetBrains Mono'">@Transactional</code>。Vol.13 では<b>「1つの操作で複数テーブルを更新する」</b>場面で、その真の力を体験します。<br>
+    キーワードは<b>「全部成功するか、全部失敗するか」</b>。途中でエラーが起きたら<b>全ての変更を取り消す（ロールバック）</b>。これがデータ整合性を守る業務システムの<b>心臓部</b>です。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>Vol.13では <code>org.springframework.transaction.annotation.Transactional</code> を確認します。<br>
+    <code>@Transactional</code> には<b>2つの同名アノテーション</b>があります（Spring のと jakarta/javax のと）。<b>Spring 版を選ぶ</b>のが定石。「Import 'Transactional' (org.springframework.transaction.annotation)」を選択。<br>
+    意図的に例外を投げる場面で <code>RuntimeException</code> を使うので、その import も。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#transaction">04 トランザクションとは</a></li>
+    <li><a href="#rollback">05 ロールバックを体験する</a></li>
+    <li><a href="#create">06 ファイル作成と改修</a></li>
+    <li><a href="#run">07 ブラウザで動かして確認</a></li>
+    <li><a href="#trouble">08 ハマりどころと対処</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.13では<b>「複数テーブルを1つの操作で更新」</b>し、途中でエラーが起きたら<b>全部取り消す</b>動作を実装・体験します。トランザクションの本質を掴む巻。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.13-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">複数テーブルを更新する操作を作る</div>
+          <div class="desc">「記録を登録 ＋ 科目の最終学習日を更新」のように、<b>1つの操作で2テーブルを変更</b>する。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">途中エラーで全部ロールバック</div>
+          <div class="desc">2テーブル目の更新で例外が起きたら、<b>1テーブル目の変更も取り消される</b>のを確認。「中途半端な状態」を作らない。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">@Transactional の効果を実感する</div>
+          <div class="desc">アノテーションを<b>付けた時と外した時</b>で挙動を比較。「データ整合性が守られる/壊れる」を体験。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻でやること</span>
+
+<span class="comment">// テーブルに「最終学習日」列を追加</span>
+ALTER TABLE subjects
+  ADD COLUMN last_studied_on DATE;
+
+
+<span class="comment">// 「記録登録」が2テーブルを更新</span>
+
+register(form):
+  ① study_records に INSERT
+  ② subjects の last_studied_on を UPDATE
+
+<span class="comment">// この2つは「ひとまとまり」</span>
+<span class="comment">// 片方だけ成功 = データ不整合</span>
+
+
+<span class="comment">// @Transactional で保証：</span>
+
+正常時:
+  ① INSERT 成功
+  ② UPDATE 成功
+  → 両方コミット（確定）
+
+エラー時:
+  ① INSERT 成功
+  ② UPDATE で例外！
+  → 両方ロールバック（取り消し）
+  → ① の INSERT も無かったことに
+
+
+<span class="comment">// 「全部成功 or 全部失敗」</span>
+<span class="comment">// = トランザクションの本質</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>これまで Service に何気なく付けていた <code>@Transactional</code>。実は<b>「このメソッド内のDB操作は全部まとめて1つの取引（トランザクション）にする」</b>という強力な宣言でした。Vol.13 で<b>その真価</b>を体験します。<b>銀行の振込</b>を想像してください。「A口座から引く」と「B口座へ足す」が<b>片方だけ成功したら大事故</b>。これを防ぐのがトランザクションです。</p>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── 動作の流れ</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.13 は「画面の見た目」より<b>「内部の動作」</b>が主役。記録登録時に<b>2テーブルが同時に更新</b>され、エラー時は<b>両方取り消される</b>のを確認します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-behavior</span>
+      <span class="tag-desc">正常時とエラー時の動作</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 正常時の流れ</div>
+        <div class="flow-box">
+          <div class="flow-step"><span class="ic">1</span><span>記録を INSERT（study_records）</span></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step"><span class="ic">2</span><span>科目の最終学習日を UPDATE（subjects）</span></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step"><span class="ic">✓</span><span>両方コミット → 確定</span></div>
+        </div>
+        <div class="panel-head" style="margin-top:16px">// エラー時の流れ</div>
+        <div class="flow-box">
+          <div class="flow-step"><span class="ic">1</span><span>記録を INSERT（仮）</span></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step fail"><span class="ic">!</span><span>UPDATE で例外発生</span></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step fail"><span class="ic">✗</span><span>両方ロールバック → INSERT も取消</span></div>
+        </div>
+        <p style="margin-top:12px;font-size:13px"><b>エラー時に「記録だけ残って最終学習日が古いまま」</b>という<b>中途半端な状態を作らない</b>。これがトランザクションの価値。</p>
+      </div>
+      <div class="code"><span class="code-head">// プロジェクト構造の変化</span>
+
+todo/
+├ DB:
+│  └ subjects テーブルに列追加
+│     <span class="kw">last_studied_on DATE</span>
+├ src/main/java/com/example/todo/
+│  ├ entity/
+│  │  └ Subject.java           <span class="comment">// 改修</span>
+│  │      <span class="kw">// + lastStudiedOn フィールド</span>
+│  ├ mapper/
+│  │  ├ StudyRecordMapper.java <span class="comment">// 既存 insert</span>
+│  │  └ SubjectMapper.java     <span class="comment">// 改修</span>
+│  │      <span class="kw">// + updateLastStudiedOn()</span>
+│  └ service/
+│     └ StudyRecordService.java<span class="comment">// 改修</span>
+│         <span class="kw">// register が2テーブル更新に</span>
+│         <span class="kw">// @Transactional の真価</span>
+└ （HTMLは大きな変更なし）
+
+
+<span class="comment">// 主役は Service の register メソッド</span>
+<span class="comment">// 「2つの Mapper を1つの取引で呼ぶ」</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.13 は<b>A v2 で触れた <code>@Transactional</code> の深掘り</b>。これまで「おまじない」的に付けていたものの<b>本当の意味</b>を理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">前提知識</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前提知識</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>該当箇所</th></tr>
+          <tr><td>@Service / @Transactional の存在</td><td>A v2 全体</td></tr>
+          <tr><td>Mapper の insert / update</td><td>本編 M7 / A v2</td></tr>
+          <tr><td>Form → Service → Mapper の流れ</td><td>本編 M7</td></tr>
+          <tr><td>例外（Exception）の基礎</td><td>Java基礎</td></tr>
+          <tr><td>ALTER TABLE で列追加</td><td>SQL基礎</td></tr>
+        </table>
+        <div style="margin-top:16px;font-size:13.5px"><b>新しく学ぶこと</b>：</div>
+        <ol class="step-list" style="margin-top:6px">
+          <li>トランザクションの ACID 特性</li>
+          <li>コミットとロールバック</li>
+          <li>複数Mapper を1トランザクションで呼ぶ</li>
+          <li>例外とロールバックの関係</li>
+          <li>@Transactional の真の役割</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// これまでの @Transactional</span>
+
+<span class="comment">// A v2 から「とりあえず付けていた」</span>
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>  <span class="comment">// ← これ</span>
+<span class="kw">public class</span> <span class="type">SubjectService</span> {
+  ...
+}
+
+
+<span class="comment">// ─── これまでの理解 ───</span>
+<span class="comment">// 「Service には付けるもの」</span>
+<span class="comment">// 「なんか良いことがある」</span>
+<span class="comment">// → 漠然としていた</span>
+
+
+<span class="comment">// ─── Vol.13 で理解すること ───</span>
+
+<span class="comment">// @Transactional の本当の意味：</span>
+<span class="comment">// 「このメソッド内のDB操作を</span>
+<span class="comment">//  すべて1つの取引にまとめる」</span>
+
+<span class="comment">// → 全部成功したらコミット</span>
+<span class="comment">// → 1つでも失敗したらロールバック</span>
+
+
+<span class="comment">// 単一テーブルの操作では</span>
+<span class="comment">// 効果が見えにくかった。</span>
+
+<span class="comment">// 複数テーブルを更新する Vol.13 で</span>
+<span class="comment">// 真価が見える。</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="transaction">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>トランザクションとは</h2>
+    <span class="en">WHAT IS A TRANSACTION</span>
+  </div>
+  <p class="pattern-desc"><b>トランザクション</b>とは「<b>分割できない一連の処理のまとまり</b>」。複数のDB操作を<b>「全部成功 or 全部失敗」</b>のどちらかにする仕組み。中途半端な状態を許さない。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">acid</span>
+      <span class="tag-desc">トランザクションの ACID 特性</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ACID 特性</div>
+        <div class="role-card">
+          <span class="label">A</span>
+          <div class="name">Atomicity（原子性）</div>
+          <div class="desc"><b>「全部 or 何もなし」</b>。複数操作が分割不可能なひとまとまり。Vol.13 の主役。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">C</span>
+          <div class="name">Consistency（一貫性）</div>
+          <div class="desc">トランザクション前後で<b>データの整合性が保たれる</b>。制約違反する状態にはならない。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">I</span>
+          <div class="name">Isolation（分離性）</div>
+          <div class="desc">複数のトランザクションが<b>互いに干渉しない</b>。同時実行されても矛盾しない。S13 で深掘り。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">D</span>
+          <div class="name">Durability（永続性）</div>
+          <div class="desc">コミットされた変更は<b>確実に保存</b>される。障害が起きても失われない。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>Vol.13 の焦点は A（原子性）</b>。「全部成功 or 全部失敗」が業務で最も重要。</p>
+      </div>
+      <div class="code"><span class="code-head">// トランザクションの身近な例</span>
+
+<span class="comment">// ─── 銀行振込（古典的な例）───</span>
+
+振込: A口座 → B口座 へ 1万円
+
+  ① A口座から 1万円 引く
+  ② B口座へ 1万円 足す
+
+<span class="comment">// もし ① だけ成功して ② で障害が起きたら？</span>
+<span class="comment">// → A口座から消えたお金が B口座に入らない</span>
+<span class="comment">// → 1万円が「消滅」する大事故！</span>
+
+<span class="comment">// トランザクションがあれば：</span>
+<span class="comment">// ② が失敗したら ① も取り消す</span>
+<span class="comment">// → お金は消えない</span>
+
+
+<span class="comment">// ─── 学習記録アプリの例 ───</span>
+
+記録登録:
+
+  ① study_records に記録を INSERT
+  ② subjects の最終学習日を UPDATE
+
+<span class="comment">// もし ② が失敗したら？</span>
+<span class="comment">// → 記録はあるのに最終学習日が古いまま</span>
+<span class="comment">// → データ不整合</span>
+
+<span class="comment">// トランザクションがあれば：</span>
+<span class="comment">// ② 失敗 → ① も取り消し</span>
+<span class="comment">// → 「記録なし・最終学習日も変化なし」</span>
+<span class="comment">// → 整合性が保たれる</span>
+
+
+<span class="comment">// ─── コミットとロールバック ───</span>
+
+<span class="comment">// コミット（commit）:</span>
+<span class="comment">//   変更を「確定」する</span>
+<span class="comment">//   → DB に永続化</span>
+
+<span class="comment">// ロールバック（rollback）:</span>
+<span class="comment">//   変更を「取り消す」</span>
+<span class="comment">//   → 開始前の状態に戻す</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">spring-transaction</span>
+      <span class="tag-desc">Spring の @Transactional</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Spring が自動でやってくれること</div>
+        <p>Spring は <code>@Transactional</code> の付いたメソッドに対して、<b>自動的にトランザクションを管理</b>します。</p>
+        <ol class="step-list" style="margin-top:6px">
+          <li>メソッド開始時にトランザクション<b>開始</b></li>
+          <li>メソッドが正常終了したら<b>コミット</b></li>
+          <li>メソッド内で<b>実行時例外が出たらロールバック</b></li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">「宣言的トランザクション」</div>
+          <p>自分で <code>commit()</code> や <code>rollback()</code> を書かず、<b>アノテーションを付けるだけ</b>で管理される。これを「<b>宣言的トランザクション</b>」と呼びます。Spring の大きな利点のひとつ。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// @Transactional の動き</span>
+
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">register</span>(<span class="type">StudyRecordForm</span> form) {
+
+  <span class="comment">// ↓ ここでトランザクション開始（Spring）</span>
+
+  studyRecordMapper.<span class="fn">insert</span>(record);
+  <span class="comment">// ① INSERT</span>
+
+  subjectMapper.<span class="fn">updateLastStudiedOn</span>(
+      form.<span class="fn">getSubjectId</span>(),
+      form.<span class="fn">getStudiedOn</span>());
+  <span class="comment">// ② UPDATE</span>
+
+  <span class="comment">// ↓ メソッド正常終了 → コミット（Spring）</span>
+}
+
+
+<span class="comment">// ─── 例外が起きた場合 ───</span>
+
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">register</span>(<span class="type">StudyRecordForm</span> form) {
+  studyRecordMapper.<span class="fn">insert</span>(record);  <span class="comment">// ①</span>
+
+  <span class="kw">if</span> (something) {
+    <span class="kw">throw new</span> <span class="type">RuntimeException</span>(<span class="str">"エラー"</span>);
+    <span class="comment">// ↑ ここで例外</span>
+  }
+
+  subjectMapper.<span class="fn">updateLastStudiedOn</span>(...);  <span class="comment">// ②</span>
+
+  <span class="comment">// → ② に到達せず例外</span>
+  <span class="comment">// → Spring が自動ロールバック</span>
+  <span class="comment">// → ① の INSERT も取り消される</span>
+}
+
+
+<span class="comment">// ─── 重要な注意（S13で詳説）───</span>
+<span class="comment">// 自動ロールバックは</span>
+<span class="comment">// 「RuntimeException 系」がデフォルト。</span>
+<span class="comment">// チェック例外は別途設定が必要。</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="rollback">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>ロールバックを体験する</h2>
+    <span class="en">EXPERIENCE ROLLBACK</span>
+  </div>
+  <p class="pattern-desc">Vol.13 の<b>目玉</b>。<b>意図的に例外を起こして</b>、ロールバックの動作を<b>自分の目で確認</b>します。「百聞は一見にしかず」。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">rollback-demo</span>
+      <span class="tag-desc">わざとエラーを起こす実験</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実験の流れ</div>
+        <ol class="step-list">
+          <li>register メソッドで ① INSERT の後に</li>
+          <li>わざと <code>throw new RuntimeException()</code> を入れる</li>
+          <li>記録登録を実行 → 例外発生</li>
+          <li>DB を確認 → <b>INSERT した記録が無い！</b></li>
+          <li>= ロールバックされた証拠</li>
+          <li>次に <code>@Transactional</code> を外して同じ実験</li>
+          <li>今度は <b>INSERT した記録が残る</b>（ロールバックされない）</li>
+          <li>= @Transactional の効果を実感</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">実験は学びの宝庫</div>
+          <p>「<b>@Transactional あり/なし</b>」で挙動が変わるのを<b>自分の目で見る</b>と、トランザクションの理解が一気に深まります。実験後は<b>必ず例外を入れたコードを元に戻す</b>こと。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// ロールバック実験のコード</span>
+
+<span class="comment">// ─── 実験用：わざと例外を起こす ───</span>
+
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">register</span>(<span class="type">StudyRecordForm</span> form) {
+
+  <span class="comment">// ① INSERT（成功する）</span>
+  <span class="type">StudyRecord</span> record = <span class="kw">new</span> <span class="type">StudyRecord</span>();
+  record.<span class="fn">setSubjectId</span>(form.<span class="fn">getSubjectId</span>());
+  record.<span class="fn">setStudiedOn</span>(form.<span class="fn">getStudiedOn</span>());
+  record.<span class="fn">setMinutes</span>(form.<span class="fn">getMinutes</span>());
+  record.<span class="fn">setMemo</span>(form.<span class="fn">getMemo</span>());
+  studyRecordMapper.<span class="fn">insert</span>(record);
+
+  <span class="comment">// ★ 実験：わざと例外</span>
+  <span class="kw">throw new</span> <span class="type">RuntimeException</span>(
+      <span class="str">"ロールバック実験"</span>);
+
+  <span class="comment">// ② ここには到達しない</span>
+  <span class="comment">// subjectMapper.updateLastStudiedOn(...)</span>
+}
+
+
+<span class="comment">// ─── 結果の比較 ───</span>
+
+<span class="comment">// 【@Transactional あり】</span>
+<span class="comment">// 例外発生 → ロールバック</span>
+<span class="comment">// → DB を見ると INSERT が無い</span>
+<span class="comment">// → SELECT COUNT(*) は増えていない</span>
+
+
+<span class="comment">// 【@Transactional なし（実験）】</span>
+<span class="comment">// 例外発生してもロールバックされない</span>
+<span class="comment">// → DB を見ると INSERT が残っている</span>
+<span class="comment">// → 中途半端なデータが発生！</span>
+
+
+<span class="comment">// ─── 実験後 ───</span>
+<span class="comment">// throw を削除して正常なコードに戻す</span>
+<span class="comment">// @Transactional は付けたままにする</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ファイル作成と改修</h2>
+    <span class="en">CREATE & MODIFY</span>
+  </div>
+  <p class="pattern-desc"><b>DB列追加＋Entity改修＋Mapper追加＋Service改修</b>。記録登録を「2テーブル更新」に拡張します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">alter-table</span>
+      <span class="tag-desc">① DBに列を追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>DBクライアント（MySQL Workbench等）を開く</li>
+          <li>右のSQLで <code>subjects</code> に <code>last_studied_on</code> 列を追加</li>
+          <li>実行</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">ALTER TABLE で既存テーブルを変更</div>
+          <p><code>ALTER TABLE ... ADD COLUMN</code> で<b>既存テーブルに列を追加</b>。既存データはこの列が NULL になります。「最終学習日」の初期値は NULL でOK（まだ記録登録していない科目）。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 列追加SQL</span>
+
+ALTER TABLE subjects
+  ADD COLUMN last_studied_on DATE;
+
+
+<span class="comment">// ─── 確認 ───</span>
+DESC subjects;
+
+<span class="comment">// Field           | Type</span>
+<span class="comment">// id              | int</span>
+<span class="comment">// name            | varchar(50)</span>
+<span class="comment">// color           | varchar(20)</span>
+<span class="comment">// created_at      | datetime</span>
+<span class="comment">// last_studied_on | date     ← 追加</span>
+
+
+<span class="comment">// 既存の科目は last_studied_on = NULL</span>
+<span class="comment">// （まだ記録登録していないため）</span>
+
+<span class="comment">// 任意：既存記録から初期値を埋める</span>
+UPDATE subjects s
+SET last_studied_on = (
+  SELECT MAX(studied_on)
+  FROM study_records r
+  WHERE r.subject_id = s.id
+);
+<span class="comment">// → 各科目の最新の学習日をセット</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-entity</span>
+      <span class="tag-desc">② Subject Entity に フィールド追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>Subject.java</code> を開く</li>
+          <li><code>LocalDate lastStudiedOn</code> フィールドを追加</li>
+          <li>import を確認</li>
+          <li>保存</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// Subject.java（改修後）</span>
+
+<span class="kw">package</span> com.example.todo.entity;
+
+<span class="kw">import</span> java.time.LocalDate;
+<span class="kw">import</span> java.time.LocalDateTime;
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Subject</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> id;
+  <span class="kw">private</span> <span class="type">String</span> name;
+  <span class="kw">private</span> <span class="type">String</span> color;
+  <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+
+  <span class="comment">// ★ Vol.13で追加</span>
+  <span class="kw">private</span> <span class="type">LocalDate</span> lastStudiedOn;
+
+  <span class="comment">// 1対多の関連（M4以降）</span>
+  <span class="kw">private</span> <span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt; records;
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・lastStudiedOn は LocalDate</span>
+<span class="comment">//   （DBが DATE 型なので）</span>
+<span class="comment">// ・@Data で getter/setter 自動</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-mapper</span>
+      <span class="tag-desc">③ SubjectMapper に update メソッド追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectMapper.java</code> を開く</li>
+          <li><code>updateLastStudiedOn()</code> を <code>@Update</code> で追加</li>
+          <li><code>@Param</code> を2つ付ける</li>
+          <li>保存</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.java（追加部分）</span>
+
+<span class="kw">import</span> java.time.LocalDate;
+<span class="kw">import</span> org.apache.ibatis.annotations.Update;
+<span class="kw">import</span> org.apache.ibatis.annotations.Param;
+<span class="comment">// 他のimportは省略</span>
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+
+  <span class="comment">// 既存メソッド省略 ...</span>
+
+  <span class="comment">// ★ Vol.13で追加</span>
+  <span class="ann">@Update</span>(<span class="str">"UPDATE subjects "</span>
+        + <span class="str">"SET last_studied_on = #{studiedOn} "</span>
+        + <span class="str">"WHERE id = #{subjectId}"</span>)
+  <span class="kw">void</span> <span class="fn">updateLastStudiedOn</span>(
+      <span class="ann">@Param</span>(<span class="str">"subjectId"</span>) <span class="type">Integer</span> subjectId,
+      <span class="ann">@Param</span>(<span class="str">"studiedOn"</span>) <span class="type">LocalDate</span> studiedOn);
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・@Update アノテーション</span>
+<span class="comment">// ・引数2つ → @Param 必須</span>
+<span class="comment">// ・LocalDate → DATE は TypeHandler 変換</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-service</span>
+      <span class="tag-desc">④ StudyRecordService の register を2テーブル更新に</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>StudyRecordService.java</code> を開く</li>
+          <li><code>SubjectMapper</code> を <code>@Autowired</code> で注入</li>
+          <li><code>register()</code> に「② 最終学習日の更新」を追加</li>
+          <li>クラスに <code>@Transactional</code> があることを確認</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">2つのMapperを1メソッドで呼ぶ</div>
+          <p>これが<b>「複数テーブル更新」の核心</b>。<code>studyRecordMapper.insert()</code> と <code>subjectMapper.updateLastStudiedOn()</code> を<b>同じメソッド内</b>で呼ぶ。<code>@Transactional</code> があるので、この2つは<b>1つの取引</b>として扱われます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// StudyRecordService.java（改修後）</span>
+
+<span class="kw">package</span> com.example.todo.service;
+
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Service;
+<span class="kw">import</span> org.springframework.transaction.annotation.Transactional;
+<span class="kw">import</span> com.example.todo.entity.StudyRecord;
+<span class="kw">import</span> com.example.todo.form.StudyRecordForm;
+<span class="kw">import</span> com.example.todo.mapper.StudyRecordMapper;
+<span class="kw">import</span> com.example.todo.mapper.SubjectMapper;
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>   <span class="comment">// ← この宣言が今巻の主役</span>
+<span class="kw">public class</span> <span class="type">StudyRecordService</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">StudyRecordMapper</span> studyRecordMapper;
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectMapper</span> subjectMapper;  <span class="comment">// ★追加</span>
+
+  <span class="kw">public void</span> <span class="fn">register</span>(<span class="type">StudyRecordForm</span> form) {
+
+    <span class="comment">// ① 記録を INSERT</span>
+    <span class="type">StudyRecord</span> record = <span class="kw">new</span> <span class="type">StudyRecord</span>();
+    record.<span class="fn">setSubjectId</span>(form.<span class="fn">getSubjectId</span>());
+    record.<span class="fn">setStudiedOn</span>(form.<span class="fn">getStudiedOn</span>());
+    record.<span class="fn">setMinutes</span>(form.<span class="fn">getMinutes</span>());
+    record.<span class="fn">setMemo</span>(form.<span class="fn">getMemo</span>());
+    studyRecordMapper.<span class="fn">insert</span>(record);
+
+    <span class="comment">// ② 科目の最終学習日を UPDATE ★追加</span>
+    subjectMapper.<span class="fn">updateLastStudiedOn</span>(
+        form.<span class="fn">getSubjectId</span>(),
+        form.<span class="fn">getStudiedOn</span>());
+
+    <span class="comment">// ① と ② は1トランザクション</span>
+    <span class="comment">// 両方成功 → コミット</span>
+    <span class="comment">// どちらか失敗 → 両方ロールバック</span>
+  }
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・SubjectMapper を新たに注入</span>
+<span class="comment">// ・register が2テーブルを更新</span>
+<span class="comment">// ・@Transactional でひとまとまりに</span>
+<span class="comment">// ・例外時は全部取り消される</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かして確認</h2>
+    <span class="en">RUN IN BROWSER</span>
+  </div>
+  <p class="pattern-desc">起動して<b>記録登録</b>を行い、<b>2テーブルが更新</b>されるのを確認。その後<b>ロールバック実験</b>を行います。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">browser-check</span>
+      <span class="tag-desc">通常確認＋ロールバック実験</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>アプリ起動・<code>/records/new</code> で記録を1件登録</li>
+          <li>DBで <code>study_records</code> に記録が追加されたか確認</li>
+          <li>DBで <code>subjects</code> の <code>last_studied_on</code> が更新されたか確認</li>
+          <li><b>2テーブル両方更新</b>されていればOK</li>
+          <li><b>【実験】</b>register に <code>throw new RuntimeException()</code> を入れて再起動</li>
+          <li>記録登録 → エラー画面が出る</li>
+          <li>DBを確認 → <b>記録が増えていない</b>（ロールバック成功）</li>
+          <li>実験用の throw を削除して元に戻す</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ ここまで確認できればVol.13クリア！</p>
+      </div>
+      <div class="code"><span class="code-head">// SQLログと確認クエリ</span>
+
+<span class="comment">// ─── 正常登録時のSQLログ ───</span>
+==&gt;  Preparing:
+  INSERT INTO study_records ...
+==&gt; Parameters: 1, 2026-05-20, 60, ...
+&lt;==    Updates: 1
+
+==&gt;  Preparing:
+  UPDATE subjects
+  SET last_studied_on = ?
+  WHERE id = ?
+==&gt; Parameters: 2026-05-20, 1
+&lt;==    Updates: 1
+
+<span class="comment">// → INSERT と UPDATE が連続で実行</span>
+<span class="comment">// → 同一トランザクション内</span>
+
+
+<span class="comment">// ─── 確認クエリ ───</span>
+
+<span class="comment">// 記録が追加されたか</span>
+SELECT COUNT(*) FROM study_records
+WHERE subject_id = 1;
+
+<span class="comment">// 最終学習日が更新されたか</span>
+SELECT id, name, last_studied_on
+FROM subjects WHERE id = 1;
+<span class="comment">// last_studied_on = 2026-05-20 になっている</span>
+
+
+<span class="comment">// ─── ロールバック実験時 ───</span>
+
+<span class="comment">// throw を入れて登録すると：</span>
+==&gt;  Preparing: INSERT INTO study_records ...
+&lt;==    Updates: 1
+<span class="comment">// → INSERT は実行された（ように見える）</span>
+
+<span class="comment">// しかし例外発生 → ロールバック</span>
+
+<span class="comment">// 確認：</span>
+SELECT COUNT(*) FROM study_records;
+<span class="comment">// → 増えていない！</span>
+<span class="comment">// → ロールバックされた証拠</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">業務での感動ポイント</div>
+    <p>「<b>例外が起きたら、全部なかったことになる</b>」── これがトランザクションの安心感。「<b>中途半端なデータが絶対に残らない</b>」と保証されるから、業務システムは複雑な処理を安全に書けます。<code>@Transactional</code> ひとつでこれが実現する。Spring の<b>真の強み</b>のひとつです。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">トランザクションは<b>「効かない」トラブルが多い</b>。@Transactional が効かない典型パターンを押さえます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">troubles</span>
+      <span class="tag-desc">起きやすいトラブル6選</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card">
+          <span class="label">TROUBLE 1</span>
+          <div class="name">チェック例外でロールバックされない</div>
+          <div class="desc"><b>原因</b>：Spring の自動ロールバックは<b>RuntimeException系のみ</b>がデフォルト。<code>IOException</code> などのチェック例外では<b>ロールバックされない</b>。<br><b>対処</b>：<code>@Transactional(rollbackFor = Exception.class)</code> を指定。S13 で詳説。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 2</span>
+          <div class="name">同一クラス内のメソッド呼び出しで効かない</div>
+          <div class="desc"><b>原因</b>：同じクラスの別メソッドを <code>this.method()</code> で呼ぶと <code>@Transactional</code> が効かない（プロキシの仕組み）。<br><b>対処</b>：別のService に分けるか、self-injection。S13 で詳説。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 3</span>
+          <div class="name">try-catch で例外を握りつぶす</div>
+          <div class="desc"><b>原因</b>：メソッド内で <code>try-catch</code> し、例外を<b>外に投げない</b>と Spring が例外を検知できずロールバックされない。<br><b>対処</b>：catch 内で再スロー、または catch しない。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 4</span>
+          <div class="name">@Transactional が private メソッドで効かない</div>
+          <div class="desc"><b>原因</b>：<code>@Transactional</code> は<b>public メソッド</b>でしか効かない（プロキシの制約）。<br><b>対処</b>：public にする。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 5</span>
+          <div class="name">import が jakarta 版になっている</div>
+          <div class="desc"><b>原因</b>：自動 import で <code>jakarta.transaction.Transactional</code> を選んだ。Spring 版と挙動が微妙に違う。<br><b>対処</b>：<code>org.springframework.transaction.annotation.Transactional</code> に統一。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 6</span>
+          <div class="name">最終学習日が NULL のまま</div>
+          <div class="desc"><b>原因</b>：updateLastStudiedOn の呼び出し忘れ、または WHERE 条件のミス。<br><b>対処</b>：register に ② の更新があるか、subjectId が正しいか確認。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// TROUBLE 3: 例外の握りつぶし</span>
+
+<span class="comment">// ─── ✗ NG: catch で握りつぶす ───</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">register</span>(...) {
+  studyRecordMapper.<span class="fn">insert</span>(record);
+  <span class="kw">try</span> {
+    subjectMapper.<span class="fn">updateLastStudiedOn</span>(...);
+  } <span class="kw">catch</span> (<span class="type">Exception</span> e) {
+    <span class="comment">// 例外をログに出すだけで何もしない</span>
+    e.<span class="fn">printStackTrace</span>();
+  }
+  <span class="comment">// → 例外が外に出ない</span>
+  <span class="comment">// → Spring がロールバックを判断できない</span>
+  <span class="comment">// → INSERT だけ残る（不整合）</span>
+}
+
+
+<span class="comment">// ─── ✓ OK: 再スローする ───</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">register</span>(...) {
+  studyRecordMapper.<span class="fn">insert</span>(record);
+  <span class="kw">try</span> {
+    subjectMapper.<span class="fn">updateLastStudiedOn</span>(...);
+  } <span class="kw">catch</span> (<span class="type">Exception</span> e) {
+    <span class="comment">// ログを出してから再スロー</span>
+    <span class="kw">throw new</span> <span class="type">RuntimeException</span>(e);
+  }
+  <span class="comment">// → 例外が外に出る</span>
+  <span class="comment">// → Spring がロールバック</span>
+}
+
+
+<span class="comment">// ─── ✓ さらにシンプル：catch しない ───</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">register</span>(...) {
+  studyRecordMapper.<span class="fn">insert</span>(record);
+  subjectMapper.<span class="fn">updateLastStudiedOn</span>(...);
+  <span class="comment">// 例外はそのまま伝播</span>
+  <span class="comment">// → Spring が自動ロールバック</span>
+}
+
+
+<span class="comment">// 「不要な try-catch を書かない」が安全</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.13本編の<b>完了チェックリスト</b>。完成フェーズの最初の節目。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol13-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li><code>subjects</code> に <code>last_studied_on DATE</code> 列を追加</li>
+          <li><code>Subject.java</code> に <code>lastStudiedOn</code> フィールド追加</li>
+          <li><code>SubjectMapper</code> に <code>updateLastStudiedOn()</code> 追加</li>
+          <li><code>@Update</code> ＋ <code>@Param</code> 2つ</li>
+          <li><code>StudyRecordService</code> に <code>SubjectMapper</code> を注入</li>
+          <li><code>register()</code> が ① INSERT ＋ ② UPDATE の2テーブル更新</li>
+          <li>クラスに <code>@Transactional</code>（Spring版）</li>
+          <li>記録登録で2テーブル両方が更新される</li>
+          <li>【実験】throw を入れるとロールバックされる</li>
+          <li>【実験】DB に中途半端なデータが残らない</li>
+          <li>実験用の throw を削除して元に戻した</li>
+          <li>import が Spring 版の Transactional</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.13本編完了！</b><br>
+          <b>トランザクション応用</b>のスキル達成。完成フェーズ突入。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で獲得したスキル</span>
+
+★ <span class="kw">トランザクション応用</span> ── 達成！
+
+  <span class="comment">// できるようになったこと:</span>
+  <span class="comment">// ・トランザクションの ACID 特性</span>
+  <span class="comment">// ・コミットとロールバック</span>
+  <span class="comment">// ・複数テーブルを1取引で更新</span>
+  <span class="comment">// ・@Transactional の真の役割</span>
+  <span class="comment">// ・例外とロールバックの関係</span>
+  <span class="comment">// ・「全部成功 or 全部失敗」の保証</span>
+
+
+<span class="code-head" style="margin-top:14px">// 次にやること</span>
+
+<span class="comment">// ① 別冊 S13 を読む</span>
+<span class="comment">//   タイトル: 「@Transactional完全理解」</span>
+<span class="comment">//   内容: ロールバック条件 / 伝播 /</span>
+<span class="comment">//        分離レベル / プロキシの仕組み /</span>
+<span class="comment">//        効かない罠の全解説</span>
+
+
+<span class="comment">// ② Vol.14 本編：</span>
+<span class="comment">//   タイトル: 「関連データ削除と外部キー制約」</span>
+<span class="comment">//   獲得スキル: 外部キー/ON DELETE</span>
+<span class="comment">//   内容:</span>
+<span class="comment">//   ・科目を削除したら記録はどうなる?</span>
+<span class="comment">//   ・外部キー制約とは</span>
+<span class="comment">//   ・ON DELETE CASCADE / RESTRICT</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(31,70,52,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S13</div>
+    <p>本編Vol.13お疲れさまでした。<b>トランザクションの本質</b>を体験しました。別冊S13「<b>@Transactional完全理解</b>」では、<b>「ロールバックされる例外の条件」「トランザクションの伝播（propagation）」「分離レベル（isolation）」「プロキシの仕組み」「効かない罠の全解説」</b>を扱います。本編で触れた「効かないトラブル」の<b>真の原因</b>がここで全て繋がります。<b>続けて別冊S13へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.13 / 15 ── TRANSACTION（本編）</span>
+</footer>
+
+</body>
+</html>

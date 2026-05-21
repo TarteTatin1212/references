@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git/GitHub編 GitHub実践 Vol.6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2520;
+  --paper:#e5d9c0;
+  --paper-2:#d2c4a3;
+  --accent:#b48050;
+  --accent-2:#c9a876;
+  --accent-3:#5e4634;
+  --muted:#7a6e5d;
+  --line:#b0a085;
+  --code-bg:#181410;
+  --code-text:#e8dfcc;
+  --panel-bg:#dbcdae;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;font-size:15px;line-height:1.85}
+body{max-width:1180px;margin:0 auto;padding:48px 40px 80px}
+
+.page-header{position:relative;padding:36px 32px 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"◐";position:absolute;right:10px;top:-30px;font-size:260px;color:var(--accent);opacity:0.16;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em}
+h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin:18px 0 10px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;letter-spacing:0.15em;font-family:"JetBrains Mono",monospace;margin-bottom:20px}
+.lead{max-width:640px;font-size:15px;line-height:2;color:var(--ink)}
+
+.toc{background:var(--paper-2);padding:22px 28px;margin-bottom:56px;border:1px solid var(--line)}
+.toc-title{font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:0.2em;margin-bottom:12px;color:var(--accent-3)}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc a{color:var(--ink);text-decoration:none;font-size:14px;font-family:"JetBrains Mono",monospace}
+.toc a::before{content:"— ";color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
+.section-num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;flex:1}
+.en{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted)}
+.pattern-desc{max-width:740px;margin-bottom:22px;color:var(--ink)}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-family:"JetBrains Mono",monospace;font-weight:600;color:var(--accent-3);font-size:13px}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line)}
+.panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:"JetBrains Mono",monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}
+.num{color:#f7a8d8}.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}.step{color:#c9a876;font-weight:600}
+.cmd{color:#b5e8b0}.flag{color:#f7c08a}.branch{color:#f7a8d8}
+.added{color:#7fc97f}.removed{color:#f08080}
+.label-open{color:#7fc97f}.label-closed{color:#c2a3ff}.label-draft{color:#998aaa}
+
+@media(max-width:720px){
+  body{padding:24px 18px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  h1{font-size:32px}
+  .page-header::before{font-size:180px}
+  .toc ul{gap:6px 14px}
+}
+
+.box{background:#fff;border:1px solid var(--line);padding:12px 14px;margin-bottom:10px}
+.box .box-title{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-bottom:6px;letter-spacing:0.1em}
+.box p{font-size:13px;line-height:1.7}
+
+.diagram{background:#fff;border:1px solid var(--line);padding:18px;font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.8;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+.tbl{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
+.tbl th,.tbl td{padding:8px 10px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{background:var(--paper-2);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.1em;font-weight:600}
+.tbl td code{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12px;color:var(--accent-3)}
+
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:12px;margin:0 1px}
+
+.tip{background:rgba(180,128,80,0.08);border-left:3px solid var(--accent);padding:16px 20px;margin:18px 0}
+.tip-title{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.15em;color:var(--accent-3);font-weight:600;margin-bottom:6px}
+.tip p{font-size:14px;line-height:1.9}
+.tip b{color:var(--accent-3)}
+
+.page-footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+.page-footer .right{text-align:right}
+
+code.inline{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12.5px;color:var(--accent-3)}
+
+.pr-mock{background:#fff;border:1px solid var(--line);padding:14px;font-size:13px}
+.pr-mock .pr-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:600}
+.badge.open{background:#e3f5e8;color:#2d7a40}
+.badge.merged{background:#efe2ff;color:#6a30b0}
+.badge.closed{background:#ffe8e6;color:#b04030}
+.badge.draft{background:#f0eee8;color:#666}
+.pr-title{font-family:"Shippori Mincho",serif;font-size:16px;font-weight:700;margin-bottom:6px}
+.pr-meta{font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">GIT / GITHUB</span>
+  <span class="vol-tag">VOL.06 / 09</span>
+  <h1>GitHub実践編</h1>
+  <div class="subtitle">PULL REQUEST &amp; ISSUE</div>
+  <p class="lead">
+    舞台をGitHubのWeb画面に移します。
+    Pull Request、Issue、コードレビュー——
+    <b>「コマンドだけでは見えない、チーム開発の本番」</b>がここから始まります。
+    現代のWeb開発では、これらの仕組みなしに仕事は進みません。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01. Pull Requestとは</a></li>
+    <li><a href="#s02">02. PRの作成手順</a></li>
+    <li><a href="#s03">03. レビューを受ける</a></li>
+    <li><a href="#s04">04. レビューする側</a></li>
+    <li><a href="#s05">05. マージの3パターン</a></li>
+    <li><a href="#s06">06. Issueの使い方</a></li>
+    <li><a href="#s07">07. PR/Issueテンプレート</a></li>
+    <li><a href="#s08">08. GitHub CLI (gh)</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>Pull Requestとは</h2>
+    <span class="en">PULL REQUEST</span>
+  </div>
+  <p class="pattern-desc">
+    通称<b>「PR(プルリク)」</b>。ある作業ブランチの変更を、<b>「mainに取り込んでください」とお願いする仕組み</b>です。
+    単なるマージではなく、<b>レビュー・議論・CI実行</b>を経て統合するための一連のワークフロー。
+    現代のGitHub開発では、これがあらゆる作業の中心になります。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pull request workflow</span>
+      <span class="tag-desc">★★★ チーム開発の中心</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// PR の全体フロー</div>
+        <div class="diagram">[ 開発者 ]
+1. ブランチ切る → コミット → push
+
+[ GitHub ]
+2. PR 作成
+
+[ チーム ]
+3. レビュー (コメント・修正依頼)
+
+[ 開発者 ]
+4. 指摘反映 → 追加push
+
+[ CI/CD ]
+5. テスト・lint 自動実行
+
+[ 承認後 ]
+6. マージ → ブランチ削除
+
+[ 完了 ]
+7. main が更新される</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">PRがあるとできること</div>
+          <p>◯ 変更内容を一覧で見られる<br>
+          ◯ 行ごとにコメントが付く<br>
+          ◯ 議論履歴が残る<br>
+          ◯ CIで自動チェック<br>
+          ◯ 承認制で品質を担保<br>
+          ◯ Issueと紐付け可能</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- PR完成形のイメージ ---</span>
+
+<span class="ann">PR #42</span>
+feat: ログイン機能を実装
+
+<span class="comment">┌─ 変更ファイル ─────────────┐</span>
+src/login.js     +85
+src/auth.js      +23
+tests/login.spec  +40
+<span class="comment">└──────────────────────────┘</span>
+
+<span class="comment">┌─ チェック結果 ─────────────┐</span>
+<span class="added">✓</span> ESLint passed
+<span class="added">✓</span> Unit tests passed (52/52)
+<span class="added">✓</span> Build successful
+<span class="comment">└──────────────────────────┘</span>
+
+<span class="comment">┌─ レビュー ──────────────────┐</span>
+<span class="added">✓</span> @hanako approved
+🗨 @taro commented on line 23
+<span class="comment">└──────────────────────────┘</span>
+
+<span class="comment">┌─ ブランチ ──────────────────┐</span>
+feature/login → main
+<span class="comment">└──────────────────────────┘</span>
+
+<span class="comment"># これが「PR」の正体</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p>PRは<b>単なるマージ機能ではなく「議論の場」</b>。コードの良し悪しだけでなく、設計の妥当性・命名・テスト方針までを<b>チーム全体で議論する場</b>です。これを通じてチームの技術レベルが上がっていきます。</p>
+  </div>
+</section>
+
+<section id="s02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>PRの作成手順</h2>
+    <span class="en">CREATE PR</span>
+  </div>
+  <p class="pattern-desc">
+    実際にPRを作る流れを順を追って見ていきます。
+    <b>「ブランチ push → GitHubで作成」</b>の2ステップが基本。
+    PRの<b>タイトルと説明文</b>は、レビュアーへの最初の印象を決める重要なポイントです。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create pull request</span>
+      <span class="tag-desc">★★★ PR作成の流れ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// PR画面のイメージ</div>
+        <div class="pr-mock">
+          <div class="pr-header">
+            <span class="badge open">● Open</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)">#42</span>
+          </div>
+          <div class="pr-title">feat: ログイン機能を実装</div>
+          <div class="pr-meta">taro wants to merge 5 commits into <b>main</b> from <b>feature/login</b></div>
+          <hr style="margin:10px 0;border:0;border-top:1px solid var(--line)">
+          <p style="font-size:12.5px;line-height:1.8">
+          <b>## 概要</b><br>
+          ログインフォームと認証ロジックを実装。<br><br>
+          <b>## 変更点</b><br>
+          - ログインフォームUI追加<br>
+          - JWTトークン発行ロジック<br>
+          - バリデーション処理<br><br>
+          <b>## テスト</b><br>
+          - 単体テスト追加(52件全パス)<br><br>
+          <b>## 関連Issue</b><br>
+          Closes #38</p>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">定番テンプレ —</div>
+          <p>「概要 / 変更点 / テスト / 関連Issue」の4つを書けば<b>レビュアーが助かります</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- ① ブランチで作業 ---</span>
+$ <span class="cmd">git switch</span> <span class="flag">-c</span> <span class="branch">feature/login</span>
+<span class="comment"># ファイル編集 → コミット</span>
+
+<span class="comment"># --- ② リモートに push ---</span>
+$ <span class="cmd">git push</span> <span class="flag">-u</span> origin <span class="branch">feature/login</span>
+
+Branch <span class="str">'feature/login'</span> set up to track...
+remote:
+remote: Create a pull request for <span class="str">'feature/login'</span>:
+remote: https://github.com/team/app/pull/new/feature/login
+remote:
+
+<span class="comment"># ↑ GitHubがPR作成URLを教えてくれる</span>
+
+<span class="comment"># --- ③ ブラウザでPR作成 ---</span>
+
+<span class="comment">GitHubページに行くと:</span>
+<span class="comment">「Compare &amp; pull request」ボタン</span>
+<span class="comment">が黄色で表示されている</span>
+
+<span class="comment"># --- ④ 入力項目 ---</span>
+
+タイトル:    feat: ログイン機能を実装
+本文:        (テンプレに沿って)
+レビュアー:  @hanako @ichiro
+担当者:      @taro
+ラベル:      enhancement, frontend
+マイルストン: v1.2
+
+<span class="comment"># --- ⑤ Draft PR ---</span>
+
+<span class="comment">完成前でも「Draft」状態で作れる</span>
+<span class="comment">→ レビュー対象外、CIだけ動かす</span>
+<span class="comment">→ 進捗共有に便利</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">TIP —</div>
+    <p>PRのタイトルは<b>「動詞: 何を」</b>の形が定番(コミットメッセージと同じ)。<b>「fix: 404エラーを修正」</b>「<b>feat: パスワード強度メーター追加</b>」など。<b>大量のPRが流れる現場では、タイトルだけで内容が分かるかが死活問題</b>です。</p>
+  </div>
+</section>
+
+<section id="s03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>レビューを受ける</h2>
+    <span class="en">RECEIVING REVIEW</span>
+  </div>
+  <p class="pattern-desc">
+    PRを出したら<b>「レビューを受ける側」</b>になります。指摘をどう受け止め、どう反映するか——
+    ここでチームの一員としての姿勢が試されます。<b>反映の作法</b>を押さえておきましょう。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">handle review</span>
+      <span class="tag-desc">★★★ 指摘への対応</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 指摘への対応パターン</div>
+        <div class="box">
+          <div class="box-title">① 修正が必要 → 反映してpush</div>
+          <p>「ありがとうございます、修正しました」+ <span class="key">Resolve conversation</span> ボタンで解決マーク。</p>
+        </div>
+        <div class="box">
+          <div class="box-title">② 同意できない → 議論する</div>
+          <p>「この方が○○の理由で良いと考えました。いかがでしょうか?」と<b>理由を添えて返信</b>。</p>
+        </div>
+        <div class="box">
+          <div class="box-title">③ あとで対応 → Issue化</div>
+          <p>本PRのスコープ外なら<b>「別Issue化します」</b>と返して切り出す。</p>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">鉄則 —</div>
+          <p>レビューは<b>「あなた個人への攻撃」ではない</b>。コードに対する意見。<b>感情で返さず、技術で返す</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- 指摘を反映する流れ ---</span>
+
+<span class="comment"># ① レビューコメントを読む</span>
+<span class="comment">   "ここはnullチェックがないので</span>
+<span class="comment">    エラーになりそうです" - @hanako</span>
+
+<span class="comment"># ② ローカルで修正</span>
+$ <span class="cmd">git switch</span> <span class="branch">feature/login</span>
+<span class="comment"># ファイル編集...</span>
+
+<span class="comment"># ③ コミット (修正であることを明示)</span>
+$ <span class="cmd">git add</span> .
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"fix: nullチェックを追加"</span>
+
+<span class="comment"># ④ プッシュ</span>
+$ <span class="cmd">git push</span>
+
+<span class="comment"># → PR画面に自動反映される</span>
+<span class="comment">  CIも再実行される</span>
+
+<span class="comment"># ⑤ GitHubでコメント返信</span>
+<span class="comment">  「ご指摘ありがとうございます、</span>
+<span class="comment">   修正しました(commit a3f2c1d)」</span>
+<span class="comment">  → Resolve conversation で解決</span>
+
+<span class="comment"># --- 再レビュー依頼 ---</span>
+
+<span class="comment">PR画面右側 Reviewers の</span>
+<span class="comment">レビュアー名の横の 🔄 アイコンを</span>
+<span class="comment">クリック → 再レビューがリクエストされる</span>
+
+<span class="comment"># --- 細かいfixupコミットを整理 ---</span>
+
+$ <span class="cmd">git rebase</span> <span class="flag">-i</span> HEAD~5
+<span class="comment">  完成前にコミットを綺麗にまとめると吉</span>
+<span class="comment">  (push --force-with-lease で反映)</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">あるある —</div>
+    <p>レビュー指摘の<b>「typoとか細かい指摘でいちいち修正コミットが量産される」</b>問題。これは<code class="inline">git commit --fixup</code> + <code class="inline">git rebase -i --autosquash</code> でまとめるか、マージ時に「Squash and merge」(本巻 05)を選べば解決します。</p>
+  </div>
+</section>
+
+<section id="s04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>レビューする側</h2>
+    <span class="en">DOING REVIEW</span>
+  </div>
+  <p class="pattern-desc">
+    <b>レビューする側</b>の作法も重要。
+    「指摘の質」と「言葉遣い」がチームの空気を決めます。
+    GitHubのレビュー機能には<b>3段階の判定</b>があり、これも使い分けが大事。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">code review</span>
+      <span class="tag-desc">★★★ レビューの作法</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// レビュー3つの判定</div>
+        <table class="tbl">
+          <tr><th>判定</th><th>意味</th></tr>
+          <tr><td><b style="color:#3a7050">Approve</b></td><td>承認 (マージOK)</td></tr>
+          <tr><td><b style="color:#b04030">Request changes</b></td><td>修正必須</td></tr>
+          <tr><td><b style="color:var(--muted)">Comment</b></td><td>コメントのみ (賛否なし)</td></tr>
+        </table>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">コメントの定番プレフィックス</div>
+          <p><code style="font-family:'JetBrains Mono',monospace">nits:</code> 些細な指摘 (任意対応)<br>
+          <code style="font-family:'JetBrains Mono',monospace">must:</code> 必須対応<br>
+          <code style="font-family:'JetBrains Mono',monospace">imo:</code> 個人的意見<br>
+          <code style="font-family:'JetBrains Mono',monospace">q:</code> 質問<br>
+          <code style="font-family:'JetBrains Mono',monospace">praise:</code> 良いと思った箇所</p>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">鉄則 —</div>
+          <p>レビューは<b>「人ではなくコードに対して」</b>。「○○さんのコード変」ではなく「<b>この実装は△△の理由で改善できそう</b>」。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- 良いレビュー例 ---</span>
+
+<span class="comment">// must: ここはnullチェックが必要です。</span>
+<span class="comment">// user が undefined の時に落ちます。</span>
+
+<span class="comment">// nits: 変数名を userName に揃えると</span>
+<span class="comment">// 他のメソッドと統一されて読みやすいです</span>
+
+<span class="comment">// q: ここで try-catch しているのは</span>
+<span class="comment">// 何か想定エラーがありますか?</span>
+
+<span class="comment">// praise: この設計とても良いですね!</span>
+<span class="comment">// 後で参考にさせてください</span>
+
+<span class="comment"># --- 避けるべきレビュー ---</span>
+
+<span class="comment">// これはダメです。</span>
+<span class="removed">// 「何が」「なぜ」が抜けてる</span>
+
+<span class="comment">// こんなコード書く人初めて見た</span>
+<span class="removed">// 人格攻撃NG</span>
+
+<span class="comment">// 直してください。</span>
+<span class="removed">// どう直す? 議論の余地は?</span>
+
+<span class="comment"># --- レビュー操作の手順 ---</span>
+
+<span class="step">①</span> PR画面 → Files changed タブ
+<span class="step">②</span> 行をクリックで + ボタン → コメント
+<span class="step">③</span> "Start a review" で複数まとめる
+<span class="step">④</span> "Review changes" で判定送信
+<span class="step">⑤</span> Approve / Request changes / Comment
+   いずれかを選んで Submit
+
+<span class="comment"># --- Suggestion 機能 ---</span>
+
+<span class="comment">変更案を直接コードで提案できる:</span>
+
+```suggestion
+const user = data?.user ?? null;
+```
+
+<span class="comment">PR作成者は1クリックで取り込める!</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">現場で —</div>
+    <p>レビューは<b>「翌営業日まで」に応える</b>のが目安。長く放置するとPRが積もって誰も嬉しくない。<b>「1日に1回はPRを見る時間」</b>を確保する人が、信頼されるエンジニアになります。</p>
+  </div>
+</section>
+
+<section id="s05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>マージの3パターン</h2>
+    <span class="en">3 MERGE STRATEGIES</span>
+  </div>
+  <p class="pattern-desc">
+    GitHubのマージボタンには<b>3つの選択肢</b>があります。
+    <b>Create a merge commit / Squash and merge / Rebase and merge</b>。
+    それぞれ履歴の残り方が違い、チーム方針で決まっていることが多い項目です。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">merge strategies</span>
+      <span class="tag-desc">★★ マージ方式の選択</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3方式の比較</div>
+        <table class="tbl">
+          <tr><th>方式</th><th>履歴</th><th>適性</th></tr>
+          <tr><td>Merge commit</td><td>そのまま全部残る</td><td>記録重視</td></tr>
+          <tr><td>Squash and merge</td><td>1コミットに集約</td><td>クリーン派</td></tr>
+          <tr><td>Rebase and merge</td><td>一直線に並べる</td><td>線形履歴派</td></tr>
+        </table>
+        <div class="diagram" style="margin-top:14px">[ Merge commit ]
+main ●─●─●─────●
+          \   /
+   feature ●─●
+
+[ Squash and merge ]
+main ●─●─●─●'
+            ↑1コミットに集約
+
+[ Rebase and merge ]
+main ●─●─●─●─●
+        ↑featureが一直線に</div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">現場の主流 —</div>
+          <p>多くの現場で<b>Squash and merge</b>が定番。PR単位で履歴がスッキリ、レビューしやすい。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- ① Create a merge commit ---</span>
+
+<span class="comment">最も標準的な方式。</span>
+<span class="comment">マージコミットが必ず作られる。</span>
+
+main: ●─●─●           ●←merge
+            \         /
+feature:     ●─●─●─●─
+
+長所: いつ何が入ったか明確
+短所: 履歴が複雑になりがち
+
+<span class="comment"># --- ② Squash and merge ---</span>
+
+<span class="comment">feature の全コミットを1つに集約。</span>
+<span class="comment">中の細かい履歴は消える。</span>
+
+main: ●─●─●─●' ← featureの全変更が
+                  1コミットに
+
+長所: メインの履歴が綺麗
+短所: 細かい開発過程が消える
+
+<span class="comment"># --- ③ Rebase and merge ---</span>
+
+<span class="comment">featureを main の先に並べ替えて</span>
+<span class="comment">一直線にする。</span>
+
+main: ●─●─●─●─●─●─●
+              ↑ feature の各コミット
+
+長所: 履歴が綺麗な一直線
+短所: マージした事実が消える
+
+<span class="comment"># --- どれを選ぶ? ---</span>
+
+<span class="comment">迷ったら Squash and merge が無難。</span>
+<span class="comment">細かい修正コミットを残したくない時に最適。</span>
+
+<span class="comment"># 設定で常にSquashを強制</span>
+<span class="comment">  Repo → Settings → General</span>
+<span class="comment">  → Allow Squash and merge のみ ON</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p>マージ方式は<b>「個人の好み」ではなくチームの規約</b>。配属されたら<b>まず確認</b>しましょう。Squash派が圧倒的多数ですが、Linuxカーネルなど大規模OSSではMerge commit派も。<b>「あえて選ばない」のがプロ</b>です。</p>
+  </div>
+</section>
+
+<section id="s06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>Issueの使い方</h2>
+    <span class="en">ISSUES</span>
+  </div>
+  <p class="pattern-desc">
+    Issueは<b>「課題管理ツール」</b>です。バグ報告、機能要望、タスク管理、ディスカッション——
+    あらゆる<b>「やること・議論すること」</b>をIssueとして起票しておくのが、現代のGitHub開発の流儀。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">github issues</span>
+      <span class="tag-desc">★★ プロジェクト管理の中心</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Issue の典型例</div>
+        <div class="pr-mock">
+          <div class="pr-header">
+            <span class="badge open">● Open</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)">#38</span>
+          </div>
+          <div class="pr-title">[Bug] ログイン後に画面が真っ白になる</div>
+          <div class="pr-meta">Reported by @taro · Assigned to @hanako</div>
+          <hr style="margin:10px 0;border:0;border-top:1px solid var(--line)">
+          <p style="font-size:12.5px;line-height:1.8">
+          <b>## 再現手順</b><br>
+          1. ログイン画面で正しい情報を入力<br>
+          2. ログインボタンを押す<br>
+          3. 画面が真っ白になる<br><br>
+          <b>## 期待する動作</b><br>
+          ダッシュボード画面が表示される<br><br>
+          <b>## 環境</b><br>
+          Chrome 124, macOS 14.4</p>
+        </div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">活用シーン</div>
+          <p>◯ バグの追跡 (再現手順・環境)<br>
+          ◯ 機能リクエスト<br>
+          ◯ タスク管理 (誰が何をいつまで)<br>
+          ◯ 質問・議論</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- Issue の使い方 ---</span>
+
+<span class="step">①</span> リポジトリの Issues タブ → New issue
+<span class="step">②</span> テンプレが用意されていれば選択
+   (Bug report / Feature request 等)
+<span class="step">③</span> 必須項目を埋める
+<span class="step">④</span> ラベル・担当者・マイルストンを設定
+
+<span class="comment"># --- ラベルの定番 ---</span>
+
+bug          バグ報告
+enhancement  機能改善
+documentation ドキュメント
+good first issue 初心者歓迎
+help wanted  助けが欲しい
+question     質問
+
+<span class="comment"># --- PR と Issue の連携 ---</span>
+
+<span class="comment">PR本文に下記キーワードを書くと</span>
+<span class="comment">マージ時に Issue が自動でクローズされる:</span>
+
+  Closes #38
+  Fixes #38
+  Resolves #38
+
+<span class="comment"># --- Issue検索の便利フィルタ ---</span>
+
+is:open is:issue label:bug
+is:closed assignee:@me
+is:open milestone:"v1.2"
+is:open no:assignee
+
+<span class="comment"># --- 高度な機能 ---</span>
+
+<span class="comment"># GitHub Projects: かんばん化</span>
+<span class="comment"># Issue Forms: 入力フォームで起票</span>
+<span class="comment"># Discussions: スレッド型の議論用</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">鉄則 —</div>
+    <p><b>「Issueを書ける人」は重宝されます</b>。再現手順・期待する動作・実際の動作・環境——この4点をきちんと書けるだけで「<b>仕事ができる人</b>」評価。逆に<b>「動きません。直してください」</b>だけのIssueはチームから嫌われます。</p>
+  </div>
+</section>
+
+<section id="s07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>PR/Issueテンプレート</h2>
+    <span class="en">TEMPLATES</span>
+  </div>
+  <p class="pattern-desc">
+    リポジトリに<b>テンプレートファイル</b>を置いておくと、新しいPRやIssueを作る時に<b>自動でひな型が表示</b>されます。
+    チーム全体で<b>記述粒度を揃える</b>ための重要な仕組み。
+    特定のフォルダにMarkdownを置くだけ。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">.github/templates</span>
+      <span class="tag-desc">★★ 記述ルールの統一</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 配置場所</div>
+        <div class="diagram">my-repo/
+├─ .github/
+│   ├─ PULL_REQUEST_TEMPLATE.md
+│   └─ ISSUE_TEMPLATE/
+│       ├─ bug_report.md
+│       ├─ feature_request.md
+│       └─ config.yml
+└─ src/
+
+これだけで自動適用!
+PR作成画面 / Issue作成画面で
+自動的にひな型が読み込まれる</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">効果</div>
+          <p>◯ 必要情報が漏れない<br>
+          ◯ レビュー効率アップ<br>
+          ◯ 新メンバーが書き方に迷わない<br>
+          ◯ チェックリストで抜け漏れ防止</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># === PULL_REQUEST_TEMPLATE.md ===</span>
+
+<span class="kw">## 概要</span>
+
+&lt;!-- このPRで何を変えたか --&gt;
+
+<span class="kw">## 変更点</span>
+
+- 
+- 
+- 
+
+<span class="kw">## 動作確認</span>
+
+- [ ] ローカルで動作確認済み
+- [ ] 単体テスト追加
+- [ ] レビュアー向け確認手順を記載
+
+<span class="kw">## 関連Issue</span>
+
+Closes #
+
+<span class="kw">## スクリーンショット (UI変更時)</span>
+
+| Before | After |
+|--------|-------|
+|        |       |
+
+<span class="comment"># === ISSUE_TEMPLATE/bug_report.md ===</span>
+
+---
+name: バグ報告
+about: 不具合を報告する
+labels: bug
+---
+
+<span class="kw">## 再現手順</span>
+
+1. 
+2. 
+3. 
+
+<span class="kw">## 期待する動作</span>
+
+<span class="kw">## 実際の動作</span>
+
+<span class="kw">## 環境</span>
+
+- OS:
+- ブラウザ:
+- アプリバージョン:
+
+<span class="comment"># この内容で起票画面に自動展開!</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">TIP —</div>
+    <p>テンプレートは<b>「最初の数行だけ」</b>でもOK。最初から完璧を目指さず、運用しながら育てるのがコツ。「<b>このリポジトリのPRはこう書いて</b>」とドキュメント代わりにもなる、地味だけど効果絶大の仕組みです。</p>
+  </div>
+</section>
+
+<section id="s08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>GitHub CLI (gh)</h2>
+    <span class="en">GITHUB CLI</span>
+  </div>
+  <p class="pattern-desc">
+    <code class="inline">gh</code> はGitHub公式のコマンドラインツール。
+    <b>ターミナルから直接PR作成・レビュー・Issue操作</b>ができ、ブラウザを開かずに作業が完結します。
+    使いこなせば<b>作業効率が劇的に上がる</b>、現代エンジニア必携のツール。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">gh command</span>
+      <span class="tag-desc">★★ ターミナルが完結環境に</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よく使うghコマンド</div>
+        <table class="tbl">
+          <tr><th>用途</th><th>コマンド</th></tr>
+          <tr><td>認証</td><td><code>gh auth login</code></td></tr>
+          <tr><td>PR作成</td><td><code>gh pr create</code></td></tr>
+          <tr><td>PR一覧</td><td><code>gh pr list</code></td></tr>
+          <tr><td>PR表示</td><td><code>gh pr view</code></td></tr>
+          <tr><td>PRチェックアウト</td><td><code>gh pr checkout 42</code></td></tr>
+          <tr><td>Issue作成</td><td><code>gh issue create</code></td></tr>
+          <tr><td>リポジトリclone</td><td><code>gh repo clone</code></td></tr>
+        </table>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">インストール —</div>
+          <p>macOS: <code class="inline">brew install gh</code> / Windows: scoop or winget / Linux: 各種パッケージ。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- 認証 (一度きり) ---</span>
+$ <span class="cmd">gh auth login</span>
+? What account do you want to log into?
+  &gt; GitHub.com
+? What is your preferred protocol?
+  &gt; SSH
+<span class="comment"># 対話形式で設定完了</span>
+
+<span class="comment"># --- PR作成 (神機能) ---</span>
+$ <span class="cmd">gh pr create</span>
+? Title: feat: ログイン機能を実装
+? Body  (e to launch editor)
+? What's next? Submit
+
+Creating pull request for feature/login
+into main in team/app
+https://github.com/team/app/pull/42
+
+<span class="comment"># ブラウザ不要でPR完成!</span>
+
+<span class="comment"># --- 短縮形 ---</span>
+$ <span class="cmd">gh pr create</span> <span class="flag">--fill</span>
+<span class="comment">  ↑ コミットメッセージから自動生成</span>
+
+<span class="comment"># --- PR一覧 ---</span>
+$ <span class="cmd">gh pr list</span>
+#42  feat: ログイン       open   taro
+#41  fix: 404エラー      open   hana
+#40  docs: README更新    merged ichiro
+
+<span class="comment"># --- 他人のPRをローカルで試す ---</span>
+$ <span class="cmd">gh pr checkout</span> 42
+<span class="comment"># そのブランチに切替完了</span>
+
+<span class="comment"># --- PRをブラウザで開く ---</span>
+$ <span class="cmd">gh pr view</span> <span class="flag">--web</span>
+
+<span class="comment"># --- リポジトリ作成 ---</span>
+$ <span class="cmd">gh repo create</span> my-app <span class="flag">--public</span>
+<span class="comment">  ローカル → リモート作成 → push</span>
+<span class="comment">  まで一気に</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">最後に —</div>
+    <p><code class="inline">gh</code>を使い始めると<b>「GitHubのWeb画面を開く回数が激減」</b>します。<code class="inline">gh pr create --fill</code> で30秒、<code class="inline">gh pr checkout</code> で他人のPRも瞬時に試せる。<b>「PR作るの面倒だなあ」</b>と思うことが無くなり、自然にPRを切り出す頻度が増えていきます。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px">
+  <div class="tip-title">NEXT STEP —</div>
+  <p>第6巻で<b>チーム開発の本番ステージ</b>に踏み込みました。PR、Issue、レビュー——これらを使いこなせれば、もうあなたは<b>「現場のエンジニア」</b>です。<br>
+  Vol.7「<b>GitHub Actions編</b>」では、GitHub上で<b>テスト・ビルド・デプロイを自動化する仕組み</b>を扱います。pushしただけで全自動。これを覚えるとあなたの仕事が<b>「人力」から「半人力」</b>に進化します。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <div>GIT / GITHUB REFERENCE — VOL.06</div>
+  <div class="right">PULL REQUEST &amp; ISSUE / GitHub実践編</div>
+</footer>
+
+</body>
+</html>

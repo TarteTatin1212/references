@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.5 本編 N+1問題を体験して直そう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1e2d26;
+  --paper:#e7ece3;
+  --paper-2:#d0dccd;
+  --accent:#517b5b;
+  --accent-2:#6e9676;
+  --accent-3:#1f3e2c;
+  --muted:#697867;
+  --line:#b3c1ae;
+  --code-bg:#14211a;
+  --code-text:#e7ece3;
+  --panel-bg:#eef3ec;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(81,123,91,0.08);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.metrics-card{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:14px 0}
+.metrics-card .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dotted var(--line);font-size:13.5px}
+.metrics-card .row:last-child{border-bottom:none}
+.metrics-card .row .key{font-family:'Shippori Mincho',serif;color:var(--accent-3)}
+.metrics-card .row .val{font-family:'JetBrains Mono',monospace;color:var(--accent)}
+.metrics-card .row .val.bad{color:#a04040;font-weight:700}
+.metrics-card .row .val.good{color:#3a7a4a;font-weight:700}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.05 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>N+1問題を体験して<br>直そう</h1>
+  <div class="subtitle">N+1 PROBLEM ── EXPERIENCE THE PROBLEM, FIX IT</div>
+  <p class="lead">
+    Vol.5は<b>「N+1の発見と修正」</b>の獲得です。<br>
+    本編Vol.4で <code style="font-family:'JetBrains Mono'">resultMap + JOIN</code> を実装した時点で、画面の<b>主要なN+1問題は既に解消されています</b>。Vol.5では実装するというより、<b>「Vol.2の方式」と「Vol.4の方式」を並べて比較し、N+1問題の正体を体で理解する</b>巻です。<br>
+    具体的には：<code style="font-family:'JetBrains Mono'">SubjectService</code> に「あえてVol.2方式」を残し、両方のURLでログを比較。<b>件数を増やしてN+1の災厄を視覚化</b>し、業務開発でなぜこれが警戒されるかを<b>体感</b>します。<br>
+    Cで一番<b>「センスを養う」</b>巻のひとつ。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>Vol.5は新規ファイル作成はなく、<b>既存ファイルの改修のみ</b>。赤線が出るとしたら、<code>StudyRecordMapper</code> の <code>import</code> 不足。<br>
+    <code>Ctrl + Shift + O</code> で一括整理を。Vol.4で <code>@Autowired</code> していたものをそのまま使うので、新しいクラスを覚える必要はありません。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#what">04 N+1問題の正体を整理</a></li>
+    <li><a href="#impl">05 比較できる仕組みを作る</a></li>
+    <li><a href="#create">06 SubjectServiceとControllerの改修</a></li>
+    <li><a href="#run">07 ブラウザで動かしてログ比較</a></li>
+    <li><a href="#trouble">08 ハマりどころと他のN+1パターン</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.5は<b>「実装するため」より「理解するため」</b>の巻です。N+1問題は<b>業務開発で最も頻繁に話題になる性能課題</b>。「<b>知っているつもり</b>」を「<b>体で分かる</b>」に変えます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.5-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">Vol.2方式とVol.4方式を並列で動かせる状態を作る</div>
+          <div class="desc"><code>/subjects</code> はVol.4方式（1回JOIN）、<code>/subjects/legacy</code> はVol.2方式（1+N回）として切り替え可能に。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">両方のURLでログを観察し違いを体感</div>
+          <div class="desc">片方は SELECT 1回、もう片方は 1+5=6回。<b>同じ画面・違うコスト</b>を実体験する。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">データを増やしてN+1の災厄を視覚化</div>
+          <div class="desc">subjects を5件→50件に増やすと、Vol.2方式は <b>51回</b> SQLを発行。Vol.4方式は<b>1回のまま</b>。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻の見どころ</span>
+
+<span class="comment">// /subjects （Vol.4方式 = JOIN）</span>
+SELECT ... LEFT JOIN ...   <span class="comment">// 1回</span>
+                            <span class="comment">// → SQL: 1回</span>
+
+
+<span class="comment">// /subjects/legacy （Vol.2方式 = 2回SQL）</span>
+SELECT * FROM subjects;     <span class="comment">// 1回</span>
+SELECT * FROM study_records
+  WHERE subject_id = ?;     <span class="comment">// N回</span>
+                            <span class="comment">// → SQL: 1+N 回</span>
+
+
+<span class="comment">// 件数を増やすと…</span>
+
+<span class="comment">// 5科目  → JOIN: 1回   /  2回SQL: 6回</span>
+<span class="comment">// 50科目 → JOIN: 1回   /  2回SQL: 51回</span>
+<span class="comment">// 500科目→ JOIN: 1回   /  2回SQL: 501回</span>
+
+
+<span class="comment">// → JOIN は科目数に関係なく定数</span>
+<span class="comment">// → 2回SQL は科目数に比例</span>
+<span class="comment">// → これがN+1問題の災厄</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>Vol.5は<b>「実装の難易度」より「観察の濃度」</b>が問われる巻。新しい技術はほとんど登場しません。代わりに「<b>ログを読む目」「件数と通信回数の関係を体感する感性</b>」を磨きます。<b>業務で最も大事な「気付く目」</b>の養成回。</p>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── 画面ではなく「ログ」が主役</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.5の<b>「完成画面」はVol.4と同じ</b>。違うのは <code>/subjects/legacy</code> URLが追加され、<b>2つの実装を切り替えて比較できる</b>こと。<b>主役はコンソールに流れるSQLログ</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-state</span>
+      <span class="tag-desc">2つのURLで切り替え</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 完了後の状態</div>
+        <div class="metrics-card">
+          <div class="row"><span class="key">/subjects（Vol.4方式）</span><span class="val good">SQL 1回</span></div>
+          <div class="row"><span class="key">/subjects/legacy（Vol.2方式）</span><span class="val bad">SQL 1+N回</span></div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px">画面自体は<b>両方同じ</b>。ユーザーから見ると違いは分からない。<b>裏側の効率だけが違う</b>──これがN+1問題の<b>気付きにくさ</b>でもある。</p>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          表面に出ないからこそ、<b>「ログを見る習慣」</b>がないと永遠に気付けない。<br>Vol.5の真の収穫は「<b>ログを見る習慣の獲得</b>」。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// プロジェクト構造の変化</span>
+
+todo/
+├ src/main/java/com/example/todo/
+│  ├ controller/
+│  │  └ SubjectController.java    <span class="comment">// 改修</span>
+│  │      <span class="kw">// + /subjects/legacy 追加</span>
+│  ├ service/
+│  │  └ SubjectService.java       <span class="comment">// 改修</span>
+│  │      <span class="kw">// findAllWithRecordsLegacy() 追加</span>
+│  │      <span class="kw">// （Vol.2のループ実装を復活）</span>
+│  └ ... 他は変更なし
+
+└ src/main/resources/
+   └ templates/
+      └ subjects/list.html        <span class="comment">// 変更なし</span>
+
+
+<span class="comment">// 触るのは2ファイルだけ</span>
+<span class="comment">// 新規ファイル作成なし</span>
+<span class="comment">// 観察と比較が主役</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.5はVol.2・Vol.4の<b>両方を踏まえた振り返り</b>巻。新概念はなく、<b>これまでの体験を別角度から見直す</b>のが目的。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">これまでに身についている前提</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前提知識</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>該当箇所</th></tr>
+          <tr><td>2回SQL方式の実装と現象</td><td>本編 M2</td></tr>
+          <tr><td>取得戦略3種（都度／一括／遅延）</td><td>別冊 S2</td></tr>
+          <tr><td>resultMap + JOIN の実装</td><td>本編 M4</td></tr>
+          <tr><td>MyBatis内部処理（参考）</td><td>別冊 S4</td></tr>
+          <tr><td>SQLログの読み方</td><td>A v2 / 本編全体</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// 復習：これまでの SQL 発行回数</span>
+
+<span class="comment">// ── 本編 Vol.2 完了時 ──</span>
+<span class="comment">// /subjects → 1+5=6回</span>
+<span class="comment">// （subjects 1回 + records 各科目1回×5）</span>
+
+
+<span class="comment">// ── 本編 Vol.3 完了時 ──</span>
+<span class="comment">// /subjects → 1+5=6回（変わらず）</span>
+<span class="comment">// XMLに移しただけ。SQLは同じ。</span>
+
+
+<span class="comment">// ── 本編 Vol.4 完了時（今ここの直前）──</span>
+<span class="comment">// /subjects → 1回</span>
+<span class="comment">// LEFT JOIN で一発取得</span>
+
+
+<span class="comment">// ── 本編 Vol.5 完了時 ──</span>
+<span class="comment">// /subjects        → 1回（Vol.4のまま）</span>
+<span class="comment">// /subjects/legacy → 1+N回（比較用）</span>
+<span class="comment">// 切り替えてログを見比べる</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="what">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>N+1問題の正体を整理</h2>
+    <span class="en">WHAT IS N+1</span>
+  </div>
+  <p class="pattern-desc">「N+1問題」とは：<b>親を取得する1回のSQL（=「1」）に対し、N件の親それぞれに対して子取得のSQLを呼ぶ（=「N」）</b>ことで、合計 <b>1+N 回</b> のSQLが発行される現象。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">n-plus-1-definition</span>
+      <span class="tag-desc">N+1問題の正式な定義</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ「N+1」と呼ぶか</div>
+        <div class="role-card">
+          <span class="label">「1」の部分</span>
+          <div class="name">親をまとめて取る最初のクエリ</div>
+          <div class="desc"><code>SELECT * FROM subjects</code> など。<b>1回だけ</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">「N」の部分</span>
+          <div class="name">親の件数N件に対して、それぞれ子を取る</div>
+          <div class="desc">親が5件なら子のSELECTが<b>5回</b>。親が100件なら<b>100回</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">合計</span>
+          <div class="name">1 + N 回のSQL発行</div>
+          <div class="desc">親の件数が増えると<b>線形に</b>SQL回数が増える。これが「災厄」と呼ばれる所以。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>なぜ問題か</b>：DB通信のコストは<b>SQLの「中身の重さ」より「往復回数」</b>で大きく決まる。1回で取れることを100回に分けて取るのは、明らかな無駄。</p>
+      </div>
+      <div class="code"><span class="code-head">// 件数別の SQL 回数（理論値）</span>
+
+科目  5件:   1 + 5  =   <span class="num">6</span> 回
+科目 10件:   1 + 10 =  <span class="num">11</span> 回
+科目 50件:   1 + 50 =  <span class="num">51</span> 回
+科目100件:   1 + 100=  <span class="num">101</span> 回
+科目500件:   1 + 500=  <span class="num">501</span> 回
+
+
+<span class="comment">// SQL 1回 ≒ 1〜数ms（ローカル）</span>
+<span class="comment">// SQL 1回 ≒ 10〜数十ms（リモートDB）</span>
+
+
+<span class="comment">// ─── 体感での違い ───</span>
+<span class="comment">// 5科目  → 30ms     ユーザー気付かず</span>
+<span class="comment">// 50科目 → 300ms    やや遅く感じる</span>
+<span class="comment">// 500科目→ 3000ms   明らかに遅い・苦情来る</span>
+
+
+<span class="comment">// ─── 同じ画面を JOIN で取る場合 ───</span>
+科目  5件:  <span class="num">1</span> 回（5〜10ms）
+科目 10件:  <span class="num">1</span> 回（5〜10ms）
+科目 50件:  <span class="num">1</span> 回（10〜20ms）
+科目100件:  <span class="num">1</span> 回（20〜40ms）
+科目500件:  <span class="num">1</span> 回（50〜100ms）
+
+<span class="comment">// 件数による劣化が「ゆるやか」</span>
+<span class="comment">// = 「スケーラブル」な実装</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><b>N+1問題は「動作上はバグではない」</b>のが厄介。テストは通る・画面も表示される・データも正しい。<b>「ただ遅い」</b>だけ。だから開発時には気付きにくく、本番でユーザー数が増えてから「重い」と苦情が来る。<b>SQLログを開発時から見る習慣</b>が唯一の予防策。</p>
+  </div>
+</section>
+
+<section id="impl">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>比較できる仕組みを作る</h2>
+    <span class="en">BUILD COMPARISON</span>
+  </div>
+  <p class="pattern-desc">Vol.4方式とVol.2方式を<b>同時に動かして比較</b>できる状態にします。<code>SubjectService</code> に「Vol.2方式」のメソッドを<b>復活</b>させ、別URLで呼べるようにする。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">implementation-plan</span>
+      <span class="tag-desc">実装の計画</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// やることのまとめ</div>
+        <ol class="step-list">
+          <li><code>SubjectService.findAllWithRecordsLegacy()</code> を追加（Vol.2のループ実装）</li>
+          <li><code>SubjectController.listLegacy(...)</code> を追加（<code>/subjects/legacy</code> URL）</li>
+          <li>templates の <code>subjects/list.html</code> は<b>そのまま流用</b>（モデル属性名が同じなので変更不要）</li>
+          <li>起動して両URLでログを比較</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">なぜ Vol.2方式を残すのか</div>
+          <p>「<b>悪い例も手元に残しておく</b>」のが学習効率を上げます。後から振り返って「<b>あれが N+1 だったね</b>」と確認できるし、新しいプロジェクトで似た構造を見た時に<b>瞬時にN+1だと気付ける</b>感性が養われる。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 完成後のService構造</span>
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public class</span> <span class="type">SubjectService</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectMapper</span> subjectMapper;
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">StudyRecordMapper</span> studyRecordMapper;
+
+  <span class="comment">// 既存（Vol.4のJOIN方式）</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>() {
+    <span class="kw">return</span> subjectMapper.<span class="fn">findAllWithRecords</span>();
+  }
+
+  <span class="comment">// ★ Vol.5で追加（Vol.2のループ方式）</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt;
+       <span class="fn">findAllWithRecordsLegacy</span>() {
+    <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; subjects =
+        subjectMapper.<span class="fn">findAll</span>();      <span class="comment">// SQL ①</span>
+    <span class="kw">for</span> (<span class="type">Subject</span> s : subjects) {
+      <span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt; records =
+          studyRecordMapper
+              .<span class="fn">findBySubjectId</span>(s.<span class="fn">getId</span>()); <span class="comment">// SQL ②×N</span>
+      s.<span class="fn">setRecords</span>(records);
+    }
+    <span class="kw">return</span> subjects;
+  }
+}
+
+
+<span class="comment">// → 2つの実装が共存</span>
+<span class="comment">// → URLで切り替え可能</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>SubjectServiceとControllerの改修</h2>
+    <span class="en">MODIFY SERVICE & CONTROLLER</span>
+  </div>
+  <p class="pattern-desc">2ファイルを改修します。<b>新規メソッドの追加</b>と<b>新規エンドポイント</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-service</span>
+      <span class="tag-desc">① SubjectService に Legacyメソッドを追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectService.java</code> を開く</li>
+          <li>既存の <code>findAllWithRecords()</code> の<b>下</b>に <code>findAllWithRecordsLegacy()</code> を追加</li>
+          <li>import を整理（<code>Ctrl + Shift + O</code>）</li>
+          <li>保存</li>
+        </ol>
+        <p style="margin-top:12px;font-size:13.5px"><b>Vol.2 で書いたコードをそのまま復活</b>させるだけ。<code>StudyRecordMapper</code> の <code>@Autowired</code> はVol.4から残っているので、追加注入は不要。</p>
+      </div>
+      <div class="code"><span class="code-head">// SubjectService.java（改修後・全体）</span>
+
+<span class="kw">package</span> com.example.todo.service;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Service;
+<span class="kw">import</span> org.springframework.transaction.annotation.Transactional;
+<span class="kw">import</span> com.example.todo.entity.Subject;
+<span class="kw">import</span> com.example.todo.entity.StudyRecord;
+<span class="kw">import</span> com.example.todo.mapper.SubjectMapper;
+<span class="kw">import</span> com.example.todo.mapper.StudyRecordMapper;
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public class</span> <span class="type">SubjectService</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectMapper</span> subjectMapper;
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">StudyRecordMapper</span> studyRecordMapper;
+
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>() {
+    <span class="kw">return</span> subjectMapper.<span class="fn">findAll</span>();
+  }
+
+  <span class="comment">// Vol.4の JOIN 方式（既存）</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>() {
+    <span class="kw">return</span> subjectMapper.<span class="fn">findAllWithRecords</span>();
+  }
+
+  <span class="comment">// ★ Vol.5で追加：Vol.2のループ方式</span>
+  <span class="comment">// （比較・教育用に意図的に残す）</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt;
+       <span class="fn">findAllWithRecordsLegacy</span>() {
+    <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; subjects =
+        subjectMapper.<span class="fn">findAll</span>();
+    <span class="kw">for</span> (<span class="type">Subject</span> s : subjects) {
+      <span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt; records =
+          studyRecordMapper
+              .<span class="fn">findBySubjectId</span>(s.<span class="fn">getId</span>());
+      s.<span class="fn">setRecords</span>(records);
+    }
+    <span class="kw">return</span> subjects;
+  }
+}</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-controller</span>
+      <span class="tag-desc">② SubjectController に /subjects/legacy を追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectController.java</code> を開く</li>
+          <li>既存の <code>list(...)</code> の<b>下</b>に <code>listLegacy(...)</code> を追加</li>
+          <li>戻り値の HTML は<b>同じ</b> <code>"subjects/list"</code></li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">同じテンプレートを使う理由</div>
+          <p>モデル属性名 <code>subjects</code> と Subject オブジェクトの構造が<b>両方の方式で同じ</b>なので、テンプレート側は何も変えなくて良い。<b>「同じ画面・違う中身」</b>を実体験するための仕掛けです。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectController.java（改修後・全体）</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind.annotation.GetMapping;
+<span class="kw">import</span> com.example.todo.service.SubjectService;
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">SubjectController</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectService</span> subjectService;
+
+  <span class="comment">// 既存：Vol.4の1回JOIN方式</span>
+  <span class="ann">@GetMapping</span>(<span class="str">"/subjects"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> model) {
+    model.<span class="fn">addAttribute</span>(<span class="str">"subjects"</span>,
+        subjectService
+            .<span class="fn">findAllWithRecords</span>());
+    <span class="kw">return</span> <span class="str">"subjects/list"</span>;
+  }
+
+  <span class="comment">// ★ Vol.5で追加：Vol.2のループ方式</span>
+  <span class="ann">@GetMapping</span>(<span class="str">"/subjects/legacy"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">listLegacy</span>(<span class="type">Model</span> model) {
+    model.<span class="fn">addAttribute</span>(<span class="str">"subjects"</span>,
+        subjectService
+            .<span class="fn">findAllWithRecordsLegacy</span>());
+    <span class="kw">return</span> <span class="str">"subjects/list"</span>;
+    <span class="comment">// ↑ テンプレートは同じ</span>
+  }
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・URLが違うだけで同じ画面が出る</span>
+<span class="comment">// ・SubjectService の呼び分けで切替</span>
+<span class="comment">// ・コンソールログだけが違う</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かしてログ比較</h2>
+    <span class="en">RUN AND COMPARE</span>
+  </div>
+  <p class="pattern-desc">いよいよ<b>本巻のクライマックス</b>。両方のURLを開いて、コンソールに流れるSQLログを<b>並べて見比べます</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">comparison-test</span>
+      <span class="tag-desc">比較実験の手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>アプリ起動中なら停止、再起動</li>
+          <li>コンソールビューを開いておく（Eclipse下部）</li>
+          <li>コンソール右上の<b>消去アイコン（ゴミ箱風）</b>でログをクリア</li>
+          <li>ブラウザで <code>http://localhost:8080/subjects</code> を開く</li>
+          <li>コンソールに出たSQL本数を<b>数える</b> → <b>1本</b>のはず</li>
+          <li>コンソールを<b>再クリア</b></li>
+          <li>ブラウザで <code>http://localhost:8080/subjects/legacy</code> を開く</li>
+          <li>コンソールに出たSQL本数を<b>数える</b> → <b>6本</b>のはず</li>
+          <li>画面表示は両方<b>完全に同じ</b>であることを確認</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ 1回 vs 6回 の差を体感できればOK！</p>
+      </div>
+      <div class="code"><span class="code-head">// /subjects のログ（JOIN方式）</span>
+
+==&gt;  Preparing:
+  SELECT s.id AS subject_id,
+         s.name AS subject_name,
+         ...
+  FROM subjects s
+  LEFT JOIN study_records r
+    ON s.id = r.subject_id
+  ORDER BY s.id, r.studied_on
+==&gt; Parameters:
+&lt;==      Total: 11
+
+<span class="comment">// → SQL 1本だけ ✓</span>
+
+
+<span class="code-head" style="margin-top:14px">// /subjects/legacy のログ（ループ方式）</span>
+
+==&gt;  Preparing:
+  SELECT * FROM subjects ORDER BY id
+==&gt; Parameters:
+&lt;==      Total: 5
+
+==&gt;  Preparing:
+  SELECT * FROM study_records
+  WHERE subject_id = ? ORDER BY studied_on
+==&gt; Parameters: 1(Integer)
+&lt;==      Total: 5
+
+==&gt;  Preparing:
+  SELECT * FROM study_records
+  WHERE subject_id = ? ORDER BY studied_on
+==&gt; Parameters: 2(Integer)
+&lt;==      Total: 3
+
+==&gt;  Preparing:
+  SELECT * FROM study_records
+  WHERE subject_id = ? ORDER BY studied_on
+==&gt; Parameters: 3(Integer)
+&lt;==      Total: 1
+
+==&gt;  Preparing:
+  SELECT * FROM study_records
+  WHERE subject_id = ? ORDER BY studied_on
+==&gt; Parameters: 4(Integer)
+&lt;==      Total: 0
+
+==&gt;  Preparing:
+  SELECT * FROM study_records
+  WHERE subject_id = ? ORDER BY studied_on
+==&gt; Parameters: 5(Integer)
+&lt;==      Total: 0
+
+<span class="comment">// → SQL 6本 ✗</span>
+<span class="comment">// 親 1回 + 子 5回 = 1+N</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">scale-test</span>
+      <span class="tag-desc">件数を増やしてN+1の災厄を視覚化（任意）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// データ追加で実感を増す</div>
+        <p>余裕があれば、subjects に<b>追加データ</b>を投入してから両URLを開き直すと、N+1の影響が一段はっきり見えます。</p>
+        <ol class="step-list" style="margin-top:10px">
+          <li>MySQL で右のINSERT文を実行</li>
+          <li>アプリを停止→再起動</li>
+          <li><code>/subjects</code> を開く → ログ <b>1本</b>のまま</li>
+          <li><code>/subjects/legacy</code> を開く → ログ <b>1+25=26本</b></li>
+          <li>違いの大きさを実感する</li>
+          <li>体感後は<b>余分なデータを DELETE</b> しても OK</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">削除SQLの例（後で戻したい時）</div>
+          <p><code>DELETE FROM subjects WHERE id &gt; 5;</code>（子の study_records は FOREIGN KEY 制約で先に消すか、ON DELETE 設定次第で連動）。<b>Vol.14で外部キー制約を本格的に扱います</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// データを20件追加するINSERT</span>
+
+<span class="kw">INSERT INTO</span> subjects (name, color) <span class="kw">VALUES</span>
+  (<span class="str">'TypeScript'</span>,    <span class="str">'#3178c6'</span>),
+  (<span class="str">'React'</span>,         <span class="str">'#61dafb'</span>),
+  (<span class="str">'Vue'</span>,           <span class="str">'#4fc08d'</span>),
+  (<span class="str">'Angular'</span>,       <span class="str">'#dd0031'</span>),
+  (<span class="str">'Node.js'</span>,       <span class="str">'#3c873a'</span>),
+  (<span class="str">'Python'</span>,        <span class="str">'#3776ab'</span>),
+  (<span class="str">'Django'</span>,        <span class="str">'#092e20'</span>),
+  (<span class="str">'Flask'</span>,         <span class="str">'#000000'</span>),
+  (<span class="str">'Ruby'</span>,          <span class="str">'#cc342d'</span>),
+  (<span class="str">'Rails'</span>,         <span class="str">'#cc0000'</span>),
+  (<span class="str">'Go'</span>,            <span class="str">'#00add8'</span>),
+  (<span class="str">'Rust'</span>,          <span class="str">'#000000'</span>),
+  (<span class="str">'C++'</span>,           <span class="str">'#00599c'</span>),
+  (<span class="str">'C#'</span>,            <span class="str">'#239120'</span>),
+  (<span class="str">'Kotlin'</span>,        <span class="str">'#7f52ff'</span>),
+  (<span class="str">'Scala'</span>,         <span class="str">'#dc322f'</span>),
+  (<span class="str">'PHP'</span>,           <span class="str">'#777bb4'</span>),
+  (<span class="str">'Laravel'</span>,       <span class="str">'#ff2d20'</span>),
+  (<span class="str">'Docker'</span>,        <span class="str">'#2496ed'</span>),
+  (<span class="str">'Kubernetes'</span>,    <span class="str">'#326ce5'</span>);
+
+<span class="comment">// → 全 25科目になる</span>
+
+
+<span class="code-head" style="margin-top:14px">// SQL回数の理論値</span>
+
+科目  5件:
+  JOIN  →  1回    /  Legacy → 6回    (差5)
+科目 25件:
+  JOIN  →  1回    /  Legacy → 26回   (差25)
+
+
+<span class="comment">// 科目数が増えるほど</span>
+<span class="comment">// JOIN方式の優位性が劇的に</span>
+<span class="comment">// 大きくなる</span>
+
+
+<span class="comment">// ─── 実務での再現 ───</span>
+<span class="comment">// ユーザー1000人</span>
+<span class="comment">// 各ユーザーに投稿が平均10件</span>
+<span class="comment">// 一覧画面で投稿数を表示</span>
+<span class="comment">//   → Legacy: 1+1000=1001回SQL</span>
+<span class="comment">//   → 1リクエストに数秒かかる</span>
+<span class="comment">//   → 完全に「重いシステム」</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと他のN+1パターン</h2>
+    <span class="en">PITFALLS & OTHER N+1 PATTERNS</span>
+  </div>
+  <p class="pattern-desc">Vol.5自体の実装ハマりどころは少ないですが、<b>「他の場面で出会うN+1パターン」</b>を知っておくと、業務開発で<b>未来の自分を救えます</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">other-patterns</span>
+      <span class="tag-desc">よくあるN+1パターン4選</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// N+1の登場場面</div>
+        <div class="role-card">
+          <span class="label">PATTERN 1</span>
+          <div class="name">ループ内でMapperを呼ぶ（今回の典型）</div>
+          <div class="desc"><code>for</code> ループで親を回し、中で子用のMapperを呼ぶ。<b>最も古典的</b>。Vol.5で体験済み。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PATTERN 2</span>
+          <div class="name">Stream API 内でMapperを呼ぶ</div>
+          <div class="desc"><code>subjects.stream().map(s -> mapper.findRecords(s.getId())).collect(toList())</code>。一見モダンだが<b>中身は同じN+1</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PATTERN 3</span>
+          <div class="name">JPAの遅延ロード（lazy）誤用</div>
+          <div class="desc">JPA で <code>parent.getChildren()</code> をループ中に呼ぶ。Proxyが裏でSQLを発行し、結果N+1。<b>JPA最大の罠</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PATTERN 4</span>
+          <div class="name">複数のサービスがそれぞれ取りに行く</div>
+          <div class="desc">マイクロサービス時代の派生形。1リクエストの裏で、各サービスがDBを叩く。<b>「分散N+1」</b>。設計者が気付きにくい。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// PATTERN 2: Stream APIの罠</span>
+
+<span class="comment">// ─── ✗ NG ───</span>
+<span class="type">List</span>&lt;<span class="type">Subject</span>&gt; subjects =
+    subjectMapper.<span class="fn">findAll</span>();
+
+<span class="kw">return</span> subjects.<span class="fn">stream</span>()
+  .<span class="fn">map</span>(s -&gt; {
+    s.<span class="fn">setRecords</span>(
+      studyRecordMapper
+        .<span class="fn">findBySubjectId</span>(s.<span class="fn">getId</span>()));
+    <span class="kw">return</span> s;
+  })
+  .<span class="fn">collect</span>(<span class="type">Collectors</span>.<span class="fn">toList</span>());
+
+
+<span class="comment">// 「Stream API使ったから速い」</span>
+<span class="comment">// と勘違いしがちだが、</span>
+<span class="comment">// 中身は forループと完全に同じ。</span>
+<span class="comment">// N+1問題は解消されない。</span>
+
+
+<span class="comment">// → 直し方：JOINクエリを使うこと自体</span>
+<span class="comment">// (= 本編Vol.4 の手法）</span>
+
+
+<span class="code-head" style="margin-top:14px">// PATTERN 3: JPAの遅延ロード罠</span>
+
+<span class="ann">@Entity</span>
+<span class="kw">public class</span> <span class="type">Subject</span> {
+  <span class="ann">@OneToMany</span>(fetch = <span class="type">FetchType</span>.LAZY)
+  <span class="kw">private</span> <span class="type">List</span>&lt;<span class="type">StudyRecord</span>&gt; records;
+}
+
+
+<span class="comment">// 一覧画面</span>
+<span class="kw">for</span> (<span class="type">Subject</span> s : subjects) {
+  s.<span class="fn">getRecords</span>().<span class="fn">size</span>();
+  <span class="comment">//   ↑ ここで初めて子SQLが走る！</span>
+  <span class="comment">//   親N件あれば N回 SQL</span>
+}
+
+
+<span class="comment">// 直し方： FETCH JOIN を明示</span>
+<span class="ann">@Query</span>(<span class="str">"SELECT s FROM Subject s "</span>
+     + <span class="str">"LEFT JOIN FETCH s.records"</span>)
+<span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>();
+
+
+<span class="comment">// 結局のところ、MyBatisでもJPAでも</span>
+<span class="comment">// 「親と子をJOINで一発取得」</span>
+<span class="comment">// が王道の解決策。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>N+1問題は<b>「使う技術が変わっても本質は同じ」</b>です。MyBatisでも JPA/Hibernate でも Spring Data JPA でも、<b>「ループ中に親→子のSQLを呼ぶ」</b>パターンは即座にN+1。<b>逆に「JOINで一発取得する」</b>のがどの技術でも王道の解決策。<b>「N+1のセンサー」</b>を一度養えば、技術が変わっても通用します。</p>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.5本編の<b>完了チェックリスト</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol5-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li><code>SubjectService</code> に <code>findAllWithRecordsLegacy()</code> が追加</li>
+          <li>Legacyメソッドの中身が「Vol.2のループ実装」になっている</li>
+          <li><code>SubjectController</code> に <code>/subjects/legacy</code> のエンドポイント追加</li>
+          <li>アプリ起動時にエラーが出ない</li>
+          <li><code>/subjects</code> を開くとSQL <b>1本</b>のログ</li>
+          <li><code>/subjects/legacy</code> を開くとSQL <b>6本</b>のログ</li>
+          <li>両URLで画面表示は完全に同じ</li>
+          <li>件数を増やすとLegacyのSQL数が増えることを理論的に理解</li>
+          <li>他のN+1パターン4種を「見たことがある」状態</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.5本編完了！</b><br>
+          <b>N+1の発見と修正</b>のスキル獲得です。<b>「ログを見る習慣」</b>が身につきました。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で獲得したスキル</span>
+
+★ <span class="kw">N+1の発見と修正</span> ── 獲得！
+
+  <span class="comment">// できるようになったこと:</span>
+  <span class="comment">// ・N+1問題の正式な定義を説明できる</span>
+  <span class="comment">// ・ループ内でMapperを呼ぶ実装と</span>
+  <span class="comment">//   JOIN方式の実装を並列で動かせる</span>
+  <span class="comment">// ・SQLログから N+1 を「見つけられる」</span>
+  <span class="comment">// ・件数増加でのSQL数推移を予測できる</span>
+  <span class="comment">// ・他のN+1パターン（Stream/JPA等）も</span>
+  <span class="comment">//   構造的に理解</span>
+
+
+<span class="code-head" style="margin-top:14px">// 次にやること</span>
+
+<span class="comment">// ① 別冊 S5 を読む</span>
+<span class="comment">//   タイトル: 「N+1問題の正体」</span>
+<span class="comment">//   内容: 検出ツール / 業務での災厄事例 /</span>
+<span class="comment">//        対策3パターン / 業界の検出文化</span>
+
+
+<span class="comment">// ② Vol.6 本編：</span>
+<span class="comment">//   タイトル: 「@RequestParam で絞り込もう」</span>
+<span class="comment">//   獲得スキル: 検索獲得</span>
+<span class="comment">//   内容:</span>
+<span class="comment">//   ・URLパラメータで科目絞り込み</span>
+<span class="comment">//   ・@RequestParam の使い方</span>
+<span class="comment">//   ・SubjectMapper.xmlに条件付きSELECT追加</span>
+<span class="comment">//   ・検索フォームの実装</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(31,62,44,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S5</div>
+    <p>本編Vol.5お疲れさまでした。<b>「N+1を見つける目」</b>を手に入れたあなたに、別冊S5「<b>N+1問題の正体</b>」では、<b>検出ツール（p6spy など）」「業務での災厄事例」「対策3パターン」「JPAでも起きる同じ問題」「業界全体の検出文化」</b>を多角的に深掘りします。<br>Cの中で<b>「性能対策」の感性</b>を最も磨く別冊。<b>続けて別冊S5へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.05 / 15 ── N+1 PROBLEM（本編）</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕Vol.6 タグ付けとトランザクション</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2940;
+  --paper:#f3f0e6;
+  --paper-2:#e4dfcd;
+  --accent:#2d5485;
+  --accent-2:#507aa8;
+  --accent-3:#8a6a3a;
+  --muted:#6a7484;
+  --line:#c6c1b0;
+  --code-bg:#1a2236;
+  --code-text:#e8e4d4;
+  --panel-bg:#ede7d3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✦";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.phase-badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700;letter-spacing:0.05em}
+.ph-req{background:#e8eef6;color:#2d5485;border:1px solid #2d5485}
+.ph-des{background:#f0ebe0;color:#8a6a3a;border:1px solid #8a6a3a}
+.ph-imp{background:#e6efe8;color:#3a6a4a;border:1px solid #3a6a4a}
+.ph-test{background:#f3e8e8;color:#9a4040;border:1px solid #9a4040}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.key{background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(45,84,133,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.tag-chip{display:inline-block;background:var(--accent-2);color:#fff;padding:1px 10px;border-radius:12px;font-size:11px;margin:2px;font-family:'JetBrains Mono',monospace}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.6</span>
+    <span class="kind-tag">本編 ── MAIN</span>
+    <span class="rdt-tag">REQ · DESIGN · TEST</span>
+  </div>
+  <h1>タグ付けと<br>トランザクション</h1>
+  <div class="subtitle">VOL.06 ── TAGGING &amp; TRANSACTION</div>
+  <p class="lead">Vol.5 で<b>タグの取得・表示</b>まで作りました。今回は<b>メモに複数タグを保存</b>します。これは<b>「既存の紐付けを全削除→新タグを再INSERT」</b>という複数テーブル更新。途中で失敗したら全部取り消す必要があり、<b>@Transactional（トランザクション）</b>が登場します。別冊S5の理論が実装で形に。これで<b>US-003 が完成</b>します。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら — Vol.6 で新たに使うもの</div>
+    <p>実装の新規 import：<code>org.springframework.transaction.annotation.Transactional</code>（@Transactional）。XML で <code>&lt;foreach&gt;</code>（複数INSERT）。<code>@RequestParam List&lt;Long&gt;</code>（チェックボックスの複数値受け取り）。<code>Ctrl + Shift + O</code>整理、<code>Ctrl + 1</code>クイック修正。<b>別冊S5を開きながら</b>進めましょう。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 要求の確認（US-003の完成）</a></li>
+    <li><a href="#s02">02 受入条件をテストケース化</a></li>
+    <li><a href="#s03">03 仕様化：タグ付けの操作</a></li>
+    <li><a href="#s04">04 設計①：全削除→再INSERT</a></li>
+    <li><a href="#s05">05 設計②：トランザクション境界</a></li>
+    <li><a href="#s06">06 実装</a></li>
+    <li><a href="#s07">07 テスト（ロールバックも検証）</a></li>
+    <li><a href="#s08">08 ブラウザ確認＋ハマりどころ</a></li>
+    <li><a href="#s09">09 レビュー・評価＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>要求の確認（US-003の完成）</h2><span class="phase-badge ph-req">PHASE: REQ</span><span class="en">REVISIT REQUIREMENT</span></div>
+  <p class="pattern-desc">Vol.5 で「タグの表示」はできましたが、<b>「メモにタグを付ける（保存）」がまだ</b>です。US-003 を<b>本当に完成</b>させるには、メモ編集画面で<b>複数タグを選んで保存</b>できる必要があります。Vol.6 は US-003 の<b>最終段階</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">US-003 の残りと完成条件</span><span class="tag-desc">保存ができて初めて完成</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Vol.5 で足りなかったこと</div>
+        <p>Vol.5 では<b>「付いているタグの表示」</b>まで。でも US-003「<b>メモに複数タグを付けたい</b>」には、<b>タグを付ける操作（保存）</b>が必要。これが Vol.6。</p>
+
+        <div class="panel-head" style="margin-top:18px">// なぜ Vol.5 と分けたか</div>
+        <p>タグ付け（保存）は<b>複数テーブルの更新</b>＝<b>トランザクション</b>が絡む。表示（取得）より<b>難易度が一段上</b>。だから Vol.5（取得）と Vol.6（保存）に分けました。<b>1つずつ確実に</b>（別冊S2）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// Vol.6 で追加する受入条件</div>
+        <p>US-003 にタグ付け（保存）の受入条件を追加。<b>「付ける」「外す」「付け替える」</b>を扱います。</p>
+      </div>
+      <div class="code"><span class="code-head">// US-003 の受入条件（Vol.6で追加分）</span>
+<span class="ann">@AC5</span> タグを付けて保存
+Given: メモ編集で「重要」「急ぎ」を選ぶ
+When : 保存する
+Then : メモに2つのタグが紐付く
+
+<span class="ann">@AC6</span> タグを付け替える
+Given: 「重要」が付いたメモ
+When : 「重要」を外し「急ぎ」を付けて保存
+Then : タグが「急ぎ」だけになる
+
+<span class="ann">@AC7</span> タグを全部外す
+Given: タグが付いたメモ
+When : 全タグのチェックを外して保存
+Then : タグが0個になる
+
+<span class="ann">@AC8</span> 保存の原子性（途中失敗）★トランザクション
+Given: タグ保存の途中でエラーが起きる
+When : 保存処理が失敗する
+Then : 元のタグ状態に戻る（中途半端にしない）
+
+
+<span class="comment">// ─── @AC8 がトランザクションの核心 ★★★ ───</span>
+<span class="comment">// 「途中失敗で元に戻る」</span>
+<span class="comment">// → @Transactional が必要（別冊S5）</span>
+<span class="comment">// → 全削除→再INSERTを安全にする</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「付け替え」は内部的に「全削除→全追加」</div>
+    <p>タグの付け替え（@AC6）は、人間の感覚では「重要を外して急ぎを足す」ですが、実装では<b>「既存タグを全削除して、新しいタグを全追加」</b>が定石（別冊S5）。差分計算（どれを消してどれを足すか）より<b>シンプルで確実</b>。ただしこれは<b>トランザクション（@AC8）が前提</b>。全削除した後にINSERTが失敗したら、タグが全部消える悲劇を防ぐためです。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>受入条件をテストケース化</h2><span class="phase-badge ph-req">PHASE: REQ→TEST</span><span class="en">AC TO TEST CASES</span></div>
+  <p class="pattern-desc">タグ付けの受入条件をテストに。<b>付ける・付け替える・全外し（@AC5,6,7）は結合テスト</b>、<b>原子性（@AC8）はロールバックのテスト</b>。別冊S5のトランザクション理論が、テストで実証されます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">テストケースと層振り分け</span><span class="tag-desc">原子性のテストが新しい</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テストケース一覧</div>
+        <table class="compare-tbl">
+          <thead><tr><th>検証</th><th>期待</th><th>層</th></tr></thead>
+          <tbody>
+            <tr><td>タグを付けて保存</td><td>2件紐付く</td><td>結合</td></tr>
+            <tr><td>タグ付け替え</td><td>古いの消え新が残る</td><td>結合</td></tr>
+            <tr><td>全タグ外し</td><td>0件になる</td><td>結合</td></tr>
+            <tr><td>途中失敗で元に戻る</td><td>ロールバック</td><td><b>結合</b></td></tr>
+            <tr><td>保存ロジックの呼び出し</td><td>正しい順序</td><td>単体</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>@AC8（原子性）のテスト</b>が新しい挑戦。「<b>途中で例外→ロールバック→元に戻る</b>」を検証します。</p>
+      </div>
+      <div class="code"><span class="code-head">// 受入条件 → テスト層</span>
+<span class="comment">// ─── 結合テスト（@MybatisTest+H2）───</span>
+@AC5 付けて保存
+  → 全削除→INSERTで2件紐付くか
+
+@AC6 付け替え
+  → 全削除→新INSERTで入れ替わるか
+
+@AC7 全外し
+  → 全削除のみ、0件になるか
+
+@AC8 原子性（ロールバック）★★★
+  → 途中で例外→元の状態に戻るか
+  → これがトランザクションの検証
+
+
+<span class="comment">// ─── 単体テスト（Mockito）───</span>
+保存処理の順序：
+  1. deleteTagsByMemoId が呼ばれる
+  2. その後 addTag が呼ばれる
+  → verify で呼び出し順序を検証
+
+
+<span class="comment">// ─── @AC8 のテストが核心 ───</span>
+<span class="comment">// 「全削除した後にINSERT失敗」を</span>
+<span class="comment">// わざと起こし、元に戻るか確認</span>
+<span class="comment">// → トランザクションが効いている証明 ★★★</span>
+<span class="comment">// → 別冊S5の理論をテストで実証</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「ロールバックのテスト」を書く意味</div>
+    <p>@AC8 の<b>ロールバックのテスト</b>は、本シリーズで初めて<b>「失敗時の挙動」を検証</b>します。正常系（成功）だけでなく<b>「失敗したとき正しく元に戻るか」</b>をテストする。これがないと、@Transactional の付け忘れ（別冊S5のあるある①）に気づけません。<b>「壊れたときに正しく壊れるか」</b>をテストするのが、堅牢なシステムの条件です。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>仕様化：タグ付けの操作</h2><span class="phase-badge ph-req">PHASE: SPEC</span><span class="en">SPECIFICATION</span></div>
+  <p class="pattern-desc">タグ付けの<b>画面操作とデータの流れ</b>を仕様化します。メモ編集画面（SC-03）に<b>タグのチェックボックス</b>を追加。複数選択した tag_id を、メモ更新と一緒に受け取ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">タグ付けの画面とデータフロー</span><span class="tag-desc">複数チェックボックス</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// メモ編集画面に追加</div>
+        <p>メモ編集（SC-03）に<b>タグのチェックボックス群</b>を追加。全タグを表示し、付いているものはチェック済みに。</p>
+
+        <div class="panel-head" style="margin-top:18px">// データの流れ</div>
+        <ol style="margin-left:20px">
+          <li>編集画面で複数タグをチェック</li>
+          <li>保存（POST /memos/{id}）で<b>tagIds[] が複数送られる</b></li>
+          <li>Controller が <code>List&lt;Long&gt; tagIds</code> で受け取る</li>
+          <li>Service が memos 更新＋タグ付け替え</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// URL は既存を流用</div>
+        <p>新URLは不要。既存の <code>POST /memos/{id}</code>（更新）に<b>tagIds を追加</b>するだけ。</p>
+      </div>
+      <div class="code"><span class="code-head">// 仕様：画面とリクエスト</span>
+<span class="comment">// ─── メモ編集画面（SC-03）───</span>
+┌────────────────────────────┐
+│ メモ編集                     │
+│ タイトル: [会議メモ        ]│
+│ 本文:     [...            ]│
+│ カテゴリ: [仕事 ▼]          │
+│ タグ:                       │
+│   ☑ 重要  ☑ 急ぎ  ☐ あとで │ ←複数選択
+│ [保存]                      │
+└────────────────────────────┘
+
+
+<span class="comment">// ─── 送信されるリクエスト ───</span>
+POST /memos/1
+  title=会議メモ
+  content=...
+  categoryId=1
+  <span class="ann">tagIds=1&tagIds=2</span>  ← チェックした分だけ
+                       複数値で送られる ★★★
+
+
+<span class="comment">// ─── 全外しのとき ───</span>
+POST /memos/1
+  title=会議メモ
+  ...
+  （tagIds なし）  ← チェック0個
+<span class="comment">// → tagIds が空 or null</span>
+<span class="comment">// → 全タグを外す（@AC7）</span>
+
+
+<span class="comment">// ─── HTML のチェックボックス ───</span>
+<span class="kw">&lt;input</span> type=<span class="str">"checkbox"</span>
+       name=<span class="str">"tagIds"</span>
+       value=<span class="str">"1"</span> checked<span class="kw">&gt;</span> 重要
+<span class="kw">&lt;input</span> type=<span class="str">"checkbox"</span>
+       name=<span class="str">"tagIds"</span>
+       value=<span class="str">"2"</span> checked<span class="kw">&gt;</span> 急ぎ
+<span class="comment">// → 同じ name で複数 → List で受け取る ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — チェックボックスは「同じ name」で複数値</div>
+    <p>HTML のチェックボックスで複数選択を送るには、<b>全部同じ <code>name="tagIds"</code></b> にします。チェックした分だけ <code>tagIds=1&tagIds=2</code> と送られ、Spring が <code>List&lt;Long&gt; tagIds</code> で受け取ります。<b>0個チェックなら tagIds は送られない</b>（null になる）ので、Controller 側で null を空リスト扱いする必要があります（Section 06）。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>設計①：全削除→再INSERT</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">DELETE-ALL &amp; RE-INSERT</span></div>
+  <p class="pattern-desc">タグ付けの実装方針を<b>「全削除→再INSERT」</b>に決めます（別冊S5）。差分更新より<b>シンプルで確実</b>。中間テーブルへの操作メソッドを設計します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">なぜ「全削除→再INSERT」か</span><span class="tag-desc">差分更新より確実</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの方針の比較</div>
+        <table class="compare-tbl">
+          <thead><tr><th></th><th>差分更新</th><th>全削除→再INSERT</th></tr></thead>
+          <tbody>
+            <tr><td>処理</td><td>消す/足すを計算</td><td>全消し→全追加</td></tr>
+            <tr><td>複雑さ</td><td>高い</td><td><b>低い</b></td></tr>
+            <tr><td>バグ</td><td>入りやすい</td><td><b>入りにくい</b></td></tr>
+            <tr><td>前提</td><td>—</td><td>トランザクション</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>全削除→再INSERT</b>を採用（KISS＝別冊S2）。差分計算は複雑でバグの温床。<b>シンプルが正義</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 必要な Mapper メソッド</div>
+        <ul>
+          <li><code>deleteTagsByMemoId(memoId)</code>：紐付け全削除</li>
+          <li><code>addTag(memoId, tagId)</code>：1件追加</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 中間テーブル操作の Mapper</span>
+<span class="comment">// ─── MemoMapper.java（追加）───</span>
+<span class="comment">// 紐付けを全削除</span>
+<span class="kw">void</span> <span class="fn">deleteTagsByMemoId</span>(<span class="type">Long</span> memoId);
+
+<span class="comment">// 紐付けを1件追加</span>
+<span class="kw">void</span> <span class="fn">addTag</span>(
+    <span class="ann">@Param</span>(<span class="str">"memoId"</span>) <span class="type">Long</span> memoId,
+    <span class="ann">@Param</span>(<span class="str">"tagId"</span>) <span class="type">Long</span> tagId);
+
+
+<span class="comment">// ─── MemoMapper.xml ───</span>
+<span class="kw">&lt;delete</span> id=<span class="str">"deleteTagsByMemoId"</span><span class="kw">&gt;</span>
+  DELETE FROM memo_tags
+   WHERE memo_id = #{memoId}
+<span class="kw">&lt;/delete&gt;</span>
+
+<span class="kw">&lt;insert</span> id=<span class="str">"addTag"</span><span class="kw">&gt;</span>
+  INSERT INTO memo_tags
+    (memo_id, tag_id)
+  VALUES (#{memoId}, #{tagId})
+<span class="kw">&lt;/insert&gt;</span>
+
+
+<span class="comment">// ─── 全削除→再INSERT の流れ ───</span>
+タグを[急ぎ]に付け替える：
+
+1. DELETE FROM memo_tags
+     WHERE memo_id=1   ← 既存全削除
+   （重要・急ぎ が消える）
+
+2. INSERT memo_tags(1, 急ぎ)  ← 再追加
+
+結果：急ぎ だけになる ★
+
+<span class="comment">// → 「今のタグ＝送られたtagIds」に</span>
+<span class="comment">//   完全に置き換える</span>
+<span class="comment">// → シンプル・確実（KISS）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「全削除→再INSERT」は KISS の実践</div>
+    <p>差分更新（「どのタグを消して、どれを足すか」を計算）は<b>賢く見えますが、バグの温床</b>。「全部消して、欲しいものだけ入れ直す」方が<b>圧倒的にシンプルで確実</b>（別冊S2の KISS）。性能が問題になる規模でもないので（メモ1件のタグは数個）、<b>シンプルさを優先</b>。ただし<b>トランザクションが前提</b>——次の Section 05 で境界を引きます。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>設計②：トランザクション境界</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">TRANSACTION BOUNDARY</span></div>
+  <p class="pattern-desc"><b>別冊S5の集大成</b>。「全削除→再INSERT」を<b>1つのトランザクション</b>にまとめます。<b>@Transactional を Service メソッドに付ける</b>。途中失敗で全部ロールバック。境界の引き方を設計します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">@Transactional の境界設計</span><span class="tag-desc">Service の1メソッドに</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// トランザクションの範囲</div>
+        <p>「メモにタグを付ける」という<b>1つの業務</b>を、<b>1つの @Transactional メソッド</b>にまとめます（別冊S5）。</p>
+        <ul>
+          <li>メモ本体の更新</li>
+          <li>タグ紐付けの全削除</li>
+          <li>新タグの複数INSERT</li>
+        </ul>
+        <p style="margin-top:8px">これら全部を<b>「全部か、ゼロか」</b>に。1つでも失敗したら全部ロールバック。</p>
+
+        <div class="panel-head" style="margin-top:18px">// どこに付けるか（別冊S5）</div>
+        <ul>
+          <li><b>Service のメソッド</b>に付ける（業務の単位）</li>
+          <li>Controller・Mapper には付けない</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// @Transactional の境界</span>
+<span class="kw">import</span> org.springframework
+         .transaction.annotation.Transactional;
+
+<span class="ann">@Service</span>
+<span class="ann">@RequiredArgsConstructor</span>
+<span class="kw">public class</span> <span class="type">MemoService</span> {
+  <span class="kw">private final</span> <span class="type">MemoMapper</span> mapper;
+
+  <span class="comment">// 複数操作 → @Transactional 必須 ★★★</span>
+  <span class="ann">@Transactional</span>
+  <span class="kw">public void</span> <span class="fn">updateWithTags</span>(
+      <span class="type">Memo</span> memo,
+      <span class="type">List</span>&lt;<span class="type">Long</span>&gt; tagIds) {
+
+    <span class="comment">// ① メモ本体を更新</span>
+    memo.<span class="fn">setUpdatedAt</span>(
+      <span class="type">LocalDateTime</span>.<span class="fn">now</span>());
+    mapper.<span class="fn">update</span>(memo);
+
+    <span class="comment">// ② 既存タグ紐付けを全削除</span>
+    mapper.<span class="fn">deleteTagsByMemoId</span>(
+      memo.<span class="fn">getId</span>());
+
+    <span class="comment">// ③ 新タグを再INSERT</span>
+    <span class="kw">if</span> (tagIds != <span class="kw">null</span>) {
+      <span class="kw">for</span> (<span class="type">Long</span> tagId : tagIds) {
+        mapper.<span class="fn">addTag</span>(
+          memo.<span class="fn">getId</span>(), tagId);
+      }
+    }
+    <span class="comment">// → ①②③全部が1トランザクション ★★★</span>
+    <span class="comment">// → 途中で例外なら全部ロールバック</span>
+  }
+}
+
+
+<span class="comment">// ─── @Transactional がなかったら ───</span>
+<span class="comment">// ② で全削除した後 ③ で失敗すると…</span>
+<span class="comment">// → タグが全部消えたまま！（別冊S5）</span>
+<span class="comment">// → @Transactional が「全削除→再INSERT」を</span>
+<span class="comment">//   安全にする ★★★</span>
+
+
+<span class="comment">// ─── 境界の原則（別冊S5）───</span>
+<span class="comment">// 業務の単位 = トランザクションの単位</span>
+<span class="comment">// = Service の1メソッド</span>
+<span class="comment">// 「メモにタグを付ける」業務全体が</span>
+<span class="comment">// 1つの「全部か、ゼロか」</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — トランザクションが「大胆な全削除」を可能にする</div>
+    <p>Section 04 で<b>「全削除→再INSERT」</b>というシンプルな方針を選べたのは、<b>@Transactional があるから</b>。「全削除した後に失敗しても元に戻る」と保証されているので、<b>安心して大胆に全削除できる</b>。トランザクションがなければ、怖くて差分更新せざるを得ない。<b>トランザクションが、シンプルな実装を可能にする</b>。設計とトランザクションは表裏一体です（別冊S5）。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>実装</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">IMPLEMENTATION</span></div>
+  <p class="pattern-desc">設計に沿って実装。<b>Controller（複数 tagIds 受け取り）</b>、<b>Service（@Transactional）</b>、<b>View（タグチェックボックス）</b>。既存のメモ更新に<b>タグ付けを組み込み</b>ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Controller と View</span><span class="tag-desc">複数値の受け取りと表示</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Controller の変更</div>
+        <p>既存の更新メソッドに <code>@RequestParam List&lt;Long&gt; tagIds</code> を追加。<b>required=false</b> で全外し（0個）にも対応。</p>
+
+        <div class="panel-head" style="margin-top:18px">// View の変更（編集画面）</div>
+        <p>全タグをチェックボックスで表示。<b>付いているタグは checked</b> に。Thymeleaf で現在のタグ判定。</p>
+      </div>
+      <div class="code"><span class="code-head">// MemoController + 編集View</span>
+<span class="comment">// ─── 編集フォーム表示（タグ含む）───</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/{id}/edit"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">editForm</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+    <span class="type">Model</span> model) {
+  model.<span class="fn">addAttribute</span>(<span class="str">"memo"</span>,
+    service.<span class="fn">findByIdWithTags</span>(id));
+  model.<span class="fn">addAttribute</span>(<span class="str">"allTags"</span>,
+    tagService.<span class="fn">findAll</span>());
+  <span class="kw">return</span> <span class="str">"memos/edit"</span>;
+}
+
+
+<span class="comment">// ─── 更新（タグ付け含む）───</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/{id}"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">update</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Long</span> id,
+    <span class="ann">@Validated</span> <span class="ann">@ModelAttribute</span> <span class="type">Memo</span> memo,
+    <span class="type">BindingResult</span> br,
+    <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+    <span class="type">List</span>&lt;<span class="type">Long</span>&gt; tagIds) {  <span class="comment">// 複数値 ★</span>
+
+  <span class="kw">if</span> (br.<span class="fn">hasErrors</span>()) {
+    <span class="kw">return</span> <span class="str">"memos/edit"</span>;
+  }
+  memo.<span class="fn">setId</span>(id);
+  service.<span class="fn">updateWithTags</span>(memo, tagIds);
+  <span class="comment">// ↑ @Transactional のメソッド ★★★</span>
+  <span class="kw">return</span> <span class="str">"redirect:/memos"</span>;
+}
+
+
+<span class="comment">// ─── edit.html タグチェックボックス ───</span>
+<span class="kw">&lt;div</span> th:each=<span class="str">"tag : ${allTags}"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;input</span> type=<span class="str">"checkbox"</span>
+    name=<span class="str">"tagIds"</span>
+    th:value=<span class="str">"${tag.id}"</span>
+    th:checked=<span class="str">"${#lists.contains(</span>
+      <span class="str">memo.tags.![id], tag.id)}"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;span</span> th:text=<span class="str">"${tag.name}"</span><span class="kw">&gt;</span><span class="kw">&lt;/span&gt;</span>
+<span class="kw">&lt;/div&gt;</span>
+<span class="comment">// → 全タグ表示、付いてるのはchecked ★</span>
+<span class="comment">// → memo.tags.![id] = 現在のタグID一覧</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Service（@Transactional）の実装</span><span class="tag-desc">Section 05 のコード</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実装のポイント</div>
+        <ul>
+          <li><code>@Transactional</code> をメソッドに付ける</li>
+          <li>更新→全削除→再INSERT の順</li>
+          <li>tagIds が null なら全外し（INSERT スキップ）</li>
+          <li>例外は<b>握りつぶさない</b>（別冊S5）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// MemoService.updateWithTags</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">updateWithTags</span>(
+    <span class="type">Memo</span> memo,
+    <span class="type">List</span>&lt;<span class="type">Long</span>&gt; tagIds) {
+
+  <span class="comment">// ① メモ本体更新</span>
+  memo.<span class="fn">setUpdatedAt</span>(
+    <span class="type">LocalDateTime</span>.<span class="fn">now</span>());
+  mapper.<span class="fn">update</span>(memo);
+
+  <span class="comment">// ② 既存タグ全削除</span>
+  mapper.<span class="fn">deleteTagsByMemoId</span>(
+    memo.<span class="fn">getId</span>());
+
+  <span class="comment">// ③ 新タグ再INSERT（@AC5,6）</span>
+  <span class="kw">if</span> (tagIds != <span class="kw">null</span>
+      &amp;&amp; !tagIds.<span class="fn">isEmpty</span>()) {
+    <span class="kw">for</span> (<span class="type">Long</span> tagId : tagIds) {
+      mapper.<span class="fn">addTag</span>(
+        memo.<span class="fn">getId</span>(), tagId);
+    }
+  }
+  <span class="comment">// tagIds が空 → ②だけ実行 = 全外し（@AC7）</span>
+
+  <span class="comment">// 例外は catch せず伝播させる ★★★</span>
+  <span class="comment">// → 失敗時 Spring が自動ロールバック</span>
+}
+
+<span class="comment">// ─── 動作まとめ ───</span>
+<span class="comment">// tagIds=[急ぎ]   → 重要削除・急ぎ追加（付け替え）</span>
+<span class="comment">// tagIds=[]/null  → 全削除のみ（全外し）</span>
+<span class="comment">// 途中失敗        → 全ロールバック（原子性）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — null と空リストの両方に備える</div>
+    <p>チェックボックスを<b>0個</b>選んで保存すると、tagIds は<b>null</b>（送られない）。Service 側で <code>tagIds != null && !tagIds.isEmpty()</code> と<b>両方チェック</b>すると安全。これで「全タグを外す（@AC7）」が正しく動きます。<b>「複数選択UIは0個もありうる」</b>を忘れずに。null チェック漏れは Section 08 のハマりどころでも扱います。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>テスト（ロールバックも検証）</h2><span class="phase-badge ph-test">PHASE: TEST</span><span class="en">TEST</span></div>
+  <p class="pattern-desc">タグ付けを結合テストで検証。<b>付ける・付け替える・全外し</b>に加え、<b>「途中失敗でロールバック」</b>を検証します。別冊S5の<b>原子性</b>を、テストで実証する回です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">結合テスト — タグ付けの正常系</span><span class="tag-desc">@AC5,6,7 を実DBで</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 検証ポイント</div>
+        <ul>
+          <li><b>@AC5</b>：タグを付けて保存→2件紐付く</li>
+          <li><b>@AC6</b>：付け替え→古いの消え新が残る</li>
+          <li><b>@AC7</b>：全外し→0件になる</li>
+        </ul>
+        <p style="margin-top:8px"><b>@SpringBootTest</b> を使い、@Transactional の Service を実際に動かして検証します（Mapper だけの @MybatisTest では @Transactional のService が動かないため）。</p>
+      </div>
+      <div class="code"><span class="code-head">// MemoTagServiceTest.java（結合）</span>
+<span class="ann">@SpringBootTest</span>
+<span class="ann">@Transactional</span>  <span class="comment">// テスト後ロールバック（独立性）</span>
+<span class="kw">class</span> <span class="type">MemoTagServiceTest</span> {
+  <span class="ann">@Autowired</span> <span class="type">MemoService</span> service;
+  <span class="ann">@Autowired</span> <span class="type">MemoMapper</span> mapper;
+  <span class="ann">@Autowired</span> <span class="type">TagMapper</span> tagMapper;
+
+  <span class="comment">// @AC5: 付けて保存</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">タグを付けて保存できる</span>() {
+    <span class="comment">// Arrange</span>
+    <span class="type">Tag</span> t1 = <span class="fn">tag</span>(<span class="str">"重要"</span>);
+    <span class="type">Tag</span> t2 = <span class="fn">tag</span>(<span class="str">"急ぎ"</span>);
+    tagMapper.<span class="fn">insert</span>(t1);
+    tagMapper.<span class="fn">insert</span>(t2);
+    <span class="type">Memo</span> m = <span class="fn">memo</span>(<span class="str">"会議"</span>);
+    mapper.<span class="fn">insert</span>(m);
+
+    <span class="comment">// Act：2つのタグを付ける</span>
+    service.<span class="fn">updateWithTags</span>(m,
+      <span class="type">List</span>.<span class="fn">of</span>(t1.<span class="fn">getId</span>(), t2.<span class="fn">getId</span>()));
+
+    <span class="comment">// Assert</span>
+    <span class="kw">var</span> saved = service
+      .<span class="fn">findByIdWithTags</span>(m.<span class="fn">getId</span>());
+    <span class="fn">assertThat</span>(saved.<span class="fn">getTags</span>())
+      .<span class="fn">hasSize</span>(<span class="num">2</span>);
+  }
+
+  <span class="comment">// @AC6: 付け替え</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">タグを付け替えられる</span>() {
+    <span class="comment">// 重要を付けた後、急ぎだけにする</span>
+    <span class="comment">// （Arrange省略）</span>
+    service.<span class="fn">updateWithTags</span>(m,
+      <span class="type">List</span>.<span class="fn">of</span>(important.<span class="fn">getId</span>()));
+    service.<span class="fn">updateWithTags</span>(m,
+      <span class="type">List</span>.<span class="fn">of</span>(urgent.<span class="fn">getId</span>()));
+
+    <span class="kw">var</span> saved = service
+      .<span class="fn">findByIdWithTags</span>(m.<span class="fn">getId</span>());
+    <span class="fn">assertThat</span>(saved.<span class="fn">getTags</span>())
+      .<span class="fn">extracting</span>(<span class="type">Tag</span>::<span class="fn">getName</span>)
+      .<span class="fn">containsExactly</span>(<span class="str">"急ぎ"</span>);
+    <span class="comment">// → 重要が消え、急ぎだけ ★★★</span>
+  }
+
+  <span class="comment">// @AC7: 全外し</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">タグを全部外せる</span>() {
+    <span class="comment">// タグ付け後、空リストで更新</span>
+    service.<span class="fn">updateWithTags</span>(m,
+      <span class="type">List</span>.<span class="fn">of</span>());  <span class="comment">// 空</span>
+    <span class="kw">var</span> saved = service
+      .<span class="fn">findByIdWithTags</span>(m.<span class="fn">getId</span>());
+    <span class="fn">assertThat</span>(saved.<span class="fn">getTags</span>())
+      .<span class="fn">isEmpty</span>();
+  }
+}</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">結合テスト — ロールバックの検証</span><span class="tag-desc">@AC8 原子性</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 原子性のテスト方法</div>
+        <p><b>わざと失敗を起こす</b>。存在しない tag_id を渡すと、FK制約違反で<b>INSERTが例外</b>。このとき<b>全削除も取り消され、元のタグが残る</b>か検証。</p>
+        <ul>
+          <li>既存タグ「重要」を付けたメモを用意</li>
+          <li>存在しない tag_id（999）で更新を試みる</li>
+          <li>例外発生→ロールバック</li>
+          <li><b>元の「重要」が残っている</b>ことを確認</li>
+        </ul>
+        <p style="margin-top:8px">これで<b>@Transactional が効いている</b>ことを実証します。</p>
+      </div>
+      <div class="code"><span class="code-head">// ロールバックのテスト（@AC8）</span>
+<span class="comment">// 途中失敗で元に戻るか</span>
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">保存途中の失敗で元のタグに戻る</span>() {
+  <span class="comment">// Arrange：重要タグを付けておく</span>
+  <span class="type">Tag</span> important = <span class="fn">tag</span>(<span class="str">"重要"</span>);
+  tagMapper.<span class="fn">insert</span>(important);
+  <span class="type">Memo</span> m = <span class="fn">memo</span>(<span class="str">"会議"</span>);
+  mapper.<span class="fn">insert</span>(m);
+  service.<span class="fn">updateWithTags</span>(m,
+    <span class="type">List</span>.<span class="fn">of</span>(important.<span class="fn">getId</span>()));
+  <span class="comment">// 今：重要 が付いている</span>
+
+  <span class="comment">// Act：存在しないタグIDで更新（失敗する）</span>
+  <span class="fn">assertThatThrownBy</span>(() ->
+    service.<span class="fn">updateWithTags</span>(m,
+      <span class="type">List</span>.<span class="fn">of</span>(<span class="num">999L</span>)))  <span class="comment">// 存在しないID</span>
+    .<span class="fn">isInstanceOf</span>(
+      <span class="type">DataIntegrityViolationException</span>.<span class="kw">class</span>);
+  <span class="comment">// → FK制約違反で例外</span>
+  <span class="comment">// → @Transactional でロールバック ★★★</span>
+
+  <span class="comment">// Assert：元の「重要」が残っている</span>
+  <span class="kw">var</span> saved = service
+    .<span class="fn">findByIdWithTags</span>(m.<span class="fn">getId</span>());
+  <span class="fn">assertThat</span>(saved.<span class="fn">getTags</span>())
+    .<span class="fn">extracting</span>(<span class="type">Tag</span>::<span class="fn">getName</span>)
+    .<span class="fn">containsExactly</span>(<span class="str">"重要"</span>);
+  <span class="comment">// → 全削除されたはずの「重要」が</span>
+  <span class="comment">//   ロールバックで戻っている ★★★</span>
+  <span class="comment">// → @Transactional の動作を実証！</span>
+}
+
+<span class="comment">// ─── このテストが証明すること ───</span>
+<span class="comment">// もし @Transactional を付け忘れたら…</span>
+<span class="comment">// → 全削除が確定し、INSERTだけ失敗</span>
+<span class="comment">// → タグが消えたまま</span>
+<span class="comment">// → このテストが落ちて気づける ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — ロールバックのテストが @Transactional 付け忘れを検出</div>
+    <p>このロールバックテストの真価は、<b>「@Transactional を付け忘れたら落ちる」</b>こと。別冊S5の<b>あるある失敗①（付け忘れ）</b>を、テストが自動で検出してくれます。正常系のテストだけだと、付け忘れに気づけません。<b>「失敗時に正しく元に戻るか」を明示的にテストする</b>ことで、トランザクションの守りが本当に効いているか確認できます。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>ブラウザ確認＋ハマりどころ</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">VERIFY &amp; PITFALLS</span></div>
+  <p class="pattern-desc">テストが緑になったらブラウザで確認。<b>タグの選択・付け替え・全外し</b>を目視。Vol.6 で踏みやすいトランザクション・複数値特有の地雷を5つ先回りします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.6 ハマりどころ 5選</span><span class="tag-desc">トランザクション特有の地雷</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① @Transactional 付け忘れ ★★★</b></p>
+        <ul>
+          <li>全削除後にINSERT失敗→タグ消失</li>
+          <li>対処：複数操作の Service に必ず @Transactional（別冊S5）</li>
+          <li>検知：ロールバックテスト（Section 07）が落ちる</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② @Transactional が効かない（自己呼び出し）★★★</b></p>
+        <ul>
+          <li>同クラス内呼び出しはプロキシを通らない（別冊S5）</li>
+          <li>対処：Controller→Service の呼び出しなら問題なし</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ 全外しでエラー（tagIds が null）</b></p>
+        <ul>
+          <li>チェック0個で tagIds=null → NPE</li>
+          <li>対処：<code>tagIds != null && !isEmpty()</code> でチェック（Section 06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 編集画面でタグが選択済みにならない</b></p>
+        <ul>
+          <li>th:checked の判定ミス</li>
+          <li>対処：<code>#lists.contains(memo.tags.![id], tag.id)</code></li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 例外を握りつぶしてロールバックされない</b></p>
+        <ul>
+          <li>try-catch で例外を消すと Spring が検知できない（別冊S5）</li>
+          <li>対処：トランザクション内では例外を伝播させる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// テスト＆ブラウザ確認</span>
+<span class="comment">// ─── テスト結果 ───</span>
+MemoTagServiceTest
+  ✓ タグを付けて保存できる
+  ✓ タグを付け替えられる
+  ✓ タグを全部外せる
+  ✓ 保存途中の失敗で元のタグに戻る
+
+<span class="kw">all green</span> ★★★
+
+
+<span class="comment">// ─── ③ null チェックの徹底 ───</span>
+<span class="ann">NG:</span>
+for (Long id : tagIds) {  <span class="comment">// tagIds=null でNPE ★</span>
+  mapper.addTag(...);
+}
+
+<span class="ann">OK:</span>
+if (tagIds != null
+    &amp;&amp; !tagIds.isEmpty()) {  <span class="comment">// 両方チェック ★</span>
+  for (Long id : tagIds) {
+    mapper.addTag(...);
+  }
+}
+
+
+<span class="comment">// ─── ⑤ 例外を握りつぶさない ───</span>
+<span class="ann">NG:</span>
+@Transactional
+public void updateWithTags(...) {
+  try {
+    ...
+  } catch (Exception e) {
+    <span class="comment">// 握りつぶし → ロールバックされない ★</span>
+  }
+}
+
+<span class="ann">OK:</span> 例外はそのまま伝播させる（catchしない）
+
+
+<span class="comment">// ─── ブラウザ確認 ───</span>
+<span class="comment">// メモ編集画面で：</span>
+<span class="comment">// - タグを複数チェック→保存→一覧で確認（@AC5）</span>
+<span class="comment">// - 再編集→チェック変更→付け替え（@AC6）</span>
+<span class="comment">// - 全チェック外し→保存→タグ0個（@AC7）</span>
+<span class="comment">// - 付いてるタグがchecked表示される（④）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — トランザクションは「目に見えない」から、テストで守る</div>
+    <p>トランザクションの怖さは<b>「正常時は付け忘れても動いてしまう」</b>こと。タグ付けが成功している限り、@Transactional がなくても見た目は同じ。問題は<b>失敗したとき</b>だけ露見します。だから<b>ロールバックテスト（Section 07）が不可欠</b>。「普段は見えないが、いざというとき効く」守りを、テストで可視化する。<b>見えない品質こそテストで守る</b>のです。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>レビュー・評価＆次巻へ</h2><span class="phase-badge ph-test">PHASE: REVIEW</span><span class="en">REVIEW &amp; NEXT</span></div>
+  <p class="pattern-desc">タグ付けを完成させ、<b>US-003 が完了</b>しました。<b>トランザクションは正しく引けたか、原子性は守られるか、テストは失敗時も検証したか</b>を振り返ります。<b>3つのユーザーストーリー</b>が揃ったことを実感しましょう。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.6 卒業チェック</span><span class="tag-desc">US-003完成・トランザクション習得</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 要求の達成</div>
+        <ul class="check-list">
+          <li>US-003 の @AC5〜@AC8 をテスト化した</li>
+          <li>各テストが緑になった</li>
+          <li><b>US-003 が完全に達成</b>された（タグ付け完成）</li>
+          <li>US-001,002,003 が全て揃った</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 設計の評価</div>
+        <ul class="check-list">
+          <li>「全削除→再INSERT」をKISSで選んだ</li>
+          <li>@Transactional を Service メソッドに引いた</li>
+          <li>トランザクション境界＝業務単位と理解した</li>
+          <li>トランザクションが大胆な実装を可能にすると分かった</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// テストの評価</div>
+        <ul class="check-list">
+          <li>正常系（付け/付け替え/全外し）を検証した</li>
+          <li><b>ロールバック（失敗時）も検証した</b></li>
+          <li>ロールバックテストが付け忘れを検出すると理解</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.6 で完成したフロー</span>
+<span class="comment">// ─── 要求（REQ）───</span>
+US-003 タグ付け（保存）
+@AC8「途中失敗で元に戻る」が原子性
+  ↓
+<span class="comment">// ─── 設計（DESIGN）───</span>
+全削除→再INSERT（KISS）
++ @Transactional（業務単位＝Service）
+  ↓
+<span class="comment">// ─── 実装（IMPL）───</span>
+複数tagIds受け取り＋@Transactional
++ タグチェックボックスUI
+  ↓
+<span class="comment">// ─── テスト（TEST）───</span>
+正常系（付け/付け替え/全外し）
++ <span class="kw">ロールバック（失敗時の原子性）★★★</span>
+
+
+<span class="comment">// ─── 3つのUSが揃った ───</span>
+US-001 メモ作成     ✓（Vol.2）
+US-002 カテゴリ分類  ✓（Vol.3,4）
+US-003 タグ付け      ✓（Vol.5,6）★★★
+US-004 検索          ← 次（Vol.7,8）
+
+
+<span class="comment">// 次回 Vol.7：</span>
+<span class="comment">//   複合検索（動的SQL）</span>
+<span class="comment">//   US-004 の開始</span>
+<span class="comment">//   MyBatis の <if> <where> 登場</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.7 へ</div>
+    <p>Vol.6 で<b>トランザクション</b>を習得し、<b>US-003 が完成</b>しました。これで「メモ作成・カテゴリ分類・タグ付け」の3つが揃いました。次は Vol.7「<b>複合検索（動的SQL）</b>」。<b>US-004</b> を起点に、<b>キーワード＋カテゴリ＋タグ</b>を組み合わせた検索を実装します。MyBatis の <code>&lt;if&gt;</code> <code>&lt;where&gt;</code> による<b>動的SQL</b>が登場。条件の有無で SQL が変わる、検索機能の核心です。並行して<b>別冊S6</b>、<b>GitHub版Vol.6</b>を進めると効果的。<b>本編Vol.7 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>VOL.06 / 14 ── TAGGING &amp; TRANSACTION（本編）</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git/GitHub編 リモートリポジトリ Vol.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2520;
+  --paper:#ece2cd;
+  --paper-2:#dccfb5;
+  --accent:#a47245;
+  --accent-2:#c9a876;
+  --accent-3:#624a36;
+  --muted:#7a6e5d;
+  --line:#b8a98e;
+  --code-bg:#1a1610;
+  --code-text:#e8dfcc;
+  --panel-bg:#e0d6bc;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;font-size:15px;line-height:1.85}
+body{max-width:1180px;margin:0 auto;padding:48px 40px 80px}
+
+.page-header{position:relative;padding:36px 32px 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"⇄";position:absolute;right:0px;top:-30px;font-size:280px;color:var(--accent);opacity:0.16;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em}
+h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin:18px 0 10px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;letter-spacing:0.15em;font-family:"JetBrains Mono",monospace;margin-bottom:20px}
+.lead{max-width:640px;font-size:15px;line-height:2;color:var(--ink)}
+
+.toc{background:var(--paper-2);padding:22px 28px;margin-bottom:56px;border:1px solid var(--line)}
+.toc-title{font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:0.2em;margin-bottom:12px;color:var(--accent-3)}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc a{color:var(--ink);text-decoration:none;font-size:14px;font-family:"JetBrains Mono",monospace}
+.toc a::before{content:"— ";color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
+.section-num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;flex:1}
+.en{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted)}
+.pattern-desc{max-width:740px;margin-bottom:22px;color:var(--ink)}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-family:"JetBrains Mono",monospace;font-weight:600;color:var(--accent-3);font-size:13px}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line)}
+.panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:"JetBrains Mono",monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}
+.num{color:#f7a8d8}.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}.step{color:#c9a876;font-weight:600}
+.cmd{color:#b5e8b0}.flag{color:#f7c08a}.branch{color:#f7a8d8}
+.added{color:#7fc97f}.removed{color:#f08080}
+
+@media(max-width:720px){
+  body{padding:24px 18px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  h1{font-size:32px}
+  .page-header::before{font-size:180px}
+  .toc ul{gap:6px 14px}
+}
+
+.box{background:#fff;border:1px solid var(--line);padding:12px 14px;margin-bottom:10px}
+.box .box-title{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-bottom:6px;letter-spacing:0.1em}
+.box p{font-size:13px;line-height:1.7}
+
+.diagram{background:#fff;border:1px solid var(--line);padding:18px;font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.8;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+.tbl{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
+.tbl th,.tbl td{padding:8px 10px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{background:var(--paper-2);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.1em;font-weight:600}
+.tbl td code{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12px;color:var(--accent-3)}
+
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:12px;margin:0 1px}
+
+.tip{background:rgba(164,114,69,0.08);border-left:3px solid var(--accent);padding:16px 20px;margin:18px 0}
+.tip-title{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.15em;color:var(--accent-3);font-weight:600;margin-bottom:6px}
+.tip p{font-size:14px;line-height:1.9}
+.tip b{color:var(--accent-3)}
+
+.page-footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+.page-footer .right{text-align:right}
+
+code.inline{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12.5px;color:var(--accent-3)}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">GIT / GITHUB</span>
+  <span class="vol-tag">VOL.04 / 09</span>
+  <h1>リモートリポジトリ編</h1>
+  <div class="subtitle">REMOTE REPOSITORIES</div>
+  <p class="lead">
+    ローカルのGitとGitHubを結ぶ<b>「橋」</b>がリモートです。
+    push / pull / fetch、SSH鍵、Personal Access Token——
+    ここを越えると<b>初学者が一番つまずく「認証エラー」</b>を卒業し、本格的なチーム開発の入り口に立てます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01. リモートの概念</a></li>
+    <li><a href="#s02">02. git remote</a></li>
+    <li><a href="#s03">03. git push</a></li>
+    <li><a href="#s04">04. git fetch と git pull</a></li>
+    <li><a href="#s05">05. 認証 (HTTPS + PAT)</a></li>
+    <li><a href="#s06">06. SSH鍵での認証</a></li>
+    <li><a href="#s07">07. 追跡ブランチ</a></li>
+    <li><a href="#s08">08. リモートのトラブル対処</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>リモートの概念</h2>
+    <span class="en">REMOTE CONCEPT</span>
+  </div>
+  <p class="pattern-desc">
+    リモートとは<b>「ネットワークの向こうにあるリポジトリ」</b>のこと。
+    GitHubはその<b>代表的な置き場所</b>です。
+    あなたのPCのリポジトリ(ローカル)と、GitHub上のリポジトリ(リモート)が<b>「ペア」</b>になって、双方向にやり取りするイメージを持ってください。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">local ⇄ remote</span>
+      <span class="tag-desc">★★★ 全体像</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 双方向のやり取り</div>
+        <div class="diagram">[ あなたのPC ]
+ローカルリポジトリ
+  .git/
+  src/
+  README.md
+       │
+       │ push (送る)
+       ↓
+       ↑ pull (取る)
+       │
+[ GitHub ]
+リモートリポジトリ
+  github.com/taro/app
+
+       ↑↓
+[ 同僚のPC ]
+ローカルリポジトリ
+  (同じものを持っている)</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">主な操作と方向</div>
+          <p><b>push</b> = ローカル → リモート (送信)<br>
+          <b>fetch</b> = リモート → ローカル (取得のみ)<br>
+          <b>pull</b> = リモート → ローカル + マージ<br>
+          <b>clone</b> = リモートを丸ごと複製(初回)</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># 接続されているリモートを確認</span>
+$ <span class="cmd">git remote</span>
+origin
+
+<span class="comment"># URLも表示</span>
+$ <span class="cmd">git remote</span> <span class="flag">-v</span>
+origin  https://github.com/taro/app.git (fetch)
+origin  https://github.com/taro/app.git (push)
+
+<span class="comment"># --- 「origin」って何? ---</span>
+
+<span class="comment">単なる「リモートに付けた名前(ニックネーム)」</span>
+<span class="comment">慣習として最初のリモート = origin</span>
+<span class="comment">名前は自由に変えられる</span>
+
+<span class="comment"># --- リモートとの関係 ---</span>
+
+ローカルブランチ:    main
+リモートブランチ:    origin/main
+                  <span class="comment">↑ "origin"上の"main"</span>
+
+<span class="comment"># 2つは別物</span>
+<span class="comment"># push/pull で同期する</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p>リモートは<b>1つに限定されない</b>。たとえばオープンソースに貢献する時は「<b>origin</b>(自分のフォーク)」と「<b>upstream</b>(本家)」の2つを登録するのが定番。複数リモートの活用はVol.8で詳説します。</p>
+  </div>
+</section>
+
+<section id="s02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>git remote — リモートの管理</h2>
+    <span class="en">REMOTE COMMANDS</span>
+  </div>
+  <p class="pattern-desc">
+    リモートの<b>追加・確認・変更・削除</b>を行う基本コマンド群です。
+    URL変更(例:HTTPSからSSHに切替)はよくある操作なので、<b>set-url</b>は特に覚えておくと便利。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git remote ...</span>
+      <span class="tag-desc">★★ リモート操作の一覧</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よく使うサブコマンド</div>
+        <table class="tbl">
+          <tr><th>コマンド</th><th>意味</th></tr>
+          <tr><td><code>remote -v</code></td><td>URL含めて一覧</td></tr>
+          <tr><td><code>remote add</code></td><td>リモートを追加</td></tr>
+          <tr><td><code>remote remove</code></td><td>リモートを削除</td></tr>
+          <tr><td><code>remote rename</code></td><td>名前を変更</td></tr>
+          <tr><td><code>remote set-url</code></td><td>URLを変更</td></tr>
+          <tr><td><code>remote show origin</code></td><td>詳細を表示</td></tr>
+        </table>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">あるある —</div>
+          <p>「あれ、いつの間にかpushできなくなった?」 → <b>URLが古いまま</b>のことが多い。<code class="inline">remote -v</code> で確認する癖を。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- 追加 ---</span>
+$ <span class="cmd">git remote add</span> origin <span class="str">https://github.com/taro/app.git</span>
+
+<span class="comment"># --- 確認 ---</span>
+$ <span class="cmd">git remote</span> <span class="flag">-v</span>
+origin  https://...  (fetch)
+origin  https://...  (push)
+
+<span class="comment"># --- 詳細 ---</span>
+$ <span class="cmd">git remote</span> show origin
+* remote origin
+  Fetch URL: https://...
+  Push  URL: https://...
+  HEAD branch: main
+  Remote branches:
+    main     tracked
+    feature  tracked
+
+<span class="comment"># --- URLを変更 (HTTPS→SSH等) ---</span>
+$ <span class="cmd">git remote</span> set-url origin <span class="str">git@github.com:taro/app.git</span>
+
+<span class="comment"># --- 名前を変える ---</span>
+$ <span class="cmd">git remote</span> rename origin upstream
+
+<span class="comment"># --- 削除 ---</span>
+$ <span class="cmd">git remote</span> remove origin
+<span class="comment">  (リモート側は消えない、登録解除のみ)</span>
+
+<span class="comment"># --- 複数リモート登録の例 ---</span>
+$ <span class="cmd">git remote add</span> origin   <span class="str">git@github.com:taro/app</span>
+$ <span class="cmd">git remote add</span> upstream <span class="str">git@github.com:org/app</span>
+<span class="comment">          ↑ 自分のフォーク      ↑ 本家</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">TIP —</div>
+    <p>リモートの<b>削除</b>は <code class="inline">remove</code> だけど、<b>リネーム</b>は <code class="inline">rename</code>(removeじゃない)。地味に紛らわしいので注意。</p>
+  </div>
+</section>
+
+<section id="s03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>git push — ローカルからリモートへ</h2>
+    <span class="en">PUSH</span>
+  </div>
+  <p class="pattern-desc">
+    ローカルでコミットした内容を<b>リモート(GitHub)に送る</b>コマンドです。
+    pushしないとGitHub上には何も反映されません。
+    <b>「コミット」と「push」は別物</b>——これは初学者が一番ハマるポイント。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git push</span>
+      <span class="tag-desc">★★★ リモートへ反映</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 基本パターン</div>
+        <div class="box">
+          <div class="box-title">初回 (-u が必要)</div>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:12px">git push -u origin feature/x</p>
+        </div>
+        <div class="box">
+          <div class="box-title">2回目以降 (シンプル)</div>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:12px">git push</p>
+        </div>
+        <div class="box">
+          <div class="box-title">別ブランチへ送る</div>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:12px">git push origin feature/x</p>
+        </div>
+        <div class="diagram" style="margin-top:14px">[ Local ]                [ Remote ]
+  main:   ●─●─●           main: ●
+              ↑ HEAD
+              │
+              │  push
+              ↓
+  main:   ●─●─●           main: ●─●─●
+                                 (送られて同期)</div>
+      </div>
+      <div class="code"><span class="comment"># --- 初回 push (上流設定) ---</span>
+$ <span class="cmd">git push</span> <span class="flag">-u</span> origin main
+<span class="comment">         ↑ "upstream"を設定</span>
+
+Enumerating objects: 3, done.
+Writing objects: 100% (3/3)
+To github.com:taro/app.git
+ * [new branch]  main -&gt; main
+Branch <span class="str">'main'</span> set up to track
+  remote branch <span class="str">'main'</span> from <span class="str">'origin'</span>.
+
+<span class="comment"># 以降は引数なしでOK</span>
+$ <span class="cmd">git push</span>
+
+<span class="comment"># --- 拒否されるケース ---</span>
+
+<span class="comment"># ① リモートに新しいコミットがある時</span>
+$ <span class="cmd">git push</span>
+! [rejected]  main -&gt; main (non-fast-forward)
+hint: Updates were rejected because...
+
+<span class="comment"># 解決: 先にpullで取り込む</span>
+$ <span class="cmd">git pull</span>
+$ <span class="cmd">git push</span>
+
+<span class="comment"># ② 強制push (危険・要注意)</span>
+$ <span class="cmd">git push</span> <span class="flag">--force-with-lease</span>
+<span class="comment">         ↑ 他人のコミットがあれば拒否</span>
+<span class="comment">           --forceより安全</span>
+
+<span class="comment"># --- リモートのブランチを消す ---</span>
+$ <span class="cmd">git push</span> origin <span class="flag">--delete</span> <span class="branch">feature/x</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">鉄則 —</div>
+    <p><code class="inline">git push --force</code> は<b>「他人のコミットを消し飛ばす」</b>核ミサイル級の操作。チーム開発で軽率にこれをやると<b>信頼を失います</b>。どうしても必要な時は <code class="inline">--force-with-lease</code> を使うのが現代の流儀です。</p>
+  </div>
+</section>
+
+<section id="s04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>git fetch と git pull</h2>
+    <span class="en">FETCH &amp; PULL</span>
+  </div>
+  <p class="pattern-desc">
+    リモートの最新情報を取ってくる2つのコマンド。
+    <b>違いを一言で:</b> fetchは<b>「取ってくるだけ」</b>、pullは<b>「取ってきて即マージ」</b>。
+    安全派は fetch → 確認 → merge、お手軽派は pull 一発。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">fetch vs pull</span>
+      <span class="tag-desc">★★★ 取得の2系統</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動作の違い</div>
+        <table class="tbl">
+          <tr><th>動作</th><th>fetch</th><th>pull</th></tr>
+          <tr><td>リモート確認</td><td>◯</td><td>◯</td></tr>
+          <tr><td>ダウンロード</td><td>◯</td><td>◯</td></tr>
+          <tr><td>自動マージ</td><td>✗</td><td>◯</td></tr>
+          <tr><td>事故リスク</td><td>低</td><td>中</td></tr>
+        </table>
+        <div class="diagram" style="margin-top:14px">[ fetch のイメージ ]
+
+Remote:  ●─●─●─●  (最新)
+              ↓ fetch
+Local:   ●─●─●     origin/main更新
+                   ローカルmainは無変化
+                   → 確認してからmergeで反映
+
+[ pull のイメージ ]
+
+Remote:  ●─●─●─●  (最新)
+              ↓ pull
+Local:   ●─●─●─●  ローカルmainも更新
+                   (fetch + merge を一発)</div>
+      </div>
+      <div class="code"><span class="comment"># --- fetch (取得のみ) ---</span>
+$ <span class="cmd">git fetch</span>
+From github.com:taro/app
+   <span class="num">9b8e4a2..a3f2c1d</span>  main -&gt; origin/main
+
+<span class="comment"># 取れたものを確認</span>
+$ <span class="cmd">git log</span> <span class="flag">--oneline</span> origin/main
+<span class="num">a3f2c1d</span> 同僚のコミット (まだローカル未反映)
+<span class="num">9b8e4a2</span> 自分の最後のコミット
+
+<span class="comment"># 差分を確認</span>
+$ <span class="cmd">git diff</span> main origin/main
+
+<span class="comment"># 取り込むならmerge</span>
+$ <span class="cmd">git merge</span> origin/main
+
+<span class="comment"># --- pull (取得 + マージ) ---</span>
+$ <span class="cmd">git pull</span>
+remote: Enumerating objects...
+Updating <span class="num">9b8e4a2..a3f2c1d</span>
+Fast-forward
+
+<span class="comment"># pull = fetch + merge を一発</span>
+
+<span class="comment"># --- pull のリベース版 ---</span>
+$ <span class="cmd">git pull</span> <span class="flag">--rebase</span>
+<span class="comment">         ↑ 履歴が一直線になる(Vol.5)</span>
+
+<span class="comment"># --- 設定でデフォルト変更 ---</span>
+$ <span class="cmd">git config</span> <span class="flag">--global</span> pull.rebase true</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p>業務開発では<b>「朝一番にpull」</b>がお約束。これを怠ると、自分のpush時にコンフリクトの嵐に巻き込まれます。<b>「迷ったらまずfetch、安全なものはpull」</b>と覚えましょう。</p>
+  </div>
+</section>
+
+<section id="s05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>認証 (HTTPS + PAT)</h2>
+    <span class="en">AUTHENTICATION</span>
+  </div>
+  <p class="pattern-desc">
+    2021年8月以降、GitHubは<b>HTTPSでのパスワード認証を廃止</b>しました。
+    今は<b>Personal Access Token (PAT)</b> という「使い捨てパスワード」を使うのが基本。
+    pushで「Authentication failed」と出る初学者の<b>99%がここに引っかかります</b>。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">personal access token</span>
+      <span class="tag-desc">★★★ HTTPS認証の壁</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// PAT発行の手順</div>
+        <div class="box">
+          <div class="box-title">STEP</div>
+          <p><span class="step">①</span> GitHub にログイン<br>
+          <span class="step">②</span> 右上のアバター → <b>Settings</b><br>
+          <span class="step">③</span> 左サイドバー最下部 <b>Developer settings</b><br>
+          <span class="step">④</span> <b>Personal access tokens</b> → <b>Tokens (classic)</b><br>
+          <span class="step">⑤</span> <b>Generate new token (classic)</b><br>
+          <span class="step">⑥</span> Note(用途名) / Expiration / Scope(<b>repo</b>必須)<br>
+          <span class="step">⑦</span> 発行されたトークンを<b>必ずコピー</b><br>
+          <span style="color:#b04030;font-weight:600">⚠ 1度しか表示されない!</span></p>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">注意 —</div>
+          <p>PATは<b>「パスワード相当の機密情報」</b>。コードに書いてpushしたら<b>即座に無効化</b>してください。GitHubが検知して自動失効させることも。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- 実際のpush認証 ---</span>
+
+$ <span class="cmd">git push</span>
+Username: taro
+Password:  <span class="comment"># ←ここにPATを貼る!</span>
+           <span class="comment">  GitHubパスワードではない</span>
+
+<span class="comment"># --- 認証情報をキャッシュ ---</span>
+
+<span class="comment"># macOS (キーチェーン)</span>
+$ <span class="cmd">git config</span> <span class="flag">--global</span> \
+  credential.helper osxkeychain
+
+<span class="comment"># Windows (資格情報マネージャー)</span>
+$ <span class="cmd">git config</span> <span class="flag">--global</span> \
+  credential.helper manager
+
+<span class="comment"># Linux (一定時間メモリ保持)</span>
+$ <span class="cmd">git config</span> <span class="flag">--global</span> \
+  credential.helper <span class="str">"cache --timeout=3600"</span>
+
+<span class="comment"># --- よくあるエラー ---</span>
+
+remote: Support for password authentication
+was removed on August 13, 2021.
+fatal: Authentication failed
+
+<span class="comment"># → パスワードでなくPATを使う</span>
+
+<span class="comment"># --- PATの代わりに gh コマンド ---</span>
+$ <span class="cmd">gh auth login</span>
+<span class="comment"># GitHub CLI を使えば対話的に設定可能</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">裏技 —</div>
+    <p>もっと楽な方法もあります。<b>GitHub CLI (gh)</b> をインストールして <code class="inline">gh auth login</code> を一度実行すれば、以降のpush/pullは認証を意識せずに使えます。<b>初学者には超おすすめ</b>。</p>
+  </div>
+</section>
+
+<section id="s06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>SSH鍵での認証</h2>
+    <span class="en">SSH KEY AUTH</span>
+  </div>
+  <p class="pattern-desc">
+    PATの代わりに<b>SSH鍵</b>を使う方法もあります。
+    一度設定すれば<b>パスワード/トークン入力が一切不要</b>になり、長期運用に最適。
+    Web系エンジニアの多くはこちらを採用しています。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">ssh key authentication</span>
+      <span class="tag-desc">★★★ 玄人の選択</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// SSH鍵のしくみ</div>
+        <div class="diagram">[ あなたのPC ]
+~/.ssh/
+├─ id_ed25519       秘密鍵 (門外不出)
+└─ id_ed25519.pub   公開鍵 (GitHub登録用)
+
+公開鍵を GitHub に登録すると…
+
+[ push/pull 時 ]
+ローカル ──── 秘密鍵で署名 ────→ GitHub
+                                  ↓
+              公開鍵で検証 ←──────┘
+                  ↓
+            "本人確認OK!"
+
+パスワード/PAT入力が不要に</div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">注意 —</div>
+          <p>秘密鍵(.pub<b>なし</b>の方)は<b>絶対に外に出さない</b>こと。これが漏れたら別人になりすませます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- ① 鍵を生成 ---</span>
+$ <span class="cmd">ssh-keygen</span> <span class="flag">-t</span> ed25519 <span class="flag">-C</span> <span class="str">"taro@example.com"</span>
+
+Enter file in which to save the key:
+  (Enterで標準パス)
+Enter passphrase: ********
+  (任意の合言葉, 空Enterでも可)
+
+<span class="comment"># --- ② 公開鍵を表示してコピー ---</span>
+$ <span class="cmd">cat</span> ~/.ssh/id_ed25519.pub
+ssh-ed25519 AAAAC3...XYZ taro@example.com
+<span class="comment">       ↑ この行ぜんぶコピー</span>
+
+<span class="comment"># --- ③ GitHub に登録 ---</span>
+<span class="comment">GitHub → Settings → SSH and GPG keys</span>
+<span class="comment">→ New SSH key → 貼り付け → Add</span>
+
+<span class="comment"># --- ④ 接続テスト ---</span>
+$ <span class="cmd">ssh</span> <span class="flag">-T</span> <span class="str">git@github.com</span>
+Hi taro! You've successfully authenticated,
+but GitHub does not provide shell access.
+
+<span class="comment"># --- ⑤ リモートURLをSSHに変更 ---</span>
+$ <span class="cmd">git remote</span> set-url origin \
+    <span class="str">git@github.com:taro/app.git</span>
+
+<span class="comment"># 以降、認証不要でpush/pull可能!</span>
+$ <span class="cmd">git push</span>
+<span class="comment"># パスワードもPATも聞かれない</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">TIP —</div>
+    <p>鍵には<b>パスフレーズを設定する</b>のがセキュリティ的に推奨。「毎回入力は面倒」と思うかもしれませんが、<b>ssh-agent</b>に登録すれば一度きりでOK。会社PCでは特に強く推奨です。</p>
+  </div>
+</section>
+
+<section id="s07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>追跡ブランチ</h2>
+    <span class="en">TRACKING BRANCHES</span>
+  </div>
+  <p class="pattern-desc">
+    ローカルブランチが<b>「リモートのどのブランチと組になっているか」</b>の関係を「追跡ブランチ(upstream)」と言います。
+    これが設定されていると、<code class="inline">git push</code> や <code class="inline">git pull</code> を引数なしで叩けるようになります。
+    地味に重要。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">tracking / upstream</span>
+      <span class="tag-desc">★★ ローカルとリモートの紐付け</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 追跡関係の図</div>
+        <div class="diagram">[ Local ]              [ Remote ]
+  main         ←─→     origin/main
+  feature/x    ←─→     origin/feature/x
+  experiment   <span class="removed">(未追跡)</span>      ─
+
+追跡されているブランチは
+push/pull が引数なしでOK
+
+未追跡だと毎回フルパス指定が必要:
+  git push origin experiment</div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">POINT —</div>
+          <p><code class="inline">git push -u</code> の <b>-u</b> は「<b>--set-upstream</b>(追跡関係を設定)」の略。初回pushでは必ず付ける。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># 追跡関係の確認</span>
+$ <span class="cmd">git branch</span> <span class="flag">-vv</span>
+* main      <span class="num">a3f2c1d</span> [origin/main] update
+  feature   <span class="num">9b8e4a2</span> [origin/feature: ahead 2] ...
+  local-only <span class="num">5d6f3a8</span> just local
+<span class="comment">  ↑ どのリモートと組になっているか表示</span>
+
+<span class="comment"># [origin/main] = 追跡中</span>
+<span class="comment"># [ahead 2]     = リモートより2コミット先</span>
+
+<span class="comment"># --- 追跡を後から設定 ---</span>
+$ <span class="cmd">git branch</span> <span class="flag">--set-upstream-to=</span>origin/main
+<span class="comment">  または短縮: -u origin/main</span>
+
+<span class="comment"># --- pushと同時に設定 ---</span>
+$ <span class="cmd">git push</span> <span class="flag">-u</span> origin <span class="branch">feature/x</span>
+
+<span class="comment"># --- 追跡を解除 ---</span>
+$ <span class="cmd">git branch</span> <span class="flag">--unset-upstream</span>
+
+<span class="comment"># --- リモートを丸ごと最新化 + 不要な追跡を削除 ---</span>
+$ <span class="cmd">git fetch</span> <span class="flag">--prune</span>
+<span class="comment">  GitHub側で消されたブランチ追跡を整理</span>
+
+<span class="comment"># 自動で prune するように設定</span>
+$ <span class="cmd">git config</span> <span class="flag">--global</span> fetch.prune true</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">あるある —</div>
+    <p>「pushしてって言われたけど、なんか上手くいかない…」 → 大抵 <code class="inline">-u</code> を付けずに初回pushしようとしている。新しいブランチを初めて送る時は <code class="inline">git push -u origin &lt;branch&gt;</code>。これだけ覚えれば十分。</p>
+  </div>
+</section>
+
+<section id="s08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>リモートのトラブル対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">
+    リモート操作で遭遇する<b>「よくあるエラー4つ」</b>と対処法をまとめます。
+    どれも一度はハマるやつばかり。<b>慌てず原因を切り分ける</b>のがコツ。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">remote troubles</span>
+      <span class="tag-desc">★★ よくあるエラー集</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// エラー一覧</div>
+        <div class="box">
+          <div class="box-title">① Authentication failed</div>
+          <p><b>原因:</b> パスワード認証は廃止。<br>
+          <b>解決:</b> PAT または SSH鍵を使う(本巻 05〜06)。</p>
+        </div>
+        <div class="box">
+          <div class="box-title">② Updates were rejected (non-fast-forward)</div>
+          <p><b>原因:</b> リモートに自分が知らないコミットがある。<br>
+          <b>解決:</b> 先に <code style="font-family:'JetBrains Mono',monospace">git pull</code>。</p>
+        </div>
+        <div class="box">
+          <div class="box-title">③ src refspec ... does not match any</div>
+          <p><b>原因:</b> 存在しないブランチをpushしようとした。<br>
+          <b>解決:</b> ブランチ名のタイポ確認、コミットを1つは作る。</p>
+        </div>
+        <div class="box">
+          <div class="box-title">④ remote: Permission denied</div>
+          <p><b>原因:</b> 書き込み権限がないリポジトリ。<br>
+          <b>解決:</b> 自分のリポジトリかフォーク先か確認。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># ① 認証エラー</span>
+fatal: Authentication failed for ...
+<span class="comment">→ PATを使い直す or SSH切替</span>
+
+<span class="comment"># ② 競合push</span>
+! [rejected]        main -&gt; main (non-fast-forward)
+error: failed to push some refs to ...
+hint: Updates were rejected because the
+hint: remote contains work that you do not
+hint: have locally.
+<span class="comment">→ git pull してから git push</span>
+
+<span class="comment"># ③ refspec エラー</span>
+error: src refspec main does not match any
+<span class="comment">→ コミットがないか、ブランチ名間違い</span>
+$ <span class="cmd">git log</span>     <span class="comment"># コミットあるか?</span>
+$ <span class="cmd">git branch</span>  <span class="comment"># 名前合ってる?</span>
+
+<span class="comment"># ④ 権限エラー</span>
+remote: Permission to xxx/yyy.git denied
+fatal: unable to access ...
+<span class="comment">→ 別人のリポジトリにpushしようとしている</span>
+<span class="comment">  自分のフォークを作るか権限を貰う</span>
+
+<span class="comment"># --- 切り分けの定番 ---</span>
+$ <span class="cmd">git remote</span> <span class="flag">-v</span>      <span class="comment"># URL確認</span>
+$ <span class="cmd">git status</span>          <span class="comment"># 状態確認</span>
+$ <span class="cmd">git branch</span> <span class="flag">-vv</span>     <span class="comment"># 追跡確認</span>
+$ <span class="cmd">ssh</span> <span class="flag">-T</span> <span class="str">git@github.com</span> <span class="comment"># 接続確認</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">鉄則 —</div>
+    <p>リモートでエラーが出たら<b>まずエラーメッセージを丁寧に読む</b>。Gitのエラーメッセージは<b>「ヒント付き」</b>で意外と親切。<code class="inline">hint:</code> から始まる行に解決策が書かれていることがほとんどです。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px">
+  <div class="tip-title">NEXT STEP —</div>
+  <p>第4巻で<b>ローカルとリモートをつなぐ橋</b>が架かりました。これでチーム開発の<b>「物理的な」</b>準備は完了です。<br>
+  Vol.5「<b>履歴操作とコンフリクト編</b>」では <code class="inline">reset / revert / stash / rebase</code> といった<b>「過去を編集する」</b>強力なコマンドと、避けて通れない<b>コンフリクトの解消法</b>を扱います。ここを越えれば「Gitに振り回される側」から「Gitを乗りこなす側」へ。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <div>GIT / GITHUB REFERENCE — VOL.04</div>
+  <div class="right">REMOTE REPOSITORIES / リモートリポジトリ編</div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリング設計編 設計原則 Vol.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2f2418;
+    --paper:#efe4d0;
+    --paper-2:#e2d0b0;
+    --accent:#8e5532;
+    --accent-2:#b88154;
+    --accent-3:#6a3e22;
+    --muted:#7d6a58;
+    --line:#bda685;
+    --code-bg:#28200f;
+    --code-text:#f0e4cf;
+    --panel-bg:#faf3e5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;line-height:1.75;font-size:15px}
+  body{max-width:1180px;margin:0 auto;padding:0 28px 80px}
+
+  .page-header{position:relative;padding:48px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+  .page-header::before{content:"△";position:absolute;right:-10px;top:-30px;font-size:280px;color:var(--accent);opacity:.18;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+  .page-header > *{position:relative;z-index:1}
+  .series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace;margin-right:8px}
+  .vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace}
+  h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin-top:18px;letter-spacing:.04em}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;font-family:"JetBrains Mono",monospace;letter-spacing:.08em}
+  .lead{max-width:640px;margin-top:22px;font-size:15px}
+  .lead b{color:var(--accent-3)}
+
+  .toc{background:var(--paper-2);padding:18px 22px;margin:32px 0 48px;border-left:3px solid var(--accent)}
+  .toc-title{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:.2em;color:var(--accent-3);margin-bottom:10px}
+  .toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px}
+  .toc li{font-size:13px}
+  .toc a{color:var(--ink);text-decoration:none;font-family:"JetBrains Mono",monospace}
+  .toc a::before{content:"— ";color:var(--accent)}
+  .toc a:hover{color:var(--accent)}
+
+  section{margin:64px 0}
+  .section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .section-num{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent);font-weight:600}
+  .section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;letter-spacing:.04em;flex:1}
+  .section-header .en{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:.15em}
+  .pattern-desc{max-width:680px;margin-bottom:20px;font-size:14.5px}
+  .pattern-desc b{color:var(--accent-3)}
+
+  .demo-card{border:1px solid var(--line);background:#fff;margin:18px 0}
+  .demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .tag-name{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+  .tag-desc{font-size:12px;color:var(--muted)}
+  .demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+  .panel{background:var(--panel-bg);padding:20px;border-right:1px solid var(--line);font-size:14px}
+  .panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:.1em}
+  .code{background:var(--code-bg);color:var(--code-text);padding:20px;font-family:"JetBrains Mono",monospace;font-size:12.5px;line-height:1.85;overflow-x:auto;white-space:pre-wrap}
+  @media(max-width:720px){
+    .demo-body{grid-template-columns:1fr}
+    .panel{border-right:none;border-bottom:1px solid var(--line)}
+  }
+
+  .kw{color:#ffc88a}
+  .type{color:#c2a3ff}
+  .fn{color:#a3c9ff}
+  .str{color:#b5e8b0}
+  .num{color:#f7a8d8}
+  .comment{color:#998aaa;font-style:italic}
+  .ann{color:#f7c08a}
+  .menu-code{color:#f7c08a;font-weight:600}
+  .step{color:#ffc88a;font-weight:600}
+
+  .tip{background:rgba(142,85,50,.09);border-left:3px solid var(--accent);padding:14px 18px;margin:18px 0;font-size:14px}
+  .tip-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);letter-spacing:.18em;margin-bottom:6px;font-weight:600}
+  .tip b{color:var(--accent-3)}
+
+  .key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:11.5px}
+
+  .panel ul{list-style:none;margin:8px 0}
+  .panel li{padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .panel li:last-child{border-bottom:none}
+  .panel .label{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-right:6px}
+  .panel strong{color:var(--accent-3);font-weight:600}
+
+  .diagram{padding:14px;background:#fff;border:1px dashed var(--line);font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.6;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+  .compare{width:100%;font-size:13px;margin:10px 0}
+  .compare th{background:var(--paper-2);text-align:left;padding:8px;border-bottom:1px solid var(--line);font-family:"Shippori Mincho",serif;font-size:13px}
+  .compare td{padding:8px;border-bottom:1px dashed var(--line);vertical-align:top}
+  .compare .ng{color:#b04848}
+  .compare .ok{color:#4a7848}
+
+  .stars{color:var(--accent);font-weight:700;letter-spacing:.05em}
+
+  .principle-badge{display:inline-block;background:var(--accent-3);color:var(--paper);padding:3px 10px;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.1em;margin-right:8px;border-radius:2px}
+
+  .page-footer{margin-top:80px;padding-top:24px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.1em}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">ENGINEERING DESIGN</span>
+  <span class="vol-tag">VOL.03</span>
+  <h1>設計原則 — SOLID & 鉄則</h1>
+  <div class="subtitle">DESIGN PRINCIPLES — SOLID AND BEYOND</div>
+  <p class="lead">設計原則は<b>「やった方がいい」ではなく「やらないと後で破綻する」鉄則</b>です。先人が数十年かけて見つけた地雷の位置を、私たちはタダで教えてもらえます。本巻ではSOLID 5原則と、DRY/KISS/YAGNI、凝集と結合を扱います。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — 本巻の目次</div>
+  <ul>
+    <li><a href="#s1">01 設計原則の役割</a></li>
+    <li><a href="#s2">02 SRP — 単一責任</a></li>
+    <li><a href="#s3">03 OCP — 開放閉鎖</a></li>
+    <li><a href="#s4">04 LSP — リスコフ置換</a></li>
+    <li><a href="#s5">05 ISP — インターフェース分離</a></li>
+    <li><a href="#s6">06 DIP — 依存性逆転</a></li>
+    <li><a href="#s7">07 DRY / KISS / YAGNI と凝集・結合</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>設計原則の役割</h2>
+    <span class="en">WHY PRINCIPLES MATTER</span>
+  </div>
+  <p class="pattern-desc">設計原則は<b>「迷った時の判断基準」</b>です。クラスを分けるべきか / 継承すべきか / どう依存させるか。こうした分岐点で原則を知っていれば、根拠を持って選べます。<b>感覚や好みではなく、原則で設計する</b>のが現場の流儀です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-principles</span>
+      <span class="tag-desc">SOLIDの位置づけ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// SOLID = 5原則の頭文字</div>
+        <ul>
+          <li><span class="label">S</span><strong>Single Responsibility</strong> 単一責任</li>
+          <li><span class="label">O</span><strong>Open/Closed</strong> 開放閉鎖</li>
+          <li><span class="label">L</span><strong>Liskov Substitution</strong> リスコフ置換</li>
+          <li><span class="label">I</span><strong>Interface Segregation</strong> インターフェース分離</li>
+          <li><span class="label">D</span><strong>Dependency Inversion</strong> 依存性逆転</li>
+        </ul>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)">提唱者は <b>Robert C. Martin</b>（通称ボブおじさん）。オブジェクト指向設計の<b>定番中の定番</b>です。</p>
+      </div>
+      <div class="code"><span class="comment">// 原則を知らずに書いたコード</span>
+
+<span class="kw">class</span> <span class="type">UserService</span> {
+  <span class="fn">register</span>(user) {
+    <span class="comment">// DB保存も</span>
+    db.<span class="fn">insert</span>(user);
+    <span class="comment">// メール送信も</span>
+    smtp.<span class="fn">send</span>(user.email, <span class="str">"welcome"</span>);
+    <span class="comment">// ログも</span>
+    fs.<span class="fn">append</span>(<span class="str">"log.txt"</span>, ...);
+    <span class="comment">// 課金処理も</span>
+    stripe.<span class="fn">charge</span>(user.card);
+    <span class="comment">// PDF生成も</span>
+    pdf.<span class="fn">create</span>(...);
+  }
+}
+
+<span class="comment">// 問題点:</span>
+<span class="comment">// - メール仕様が変わるとUserServiceを修正</span>
+<span class="comment">// - DBが変わるとUserServiceを修正</span>
+<span class="comment">// - 課金が変わるとUserServiceを修正</span>
+<span class="comment">// → 変更理由が5つもある = SRP違反</span>
+
+<span class="comment">// このコードは半年後、必ず崩壊する。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 原則は道具、目的じゃない</div>
+    SOLIDを<b>守ること自体</b>を目的にすると過剰設計になります。原則の本当の目的は<b>「変更に強いコード」</b>。読みやすく、テストしやすく、後から直しやすい。それを実現するための道具がSOLIDです。
+  </div>
+</section>
+
+<section id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>SRP — 単一責任の原則</h2>
+    <span class="en">SINGLE RESPONSIBILITY PRINCIPLE</span>
+  </div>
+  <p class="pattern-desc"><span class="principle-badge">SRP</span>「<b>クラスを変更する理由は、たった1つであるべき</b>」。一見当たり前に見えますが、現場のコードはほぼ全てこの原則を破っています。クラス名に「Manager」「Util」「Helper」が付いていたら、まず疑ってください。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">srp-example</span>
+      <span class="tag-desc">責務を1つに絞る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// SRP違反の見抜き方</div>
+        <ul>
+          <li><span class="stars">★★★</span> クラスの説明に <b>「と」</b> が入る<br><span style="font-size:12px;color:var(--muted)">例: ユーザー登録「と」メール送信「と」課金</span></li>
+          <li><span class="stars">★★★</span> メソッドの<b>主語が違う</b><br><span style="font-size:12px;color:var(--muted)">例: register / sendMail / chargeCard</span></li>
+          <li><span class="stars">★★</span> インポートが<b>多すぎる</b><br><span style="font-size:12px;color:var(--muted)">外部ライブラリを5種類以上使う = 怪しい</span></li>
+          <li><span class="stars">★★</span> テスト時にモックが<b>10個</b>必要</li>
+        </ul>
+      </div>
+      <div class="code"><span class="comment">// SRP適用前: 1クラスが全部やる</span>
+<span class="kw">class</span> <span class="type">UserService</span> {
+  <span class="fn">register</span>(u) {
+    db.<span class="fn">insert</span>(u);          <span class="comment">// 永続化</span>
+    smtp.<span class="fn">send</span>(...);        <span class="comment">// 通知</span>
+    stripe.<span class="fn">charge</span>(...);    <span class="comment">// 課金</span>
+    logger.<span class="fn">info</span>(...);      <span class="comment">// ログ</span>
+  }
+}
+
+<span class="comment">// SRP適用後: 責務ごとに分割</span>
+<span class="kw">class</span> <span class="type">UserRepository</span> {
+  <span class="fn">save</span>(u) { db.<span class="fn">insert</span>(u); }
+}
+<span class="kw">class</span> <span class="type">WelcomeMailer</span> {
+  <span class="fn">send</span>(u) { smtp.<span class="fn">send</span>(...); }
+}
+<span class="kw">class</span> <span class="type">PaymentProcessor</span> {
+  <span class="fn">charge</span>(u) { stripe.<span class="fn">charge</span>(...); }
+}
+
+<span class="kw">class</span> <span class="type">UserRegistration</span> {
+  <span class="kw">constructor</span>(
+    <span class="kw">private</span> repo: <span class="type">UserRepository</span>,
+    <span class="kw">private</span> mailer: <span class="type">WelcomeMailer</span>,
+    <span class="kw">private</span> payment: <span class="type">PaymentProcessor</span>,
+  ) {}
+
+  <span class="fn">register</span>(u) {
+    <span class="kw">this</span>.repo.<span class="fn">save</span>(u);
+    <span class="kw">this</span>.mailer.<span class="fn">send</span>(u);
+    <span class="kw">this</span>.payment.<span class="fn">charge</span>(u);
+  }
+}
+
+<span class="comment">// 各クラスは「変更理由が1つ」</span>
+<span class="comment">// メール仕様の変更 → Mailerだけ修正</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — 「アクター」で考える</div>
+    SRPの本当の定義は「<b>クラスを変更させる『アクター（人/役割）』は1人であるべき</b>」。経理チーム向けの集計と、マーケ向けの集計を同じクラスに入れると、両者の要望が衝突して悲劇が起きます。<b>「誰がそれを要求するか」</b>で分けましょう。
+  </div>
+</section>
+
+<section id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>OCP — 開放閉鎖の原則</h2>
+    <span class="en">OPEN/CLOSED PRINCIPLE</span>
+  </div>
+  <p class="pattern-desc"><span class="principle-badge">OCP</span>「<b>拡張に対して開いており、修正に対して閉じている</b>」。機能追加の時に<b>既存コードを書き換えず、新しいコードを足すだけで済む</b>状態を目指します。これが守られていると、リグレッション（壊れる）が激減します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">ocp-example</span>
+      <span class="tag-desc">if/switchの分岐をなくす</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// OCPを実現する道具</div>
+        <ul>
+          <li><strong>インターフェース / 抽象クラス</strong><br><span style="font-size:12px;color:var(--muted)">共通の型を定義</span></li>
+          <li><strong>ポリモーフィズム</strong><br><span style="font-size:12px;color:var(--muted)">同じメソッド名で違う動き</span></li>
+          <li><strong>Strategyパターン</strong><br><span style="font-size:12px;color:var(--muted)">アルゴリズムを差し替え可能に</span></li>
+        </ul>
+        <p style="margin-top:10px;font-size:12.5px"><b>典型サイン</b>: <code style="background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">if (type == "A") ... else if (type == "B") ...</code> が出てきたらOCP違反の合図。</p>
+      </div>
+      <div class="code"><span class="comment">// OCP違反: 新方式を追加するたびに修正</span>
+<span class="kw">class</span> <span class="type">Notifier</span> {
+  <span class="fn">send</span>(type, msg) {
+    <span class="kw">if</span> (type === <span class="str">"email"</span>) {
+      smtp.<span class="fn">send</span>(msg);
+    } <span class="kw">else if</span> (type === <span class="str">"sms"</span>) {
+      twilio.<span class="fn">send</span>(msg);
+    } <span class="kw">else if</span> (type === <span class="str">"slack"</span>) {
+      slack.<span class="fn">post</span>(msg);
+    }
+    <span class="comment">// LINE通知を追加するたびに</span>
+    <span class="comment">// このメソッドを書き換える…</span>
+  }
+}
+
+<span class="comment">// OCP適用: 拡張に開く</span>
+<span class="kw">interface</span> <span class="type">NotificationChannel</span> {
+  <span class="fn">send</span>(msg: <span class="type">string</span>): <span class="type">void</span>;
+}
+
+<span class="kw">class</span> <span class="type">EmailChannel</span> <span class="kw">implements</span> <span class="type">NotificationChannel</span> {
+  <span class="fn">send</span>(msg) { smtp.<span class="fn">send</span>(msg); }
+}
+<span class="kw">class</span> <span class="type">SmsChannel</span> <span class="kw">implements</span> <span class="type">NotificationChannel</span> {
+  <span class="fn">send</span>(msg) { twilio.<span class="fn">send</span>(msg); }
+}
+
+<span class="comment">// LINEを追加: 新しいクラスを作るだけ</span>
+<span class="kw">class</span> <span class="type">LineChannel</span> <span class="kw">implements</span> <span class="type">NotificationChannel</span> {
+  <span class="fn">send</span>(msg) { line.<span class="fn">post</span>(msg); }
+}
+
+<span class="comment">// Notifier本体は1行も触らない</span>
+<span class="comment">// = 既存テスト全て通る</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 「予想される拡張」だけ</div>
+    全てをOCPで設計すると過剰設計になります。<b>「ここは増えそうだ」と現実的に見える箇所にだけ</b>適用するのが現場の知恵。1回しか使わないなら直接書いてOK。<b>3回目に登場したらOCPを検討</b>する、くらいのバランス感です。
+  </div>
+</section>
+
+<section id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>LSP — リスコフ置換の原則</h2>
+    <span class="en">LISKOV SUBSTITUTION PRINCIPLE</span>
+  </div>
+  <p class="pattern-desc"><span class="principle-badge">LSP</span>「<b>派生クラスは、基底クラスと置き換えても問題なく動くべき</b>」。継承を使うときの安全装置です。LSP違反のコードは「あれ?<b>サブクラスを渡したら急に動かなくなった</b>」というバグの温床になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">lsp-example</span>
+      <span class="tag-desc">継承の落とし穴</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 有名な「正方形と長方形」問題</div>
+        <div class="diagram">Rectangle (長方形)
+  setWidth(w)
+  setHeight(h)
+  area() = w * h
+    ↑ extends
+Square (正方形)
+  setWidth → heightも変える
+  setHeight → widthも変える
+
+問題:
+  rect.setWidth(5);
+  rect.setHeight(10);
+  assert(rect.area() == 50);
+
+  Square を渡すと…
+  area() == 100 になる!
+  (LSP違反)</div>
+        <p style="margin-top:14px;font-size:13px"><b>数学的には正方形は長方形の特殊形。でも<b>振る舞いとしては別物</b></b>。継承は「is-a」だけでは不十分で<b>「振る舞いとして置換可能」</b>であることが要求されます。</p>
+      </div>
+      <div class="code"><span class="comment">// LSP違反の例</span>
+<span class="kw">class</span> <span class="type">Bird</span> {
+  <span class="fn">fly</span>() { <span class="comment">/* 飛ぶ */</span> }
+}
+
+<span class="kw">class</span> <span class="type">Penguin</span> <span class="kw">extends</span> <span class="type">Bird</span> {
+  <span class="fn">fly</span>() {
+    <span class="kw">throw</span> <span class="kw">new</span> <span class="type">Error</span>(<span class="str">"ペンギンは飛べない"</span>);
+  }
+}
+
+<span class="kw">function</span> <span class="fn">makeFly</span>(bird: <span class="type">Bird</span>) {
+  bird.<span class="fn">fly</span>();  <span class="comment">// Penguinが来ると爆発</span>
+}
+
+<span class="comment">// 解決: 階層を見直す</span>
+<span class="kw">class</span> <span class="type">Bird</span> { name: <span class="type">string</span>; }
+<span class="kw">class</span> <span class="type">FlyingBird</span> <span class="kw">extends</span> <span class="type">Bird</span> {
+  <span class="fn">fly</span>() { ... }
+}
+<span class="kw">class</span> <span class="type">SwimmingBird</span> <span class="kw">extends</span> <span class="type">Bird</span> {
+  <span class="fn">swim</span>() { ... }
+}
+
+<span class="kw">class</span> <span class="type">Sparrow</span> <span class="kw">extends</span> <span class="type">FlyingBird</span> {}
+<span class="kw">class</span> <span class="type">Penguin</span> <span class="kw">extends</span> <span class="type">SwimmingBird</span> {}
+
+<span class="comment">// もうペンギンは飛ばないし、</span>
+<span class="comment">// makeFly()も安全に動く。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — 継承より委譲</div>
+    迷ったら<b>継承（extends）より委譲（コンポジション）</b>を選ぶのが現代の流儀。「<b>○○は△△である</b>」より「<b>○○は△△を持っている</b>」のほうが、変更に強い設計になります。継承は<b>本当に置換可能な時だけ</b>使いましょう。
+  </div>
+</section>
+
+<section id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>ISP — インターフェース分離の原則</h2>
+    <span class="en">INTERFACE SEGREGATION PRINCIPLE</span>
+  </div>
+  <p class="pattern-desc"><span class="principle-badge">ISP</span>「<b>使わないメソッドへの依存を強制してはならない</b>」。<b>巨大なインターフェース</b>を作って「あれもこれも実装してね」とすると、実装側は使わないメソッドを空実装で埋めるハメになります。これがISP違反。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">isp-example</span>
+      <span class="tag-desc">大きなインターフェースを分割</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ISP違反の典型</div>
+        <ul>
+          <li><strong>巨大なインターフェース</strong><br>メソッドが10個以上</li>
+          <li><strong>空実装の存在</strong><br><code style="font-size:11px;background:var(--paper-2);padding:1px 4px">{ /* 使わない */ }</code> や <code style="font-size:11px;background:var(--paper-2);padding:1px 4px">throw new NotSupported()</code></li>
+          <li><strong>用途別の実装</strong><br>同じインターフェースで全く違う動作</li>
+        </ul>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)">解決策: <b>「役割ごとに小さく分割」</b>。1つのクラスが複数のインターフェースを実装してもOK。</p>
+      </div>
+      <div class="code"><span class="comment">// ISP違反: 太いインターフェース</span>
+<span class="kw">interface</span> <span class="type">Worker</span> {
+  <span class="fn">work</span>(): <span class="type">void</span>;
+  <span class="fn">eat</span>(): <span class="type">void</span>;
+  <span class="fn">sleep</span>(): <span class="type">void</span>;
+  <span class="fn">getSalary</span>(): <span class="type">number</span>;
+}
+
+<span class="comment">// ロボットを実装する時…</span>
+<span class="kw">class</span> <span class="type">Robot</span> <span class="kw">implements</span> <span class="type">Worker</span> {
+  <span class="fn">work</span>() { ... }
+  <span class="fn">eat</span>() { <span class="comment">/* 何もしない */</span> }   <span class="comment">// 違反</span>
+  <span class="fn">sleep</span>() { <span class="comment">/* 何もしない */</span> } <span class="comment">// 違反</span>
+  <span class="fn">getSalary</span>() {
+    <span class="kw">throw</span> <span class="kw">new</span> <span class="type">Error</span>(<span class="str">"無給"</span>);          <span class="comment">// 違反</span>
+  }
+}
+
+<span class="comment">// ISP適用: 役割で分割</span>
+<span class="kw">interface</span> <span class="type">Workable</span> { <span class="fn">work</span>(): <span class="type">void</span>; }
+<span class="kw">interface</span> <span class="type">Feedable</span> { <span class="fn">eat</span>(): <span class="type">void</span>; }
+<span class="kw">interface</span> <span class="type">Sleepable</span> { <span class="fn">sleep</span>(): <span class="type">void</span>; }
+<span class="kw">interface</span> <span class="type">Payable</span> { <span class="fn">getSalary</span>(): <span class="type">number</span>; }
+
+<span class="kw">class</span> <span class="type">Human</span> <span class="kw">implements</span>
+  <span class="type">Workable</span>, <span class="type">Feedable</span>, <span class="type">Sleepable</span>, <span class="type">Payable</span> { ... }
+
+<span class="kw">class</span> <span class="type">Robot</span> <span class="kw">implements</span> <span class="type">Workable</span> { ... }
+
+<span class="comment">// Robot は不要なメソッドを持たない</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">TIP — クライアント目線で分ける</div>
+    インターフェースを設計する時は<b>「呼び出し側（クライアント）が何を必要としているか」</b>を起点に考えます。「実装側の都合」で1つにまとめると、必ずISP違反になります。
+  </div>
+</section>
+
+<section id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>DIP — 依存性逆転の原則</h2>
+    <span class="en">DEPENDENCY INVERSION PRINCIPLE</span>
+  </div>
+  <p class="pattern-desc"><span class="principle-badge">DIP</span>「<b>上位モジュールは下位モジュールに依存してはならない。両者とも抽象に依存すべき</b>」。SOLIDで最も重要かつ最も難しい原則。<b>これを理解するとアーキテクチャ設計が一気に分かるようになります</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">dip-example</span>
+      <span class="tag-desc">依存の向きを逆転させる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 依存の矢印を逆さに</div>
+        <div class="diagram">[Before: 上が下に依存]
+UserService (上位)
+    ↓ 依存
+MySQLRepository (下位)
+
+→ DB変えるとUserServiceも修正
+
+[After: 両者とも抽象に依存]
+UserService (上位)
+    ↓
+[UserRepository] (抽象)
+    ↑
+MySQLRepository (下位)
+
+→ DB変えてもUserServiceは無傷</div>
+        <p style="margin-top:14px;font-size:13px"><b>抽象</b>（インターフェース）<b>を挟むことで、矢印の向きを上→下から下→中央へと逆転</b>させる。これが「逆転」の意味です。</p>
+      </div>
+      <div class="code"><span class="comment">// DIP違反: 具体クラスに直接依存</span>
+<span class="kw">class</span> <span class="type">MySQLUserRepo</span> {
+  <span class="fn">save</span>(u) { mysql.<span class="fn">query</span>(...); }
+}
+
+<span class="kw">class</span> <span class="type">UserService</span> {
+  <span class="kw">private</span> repo = <span class="kw">new</span> <span class="type">MySQLUserRepo</span>();
+  <span class="comment">// ↑ 具体クラスに固定</span>
+
+  <span class="fn">register</span>(u) { <span class="kw">this</span>.repo.<span class="fn">save</span>(u); }
+}
+
+<span class="comment">// 問題:</span>
+<span class="comment">// - DB変更時にUserServiceも修正</span>
+<span class="comment">// - テストでモック差し替え不可</span>
+
+<span class="comment">// DIP適用: 抽象に依存</span>
+<span class="kw">interface</span> <span class="type">UserRepository</span> {
+  <span class="fn">save</span>(u: <span class="type">User</span>): <span class="type">void</span>;
+}
+
+<span class="kw">class</span> <span class="type">MySQLUserRepo</span>
+  <span class="kw">implements</span> <span class="type">UserRepository</span> {
+  <span class="fn">save</span>(u) { mysql.<span class="fn">query</span>(...); }
+}
+
+<span class="kw">class</span> <span class="type">UserService</span> {
+  <span class="kw">constructor</span>(
+    <span class="kw">private</span> repo: <span class="type">UserRepository</span>
+    <span class="comment">// ↑ 抽象（interface）に依存</span>
+  ) {}
+  <span class="fn">register</span>(u) { <span class="kw">this</span>.repo.<span class="fn">save</span>(u); }
+}
+
+<span class="comment">// 使い方</span>
+<span class="kw">new</span> <span class="type">UserService</span>(<span class="kw">new</span> <span class="type">MySQLUserRepo</span>());     <span class="comment">// 本番</span>
+<span class="kw">new</span> <span class="type">UserService</span>(<span class="kw">new</span> <span class="type">InMemoryRepo</span>());     <span class="comment">// テスト</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — DIP = DI ではない</div>
+    DIP（依存性逆転の<b>原則</b>）と DI（依存性<b>注入</b>）は別物。DIPは「考え方」、DIは「実現手段の1つ」です。DIを使えばDIPが守られるとは限らない（具体クラスを注入してたら意味なし）。<b>抽象に依存しているか</b>を常に確認しましょう。
+  </div>
+</section>
+
+<section id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>DRY / KISS / YAGNI と凝集・結合</h2>
+    <span class="en">DRY, KISS, YAGNI & COHESION/COUPLING</span>
+  </div>
+  <p class="pattern-desc">SOLID以外にも、コードの品質を支える<b>名言級の鉄則</b>があります。<b>DRY / KISS / YAGNI</b>はTシャツに書きたいレベルの3大原則。そして<b>凝集と結合</b>はモジュール設計の最重要指標です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">dry-kiss-yagni</span>
+      <span class="tag-desc">3大鉄則</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの鉄則</div>
+        <ul>
+          <li><span class="label">DRY</span><strong>Don't Repeat Yourself</strong><br>同じコードを2度書くな。3回目に登場したら必ず共通化</li>
+          <li><span class="label">KISS</span><strong>Keep It Simple, Stupid</strong><br>シンプルに保て。賢く見せようとして複雑にするな</li>
+          <li><span class="label">YAGNI</span><strong>You Aren't Gonna Need It</strong><br>必要になるまで作るな。「将来のため」の8割は使われない</li>
+        </ul>
+      </div>
+      <div class="code"><span class="comment">// DRY違反: 同じロジックがコピペ</span>
+<span class="fn">calcDiscountForGold</span>(p) {
+  <span class="kw">return</span> p * <span class="num">0.9</span>;
+}
+<span class="fn">calcDiscountForSilver</span>(p) {
+  <span class="kw">return</span> p * <span class="num">0.95</span>;
+}
+
+<span class="comment">// DRY適用</span>
+<span class="kw">const</span> RATES = { gold: <span class="num">0.9</span>, silver: <span class="num">0.95</span> };
+<span class="fn">calcDiscount</span>(p, rank) { <span class="kw">return</span> p * RATES[rank]; }
+
+<span class="comment">// YAGNI違反</span>
+<span class="kw">class</span> <span class="type">User</span> {
+  name: <span class="type">string</span>;
+  middleName: <span class="type">string</span>;   <span class="comment">// 「将来必要かも」</span>
+  preferredLang: <span class="type">string</span>; <span class="comment">// 「多言語化のため」</span>
+  timezone: <span class="type">string</span>;      <span class="comment">// 「グローバル展開で」</span>
+}
+<span class="comment">// → どれも5年経っても使われない</span>
+
+<span class="comment">// YAGNI適用: 今要るものだけ</span>
+<span class="kw">class</span> <span class="type">User</span> { name: <span class="type">string</span>; }
+<span class="comment">// 必要になったら、その時に追加</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">cohesion-coupling</span>
+      <span class="tag-desc">凝集度高く、結合度低く</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// モジュール設計の2大指標</div>
+        <table class="compare">
+          <tr><th>指標</th><th>意味</th><th>目標</th></tr>
+          <tr><td><b>凝集度</b><br>Cohesion</td><td>1モジュール内で関連性が強いか</td><td class="ok">高く</td></tr>
+          <tr><td><b>結合度</b><br>Coupling</td><td>モジュール間の依存の強さ</td><td class="ng">低く</td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:13px"><b>High Cohesion, Low Coupling</b>。<br>これがあらゆる設計の<b>合言葉</b>です。SOLIDも結局この2つを実現するための道具と言えます。</p>
+      </div>
+      <div class="code"><span class="comment">// 結合度の段階（低い順）</span>
+
+<span class="ann">[1. メッセージ結合]</span> ★最弱
+  メソッド呼び出しのみ
+  <span class="fn">payment</span>.<span class="fn">charge</span>(amount)
+
+<span class="ann">[2. データ結合]</span>
+  プリミティブな引数のみ
+  <span class="fn">calc</span>(price, rate)
+
+<span class="ann">[3. スタンプ結合]</span>
+  オブジェクトを丸ごと渡す
+  <span class="fn">save</span>(user)
+
+<span class="ann">[4. 制御結合]</span>
+  フラグで動きを変える
+  <span class="fn">do</span>(flag, data) <span class="comment">// flagがcontrol</span>
+
+<span class="ann">[5. 共通結合]</span>
+  グローバル変数を共有
+  <span class="kw">global</span> currentUser
+
+<span class="ann">[6. 内容結合]</span> ★最悪
+  他クラスの内部に直接アクセス
+  user.<span class="kw">_internal</span>.<span class="kw">_password</span> = <span class="num">123</span>
+
+<span class="comment">// なるべく上のレベルに留めること</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">NEXT STEP — Vol.4 へ</div>
+    原則を頭に入れたら、次はそれを<b>具体的な「型」</b>として身につける番です。Vol.4では<b>GoFのデザインパターン</b>を扱います。Strategy、Factory、Observer…これらは「先人がSOLIDを適用して見つけた定番解」。原則の生きた応用例として最高の教材です。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING DESIGN SERIES — VOL.03</span>
+  <span>△ PRINCIPLES</span>
+</footer>
+
+</body>
+</html>

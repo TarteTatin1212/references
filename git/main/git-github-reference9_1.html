@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git/GitHub編 困った時のGit Vol.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2520;
+  --paper:#d8caa9;
+  --paper-2:#c3b18a;
+  --accent:#c89865;
+  --accent-2:#c9a876;
+  --accent-3:#583f2c;
+  --muted:#7a6e5d;
+  --line:#a08c70;
+  --code-bg:#151210;
+  --code-text:#e8dfcc;
+  --panel-bg:#ceb999;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;font-size:15px;line-height:1.85}
+body{max-width:1180px;margin:0 auto;padding:48px 40px 80px}
+
+.page-header{position:relative;padding:36px 32px 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"?";position:absolute;right:20px;top:-30px;font-size:340px;color:var(--accent);opacity:0.16;font-family:"Shippori Mincho",serif;line-height:1;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em}
+h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin:18px 0 10px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;letter-spacing:0.15em;font-family:"JetBrains Mono",monospace;margin-bottom:20px}
+.lead{max-width:640px;font-size:15px;line-height:2;color:var(--ink)}
+
+.toc{background:var(--paper-2);padding:22px 28px;margin-bottom:56px;border:1px solid var(--line)}
+.toc-title{font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:0.2em;margin-bottom:12px;color:var(--accent-3)}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13.5px;font-family:"JetBrains Mono",monospace}
+.toc a::before{content:"— ";color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+/* ===== Q&A 形式の独自構造 ===== */
+.qa{margin-bottom:48px;background:#fff;border:1px solid var(--line)}
+.qa-header{background:var(--paper-2);padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.qa-num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:700;letter-spacing:0.05em}
+.qa-q{font-family:"Shippori Mincho",serif;font-size:20px;font-weight:700;flex:1;color:var(--ink)}
+.qa-cat{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.15em;color:var(--muted);background:#fff;padding:2px 8px;border:1px solid var(--line)}
+.qa-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.qa-answer{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line)}
+.answer-label{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:700;margin-bottom:14px;letter-spacing:0.2em;display:flex;align-items:center;gap:8px}
+.answer-label::before{content:"A";display:inline-block;background:var(--accent);color:var(--paper);width:20px;height:20px;border-radius:50%;text-align:center;line-height:20px;font-size:12px;font-weight:700}
+.qa-code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:"JetBrains Mono",monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}
+.num{color:#f7a8d8}.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}.step{color:#c9a876;font-weight:600}
+.cmd{color:#b5e8b0}.flag{color:#f7c08a}.branch{color:#f7a8d8}
+.added{color:#7fc97f}.removed{color:#f08080}
+
+@media(max-width:720px){
+  body{padding:24px 18px 60px}
+  .qa-body{grid-template-columns:1fr}
+  .qa-answer{border-right:none;border-bottom:1px solid var(--line)}
+  h1{font-size:30px}
+  .page-header::before{font-size:200px}
+  .qa-q{font-size:17px}
+  .toc ul{gap:6px 14px}
+}
+
+.box{background:#fff;border:1px solid var(--line);padding:12px 14px;margin-bottom:10px}
+.box .box-title{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-bottom:6px;letter-spacing:0.1em}
+.box p{font-size:13px;line-height:1.7}
+
+.ng-ok{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.ng-ok > div{padding:10px 12px;font-size:12.5px;border:1px solid var(--line)}
+.ng-ok .ng{background:#ffe8e6;border-color:#d4a09a}
+.ng-ok .ok{background:#e3f5e8;border-color:#9ac4a8}
+.ng-ok .label{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.15em;font-weight:700;margin-bottom:4px}
+.ng-ok .ng .label{color:#b04030}
+.ng-ok .ok .label{color:#3a7050}
+
+p.intro{font-size:13.5px;line-height:1.8;margin-bottom:14px;color:var(--ink)}
+p.intro b{color:var(--accent-3)}
+
+.tip-inline{background:rgba(200,152,101,0.1);border-left:3px solid var(--accent);padding:10px 14px;margin-top:12px;font-size:12.5px;line-height:1.7}
+.tip-inline .t-title{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--accent-3);font-weight:700;letter-spacing:0.15em;margin-bottom:4px}
+.tip-inline b{color:var(--accent-3)}
+
+code.inline{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12.5px;color:var(--accent-3)}
+
+/* ===== Ending Section ===== */
+.ending{margin-top:96px;padding:60px 40px;background:var(--paper-2);border:2px solid var(--ink);text-align:center;position:relative;overflow:hidden}
+.ending::before{content:"⎇";position:absolute;left:-30px;top:-50px;font-size:280px;color:var(--accent);opacity:0.12;font-family:"Shippori Mincho",serif;line-height:1}
+.ending::after{content:"⎇";position:absolute;right:-30px;bottom:-50px;font-size:280px;color:var(--accent);opacity:0.12;font-family:"Shippori Mincho",serif;line-height:1}
+.ending > *{position:relative;z-index:1}
+.ending h2{font-family:"Shippori Mincho",serif;font-size:34px;font-weight:700;margin-bottom:10px;letter-spacing:0.05em;color:var(--ink)}
+.subtitle-end{font-family:"JetBrains Mono",monospace;font-size:13px;letter-spacing:0.4em;color:var(--accent-3);margin-bottom:30px;font-weight:600}
+.message{font-size:15px;line-height:2.1;max-width:580px;margin:0 auto 40px;text-align:left;color:var(--ink)}
+.message b{color:var(--accent-3)}
+.series-list{background:#fff;border:1px solid var(--line);padding:28px;max-width:600px;margin:0 auto;text-align:left;font-family:"JetBrains Mono",monospace;font-size:13px;line-height:2.1}
+.series-list .s-title{font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:0.2em;color:var(--accent-3);margin-bottom:14px;text-align:center;font-weight:700}
+.series-list .s-item{display:flex;gap:12px;align-items:baseline;padding:2px 0}
+.series-list .s-num{color:var(--accent);font-weight:700;width:60px}
+.series-list .s-name{flex:1;color:var(--ink)}
+.thanks{margin-top:32px;font-family:"Shippori Mincho",serif;font-size:18px;color:var(--accent-3);letter-spacing:0.1em}
+
+.page-footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+.page-footer .right{text-align:right}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">GIT / GITHUB</span>
+  <span class="vol-tag">VOL.09 / 09</span>
+  <h1>困った時のGit編</h1>
+  <div class="subtitle">TROUBLESHOOTING Q&amp;A</div>
+  <p class="lead">
+    シリーズ完結巻。
+    <b>「やってしまった事故」</b>と、その救出法をQ&amp;A形式で10問。
+    全エンジニアが必ず一度は遭遇する詰まりどころばかりです。
+    <b>困った時に開く辞書として、いつでもここに戻ってきてください。</b>
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#q01">Q.01 commit前の変更を消したい</a></li>
+    <li><a href="#q02">Q.02 間違ったコミットを取消</a></li>
+    <li><a href="#q03">Q.03 push後の修正</a></li>
+    <li><a href="#q04">Q.04 .env をコミットしちゃった</a></li>
+    <li><a href="#q05">Q.05 ブランチ間違いでcommit</a></li>
+    <li><a href="#q06">Q.06 reset --hard で消した</a></li>
+    <li><a href="#q07">Q.07 コンフリクトで詰んだ</a></li>
+    <li><a href="#q08">Q.08 push できない</a></li>
+    <li><a href="#q09">Q.09 detached HEAD</a></li>
+    <li><a href="#q10">Q.10 リモートと同期が壊れた</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ============ Q.01 ============ -->
+<div class="qa" id="q01">
+  <div class="qa-header">
+    <span class="qa-num">Q.01</span>
+    <h2 class="qa-q">編集をやっぱり全部やめたい。コミット前なら戻せる?</h2>
+    <span class="qa-cat">RESTORE</span>
+  </div>
+  <div class="qa-body">
+    <div class="qa-answer">
+      <div class="answer-label">ANSWER</div>
+      <p class="intro">コミット前なら<b>戻せます</b>。状況によって2パターン:</p>
+      <div class="box">
+        <div class="box-title">① まだ git add していない時</div>
+        <p><code class="inline">git restore &lt;file&gt;</code> または <code class="inline">git restore .</code> (全部)</p>
+      </div>
+      <div class="box">
+        <div class="box-title">② git add 済みの時</div>
+        <p>先に <code class="inline">git restore --staged &lt;file&gt;</code> でステージから降ろし、続けて <code class="inline">git restore &lt;file&gt;</code></p>
+      </div>
+      <div class="ng-ok">
+        <div class="ng">
+          <div class="label">✗ NG: 何も考えず rm</div>
+          <p>新規ファイルが惜しい時にこれをやると<b>復元不能</b>。</p>
+        </div>
+        <div class="ok">
+          <div class="label">◯ OK: restore</div>
+          <p>追跡中のファイルを<b>安全に</b>戻せる。</p>
+        </div>
+      </div>
+      <div class="tip-inline">
+        <div class="t-title">TIP —</div>
+        <p>未追跡ファイル(<code class="inline">??</code>表示)は <code class="inline">restore</code>で消えない。<code class="inline">git clean -fd</code> で削除可能。<b>こちらは復元不能なので慎重に</b>。</p>
+      </div>
+    </div>
+    <div class="qa-code"><span class="comment"># --- ケース①: addしてない時 ---</span>
+$ <span class="cmd">git status</span>
+Changes not staged for commit:
+        modified: src/app.js
+        modified: README.md
+
+<span class="comment"># 全部捨てる</span>
+$ <span class="cmd">git restore</span> .
+
+<span class="comment"># 特定だけ</span>
+$ <span class="cmd">git restore</span> src/app.js
+
+<span class="comment"># --- ケース②: addしちゃった時 ---</span>
+$ <span class="cmd">git status</span>
+Changes to be committed:
+        modified: src/app.js
+
+<span class="comment"># まずステージから降ろす</span>
+$ <span class="cmd">git restore</span> <span class="flag">--staged</span> src/app.js
+
+<span class="comment"># それから変更も戻す</span>
+$ <span class="cmd">git restore</span> src/app.js
+
+<span class="comment"># --- 未追跡ファイルを消したい時 ---</span>
+$ <span class="cmd">git clean</span> <span class="flag">-fd</span>
+<span class="comment">             ↑ 警告なしで削除</span>
+<span class="comment">  事前に -n でドライラン推奨:</span>
+$ <span class="cmd">git clean</span> <span class="flag">-fdn</span>
+<span class="comment"># 何が消えるか先に確認</span></div>
+  </div>
+</div>
+
+<!-- ============ Q.02 ============ -->
+<div class="qa" id="q02">
+  <div class="qa-header">
+    <span class="qa-num">Q.02</span>
+    <h2 class="qa-q">間違った内容でコミットしちゃった。取り消したい!</h2>
+    <span class="qa-cat">RESET / AMEND</span>
+  </div>
+  <div class="qa-body">
+    <div class="qa-answer">
+      <div class="answer-label">ANSWER</div>
+      <p class="intro"><b>まだpushしていなければ</b>、自由に取り消せます。やりたいことで使い分け:</p>
+      <div class="box">
+        <div class="box-title">① 直前のコミットを修正したい</div>
+        <p><code class="inline">git commit --amend</code> — メッセージ修正、ファイル追加が可能</p>
+      </div>
+      <div class="box">
+        <div class="box-title">② コミットだけ取り消したい(変更は残す)</div>
+        <p><code class="inline">git reset --soft HEAD~1</code></p>
+      </div>
+      <div class="box">
+        <div class="box-title">③ コミットも変更も全部消したい</div>
+        <p><code class="inline">git reset --hard HEAD~1</code> ⚠ 慎重に</p>
+      </div>
+      <div class="tip-inline">
+        <div class="t-title">注意 —</div>
+        <p><b>push済み</b>のコミットを reset で巻き戻すと、後でpushに <code class="inline">--force</code> が必要になり、チーム事故の元。push済みなら <code class="inline">git revert</code> を使う(Q.03)。</p>
+      </div>
+    </div>
+    <div class="qa-code"><span class="comment"># --- ① 直前を修正 ---</span>
+
+<span class="comment"># メッセージだけ書き直し</span>
+$ <span class="cmd">git commit</span> <span class="flag">--amend</span> <span class="flag">-m</span> <span class="str">"feat: 正しい説明"</span>
+
+<span class="comment"># ファイル追加忘れたので追加</span>
+$ <span class="cmd">git add</span> forgotten.js
+$ <span class="cmd">git commit</span> <span class="flag">--amend</span> <span class="flag">--no-edit</span>
+<span class="comment">                       ↑ メッセージ変えない</span>
+
+<span class="comment"># --- ② コミットだけ取消(変更残す) ---</span>
+$ <span class="cmd">git reset</span> <span class="flag">--soft</span> HEAD~1
+$ <span class="cmd">git status</span>
+Changes to be committed:
+        modified: ...
+<span class="comment"># 変更は残ってる → やり直しできる</span>
+
+<span class="comment"># --- ③ 完全に消す ---</span>
+$ <span class="cmd">git reset</span> <span class="flag">--hard</span> HEAD~1
+
+<span class="comment"># 慎重に! ファイル変更も消える</span>
+
+<span class="comment"># --- 複数コミットまとめて取消 ---</span>
+$ <span class="cmd">git reset</span> <span class="flag">--hard</span> HEAD~3
+<span class="comment">                       ↑ 3つ消す</span>
+
+<span class="comment"># --- やってしまった→Q.06 で救出 ---</span></div>
+  </div>
+</div>
+
+<!-- ============ Q.03 ============ -->
+<div class="qa" id="q03">
+  <div class="qa-header">
+    <span class="qa-num">Q.03</span>
+    <h2 class="qa-q">push済みのコミットに間違いがある!どうすれば?</h2>
+    <span class="qa-cat">REVERT</span>
+  </div>
+  <div class="qa-body">
+    <div class="qa-answer">
+      <div class="answer-label">ANSWER</div>
+      <p class="intro">共有済みなら<b>絶対に <code class="inline">git revert</code></b>。reset --hardしてpush --forceは<b>他人のローカルを壊す世紀の事故</b>になります。</p>
+      <div class="box">
+        <div class="box-title">revertの仕組み</div>
+        <p>過去のコミットを「打ち消す内容の<b>新しいコミット</b>」を作る。履歴は改変されないので<b>安全</b>。</p>
+      </div>
+      <div class="ng-ok">
+        <div class="ng">
+          <div class="label">✗ 絶対NG (チーム事故)</div>
+          <p>git reset --hard HEAD~1<br>git push --force</p>
+        </div>
+        <div class="ok">
+          <div class="label">◯ 正解</div>
+          <p>git revert HEAD<br>git push</p>
+        </div>
+      </div>
+      <div class="tip-inline">
+        <div class="t-title">鉄則 —</div>
+        <p><b>「pushしたら過去は変えない」</b>。これがチーム開発の絶対法則。例外なし。</p>
+      </div>
+    </div>
+    <div class="qa-code"><span class="comment"># --- 直前のpush済みコミットを取消 ---</span>
+
+$ <span class="cmd">git revert</span> HEAD
+
+<span class="comment"># エディタ開く → 保存 → 新コミット作成</span>
+[main <span class="num">b7e5a92</span>] Revert "feat: ..."
+
+$ <span class="cmd">git push</span>
+
+<span class="comment"># --- 特定コミットを取消 ---</span>
+$ <span class="cmd">git log</span> <span class="flag">--oneline</span>
+<span class="num">a3f2c1d</span> 良いコミット
+<span class="num">9b8e4a2</span> 問題のコミット   ← これを消したい
+<span class="num">5d6f3a8</span> その他
+
+$ <span class="cmd">git revert</span> <span class="num">9b8e4a2</span>
+
+<span class="comment"># --- マージコミットを取消 ---</span>
+$ <span class="cmd">git revert</span> <span class="flag">-m</span> <span class="num">1</span> &lt;merge-commit&gt;
+<span class="comment">             ↑ -m 1 = mainを残す</span>
+
+<span class="comment"># --- 複数まとめて ---</span>
+$ <span class="cmd">git revert</span> <span class="num">a3f2c1d^..9b8e4a2</span>
+
+<span class="comment"># --- revertコミット自体をrevert ---</span>
+<span class="comment"># 「取消を取消」も可能。元の変更が復活</span>
+$ <span class="cmd">git revert</span> &lt;revert-commit-hash&gt;</div>
+  </div>
+</div>
+
+<!-- ============ Q.04 ============ -->
+<div class="qa" id="q04">
+  <div class="qa-header">
+    <span class="qa-num">Q.04</span>
+    <h2 class="qa-q">.env をうっかりコミット&amp;pushしてしまった!</h2>
+    <span class="qa-cat">SECURITY ⚠</span>
+  </div>
+  <div class="qa-body">
+    <div class="qa-answer">
+      <div class="answer-label">ANSWER</div>
+      <p class="intro"><b>業界全体の悲劇</b>です。<b>順序が超重要</b>:</p>
+      <div class="box">
+        <div class="box-title">緊急対応の手順</div>
+        <p><span class="step">①</span> <b>該当APIキーを即座に無効化(ローテート)</b><br>
+        <span class="step">②</span> <code class="inline">.gitignore</code> に <code class="inline">.env</code> を追加<br>
+        <span class="step">③</span> <code class="inline">git rm --cached .env</code> でGit管理から除外<br>
+        <span class="step">④</span> コミット&amp;push<br>
+        <span class="step">⑤</span> 必要なら git filter-repo で履歴から完全削除</p>
+      </div>
+      <div class="tip-inline">
+        <div class="t-title">最重要 —</div>
+        <p><b>履歴から消しても「漏れた事実」は消えない</b>。GitHubは多数のbotが常時スキャンしており、push直後に外部に複製される可能性も。<b>「キーローテートが最優先」</b>これを忘れずに。</p>
+      </div>
+    </div>
+    <div class="qa-code"><span class="comment"># === ① キーを即座に無効化 ===</span>
+
+<span class="comment"># AWS / Stripe / Firebase 等の</span>
+<span class="comment"># 管理画面で該当キーをローテート</span>
+<span class="comment"># これが最優先!!</span>
+
+<span class="comment"># === ② .gitignore 更新 ===</span>
+$ <span class="cmd">echo</span> <span class="str">".env"</span> &gt;&gt; .gitignore
+
+<span class="comment"># === ③ Git管理から除外 ===</span>
+$ <span class="cmd">git rm</span> <span class="flag">--cached</span> .env
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"chore: .env を追跡解除"</span>
+$ <span class="cmd">git push</span>
+
+<span class="comment"># これで「現在」からは消える</span>
+<span class="comment"># しかし「過去の履歴」には残っている!</span>
+
+<span class="comment"># === ④ 履歴からも完全削除 ===</span>
+
+<span class="comment"># git filter-repo (推奨ツール)</span>
+$ <span class="cmd">pip install</span> git-filter-repo
+$ <span class="cmd">git filter-repo</span> <span class="flag">--path</span> .env <span class="flag">--invert-paths</span>
+
+<span class="comment"># 履歴が書き換わる → 強制push必要</span>
+$ <span class="cmd">git push</span> <span class="flag">--force</span>
+
+<span class="comment"># --- チーム共有リポジトリでは要相談 ---</span>
+<span class="comment"># 履歴書き換えはチームの同意必須</span>
+
+<span class="comment"># --- 再発防止 ---</span>
+<span class="comment"># .env.example だけコミット</span>
+<span class="comment"># pre-commit hookで検出する</span></div>
+  </div>
+</div>
+
+<!-- ============ Q.05 ============ -->
+<div class="qa" id="q05">
+  <div class="qa-header">
+    <span class="qa-num">Q.05</span>
+    <h2 class="qa-q">気付いたら間違ったブランチで作業してた!</h2>
+    <span class="qa-cat">STASH / CHERRY-PICK</span>
+  </div>
+  <div class="qa-body">
+    <div class="qa-answer">
+      <div class="answer-label">ANSWER</div>
+      <p class="intro">よくあるやつ。状況で対応が変わります:</p>
+      <div class="box">
+        <div class="box-title">① まだコミットしていない</div>
+        <p><code class="inline">git stash</code> で退避 → 正しいブランチに <code class="inline">switch</code> → <code class="inline">git stash pop</code></p>
+      </div>
+      <div class="box">
+        <div class="box-title">② すでにコミットしてしまった</div>
+        <p>正しいブランチに <code class="inline">cherry-pick</code> で移植 → 元ブランチで <code class="inline">reset --hard HEAD~1</code></p>
+      </div>
+      <div class="tip-inline">
+        <div class="t-title">POINT —</div>
+        <p>業務開発で<b>一番頻繁にやらかすミス</b>。状況の判断ができれば慌てる必要なし。<b>「stashとcherry-pickの使い方」が分かっていれば余裕</b>。</p>
+      </div>
+    </div>
+    <div class="qa-code"><span class="comment"># === ケース①: 未コミットの時 ===</span>
+
+$ <span class="cmd">git status</span>
+On branch <span class="branch">main</span>   <span class="comment">← あれ、mainで作業してた!</span>
+modified: src/app.js
+
+<span class="comment"># 退避</span>
+$ <span class="cmd">git stash</span>
+
+<span class="comment"># 正しいブランチへ</span>
+$ <span class="cmd">git switch</span> <span class="branch">feature/x</span>
+
+<span class="comment"># 取り出す</span>
+$ <span class="cmd">git stash</span> pop
+
+<span class="comment"># → 復活! 作業続行</span>
+
+<span class="comment"># === ケース②: コミット済 ===</span>
+
+<span class="comment"># 状態確認</span>
+$ <span class="cmd">git log</span> <span class="flag">--oneline</span>
+<span class="num">a3f2c1d</span> あ、これmainに乗ってる!
+<span class="num">9b8e4a2</span> 既にあるコミット
+$ <span class="cmd">git branch</span>
+* <span class="branch">main</span>            ← ここに乗ってる
+  <span class="branch">feature/x</span>     ← ここに移したい
+
+<span class="comment"># ① 正しいブランチへ移動</span>
+$ <span class="cmd">git switch</span> <span class="branch">feature/x</span>
+
+<span class="comment"># ② コミットを取り込む</span>
+$ <span class="cmd">git cherry-pick</span> <span class="num">a3f2c1d</span>
+
+<span class="comment"># ③ 元ブランチから消す</span>
+$ <span class="cmd">git switch</span> <span class="branch">main</span>
+$ <span class="cmd">git reset</span> <span class="flag">--hard</span> HEAD~1
+
+<span class="comment"># まだpush前なら ↑ で安全</span>
+<span class="comment"># push済みなら revert を使う(Q.03)</span></div>
+  </div>
+</div>
+
+<!-- ============ Q.06 ============ -->
+<div class="qa" id="q06">
+  <div class="qa-header">
+    <span class="qa-num">Q.06</span>
+    <h2 class="qa-q">reset --hard でコミット消した!何とかして!</h2>
+    <span class="qa-cat">REFLOG ⚠</span>
+  </div>
+  <div class="qa-body">
+    <div class="qa-answer">
+      <div class="answer-label">ANSWER</div>
+      <p class="intro">慌てるな。<b>90%以上のケースで救出可能</b>。Gitの最終救済策<code class="inline">git reflog</code>を使います。</p>
+      <div class="box">
+        <div class="box-title">救出の3ステップ</div>
+        <p><span class="step">①</span> <code class="inline">git reflog</code> で操作履歴を確認<br>
+        <span class="step">②</span> 戻したいコミットのハッシュをコピー<br>
+        <span class="step">③</span> <code class="inline">git reset --hard &lt;hash&gt;</code> で復活</p>
+      </div>
+      <div class="box">
+        <div class="box-title">reflogが救えるもの</div>
+        <p>◯ reset --hard で消した<br>
+        ◯ rebase で書き換えた<br>
+        ◯ branch -D で消した<br>
+        ◯ commit --amend の前の状態<br>
+        ✗ 未コミットの変更だけは救えない</p>
+      </div>
+      <div class="tip-inline">
+        <div class="t-title">保持期間 —</div>
+        <p>reflogは<b>デフォルト90日</b>残る。それまでなら冷静に対処可能。</p>
+      </div>
+    </div>
+    <div class="qa-code"><span class="comment"># === 救出の流れ ===</span>
+
+<span class="comment"># ① reflog で操作履歴を見る</span>
+$ <span class="cmd">git reflog</span>
+<span class="num">a3f2c1d</span> HEAD@{0}: reset: --hard HEAD~3
+<span class="num">9b8e4a2</span> HEAD@{1}: commit: feat: 大事な機能
+<span class="num">5d6f3a8</span> HEAD@{2}: commit: fix: 修正
+<span class="num">2c1b0e9</span> HEAD@{3}: commit: 序章
+                ↑ ここまで戻したい!
+
+<span class="comment"># ② 戻す</span>
+$ <span class="cmd">git reset</span> <span class="flag">--hard</span> <span class="num">9b8e4a2</span>
+
+HEAD is now at <span class="num">9b8e4a2</span> feat: 大事な機能
+
+<span class="comment"># 復活!!</span>
+
+<span class="comment"># === 別ブランチに保管する派 ===</span>
+
+$ <span class="cmd">git branch</span> recovered <span class="num">9b8e4a2</span>
+<span class="comment">  失ったコミットを新ブランチに保存</span>
+
+<span class="comment"># 後で確認してからmergeすれば安全</span>
+
+<span class="comment"># === 削除済みブランチの復活 ===</span>
+
+$ <span class="cmd">git reflog</span> <span class="flag">--all</span> | <span class="cmd">grep</span> <span class="str">"feature/x"</span>
+<span class="num">a3f2c1d</span> ... checkout: moving from feature/x
+
+$ <span class="cmd">git switch</span> <span class="flag">-c</span> <span class="branch">feature/x</span> <span class="num">a3f2c1d</span>
+
+<span class="comment"># ブランチ復元成功</span>
+
+<span class="comment"># === 時間指定でも探せる ===</span>
+
+$ <span class="cmd">git reflog</span> <span class="str">"HEAD@{1 hour ago}"</span>
+$ <span class="cmd">git reflog</span> <span class="str">"HEAD@{yesterday}"</span></div>
+  </div>
+</div>
+
+<!-- ============ Q.07 ============ -->
+<div class="qa" id="q07">
+  <div class="qa-header">
+    <span class="qa-num">Q.07</span>
+    <h2 class="qa-q">マージしたらコンフリクトで真っ赤!どうすればいい?</h2>
+    <span class="qa-cat">CONFLICT</span>
+  </div>
+  <div class="qa-body">
+    <div class="qa-answer">
+      <div class="answer-label">ANSWER</div>
+      <p class="intro">コンフリクトは<b>敵じゃなくGitからの助け要請</b>。手順は決まっています:</p>
+      <div class="box">
+        <div class="box-title">解消の5ステップ</div>
+        <p><span class="step">①</span> <code class="inline">git status</code> で衝突ファイル特定<br>
+        <span class="step">②</span> エディタで開く<br>
+        <span class="step">③</span> <code class="inline">&lt;&lt;&lt;</code> <code class="inline">===</code> <code class="inline">&gt;&gt;&gt;</code> マーカーを見つけて、正しい形に書き換え<br>
+        <span class="step">④</span> マーカー行も削除<br>
+        <span class="step">⑤</span> <code class="inline">git add</code> → <code class="inline">git commit</code></p>
+      </div>
+      <div class="box">
+        <div class="box-title">諦めて中止したい</div>
+        <p><code class="inline">git merge --abort</code> でマージ前の状態に戻る。</p>
+      </div>
+      <div class="tip-inline">
+        <div class="t-title">TIP —</div>
+        <p>VS Code等のエディタには<b>コンフリクト解消用UI</b>がある。「<b>Accept Current / Accept Incoming / Accept Both</b>」ボタンが出る。マウスで選ぶだけ。</p>
+      </div>
+    </div>
+    <div class="qa-code"><span class="comment"># --- マージしたらコンフリクト ---</span>
+$ <span class="cmd">git merge</span> <span class="branch">feature/x</span>
+Auto-merging src/app.js
+<span class="removed">CONFLICT</span> (content): Merge conflict in src/app.js
+Automatic merge failed; fix conflicts
+and then commit the result.
+
+<span class="comment"># ① どこが衝突したか確認</span>
+$ <span class="cmd">git status</span>
+Unmerged paths:
+        both modified: src/app.js
+
+<span class="comment"># ② ファイルを開く</span>
+function greet() {
+<span class="removed">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>
+  return "Hello, World";
+<span class="removed">=======</span>
+  return "Hi, World";
+<span class="removed">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/x</span>
+}
+
+<span class="comment"># ③ 正しい形に編集 (マーカーも消す)</span>
+function greet() {
+  return "Hello, World";   <span class="comment">// 採用</span>
+}
+
+<span class="comment"># ④ 解決を宣言</span>
+$ <span class="cmd">git add</span> src/app.js
+$ <span class="cmd">git commit</span>
+<span class="comment"># マージコミットメッセージは自動生成</span>
+
+<span class="comment"># --- 諦める ---</span>
+$ <span class="cmd">git merge</span> <span class="flag">--abort</span>
+<span class="comment"># マージ前の状態に戻る</span>
+
+<span class="comment"># --- 片方をまるごと採用 ---</span>
+$ <span class="cmd">git checkout</span> <span class="flag">--ours</span>   src/app.js
+$ <span class="cmd">git checkout</span> <span class="flag">--theirs</span> src/app.js
+
+<span class="comment"># rebase中なら</span>
+$ <span class="cmd">git rebase</span> <span class="flag">--continue</span>
+$ <span class="cmd">git rebase</span> <span class="flag">--abort</span></div>
+  </div>
+</div>
+
+<!-- ============ Q.08 ============ -->
+<div class="qa" id="q08">
+  <div class="qa-header">
+    <span class="qa-num">Q.08</span>
+    <h2 class="qa-q">git push したら拒否された!エラーがよく分からない</h2>
+    <span class="qa-cat">PUSH ERROR</span>
+  </div>
+  <div class="qa-body">
+    <div class="qa-answer">
+      <div class="answer-label">ANSWER</div>
+      <p class="intro">pushエラーは<b>4パターン</b>。エラーメッセージで切り分けます:</p>
+      <div class="box">
+        <div class="box-title">① non-fast-forward</div>
+        <p>リモートに新コミットあり → <code class="inline">git pull</code> してから再push</p>
+      </div>
+      <div class="box">
+        <div class="box-title">② Authentication failed</div>
+        <p>パスワード認証は廃止 → PAT または SSH鍵を使う(Vol.4)</p>
+      </div>
+      <div class="box">
+        <div class="box-title">③ src refspec does not match</div>
+        <p>そのブランチが存在しない、コミット未作成。<code class="inline">git log</code>と<code class="inline">git branch</code>で確認</p>
+      </div>
+      <div class="box">
+        <div class="box-title">④ Permission denied / GH006</div>
+        <p>書き込み権限がない、またはブランチ保護に弾かれている</p>
+      </div>
+      <div class="tip-inline">
+        <div class="t-title">鉄則 —</div>
+        <p>エラーメッセージの<b><code class="inline">hint:</code></b> から始まる行に解決策が書いてあることが多い。<b>まずそこを読む</b>。</p>
+      </div>
+    </div>
+    <div class="qa-code"><span class="comment"># === ① non-fast-forward ===</span>
+$ <span class="cmd">git push</span>
+! [rejected]   main -&gt; main (non-fast-forward)
+hint: Updates were rejected because the
+hint: remote contains work that you do not
+hint: have locally.
+
+<span class="comment"># → pull してから push</span>
+$ <span class="cmd">git pull</span>
+$ <span class="cmd">git push</span>
+
+<span class="comment"># === ② 認証エラー ===</span>
+remote: Support for password authentication
+was removed on August 13, 2021.
+fatal: Authentication failed
+
+<span class="comment"># → PAT or SSH鍵を使う (Vol.4)</span>
+
+<span class="comment"># === ③ refspec エラー ===</span>
+error: src refspec main does not match any
+
+<span class="comment"># 確認</span>
+$ <span class="cmd">git log</span>           <span class="comment"># コミットある?</span>
+fatal: your current branch ...
+<span class="comment"># → まだ1つもコミットしてない</span>
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"init"</span>
+$ <span class="cmd">git push</span> <span class="flag">-u</span> origin main
+
+<span class="comment"># === ④ 権限・保護エラー ===</span>
+remote: error: GH006: Protected branch update failed
+
+<span class="comment"># → ブランチ保護に弾かれている</span>
+<span class="comment">   PR経由でマージするのが正解</span>
+
+<span class="comment"># === 切り分けの定番 ===</span>
+$ <span class="cmd">git remote</span> <span class="flag">-v</span>      <span class="comment"># URL確認</span>
+$ <span class="cmd">git branch</span> <span class="flag">-vv</span>     <span class="comment"># 追跡確認</span>
+$ <span class="cmd">ssh</span> <span class="flag">-T</span> <span class="str">git@github.com</span> <span class="comment"># 接続確認</span></div>
+  </div>
+</div>
+
+<!-- ============ Q.09 ============ -->
+<div class="qa" id="q09">
+  <div class="qa-header">
+    <span class="qa-num">Q.09</span>
+    <h2 class="qa-q">「detached HEAD」って出てきた!怖い!</h2>
+    <span class="qa-cat">DETACHED HEAD</span>
+  </div>
+  <div class="qa-body">
+    <div class="qa-answer">
+      <div class="answer-label">ANSWER</div>
+      <p class="intro"><b>怖くない</b>。ただの「ブランチに紐づかない場所にいる」状態です。</p>
+      <div class="box">
+        <div class="box-title">発生する原因</div>
+        <p>ブランチ名でなく<b>コミットハッシュで直接checkout</b>すると発生。<br>
+        例: <code class="inline">git checkout a3f2c1d</code></p>
+      </div>
+      <div class="box">
+        <div class="box-title">解決法</div>
+        <p>① 何もせず帰る場合: <code class="inline">git switch &lt;ブランチ名&gt;</code><br>
+        ② この場所からブランチを切る場合: <code class="inline">git switch -c new-branch</code></p>
+      </div>
+      <div class="tip-inline">
+        <div class="t-title">POINT —</div>
+        <p>detached HEAD状態でコミットを作っても、ブランチで保護されていない<b>「迷子のコミット」</b>になります。Gitに自動回収されると消えるので、残したいなら<b>必ずブランチを切ること</b>。</p>
+      </div>
+    </div>
+    <div class="qa-code"><span class="comment"># --- 状況確認 ---</span>
+$ <span class="cmd">git status</span>
+HEAD detached at <span class="num">a3f2c1d</span>
+<span class="comment">    ↑ ブランチでなくハッシュを指している</span>
+nothing to commit, working tree clean
+
+<span class="comment"># --- 抜け出す ---</span>
+
+<span class="comment"># ① そのまま帰る (何も保存しない)</span>
+$ <span class="cmd">git switch</span> <span class="branch">main</span>
+Previous HEAD position was <span class="num">a3f2c1d</span> ...
+Switched to branch <span class="str">'main'</span>
+
+<span class="comment"># ② この場所からブランチを作る</span>
+$ <span class="cmd">git switch</span> <span class="flag">-c</span> <span class="branch">my-investigation</span>
+Switched to a new branch <span class="str">'my-investigation'</span>
+
+<span class="comment"># --- detached HEADで誤ってコミット ---</span>
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"何かした"</span>
+[detached HEAD <span class="num">b7e5a92</span>] 何かした
+
+<span class="comment"># 慌ててブランチ化!</span>
+$ <span class="cmd">git switch</span> <span class="flag">-c</span> <span class="branch">save-my-work</span>
+<span class="comment"># これで安全</span>
+
+<span class="comment"># --- うっかり消えても reflog で救える ---</span>
+$ <span class="cmd">git reflog</span>
+<span class="num">b7e5a92</span> HEAD@{0}: commit: 何かした
+<span class="num">a3f2c1d</span> HEAD@{1}: checkout: ...
+
+$ <span class="cmd">git switch</span> <span class="flag">-c</span> recovered <span class="num">b7e5a92</span></div>
+  </div>
+</div>
+
+<!-- ============ Q.10 ============ -->
+<div class="qa" id="q10">
+  <div class="qa-header">
+    <span class="qa-num">Q.10</span>
+    <h2 class="qa-q">リモートとローカルが滅茶苦茶で、もう諦めたい…</h2>
+    <span class="qa-cat">RESET TO REMOTE</span>
+  </div>
+  <div class="qa-body">
+    <div class="qa-answer">
+      <div class="answer-label">ANSWER</div>
+      <p class="intro"><b>「もうリモートを正として、ローカルをリモートに完全一致させる」</b>のが最強の脱出技。</p>
+      <div class="box">
+        <div class="box-title">最終手段の手順</div>
+        <p><span class="step">①</span> <code class="inline">git fetch origin</code><br>
+        <span class="step">②</span> <code class="inline">git reset --hard origin/main</code>(リモート完全一致)<br>
+        <span class="step">③</span> <code class="inline">git clean -fd</code>(余計なファイル削除)</p>
+      </div>
+      <div class="box">
+        <div class="box-title">それでもダメな時の最終奥義</div>
+        <p>別フォルダにクローンし直し: <code class="inline">cd .. && git clone ...</code>。<br>
+        手元の作業はバックアップしてから。</p>
+      </div>
+      <div class="tip-inline">
+        <div class="t-title">最後に —</div>
+        <p>Gitは「<b>壊れたら再クローンすれば良い</b>」が究極の安心感。リポジトリの本体はリモートにあるので、ローカルは何度でも作り直せます。<b>潔く諦めるのも技術</b>。</p>
+      </div>
+    </div>
+    <div class="qa-code"><span class="comment"># === 強制的にリモートに揃える ===</span>
+
+<span class="comment"># ① 最新を取得</span>
+$ <span class="cmd">git fetch</span> origin
+
+<span class="comment"># ② ローカルmainをリモートに完全一致</span>
+$ <span class="cmd">git switch</span> <span class="branch">main</span>
+$ <span class="cmd">git reset</span> <span class="flag">--hard</span> origin/main
+
+<span class="comment"># ③ 追跡されてないファイルも消す</span>
+$ <span class="cmd">git clean</span> <span class="flag">-fd</span>
+
+<span class="comment"># これでクリーンスタート!</span>
+
+<span class="comment"># === 残したい変更がある場合 ===</span>
+
+<span class="comment"># まず退避してから</span>
+$ <span class="cmd">git stash</span> push <span class="flag">-u</span> <span class="flag">-m</span> <span class="str">"念のため退避"</span>
+
+<span class="comment"># または別ブランチで保管</span>
+$ <span class="cmd">git switch</span> <span class="flag">-c</span> backup-current
+$ <span class="cmd">git add</span> <span class="flag">-A</span>
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"WIP backup"</span>
+$ <span class="cmd">git switch</span> <span class="branch">main</span>
+$ <span class="cmd">git reset</span> <span class="flag">--hard</span> origin/main
+
+<span class="comment"># === 最終奥義: 再クローン ===</span>
+
+$ <span class="cmd">cd</span> ..
+$ <span class="cmd">mv</span> my-project my-project-broken
+$ <span class="cmd">git clone</span> &lt;url&gt; my-project
+$ <span class="cmd">cd</span> my-project
+
+<span class="comment"># 古いフォルダから必要なものだけ</span>
+<span class="comment"># 手動コピー → 落ち着いて作業</span>
+
+<span class="comment"># === 大事なこと ===</span>
+
+<span class="comment"># Gitは何度でもやり直せる。</span>
+<span class="comment"># 焦るな、落ち着いて、まずは status。</span></div>
+  </div>
+</div>
+
+</main>
+
+<!-- ============ Ending ============ -->
+<div class="ending">
+  <h2>Git/GitHub編 全9巻 完結</h2>
+  <div class="subtitle-end">★ SERIES — COMPLETE ★</div>
+
+  <div class="message">
+    全9巻、お疲れ様でした。<br><br>
+    バージョン管理の基本から始まり、ブランチ・リモート・履歴操作、
+    そしてGitHubでのチーム開発とCI/CD自動化まで——
+    エンジニアとして必須の道具を、<b>一通り手に入れた</b>はずです。<br><br>
+    Gitは<b>「最初の山が高い」</b>けれど、一度越えれば一生使える武器になります。
+    最初は呪文に見えたコマンドも、今では<b>「何が起きているか」</b>がきちんと
+    イメージできるようになっているはず。<br><br>
+    これからもエラーに遭遇する日はあるでしょう。
+    そんな時はぜひ、この第9巻を辞書のように開いてください。
+    たいていの<b>「やってしまった」</b>は、ここに救出法があります。<br><br>
+    <b>困ったらstatus、迷ったらreflog、最後はクローンし直し</b>。<br>
+    この3つさえ覚えていれば、もう何が起きても大丈夫です。
+  </div>
+
+  <div class="series-list">
+    <div class="s-title">⎇ SERIES MAP</div>
+    <div class="s-item"><span class="s-num">Vol.1</span><span class="s-name">入門・全体像編</span></div>
+    <div class="s-item"><span class="s-num">Vol.2</span><span class="s-name">基本コマンド編</span></div>
+    <div class="s-item"><span class="s-num">Vol.3</span><span class="s-name">ブランチとマージ編</span></div>
+    <div class="s-item"><span class="s-num">Vol.4</span><span class="s-name">リモートリポジトリ編</span></div>
+    <div class="s-item"><span class="s-num">Vol.5</span><span class="s-name">履歴操作とコンフリクト編</span></div>
+    <div class="s-item"><span class="s-num">Vol.6</span><span class="s-name">GitHub実践編</span></div>
+    <div class="s-item"><span class="s-num">Vol.7</span><span class="s-name">GitHub Actions編</span></div>
+    <div class="s-item"><span class="s-num">Vol.8</span><span class="s-name">チーム運用編</span></div>
+    <div class="s-item"><span class="s-num">Vol.9</span><span class="s-name">困った時のGit編 ← 今ここ</span></div>
+  </div>
+
+  <div class="thanks">— ありがとうございました —</div>
+</div>
+
+<footer class="page-footer">
+  <div>GIT / GITHUB REFERENCE — VOL.09 / FINAL</div>
+  <div class="right">TROUBLESHOOTING Q&amp;A / 困った時のGit編</div>
+</footer>
+
+</body>
+</html>

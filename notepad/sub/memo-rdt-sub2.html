@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕別冊S2 設計原則とアーキテクチャ理論</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a3540;
+  --paper:#ece8de;
+  --paper-2:#d8d4c6;
+  --accent:#6a8590;
+  --accent-2:#8aa0a8;
+  --accent-3:#a07050;
+  --muted:#707a82;
+  --line:#c2c0b4;
+  --code-bg:#252a32;
+  --code-text:#e6e2d6;
+  --panel-bg:#f3eee2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✧";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.18;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.tip{background:rgba(106,133,144,0.10);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.S2</span>
+    <span class="kind-tag">別冊 ── SUB</span>
+    <span class="rdt-tag">DESIGN THEORY</span>
+  </div>
+  <h1>設計原則とアーキテクチャ理論<br>SOLIDから設計判断まで</h1>
+  <div class="subtitle">SUB.02 ── DESIGN PRINCIPLES &amp; ARCHITECTURE</div>
+  <p class="lead">本編Vol.2 で<b>3層構造とSRP</b>を実践しました。別冊S2では、その背後にある<b>設計原則の理論</b>を深掘りします。<b>SOLID原則</b>、<b>凝集度と結合度</b>、<b>過剰設計の罠</b>、<b>トレードオフの判断軸</b>。<b>「なぜそう設計するか」を語れるエンジニア</b>になるための知識を、メモ帳アプリの具体例とともに身につけます。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 別冊S2で腑に落とす3つの問い</div>
+    <p>① SOLID の<b>SRPとOCP</b>はメモ帳アプリでどう効くか／② <b>凝集度・結合度</b>を高める/弱めるとは具体的に何か／③ <b>過剰設計</b>を避けながら拡張に備えるバランスとは — この3問に自分の言葉で答えられたらS2卒業です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 別冊S2のミッション</a></li>
+    <li><a href="#s02">02 設計の目的は3つ</a></li>
+    <li><a href="#s03">03 SRP — 単一責任の原則</a></li>
+    <li><a href="#s04">04 OCP — 開放閉鎖の原則</a></li>
+    <li><a href="#s05">05 凝集度と結合度</a></li>
+    <li><a href="#s06">06 KISS・YAGNI・過剰設計</a></li>
+    <li><a href="#s07">07 レイヤードアーキテクチャ</a></li>
+    <li><a href="#s08">08 トレードオフの判断軸</a></li>
+    <li><a href="#s09">09 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>別冊S2のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">別冊S2は<b>「設計原則を理論として理解する」</b>回。本編Vol.2 で「SRPで分けた」「DIで注入した」を体験しました。でも<b>「なぜそれが良いのか」</b>を理論で理解すると、未知の場面でも判断できます。<b>設計はセンスではなく、原則の積み重ね</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">設計を学ぶと何が変わるか</span><span class="tag-desc">壊れないコードへ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 設計の有無で起きる差</div>
+        <p>フロー文書の名言：<b>「設計を飛ばして書き始めたコードは、最初の1週間は速いが、1か月後から壊れ始める」</b>。</p>
+        <ul>
+          <li><b>設計なし</b>：書くのは速い → 変更で破綻 → 全体作り直し</li>
+          <li><b>設計あり</b>：最初は少し慎重 → 変更に強い → 長く使える</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 設計を見直すサイン（症状）</div>
+        <ul>
+          <li><b>新機能の追加に毎回たくさんの箇所を触る</b>（結合度が高い）</li>
+          <li><b>同じバグが繰り返し出る</b>（責務が分かれていない）</li>
+          <li><b>どこに何のコードがあるか分からない</b>（凝集度が低い）</li>
+        </ul>
+        <p style="margin-top:8px">これらの症状が出たら<b>設計に立ち戻る</b>サインです。</p>
+      </div>
+      <div class="code"><span class="code-head">// 別冊S2のゴール</span>
+<span class="comment">// このS2を読み終えると、こう言える：</span>
+
+✓ <span class="str">"SRP違反は「説明に『と』が入る」で</span>
+   <span class="str"> 見抜ける"</span>
+
+✓ <span class="str">"OCPは「拡張は足すだけ、既存は</span>
+   <span class="str"> 触らない」"</span>
+
+✓ <span class="str">"凝集度を高く、結合度を低く、が</span>
+   <span class="str"> あらゆる設計の合言葉"</span>
+
+✓ <span class="str">"YAGNI：必要になるまで作らない。</span>
+   <span class="str"> 『将来のため』の8割は使われない"</span>
+
+✓ <span class="str">"迷ったら『戻せる選択肢』を選ぶ"</span>
+
+
+<span class="comment">// → 設計を「言葉」で語れるようになる ★★★</span>
+<span class="comment">// → コードレビューで的確な指摘ができる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 設計原則は「禁止リスト」ではなく「判断の軸」</div>
+    <p>SOLIDなどの原則を<b>「絶対守るべき掟」</b>と捉えると、過剰設計に走ります。原則は<b>「迷ったときの判断の軸」</b>。<b>状況に応じて適用度を変える</b>もの。メモ帳アプリのような小規模では<b>原則を緩く、要点だけ守る</b>のが正解です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>設計の目的は3つ</h2><span class="en">3 GOALS OF DESIGN</span></div>
+  <p class="pattern-desc">そもそも<b>「なぜ設計するのか」</b>。フロー文書が挙げる3つの目的——<b>変更容易性・理解容易性・正しさの保証</b>。「コードを速く書くため」ではありません。この目的を理解すると、設計判断がブレなくなります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">設計の3つの目的</span><span class="tag-desc">速く書くためではない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">GOAL 1</span>
+            <div class="name">変更容易性</div>
+            <div class="desc"><b>後から直しやすい</b>。要求は必ず変わる（別冊S1）。変更に強い構造を作る。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">GOAL 2</span>
+            <div class="name">理解容易性</div>
+            <div class="desc"><b>他人と未来の自分が読める</b>。半年後の自分が5分で理解できるか。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">GOAL 3</span>
+            <div class="name">正しさの保証</div>
+            <div class="desc"><b>意図した通りに動く</b>。テストできる構造＝正しさを守れる構造。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// 3目標とテストの関係</div>
+        <p>注目すべきは<b>GOAL 3（正しさ）とテストの関係</b>。テストできる構造（DI・SRP）は、そのまま<b>変更容易性</b>にも貢献する。<b>設計品質とテスト容易性は同じもの</b>を別の角度から見ているのです。</p>
+      </div>
+      <div class="code"><span class="code-head">// 3目標がメモ帳アプリでどう効くか</span>
+<span class="comment">// ─── 変更容易性 ───</span>
+<span class="comment">// 「保存先を localStorage から DB に</span>
+<span class="comment">//  変えたい」→ Mapper だけ差し替え</span>
+<span class="comment">// → Controller/Service は無傷 ★</span>
+
+
+<span class="comment">// ─── 理解容易性 ───</span>
+<span class="comment">// MemoController を見れば</span>
+<span class="comment">// 「URLと画面の対応」が分かる</span>
+<span class="comment">// MemoService を見れば</span>
+<span class="comment">// 「業務ロジック」が分かる</span>
+<span class="comment">// → 探す場所が明確 ★</span>
+
+
+<span class="comment">// ─── 正しさの保証 ───</span>
+<span class="comment">// Mapper をモック化して</span>
+<span class="comment">// Service のロジックを単体テスト</span>
+<span class="comment">// → 「日時が必ずセットされる」を保証 ★</span>
+
+
+<span class="comment">// ─── 速く書くことは目的ではない ───</span>
+<span class="comment">// むしろ最初は少し遅くなる</span>
+<span class="comment">// でも「変更・理解・正しさ」を得る</span>
+<span class="comment">// → トータルでは圧倒的に速い ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「往復運動」が正しい設計プロセス</div>
+    <p>フロー文書の重要な指摘：<b>設計は一直線ではなく往復運動</b>。実装で問題に気づいたら設計に戻る、設計で問題に気づいたら要求に戻る。<b>「もう決まったから」と無視すると辻褄合わせの汚いコード</b>になる。<b>早く戻るほど傷は浅い</b>。これは別冊S1の「1:10:100」とも繋がります。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>SRP — 単一責任の原則</h2><span class="en">SINGLE RESPONSIBILITY</span></div>
+  <p class="pattern-desc">SOLID の<b>S</b>。<b>「クラスを変更する理由は1つだけ」</b>。本編Vol.2 で<b>「説明に『と』が入ったら分割」</b>と実践しました。ここでは、なぜSRPが変更容易性を生むかを理論で理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">SRPの本質と効果</span><span class="tag-desc">変更理由を1つに</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 「変更理由」で責務を見る</div>
+        <p>SRPの「責任」とは<b>「変更を引き起こす理由」</b>。1つのクラスが複数の理由で変更されると、ある変更が別の機能を壊します。</p>
+
+        <div class="panel-head" style="margin-top:18px">// メモ帳の MemoManager（悪い例）</div>
+        <p>もし <code>MemoManager</code> が「保存・画面更新・検索」を全部やると：</p>
+        <ul>
+          <li><b>DB変更</b>でこのクラスを触る</li>
+          <li><b>画面変更</b>でも触る</li>
+          <li><b>検索仕様変更</b>でも触る</li>
+        </ul>
+        <p style="margin-top:8px">→ <b>3つの理由で変更される</b>。1つの修正が他を壊すリスク。</p>
+      </div>
+      <div class="code"><span class="code-head">// SRP違反 → 分割</span>
+<span class="comment">// ─── 悪い例：全部入り ───</span>
+<span class="kw">class</span> <span class="type">MemoManager</span> {
+  <span class="kw">void</span> <span class="fn">save</span>(Memo m) { ... }
+       <span class="comment">// DB変更で触る</span>
+  <span class="kw">void</span> <span class="fn">updateScreen</span>() { ... }
+       <span class="comment">// 画面変更で触る</span>
+  <span class="type">List</span> <span class="fn">search</span>(String k) { ... }
+       <span class="comment">// 検索変更で触る</span>
+}
+<span class="comment">// → 変更理由が3つ = SRP違反 ★</span>
+
+
+<span class="comment">// ─── 良い例：責務で分割 ───</span>
+<span class="kw">class</span> <span class="type">MemoMapper</span> {
+  <span class="kw">void</span> <span class="fn">insert</span>(Memo m) { ... }
+}      <span class="comment">// 変更理由：DB</span>
+
+<span class="kw">class</span> <span class="type">MemoService</span> {
+  <span class="kw">void</span> <span class="fn">create</span>(Memo m) { ... }
+}      <span class="comment">// 変更理由：業務ロジック</span>
+
+<span class="kw">class</span> <span class="type">MemoController</span> {
+  <span class="type">String</span> <span class="fn">list</span>(Model m) { ... }
+}      <span class="comment">// 変更理由：画面</span>
+
+<span class="comment">// → 各クラス変更理由は1つ ★★★</span>
+
+
+<span class="comment">// ─── 分割のサイン ───</span>
+<span class="comment">// クラスの説明文に「と」「かつ」が入る</span>
+<span class="comment">// → 「保存し、かつ画面更新する」</span>
+<span class="comment">// → 即・分割を検討</span>
+
+<span class="comment">// クラス名に Manager/Util/Helper が付く</span>
+<span class="comment">// → 責務が曖昧なサイン</span>
+<span class="comment">// → 「何をするか」を具体的な名前に</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Manager / Util / Helper は黄信号</div>
+    <p>クラス名に<b>Manager・Util・Helper</b>が付いたら<b>「責務が曖昧」</b>のサイン。これらの名前は「<b>何でも入れていい箱</b>」になりがち。<code>MemoManager</code> より <code>MemoService（業務）/MemoMapper（保存）</code> のように<b>「何をするか」を具体名で</b>。名前が設計を導きます。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>OCP — 開放閉鎖の原則</h2><span class="en">OPEN-CLOSED</span></div>
+  <p class="pattern-desc">SOLID の<b>O</b>。<b>「拡張に開き、修正に閉じる」</b>＝<b>機能追加は足すだけ、既存コードは触らない</b>。メモ帳アプリで「保存先を切り替えたい」場面を例に、OCPの実践を見ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">OCPとインターフェース</span><span class="tag-desc">拡張は足すだけ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// OCPの実現手段＝抽象化</div>
+        <p>OCPは<b>インターフェース（抽象）</b>で実現します。具体的な実装を直接使わず、<b>「契約（インターフェース）」に依存</b>する。</p>
+
+        <div class="panel-head" style="margin-top:18px">// メモ帳での例</div>
+        <p>フロー文書の例：<b>保存先を localStorage / IndexedDB で切り替え</b>。Spring版なら<b>MySQL / 別DB</b>の切り替え。</p>
+        <ul>
+          <li><b>MemoRepository インターフェース</b>を定義</li>
+          <li>実装を <b>MyBatis版</b>、<b>JPA版</b> など差し替え可能に</li>
+          <li>Service は<b>インターフェースだけ知る</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// ただし3回ルール</div>
+        <p>フロー文書の警告：<b>OCPのための抽象化も、必要になってから</b>。最初から全部インターフェース化は過剰設計。</p>
+      </div>
+      <div class="code"><span class="code-head">// OCP：保存先を差し替え可能に</span>
+<span class="comment">// ─── 抽象（インターフェース）───</span>
+<span class="kw">public interface</span> <span class="type">MemoRepository</span> {
+    <span class="type">List</span>&lt;<span class="type">Memo</span>&gt; <span class="fn">findAll</span>();
+    <span class="kw">void</span> <span class="fn">save</span>(<span class="type">Memo</span> m);
+}
+
+
+<span class="comment">// ─── 実装A：MyBatis版 ───</span>
+<span class="ann">@Repository</span>
+<span class="kw">public class</span> <span class="type">MyBatisMemoRepository</span>
+    <span class="kw">implements</span> <span class="type">MemoRepository</span> {
+    <span class="kw">private final</span> <span class="type">MemoMapper</span> mapper;
+    <span class="comment">// MyBatisで実装</span>
+}
+
+
+<span class="comment">// ─── 実装B：将来のJPA版 ───</span>
+<span class="comment">// @Repository</span>
+<span class="comment">// class JpaMemoRepository</span>
+<span class="comment">//     implements MemoRepository { ... }</span>
+<span class="comment">// → 足すだけ。既存は触らない ★★★</span>
+
+
+<span class="comment">// ─── Service は抽象に依存 ───</span>
+<span class="ann">@Service</span>
+<span class="kw">public class</span> <span class="type">MemoService</span> {
+    <span class="kw">private final</span> <span class="type">MemoRepository</span> repo;
+    <span class="comment">// 具体実装を知らない</span>
+    <span class="comment">// → 保存先が変わっても無傷 ★★★</span>
+}
+
+
+<span class="comment">// ─── ただし注意（YAGNI）───</span>
+<span class="comment">// 本シリーズ本編では Mapper を直接使う</span>
+<span class="comment">// （Repository層は入れていない）</span>
+<span class="comment">// 理由：保存先を変える予定がない</span>
+<span class="comment">// → 「必要になってから」抽象化する ★</span>
+<span class="comment">// → これが OCP と YAGNI のバランス</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — OCPと過剰設計は紙一重</div>
+    <p>OCPは強力ですが、<b>「あらゆる箇所をインターフェースで抽象化」すると過剰設計</b>。本シリーズ本編が <code>Mapper</code> を直接使い、<code>Repository</code> 層を入れていないのは<b>「保存先を変える予定がないから」</b>。OCPは<b>「変わりそうな箇所」だけに適用</b>する。<b>変化を予測して、変わる所だけ柔らかく</b>が極意です。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>凝集度と結合度</h2><span class="en">COHESION &amp; COUPLING</span></div>
+  <p class="pattern-desc">フロー文書が<b>「あらゆる設計の合言葉」</b>と呼ぶ<b>「高凝集・低結合」</b>。<b>凝集度＝関連する処理がまとまっている度</b>、<b>結合度＝モジュール間の依存の強さ</b>。この2つを意識すると設計が一段上がります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">凝集度を高く・結合度を低く</span><span class="tag-desc">設計の合言葉</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 凝集度（Cohesion）</div>
+        <p><b>関連する処理は1つにまとめる</b>。メモの操作はメモ関連のクラスに集約。バラバラに散らばっていると<b>「どこに何があるか分からない」</b>（理解容易性の低下）。</p>
+        <ul>
+          <li><b>高凝集</b>：MemoService にメモのロジックが集まっている</li>
+          <li><b>低凝集</b>：メモのロジックがあちこちに散在</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 結合度（Coupling）</div>
+        <p><b>モジュール間の依存を弱く</b>。依存が強いと、片方の変更がもう片方に波及する。</p>
+        <ul>
+          <li><b>低結合</b>：引数で渡す（依存が明示的・弱い）</li>
+          <li><b>高結合</b>：グローバル変数共有（依存が暗黙・強い）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 結合度の強弱を比較</span>
+<span class="comment">// ─── 高結合（悪い）───</span>
+<span class="kw">class</span> <span class="type">MemoService</span> {
+  <span class="kw">void</span> <span class="fn">create</span>(Memo m) {
+    <span class="comment">// グローバルな状態を直接触る</span>
+    <span class="type">GlobalState</span>.currentUser...;
+    <span class="type">GlobalDB</span>.connection...;
+    <span class="comment">// → どこから何に依存するか不明 ★</span>
+    <span class="comment">// → テストでモック化できない</span>
+  }
+}
+
+
+<span class="comment">// ─── 低結合（良い）───</span>
+<span class="ann">@Service</span>
+<span class="ann">@RequiredArgsConstructor</span>
+<span class="kw">class</span> <span class="type">MemoService</span> {
+  <span class="comment">// 依存を「引数（コンストラクタ）」で受け取る</span>
+  <span class="kw">private final</span> <span class="type">MemoMapper</span> mapper;
+
+  <span class="kw">void</span> <span class="fn">create</span>(Memo m) {
+    mapper.<span class="fn">insert</span>(m);
+    <span class="comment">// → 依存が明示的・弱い ★★★</span>
+    <span class="comment">// → テストでモック差し替え可</span>
+  }
+}
+
+
+<span class="comment">// ─── DI が低結合を実現する ───</span>
+<span class="comment">// @RequiredArgsConstructor =</span>
+<span class="comment">// 依存性注入（DI）</span>
+<span class="comment">// → 「外から依存を渡す」</span>
+<span class="comment">// → 結合度が下がる</span>
+<span class="comment">// → テスト容易性が上がる ★★★</span>
+
+<span class="comment">// 本編Vol.2 でやった「DIでモック化」は</span>
+<span class="comment">// この「低結合」の恩恵だった</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">3層構造は凝集度・結合度の実装</span><span class="tag-desc">理論が形になる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <table class="compare-tbl">
+          <thead><tr><th>層</th><th>凝集（集めるもの）</th></tr></thead>
+          <tbody>
+            <tr><td>Controller</td><td>HTTP関連の処理</td></tr>
+            <tr><td>Service</td><td>業務ロジック</td></tr>
+            <tr><td>Mapper</td><td>SQL・データアクセス</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>各層が高凝集</b>（関連処理が集まる）。<b>層間は低結合</b>（DIで疎結合・上から下の依存のみ）。<b>レイヤード構造は高凝集・低結合の実装そのもの</b>です。</p>
+      </div>
+      <div class="code"><span class="code-head">// 高凝集・低結合の効果</span>
+<span class="comment">// ─── 高凝集の効果 ───</span>
+<span class="comment">// 「メモの保存を直したい」</span>
+<span class="comment">// → MemoMapper を見れば全部ある</span>
+<span class="comment">// → 探さなくていい（理解容易性）★</span>
+
+
+<span class="comment">// ─── 低結合の効果 ───</span>
+<span class="comment">// 「DB を MySQL から変えたい」</span>
+<span class="comment">// → Mapper だけ差し替え</span>
+<span class="comment">// → Service/Controller は無傷</span>
+<span class="comment">// → 変更が波及しない（変更容易性）★</span>
+
+
+<span class="comment">// ─── 逆（低凝集・高結合）の地獄 ───</span>
+<span class="comment">// 低凝集：メモのロジックが</span>
+<span class="comment">//   Controller/Service/Util に散在</span>
+<span class="comment">//   → 1つの修正で3箇所探す</span>
+<span class="comment">// 高結合：全部が密に絡む</span>
+<span class="comment">//   → 1つ変えると全部壊れる</span>
+<span class="comment">// → これが「スパゲッティコード」★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — DRYを意識しすぎない</div>
+    <p>フロー文書の重要な但し書き：<b>DRY（繰り返すな）を意識しすぎない</b>。<b>「形が似てるだけ」で共通化しない</b>。共通化するのは<b>「変更理由が同じとき」だけ</b>。たまたま似たコードを無理に共通化すると、片方だけ変えたい時に困ります。<b>偶然の重複と本質的な重複を見分ける</b>のが大事です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>KISS・YAGNI・過剰設計</h2><span class="en">KISS / YAGNI / OVER-ENGINEERING</span></div>
+  <p class="pattern-desc">設計で<b>最も陥りやすい罠が「過剰設計」</b>。「将来のため」「拡張性のために」が出たら立ち止まる。<b>KISS（シンプルに）</b>と<b>YAGNI（必要になるまで作るな）</b>が歯止めです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">過剰設計を防ぐ2原則</span><span class="tag-desc">「将来のため」は要注意</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">KISS</span>
+            <div class="name">Keep It Simple</div>
+            <div class="desc"><b>シンプルに保て</b>。賢く見せようとして複雑にするな。読めるコードが良いコード。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">YAGNI</span>
+            <div class="name">You Aren't Gonna Need It</div>
+            <div class="desc"><b>必要になるまで作るな</b>。「将来のため」の8割は使われない。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// 過剰設計の典型例</div>
+        <ul>
+          <li>使わないインターフェース（実装が1つしかないのに抽象化）</li>
+          <li>使わない設定の柔軟性（誰も変えない設定を外部化）</li>
+          <li>「将来複数DBになるかも」で全部Repository化</li>
+          <li>メモ帳にクリーンアーキテクチャ（規模に合わない）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 3回ルール</div>
+        <p>抽象化・共通化は<b>「同じ問題が3回現れてから」</b>。1回目はベタ書き、2回目は我慢、3回目で抽出。</p>
+      </div>
+      <div class="code"><span class="code-head">// 過剰設計 vs 適切な設計</span>
+<span class="comment">// ─── 過剰設計（メモ帳に） ───</span>
+<span class="comment">// 「将来に備えて」全部抽象化</span>
+MemoRepositoryInterface
+MemoRepositoryFactory
+AbstractMemoRepository
+MemoRepositoryStrategy
+MemoRepositoryProxy
+<span class="comment">// → メモ1種類しかないのに</span>
+<span class="comment">//   5階層の抽象化 ★</span>
+<span class="comment">// → 読めない・理解できない</span>
+<span class="comment">// → YAGNI違反</span>
+
+
+<span class="comment">// ─── 適切（本シリーズ）───</span>
+<span class="type">MemoMapper</span>          <span class="comment">// インターフェース</span>
+<span class="type">MemoMapper.xml</span>      <span class="comment">// SQL</span>
+<span class="comment">// → これで十分 ★★★</span>
+<span class="comment">// → シンプル・読める・テストできる</span>
+
+
+<span class="comment">// ─── 規模に合った構造を選ぶ ───</span>
+規模          推奨アーキテクチャ
+数画面・短命     シンプルMVC
+小〜中規模      <span class="kw">レイヤード</span> ← メモ帳はここ
+長期・複雑      レイヤード+DDD/クリーンアーキ
+
+<span class="comment">// メモ帳にクリーンアーキは過剰 ★★★</span>
+
+
+<span class="comment">// ─── マジックナンバーには名前を ───</span>
+<span class="comment">// KISS だが「定数化」はする</span>
+<span class="ann">悪:</span> if (title.length() > 200)
+<span class="ann">良:</span> static final int MAX_TITLE = 200;
+       if (title.length() > MAX_TITLE)</div>
+    </div>
+  </div>
+
+  <div class="ngok">
+    <div class="ng">
+      <div class="lb">NG — 「将来のため」の作り込み</div>
+      <p>「いつか複数DB対応するかも」「拡張性のために」で<b>使わない抽象化を大量に</b>。読めない・テストしにくい・誰も使わない。<b>YAGNI違反</b>の典型。</p>
+    </div>
+    <div class="ok">
+      <div class="lb">OK — 必要十分のシンプルさ</div>
+      <p>今の要求を<b>シンプルに満たす</b>。拡張が必要になったら<b>その時に</b>足す（OCPで足しやすくはしておく）。<b>KISS + YAGNI</b>。</p>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「測定してから最適化する」</div>
+    <p>フロー文書の判断のコツ：<b>推測で重い仕組みを入れない</b>。「遅くなりそうだからキャッシュを」ではなく<b>「測って遅かったらキャッシュを」</b>。本シリーズが localStorage ではなく素直に MySQL を使い、最初から FULLTEXT INDEX を入れないのも同じ思想。<b>早すぎる最適化は諸悪の根源</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>レイヤードアーキテクチャ</h2><span class="en">LAYERED ARCHITECTURE</span></div>
+  <p class="pattern-desc">本シリーズが採用する<b>レイヤード（層を分ける）アーキテクチャ</b>を、理論として整理します。<b>なぜ層を分けるか、依存方向の鉄則、フォルダ構成の意味</b>。Spring の3層がこれの実装です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">層を分ける意味と鉄則</span><span class="tag-desc">依存は上から下へ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ層を分けるか</div>
+        <p>各層が<b>「1つの関心」</b>に集中することで、高凝集・低結合が自然に実現します。</p>
+        <ul>
+          <li><b>Controller層</b>：画面・入力受付・表示</li>
+          <li><b>Service層</b>：業務ロジック</li>
+          <li><b>Mapper層</b>：保存・読み込み</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 鉄則：依存は上から下へ</div>
+        <p><b>下の層が上の層を知ってはいけない</b>。Mapper が Controller を呼ぶのは禁止。これを破ると<b>循環依存</b>が生まれ、すぐ破綻します。</p>
+
+        <div class="panel-head" style="margin-top:18px">// フォルダ構成は設計そのもの</div>
+        <p>フォルダを見ただけで<b>「何をするアプリか」</b>が分かるのが理想。</p>
+      </div>
+      <div class="code"><span class="code-head">// レイヤードの依存方向</span>
+<span class="comment">// ─── 正しい依存（上から下）───</span>
+[Controller層]  画面・HTTP
+      ↓ 呼ぶ（OK）
+[Service層]     業務ロジック
+      ↓ 呼ぶ（OK）
+[Mapper層]      DB
+
+<span class="comment">// ─── 禁止される依存 ───</span>
+[Mapper層]
+      ↓ 呼ぶ（NG！）
+[Controller層]
+<span class="comment">// → 下が上を知る = 循環の元 ★★★</span>
+
+
+<span class="comment">// ─── フォルダ構成（設計の表現）───</span>
+src/main/java/com/example/memo/
+  ├ controller/   <span class="comment">// 画面・HTTP</span>
+  │   ├ MemoController
+  │   └ CategoryController
+  ├ service/      <span class="comment">// 業務ロジック</span>
+  │   ├ MemoService
+  │   └ CategoryService
+  ├ mapper/       <span class="comment">// DB</span>
+  │   ├ MemoMapper
+  │   └ CategoryMapper
+  └ entity/       <span class="comment">// データ構造</span>
+      ├ Memo
+      └ Category
+
+<span class="comment">// → フォルダ = 層 = 関心の分離</span>
+<span class="comment">// → 見ただけで構造が分かる ★★★</span>
+
+
+<span class="comment">// ─── フロー文書の翻訳 ───</span>
+<span class="comment">// 原典：ui/ domain/ storage/ utils/</span>
+<span class="comment">// Spring：controller/ service/</span>
+<span class="comment">//         mapper/ entity/</span>
+<span class="comment">// → 思想は同じ「関心の分離」</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 層をまたぐ密結合が最大の敵</div>
+    <p>フロー文書のレビュー観点：<b>「データ層がUIを直接触っていないか」</b>。Mapper の中で画面更新を呼ぶ、Service が HTTP の詳細を知る——こういう<b>層をまたいだ密結合</b>が一番危険。<b>各層は自分の関心だけ</b>。Controller は HTTP、Service は業務、Mapper は SQL。<b>越境させない</b>のが鉄則です。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>トレードオフの判断軸</h2><span class="en">TRADE-OFFS</span></div>
+  <p class="pattern-desc">設計には<b>「絶対の正解」がない</b>場面が多い。<b>厳密さ vs 柔軟性</b>、<b>読み速さ vs 書き速さ</b>。フロー文書が示す<b>判断軸</b>を持っておくと、迷ったときにブレません。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">4つのトレードオフ軸</span><span class="tag-desc">迷ったときの判断材料</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <table class="compare-tbl">
+          <thead><tr><th>トレードオフ</th><th>判断のヒント</th></tr></thead>
+          <tbody>
+            <tr><td>厳密さ vs 柔軟性</td><td>型・制約を強くすると安全だが手間増</td></tr>
+            <tr><td>読み速さ vs 書き速さ</td><td>インデックスは読み速・書き遅</td></tr>
+            <tr><td>抽象化 vs 具体性</td><td>抽象化は再利用↑だが理解↓</td></tr>
+            <tr><td>開発速度 vs 長期保守</td><td>プロジェクト寿命で重視軸が変わる</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 判断の3つのコツ</div>
+        <ol style="margin-left:20px">
+          <li><b>迷ったら「戻せる選択肢」を選ぶ</b>（localStorage→IndexedDBは後で変えられる）</li>
+          <li><b>測定してから最適化</b>（推測で重い仕組みを入れない）</li>
+          <li><b>3回ルール</b>（抽象化は3回目に登場してから）</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// メモ帳での実際のトレードオフ</span>
+<span class="comment">// ─── ① ID：連番 vs UUID ───</span>
+連番:
+  + シンプル、人が読める
+  - 推測されやすい、同期で衝突
+UUID:
+  + 衝突しない、同期向き
+  - 長い、人が読めない
+
+判断: <span class="kw">本シリーズは連番</span>
+  理由: v1は同期しない（YAGNI）
+        後でUUIDに移行も可能（戻せる）★
+
+
+<span class="comment">// ─── ② 検索：LIKE vs FULLTEXT ───</span>
+LIKE:
+  + 実装が簡単、すぐ動く
+  - 件数増で遅い
+FULLTEXT:
+  + 高速、スコア順
+  - INDEX設定が必要
+
+判断: <span class="kw">小規模はLIKE、大規模でFULLTEXT</span>
+  → 測定してから切り替え（Vol.8）★
+
+
+<span class="comment">// ─── ③ Form と Entity：分離 vs 兼用 ───</span>
+分離:
+  + 役割が明確、安全
+  - クラスが増える
+兼用:
+  + シンプル
+  - バリデーションが混在
+
+判断: <span class="kw">Vol.2〜は兼用、Vol.12 で分離</span>
+  → 必要になったタイミングで分ける ★
+
+
+<span class="comment">// → トレードオフに「正解」はない</span>
+<span class="comment">// → 状況・寿命・規模で判断する ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「迷ったら戻せる選択肢」が最強の指針</div>
+    <p>設計判断で最も実用的なのが<b>「戻せる選択肢を選ぶ」</b>。連番→UUID、LIKE→FULLTEXT、兼用→分離。どれも<b>後から変更できる</b>。逆に<b>戻せない決定（DBの種類、言語選定など）</b>は慎重に。<b>「変えにくい決定ほど慎重に、変えやすい決定は気軽に」</b>。これが設計のリスク管理です。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">別冊S2 で<b>設計原則の理論</b>が頭に入りました。本編Vol.3 で<b>マスタCRUD（categories）</b>を実装するとき、これらの原則が<b>「なぜそう設計するか」の根拠</b>になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">S2 達成チェック</span><span class="tag-desc">設計を語れる人になった</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>設計の3目的（変更・理解・正しさ）を言える</li>
+          <li>SRP違反を「説明に『と』」で見抜ける</li>
+          <li>Manager/Util/Helper が黄信号と知っている</li>
+          <li>OCP（拡張は足す、既存は触らない）を理解</li>
+          <li>凝集度・結合度の意味を説明できる</li>
+          <li>DIが低結合を実現すると分かる</li>
+          <li>YAGNI・KISS・3回ルールを言える</li>
+          <li>過剰設計の典型例を挙げられる</li>
+          <li>「迷ったら戻せる選択肢」を判断軸にできる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 別冊S2 で手に入れた設計理論</span>
+✓ <span class="str">"設計の目的は変更・理解・正しさ。</span>
+   <span class="str"> 速く書くためではない"</span>
+
+✓ <span class="str">"SRP：変更理由は1つだけ"</span>
+
+✓ <span class="str">"OCP：拡張は足すだけ、既存は触らない</span>
+   <span class="str"> （ただしYAGNIとバランス）"</span>
+
+✓ <span class="str">"高凝集・低結合があらゆる設計の合言葉"</span>
+
+✓ <span class="str">"DIが低結合とテスト容易性を生む"</span>
+
+✓ <span class="str">"過剰設計を避ける：YAGNI・KISS・3回ルール"</span>
+
+✓ <span class="str">"迷ったら戻せる選択肢を選ぶ"</span>
+
+
+<span class="comment">// あなたは「設計を語れる」</span>
+<span class="comment">// エンジニアに近づいた ★★★</span>
+
+<span class="comment">// 次回 本編Vol.3：</span>
+<span class="comment">//   categories マスタCRUD を</span>
+<span class="comment">//   要求→設計→テストで実装</span>
+<span class="comment">//   SRP・DI が「なぜ」付きで見える</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── 本編 VOL.3 へ</div>
+    <p>別冊S2 で<b>「設計原則の理論」</b>を獲得しました。次は本編Vol.3「<b>カテゴリ管理（マスタの要求と設計）</b>」。<b>US-002 の受入条件</b>を起点に、categories のマスタCRUD を実装します。Vol.2 と同じ3層構造を<b>もう一度</b>作ることで、SRP・DI・高凝集低結合が<b>「理論として」見える</b>はず。別冊S2を読んだ今なら、各設計判断の「なぜ」が言語化できます。<b>本編Vol.3 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>SUB.02 / 14 ── DESIGN PRINCIPLES &amp; ARCHITECTURE（別冊）</span>
+</footer>
+
+</body>
+</html>

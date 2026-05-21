@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリング設計編 API設計 Vol.7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1e1306;
+    --paper:#e2cda0;
+    --paper-2:#caa872;
+    --accent:#5a2810;
+    --accent-2:#8e4a28;
+    --accent-3:#3a1a08;
+    --muted:#574330;
+    --line:#977048;
+    --code-bg:#1a0e04;
+    --code-text:#f0e4cf;
+    --panel-bg:#f0e0bc;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;line-height:1.75;font-size:15px}
+  body{max-width:1180px;margin:0 auto;padding:0 28px 80px}
+
+  .page-header{position:relative;padding:48px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+  .page-header::before{content:"△";position:absolute;right:-10px;top:-30px;font-size:280px;color:var(--accent);opacity:.18;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+  .page-header > *{position:relative;z-index:1}
+  .series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace;margin-right:8px}
+  .vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace}
+  h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin-top:18px;letter-spacing:.04em}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;font-family:"JetBrains Mono",monospace;letter-spacing:.08em}
+  .lead{max-width:640px;margin-top:22px;font-size:15px}
+  .lead b{color:var(--accent-3)}
+
+  .toc{background:var(--paper-2);padding:18px 22px;margin:32px 0 48px;border-left:3px solid var(--accent)}
+  .toc-title{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:.2em;color:var(--accent-3);margin-bottom:10px}
+  .toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px}
+  .toc li{font-size:13px}
+  .toc a{color:var(--ink);text-decoration:none;font-family:"JetBrains Mono",monospace}
+  .toc a::before{content:"— ";color:var(--accent)}
+  .toc a:hover{color:var(--accent)}
+
+  section{margin:64px 0}
+  .section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .section-num{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent);font-weight:600}
+  .section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;letter-spacing:.04em;flex:1}
+  .section-header .en{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:.15em}
+  .pattern-desc{max-width:680px;margin-bottom:20px;font-size:14.5px}
+  .pattern-desc b{color:var(--accent-3)}
+
+  .demo-card{border:1px solid var(--line);background:#fff;margin:18px 0}
+  .demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .tag-name{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+  .tag-desc{font-size:12px;color:var(--muted)}
+  .demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+  .panel{background:var(--panel-bg);padding:20px;border-right:1px solid var(--line);font-size:14px}
+  .panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:.1em}
+  .code{background:var(--code-bg);color:var(--code-text);padding:20px;font-family:"JetBrains Mono",monospace;font-size:12.5px;line-height:1.85;overflow-x:auto;white-space:pre-wrap}
+  @media(max-width:720px){
+    .demo-body{grid-template-columns:1fr}
+    .panel{border-right:none;border-bottom:1px solid var(--line)}
+  }
+
+  .kw{color:#ffc88a}
+  .type{color:#c2a3ff}
+  .fn{color:#a3c9ff}
+  .str{color:#b5e8b0}
+  .num{color:#f7a8d8}
+  .comment{color:#998aaa;font-style:italic}
+  .ann{color:#f7c08a}
+  .menu-code{color:#f7c08a;font-weight:600}
+  .step{color:#ffc88a;font-weight:600}
+
+  .tip{background:rgba(90,40,16,.09);border-left:3px solid var(--accent);padding:14px 18px;margin:18px 0;font-size:14px}
+  .tip-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);letter-spacing:.18em;margin-bottom:6px;font-weight:600}
+  .tip b{color:var(--accent-3)}
+
+  .key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:11.5px}
+
+  .panel ul{list-style:none;margin:8px 0}
+  .panel li{padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .panel li:last-child{border-bottom:none}
+  .panel .label{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-right:6px}
+  .panel strong{color:var(--accent-3);font-weight:600}
+
+  .diagram{padding:14px;background:#fff;border:1px dashed var(--line);font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.6;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+  .compare{width:100%;font-size:13px;margin:10px 0}
+  .compare th{background:var(--paper-2);text-align:left;padding:8px;border-bottom:1px solid var(--line);font-family:"Shippori Mincho",serif;font-size:13px}
+  .compare td{padding:8px;border-bottom:1px dashed var(--line);vertical-align:top}
+  .compare .ng{color:#b04848}
+  .compare .ok{color:#4a7848}
+
+  .stars{color:var(--accent);font-weight:700;letter-spacing:.05em}
+  .method-badge{display:inline-block;color:var(--paper);padding:2px 8px;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;margin-right:4px;border-radius:2px;font-weight:600}
+  .m-get{background:#3a6a3a}
+  .m-post{background:#a86028}
+  .m-put{background:#3a5a8a}
+  .m-patch{background:#7a5a30}
+  .m-del{background:#a83a3a}
+
+  .page-footer{margin-top:80px;padding-top:24px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.1em}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">ENGINEERING DESIGN</span>
+  <span class="vol-tag">VOL.07</span>
+  <h1>API設計</h1>
+  <div class="subtitle">REST API DESIGN — INTERFACE TO THE WORLD</div>
+  <p class="lead">APIは<b>一度公開すると簡単には変えられません</b>。クライアントが既に使っていれば、URLやレスポンス形式を変える=破壊的変更。だからこそ<b>最初から正しく設計する</b>必要があります。本巻ではREST原則からエラー設計、バージョニングまで一気に整理します。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — 本巻の目次</div>
+  <ul>
+    <li><a href="#s1">01 REST設計の原則</a></li>
+    <li><a href="#s2">02 リソース設計とURI命名</a></li>
+    <li><a href="#s3">03 HTTPメソッドとステータスコード</a></li>
+    <li><a href="#s4">04 リクエストとレスポンス</a></li>
+    <li><a href="#s5">05 エラー設計</a></li>
+    <li><a href="#s6">06 ページネーション</a></li>
+    <li><a href="#s7">07 認証・認可</a></li>
+    <li><a href="#s8">08 バージョニング戦略</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>REST設計の原則</h2>
+    <span class="en">REST PRINCIPLES</span>
+  </div>
+  <p class="pattern-desc">RESTは<b>「リソース指向」</b>のAPI設計スタイル。<b>名詞（モノ）をURLで表し、動詞（操作）をHTTPメソッドで表す</b>のが核心。これを徹底するだけで、APIの一貫性が劇的に上がります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">rest-principles</span>
+      <span class="tag-desc">6つの制約とリソース指向</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// RESTの基本ルール</div>
+        <ul>
+          <li><strong>リソース = 名詞でURL表現</strong><br><code style="font-size:11.5px;background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace">/users</code> 〇 / <code style="font-size:11.5px;background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace">/getUsers</code> ×</li>
+          <li><strong>操作はHTTPメソッドで</strong><br>GET/POST/PUT/PATCH/DELETE</li>
+          <li><strong>ステートレス</strong><br>サーバはセッション状態を持たない</li>
+          <li><strong>統一インターフェース</strong><br>同じパターンの繰り返しで予測可能</li>
+          <li><strong>キャッシュ可能</strong><br>GETはキャッシュOK</li>
+        </ul>
+      </div>
+      <div class="code"><span class="comment">// 動詞ベース vs リソースベース</span>
+
+<span class="ann">[NG] 動詞ベース（RPC風）</span>
+POST /getUserById
+POST /createUser
+POST /updateUser
+POST /deleteUser
+POST /getOrdersByUser
+<span class="comment">// → 動詞が爆発する</span>
+<span class="comment">// → 一貫性なくAPIが肥大化</span>
+
+<span class="ann">[OK] リソースベース（REST）</span>
+<span class="kw">GET</span>    /users           <span class="comment">// 一覧</span>
+<span class="kw">GET</span>    /users/<span class="num">123</span>       <span class="comment">// 1件取得</span>
+<span class="kw">POST</span>   /users           <span class="comment">// 作成</span>
+<span class="kw">PUT</span>    /users/<span class="num">123</span>       <span class="comment">// 全置換</span>
+<span class="kw">PATCH</span>  /users/<span class="num">123</span>       <span class="comment">// 部分更新</span>
+<span class="kw">DELETE</span> /users/<span class="num">123</span>       <span class="comment">// 削除</span>
+
+<span class="kw">GET</span>    /users/<span class="num">123</span>/orders <span class="comment">// 関連リソース</span>
+
+<span class="comment">// パターンが統一されて</span>
+<span class="comment">// 「だいたい想像つく」</span>
+<span class="comment">// これが REST の最大の利点</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 「だいたい想像つく」が正義</div>
+    良いAPIは<b>「ドキュメントを見なくてもだいたい想像できる」</b>もの。<code style="background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">GET /products/42/reviews</code> と書いてあれば、誰でも「商品42のレビュー一覧を取れる」と分かります。<b>予測可能性こそREST</b>です。
+  </div>
+</section>
+
+<section id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>リソース設計とURI命名</h2>
+    <span class="en">RESOURCE & URI NAMING</span>
+  </div>
+  <p class="pattern-desc">URI命名には<b>定番のルール</b>があります。これらを守るだけで「センスのある」APIに見えます。逆に破ると、初見の利用者から即「あー…」と思われるので注意。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">uri-naming</span>
+      <span class="tag-desc">命名の鉄則</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 鉄則チェックリスト</div>
+        <ul>
+          <li><span class="stars">★★★</span> <strong>名詞・複数形</strong><br><code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">/users</code> 〇 / <code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">/user</code> ×</li>
+          <li><span class="stars">★★★</span> <strong>小文字・ハイフン</strong><br><code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">/order-items</code> 〇</li>
+          <li><span class="stars">★★</span> <strong>階層は2層まで</strong><br><code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">/users/1/orders</code> 〇<br><code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">/users/1/orders/2/items</code> 深すぎ</li>
+          <li><span class="stars">★★</span> <strong>動詞を入れない</strong><br><code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">/getUser</code> ×</li>
+          <li><span class="stars">★★</span> <strong>クエリは絞り込み専用</strong><br><code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">?status=active&page=2</code></li>
+        </ul>
+      </div>
+      <div class="code"><span class="comment">// URI命名の良い例・悪い例</span>
+
+<span class="ann">[BAD]</span>
+/api/User
+/api/getUserList
+/api/users/getById?id=<span class="num">1</span>
+/api/order_items/<span class="num">5</span>
+/api/v1/orders/<span class="num">1</span>/items/<span class="num">2</span>/options/<span class="num">3</span>/details
+
+<span class="ann">[GOOD]</span>
+/api/users
+/api/users/<span class="num">1</span>
+/api/users/<span class="num">1</span>/orders
+/api/order-items/<span class="num">5</span>
+
+<span class="comment">// フィルタ・ソート・ページングはクエリで</span>
+GET /api/products?
+    category=shoes&
+    min_price=<span class="num">1000</span>&
+    sort=price_asc&
+    page=<span class="num">2</span>&
+    per_page=<span class="num">20</span>
+
+<span class="comment">// アクション系（どうしても動詞）の例外</span>
+POST /api/orders/<span class="num">42</span>/cancel
+POST /api/orders/<span class="num">42</span>/refund
+POST /api/users/<span class="num">1</span>/password-reset
+
+<span class="comment">// 「リソースの状態遷移を起こす操作」は</span>
+<span class="comment">// 動詞でいい。むしろそのほうが明確。</span>
+<span class="comment">// 例: /cancel, /publish, /archive</span>
+
+<span class="comment">// 検索のような複雑系はPOST許容</span>
+POST /api/products/search
+{
+  <span class="str">"keyword"</span>: <span class="str">"スニーカー"</span>,
+  <span class="str">"filters"</span>: { ... }
+}
+<span class="comment">// → GETでは送信不可能な複雑条件のとき</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — 「複数形で統一」が一番楽</div>
+    リソース名は<b>常に複数形</b>で統一すると判断に迷いません。「1件取得も <code style="background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">/users/1</code>」と決めれば、単数形にするか複数形にするかで悩む時間がゼロになります。
+  </div>
+</section>
+
+<section id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>HTTPメソッドとステータスコード</h2>
+    <span class="en">HTTP METHODS & STATUS CODES</span>
+  </div>
+  <p class="pattern-desc">HTTPメソッドの<b>意味的な違い</b>を正しく使い分けるのがREST設計の基本。特に<b>「べき等性（idempotent）」</b>の概念は重要で、間違えるとリトライ処理で事故ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">http-methods</span>
+      <span class="tag-desc">5つのメソッドの性質</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// メソッド別の性質</div>
+        <table class="compare">
+          <tr><th>メソッド</th><th>用途</th><th>べき等</th><th>安全</th></tr>
+          <tr><td><span class="method-badge m-get">GET</span></td><td>取得</td><td class="ok">○</td><td class="ok">○</td></tr>
+          <tr><td><span class="method-badge m-post">POST</span></td><td>作成</td><td class="ng">×</td><td class="ng">×</td></tr>
+          <tr><td><span class="method-badge m-put">PUT</span></td><td>全置換</td><td class="ok">○</td><td class="ng">×</td></tr>
+          <tr><td><span class="method-badge m-patch">PATCH</span></td><td>部分更新</td><td>場合</td><td class="ng">×</td></tr>
+          <tr><td><span class="method-badge m-del">DELETE</span></td><td>削除</td><td class="ok">○</td><td class="ng">×</td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)"><b>べき等</b>=何度実行しても結果が同じ。<br><b>安全</b>=サーバ状態を変えない。</p>
+      </div>
+      <div class="code"><span class="comment">// ステータスコード早見表</span>
+
+<span class="ann">[2xx 成功]</span>
+<span class="num">200</span> OK              GET/PUT/PATCH 成功
+<span class="num">201</span> Created         POST で作成成功
+<span class="num">202</span> Accepted        非同期処理を受付
+<span class="num">204</span> No Content      DELETE 成功・本文なし
+
+<span class="ann">[3xx リダイレクト]</span>
+<span class="num">301</span> Moved Permanently  恒久移動
+<span class="num">304</span> Not Modified       キャッシュ有効
+
+<span class="ann">[4xx クライアントエラー]</span>
+<span class="num">400</span> Bad Request     リクエスト不正
+<span class="num">401</span> Unauthorized    認証されてない
+<span class="num">403</span> Forbidden       権限なし
+<span class="num">404</span> Not Found       リソースなし
+<span class="num">409</span> Conflict        状態競合
+<span class="num">422</span> Unprocessable   バリデーション失敗
+<span class="num">429</span> Too Many Requests レート制限
+
+<span class="ann">[5xx サーバエラー]</span>
+<span class="num">500</span> Internal Server Error  想定外エラー
+<span class="num">502</span> Bad Gateway       上流エラー
+<span class="num">503</span> Service Unavailable  メンテ等
+<span class="num">504</span> Gateway Timeout   上流タイムアウト
+
+<span class="comment">// よくあるミス:</span>
+<span class="comment">// - 全部 200 で返す（エラー情報を本文に入れる）</span>
+<span class="comment">// - エラーを全部 500 で返す</span>
+<span class="comment">// → どちらもクライアント側が困る</span>
+
+<span class="comment">// 認証 vs 認可</span>
+<span class="num">401</span>: <span class="str">"あなたが誰か分からない"</span>
+<span class="num">403</span>: <span class="str">"あなたが誰か分かるが権限なし"</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — べき等性は神</div>
+    POSTは<b>べき等でない</b>ので、ネットワーク切断時にリトライすると<b>二重登録</b>の事故が起きます。これを防ぐため<b>「Idempotency-Key」ヘッダ</b>を使うのが定番（Stripeで有名）。同じキーでリトライしても1回しか実行されない仕組みです。
+  </div>
+</section>
+
+<section id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>リクエストとレスポンス</h2>
+    <span class="en">REQUEST & RESPONSE</span>
+  </div>
+  <p class="pattern-desc">JSONの<b>形式を揃える</b>のがプロのAPI。<b>キー名のケース</b>、<b>日付フォーマット</b>、<b>ネスト構造</b>。これらを最初に決めて、全エンドポイントで貫くのが鉄則です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">request-response</span>
+      <span class="tag-desc">JSON形式の流儀</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 形式の定石</div>
+        <ul>
+          <li><strong>キー名</strong>: snake_case 推奨<br>(camelCase でも可、混在はNG)</li>
+          <li><strong>日時</strong>: ISO 8601 / RFC 3339<br><code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">2026-05-13T09:00:00+09:00</code></li>
+          <li><strong>金額</strong>: 整数で最小単位<br>円なら円、ドルならセント</li>
+          <li><strong>真偽値</strong>: true/false<br>0/1や"yes"/"no"を避ける</li>
+          <li><strong>null vs 省略</strong>: 流儀を統一</li>
+          <li><strong>配列はキーで包む</strong><br><code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">{ "items": [...] }</code></li>
+        </ul>
+      </div>
+      <div class="code"><span class="comment">// 良いレスポンス例</span>
+
+<span class="ann">[一覧取得]</span> GET /api/orders?page=<span class="num">2</span>
+HTTP/<span class="num">1.1</span> <span class="num">200</span> OK
+{
+  <span class="str">"data"</span>: [
+    {
+      <span class="str">"id"</span>: <span class="num">42</span>,
+      <span class="str">"status"</span>: <span class="str">"paid"</span>,
+      <span class="str">"total_yen"</span>: <span class="num">5800</span>,
+      <span class="str">"created_at"</span>: <span class="str">"2026-05-13T09:00:00+09:00"</span>,
+      <span class="str">"customer"</span>: {
+        <span class="str">"id"</span>: <span class="num">1</span>,
+        <span class="str">"name"</span>: <span class="str">"田中太郎"</span>
+      }
+    }
+  ],
+  <span class="str">"meta"</span>: {
+    <span class="str">"page"</span>: <span class="num">2</span>,
+    <span class="str">"per_page"</span>: <span class="num">20</span>,
+    <span class="str">"total"</span>: <span class="num">143</span>,
+    <span class="str">"total_pages"</span>: <span class="num">8</span>
+  }
+}
+
+<span class="ann">[作成]</span> POST /api/orders
+HTTP/<span class="num">1.1</span> <span class="num">201</span> Created
+Location: /api/orders/<span class="num">43</span>
+{
+  <span class="str">"data"</span>: {
+    <span class="str">"id"</span>: <span class="num">43</span>,
+    <span class="str">"status"</span>: <span class="str">"pending"</span>,
+    ...
+  }
+}
+
+<span class="comment">// 鉄則:</span>
+<span class="comment">// - 1件でも一覧でも data キーで包む</span>
+<span class="comment">// - meta にページング情報</span>
+<span class="comment">// - ID は POST 後に必ず返す</span>
+<span class="comment">// - Location ヘッダで新URLを示す</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — 「JSON:API」または「Google Style」</div>
+    迷ったら<b>業界標準仕様</b>に乗っかるのが楽。<b>JSON:API（jsonapi.org）</b>は厳密な仕様、<b>Google API Design Guide</b>は実用的なガイドライン。社内で流儀を1から決めるよりこれらに倣うほうが、議論時間を節約できます。
+  </div>
+</section>
+
+<section id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>エラー設計</h2>
+    <span class="en">ERROR DESIGN</span>
+  </div>
+  <p class="pattern-desc">エラーレスポンスの設計は<b>APIの品質を一発で見抜ける指標</b>。「<code style="background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px">{"error":"failed"}</code>」しか返さないAPIはクライアントが地獄を見ます。<b>機械が処理できる構造化エラー</b>を返すのが現代の流儀です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">error-design</span>
+      <span class="tag-desc">構造化されたエラーレスポンス</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 良いエラーレスポンスの要素</div>
+        <ul>
+          <li><strong>HTTPステータスコード</strong>: 4xx/5xx を正しく</li>
+          <li><strong>エラーコード</strong>: 機械処理用の文字列ID</li>
+          <li><strong>メッセージ</strong>: 人間向けの説明</li>
+          <li><strong>フィールド情報</strong>: バリデーション失敗の対象</li>
+          <li><strong>ドキュメントURL</strong>: 詳細リンク</li>
+          <li><strong>リクエストID</strong>: サポート問合せ用</li>
+        </ul>
+        <p style="margin-top:10px;font-size:13px"><b>RFC 7807 (Problem Details)</b>という標準仕様もあります。準拠すると外部公開APIの体裁が整います。</p>
+      </div>
+      <div class="code"><span class="comment">// 単純なエラー</span>
+HTTP/<span class="num">1.1</span> <span class="num">404</span> Not Found
+{
+  <span class="str">"error"</span>: {
+    <span class="str">"code"</span>: <span class="str">"ORDER_NOT_FOUND"</span>,
+    <span class="str">"message"</span>: <span class="str">"指定された注文は存在しません"</span>,
+    <span class="str">"request_id"</span>: <span class="str">"req_abc123"</span>
+  }
+}
+
+<span class="comment">// バリデーションエラー (複数)</span>
+HTTP/<span class="num">1.1</span> <span class="num">422</span> Unprocessable Entity
+{
+  <span class="str">"error"</span>: {
+    <span class="str">"code"</span>: <span class="str">"VALIDATION_FAILED"</span>,
+    <span class="str">"message"</span>: <span class="str">"入力に誤りがあります"</span>,
+    <span class="str">"details"</span>: [
+      {
+        <span class="str">"field"</span>: <span class="str">"email"</span>,
+        <span class="str">"code"</span>: <span class="str">"INVALID_FORMAT"</span>,
+        <span class="str">"message"</span>: <span class="str">"メール形式が不正です"</span>
+      },
+      {
+        <span class="str">"field"</span>: <span class="str">"age"</span>,
+        <span class="str">"code"</span>: <span class="str">"OUT_OF_RANGE"</span>,
+        <span class="str">"message"</span>: <span class="str">"0以上150以下で入力してください"</span>
+      }
+    ],
+    <span class="str">"request_id"</span>: <span class="str">"req_xyz789"</span>
+  }
+}
+
+<span class="comment">// クライアント側で:</span>
+<span class="comment">// - code を見て分岐処理</span>
+<span class="comment">// - message をユーザーに表示</span>
+<span class="comment">// - field で該当UIをハイライト</span>
+<span class="comment">// - request_id をサポートに伝達</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — エラーメッセージはユーザー向け</div>
+    エラーの<code style="background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">message</code>は<b>そのままユーザーに見せても困らない</b>文言にするのが現代の作法。スタックトレースやSQLエラーをそのまま返すのは情報漏洩リスクです。内部詳細はログにだけ残し、ユーザーには優しい言葉で。
+  </div>
+</section>
+
+<section id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ページネーション</h2>
+    <span class="en">PAGINATION</span>
+  </div>
+  <p class="pattern-desc">一覧取得APIで<b>「全件返す」</b>のは絶対NG。10万件あったら即タイムアウトです。ページング方式には<b>オフセット型</b>と<b>カーソル型</b>があり、用途で使い分けます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pagination</span>
+      <span class="tag-desc">2方式の使い分け</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// オフセット型 vs カーソル型</div>
+        <table class="compare">
+          <tr><th></th><th>オフセット</th><th>カーソル</th></tr>
+          <tr><td>パラメータ</td><td>page/limit</td><td>cursor/limit</td></tr>
+          <tr><td>ジャンプ</td><td class="ok">任意のページに</td><td class="ng">次/前のみ</td></tr>
+          <tr><td>性能</td><td class="ng">深くなると遅い</td><td class="ok">常に高速</td></tr>
+          <tr><td>新規追加に強い</td><td class="ng">ズレる</td><td class="ok">ズレない</td></tr>
+          <tr><td>向き</td><td>管理画面</td><td>SNS/タイムライン</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// オフセット型</span>
+GET /api/products?page=<span class="num">3</span>&per_page=<span class="num">20</span>
+
+{
+  <span class="str">"data"</span>: [...],
+  <span class="str">"meta"</span>: {
+    <span class="str">"page"</span>: <span class="num">3</span>,
+    <span class="str">"per_page"</span>: <span class="num">20</span>,
+    <span class="str">"total"</span>: <span class="num">523</span>,
+    <span class="str">"total_pages"</span>: <span class="num">27</span>
+  }
+}
+
+<span class="comment">// SQL内部</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> products
+<span class="kw">ORDER BY</span> id
+<span class="kw">LIMIT</span> <span class="num">20</span> <span class="kw">OFFSET</span> <span class="num">40</span>;
+<span class="comment">// page=1000 みたいになると、OFFSET 19980</span>
+<span class="comment">// → 19980件スキップしてから20件取得</span>
+<span class="comment">// → 致命的に遅くなる</span>
+
+<span class="comment">// カーソル型 (タイムライン向き)</span>
+GET /api/posts?cursor=eyJpZCI6MTAwfQ&limit=<span class="num">20</span>
+
+{
+  <span class="str">"data"</span>: [...],
+  <span class="str">"meta"</span>: {
+    <span class="str">"next_cursor"</span>: <span class="str">"eyJpZCI6ODB9"</span>,
+    <span class="str">"has_more"</span>: <span class="kw">true</span>
+  }
+}
+
+<span class="comment">// SQL内部</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> posts
+<span class="kw">WHERE</span> id &lt; <span class="num">100</span>  <span class="comment">// カーソル位置から</span>
+<span class="kw">ORDER BY</span> id <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">20</span>;
+
+<span class="comment">// どんなに深くてもインデックスで高速</span>
+<span class="comment">// 投稿が増えてもズレない</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">TIP — 詰まりポイント</div>
+    オフセット型は「3ページ目」のような表示と相性が良いですが、<b>データ量が多いと深いページで激遅</b>。Twitter/Instagramのような無限スクロールUIなら<b>絶対にカーソル型</b>。用途を最初に決めて選びましょう。
+  </div>
+</section>
+
+<section id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>認証・認可</h2>
+    <span class="en">AUTHENTICATION & AUTHORIZATION</span>
+  </div>
+  <p class="pattern-desc"><b>認証（誰か?）</b>と<b>認可（何ができる?）</b>は別物。APIでは<b>Bearer Token</b>方式が主流で、トークンには<b>JWT</b>か<b>不透明（Opaque）</b>トークンを使います。OAuth 2.0は標準仕様として覚えておきましょう。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">auth</span>
+      <span class="tag-desc">認証方式の選択</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 認証方式の比較</div>
+        <table class="compare">
+          <tr><th>方式</th><th>用途</th></tr>
+          <tr><td><b>Bearer (JWT)</b></td><td>マイクロサービス間で人気。DB問い合わせ不要。失効が難しい</td></tr>
+          <tr><td><b>Bearer (Opaque)</b></td><td>ランダム文字列。失効は楽だがDB確認が必要</td></tr>
+          <tr><td><b>API Key</b></td><td>サーバ間連携。シンプル</td></tr>
+          <tr><td><b>OAuth 2.0</b></td><td>第三者にアクセス委譲</td></tr>
+          <tr><td><b>Session Cookie</b></td><td>同一ドメインWebに最適</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// Bearer Token の使い方</span>
+
+POST /api/auth/login
+{
+  <span class="str">"email"</span>: <span class="str">"u@example.com"</span>,
+  <span class="str">"password"</span>: <span class="str">"..."</span>
+}
+→
+HTTP/<span class="num">1.1</span> <span class="num">200</span> OK
+{
+  <span class="str">"access_token"</span>:  <span class="str">"eyJhbGc..."</span>,
+  <span class="str">"refresh_token"</span>: <span class="str">"abc123..."</span>,
+  <span class="str">"expires_in"</span>:    <span class="num">3600</span>,
+  <span class="str">"token_type"</span>:    <span class="str">"Bearer"</span>
+}
+
+<span class="comment">// 以後のリクエスト</span>
+GET /api/orders
+Authorization: Bearer eyJhbGc...
+
+<span class="comment">// JWT の中身 (Base64で3つに分かれる)</span>
+{
+  <span class="str">"sub"</span>: <span class="str">"user_123"</span>,
+  <span class="str">"iat"</span>: <span class="num">1715000000</span>,
+  <span class="str">"exp"</span>: <span class="num">1715003600</span>,
+  <span class="str">"roles"</span>: [<span class="str">"user"</span>, <span class="str">"admin"</span>]
+}
+
+<span class="comment">// 認可: ロールベース vs 属性ベース</span>
+
+<span class="ann">[RBAC: ロール]</span>
+admin → 全操作OK
+editor → 投稿の編集OK
+viewer → 閲覧のみ
+
+<span class="ann">[ABAC: 属性]</span>
+「<span class="str">自分が作成した投稿のみ編集可</span>」
+「<span class="str">同じ組織のリソースのみアクセス可</span>」
+→ より細やかな制御が可能</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — JWTの落とし穴</div>
+    JWTは<b>失効させにくい</b>のが最大の弱点。一度発行すると有効期限まで強制無効化できません。短い有効期限+リフレッシュトークン方式が定番。「ログアウト即無効化」が必須ならOpaqueトークン+Redisのほうが現実的です。
+  </div>
+</section>
+
+<section id="s8">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>バージョニング戦略</h2>
+    <span class="en">API VERSIONING</span>
+  </div>
+  <p class="pattern-desc">APIは<b>必ず後から変更したくなります</b>。破壊的変更を入れる時に、既存クライアントを壊さないようにする仕組みが<b>バージョニング</b>。<b>URLパス方式</b>がシンプルで主流です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">api-versioning</span>
+      <span class="tag-desc">破壊的変更との戦い</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// バージョニング方式の比較</div>
+        <table class="compare">
+          <tr><th>方式</th><th>例</th></tr>
+          <tr><td><b>URLパス</b></td><td><code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">/v1/users</code><br>シンプル。最も普及</td></tr>
+          <tr><td><b>ヘッダ</b></td><td><code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">API-Version: 2</code><br>URLを汚さないが、テストしにくい</td></tr>
+          <tr><td><b>クエリ</b></td><td><code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">?v=2</code><br>カジュアル。あまり推奨されない</td></tr>
+          <tr><td><b>Accept ヘッダ</b></td><td><code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">application/vnd.x.v2+json</code><br>厳密だが複雑</td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:13px"><b>結論</b>: 迷ったらURLパス方式（<code style="font-size:11.5px;background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace">/v1/</code>）。GitHub、Twitter、Stripeほぼ全部これ。</p>
+      </div>
+      <div class="code"><span class="comment">// バージョン管理の鉄則</span>
+
+<span class="ann">[Step 1]</span> 破壊的変更を見極める
+
+破壊的変更:
+  - 既存フィールドの削除/型変更
+  - 必須項目の追加
+  - エンドポイントの削除
+  - レスポンス構造の変更
+
+互換変更（バージョン上げ不要）:
+  - 新フィールドの追加（任意）
+  - 新エンドポイントの追加
+  - エラーメッセージの改善
+
+<span class="ann">[Step 2]</span> 古いバージョンを残す
+
+GET /api/<span class="kw">v1</span>/users    <span class="comment">// 既存</span>
+GET /api/<span class="kw">v2</span>/users    <span class="comment">// 新規 (破壊的変更含む)</span>
+
+<span class="comment">// 両方を並行運用。v1利用者を移行させる。</span>
+
+<span class="ann">[Step 3]</span> 廃止予告とサンセット
+
+Response Header:
+  Deprecation: true
+  Sunset: <span class="str">"Sun, 31 Dec 2026 23:59:59 GMT"</span>
+  Link: &lt;https://api.example.com/v2/users&gt;;
+        rel=<span class="str">"successor-version"</span>
+
+<span class="comment">// クライアントに「移行してね」と伝える</span>
+<span class="comment">// 半年〜1年の猶予を持って廃止</span>
+
+<span class="ann">[Step 4]</span> 旧バージョン停止
+
+HTTP/<span class="num">1.1</span> <span class="num">410</span> Gone
+{
+  <span class="str">"error"</span>: {
+    <span class="str">"code"</span>: <span class="str">"VERSION_RETIRED"</span>,
+    <span class="str">"message"</span>: <span class="str">"v1は廃止されました。v2をご利用ください"</span>
+  }
+}
+
+<span class="comment">// 破壊的変更は最後の手段。</span>
+<span class="comment">// なるべく互換変更で凌ぐのが本当のプロ。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">NEXT STEP — Vol.8 へ</div>
+    設計の実装側まで揃いました。次は<b>「設計をどう他人に伝えるか」</b>の番です。Vol.8では<b>設計ドキュメントと図解</b>を扱います。UML、C4モデル、ADR。<b>頭の中の設計を他人が理解できる形にする</b>技術は、思いのほか奥深いです。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING DESIGN SERIES — VOL.07</span>
+  <span>△ API</span>
+</footer>
+
+</body>
+</html>

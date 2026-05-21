@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト 地図編 全部試せない問題編 Vol.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;--paper:#f0ebe0;--paper-2:#e3dcc8;
+  --accent:#3d4f7c;--accent-2:#6b7a96;--accent-3:#b89968;
+  --muted:#6a6457;--line:#c8c0a8;
+  --code-bg:#1c2138;--code-text:#f0ebe0;--panel-bg:#f7f3e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"⊙";position:absolute;top:-50px;right:-20px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.12;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.map-tag{display:inline-block;background:var(--accent-3);color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:660px;margin-top:20px;color:var(--ink);font-size:15px}
+.axis-banner{display:inline-block;margin-top:18px;background:var(--paper-2);border-left:3px solid var(--accent-3);padding:8px 16px;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--ink);letter-spacing:0.1em}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em}
+.pattern-desc{max-width:700px;font-size:14px;margin-bottom:20px;color:var(--ink)}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:16px}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:22px 26px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:22px 26px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}.code .type{color:#c2a3ff}.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}.code .ann{color:#f7c08a}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.07);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+.tip.copper{border-left-color:var(--accent-3);background:rgba(184,153,104,0.12)}
+.tip.copper .tip-head{color:var(--accent-3)}
+.term-map{display:grid;grid-template-columns:160px 1fr;gap:8px 16px;font-size:13px}
+.term-map dt{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;padding:4px 0;border-bottom:1px dashed var(--line)}
+.term-map dd{padding:4px 0;border-bottom:1px dashed var(--line)}
+/* 入力空間の図 */
+.space-vis{background:#fff;padding:20px;border:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.8}
+.space-vis .row{display:grid;grid-template-columns:130px 1fr;gap:8px;align-items:center;margin:6px 0}
+.space-vis .label{color:var(--muted);font-size:10.5px;letter-spacing:0.1em}
+.space-vis .bar{height:14px;background:linear-gradient(to right,var(--accent-3),var(--accent));position:relative}
+.space-vis .bar .num{position:absolute;right:6px;top:-1px;color:#fff;font-size:10.5px;font-weight:700}
+.space-vis .bar.tiny{width:8px}
+.space-vis .bar.small{width:30%}
+.space-vis .bar.med{width:60%}
+.space-vis .bar.huge{width:95%}
+.space-vis .bar.infi{width:100%;background:linear-gradient(to right,#a44,#a44)}
+/* 三層 */
+.three-tier{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;font-size:12.5px;margin:10px 0;border:1px solid var(--line)}
+.three-tier > div{padding:14px;background:#fff;text-align:center;border-right:1px solid var(--line)}
+.three-tier > div:last-child{border-right:none}
+.three-tier .h{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.1em}
+.three-tier .v{font-size:18px;font-weight:700;color:var(--accent);margin:6px 0;font-family:'JetBrains Mono',monospace}
+.three-tier .note{font-size:10.5px;color:var(--muted);line-height:1.6}
+/* マッピング表 */
+.map-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+.map-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:left;padding:8px 10px;letter-spacing:0.1em;border-bottom:1px solid var(--line)}
+.map-table td{padding:8px 10px;border-bottom:1px dashed var(--line);vertical-align:top}
+.map-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600}
+/* 因果鎖 */
+.chain{padding-left:0;list-style:none;font-size:13px}
+.chain li{padding:8px 14px;background:#fff;border-left:3px solid var(--accent-3);margin-bottom:8px;position:relative}
+.chain li::after{content:"↓";display:block;text-align:center;color:var(--accent-3);font-size:14px;margin-top:6px;margin-bottom:-12px}
+.chain li:last-child::after{content:""}
+.chain li b{color:var(--accent)}
+/* 左右対比 */
+.lr-compare{display:grid;grid-template-columns:1fr auto 1fr;gap:0;font-size:13px;margin:10px 0;align-items:stretch}
+.lr-compare .col{padding:14px 16px;border:1px solid var(--line);background:#fff}
+.lr-compare .col.left{border-right:none;background:#fbf6e9}
+.lr-compare .col.right{border-left:none;background:#eef2f9}
+.lr-compare .vs{display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:0 14px;letter-spacing:0.15em}
+.lr-compare .h{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:700;margin-bottom:6px}
+.lr-compare .col.left .h{color:#a47b30}
+.page-footer{border-top:2px solid var(--ink);margin-top:80px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:200px}.three-tier{grid-template-columns:1fr}.lr-compare{grid-template-columns:1fr}.lr-compare .col.left,.lr-compare .col.right{border:1px solid var(--line)}.lr-compare .vs{padding:8px 0}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="map-tag">MAP</span>
+  <span class="vol-tag">MAP VOL.05 / 10</span>
+  <h1>全部試せない問題編</h1>
+  <div class="subtitle">地図編 Vol.5 — INFINITE INPUT SPACE</div>
+  <p class="lead">
+    本編Vol.5では「テスト設計技法」を学びました。地図編Vol.5ではその一段下、<b>「なぜそんな技法が必要なのか」</b>という根本を読み解きます。入力の組み合わせは事実上無限。すべて試すのは不可能。<b>テスト設計とは「効率的な絞り込み」</b>であるという構造を、入力空間の概念から組み立てます。
+  </p>
+  <span class="axis-banner">主な軸 / STRUCTURE — 構造軸で読み解く</span>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 入力空間という考え方</a></li>
+    <li><a href="#sec02">02 組合せ爆発</a></li>
+    <li><a href="#sec03">03 「同じ振る舞い」という仮定</a></li>
+    <li><a href="#sec04">04 絞り込みの3層構造</a></li>
+    <li><a href="#sec05">05 技法と入力空間の対応関係</a></li>
+    <li><a href="#sec06">06 網羅率という幻想</a></li>
+    <li><a href="#sec07">07 テスト設計の本質</a></li>
+    <li><a href="#term">用語の地図</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>入力空間という考え方</h2>
+    <span class="en">INPUT SPACE</span>
+  </div>
+  <p class="pattern-desc">
+    入力空間（input space）とは、<b>「ある関数が取りうる入力の集合すべて」</b>のことです。引数が1つなら1次元、2つなら2次元、N個なら N次元の空間として考えます。テスト設計は、この空間から<b>「どの点を試すか」</b>を選ぶ営みです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">input space</span>
+      <span class="tag-desc">入力の集合をひとつの空間として捉える</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 入力空間の大きさ</div>
+        <div class="space-vis">
+          <div class="row">
+            <span class="label">boolean</span>
+            <div class="bar tiny"><span class="num">2</span></div>
+          </div>
+          <div class="row">
+            <span class="label">1〜100の整数</span>
+            <div class="bar small"><span class="num">100</span></div>
+          </div>
+          <div class="row">
+            <span class="label">char (256)</span>
+            <div class="bar small"><span class="num">256</span></div>
+          </div>
+          <div class="row">
+            <span class="label">int (32bit)</span>
+            <div class="bar med"><span class="num">42億</span></div>
+          </div>
+          <div class="row">
+            <span class="label">long (64bit)</span>
+            <div class="bar huge"><span class="num">1844京</span></div>
+          </div>
+          <div class="row">
+            <span class="label">string</span>
+            <div class="bar infi"><span class="num">∞</span></div>
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">たった1つの引数</b>でこの広さ。複数引数では掛け算で膨れ上がる。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 入力空間の例</span>
+
+<span class="kw">function</span> <span class="fn">add</span>(a, b) {...}
+
+<span class="comment">// 入力空間 =</span>
+<span class="comment">//   aのとりうる値 ×</span>
+<span class="comment">//   bのとりうる値</span>
+
+<span class="comment">// もしa,bがint型なら</span>
+<span class="comment">//   42億 × 42億</span>
+<span class="comment">//   = 約1844京通り</span>
+
+<span class="comment">// 1ナノ秒で試しても</span>
+<span class="comment">//   585年かかる</span>
+
+<span class="comment">// 「全部試す」は</span>
+<span class="comment">// 物理的に不可能</span>
+
+<span class="comment">// → 何らかの方法で</span>
+<span class="comment">//   この空間を絞る必要</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>入力空間（input space）</b>＝関数が取りうる入力の全体集合。<b>N次元空間</b>＝N個の引数を持つ関数の入力空間。各引数が1つの軸。<b>網羅性（coverage）</b>＝この空間をどれだけカバーしたかという度合い。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>組合せ爆発</h2>
+    <span class="en">COMBINATORIAL EXPLOSION</span>
+  </div>
+  <p class="pattern-desc">
+    入力空間は<b>「引数の数」と「各引数のとりうる値」の掛け算</b>で決まります。引数が増えるたびに、空間は急激に膨張します。これを<b>組合せ爆発</b>と呼びます。テスト設計が「全部」を諦め、「賢く絞る」方向に進化した最大の理由がこれです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">explosion</span>
+      <span class="tag-desc">引数が増えると指数的に膨らむ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 組合せ数の増え方</div>
+        <table class="map-table">
+          <tr><th>引数の数 (各3値)</th><th>組合せ数</th></tr>
+          <tr><td>1個</td><td>3</td></tr>
+          <tr><td>2個</td><td>9</td></tr>
+          <tr><td>3個</td><td>27</td></tr>
+          <tr><td>5個</td><td>243</td></tr>
+          <tr><td>10個</td><td>59,049</td></tr>
+          <tr><td>20個</td><td>約34億</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">3<sup>N</sup>で増える</b>。たった3値しか取らないパラメータでも、20個並べば手に負えなくなる。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 現実の組合せ爆発</span>
+
+<span class="kw">ECサイトの購入処理</span>:
+  ・会員種別      (3値)
+  ・支払方法      (5値)
+  ・配送方法      (4値)
+  ・キャンペーン   (10値)
+  ・配送先地域     (47値: 都道府県)
+  ・商品種別       (20値)
+  ...
+
+<span class="kw">単純な掛け算</span>:
+  3 × 5 × 4 × 10 × 47 × 20
+  = <span class="ann">564,000通り</span>
+
+<span class="comment">// 全網羅は事実上不可能</span>
+
+<span class="comment">// だから絞り込みの戦略が必要</span>
+<span class="comment">//   ・同値分割</span>
+<span class="comment">//   ・境界値</span>
+<span class="comment">//   ・ペアワイズ</span>
+<span class="comment">//   ・etc.</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この事実が示すもの</div>
+    <b>「全部試したい」は人間の本能</b>ですが、組合せ爆発の前では成立しません。テスト技法の歴史は、<b>「諦め方の進化」</b>とも言えます。何を諦めるかを賢く決める技術、それが設計技法なのです。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>「同じ振る舞い」という仮定</h2>
+    <span class="en">EQUIVALENCE ASSUMPTION</span>
+  </div>
+  <p class="pattern-desc">
+    全網羅を諦めた時、頼りになる仮定があります。<b>「似た入力は似た振る舞いをする」</b>という経験則です。年齢15歳と16歳は同じ「未成年」として扱われるはず。この仮定が正しいと信じることで、無限の入力空間を有限の「グループ」に分割できます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">key assumption</span>
+      <span class="tag-desc">テスト設計を支える唯一の前提</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 仮定の中身</div>
+        <ol class="chain">
+          <li>入力空間に「<b>同じ振る舞いをする領域</b>」がある</li>
+          <li>その領域内の代表1点を試せば、領域全体を試したことになる<b>と仮定する</b></li>
+          <li>領域の境目で振る舞いが変わる</li>
+          <li>境目の前後を試せば、領域の切り替えを検証したことになる</li>
+        </ol>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">この仮定が成り立つから</b>、同値分割と境界値が意味を持つ。仮定が崩れる時はバグが潜んでいるサイン。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 仮定が崩れる例</span>
+
+<span class="comment">// 仕様: 0〜17歳はNG</span>
+<span class="comment">// 仮定: 1〜17歳のどれを試しても同じ</span>
+
+<span class="comment">// テスト: 15歳 → ✓ NG</span>
+<span class="comment">// しかし実装に隠れたバグがあると…</span>
+
+<span class="kw">function</span> <span class="fn">classify</span>(age) {
+  <span class="kw">if</span> (age === <span class="num">13</span>) <span class="kw">return</span> <span class="str">"OK"</span>;  <span class="ann">// バグ</span>
+  <span class="kw">if</span> (age &lt; <span class="num">18</span>) <span class="kw">return</span> <span class="str">"NG"</span>;
+  ...
+}
+
+<span class="comment">// 15歳のテストでは見つからない</span>
+<span class="comment">// → 仮定が局所的に崩れている</span>
+
+<span class="comment">// だから100%安全ではない</span>
+<span class="comment">// だが、現実的には十分機能する</span>
+
+<span class="comment">// テスト設計は「確率を上げる」</span>
+<span class="comment">// 営みである</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    テストは<b>「バグがないこと」を証明できません</b>。Dijkstra（ダイクストラ）の名言「テストはバグの存在を示せるが、不在を示せない」がこの限界を表しています。テスト設計はあくまで<b>「見つかる確率を上げる」</b>営み、と理解しておくと過信を避けられます。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>絞り込みの3層構造</h2>
+    <span class="en">THREE-LAYER REDUCTION</span>
+  </div>
+  <p class="pattern-desc">
+    テスト設計技法は<b>「3層の絞り込み」</b>として整理できます。入力空間を最初は大きな「群」に、次に「代表」に、最後に「狙い目」に絞り込む流れです。本編Vol.5の技法はすべてこの3層のどこかに位置づけられます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">three layers</span>
+      <span class="tag-desc">絞り込みは3段階で進む</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3層の絞り込み</div>
+        <div class="three-tier">
+          <div>
+            <div class="h">LAYER 1</div>
+            <div class="v">∞</div>
+            <div class="note">無限の入力空間</div>
+          </div>
+          <div>
+            <div class="h">LAYER 2</div>
+            <div class="v">N群</div>
+            <div class="note">同値クラスに分割</div>
+          </div>
+          <div>
+            <div class="h">LAYER 3</div>
+            <div class="v">N点</div>
+            <div class="note">代表値 + 境界値</div>
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">無限 → 数十群 → 数十点</b>。この圧縮こそテスト設計の核心。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 各層で起きること</span>
+
+<span class="kw">LAYER 1: 入力空間</span>
+  ∞通りの入力
+  ↓
+<span class="comment">// この層では考えるだけで途方に暮れる</span>
+
+<span class="kw">LAYER 2: グループ化</span>
+  同値分割
+  ↓
+  「同じ振る舞いの群」に仕分け
+  例: NG群, OK群, シニア群
+  ↓
+  N群に圧縮
+
+<span class="kw">LAYER 3: 代表選定</span>
+  各群から代表値1つ
+  + 境界値の前後
+  + 異常値
+  ↓
+  最終的に数十点のテストケース
+
+       <span class="comment">↓</span>
+
+<span class="ann">∞ から 数十 へ</span>
+<span class="ann">これがテスト設計</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この構造の価値</div>
+    技法を覚える前に、<b>「自分は今、無限から有限に圧縮しているのだ」</b>と意識すること。3層構造を頭に入れておけば、本編で出てきた様々な技法が「同じ目的に向かう違う道具」として整理できます。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>技法と入力空間の対応関係</h2>
+    <span class="en">TECHNIQUES MAPPED</span>
+  </div>
+  <p class="pattern-desc">
+    本編Vol.5で出てきた各技法は、<b>「入力空間のどんな性質に焦点を当てるか」</b>で分類できます。すべての技法が同じ問題を解いているわけではなく、それぞれが空間の異なる側面を切り取ります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">techniques map</span>
+      <span class="tag-desc">技法が攻めている空間の側面</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 技法と焦点</div>
+        <table class="map-table">
+          <tr><th>技法</th><th>焦点</th></tr>
+          <tr><td>同値分割</td><td>空間を群に分ける</td></tr>
+          <tr><td>境界値</td><td>群の境目を狙う</td></tr>
+          <tr><td>デシジョン</td><td>条件の組合せを網羅</td></tr>
+          <tr><td>状態遷移</td><td>時間軸を加えた空間</td></tr>
+          <tr><td>ペアワイズ</td><td>多次元空間を効率圧縮</td></tr>
+          <tr><td>異常系</td><td>空間の「外」を狙う</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// 視覚化 — どこを攻めるか</span>
+
+<span class="kw">同値分割</span>:
+  [ A ][ B ][ C ]
+   ↑    ↑    ↑
+  各群から1点
+
+<span class="kw">境界値</span>:
+  [ A | B | C ]
+       ↑↑   ↑↑
+  境目の前後
+
+<span class="kw">デシジョン</span>:
+  条件×条件の網
+  全マスを埋める
+
+<span class="kw">状態遷移</span>:
+  状態 + 操作 + 時系列
+  空間に時間軸を追加
+
+<span class="kw">ペアワイズ</span>:
+  多次元空間
+  ↓ 圧縮
+  すべてのペアだけ網羅
+  3因子以上は妥協
+
+<span class="kw">異常系</span>:
+  仕様外の空間
+  null, 型違い, 範囲外</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この対応の意味</div>
+    技法は<b>「相互排他的」ではなく「補完的」</b>です。同値分割で大枠 → 境界値で精度向上 → 異常系で隙を埋める、という組み合わせが現場の定番。1つの技法で全部やろうとしないのがコツです。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>網羅率という幻想</h2>
+    <span class="en">COVERAGE ILLUSION</span>
+  </div>
+  <p class="pattern-desc">
+    テスト網羅率（カバレッジ）は便利な指標ですが、<b>誤解しやすい数字</b>でもあります。「100%カバレッジ＝バグゼロ」ではありません。網羅と入力空間の関係を整理しておくと、Vol.8で出てくるカバレッジ議論への準備になります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">coverage myth</span>
+      <span class="tag-desc">カバレッジは入力空間を覆い尽くしていない</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 何をカバレッジは測っているか</div>
+        <div class="lr-compare">
+          <div class="col left">
+            <div class="h">人の錯覚</div>
+            「100%カバレッジ」<br>
+            =<br>
+            「すべての入力を試した」<br>
+            <span style="color:#a44">↑ 違う</span>
+          </div>
+          <div class="vs">≠</div>
+          <div class="col right">
+            <div class="h">実際の意味</div>
+            「100%カバレッジ」<br>
+            =<br>
+            「コードの全行を1度通った」<br>
+            入力空間とは別の話
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          カバレッジは<b style="color:var(--ink)">「コード視点」</b>の網羅、テスト設計は<b style="color:var(--ink)">「入力視点」</b>の網羅。両方が必要で、片方では足りない。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 100%カバレッジでもバグるコード</span>
+
+<span class="kw">function</span> <span class="fn">divide</span>(a, b) {
+  <span class="kw">return</span> a / b;  <span class="comment">// 1行</span>
+}
+
+<span class="fn">test</span>(<span class="str">"6/2=3"</span>, () =&gt;
+  <span class="fn">expect</span>(<span class="fn">divide</span>(<span class="num">6</span>,<span class="num">2</span>)).<span class="fn">toBe</span>(<span class="num">3</span>));
+
+<span class="comment">// カバレッジ 100%</span>
+<span class="comment">// しかし divide(1, 0) でバグる</span>
+
+<span class="comment">// 入力空間視点では</span>
+<span class="comment">//   b = 0 のケースが抜けている</span>
+<span class="comment">// = 同値分割の不足</span>
+
+<span class="comment">// カバレッジは</span>
+<span class="comment">//   「テストが弱い場所」は教えてくれる</span>
+<span class="comment">//   「テストが十分」は保証しない</span>
+
+<span class="comment">// → 詳しくは本編Vol.8</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">2つの網羅性</div>
+    <b>コードカバレッジ</b>（コードの何行を実行したか）と<b>入力カバレッジ</b>（入力空間のどこを試したか）は別物です。両者を分けて考えるのが、カバレッジ盲信から抜け出す第一歩。Vol.8でさらに深く扱います。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>テスト設計の本質</h2>
+    <span class="en">ESSENCE</span>
+  </div>
+  <p class="pattern-desc">
+    ここまで読み解いた構造をまとめます。テスト設計の本質とは<b>「無限の入力空間を、限られた時間と労力で、できる限り高い確率でバグを見つけられるように切り取る」</b>営みです。完璧は望めない。だからこそ知恵を絞る。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">essence</span>
+      <span class="tag-desc">テスト設計とは何だったか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 因果の総まとめ</div>
+        <ol class="chain">
+          <li>ソフトウェアの<b>入力空間は無限</b></li>
+          <li>全部は試せない（組合せ爆発）</li>
+          <li>「似た入力は似た振る舞い」と<b>仮定</b>する</li>
+          <li>空間を<b>群</b>に分割する</li>
+          <li>各群の<b>代表値</b>と<b>境目</b>を選ぶ</li>
+          <li>残りは異常系・組合せで補強</li>
+          <li>結果として<b>少数で高確率の検出</b>を実現</li>
+        </ol>
+      </div>
+      <div class="code"><span class="comment">// テスト設計は何ではないか</span>
+
+<span class="kw">NOT:</span>
+  完璧を目指す営み
+
+  全網羅を達成する技
+
+  バグの不在を証明する手段
+
+<span class="comment">// テスト設計は何であるか</span>
+
+<span class="kw">IS:</span>
+  限られた資源で
+  高い確率でバグを見つける営み
+
+  「諦め方の設計」
+
+  経験と理論で
+  最も効率的な点を選ぶ技
+
+       <span class="comment">↓</span>
+
+<span class="ann">技法を覚える前に</span>
+<span class="ann">この本質を押さえる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この巻のまとめ</div>
+    本編Vol.5で「同値分割」「境界値」「デシジョンテーブル」を学んだ時、それぞれが個別の技に見えたかもしれません。地図編Vol.5を通して見ると、すべてが<b>「無限を有限に圧縮する」</b>という同じゴールに向かう、異なる切り口の道具だと分かります。これが「点」を「面」として理解する、ということです。
+  </div>
+</section>
+
+<section id="term">
+  <div class="section-header">
+    <span class="section-num">★</span>
+    <h2>用語の地図</h2>
+    <span class="en">GLOSSARY</span>
+  </div>
+  <p class="pattern-desc">
+    この巻で登場した用語を<b>関係が分かる形で並べて</b>整理します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">glossary</span>
+      <span class="tag-desc">本巻で扱った用語の一覧</span>
+    </div>
+    <div class="demo-body" style="grid-template-columns:1fr">
+      <div class="panel" style="border-right:none">
+        <div class="panel-head">// 並べて見ると関係が分かる</div>
+        <dl class="term-map">
+          <dt>入力空間</dt><dd>関数が取りうる入力の全体集合。引数の数だけ次元を持つ</dd>
+          <dt>組合せ爆発</dt><dd>引数や条件が増えるたび、組合せ数が指数的に膨張する現象</dd>
+          <dt>同値クラス</dt><dd>同じ振る舞いをするであろう入力のグループ</dd>
+          <dt>同値分割</dt><dd>入力空間を同値クラスに分ける技法</dd>
+          <dt>境界値</dt><dd>クラスとクラスの境目の値。バグが集中する場所</dd>
+          <dt>off-by-one</dt><dd>境界で1ずれるバグ。&gt;と&gt;=の取り違え等</dd>
+          <dt>デシジョンテーブル</dt><dd>条件の組合せを表で網羅する技法</dd>
+          <dt>状態遷移テスト</dt><dd>状態+操作+時系列を試す技法</dd>
+          <dt>ペアワイズ法</dt><dd>多因子の中で2因子の組合せだけ網羅する技法</dd>
+          <dt>異常系</dt><dd>仕様外の入力に対する振る舞いの検証</dd>
+          <dt>カバレッジ</dt><dd>テストが何を網羅したかの指標。複数種類ある</dd>
+          <dt>コードカバレッジ</dt><dd>コードの何行・何分岐を通ったか (Vol.8で詳述)</dd>
+          <dt>入力カバレッジ</dt><dd>入力空間のどこを試したかの観点</dd>
+          <dt>Dijkstraの言葉</dt><dd>「テストはバグの存在を示せるが、不在を示せない」</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tip copper" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  本編Vol.6「結合・統合テスト編」では、単体テストを越えて<b>「複数の部品を組み合わせる」</b>世界に踏み込みます。地図編Vol.6「部品から製品への流れ編」では、ソフトウェアがどう組み上がっていくのか、その構造を上下軸と時間軸で読み解きます。Vol.5で見た「入力空間」の話は、Vol.6では「部品の組合せ空間」へと拡張されていきます。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST MAP — VOL.05</span>
+  <span>INFINITE INPUT SPACE</span>
+</footer>
+
+</body>
+</html>

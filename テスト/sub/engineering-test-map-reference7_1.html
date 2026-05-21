@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト 地図編 ユーザー視点と開発者視点編 Vol.7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;--paper:#f0ebe0;--paper-2:#e3dcc8;
+  --accent:#3d4f7c;--accent-2:#6b7a96;--accent-3:#b89968;
+  --muted:#6a6457;--line:#c8c0a8;
+  --code-bg:#1c2138;--code-text:#f0ebe0;--panel-bg:#f7f3e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"⊙";position:absolute;top:-50px;right:-20px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.12;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.map-tag{display:inline-block;background:var(--accent-3);color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:660px;margin-top:20px;color:var(--ink);font-size:15px}
+.axis-banner{display:inline-block;margin-top:18px;background:var(--paper-2);border-left:3px solid var(--accent-3);padding:8px 16px;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--ink);letter-spacing:0.1em}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:20px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em}
+.pattern-desc{max-width:700px;font-size:14px;margin-bottom:20px;color:var(--ink)}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line);margin-top:16px}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:22px 26px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:22px 26px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}.code .type{color:#c2a3ff}.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}.code .ann{color:#f7c08a}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.07);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+.tip.copper{border-left-color:var(--accent-3);background:rgba(184,153,104,0.12)}
+.tip.copper .tip-head{color:var(--accent-3)}
+.term-map{display:grid;grid-template-columns:170px 1fr;gap:8px 16px;font-size:13px}
+.term-map dt{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;padding:4px 0;border-bottom:1px dashed var(--line)}
+.term-map dd{padding:4px 0;border-bottom:1px dashed var(--line)}
+/* 内側 vs 外側 */
+.inside-outside{display:grid;grid-template-columns:1fr auto 1fr;gap:0;font-size:13px;margin:10px 0;align-items:stretch}
+.inside-outside .col{padding:16px;border:1px solid var(--line);background:#fff}
+.inside-outside .col.left{border-right:none;background:#eef2f9}
+.inside-outside .col.right{border-left:none;background:#fbf6e9}
+.inside-outside .vs{display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:0 14px;letter-spacing:0.15em}
+.inside-outside .h{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;font-weight:700;margin-bottom:6px;color:var(--accent)}
+.inside-outside .col.right .h{color:#a47b30}
+/* システム断面 */
+.cross-section{background:#fff;padding:16px;border:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:11.5px}
+.cross-section .layer{padding:10px 14px;margin:2px 0;color:#fff;text-align:center;letter-spacing:0.05em;font-weight:600}
+.cross-section .l-ui{background:#386a3d}
+.cross-section .l-api{background:var(--accent-2)}
+.cross-section .l-svc{background:var(--accent-3);color:var(--ink)}
+.cross-section .l-db{background:var(--accent)}
+.cross-section .view-bracket{position:relative;border:2px dashed #c43030;padding:8px;margin:6px 0}
+.cross-section .view-bracket.dev{border-color:var(--accent)}
+.cross-section .view-bracket .lab{position:absolute;top:-10px;left:8px;background:#fff;padding:0 6px;font-size:10px;color:#c43030;font-weight:700}
+.cross-section .view-bracket.dev .lab{color:var(--accent)}
+/* テーブル */
+.cmp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+.cmp-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:left;padding:8px 10px;letter-spacing:0.1em;border-bottom:1px solid var(--line)}
+.cmp-table td{padding:8px 10px;border-bottom:1px dashed var(--line);vertical-align:top}
+.cmp-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;width:140px}
+/* 因果鎖 */
+.chain{padding-left:0;list-style:none;font-size:13px}
+.chain li{padding:8px 14px;background:#fff;border-left:3px solid var(--accent-3);margin-bottom:8px;position:relative}
+.chain li::after{content:"↓";display:block;text-align:center;color:var(--accent-3);font-size:14px;margin-top:6px;margin-bottom:-12px}
+.chain li:last-child::after{content:""}
+.chain li b{color:var(--accent)}
+.page-footer{border-top:2px solid var(--ink);margin-top:80px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:200px}.inside-outside{grid-template-columns:1fr}.inside-outside .vs{padding:8px 0}.inside-outside .col.left,.inside-outside .col.right{border:1px solid var(--line)}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="map-tag">MAP</span>
+  <span class="vol-tag">MAP VOL.07 / 10</span>
+  <h1>ユーザー視点と開発者視点編</h1>
+  <div class="subtitle">地図編 Vol.7 — OUTSIDE-IN vs INSIDE-OUT</div>
+  <p class="lead">
+    本編Vol.7ではE2Eテストの実装を学びました。地図編Vol.7では、なぜE2Eが他のテストと<b>根本的に違う性質</b>を持つのかを、視点という左右軸で読み解きます。同じシステムでも、<b>内側から見るか / 外側から見るか</b>で別の世界になります。
+  </p>
+  <span class="axis-banner">主な軸 / LEFT-RIGHT — 視点の左右軸で読み解く</span>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 2つの視点</a></li>
+    <li><a href="#sec02">02 内側から見る検証 (単体・結合)</a></li>
+    <li><a href="#sec03">03 外側から見る検証 (E2E・UI)</a></li>
+    <li><a href="#sec04">04 視点が変わると何が変わるか</a></li>
+    <li><a href="#sec05">05 E2Eが脆い構造的理由</a></li>
+    <li><a href="#sec06">06 視点の混在というアンチパターン</a></li>
+    <li><a href="#sec07">07 役割分担の地図</a></li>
+    <li><a href="#term">用語の地図</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>2つの視点</h2>
+    <span class="en">TWO PERSPECTIVES</span>
+  </div>
+  <p class="pattern-desc">
+    ソフトウェアを検証する時、<b>視点が2つ</b>あります。<b>内側から見る視点（inside-out）</b>と<b>外側から見る視点（outside-in）</b>。同じシステムを別の角度から眺めるこの2つの視点が、テストの粒度の本質的な違いを作ります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">two views</span>
+      <span class="tag-desc">内側と外側、視点で世界が変わる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 内側 vs 外側</div>
+        <div class="inside-outside">
+          <div class="col left">
+            <div class="h">INSIDE-OUT — 内側から</div>
+            開発者の視点<br>
+            ↓<br>
+            部品ごとに見る<br>
+            ↓<br>
+            正しく実装されているか
+          </div>
+          <div class="vs">vs</div>
+          <div class="col right">
+            <div class="h">OUTSIDE-IN — 外側から</div>
+            ユーザーの視点<br>
+            ↓<br>
+            全体として見る<br>
+            ↓<br>
+            正しい結果が得られるか
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          内側 = <b style="color:var(--ink)">部品が仕様通り作られているか</b>を問う視点。<br>
+          外側 = <b style="color:var(--ink)">ユーザーが望む結果が得られるか</b>を問う視点。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 同じシステムを2つの視点で見る</span>
+
+<span class="kw">内側からの問い</span>:
+  ・このクラスは仕様通りか?
+  ・このメソッドは正しい値を返すか?
+  ・このSQLは適切か?
+  ・このAPIは要件を満たすか?
+
+       <span class="comment">↓ 答える層</span>
+
+  単体テスト, 結合テスト
+
+<span class="kw">外側からの問い</span>:
+  ・ユーザーは目的を達成できるか?
+  ・画面は意図通り見えるか?
+  ・操作の流れは破綻していないか?
+
+       <span class="comment">↓ 答える層</span>
+
+  E2Eテスト, UIテスト
+
+<span class="comment">// テストの粒度の違いは</span>
+<span class="comment">// 視点の違いに対応している</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    地図編Vol.2のテストピラミッドは「粒度の上下軸」でしたが、別の見方では<b>「視点の左右軸」</b>でもあります。下層=内側、上層=外側。<b>同じ階層構造を2つの軸で理解する</b>と、テスト戦略がより立体的に見えてきます。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>内側から見る検証 (単体・結合)</h2>
+    <span class="en">INSIDE-OUT VIEW</span>
+  </div>
+  <p class="pattern-desc">
+    内側から見る検証は、<b>「開発者がシステムを部品に分解した目線」</b>です。コードの構造に沿ってテストを書きます。<b>関数1つ、クラス1つ、サービス層、リポジトリ層</b>。コードの理解者だけが書ける検証です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">inside-out</span>
+      <span class="tag-desc">開発者の視点に立つ検証</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 内側視点の検証範囲</div>
+        <div class="cross-section">
+          <div class="layer l-ui">UI / 画面</div>
+          <div class="view-bracket dev">
+            <span class="lab">INSIDE-OUT</span>
+            <div class="layer l-api">API</div>
+            <div class="layer l-svc">Service</div>
+            <div class="layer l-db">DB</div>
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          ピラミッドの<b style="color:var(--ink)">下部から中部</b>にあたる層。コードに対応した粒度でテストを書く。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 内側視点のテスト例</span>
+
+<span class="comment">// 個別クラスの責務を確認</span>
+<span class="fn">test</span>(<span class="str">"DiscountCalc#apply"</span>, () =&gt; {
+  <span class="kw">const</span> calc = <span class="kw">new</span> <span class="type">DiscountCalc</span>();
+  <span class="fn">expect</span>(calc.<span class="fn">apply</span>(<span class="num">1000</span>, <span class="num">0.1</span>))
+    .<span class="fn">toBe</span>(<span class="num">900</span>);
+});
+
+<span class="comment">// 内部構造に立脚した検証</span>
+<span class="fn">test</span>(<span class="str">"OrderRepo がSQLでINSERTを発行"</span>, () =&gt; {
+  service.<span class="fn">place</span>(...);
+  <span class="fn">expect</span>(jdbc).<span class="fn">toHaveExecuted</span>(<span class="str">"INSERT INTO orders"</span>);
+});
+
+<span class="comment">// 「コードを書いた人にしか分からない」</span>
+<span class="comment">// 視点の検証</span>
+
+<span class="comment">// 観点:</span>
+<span class="comment">//   ・各部品は仕様通りか</span>
+<span class="comment">//   ・契約 (interface) を満たすか</span>
+<span class="comment">//   ・境目で正しく繋がるか</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>ホワイトボックステスト</b>＝コードの中身を見ながら設計するテスト。内側視点の典型。「実装の知識を前提とする」テスト。
+    <br><b>構造ベーステスト</b>＝同義。プログラムの構造（分岐・パス）に沿って設計する。
+    <br><b>開発者テスト</b>＝開発者が自分のコードに対して書くテスト。多くは内側視点。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>外側から見る検証 (E2E・UI)</h2>
+    <span class="en">OUTSIDE-IN VIEW</span>
+  </div>
+  <p class="pattern-desc">
+    外側から見る検証は、<b>「ユーザーがシステムをひとつの箱として使う目線」</b>です。中身は問わない、結果だけを見る。<b>「目的を達成できるか」</b>が唯一の関心事です。コードの内部を知らなくても書ける検証です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">outside-in</span>
+      <span class="tag-desc">ユーザーの視点に立つ検証</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 外側視点の検証範囲</div>
+        <div class="cross-section">
+          <div class="view-bracket">
+            <span class="lab">OUTSIDE-IN</span>
+            <div class="layer l-ui">UI / 画面</div>
+            <div class="layer l-api">API</div>
+            <div class="layer l-svc">Service</div>
+            <div class="layer l-db">DB</div>
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          ピラミッドの<b style="color:var(--ink)">最上層</b>にあたる層。中身を貫通して「結果」だけを見る。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 外側視点のテスト例</span>
+
+<span class="comment">// 内部構造に踏み込まない</span>
+<span class="fn">test</span>(<span class="str">"ユーザーが商品を購入できる"</span>, <span class="kw">async</span> () =&gt; {
+  <span class="kw">await</span> page.<span class="fn">goto</span>(<span class="str">"/shop"</span>);
+  <span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"text=本"</span>);
+  <span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"text=購入"</span>);
+  <span class="kw">await</span> page.<span class="fn">fill</span>(<span class="str">"#card"</span>, <span class="str">"..."</span>);
+  <span class="kw">await</span> page.<span class="fn">click</span>(<span class="str">"text=確定"</span>);
+
+  <span class="kw">await</span> <span class="fn">expect</span>(page.<span class="fn">getByText</span>(<span class="str">"購入完了"</span>))
+    .<span class="fn">toBeVisible</span>();
+});
+
+<span class="comment">// 観点:</span>
+<span class="comment">//   ・ユーザーは何を見るか</span>
+<span class="comment">//   ・操作は迷わずできるか</span>
+<span class="comment">//   ・目的の結果に到達できるか</span>
+
+<span class="comment">// 内部の実装は知らない</span>
+<span class="comment">// 知らなくても書ける</span>
+<span class="comment">// → 利用者の立場で検証</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>ブラックボックステスト</b>＝中身を見ずに「入力と出力」だけで検証するテスト。外側視点の典型。
+    <br><b>振る舞いベーステスト</b>＝同義。仕様で定義された振る舞いに沿って設計する。
+    <br><b>受け入れテスト</b>＝ユーザーや顧客の視点で「これで納品して良いか」を判定するテスト。外側視点の代表。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>視点が変わると何が変わるか</h2>
+    <span class="en">CONSEQUENCES OF PERSPECTIVE</span>
+  </div>
+  <p class="pattern-desc">
+    視点が変わるだけで、テストの性質が<b>連鎖的に変化</b>します。書きやすさ・速さ・壊れやすさ・実装変更への耐性。すべてが内側／外側で逆方向に振れます。これを理解しておくと、なぜE2Eが「遅くて脆い」のかが必然として見えます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">consequences</span>
+      <span class="tag-desc">視点の違いが生む連鎖的な性質差</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 視点 → 性質の対応</div>
+        <table class="cmp-table">
+          <tr><th>観点</th><th>内側 / 外側</th></tr>
+          <tr><td>速度</td><td>速い / 遅い</td></tr>
+          <tr><td>必要部品</td><td>少ない / 全部</td></tr>
+          <tr><td>失敗特定</td><td>容易 / 困難</td></tr>
+          <tr><td>実装変更耐性</td><td>低い / 高い</td></tr>
+          <tr><td>仕様変更耐性</td><td>高い / 低い</td></tr>
+          <tr><td>ビジネス価値</td><td>間接的 / 直接的</td></tr>
+        </table>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          おもしろい点: <b style="color:var(--ink)">「実装変更耐性」と「仕様変更耐性」が逆</b>。実装をいじっても外側テストは壊れない。仕様が変わると外側テストは壊れやすい。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 実装変更 vs 仕様変更</span>
+
+<span class="kw">実装変更</span>:
+  関数を分割・統合
+  クラスをリファクタ
+  SQLを最適化
+
+  ↓ 影響を受けやすい
+
+  <span class="ann">内側テスト</span> (詳細に依存)
+
+<span class="kw">仕様変更</span>:
+  画面のレイアウト変更
+  項目の追加・削除
+  操作フローの変更
+
+  ↓ 影響を受けやすい
+
+  <span class="ann">外側テスト</span> (画面に依存)
+
+<span class="comment">// テストはどちらかに脆い</span>
+<span class="comment">// 完全無敵のテストはない</span>
+
+<span class="comment">// → だから両方必要</span>
+<span class="comment">// → だからピラミッド</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この事実の意味</div>
+    <b>テストには「何に脆いか」のトレードオフがある</b>。内側テストは実装の変更に脆く、外側テストは仕様の変更に脆い。どちらか片方だけだと盲点が生まれる。<b>両方を組み合わせるからこそ全体が守られる</b>のです。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>E2Eが脆い構造的理由</h2>
+    <span class="en">WHY E2E IS FRAGILE</span>
+  </div>
+  <p class="pattern-desc">
+    E2Eテストはなぜ壊れやすいのか。よく「不安定だから」「待ち時間が」と語られますが、<b>もっと根本の理由は「依存する部品が圧倒的に多い」</b>ことにあります。外側から見るということは、内側のすべてに依存するということです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why fragile</span>
+      <span class="tag-desc">E2Eが壊れやすい構造的理由</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 依存の連鎖</div>
+        <ol class="chain">
+          <li>E2Eテストは<b>画面・API・DB・外部</b>すべてに依存する</li>
+          <li>そのどれか1つでも変われば、テストに影響しうる</li>
+          <li>変更を加える機会は無数にある (人・時間・要因)</li>
+          <li>結果、テストが壊れる<b>確率は単体テストより遥かに高い</b></li>
+        </ol>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          単体テストの依存=1 〜 数個。E2Eの依存=数十〜数百。<b style="color:var(--ink)">壊れる確率は依存数の積</b>。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 確率モデルで理解する</span>
+
+<span class="kw">1つの部品が壊れない確率</span>:
+  仮に 99%
+
+<span class="kw">単体テストの安定性</span>:
+  依存 = 1部品
+  安定確率 = 0.99
+  ≒ <span class="ann">99%安定</span>
+
+<span class="kw">結合テストの安定性</span>:
+  依存 = 数部品
+  安定確率 = 0.99^5
+  ≒ <span class="ann">95%安定</span>
+
+<span class="kw">E2Eテストの安定性</span>:
+  依存 = 数十部品 + 環境
+  安定確率 = 0.99^50
+  ≒ <span class="ann">60%安定</span>
+
+<span class="comment">// 個々の部品の質を上げても</span>
+<span class="comment">// 依存数が多いほど</span>
+<span class="comment">// 全体の安定性は下がる</span>
+
+<span class="comment">// これがE2Eが脆い構造的理由</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この構造の意味</div>
+    E2Eテストの脆さは<b>「気をつければ直る」性質のものではない</b>。依存が多いという構造そのものの帰結。だから本編Vol.7で見た「フレーキー対策」は<b>「壊れにくくする」ではなく「壊れた時の被害を最小にする」</b>方向の工夫が中心になります。「E2Eは少なく書く」が現場の知恵である理由がここにあります。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>視点の混在というアンチパターン</h2>
+    <span class="en">MIXING PERSPECTIVES</span>
+  </div>
+  <p class="pattern-desc">
+    視点の概念が分かると、<b>テストで起きるアンチパターン</b>の多くが「視点の混在」として説明できます。「内側でテストすべきものを外側で」「外側で確かめるべきものを内側で」やってしまう失敗です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">mixing</span>
+      <span class="tag-desc">視点の使い分けを誤るアンチパターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの典型的混乱</div>
+        <div class="inside-outside">
+          <div class="col left">
+            <div class="h">混乱A — 外側で詳細を見る</div>
+            E2Eで全バリデーション網羅<br>
+            ↓<br>
+            遅い・脆い・冗長<br>
+            ↓<br>
+            <span style="color:#a44">単体でやればよかった</span>
+          </div>
+          <div class="vs">×</div>
+          <div class="col right">
+            <div class="h">混乱B — 内側で全体を見る</div>
+            単体でユーザーフロー検証<br>
+            ↓<br>
+            実装の擬似に頼る<br>
+            ↓<br>
+            <span style="color:#a44">E2Eでやればよかった</span>
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          視点を間違えると、<b style="color:var(--ink)">「適切な層で取れるはずの効果」を取り損なう</b>。視点の使い分けこそテスト戦略の核。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 混乱Aの実例</span>
+
+<span class="comment">// E2Eで全部やろうとした失敗</span>
+<span class="fn">test</span>(<span class="str">"メールが空でエラー表示"</span>, ...);
+<span class="fn">test</span>(<span class="str">"メール形式不正でエラー"</span>, ...);
+<span class="fn">test</span>(<span class="str">"メール長すぎでエラー"</span>, ...);
+<span class="fn">test</span>(<span class="str">"パスワード空でエラー"</span>, ...);
+...
+<span class="comment">// 各テスト 30秒</span>
+<span class="comment">// 50ケース = 25分</span>
+<span class="comment">// 単体なら 数秒で同じ網羅</span>
+
+<span class="comment">// → バリデーションは内側で</span>
+
+<span class="comment">// 混乱Bの実例</span>
+
+<span class="comment">// 単体テストで「画面遷移」を検証</span>
+<span class="fn">test</span>(<span class="str">"購入後に完了画面"</span>, () =&gt; {
+  <span class="kw">const</span> mockRouter = <span class="fn">mock</span>();
+  service.<span class="fn">complete</span>(...);
+  <span class="fn">expect</span>(mockRouter.<span class="fn">push</span>)
+    .<span class="fn">toHaveBeenCalledWith</span>(<span class="str">"/done"</span>);
+});
+<span class="comment">// ルーターをモック</span>
+<span class="comment">// 本物のブラウザ遷移を試していない</span>
+<span class="comment">// → これはE2Eでやるべき</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">処方箋</div>
+    <b>「視点を意識して書く」</b>のが処方箋。書きながら<b>「自分は今、内側を見ているか / 外側を見ているか」</b>を自問する習慣を持つと、適切な層を選べるようになります。これがテスト戦略の<b>実践的な判断軸</b>です。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>役割分担の地図</h2>
+    <span class="en">DIVISION OF ROLES</span>
+  </div>
+  <p class="pattern-desc">
+    最後に、視点という軸でテストの役割分担を整理します。<b>「何を内側で・何を外側で」</b>の判断が一目で分かる対応表。これを頭に入れておくと、新機能を作る時のテスト戦略がすぐ立てられます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">division of roles</span>
+      <span class="tag-desc">何を内側で、何を外側で見るか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 役割分担</div>
+        <table class="cmp-table">
+          <tr><th>検証したいもの</th><th>適切な視点</th></tr>
+          <tr><td>計算ロジック</td><td>内側 (単体)</td></tr>
+          <tr><td>バリデーション</td><td>内側 (単体)</td></tr>
+          <tr><td>SQL・DB操作</td><td>内側 (結合)</td></tr>
+          <tr><td>外部API連携</td><td>内側 (結合)</td></tr>
+          <tr><td>画面の見え方</td><td>外側 (UI)</td></tr>
+          <tr><td>ユーザーフロー</td><td>外側 (E2E)</td></tr>
+          <tr><td>ハッピーパス</td><td>外側 (E2E)</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="comment">// 視点による役割分担の3原則</span>
+
+<span class="ann">①</span> 内側で取れるものは内側で
+   速い・安定・大量に書ける
+
+<span class="ann">②</span> 外側でしか取れないものは外側で
+   ユーザー体験・全体の通り
+
+<span class="ann">③</span> 同じものを両方で書かない
+   時間と労力の無駄
+
+       <span class="comment">↓</span>
+
+<span class="kw">結果としてピラミッドが完成</span>
+
+  外側 (E2E)         少数・厳選
+       ↑
+  内側 (結合)        中程度
+       ↑
+  内側 (単体)        大量
+
+<span class="comment">// 視点という軸で整理しても</span>
+<span class="comment">// ピラミッドが必然的に出てくる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この巻のまとめ</div>
+    地図編Vol.2でピラミッドを「粒度」で、地図編Vol.6で「構造」で読み解き、地図編Vol.7では「視点」で読み解きました。<b>同じ結論に3つの違う角度から到達する</b>—これは知識が立体化している証です。テスト戦略を理解する上で、視点の左右軸を持つことは大きな助けになります。
+  </div>
+</section>
+
+<section id="term">
+  <div class="section-header">
+    <span class="section-num">★</span>
+    <h2>用語の地図</h2>
+    <span class="en">GLOSSARY</span>
+  </div>
+  <p class="pattern-desc">
+    この巻で登場した用語を<b>関係が分かる形で並べて</b>整理します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">glossary</span>
+      <span class="tag-desc">本巻で扱った用語の一覧</span>
+    </div>
+    <div class="demo-body" style="grid-template-columns:1fr">
+      <div class="panel" style="border-right:none">
+        <div class="panel-head">// 並べて見ると関係が分かる</div>
+        <dl class="term-map">
+          <dt>内側視点 / inside-out</dt><dd>システムを部品単位で見る視点。開発者の立場</dd>
+          <dt>外側視点 / outside-in</dt><dd>システムを箱として見る視点。ユーザーの立場</dd>
+          <dt>ホワイトボックス</dt><dd>中身を見ながら設計するテスト。内側視点の典型</dd>
+          <dt>ブラックボックス</dt><dd>中身を見ずに入出力だけで検証。外側視点の典型</dd>
+          <dt>構造ベース</dt><dd>プログラム構造に沿った設計。ホワイトボックス系</dd>
+          <dt>振る舞いベース</dt><dd>仕様の振る舞いに沿った設計。ブラックボックス系</dd>
+          <dt>開発者テスト</dt><dd>開発者が自分のコードに書くテスト。多くは内側視点</dd>
+          <dt>受け入れテスト</dt><dd>納品判定のテスト。外側視点</dd>
+          <dt>UIテスト</dt><dd>画面操作を伴うテスト。外側視点</dd>
+          <dt>E2Eテスト</dt><dd>システム端から端までを通すテスト。最も外側</dd>
+          <dt>実装変更耐性</dt><dd>内部の書き換えで壊れにくい性質。外側テストが強い</dd>
+          <dt>仕様変更耐性</dt><dd>仕様変更で壊れにくい性質。内側テストが強い</dd>
+          <dt>視点の混在</dt><dd>適切でない層で検証してしまうアンチパターン</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tip copper" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  本編Vol.8「カバレッジ・品質測定編」では、テストの<b>「量」だけでなく「質」を測る</b>仕組みに踏み込みます。地図編Vol.5で予告した「カバレッジの罠」も本格議論します。地図編Vol.8「『測る』を読み解く編」では、「測定」という行為そのものを構造的に解剖。<b>量と質の関係、何を測ると何が分かるか</b>を読み解きます。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST MAP — VOL.07</span>
+  <span>OUTSIDE-IN vs INSIDE-OUT</span>
+</footer>
+
+</body>
+</html>

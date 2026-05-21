@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリング設計編 設計ドキュメントと図解 Vol.8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1a0f04;
+    --paper:#dec392;
+    --paper-2:#c19c62;
+    --accent:#4a1c08;
+    --accent-2:#7e3c1c;
+    --accent-3:#2c0c02;
+    --muted:#4e3a26;
+    --line:#8e6638;
+    --code-bg:#170a02;
+    --code-text:#f0e4cf;
+    --panel-bg:#ecd6ac;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;line-height:1.75;font-size:15px}
+  body{max-width:1180px;margin:0 auto;padding:0 28px 80px}
+
+  .page-header{position:relative;padding:48px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+  .page-header::before{content:"△";position:absolute;right:-10px;top:-30px;font-size:280px;color:var(--accent);opacity:.18;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+  .page-header > *{position:relative;z-index:1}
+  .series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace;margin-right:8px}
+  .vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:.18em;font-family:"JetBrains Mono",monospace}
+  h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin-top:18px;letter-spacing:.04em}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;font-family:"JetBrains Mono",monospace;letter-spacing:.08em}
+  .lead{max-width:640px;margin-top:22px;font-size:15px}
+  .lead b{color:var(--accent-3)}
+
+  .toc{background:var(--paper-2);padding:18px 22px;margin:32px 0 48px;border-left:3px solid var(--accent)}
+  .toc-title{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:.2em;color:var(--accent-3);margin-bottom:10px}
+  .toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px}
+  .toc li{font-size:13px}
+  .toc a{color:var(--ink);text-decoration:none;font-family:"JetBrains Mono",monospace}
+  .toc a::before{content:"— ";color:var(--accent)}
+  .toc a:hover{color:var(--accent)}
+
+  section{margin:64px 0}
+  .section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .section-num{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent);font-weight:600}
+  .section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;letter-spacing:.04em;flex:1}
+  .section-header .en{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:.15em}
+  .pattern-desc{max-width:680px;margin-bottom:20px;font-size:14.5px}
+  .pattern-desc b{color:var(--accent-3)}
+
+  .demo-card{border:1px solid var(--line);background:#fff;margin:18px 0}
+  .demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .tag-name{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+  .tag-desc{font-size:12px;color:var(--muted)}
+  .demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+  .panel{background:var(--panel-bg);padding:20px;border-right:1px solid var(--line);font-size:14px}
+  .panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:.1em}
+  .code{background:var(--code-bg);color:var(--code-text);padding:20px;font-family:"JetBrains Mono",monospace;font-size:12.5px;line-height:1.85;overflow-x:auto;white-space:pre-wrap}
+  @media(max-width:720px){
+    .demo-body{grid-template-columns:1fr}
+    .panel{border-right:none;border-bottom:1px solid var(--line)}
+  }
+
+  .kw{color:#ffc88a}
+  .type{color:#c2a3ff}
+  .fn{color:#a3c9ff}
+  .str{color:#b5e8b0}
+  .num{color:#f7a8d8}
+  .comment{color:#998aaa;font-style:italic}
+  .ann{color:#f7c08a}
+  .menu-code{color:#f7c08a;font-weight:600}
+  .step{color:#ffc88a;font-weight:600}
+
+  .tip{background:rgba(74,28,8,.09);border-left:3px solid var(--accent);padding:14px 18px;margin:18px 0;font-size:14px}
+  .tip-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);letter-spacing:.18em;margin-bottom:6px;font-weight:600}
+  .tip b{color:var(--accent-3)}
+
+  .key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:11.5px}
+
+  .panel ul{list-style:none;margin:8px 0}
+  .panel li{padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .panel li:last-child{border-bottom:none}
+  .panel .label{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-right:6px}
+  .panel strong{color:var(--accent-3);font-weight:600}
+
+  .diagram{padding:14px;background:#fff;border:1px dashed var(--line);font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.6;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+  .compare{width:100%;font-size:13px;margin:10px 0}
+  .compare th{background:var(--paper-2);text-align:left;padding:8px;border-bottom:1px solid var(--line);font-family:"Shippori Mincho",serif;font-size:13px}
+  .compare td{padding:8px;border-bottom:1px dashed var(--line);vertical-align:top}
+  .compare .ng{color:#b04848}
+  .compare .ok{color:#4a7848}
+
+  .stars{color:var(--accent);font-weight:700;letter-spacing:.05em}
+
+  .page-footer{margin-top:80px;padding-top:24px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.1em}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">ENGINEERING DESIGN</span>
+  <span class="vol-tag">VOL.08</span>
+  <h1>設計ドキュメントと図解</h1>
+  <div class="subtitle">DESIGN DOCUMENTATION & DIAGRAMS</div>
+  <p class="lead">どんなに優れた設計でも、<b>伝わらなければ無いのと同じ</b>です。本巻ではUML主要図、C4モデル、ADR（設計決定記録）、Mermaidによるテキスト図、そして設計レビューの進め方まで。<b>設計を「伝える」技術</b>を体系的に身につけましょう。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — 本巻の目次</div>
+  <ul>
+    <li><a href="#s1">01 なぜ設計を書くか</a></li>
+    <li><a href="#s2">02 UML主要図</a></li>
+    <li><a href="#s3">03 クラス図とER図</a></li>
+    <li><a href="#s4">04 シーケンス図と状態遷移図</a></li>
+    <li><a href="#s5">05 C4モデル</a></li>
+    <li><a href="#s6">06 ADR(設計決定記録)</a></li>
+    <li><a href="#s7">07 Mermaidで書く</a></li>
+    <li><a href="#s8">08 設計レビューの進め方</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>なぜ設計を書くか</h2>
+    <span class="en">WHY DOCUMENT DESIGN</span>
+  </div>
+  <p class="pattern-desc">設計ドキュメントには3つの読者がいます。<b>「他人」「未来の自分」「現在の自分」</b>。書く行為そのものが思考を整理し、後から読む人が高速で全体像を掴め、自分の頭の中の曖昧さも炙り出されます。<b>「コードがあれば十分」は幻想</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-docs</span>
+      <span class="tag-desc">設計を書く3つの理由</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3人の読者</div>
+        <ul>
+          <li><span class="label">他人</span><strong>新メンバー</strong><br>「このシステムどうなってる?」を1日で理解</li>
+          <li><span class="label">未来</span><strong>6ヶ月後の自分</strong><br>「なんでこう作ったんだっけ?」の答え</li>
+          <li><span class="label">現在</span><strong>書いてる今の自分</strong><br>書くと思考が整理される</li>
+        </ul>
+        <p style="margin-top:10px;font-size:13px"><b>「書ける = 理解している」</b>。書けないなら理解が不十分という証拠です。設計を書く時間は<b>無駄ではなく投資</b>。</p>
+      </div>
+      <div class="code"><span class="comment">// ドキュメントの種類と寿命</span>
+
+<span class="ann">[長期保存]</span> 概念モデル / アーキテクチャ
+  <span class="comment">- 5年単位で残る</span>
+  <span class="comment">- システムの本質を記述</span>
+  <span class="comment">- ADR、C4 Lv1-2図</span>
+
+<span class="ann">[中期]</span> 機能設計書
+  <span class="comment">- リリース単位で残る</span>
+  <span class="comment">- ユースケース、データモデル</span>
+  <span class="comment">- 機能仕様書</span>
+
+<span class="ann">[短期]</span> 議事録 / 検討メモ
+  <span class="comment">- 議論の経過を残す</span>
+  <span class="comment">- すぐに陳腐化する</span>
+  <span class="comment">- 重要な結論はADRに昇格させる</span>
+
+<span class="comment">// ドキュメントの理想:</span>
+<span class="comment">// 「コードで表現できることはコードで」</span>
+<span class="comment">// 「コードで表現できないことを文書で」</span>
+
+<span class="comment">// 表現できないこと:</span>
+<span class="comment">// - なぜそう作ったか (Why)</span>
+<span class="comment">// - 他の選択肢と比べた理由</span>
+<span class="comment">// - システム全体の俯瞰図</span>
+<span class="comment">// - 非機能要件と制約</span>
+<span class="comment">// - 業務ドメインの背景</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — Whyを書け、Howは書くな</div>
+    最も価値あるドキュメントは<b>「なぜそう作ったか」</b>を書いたもの。コードを見れば How（どう動くか）は分かりますが、Why（なぜそう決めたか）はコードに残りません。<b>意思決定の理由を書く</b>のがドキュメントの本義です。
+  </div>
+</section>
+
+<section id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>UML主要図</h2>
+    <span class="en">UML ESSENTIALS</span>
+  </div>
+  <p class="pattern-desc">UMLは13種類の図がありますが、<b>実務で使うのは4〜5種類</b>だけ。クラス図、シーケンス図、状態遷移図、ユースケース図、アクティビティ図。これさえ押さえれば、設計コミュニケーションで困ることはありません。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">uml-overview</span>
+      <span class="tag-desc">実用5図</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 用途別の使い分け</div>
+        <table class="compare">
+          <tr><th>図</th><th>何を表す</th></tr>
+          <tr><td><b>クラス図</b></td><td>静的構造。型と関係</td></tr>
+          <tr><td><b>シーケンス図</b></td><td>動的な対話。時系列</td></tr>
+          <tr><td><b>状態遷移図</b></td><td>状態の変化と条件</td></tr>
+          <tr><td><b>ユースケース図</b></td><td>誰が何をするか</td></tr>
+          <tr><td><b>アクティビティ図</b></td><td>処理フロー</td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:13px"><b>使い分けの目安</b>: 「<b>何が(クラス)、どんな時(状態)、どう動くか(シーケンス)</b>」。3点セットで多くのケースをカバーできます。</p>
+      </div>
+      <div class="code"><span class="comment">// ユースケース図の例</span>
+
+         <span class="kw">[注文システム]</span>
+   ┌──────────────────────┐
+   │                        │
+顧客→ 商品検索               │
+   │                        │
+顧客→ カートに追加           │
+   │  &lt;&lt;include&gt;&gt;          │
+   │        ↓                │
+顧客→ 注文確定 ─── ログイン  │
+   │                        │
+顧客→ 注文履歴閲覧           │
+   │                        │
+管理者→ 在庫管理             │
+管理者→ 売上集計             │
+   └──────────────────────┘
+
+<span class="ann">記法ポイント:</span>
+- <span class="kw">アクター</span> (人/外部システム)
+- <span class="kw">ユースケース</span> (楕円で表現)
+- <span class="kw">includes</span> 必ず実行する関連
+- <span class="kw">extends</span> 任意で実行する関連
+
+<span class="comment">// 厳密性より「全体像が伝わるか」が大事</span>
+<span class="comment">// 矢印の向きで悩むより、</span>
+<span class="comment">// 読み手の理解優先で柔軟に</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">TIP — UMLは「方言」を許容</div>
+    UMLの厳密な記法を完全に守る必要はありません。<b>チーム内で意味が伝わるなら、ある程度の崩しはOK</b>。「正しいUML」より「<b>伝わる図</b>」を優先しましょう。学術論文を書いてるわけではないので。
+  </div>
+</section>
+
+<section id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>クラス図とER図</h2>
+    <span class="en">CLASS DIAGRAM & ER</span>
+  </div>
+  <p class="pattern-desc"><b>クラス図</b>はオブジェクト指向の世界の地図、<b>ER図</b>はDBの世界の地図。似ているようで目的が違います。クラス図は<b>振る舞い込み</b>、ER図は<b>データ構造に集中</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">class-vs-er</span>
+      <span class="tag-desc">2種類の構造図</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// クラス図の例</div>
+        <div class="diagram">┌─────────────────┐
+│ &lt;&lt;interface&gt;&gt;   │
+│ PaymentMethod    │
+├─────────────────┤
+│ +pay(amt): bool  │
+└─────────────────┘
+         △
+         │ implements
+   ┌─────┴─────┐
+   │           │
+┌──────────┐ ┌──────────┐
+│CreditCard│ │ PayPay   │
+├──────────┤ ├──────────┤
+│-cardNo   │ │-userId   │
+├──────────┤ ├──────────┤
+│+pay()    │ │+pay()    │
+└──────────┘ └──────────┘
+
+[Order] 1 ◇── 1..*[OrderItem]
+   コンポジション（強い所有）</div>
+        <p style="margin-top:10px;font-size:12.5px"><b>関連の種類</b>: 関連(─) / 集約(◇─) / コンポジション(◆─) / 継承(△─) / 実装(△- -)</p>
+      </div>
+      <div class="code"><span class="comment">// ER図の例 (Crow's Foot 記法)</span>
+
+┌─────────────┐       ┌──────────────┐
+│  users      │       │   orders      │
+├─────────────┤       ├──────────────┤
+│ PK id       │──┐    │ PK id         │
+│    email    │  │    │ FK user_id    │
+│    name     │  └─&gt;┤< │    status      │
+│    created  │       │    total       │
+└─────────────┘       │    created     │
+                      └──────┬────────┘
+                             │
+                             │ has many
+                             ▼
+                      ┌──────────────────┐
+                      │  order_items      │
+                      ├──────────────────┤
+                      │ PK,FK order_id    │
+                      │ PK,FK product_id  │
+                      │    quantity       │
+                      │    unit_price     │
+                      └──────────────────┘
+
+<span class="ann">多重度の表現:</span>
+  <span class="num">1</span>     1個
+  ──&lt;   多数
+  ─&lt;|   0または1
+  ──&lt;|  1以上
+  ──○&lt; 0以上 (任意)
+
+<span class="comment">// ツール: dbdiagram.io, drawSQL, Mermaid 等</span>
+<span class="comment">// テキストで書けるものが現代的</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — 「ドメインモデル図」という選択肢</div>
+    厳密なクラス図は<b>業務メンバーには伝わりません</b>。技術記号を取り除いた<b>「ドメインモデル図」</b>（箱と矢印だけ）にすると、企画/営業/PMとの議論で大活躍します。場面で図のフォーマルさを切り替えるのがプロです。
+  </div>
+</section>
+
+<section id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>シーケンス図と状態遷移図</h2>
+    <span class="en">SEQUENCE & STATE DIAGRAM</span>
+  </div>
+  <p class="pattern-desc"><b>時間軸</b>を表すならシーケンス図、<b>状態の変化</b>を表すなら状態遷移図。どちらも<b>動的な振る舞いを伝える</b>のに無くてはならない図です。バグの議論やレビューで頻出。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">sequence-state</span>
+      <span class="tag-desc">動的な側面の表現</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// シーケンス図の例</div>
+        <div class="diagram">User    Controller  UseCase  Repo   DB
+ │          │         │       │     │
+ ├─POST────&gt;│         │       │     │
+ │          ├─execute&gt;│       │     │
+ │          │         ├─find─&gt;│     │
+ │          │         │       ├SQL─&gt;│
+ │          │         │       │&lt;────┤
+ │          │         │&lt;──────┤     │
+ │          │         ├─save─&gt;│     │
+ │          │         │       ├SQL─&gt;│
+ │          │         │&lt;──────┤     │
+ │          │&lt;────────┤       │     │
+ │&lt;─201─────┤         │       │     │
+ │          │         │       │     │
+
+時間は上から下へ
+横矢印は呼び出し
+点線は戻り値</div>
+        <p style="margin-top:10px;font-size:13px"><b>使いどころ</b>: API1回の呼び出しがどのコンポーネントを通るか / 非同期処理の流れ / トランザクション境界の説明</p>
+      </div>
+      <div class="code"><span class="comment">// 状態遷移図の例: 注文の状態</span>
+
+      <span class="kw">[*]</span> 初期
+         │
+         ▼
+   ┌───────────┐
+   │  PENDING   │ ← 注文作成直後
+   └───┬───────┘
+       │ 支払い完了
+       ▼
+   ┌───────────┐
+   │  PAID      │ ← 入金確認
+   └───┬───────┘
+       │ 出荷処理
+       ▼
+   ┌───────────┐
+   │  SHIPPED   │ ← 配送中
+   └───┬───────┘
+       │ 配達完了
+       ▼
+   ┌───────────┐
+   │ DELIVERED  │ ← 完了 (終了状態)
+   └────────────┘
+
+   キャンセル経路:
+   PENDING → CANCELLED
+   PAID    → REFUNDED
+
+<span class="ann">記述ルール:</span>
+- 状態（角丸の箱）
+- 遷移（矢印）
+- イベント/条件（矢印のラベル）
+- 開始状態 ●
+- 終了状態 ⊙
+
+<span class="comment">// 状態遷移図を書くと「想定外の状態遷移」</span>
+<span class="comment">// に気付くことが多い。バグ防止に超有効。</span>
+<span class="comment">// 例: PENDING から SHIPPED へ飛んでない?</span>
+<span class="comment">//     CANCELLED 後の払戻しはどう扱う?</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — 状態の数を意識する</div>
+    1つのエンティティに<b>状態が5個以上ある</b>場合、必ず状態遷移図を書きましょう。書かないと必ずバグが出ます。「PAIDからSHIPPEDに飛ばすコードが無い」「CANCELLED後にCONFIRMEDに戻れちゃう」など、図にすると一発で異常に気付きます。
+  </div>
+</section>
+
+<section id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>C4モデル</h2>
+    <span class="en">C4 MODEL</span>
+  </div>
+  <p class="pattern-desc"><b>C4モデル</b>はSimon Brownが提唱したアーキテクチャ図の方法論。<b>「ズームレベル」</b>の概念で、同じシステムを<b>4段階の解像度</b>で描き分けます。<b>「全体像が見えない」「詳細すぎて全体が分からない」</b>問題を一発で解決します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">c4-model</span>
+      <span class="tag-desc">4段階のズーム</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4つのレベル</div>
+        <ul>
+          <li><span class="label">L1</span><strong>System Context</strong><br>システムと外部世界の関係<br><span style="font-size:12px;color:var(--muted)">経営層・全関係者向け</span></li>
+          <li><span class="label">L2</span><strong>Container</strong><br>主要な実行単位<br><span style="font-size:12px;color:var(--muted)">Web/API/DB/外部サービス等</span></li>
+          <li><span class="label">L3</span><strong>Component</strong><br>コンテナ内のモジュール構成<br><span style="font-size:12px;color:var(--muted)">開発者向け</span></li>
+          <li><span class="label">L4</span><strong>Code</strong><br>クラスレベル<br><span style="font-size:12px;color:var(--muted)">必要な時だけ。多くは省略</span></li>
+        </ul>
+        <p style="margin-top:10px;font-size:12.5px"><b>多くの組織はL1〜L3で十分</b>。L4は普段省略してOK。</p>
+      </div>
+      <div class="code"><span class="comment">// L1: システムコンテキスト</span>
+
+        ┌─────────────┐
+        │   顧客       │ (Person)
+        └──────┬──────┘
+               │ 注文する
+               ▼
+        ┌─────────────────┐
+        │  ECシステム      │ ← <span class="kw">私たちのシステム</span>
+        └──┬───────────┬──┘
+           │           │
+           ▼           ▼
+    ┌──────────┐  ┌──────────┐
+    │ Stripe   │  │ 配送API  │
+    └──────────┘  └──────────┘
+
+<span class="comment">// L2: コンテナ図 (ECシステムを開く)</span>
+
+       ┌─────────────────┐
+       │   Webアプリ      │ (Next.js)
+       └────┬─────────────┘
+            │ HTTPS
+            ▼
+       ┌─────────────────┐    ┌────────┐
+       │   API Server     │───&gt;│ Redis  │
+       │   (Node.js)      │    │(キャッシュ)│
+       └────┬─────────────┘    └────────┘
+            │
+            ▼
+       ┌─────────────────┐
+       │   PostgreSQL     │
+       └─────────────────┘
+
+<span class="comment">// L3: API Server を開く (Component)</span>
+
+   API Server 内部:
+   ┌────────────────────────┐
+   │ Controller層              │
+   │   OrderController          │
+   │   UserController           │
+   │ ───────────────────────│
+   │ UseCase層                  │
+   │   PlaceOrderUseCase        │
+   │   ListProductsUseCase      │
+   │ ───────────────────────│
+   │ Domain層                   │
+   │   Order, Product, ...      │
+   │ ───────────────────────│
+   │ Infrastructure層            │
+   │   *Repository, *Client     │
+   └────────────────────────┘
+
+<span class="comment">// ズームインに従い詳細化。</span>
+<span class="comment">// 読み手のレベルに合わせて見せる図を選ぶ。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — C4は新人オンボーディングで神</div>
+    新メンバーが入った時、<b>「L1で全体感」→「L2でシステム構成」→「L3で担当領域」</b>と段階的に見せると、最短で立ち上がります。いきなり詳細図を渡すと迷子になるので、<b>解像度の階段</b>を意識しましょう。
+  </div>
+</section>
+
+<section id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ADR — 設計決定記録</h2>
+    <span class="en">ARCHITECTURE DECISION RECORDS</span>
+  </div>
+  <p class="pattern-desc"><b>ADR (Architecture Decision Record)</b>は<b>「なぜそれを選んだか」</b>を1ファイル1決定で残す手法。<b>長大な設計書より圧倒的に実用的</b>で、近年急速に普及しています。<b>未来の自分やチームへの贈り物</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">adr</span>
+      <span class="tag-desc">決定理由を後世に残す</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ADR の構成要素</div>
+        <ul>
+          <li><span class="label">タイトル</span>連番+短い見出し<br>例: <code style="font-size:11px;background:var(--paper-2);padding:1px 4px;font-family:'JetBrains Mono',monospace">0007-use-postgresql.md</code></li>
+          <li><span class="label">Status</span>状態<br>Proposed/Accepted/Deprecated/Superseded</li>
+          <li><span class="label">Context</span>背景・なぜ判断が必要になったか</li>
+          <li><span class="label">Decision</span>決定内容</li>
+          <li><span class="label">Consequences</span>結果と影響（良い面/悪い面）</li>
+        </ul>
+        <p style="margin-top:10px;font-size:12.5px"><b>運用方針</b>: 一度書いたら<b>絶対に書き換えない</b>。変更があれば新ADRを書き、旧ADRはSupersededにする。「履歴の保持」が肝。</p>
+      </div>
+      <div class="code"><span class="comment">// ADR の例 (Markdown)</span>
+
+<span class="ann"># ADR-0007: 主データベースに PostgreSQL を採用</span>
+
+<span class="kw">## Status</span>
+Accepted - <span class="num">2026</span>-<span class="num">04</span>-<span class="num">12</span>
+
+<span class="kw">## Context</span>
+本プロジェクトでは ECサイトを構築する。
+- 注文/在庫の<span class="str">強整合性</span>が必要
+- 月間 <span class="num">10</span>万件の注文を想定
+- レポート集計のため SQL クエリが必要
+- 既存チームの経験は MySQL/PostgreSQL
+- AWS環境で運用
+
+<span class="kw">## Decision</span>
+主データベースに <span class="str">PostgreSQL 16</span> を採用する。
+AWS RDS で運用し、リードレプリカ <span class="num">1</span>台を設置。
+
+<span class="kw">## Considered Alternatives</span>
+- MySQL <span class="num">8</span>: 同等の選択肢。
+  → JSON型と全文検索でPostgresが優位
+- DynamoDB: 強整合トランザクションが弱い
+  → 注文業務には不向き
+- MongoDB: スキーマレスは魅力だが
+  → レポート集計が複雑化
+
+<span class="kw">## Consequences</span>
+<span class="ann">良い面:</span>
+- ACIDで在庫整合性が保証される
+- 既存スキルが活かせる
+- AWS RDSの自動運用が利用可能
+
+<span class="ann">悪い面:</span>
+- 水平スケールには限界がある
+  (将来 <span class="num">100</span>万件超なら分割検討)
+- ライセンスは無料だが運用は有料
+
+<span class="kw">## References</span>
+- <span class="str">[PostgreSQL公式]</span>
+- 関連ADR: ADR-<span class="num">0005</span> (キャッシュ層に Redis)</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">POINT — ADRはコードリポジトリに入れる</div>
+    ADRは<b>コードと一緒にGitで管理</b>するのが定番。<code style="background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px">docs/adr/</code>フォルダにMarkdownで置けば、PRレビューと同じ流れで議論できます。<b>Wikiに置くと忘れられる</b>のがADRの宿命。コードと共に進化させましょう。
+  </div>
+</section>
+
+<section id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>Mermaidで書く</h2>
+    <span class="en">DIAGRAMS AS CODE — MERMAID</span>
+  </div>
+  <p class="pattern-desc"><b>Mermaid</b>はテキストで図を書ける記法。<b>GitHub/GitLab/Notion/VSCodeなど主要ツールが標準対応</b>しています。<b>図がコードと一緒にバージョン管理できる</b>のが最大の利点。図の差分レビューも可能になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">mermaid</span>
+      <span class="tag-desc">テキストで図を書く</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Mermaidの主な図種</div>
+        <ul>
+          <li><strong>flowchart</strong>: フロー図・概念図</li>
+          <li><strong>sequenceDiagram</strong>: シーケンス図</li>
+          <li><strong>classDiagram</strong>: クラス図</li>
+          <li><strong>stateDiagram-v2</strong>: 状態遷移図</li>
+          <li><strong>erDiagram</strong>: ER図</li>
+          <li><strong>gantt</strong>: ガントチャート</li>
+          <li><strong>journey</strong>: ユーザージャーニー</li>
+        </ul>
+        <p style="margin-top:10px;font-size:13px"><b>メリット</b>:<br>・テキストなのでGitで差分管理<br>・コードレビューと同じ流れ<br>・専用ツール不要<br>・Notion/GitHubで即時レンダリング</p>
+      </div>
+      <div class="code"><span class="comment">// Mermaid: フロー図</span>
+
+<span class="ann">```mermaid</span>
+flowchart LR
+  A[ユーザー] --&gt; B{ログイン済み?}
+  B --&gt;|Yes| C[商品ページ]
+  B --&gt;|No|  D[ログイン画面]
+  D --&gt; C
+  C --&gt; E[カートに追加]
+  E --&gt; F[決済]
+<span class="ann">```</span>
+
+<span class="comment">// Mermaid: シーケンス図</span>
+
+<span class="ann">```mermaid</span>
+sequenceDiagram
+  participant U as User
+  participant API
+  participant DB
+
+  U-&gt;&gt;API: POST /orders
+  API-&gt;&gt;DB: INSERT
+  DB--&gt;&gt;API: order_id
+  API--&gt;&gt;U: <span class="num">201</span> Created
+<span class="ann">```</span>
+
+<span class="comment">// Mermaid: 状態遷移図</span>
+
+<span class="ann">```mermaid</span>
+stateDiagram-v2
+  [*] --&gt; Pending
+  Pending --&gt; Paid: 入金確認
+  Pending --&gt; Cancelled: キャンセル
+  Paid --&gt; Shipped: 出荷
+  Shipped --&gt; Delivered: 配達完了
+  Paid --&gt; Refunded: 返金
+  Delivered --&gt; [*]
+<span class="ann">```</span>
+
+<span class="comment">// Mermaid: ER図</span>
+
+<span class="ann">```mermaid</span>
+erDiagram
+  USER ||--o{ ORDER : places
+  ORDER ||--|{ ORDER_ITEM : contains
+  PRODUCT ||--o{ ORDER_ITEM : <span class="str">"is in"</span>
+<span class="ann">```</span>
+
+<span class="comment">// READMEに貼るだけで図がレンダリング</span>
+<span class="comment">// 「設計図 = テキスト」の時代</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">裏技 — PlantUMLとの使い分け</div>
+    Mermaidは<b>軽量・即時レンダリング</b>が強み、PlantUMLは<b>UML厳密記法・複雑図対応</b>が強み。<b>シンプルな図はMermaid、本格UMLはPlantUML</b>と使い分けるのが現代の流儀。VSCodeなら両方プラグインで対応可能です。
+  </div>
+</section>
+
+<section id="s8">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>設計レビューの進め方</h2>
+    <span class="en">DESIGN REVIEW PROCESS</span>
+  </div>
+  <p class="pattern-desc">設計レビューは<b>「実装に入る前の最後の検問所」</b>。ここで問題を見つけられれば修正コストは小さく、見逃すと数倍の手戻りになります。<b>「合意形成の場」</b>として正しく運用するのが肝心。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">design-review</span>
+      <span class="tag-desc">効果的なレビューの進め方</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// レビューのチェック観点</div>
+        <ul>
+          <li><span class="stars">★★★</span> <strong>要件を満たしているか</strong></li>
+          <li><span class="stars">★★★</span> <strong>非機能要件は?</strong><br>性能/可用性/セキュリティ</li>
+          <li><span class="stars">★★</span> <strong>設計原則を守っているか</strong><br>SOLID / DRY / 凝集・結合</li>
+          <li><span class="stars">★★</span> <strong>テスト可能か</strong></li>
+          <li><span class="stars">★★</span> <strong>運用できるか</strong><br>監視/ログ/障害対応</li>
+          <li><span class="stars">★</span> <strong>他の選択肢は検討したか</strong></li>
+          <li><span class="stars">★</span> <strong>過剰設計になってないか</strong></li>
+        </ul>
+      </div>
+      <div class="code"><span class="comment">// レビュー進行の理想形</span>
+
+<span class="ann">[Step 1]</span> 事前共有 (<span class="num">2</span>営業日前)
+  - 設計書/ADR を事前に配布
+  - レビュアーは事前に目を通す
+  - 当日にいきなり読ませない
+
+<span class="ann">[Step 2]</span> 設計者がプレゼン (<span class="num">15</span>分)
+  - 解こうとしている問題
+  - 採用した設計の核心
+  - 検討した代替案と却下理由
+
+<span class="ann">[Step 3]</span> 質疑応答 (<span class="num">30</span>分)
+  - 不明点の確認
+  - 観点別レビュー
+  - 「なぜ」を5回くらい掘る
+
+<span class="ann">[Step 4]</span> 議論と決定 (<span class="num">15</span>分)
+  - 修正必要点を確定
+  - 次のアクション
+  - 再レビュー有無
+
+<span class="comment">// レビューでやってはいけないこと</span>
+
+<span class="ann">[NG]</span> 当日初見で意見を求める
+<span class="ann">[NG]</span> 設計者を吊し上げる
+<span class="ann">[NG]</span> 個人の好みで議論
+   → 「私ならこう書く」は禁止
+<span class="ann">[NG]</span> 答えを言わずに「ダメ」だけ言う
+   → 必ず代案か観点を示す
+<span class="ann">[NG]</span> 結論を出さずに散会
+   → 必ず「OK/要修正/再レビュー」決定
+
+<span class="comment">// 良いレビュアーは「敵」じゃない</span>
+<span class="comment">// 「同じゴールを目指す仲間」</span>
+<span class="comment">// この姿勢がチーム文化を作る</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-head">NEXT STEP — Vol.9 へ</div>
+    設計の<b>原理・パターン・伝え方</b>まで揃いました。最終巻のVol.9は<b>困った時のQ&A集</b>です。「過剰設計を避けるには」「責務分割で迷ったら」「既存コードへの介入」「チーム合意の取り方」など、現場で実際にぶつかる<b>10の詰まりポイント</b>を逆引きできる形で整理します。本シリーズの締めくくりへ。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING DESIGN SERIES — VOL.08</span>
+  <span>△ DOCUMENT</span>
+</footer>
+
+</body>
+</html>

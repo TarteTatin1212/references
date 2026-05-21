@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.1 本編 プロジェクトを引き継ぎ・2テーブル目を加えよう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2a23;
+  --paper:#e8ede5;
+  --paper-2:#d4ddd0;
+  --accent:#2d4a3a;
+  --accent-2:#4a6e54;
+  --accent-3:#1a2e22;
+  --muted:#687567;
+  --line:#b8c4b3;
+  --code-bg:#14201a;
+  --code-text:#e8ede5;
+  --panel-bg:#f0f4ee;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+.step{color:#ffc88a;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(45,74,58,0.07);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+.check-list li.done::before{content:'✓';color:var(--accent-2)}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.mock-screen{background:#fff;border:1px solid var(--line);margin:12px 0;font-family:'Noto Sans JP',sans-serif}
+.mock-bar{background:#e0e0e0;padding:4px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#444;border-bottom:1px solid #c0c0c0}
+.mock-body{padding:16px}
+.mock-h{font-family:'Shippori Mincho',serif;font-size:18px;margin-bottom:12px;color:var(--accent-3);border-bottom:2px solid var(--accent);padding-bottom:6px;display:inline-block}
+.mock-tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+.mock-tbl th,.mock-tbl td{border:1px solid #d0d0d0;padding:5px 10px;text-align:left}
+.mock-tbl th{background:#f0f0f0;font-weight:600}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.01 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>プロジェクトを引き継ぎ<br>2テーブル目を加えよう</h1>
+  <div class="subtitle">FROM TODO TO LEARNING ── ADD SECOND TABLE</div>
+  <p class="lead">
+    お帰りなさい。練習問題集Aで <b>CRUD完全制覇</b> を成し遂げたあなたが次に向かう先は、<b>「複数テーブルの世界」</b>です。<br>
+    Cの全15巻では「学習記録アプリ」を題材に、<b>1対多リレーション・JOIN・集計・検索・日付処理</b>──Aでは触れなかった世界を一歩ずつ進みます。<br>
+    Vol.1の本編では<b>Aで作ったTODOプロジェクトに2つ目のテーブル <code style="font-family:'JetBrains Mono'">subjects</code>（科目）を追加</b>し、ブラウザで一覧が表示されるところまで進めます。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>Eclipseでクラス名に赤波線が出たら、importが足りていません。<br>
+    <b>自動修正</b>: <code>Ctrl + Shift + O</code>（Organize Imports）で一括解決。<br>
+    <b>個別修正</b>: 赤線にカーソルを合わせて <code>Ctrl + 1</code>（Quick Fix）→ 「Import 'Subject' ...」を選択。<br>
+    Cの全15巻でも毎日のように出会うトラブルです。ショートカットを染み込ませてください。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#design">04 subjectsテーブルを設計する</a></li>
+    <li><a href="#insert">05 SQLでテーブル作成＆データ投入</a></li>
+    <li><a href="#create">06 クラス／インターフェイス作成の手順</a></li>
+    <li><a href="#run">07 ブラウザで動かして確認</a></li>
+    <li><a href="#trouble">08 ハマりどころと対処</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.1はC全体の<b>「滑走路」</b>です。Aで作ったTODOプロジェクトに <code style="font-family:'JetBrains Mono'">subjects</code> テーブルを追加し、<b>ブラウザで科目一覧が表示できる</b>状態まで持っていきます。コードは <code style="font-family:'JetBrains Mono'">tasks</code> のときと驚くほど同じ──だからこそ「もう一回やる」価値があります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.1-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">subjectsテーブルが MySQL に存在する</div>
+          <div class="desc">DDLを実行してテーブルを作り、初期データ（5科目）を投入する。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">Subject エンティティ／Mapper／Controller が動く</div>
+          <div class="desc">Aで作ったTodoのコードと<b>瓜二つの構造</b>でSubject版を作る。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">ブラウザで <code style="font-family:'JetBrains Mono'">/subjects</code> を開くと一覧が表示される</div>
+          <div class="desc">画面はAでやった `th:each` の繰り返しで OK。Cの世界の入り口に立つ。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻の前後比較</span>
+<span class="comment">// ─── Vol.1 開始時点 ───</span>
+todo/                       <span class="comment">// A v2 で作ったプロジェクト</span>
+├ tasks テーブル            <span class="comment">// 1テーブルのみ</span>
+└ Task / TaskMapper / ...   <span class="comment">// CRUD完備</span>
+
+
+<span class="comment">// ─── Vol.1 完了時点 ───</span>
+todo/
+├ tasks テーブル
+├ <span class="kw">subjects テーブル</span>          <span class="comment">// ★ 新規追加</span>
+├ Task / TaskMapper / ...
+└ <span class="kw">Subject / SubjectMapper / ...</span>  <span class="comment">// ★ 新規追加</span>
+   <span class="comment">// → /subjects で一覧が見える</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>Vol.1で意図的に<b>「Aと同じ構造のクラスをもう一度作る」</b>のは、<b>パターンを体に染み込ませる</b>ためです。Vol.2以降で「親子関係を扱うとどう変わるか」を学ぶ前に、まずは「同じ構造」を再現することで<b>差分が見やすくなります</b>。</p>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── ブラウザで見える画面</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.1の<b>ゴール画面</b>はこれです。<code style="font-family:'JetBrains Mono'">http://localhost:8080/subjects</code> を開くと、5つの科目が表に並びます。AでTODOの一覧画面を作ったときと<b>見た目はほぼ同じ</b>ですが、表示しているのは「タスク」ではなく「科目」です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-screen</span>
+      <span class="tag-desc">/subjects のゴール画面</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 完成画面のモック</div>
+        <div class="mock-screen">
+          <div class="mock-bar">▮ http://localhost:8080/subjects</div>
+          <div class="mock-body">
+            <div class="mock-h">科目一覧</div>
+            <table class="mock-tbl">
+              <tr><th>ID</th><th>科目名</th><th>カラー</th></tr>
+              <tr><td>1</td><td>Java</td><td>#c43030</td></tr>
+              <tr><td>2</td><td>Spring Boot</td><td>#5a8a4a</td></tr>
+              <tr><td>3</td><td>SQL</td><td>#2e6090</td></tr>
+              <tr><td>4</td><td>HTML/CSS</td><td>#c4862e</td></tr>
+              <tr><td>5</td><td>JavaScript</td><td>#d6b020</td></tr>
+            </table>
+          </div>
+        </div>
+        <p style="font-size:13px;margin-top:14px"><b>これだけ</b>です。地味ですが、これが<b>Cの全15巻を支える土台</b>になります。</p>
+      </div>
+      <div class="code"><span class="code-head">// 完成プロジェクト構造</span>
+todo/
+├ pom.xml
+├ src/main/java/com/example/todo/
+│  ├ TodoApplication.java
+│  ├ controller/
+│  │  ├ TaskController.java       <span class="comment">// Aで作成</span>
+│  │  └ <span class="kw">SubjectController.java</span>    <span class="comment">// ★ Vol.1で追加</span>
+│  ├ service/
+│  │  ├ TaskService.java          <span class="comment">// Aで作成</span>
+│  │  └ <span class="kw">SubjectService.java</span>       <span class="comment">// ★ Vol.1で追加</span>
+│  ├ entity/
+│  │  ├ Task.java                 <span class="comment">// Aで作成</span>
+│  │  └ <span class="kw">Subject.java</span>              <span class="comment">// ★ Vol.1で追加</span>
+│  └ mapper/
+│     ├ TaskMapper.java           <span class="comment">// Aで作成</span>
+│     └ <span class="kw">SubjectMapper.java</span>        <span class="comment">// ★ Vol.1で追加</span>
+└ src/main/resources/
+   ├ application.properties
+   └ templates/
+      ├ tasks/ ...                <span class="comment">// Aで作成</span>
+      └ <span class="kw">subjects/list.html</span>        <span class="comment">// ★ Vol.1で追加</span>
+
+<span class="comment">// ★が今回作るファイル。全部で5つ。</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.1は<b>練習問題集A v2 全10巻の完了</b>が前提です。具体的に何を前提としているか整理します。「ここ忘れた」と思ったらAに戻ってOK。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">A v2 のどこで学んだか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// A v2 で学んだ前提</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>A v2 該当巻</th></tr>
+          <tr><td>Spring Boot プロジェクト作成</td><td>Vol.1</td></tr>
+          <tr><td>MySQL接続・application.properties</td><td>Vol.2</td></tr>
+          <tr><td>テーブル設計・DDL</td><td>Vol.2</td></tr>
+          <tr><td>Entity / @Data / Lombok</td><td>Vol.3</td></tr>
+          <tr><td>Mapper interface / @Select</td><td>Vol.3</td></tr>
+          <tr><td>Controller / @GetMapping</td><td>Vol.3</td></tr>
+          <tr><td>Thymeleaf <code>th:each</code></td><td>Vol.3</td></tr>
+          <tr><td>Service層 / @Service / @Transactional</td><td>Vol.4</td></tr>
+          <tr><td>CRUD全部</td><td>Vol.5〜7</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// Aで身についていること</span>
+
+<span class="comment">// ── 3層アーキテクチャ ──</span>
+Controller ──呼ぶ──&gt; Service ──呼ぶ──&gt; Mapper ──繋ぐ──&gt; DB
+
+<span class="comment">// ── CRUDの形 ──</span>
+<span class="ann">@Select</span>(<span class="str">"SELECT * FROM tasks"</span>)    <span class="comment">// R</span>
+<span class="ann">@Insert</span>(<span class="str">"INSERT INTO tasks ..."</span>)  <span class="comment">// C</span>
+<span class="ann">@Update</span>(<span class="str">"UPDATE tasks ..."</span>)       <span class="comment">// U</span>
+<span class="ann">@Delete</span>(<span class="str">"DELETE FROM tasks ..."</span>)  <span class="comment">// D</span>
+
+
+<span class="comment">// ── 各ファイルの役割 ──</span>
+<span class="ann">@RestController</span>     <span class="comment">// JSON返す</span>
+<span class="ann">@Controller</span>         <span class="comment">// HTML返す</span>
+<span class="ann">@Service</span>            <span class="comment">// 業務ロジック</span>
+<span class="ann">@Mapper</span>             <span class="comment">// DB操作</span>
+<span class="ann">@Data</span>               <span class="comment">// Entity の getter/setter</span>
+
+
+<span class="comment">// 全部「Subject」に置き換えて</span>
+<span class="comment">// 同じことをやるのがVol.1。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">TIP ──</div>
+    <p>Vol.1〜2は「Aの復習＋2テーブル目の追加」が中心なので、忘れた部分があったらAに戻る判断は<b>正解</b>です。<b>無理に思い出そうとせず参照</b>するのが、長丁場を乗り切るコツ。</p>
+  </div>
+</section>
+
+<section id="design">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>subjectsテーブルを設計する</h2>
+    <span class="en">DESIGN THE TABLE</span>
+  </div>
+  <p class="pattern-desc">学習記録アプリの<b>「親テーブル」</b>になる <code style="font-family:'JetBrains Mono'">subjects</code> を設計します。子テーブル <code style="font-family:'JetBrains Mono'">study_records</code> はVol.5で追加するので、Vol.1ではまだ<b>1テーブル</b>のままです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">table-design</span>
+      <span class="tag-desc">subjects テーブルの設計</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 列の設計</div>
+        <table class="compare-tbl">
+          <tr><th>列名</th><th>型</th><th>意味</th></tr>
+          <tr><td><code>id</code></td><td>INT</td><td>主キー（自動採番）</td></tr>
+          <tr><td><code>name</code></td><td>VARCHAR(50)</td><td>科目名（必須）</td></tr>
+          <tr><td><code>color</code></td><td>VARCHAR(7)</td><td>カラーコード（任意・#xxxxxx）</td></tr>
+          <tr><td><code>created_at</code></td><td>DATETIME</td><td>作成日時</td></tr>
+        </table>
+        <p style="font-size:13px;margin-top:10px"><b>tasksテーブルと同じくらいシンプル</b>です。Vol.5で <code>study_records</code> を追加し、その時に <code>subjects</code> の <code>id</code> を外部キーとして使います。</p>
+      </div>
+      <div class="code"><span class="code-head">// DDL（CREATE TABLE文）</span>
+
+<span class="kw">CREATE TABLE</span> subjects (
+  id          <span class="type">INT</span>          <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  name        <span class="type">VARCHAR</span>(<span class="num">50</span>)  <span class="kw">NOT NULL</span>,
+  color       <span class="type">VARCHAR</span>(<span class="num">7</span>),
+  created_at  <span class="type">DATETIME</span>     <span class="kw">NOT NULL DEFAULT</span> CURRENT_TIMESTAMP,
+  <span class="kw">PRIMARY KEY</span> (id)
+);
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・id は AUTO_INCREMENT で自動採番</span>
+<span class="comment">// ・name は NOT NULL（科目名なしの科目はない）</span>
+<span class="comment">// ・color は NULL OK（あとから設定でもよい）</span>
+<span class="comment">// ・created_at は DEFAULT で「今」が自動入る</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>id 列の命名は <code>subject_id</code> ではなく <code>id</code></b>」というのが Cの方針です。tasksテーブルも <code>id</code> でした。理由はVol.5で外部キーを置く時、子テーブル側で <code>subject_id</code> と<b>明確に書き分けられる</b>からです。詳しくは別冊S1で。</p>
+  </div>
+</section>
+
+<section id="insert">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>SQLでテーブル作成＆データ投入</h2>
+    <span class="en">EXECUTE DDL & INSERT</span>
+  </div>
+  <p class="pattern-desc">MySQLに接続して、DDLとINSERT文を実行します。手順は <b>A v2 Vol.2 と同じ流れ</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">execute-sql</span>
+      <span class="tag-desc">MySQLでの実行手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行手順</div>
+        <ol class="step-list">
+          <li>コマンドプロンプトで <code>mysql -u root -p</code> で接続</li>
+          <li><code>USE todo_db;</code>（Aで使ったDB）</li>
+          <li>DDLを貼り付けて実行</li>
+          <li>INSERT文を貼り付けて実行</li>
+          <li><code>SELECT * FROM subjects;</code> で5件返ることを確認</li>
+        </ol>
+        <p style="margin-top:14px;font-size:13px"><b>DBは Aで作った <code>todo_db</code> をそのまま使います</b>。「学習記録アプリなのにDB名がtodo_db？」と気になるかもしれませんが、<b>DBは「あなたの作業空間」</b>であって、用途で名前を変える必要はありません。</p>
+      </div>
+      <div class="code"><span class="code-head">// SQL実行</span>
+
+<span class="comment">-- ① テーブル作成</span>
+<span class="kw">CREATE TABLE</span> subjects (
+  id          <span class="type">INT</span>          <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  name        <span class="type">VARCHAR</span>(<span class="num">50</span>)  <span class="kw">NOT NULL</span>,
+  color       <span class="type">VARCHAR</span>(<span class="num">7</span>),
+  created_at  <span class="type">DATETIME</span>     <span class="kw">NOT NULL DEFAULT</span> CURRENT_TIMESTAMP,
+  <span class="kw">PRIMARY KEY</span> (id)
+);
+
+<span class="comment">-- ② 初期データ投入（5科目）</span>
+<span class="kw">INSERT INTO</span> subjects (name, color) <span class="kw">VALUES</span>
+  (<span class="str">'Java'</span>,         <span class="str">'#c43030'</span>),
+  (<span class="str">'Spring Boot'</span>,  <span class="str">'#5a8a4a'</span>),
+  (<span class="str">'SQL'</span>,          <span class="str">'#2e6090'</span>),
+  (<span class="str">'HTML/CSS'</span>,     <span class="str">'#c4862e'</span>),
+  (<span class="str">'JavaScript'</span>,   <span class="str">'#d6b020'</span>);
+
+<span class="comment">-- ③ 確認</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> subjects;
+
+<span class="comment">-- 5件返ればOK</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>クラス／インターフェイス作成の手順</h2>
+    <span class="en">CREATE CLASSES STEP-BY-STEP</span>
+  </div>
+  <p class="pattern-desc">EclipseでSubject版のクラス群を作ります。<b>Aで作ったTaskのコードと並べて見比べながら作る</b>と効率的です。今回作るのは<b>5ファイル</b>──Entity・Mapper・Service・Controller・Thymeleaf。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-subject-entity</span>
+      <span class="tag-desc">① Subject エンティティを作る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順（Eclipse操作）</div>
+        <ol class="step-list">
+          <li>Package Explorer で <code>com.example.todo.entity</code> を<b>右クリック</b></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Class</span> を選択</li>
+          <li>Name欄に <code>Subject</code> と入力（先頭大文字）</li>
+          <li>他のチェックは全部外して <span class="menu-code" style="color:var(--accent-3)">Finish</span></li>
+          <li>開いたファイルに右のコードを書く</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">なぜEntityはクラス？</div>
+          <p>Entityは<b>「データを入れる箱」</b>です。フィールド（id, name など）を持ち、Lombokがgetter/setterを自動生成します。<b>具体的なデータを持つ「もの」</b>なのでクラスで作ります。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Subject.java</span>
+
+<span class="kw">package</span> com.example.todo.entity;
+
+<span class="kw">import</span> java.time.LocalDateTime;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Subject</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> id;
+  <span class="kw">private</span> <span class="type">String</span> name;
+  <span class="kw">private</span> <span class="type">String</span> color;
+  <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+}
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・import文は全部書く</span>
+<span class="comment">// ・@Data ひとつで getter/setter/</span>
+<span class="comment">//   toString/equals/hashCode が揃う</span>
+<span class="comment">// ・created_at（DB） ⇄ createdAt（Java）</span>
+<span class="comment">//   は application.properties の</span>
+<span class="comment">//   map-underscore-to-camel-case で</span>
+<span class="comment">//   自動マッピング（Aで設定済み）</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-subject-mapper</span>
+      <span class="tag-desc">② SubjectMapper（インターフェイス）を作る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順（Eclipse操作）</div>
+        <ol class="step-list">
+          <li>Package Explorer で <code>com.example.todo.mapper</code> を<b>右クリック</b></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Interface</span> を選択（★Classじゃない）</li>
+          <li>Name欄に <code>SubjectMapper</code> と入力</li>
+          <li>他のチェックは全部外して <span class="menu-code" style="color:var(--accent-3)">Finish</span></li>
+          <li>開いたファイルに右のコードを書く</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">なぜMapperはインターフェイス？</div>
+          <p>Mapperは<b>「SQLを実行する命令」だけを書く場所</b>です。実装は<b>MyBatisが裏で自動生成</b>してくれるので、自分で書くのは「メソッドの形」だけ。<b>実装なしで成立する</b>ためインターフェイスにします。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.java</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> org.apache.ibatis.annotations.Select;
+<span class="kw">import</span> com.example.todo.entity.Subject;
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+
+  <span class="ann">@Select</span>(<span class="str">"SELECT * FROM subjects ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>();
+}
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・interface宣言（class じゃない）</span>
+<span class="comment">// ・@Mapper で MyBatis に見つけてもらう</span>
+<span class="comment">// ・findAll() に { } はない</span>
+<span class="comment">//   → 実装は MyBatis が自動生成</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-subject-service</span>
+      <span class="tag-desc">③ SubjectService を作る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順（Eclipse操作）</div>
+        <ol class="step-list">
+          <li>Package Explorer で <code>com.example.todo.service</code> を<b>右クリック</b></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Class</span></li>
+          <li>Name欄に <code>SubjectService</code></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">Finish</span></li>
+          <li>右のコードを書く</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">Vol.1のServiceは「素通し」</div>
+          <p>業務ロジックがまだないので、ServiceはMapperを呼ぶだけの<b>「素通し（パススルー）」</b>です。<b>形だけ作っておく</b>のがVol.1の役割。Vol.4以降で本物のロジックが入ります。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectService.java</span>
+
+<span class="kw">package</span> com.example.todo.service;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Service;
+<span class="kw">import</span> org.springframework.transaction.annotation.Transactional;
+<span class="kw">import</span> com.example.todo.entity.Subject;
+<span class="kw">import</span> com.example.todo.mapper.SubjectMapper;
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public class</span> <span class="type">SubjectService</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectMapper</span> subjectMapper;
+
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>() {
+    <span class="kw">return</span> subjectMapper.<span class="fn">findAll</span>();
+  }
+}
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・@Service で DI 対象に</span>
+<span class="comment">// ・@Transactional はクラスに付ける</span>
+<span class="comment">//   → 全メソッドにトランザクション</span>
+<span class="comment">// ・現時点では Mapper を呼ぶだけ</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-subject-controller</span>
+      <span class="tag-desc">④ SubjectController を作る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順（Eclipse操作）</div>
+        <ol class="step-list">
+          <li>Package Explorer で <code>com.example.todo.controller</code> を<b>右クリック</b></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Class</span></li>
+          <li>Name欄に <code>SubjectController</code></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">Finish</span></li>
+          <li>右のコードを書く</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// SubjectController.java</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind.annotation.GetMapping;
+<span class="kw">import</span> com.example.todo.service.SubjectService;
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">SubjectController</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectService</span> subjectService;
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/subjects"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> model) {
+    model.<span class="fn">addAttribute</span>(<span class="str">"subjects"</span>,
+        subjectService.<span class="fn">findAll</span>());
+    <span class="kw">return</span> <span class="str">"subjects/list"</span>;
+  }
+}
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・@Controller（@RestController じゃない）</span>
+<span class="comment">// ・/subjects URL を担当</span>
+<span class="comment">// ・"subjects/list" を返す</span>
+<span class="comment">//   → templates/subjects/list.html</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-thymeleaf</span>
+      <span class="tag-desc">⑤ subjects/list.html を作る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順（Eclipse操作）</div>
+        <ol class="step-list">
+          <li><code>src/main/resources/templates</code> を<b>右クリック</b></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">Folder</span> → 名前は <code>subjects</code></li>
+          <li>作成された <code>subjects</code> フォルダを<b>右クリック</b></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">New</span> → <span class="menu-code" style="color:var(--accent-3)">File</span> → 名前は <code>list.html</code></li>
+          <li>右のコードを書く</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">templates の階層</div>
+          <p>tasksは <code>templates/tasks/list.html</code> に置きました。subjectsも同じく<b>サブフォルダ</b>に置きます。Controllerが返す <code>"subjects/list"</code> がこのパスに対応します。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// templates/subjects/list.html</span>
+
+&lt;!<span class="type">DOCTYPE</span> html&gt;
+&lt;<span class="kw">html</span> <span class="ann">xmlns:th</span>=<span class="str">"http://www.thymeleaf.org"</span>&gt;
+&lt;<span class="kw">head</span>&gt;
+  &lt;<span class="kw">meta</span> <span class="ann">charset</span>=<span class="str">"UTF-8"</span>&gt;
+  &lt;<span class="kw">title</span>&gt;科目一覧&lt;/<span class="kw">title</span>&gt;
+&lt;/<span class="kw">head</span>&gt;
+&lt;<span class="kw">body</span>&gt;
+  &lt;<span class="kw">h1</span>&gt;科目一覧&lt;/<span class="kw">h1</span>&gt;
+  &lt;<span class="kw">table</span> <span class="ann">border</span>=<span class="str">"1"</span>&gt;
+    &lt;<span class="kw">tr</span>&gt;
+      &lt;<span class="kw">th</span>&gt;ID&lt;/<span class="kw">th</span>&gt;
+      &lt;<span class="kw">th</span>&gt;科目名&lt;/<span class="kw">th</span>&gt;
+      &lt;<span class="kw">th</span>&gt;カラー&lt;/<span class="kw">th</span>&gt;
+    &lt;/<span class="kw">tr</span>&gt;
+    &lt;<span class="kw">tr</span> <span class="ann">th:each</span>=<span class="str">"s : ${subjects}"</span>&gt;
+      &lt;<span class="kw">td</span> <span class="ann">th:text</span>=<span class="str">"${s.id}"</span>&gt;&lt;/<span class="kw">td</span>&gt;
+      &lt;<span class="kw">td</span> <span class="ann">th:text</span>=<span class="str">"${s.name}"</span>&gt;&lt;/<span class="kw">td</span>&gt;
+      &lt;<span class="kw">td</span> <span class="ann">th:text</span>=<span class="str">"${s.color}"</span>&gt;&lt;/<span class="kw">td</span>&gt;
+    &lt;/<span class="kw">tr</span>&gt;
+  &lt;/<span class="kw">table</span>&gt;
+&lt;/<span class="kw">body</span>&gt;
+&lt;/<span class="kw">html</span>&gt;
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・th:each="s : ${subjects}"</span>
+<span class="comment">//   → モデル属性 subjects を順に s に代入</span>
+<span class="comment">// ・th:text で値を埋め込み</span>
+<span class="comment">// ・Aで作ったtasks/list.htmlと瓜二つ</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かして確認</h2>
+    <span class="en">RUN IN BROWSER</span>
+  </div>
+  <p class="pattern-desc">5ファイル全部書き終えたら、<b>起動して動作確認</b>です。ブラウザに5科目が並べば、Vol.1ゴール達成。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">browser-check</span>
+      <span class="tag-desc">起動と動作確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>TodoApplication.java</code> を<b>右クリック</b></li>
+          <li><span class="menu-code" style="color:var(--accent-3)">Run As</span> → <span class="menu-code" style="color:var(--accent-3)">Spring Boot App</span></li>
+          <li>コンソールに <code>Started TodoApplication</code> が出るのを待つ</li>
+          <li>ブラウザで <code>http://localhost:8080/subjects</code> を開く</li>
+          <li><b>5科目が並んで表示</b>されるのを確認</li>
+          <li>コンソールに <code>SELECT * FROM subjects ORDER BY id</code> のSQLログが流れているか確認</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ ここまで動けばVol.1クリア！</p>
+      </div>
+      <div class="code"><span class="code-head">// 期待される画面</span>
+
+http://localhost:8080/subjects
+
+┌──────────────────────┐
+│ <span class="kw">科目一覧</span>             │
+├────┬──────────────┬──────────┤
+│ ID │ 科目名       │ カラー   │
+├────┼──────────────┼──────────┤
+│  1 │ Java         │ #c43030  │
+│  2 │ Spring Boot  │ #5a8a4a  │
+│  3 │ SQL          │ #2e6090  │
+│  4 │ HTML/CSS     │ #c4862e  │
+│  5 │ JavaScript   │ #d6b020  │
+└────┴──────────────┴──────────┘
+
+
+<span class="code-head" style="margin-top:14px">// コンソールに出るSQLログ</span>
+
+==&gt;  Preparing: SELECT * FROM subjects ORDER BY id
+==&gt; Parameters:
+&lt;==      Total: 5
+
+<span class="comment">// このログが見えれば「DBから取れた」証拠</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>このSQLログが見えるのは、A v2 Vol.2 で <code>application.properties</code> に <code>logging.level.com.example.todo.mapper=DEBUG</code> を書いた成果です。Cでも<b>ログを見ながら開発する</b>姿勢を持ち続けてください。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">Vol.1で<b>実際に起きやすい</b>トラブル4選です。原因と対処をペアで把握しておくと、詰まる時間が激減します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">troubles</span>
+      <span class="tag-desc">起きやすいトラブル4選</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card">
+          <span class="label">TROUBLE 1</span>
+          <div class="name">Whitelabel Error Page が出る</div>
+          <div class="desc"><b>原因</b>：<code>templates/subjects/list.html</code> のパスが間違っている。<br><b>対処</b>：Controllerの戻り値 <code>"subjects/list"</code> と、ファイルパス <code>templates/subjects/list.html</code> が一致しているか確認。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 2</span>
+          <div class="name">Table 'subjects' doesn't exist</div>
+          <div class="desc"><b>原因</b>：DDLを実行し忘れ／別のDBに作ってしまった。<br><b>対処</b>：MySQLで <code>USE todo_db; SHOW TABLES;</code> して <code>subjects</code> があるか確認。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 3</span>
+          <div class="name">Subject に赤線「import 'Subject' (...)」</div>
+          <div class="desc"><b>原因</b>：Mapper / Service / Controller で Subject を使っているがimport不足。<br><b>対処</b>：<code>Ctrl + Shift + O</code> で一括解決。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 4</span>
+          <div class="name">画面は出るが表が空</div>
+          <div class="desc"><b>原因</b>：INSERT文を実行し忘れ。<br><b>対処</b>：MySQLで <code>SELECT COUNT(*) FROM subjects;</code> が 0 なら INSERT文を再実行。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// デバッグの3点読み</span>
+
+<span class="comment">// A v2 Vol.3 別冊で習った</span>
+<span class="comment">// 「ログの3点読み」の復習：</span>
+
+<span class="comment">// ① エラーメッセージの先頭1行</span>
+Error resolving template
+[subjects/list], template might
+not exist or might not be accessible
+
+<span class="comment">// ② Caused by: の連鎖を末尾まで</span>
+<span class="comment">//   → 真因はだいたい末尾の Caused by</span>
+
+<span class="comment">// ③ どのファイルの何行目で起きたか</span>
+at com.example.todo.controller
+   .SubjectController.list
+   (SubjectController.java:<span class="num">22</span>)
+
+
+<span class="comment">// この3点を必ず見る。</span>
+<span class="comment">// スタックトレース全部読まなくていい。</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.1 本編の<b>完了チェックリスト</b>です。全項目チェックできれば、Vol.2に進む準備が整っています。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol1-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li>MySQLに <code>subjects</code> テーブルが存在する</li>
+          <li><code>SELECT * FROM subjects;</code> で5件返る</li>
+          <li><code>Subject.java</code>（Entity）が作成済み</li>
+          <li><code>SubjectMapper.java</code>（Interface）が作成済み</li>
+          <li><code>SubjectService.java</code>（Class）が作成済み</li>
+          <li><code>SubjectController.java</code>（Class）が作成済み</li>
+          <li><code>templates/subjects/list.html</code> が作成済み</li>
+          <li>アプリ起動時にエラーが出ない</li>
+          <li><code>http://localhost:8080/subjects</code> で5科目の表が見える</li>
+          <li>コンソールにSELECTのSQLログが流れる</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.1本編完了！</b><br>
+          地味な内容でしたが、これがC全15巻を支える<b>土台</b>になります。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 次にやること</span>
+
+<span class="comment">// ① この本編と対になる別冊S1を読む</span>
+<span class="comment">//   タイトル: 「1対多設計の見極め方」</span>
+<span class="comment">//   内容: ER図／関連の方向／命名規則</span>
+
+
+<span class="comment">// ② Vol.2 本編に進む</span>
+<span class="comment">//   タイトル:</span>
+<span class="comment">//   「親子関係のあるデータを画面に出そう」</span>
+<span class="comment">//   獲得スキル: 1対多取得（基礎）</span>
+
+<span class="comment">// ③ Vol.2 で起きること:</span>
+<span class="comment">//   - study_records テーブルを追加</span>
+<span class="comment">//   - 「科目別に学習記録を一覧表示」</span>
+<span class="comment">//   - まずは2回SQLでもOK（基礎理解）</span>
+<span class="comment">//   - JOINは Vol.4 で本格化</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(45,74,58,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S1</div>
+    <p>本編お疲れさまでした。<b>本編と対になる別冊S1</b>「1対多設計の見極め方」では、Vol.5で追加する <code>study_records</code> テーブルに向けて、<b>「1対多／1対1／多対多はどう見分けるのか」</b>「外部キーはどちら側に置くのか」を<b>図解で深掘り</b>します。<br>Cの15巻すべてが<b>本編1編＋別冊1編のペア構成</b>です。<b>続けて別冊S1を読みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.01 / 15 ── ADD SECOND TABLE（本編）</span>
+</footer>
+
+</body>
+</html>

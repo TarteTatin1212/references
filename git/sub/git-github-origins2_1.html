@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git/GitHub探源編 コマンド設計の系譜 Vol.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a1814;
+  --paper:#e9e4da;
+  --paper-2:#d4cebf;
+  --accent:#a8442e;
+  --accent-2:#c2a585;
+  --accent-3:#3a342a;
+  --muted:#7a7368;
+  --line:#ad9f8e;
+  --code-bg:#16140f;
+  --code-text:#d8d3c6;
+  --panel-bg:#dcd5c4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;font-size:15px;line-height:1.95}
+body{max-width:1180px;margin:0 auto;padding:48px 40px 80px}
+
+.page-header{position:relative;padding:42px 32px 48px;border-bottom:2px solid var(--ink);margin-bottom:52px;overflow:hidden}
+.page-header::before{content:"∴";position:absolute;right:20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.10;font-family:"Shippori Mincho",serif;line-height:1;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;margin-right:8px}
+.companion-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--paper-2);color:var(--accent-3);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;border:1px solid var(--line)}
+h1{font-family:"Shippori Mincho",serif;font-size:44px;font-weight:700;margin:22px 0 12px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;letter-spacing:0.18em;font-family:"JetBrains Mono",monospace;margin-bottom:24px}
+.lead{max-width:660px;font-size:15px;line-height:2.05;color:var(--ink)}
+.lead b{color:var(--accent)}
+
+.toc{background:#fff;padding:26px 30px;margin-bottom:64px;border:1px solid var(--line);border-left:4px solid var(--accent)}
+.toc-title{font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:0.25em;margin-bottom:14px;color:var(--accent);font-weight:700}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13.5px;font-family:"JetBrains Mono",monospace}
+.toc a::before{content:"∴ ";color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin-bottom:80px}
+.section-header{display:flex;align-items:baseline;gap:18px;border-bottom:1px solid var(--accent-3);padding-bottom:12px;margin-bottom:20px}
+.section-num{font-family:"JetBrains Mono",monospace;font-size:15px;color:var(--accent);font-weight:700;letter-spacing:0.05em}
+.section-header h2{font-family:"Shippori Mincho",serif;font-size:27px;font-weight:700;flex:1;color:var(--ink)}
+.en{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.25em;color:var(--muted)}
+.pattern-desc{max-width:760px;margin-bottom:22px;color:var(--ink);font-size:14.5px;line-height:2.05}
+.pattern-desc b{color:var(--accent)}
+
+.terms{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:20px 26px;margin-bottom:26px;max-width:780px}
+.terms-head{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:0.25em;color:var(--accent);margin-bottom:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.terms-head::before{content:"∴";color:var(--accent);font-size:16px}
+.term{margin-bottom:16px;padding-left:2px}
+.term:last-child{margin-bottom:0}
+.t1{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--ink);font-weight:600;line-height:1.5}
+.t1 .slash{color:var(--accent);margin:0 6px}
+.t2{margin-left:18px;font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.6}
+.t2::before{content:"└ ";color:var(--line)}
+.t3{margin-left:18px;font-size:13.5px;color:var(--accent-3);margin-top:2px;line-height:1.7;font-weight:500}
+.t3::before{content:"└ ";color:var(--line)}
+.t3 b{color:var(--accent)}
+
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:18px}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-family:"Shippori Mincho",serif;font-weight:700;color:var(--accent-3);font-size:14px}
+.tag-desc{font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:0.1em}
+.demo-body{display:grid;grid-template-columns:340px 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.12em}
+.text{background:#fff;padding:28px 30px;font-size:14.5px;line-height:2.1}
+.text p{margin-bottom:16px}
+.text p:last-child{margin-bottom:0}
+.text h3{font-family:"Shippori Mincho",serif;font-size:17px;margin:24px 0 12px;color:var(--accent-3);font-weight:700;letter-spacing:0.02em}
+.text h3:first-child{margin-top:0}
+.text b{color:var(--accent)}
+.text .small{font-size:12.5px;color:var(--muted);line-height:1.8}
+
+.quote{border-left:3px solid var(--accent);padding:14px 18px;margin:18px 0;background:#f5f0e6;font-family:"Shippori Mincho",serif;font-size:14.5px;line-height:1.95;color:var(--accent-3)}
+.quote .source{display:block;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-top:8px;font-style:normal;letter-spacing:0.05em}
+
+@media(max-width:720px){
+  body{padding:24px 18px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .text{padding:22px}
+  h1{font-size:32px}
+  .page-header::before{font-size:200px}
+  .toc ul{gap:6px 14px}
+  .terms{padding:16px 18px}
+}
+
+.timeline{font-family:"JetBrains Mono",monospace;font-size:11.5px;line-height:1.85;background:#fff;border:1px solid var(--line);padding:14px}
+.timeline .year{color:var(--accent);font-weight:700;font-size:11px;letter-spacing:0.1em}
+.timeline .event{color:var(--ink);margin-bottom:8px;padding-left:6px;border-left:1px solid var(--line);margin-left:2px;padding-top:1px}
+.timeline .event:last-child{margin-bottom:0}
+
+.box{background:#fff;border:1px solid var(--line);padding:14px 16px;margin-bottom:10px}
+.box .box-title{font-family:"Shippori Mincho",serif;font-size:13px;color:var(--accent);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.box p{font-size:13px;line-height:1.85}
+
+.diagram{background:#fff;border:1px solid var(--line);padding:18px;font-family:"JetBrains Mono",monospace;font-size:11.5px;line-height:1.75;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.compare > div{background:#fff;border:1px solid var(--line);padding:12px}
+.compare .heading{font-family:"Shippori Mincho",serif;font-size:12px;font-weight:700;color:var(--accent);margin-bottom:6px;letter-spacing:0.05em}
+.compare ul{list-style:none;font-size:12px;line-height:1.7}
+.compare li{padding:1px 0;padding-left:12px;position:relative}
+.compare li::before{content:"・";position:absolute;left:0;color:var(--accent)}
+
+.tip{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);padding:18px 24px;margin:20px 0;max-width:880px}
+.tip-title{font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:0.2em;color:var(--accent);font-weight:700;margin-bottom:8px}
+.tip p{font-size:14px;line-height:2}
+.tip b{color:var(--accent-3)}
+
+.page-footer{margin-top:72px;padding-top:28px;border-top:1px solid var(--accent-3);display:flex;justify-content:space-between;align-items:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+.page-footer .right{text-align:right}
+
+code.inline{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 6px;font-size:12.5px;color:var(--accent-3);border-radius:2px}
+
+.principles{background:#fff;border:1px solid var(--line);padding:14px}
+.principles .p-item{padding:6px 0;border-bottom:1px dashed var(--line);font-size:12.5px;line-height:1.6}
+.principles .p-item:last-child{border-bottom:none}
+.principles .p-num{color:var(--accent);font-weight:700;font-family:"JetBrains Mono",monospace;margin-right:8px}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">GIT / GITHUB</span>
+  <span class="companion-tag">探源編 ORIGINS</span>
+  <span class="vol-tag">VOL.02 / 09</span>
+  <h1>コマンド設計の系譜</h1>
+  <div class="subtitle">UNIX PHILOSOPHY &amp; GIT COMMANDS</div>
+  <p class="lead">
+    なぜ <code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 6px">git add</code> なのか。なぜ <code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 6px">git commit</code> はテキストエディタを開くのか。
+    リファレンス本編で学んだ7つのコマンドには、それぞれ<b>40年以上前のUNIX文化</b>が
+    色濃く反映されています。<b>道具の形は、その道具を生んだ思想の形</b>——
+    本巻ではコマンドの背後にある<b>設計哲学の系譜</b>を辿ります。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01. UNIX哲学とは何か</a></li>
+    <li><a href="#s02">02. なぜ「git」+サブコマンドなのか</a></li>
+    <li><a href="#s03">03. add の哲学 — 明示性の設計</a></li>
+    <li><a href="#s04">04. commit メッセージという文化</a></li>
+    <li><a href="#s05">05. log の系譜 — 構造化された出力</a></li>
+    <li><a href="#s06">06. diff という発明の継承</a></li>
+    <li><a href="#s07">07. status — 親切なエラー文化</a></li>
+    <li><a href="#s08">08. なぜコマンドラインなのか</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ============ 01 ============ -->
+<section id="s01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>UNIX哲学とは何か</h2>
+    <span class="en">UNIX PHILOSOPHY</span>
+  </div>
+  <p class="pattern-desc">
+    Gitのコマンド設計を理解する鍵は、Linus Torvaldsの個人的なセンスではなく、
+    彼が育った<b>UNIX文化の40年以上の伝統</b>にあります。
+    「<b>小さく、専門化し、組み合わせる</b>」——この単純な思想が、Gitの隅々まで貫かれています。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">UNIX <span class="slash">/</span> Uniplexed Information and Computing Service</div>
+      <div class="t2">ユニプレックス情報計算サービス</div>
+      <div class="t3"><b>1969年にベル研究所で生まれた、コンピュータの基本ソフト</b>。シンプルで強力な設計が後の世代の規範となり、Linux や macOS の祖先にもなった</div>
+    </div>
+    <div class="term">
+      <div class="t1">philosophy <span class="slash">/</span> Unix philosophy</div>
+      <div class="t2">UNIX哲学 / ユニックス哲学</div>
+      <div class="t3"><b>UNIXを作った人々が共有していた「良いソフトウェアとは何か」という考え方</b>。「一つのことをうまくやれ」を中心とする設計思想の集まり</div>
+    </div>
+    <div class="term">
+      <div class="t1">pipe <span class="slash">/</span> pipeline</div>
+      <div class="t2">パイプ / パイプライン</div>
+      <div class="t3"><b>あるコマンドの出力を、次のコマンドの入力に直接流し込む仕組み</b>。「<code style="font-family:'JetBrains Mono',monospace">|</code>」記号で書く。これによって小さな道具を組み合わせて大きな仕事ができる</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">小さく、組み合わせる思想</span>
+      <span class="tag-desc">1969 - PRESENT</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// UNIXの誕生</div>
+        <div class="timeline">
+          <div class="year">1969</div>
+          <div class="event">ベル研究所<br>K.Thompson, D.Ritchie<br>UNIX誕生</div>
+          <div class="year">1973</div>
+          <div class="event">C言語でUNIX書き直し<br>移植可能なOSへ</div>
+          <div class="year">1978</div>
+          <div class="event">McIlroyが「パイプ」発明<br>UNIX哲学が完成形に</div>
+          <div class="year">1991</div>
+          <div class="event">Linus、Linuxを開発開始<br>UNIX文化の継承者として</div>
+          <div class="year">2005</div>
+          <div class="event">Git登場<br>UNIX哲学の現代版</div>
+        </div>
+
+        <div class="principles" style="margin-top:14px">
+          <div class="p-item"><span class="p-num">①</span>一つのプログラムは一つのことを<b>うまくやれ</b></div>
+          <div class="p-item"><span class="p-num">②</span>プログラムは<b>協調して動く</b>ように作れ</div>
+          <div class="p-item"><span class="p-num">③</span><b>早期にプロトタイプ</b>を作れ</div>
+          <div class="p-item"><span class="p-num">④</span><b>テキスト</b>を共通言語にせよ</div>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>1969年、ベル研究所の地下室</h3>
+<p>UNIXは、1969年にアメリカのAT&amp;Tベル研究所で<b>ケン・トンプソン</b>と<b>デニス・リッチー</b>が中心となって作り始めたOSです。当時、コンピュータは部屋一つを占有する巨大な装置で、複数人が時間を分け合って使う贅沢品でした。</p>
+
+<p>彼らが目指したのは、当時主流だった重厚なOSへのアンチテーゼでした。<b>「小さく、シンプルに、それでいて強力に」</b>——この方向性が、後にUNIX文化と呼ばれる一連の設計思想を生むことになります。</p>
+
+<h3>パイプという発明</h3>
+<p>UNIXの最大の発明は、1978年に<b>ダグラス・マキロイ</b>が定式化した<b>パイプ</b>です。これは、あるプログラムの出力を別のプログラムの入力に直接繋ぐ仕組みでした。</p>
+
+<p>たとえば「ファイル一覧から、サイズが大きい順に上位10件を取り出したい」場合、UNIX以前なら専用のプログラムを書く必要がありました。UNIXでは <code class="inline">ls -l | sort -k 5 -n | tail -10</code> のように、<b>3つの小さな道具を「|」で繋ぐだけ</b>で完成します。</p>
+
+<div class="quote">
+「我々が学んだ最大の教訓は、ソフトウェアを構築する方法には、データの流れに沿って小さな部品を繋ぐ、というものがあるということだ」
+<span class="source">— Douglas McIlroy, "A Research UNIX Reader" (1986)</span>
+</div>
+
+<h3>マキロイの四箇条</h3>
+<p>マキロイは後に、UNIXの設計原則を有名な形で言語化しました。原文は英語ですが、要約すると次の4つです:</p>
+
+<p><b>① 一つのプログラムは一つのことをうまくやれ。</b><br>
+新しい仕事をするには、新しい機能を既存プログラムに足すのではなく、新しいプログラムを作れ。</p>
+
+<p><b>② プログラムは協調して動くように作れ。</b><br>
+他のプログラムからの出力をそのまま受け取れるように、テキストを介して。</p>
+
+<p><b>③ 早期にプロトタイプを作れ。</b><br>
+完璧を目指して長く考え込むより、動くものを早く作って改善せよ。</p>
+
+<p><b>④ テキストを共通言語にせよ。</b><br>
+バイナリ独自形式ではなく、テキストで入出力すれば、どんなプログラムとも繋がる。</p>
+
+<h3>Linus が継承したもの</h3>
+<p>Linus Torvalds は、まさにこのUNIX文化の中で育ったプログラマでした。1991年に彼が自作したLinuxは、UNIXの精神的後継として世界中の支持を集めます。Gitを作る2005年、彼はすでに14年以上UNIX的な思考に染まっていたのです。</p>
+
+<p>だからGitのコマンド体系は、ユーザーが知らずとも、その奥底でUNIX哲学に従っています。<b>「git は小さなツール群の集まり」「コマンドはテキストで入出力する」「他のツールと組み合わせやすい」</b>——どれもマキロイの四箇条そのものです。</p>
+
+<p>つまり、あなたが <code class="inline">git log | grep "fix:"</code> のような操作を直感的にできるとしたら、それはGitが特別に賢く設計されているからではなく、<b>UNIX哲学という40年の遺産</b>に乗っているからなのです。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ POINT</div>
+    <p>Gitはゼロから設計されたわけではありません。<b>40年以上磨かれてきたUNIX文化</b>という土台の上に、Linus 個人の発想が乗っている。これからの章で扱う各コマンドの「不思議な設計」のほとんどは、<b>UNIX文化を知れば自然に納得できる</b>はずです。</p>
+  </div>
+</section>
+
+<!-- ============ 02 ============ -->
+<section id="s02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>なぜ「git」+サブコマンドなのか</h2>
+    <span class="en">SUBCOMMAND DESIGN</span>
+  </div>
+  <p class="pattern-desc">
+    <code class="inline">git init</code>、<code class="inline">git add</code>、<code class="inline">git commit</code>——
+    なぜ全部 git で始まるのか? これは UNIX 哲学にもとづいた<b>意図的な設計判断</b>です。
+    そしてGitの内部には、ユーザーから見えない<b>「磁器(porcelain)」と「配管(plumbing)」</b>という2層構造が隠されています。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">subcommand</div>
+      <div class="t2">サブコマンド</div>
+      <div class="t3"><b>「メインコマンドの後ろに付ける、もう一つの動詞」</b>。<code style="font-family:'JetBrains Mono',monospace">git add</code> の add がそれ。1つのコマンドが多くの機能を整理して提供する方式</div>
+    </div>
+    <div class="term">
+      <div class="t1">porcelain <span class="slash">/</span> porcelain commands</div>
+      <div class="t2">ポーセリン / 磁器コマンド</div>
+      <div class="t3"><b>普段ユーザーが使う、見栄えのいい高レベルコマンド</b>。<code style="font-family:'JetBrains Mono',monospace">git commit</code> や <code style="font-family:'JetBrains Mono',monospace">git log</code> がこれ。磁器(食器の高級素材)の比喩</div>
+    </div>
+    <div class="term">
+      <div class="t1">plumbing <span class="slash">/</span> plumbing commands</div>
+      <div class="t2">プラミング / 配管コマンド</div>
+      <div class="t3"><b>裏側でGitの仕組みを支える低レベルコマンド</b>。普段は使わないが、スクリプトから呼ぶ時に重宝する。<b>配管(目に触れない内部の管)</b>の比喩</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">2層構造の設計</span>
+      <span class="tag-desc">PORCELAIN &amp; PLUMBING</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Git コマンドの2階層</div>
+        <div class="diagram">[ ユーザー視点 ]
+      ↓
+┌──────────────────┐
+│  porcelain       │  ← 磁器
+│  (高レベル)        │
+│                  │
+│  add / commit    │
+│  push / pull     │
+│  log / status    │
+└──────┬───────────┘
+       │ 内部的に呼ぶ
+       ↓
+┌──────────────────┐
+│  plumbing        │  ← 配管
+│  (低レベル)        │
+│                  │
+│  hash-object     │
+│  cat-file        │
+│  update-index    │
+│  write-tree      │
+└──────────────────┘</div>
+
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">この比喩の出典</div>
+          <p>Linus 自身が好んで使った表現。<b>「磁器(porcelain)はユーザーに見せる側、配管(plumbing)は見えない内部」</b>という、家の水回りからの比喩です。</p>
+        </div>
+
+        <div class="box">
+          <div class="box-title">サブコマンド設計の利点</div>
+          <p>● PATH を1つだけ汚す<br>
+          ● 関連コマンドが揃って見える<br>
+          ● ヘルプが一元化<br>
+          ● 拡張が容易</p>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>歴史的には個別コマンドが普通だった</h3>
+<p>古典的なUNIXでは、コマンドは<b>1機能1コマンド</b>が原則でした。<code class="inline">ls</code> はファイル一覧、<code class="inline">cat</code> はファイル表示、<code class="inline">grep</code> は検索。それぞれが独立した実行ファイルとして OS に存在しています。</p>
+
+<p>もしGitが古典的UNIX流儀で作られていたら、こうなっていたかもしれません: <code class="inline">git-init</code>、<code class="inline">git-add</code>、<code class="inline">git-commit</code> ——ハイフン区切りの個別コマンド群。実際、初期のGitは内部的にこのスタイルで作られていました。</p>
+
+<h3>「git」というディスパッチャ</h3>
+<p>しかし、ユーザー視点ではこれは煩雑でした。150を超えるコマンドが個別に並ぶと、補完も検索もしにくい。そこで採用されたのが、<b>「<code class="inline">git</code> という単一のコマンドがあり、第一引数で実際の機能を選ぶ」</b>という設計です。</p>
+
+<p>これを<b>サブコマンド方式</b>と呼びます。実態としては、<code class="inline">git commit</code> と打つと <code class="inline">git</code> が呼ばれ、内部的に <code class="inline">git-commit</code> という実行ファイルが起動されます。ユーザーには1つのツールに見え、内部では伝統的UNIX流の個別実行ファイル構造が保たれている——絶妙な折衷案です。</p>
+
+<h3>magnetic と plumbing の発見</h3>
+<p>Linusがもう一つ重要視したのは、<b>「Gitは普段使うツールであると同時に、スクリプトから呼ばれる部品でもある」</b>という両面性でした。普段の操作には親しみやすいインターフェースが必要ですが、自動化スクリプトには厳密で予測可能な動作が必要です。</p>
+
+<p>この対立を解くために、彼は意図的に<b>2つのレイヤー</b>を作りました:</p>
+
+<p><b>磁器 (porcelain):</b> ユーザーが直接触る、見栄えのする高レベルコマンド。<br>
+<b>配管 (plumbing):</b> 内部で動く、地味で機械的な低レベルコマンド。</p>
+
+<p>普段の操作は磁器(<code class="inline">git commit</code> など)を使い、内部スクリプトや高度な自動化では配管(<code class="inline">git update-index</code>, <code class="inline">git write-tree</code> など)を直接叩く。<b>同じツールでありながら、用途別に2つの顔を持つ</b>のです。</p>
+
+<div class="quote">
+「Gitのコマンドが多すぎると感じるのは、ユーザー向けの磁器と、スクリプト向けの配管が同居しているからだ。配管を見なければ、Gitは決して複雑ではない」
+<span class="source">— Pro Git の解説より要約</span>
+</div>
+
+<h3>配管コマンドの実例</h3>
+<p>普段使わない世界ですが、ちょっと覗いてみましょう。<code class="inline">git hash-object</code> は<b>「ファイル内容からハッシュ値を計算するだけ」</b>のコマンドです。<code class="inline">git cat-file</code> は<b>「コミットIDから内容を取り出すだけ」</b>。<code class="inline">git update-index</code> は<b>「ステージング領域を直接操作するだけ」</b>。</p>
+
+<p>これらは見るからに無骨で、ユーザーフレンドリーさはありません。しかし、<b>これらの組み合わせで <code class="inline">git commit</code> という磁器が成立している</b>のです。配管が地味であるからこそ、磁器が美しく作れる——という二層設計の妙味があります。</p>
+
+<h3>サブコマンド方式の遺産</h3>
+<p>この「<b>1コマンド+サブコマンド</b>」スタイルは、Git以降のツール設計に大きな影響を与えました。<code class="inline">docker run</code>、<code class="inline">kubectl get</code>、<code class="inline">npm install</code>、<code class="inline">cargo build</code>——現代のほぼ全ての CLI ツールがこのスタイルを採用しています。</p>
+
+<p>Git は<b>「サブコマンド方式の代表例」</b>として、ツール設計の世界にスタイルを定着させたのです。あなたが新しいCLIツールを触る時、最初に <code class="inline">tool --help</code> を叩く習慣は、Gitが残した遺産の一つとも言えます。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>「<code class="inline">git</code> + サブコマンド」は、<b>古典的UNIXの「個別コマンド主義」と、現代的な「使いやすさ」の折衷案</b>でした。内部では古典的、外見は現代的——この二面性こそ、Gitが20年経っても古びない理由の一つかもしれません。</p>
+  </div>
+</section>
+
+<!-- ============ 03 ============ -->
+<section id="s03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>add の哲学 — 明示性の設計</h2>
+    <span class="en">EXPLICIT BY DESIGN</span>
+  </div>
+  <p class="pattern-desc">
+    Subversion など他のツールは、ファイルの変更を<b>自動で追跡</b>します。
+    なのにGitは、わざわざ <code class="inline">git add</code> しないとコミット対象にならない。
+    この<b>「面倒」に見える設計</b>は、Linusの中で揺らがない哲学から来ています:
+    <b>「機械はユーザーの意図を勝手に推測してはならない」</b>。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">explicit <span class="slash">/</span> explicit operation</div>
+      <div class="t2">明示的 / 明示的な操作</div>
+      <div class="t3"><b>「ユーザーが意図をはっきり指示しないと動かない」設計</b>。曖昧さがない代わりに、手数が増える</div>
+    </div>
+    <div class="term">
+      <div class="t1">implicit <span class="slash">/</span> implicit operation</div>
+      <div class="t2">暗黙的 / 暗黙的な操作</div>
+      <div class="t3"><b>「機械がユーザーの意図を察して自動で動く」設計</b>。手数は減るが、予想と違う動きをすることがある</div>
+    </div>
+    <div class="term">
+      <div class="t1">staging area <span class="slash">/</span> index</div>
+      <div class="t2">ステージング領域 / インデックス</div>
+      <div class="t3"><b>「次のコミットに含めるもの」を一時的に置く中間置場</b>。実体は <code style="font-family:'JetBrains Mono',monospace">.git/index</code> という1つのファイル</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">明示性という思想</span>
+      <span class="tag-desc">SVN vs GIT</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 自動 vs 明示の対比</div>
+        <div class="compare">
+          <div>
+            <div class="heading">SVN(暗黙)</div>
+            <ul>
+              <li>変更を自動検知</li>
+              <li>commit で全部送る</li>
+              <li>手数が少ない</li>
+              <li>意図しない混入リスク</li>
+            </ul>
+          </div>
+          <div>
+            <div class="heading">Git(明示)</div>
+            <ul>
+              <li>変更を自動追跡しない</li>
+              <li>add で選び commit</li>
+              <li>手数が増える</li>
+              <li>コミット内容が確実</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">設計判断の根拠</div>
+          <p>● <b>意図の保持</b><br>
+            ユーザーは何をコミットするか<br>
+            自分で決めるべき<br><br>
+          ● <b>失敗の局所化</b><br>
+            「意図しない変更を間違えて<br>
+            コミット」事故を構造的に防ぐ</p>
+        </div>
+
+        <div class="quote">
+"Explicit is better than implicit."
+<span class="source">— Python の Zen より(UNIX文化に共通する精神)</span>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>SVNが採用した「親切設計」</h3>
+<p>Subversionの設計者たちは、CVSの後継として<b>「使いやすさ」</b>を重視しました。その結果、ファイル変更は基本的に自動で追跡され、<code class="inline">svn commit</code> 一発で「<b>今ある全ての変更</b>」がリポジトリに送られる仕様になりました。</p>
+
+<p>これは初心者には親切に見えます。「コミットの前に何かを宣言しろ」と言われると、最初は冗長に感じるからです。SVNを使ってきた人がGitに移行した時、最初に戸惑うのが「<b>変更したのに、add しないと反映されない</b>」点だったりします。</p>
+
+<h3>Linusが選んだ「面倒な設計」</h3>
+<p>Linusは、SVNとは正反対の道を選びます。<b>「ユーザーが明示的に <code class="inline">add</code> で宣言したものだけが、コミット対象になる」</b>。同じ作業ディレクトリにあっても、宣言されていない変更は無視される。</p>
+
+<p>これは一見「面倒くさい設計」に見えますが、深い意図があります。彼はLinuxカーネルの統合役として、世界中から送られてくる変更を捌いていた人物です。その経験から、こう考えていました:</p>
+
+<div class="quote">
+「コミットは、人間が頭の中で『これを記録したい』と判断した結果であるべきだ。機械が勝手に『全変更をコミットしよう』と判断してはいけない」
+<span class="source">— Linus の発言を意訳</span>
+</div>
+
+<h3>現実の開発の風景</h3>
+<p>本当の開発現場では、こんなことが日常的に起きます。あなたは機能Aを実装している。その途中で、別の場所のバグに気づき、ついでに直してしまう。さらに、デバッグ用の <code class="inline">console.log</code> を3か所に仕込んでいる。気がつくと、<b>1つの「作業セッション」の中に、3種類の異なる目的の変更が混じっている</b>。</p>
+
+<p>SVN流の自動コミットでは、これらが全部一つのコミットになります。後でログを見ても何のコミットだったか分からない。Git流の明示addでは、<b>必要なものだけを add</b> し、デバッグログは含めず、機能Aとバグ修正は別コミットに分けられる。<b>「論理的に意味のある単位」</b>でコミットを切り出せるのです。</p>
+
+<h3>明示性は UNIX の伝統</h3>
+<p>「明示こそ正義」という思想は、Linus個人の意見ではなく、UNIX文化に深く根ざしています。たとえばUNIXでは、ファイルを削除する <code class="inline">rm</code> コマンドは、確認なしで即座に削除します。これも明示性の表れです——「<b>あなたが <code class="inline">rm</code> と打ったということは、削除する意図がある</b>」と信じる設計です。</p>
+
+<p>同じく、<code class="inline">git add</code> はあなたの宣言です。あなたが <code class="inline">add</code> したものだけが、次のコミットに進む候補となる。Gitはあなたに代わって判断しません。<b>判断はあなたの仕事、記録はGitの仕事</b>——明確な役割分担があるのです。</p>
+
+<h3>「面倒さ」のもう一つの顔</h3>
+<p>明示性のもう一つの利点は<b>「事故を構造的に防ぐ」</b>ことです。設定ファイル <code class="inline">.env</code> を作業ディレクトリに置いたまま忘れていたとしましょう。SVNでは、自動でこれが追跡対象になり、コミット時にうっかり機密情報がリポジトリに入る危険があります。</p>
+
+<p>Gitでは違います。<code class="inline">.env</code> を作っても、<code class="inline">git add</code> しない限りコミット候補にならない。<b>「うっかり」が「明示的な操作」を経由しないと起こらない</b>——これだけで多くの事故が防げます。<code class="inline">.gitignore</code> という別の防衛線もありますが、その手前で<b>「明示性」自体が第一の防御壁</b>として機能しているのです。</p>
+
+<h3>設計と倫理</h3>
+<p>明示性は単なる技術的選択を超えて、<b>倫理的な選択</b>でもあります。「<b>機械が人間の意図を勝手に推測しない</b>」という設計は、人間の判断を尊重する姿勢の現れです。手数が増えても、ユーザーが何をするかは常にユーザーが決める——これは、現代のソフトウェア設計でしばしば失われがちな価値観でもあります。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p><code class="inline">git add</code> の「面倒さ」は<b>欠点ではなく機能</b>です。あえて一手間を挟むことで、コミットの粒度を選ぶ自由、事故を防ぐ防壁、判断主権の保持——複数の価値を同時に得ている。<b>不便を増やすことで自由を得る設計</b>は、Gitの随所に見られる思想です。</p>
+  </div>
+</section>
+
+<!-- ============ 04 ============ -->
+<section id="s04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>commit メッセージという文化</h2>
+    <span class="en">COMMIT MESSAGE CULTURE</span>
+  </div>
+  <p class="pattern-desc">
+    <code class="inline">git commit</code> を引数なしで実行すると、テキストエディタが開きます。
+    なぜGUIではなく、なぜ最初の1行が「件名」で、なぜ50字や72字といった奇妙な数字が文化として残っているのか?
+    答えは<b>30年以上のメーリングリスト文化</b>——電子メールの伝統にあります。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">patch <span class="slash">/</span> patch file</div>
+      <div class="t2">パッチ / パッチファイル</div>
+      <div class="t3"><b>ソースコードの変更内容だけを切り出したテキスト</b>。1990-2000年代、Linuxなど大規模OSSは、開発者がメールでパッチを送り合って開発していた</div>
+    </div>
+    <div class="term">
+      <div class="t1">maintainer <span class="slash">/</span> project maintainer</div>
+      <div class="t2">メンテナ / プロジェクト管理者</div>
+      <div class="t3"><b>プロジェクトの「取り込み判断」をする人</b>。送られてくるパッチを審査し、本流に統合するかを決める</div>
+    </div>
+    <div class="term">
+      <div class="t1">subject line <span class="slash">/</span> subject</div>
+      <div class="t2">件名 / 件名行</div>
+      <div class="t3"><b>メールの題名にあたる、最初の1行</b>。コミットメッセージにこの概念が引き継がれ、要約として機能する</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">メーリングリスト文化の遺産</span>
+      <span class="tag-desc">EMAIL → COMMIT</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// メール → パッチ → コミット</div>
+        <div class="diagram">[ 1990年代 ]
+
+開発者A
+  ↓ メールでパッチ送信
+  ┌──────────────────┐
+  │ Subject: [PATCH]  │  ← 件名
+  │   bug fix         │
+  │                   │
+  │ 本文(変更理由)    │  ← 本文
+  │                   │
+  │ ── パッチ ──      │
+  │ diff --git ...    │
+  └──────────────────┘
+  ↓
+Linus(メンテナ)
+  ↓ 取り込み判断
+リポジトリ
+
+[ 現代 ]
+git commit に同じ構造が
+そのまま残った</div>
+
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">なぜ50/72字なのか</div>
+          <p><b>50字:</b> メールの件名表示で切れない長さ<br>
+          <b>72字:</b> ターミナルの80字幅で<br>
+          見出し記号と余白を引いた値<br>
+          → 紙の電報時代からの伝統</p>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>パッチをメールで送る時代</h3>
+<p>1990年代から2000年代前半、世界中の大規模OSS——Linuxカーネル、PostgreSQL、Apache——はいずれも、<b>メールでのパッチ送付</b>で開発されていました。「ファイルAをこう変えてください」という<b>差分テキスト</b>をメール本文に貼り付けて、メンテナに送る。メンテナはそれを検討し、採用するならパッチを<b>適用</b>(apply)してリポジトリに反映する——これが日常でした。</p>
+
+<p>つまり、ソフトウェア開発の歴史の長い時期、<b>「変更の単位」=「1通のメール」</b>でした。1通のメールには件名があり、本文があり、添付として diff がある。この構造が、現在のコミットメッセージの形式にそっくりそのまま継承されたのです。</p>
+
+<h3>件名(subject)と本文(body)の起源</h3>
+<p>コミットメッセージを書く時、よく言われる慣習があります:</p>
+
+<p>● <b>1行目は短い要約</b>(50字以内)<br>
+● 1行目の後に<b>空行</b><br>
+● 必要なら<b>詳しい本文</b>(72字で改行)</p>
+
+<p>これは厳密には Git の仕様ではなく、Linus と Linuxカーネルコミュニティが採用していた<b>メールの慣習</b>そのものです。彼らは長年メールでパッチをやり取りしてきたので、「1行目=件名、空行、本文」というメールの構造が体に染み付いていました。Gitを作る時、その文化的習慣がそのまま機械的な仕組みに転写されたわけです。</p>
+
+<div class="quote">
+「コミットメッセージの最初の1行は、メールの Subject 行と同じ役割だ。一覧表示で見える、最も重要な情報の凝縮」
+<span class="source">— Pro Git および Linuxカーネル開発者ガイドラインより要約</span>
+</div>
+
+<h3>「なぜテキストエディタが開くのか」</h3>
+<p>多くの初心者が驚くのが、<code class="inline">git commit</code> をオプションなしで打つと、いきなり <code class="inline">vi</code> や <code class="inline">nano</code> といったテキストエディタが立ち上がる挙動です。「<b>そのままターミナルで打たせればいいじゃないか</b>」と思うかもしれません。</p>
+
+<p>これにも歴史的な背景があります。パッチをメールで書いていた時代、開発者はメールクライアントの編集画面を使って、ある程度長文の説明文を書いていました。<b>「変更の説明文は、長くなる前提」</b>という文化があったのです。</p>
+
+<p>1行2行で済むはずがない。「<b>何を変えたか</b>」「<b>なぜ変えたか</b>」「<b>どんな副作用が予想されるか</b>」——これらを書くには、行をまたぐ編集が必要です。だから普通のテキストエディタが立ち上がる。<code class="inline">-m</code> オプションで1行メッセージも書けますが、本来はエディタで「<b>腰を据えて書く</b>」のが本筋でした。</p>
+
+<h3>50/72字の謎</h3>
+<p>「件名は50字、本文は72字で折り返す」——コミットメッセージの世界でよく語られるこの数字には、由緒があります。</p>
+
+<p><b>50字</b>: これは <code class="inline">git log --oneline</code> や、各種ツールでのコミット一覧表示で「<b>切れずに見える</b>」長さです。長くするほど一覧の見栄えが悪くなるため、自然と短く書く文化が育ちました。</p>
+
+<p><b>72字</b>: 古典的なターミナルの幅は80字。コミットメッセージを表示する際、左に4字分のインデントが付くことが多いため、80 - 4 - 4(右余白) = 72字が「綺麗に表示できる最大幅」になります。これは<b>紙の電報時代</b>(70-80字幅)から続く、英文タイポグラフィの慣習なのです。</p>
+
+<h3>Conventional Commits という現代の発展</h3>
+<p>2010年代後半から、コミットメッセージに<b>「型」を導入する</b>運動が始まりました。<code class="inline">feat:</code> は新機能、<code class="inline">fix:</code> は修正、<code class="inline">docs:</code> はドキュメント変更——という具合に、件名の先頭にカテゴリを明示する流儀です。「<b>Conventional Commits(慣習的コミット)</b>」と呼ばれます。</p>
+
+<p>これは Linus の時代にはなかった発明ですが、根本にある<b>「メールの件名のように、要点を最初に書く」</b>という発想は引き継がれています。<b>40年前のメール文化が、いまも進化している</b>と言えるかもしれません。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>コミットメッセージの<b>「件名 + 本文」</b>構造、<b>「50/72字」</b>という奇妙な数字、<b>「テキストエディタが開く」</b>挙動——これらは全て、<b>1990年代のメール文化</b>がそのまま化石として残ったものです。Gitを使うとき、あなたは知らずして<b>30年前のソフトウェア開発の風景を継承している</b>のです。</p>
+  </div>
+</section>
+
+<!-- ============ 05 ============ -->
+<section id="s05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>log の系譜 — 構造化された出力</h2>
+    <span class="en">STRUCTURED OUTPUT</span>
+  </div>
+  <p class="pattern-desc">
+    <code class="inline">git log</code> には、なぜあれほど多くのオプションがあるのか?
+    <code class="inline">--oneline</code>, <code class="inline">--graph</code>, <code class="inline">--format</code>...
+    これは「<b>テキストを共通言語にせよ</b>」というUNIX哲学の<b>直接的な表現</b>です。
+    出力の形を自在に変えられるからこそ、他のツールと組み合わせて使える——それがUNIX的設計の真髄。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">formatter <span class="slash">/</span> format option</div>
+      <div class="t2">フォーマッタ / 整形指定</div>
+      <div class="t3"><b>「出力の見た目を指定する仕組み」</b>。同じデータでも、人間向けの見やすい形と、機械向けの扱いやすい形を切り替えられる</div>
+    </div>
+    <div class="term">
+      <div class="t1">pretty-print</div>
+      <div class="t2">プリティプリント / 整形表示</div>
+      <div class="t3"><b>「データを読みやすく整形して表示すること」</b>。Gitでは <code style="font-family:'JetBrains Mono',monospace">--pretty</code> オプションで切り替える</div>
+    </div>
+    <div class="term">
+      <div class="t1">DAG <span class="slash">/</span> Directed Acyclic Graph</div>
+      <div class="t2">有向非巡回グラフ</div>
+      <div class="t3"><b>「一方向にしか進まない、輪を作らないつながり方」の図形</b>。Gitの履歴はこの形をしており、過去には戻らず未来へ枝分かれしていく</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">テキストは共通言語</span>
+      <span class="tag-desc">DESIGN AS PIPELINE</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// log がパイプで化ける</div>
+        <div class="diagram">基本:
+$ git log
+
+要約:
+$ git log --oneline
+
+グラフ:
+$ git log --graph
+
+機械処理向け:
+$ git log \
+    --format='%H,%an,%s'
+
+JSON っぽく:
+$ git log \
+    --pretty=format:'{
+      "hash":"%H",
+      "author":"%an"
+    }'
+
+↑ どの形でも内部データは同じ
+   表示だけ変えている</div>
+
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">パイプで化ける例</div>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:11.5px">
+$ git log --oneline \<br>
+&nbsp;&nbsp;| grep "fix:" \<br>
+&nbsp;&nbsp;| head -10<br><br>
+↑ 「直近のバグ修正トップ10」<br>
+&nbsp;&nbsp;が3つの道具の合成で完成</p>
+        </div>
+
+        <div class="quote">
+"The Unix way is to make programs that work together by passing simple text."
+<span class="source">— Brian Kernighan</span>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>log は単なる「表示ツール」ではない</h3>
+<p><code class="inline">git log</code> を初めて使うと、それは「履歴を表示するコマンド」に見えます。ですが実態は違います。これは<b>「履歴データへの問い合わせインターフェース」</b>であり、出力フォーマットは状況に応じて自在に変えられる設計になっています。</p>
+
+<p><code class="inline">--oneline</code> は1行表示、<code class="inline">--graph</code> はASCII文字で枝分かれを可視化、<code class="inline">--format</code> や <code class="inline">--pretty=format:...</code> は完全カスタム出力。一つのデータソースから、何種類もの「ビュー」を取り出せる構造です。</p>
+
+<h3>なぜここまで柔軟なのか</h3>
+<p>答えは<b>UNIX哲学の第4条</b>——「<b>テキストを共通言語にせよ</b>」——にあります。テキスト出力さえ自在に整形できれば、あとは別のテキスト処理ツール(grep, awk, sed, jq, ...)と組み合わせて、無限に複雑な処理ができる。<b>Gitは自分で全機能を抱え込まず、出力を他者に渡すための「整形機」として振る舞う</b>のです。</p>
+
+<p>たとえば「最近1ヶ月で最もコミット数の多い5人」を知りたいとします。Gitに専用の「ランキング機能」はありません。が、こうできます:</p>
+
+<p><code class="inline">git log --since="1 month" --format='%an' | sort | uniq -c | sort -rn | head -5</code></p>
+
+<p>5つの小さな道具をパイプで繋ぎ、Gitは<b>「データを規則的なテキストで吐き出す」</b>だけの役割を担う。これは典型的なUNIX流の設計です。</p>
+
+<h3>履歴の正体は DAG である</h3>
+<p>少し技術的な話に踏み込みます。Gitの履歴は、内部的には<b>有向非巡回グラフ(DAG)</b>という数学的な構造を持っています。これは「<b>各コミットが、自分の親コミットを指している</b>」という、一方向の繋がりです。</p>
+
+<p>● <b>有向</b>(directed): 親→子の方向だけ<br>
+● <b>非巡回</b>(acyclic): 一周して自分に戻ることがない<br>
+● <b>グラフ</b>(graph): 点と線の構造</p>
+
+<p>線形に1本道で進むだけでなく、ブランチで枝分かれし、マージで合流する。この構造を表現するために、コミットIDという「不変の名前」と、親コミットの参照という「リンク」が必要だったのです。<b>Gitが扱う履歴は、単純な「行のリスト」ではなく、立体的なネットワーク</b>でした。</p>
+
+<h3>--graph オプションの正体</h3>
+<p><code class="inline">git log --graph</code> を打つと、左側に <code class="inline">* | \</code> といった記号が出ます。これは DAG を ASCII文字で<b>2次元に投影した結果</b>です。コンピュータの内部では立体的なグラフ構造であるものを、テキスト出力に落とし込むために、<b>ASCII絵</b>で表現しているのです。</p>
+
+<p>これは1970年代から続く、UNIX文化での<b>「テキストだけで全てを表現する」</b>美意識の現れです。GUIではなくテキストで——<b>絵は描けないかもしれないが、絵に見立てた文字を組めばよい</b>。この発想が、<code class="inline">--graph</code> の小さな星型記号として今も生きています。</p>
+
+<h3>format 文字列の世界</h3>
+<p><code class="inline">--format='%H %an %s'</code> のような書式指定は、C言語の <code class="inline">printf</code> 関数からの直接的な流用です。<code class="inline">%H</code> = ハッシュ、<code class="inline">%an</code> = author name、<code class="inline">%s</code> = subject。コミットの各フィールドに名前が付いていて、それを自在に並べ替えて出力できる。</p>
+
+<p>これも UNIX 文化の伝統です。日付フォーマット指定(<code class="inline">strftime</code>)、 awk のプリント書式、printf 全般——「<b>テキスト出力は書式指定で操作する</b>」という発想が、Gitの中にもそのまま継承されているのです。<b>Gitは、過去のUNIXユーザーが慣れ親しんだ操作感を、そっくり再現してくれる</b>のです。</p>
+
+<h3>機械可読性という思想</h3>
+<p>もう一つ重要な視点があります。<code class="inline">git log --format</code> の柔軟性は、人間向けの「見やすさ」のためだけではありません。<b>機械が処理しやすい形にデータを変換する</b>ためでもあります。</p>
+
+<p>CSV形式、JSON 風、タブ区切り——どんな形にでも整形できれば、他のスクリプトやプログラムから扱いやすい。これは<b>自動化との相性</b>を考えた設計です。CI/CD パイプラインで Git の情報を使う、ダッシュボードに表示する、メトリクスを集計する——全てが、この柔軟な出力設計のおかげで可能になります。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p><code class="inline">git log</code> の<b>大量のオプション</b>は、機能の積み上げではなく、UNIX哲学の<b>「テキストで全てを表現する」</b>思想の表れです。同じデータを多様な形で吐き出せるからこそ、他のツールと自由に組み合わせて使える。<b>「不便を増やさず、柔軟性を増やす」</b>——これがUNIX的な良い設計の本質です。</p>
+  </div>
+</section>
+
+<!-- ============ 06 ============ -->
+<section id="s06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>diff という発明の継承</h2>
+    <span class="en">INHERITED FROM DIFF</span>
+  </div>
+  <p class="pattern-desc">
+    <code class="inline">git diff</code> の出力で見る <code class="inline">+</code> と <code class="inline">-</code> ——
+    あの記法は、Gitが発明したものではありません。
+    <b>1974年、UNIXで生まれた <code class="inline">diff</code> コマンド</b>の出力形式を、Gitが
+    50年後にそっくりそのまま継承しているのです。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">diff <span class="slash">/</span> differential file comparison</div>
+      <div class="t2">差分比較</div>
+      <div class="t3"><b>2つのテキストファイルの違うところだけを抜き出すコマンド</b>。1974年にUNIXで誕生し、現代まで形を変えずに使われている</div>
+    </div>
+    <div class="term">
+      <div class="t1">unified diff format</div>
+      <div class="t2">統一差分形式</div>
+      <div class="t3"><b>差分を「前後の文脈付きで」表現する形式</b>。<code style="font-family:'JetBrains Mono',monospace">+</code>と<code style="font-family:'JetBrains Mono',monospace">-</code>で追加・削除を示し、世界中のツールで標準的に使われる</div>
+    </div>
+    <div class="term">
+      <div class="t1">hunk</div>
+      <div class="t2">ハンク / 塊</div>
+      <div class="t3"><b>差分の中の「変更があった一塊の領域」</b>。<code style="font-family:'JetBrains Mono',monospace">@@ ... @@</code> という記号で区切られる。1つのファイルに複数のハンクがあることもある</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">50年変わらない記法</span>
+      <span class="tag-desc">1974 - PRESENT</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// diff の歩み</div>
+        <div class="timeline">
+          <div class="year">1974</div>
+          <div class="event">D. McIlroy ら<br>UNIX diff 開発<br>"context diff" 形式</div>
+          <div class="year">1980年代</div>
+          <div class="event">"unified diff" 形式登場<br>(現在の +/- 形式)</div>
+          <div class="year">1990年代</div>
+          <div class="event">パッチ送付文化が定着<br>OSSの開発言語に</div>
+          <div class="year">2005</div>
+          <div class="event">Git も unified diff 採用<br>互換性の維持</div>
+        </div>
+
+        <div class="diagram" style="margin-top:14px">[ unified diff 例 ]
+
+@@ -3,7 +3,8 @@ function login() {
+   if (!user) {
+     return null;
+   }
++  console.log("debug");
+   return user.token;
+-  // old code
+ }
+
+↑ 50年変わらない形式</div>
+      </div>
+      <div class="text">
+
+<h3>1974年、diffの誕生</h3>
+<p>UNIXの <code class="inline">diff</code> コマンドは、1974年に<b>ダグラス・マキロイ</b>(パイプを発明したのと同じ人物)らによって開発されました。元になったのは数学的な「<b>編集距離</b>」の研究で、2つの文字列の違いを最小の操作で表現する技術がベースになっています。</p>
+
+<p>初期の <code class="inline">diff</code> は、変更前と変更後の行を別々に表示する形式でした。これを「<b>context diff</b>(文脈付き差分)」と呼びます。後にこれを発展させた「<b>unified diff</b>(統一差分)」が現在の標準形式となります。</p>
+
+<h3>+ と - の単純な力</h3>
+<p>unified diff 形式の天才性は、<b>たった2つの記号</b>——<code class="inline">+</code>(追加された行)と <code class="inline">-</code>(削除された行)——だけで、あらゆる変更を表現できる点にあります。</p>
+
+<p>● <b>行が追加</b>: <code class="inline">+</code> で示す<br>
+● <b>行が削除</b>: <code class="inline">-</code> で示す<br>
+● <b>行の変更</b>: 元行を <code class="inline">-</code> で削除し、新行を <code class="inline">+</code> で追加<br>
+● <b>行が移動</b>: 元位置で <code class="inline">-</code>、新位置で <code class="inline">+</code><br>
+● <b>変化なし</b>: 記号なし(文脈として表示)</p>
+
+<p>この単純な記法は、人間にも機械にも読みやすい。同時に、<b>変更を逆方向に「適用」して元に戻すこともできる</b>。<code class="inline">patch</code> という別のコマンドが、この diff 出力を読んで実際にファイルを変更してくれる仕組みです。<b>diff と patch の対</b>——これがUNIX世界での版管理の基礎でした。</p>
+
+<h3>@@マークの意味</h3>
+<p>Git の差分出力でよく見る <code class="inline">@@ -3,7 +3,8 @@</code> のような行——これは「<b>ハンクヘッダ</b>」と呼ばれ、その下に続く変更が<b>「元ファイルの3行目から7行分、新ファイルの3行目から8行分」</b>に対応していることを示します。</p>
+
+<p>これも1980年代から続く伝統的な記法です。これがあるおかげで、「<b>ファイルのどの位置に対する変更か</b>」が正確に分かり、機械的にパッチを適用できます。50年経っても、この記法は1文字も変わっていません。<b>仕様の安定性</b>が、エコシステムの蓄積を可能にしているのです。</p>
+
+<div class="quote">
+「Gitは新しい diff を発明したわけではない。古い diff を、新しい仕組みのなかで使いやすくしただけだ」
+<span class="source">— OSS開発文化の伝統的な解釈</span>
+</div>
+
+<h3>パッチファイル文化との接続</h3>
+<p>Linuxカーネル開発が、長年メールでパッチを送り合っていたという話を Section 04 でしました。あの「パッチ」の正体こそ、まさにこの unified diff 形式のテキストです。<code class="inline">.patch</code> や <code class="inline">.diff</code> という拡張子のファイル——その中身は、Gitなしでも、Mercurialなしでも、純粋なテキストとして<b>独立して存在できる</b>のです。</p>
+
+<p>Gitは、この既存のパッチファイル文化と<b>完全に互換性を保った</b>まま設計されました。<code class="inline">git diff</code> の出力は、そのまま <code class="inline">patch</code> コマンドで他のシステムに適用できる。<code class="inline">git apply</code> は、外部から受け取ったパッチファイルを取り込める。<b>Gitだけの閉じた世界を作らず、UNIX文化全体と繋がる設計</b>を選んだのです。</p>
+
+<h3>ツールチェーンの恩恵</h3>
+<p>この互換性のおかげで、Git ユーザーは長年蓄積された UNIX のテキスト処理ツールを丸ごと活用できます。<code class="inline">grep</code> で差分を検索、<code class="inline">awk</code> で行を抽出、<code class="inline">wc</code> で変更行数を数える——どれも diff 形式のテキストとして処理できるからこそ可能です。</p>
+
+<p>同じことを、もし Gitが独自のバイナリ形式で差分を表現していたら——できなかったでしょう。Linus がテキスト形式を選んだ理由は、まさにこの<b>「既存の道具と繋がる」</b>という UNIX 哲学への忠誠だったのです。</p>
+
+<h3>50年の歴史は道具を強くする</h3>
+<p>diff の歴史を辿ると、<b>「良い設計は時を経ても廃れない」</b>という事実を思い知らされます。1974年に生まれた記法が、2026年もそのまま使われている——コンピュータの世界では稀有な長寿です。</p>
+
+<p>その理由は、おそらく diff が「<b>本質的に変化を表現する方法</b>」だったから。文字列の差分という普遍的な問題に対する、最初に見つけられた良い答えが、いまも色褪せていない。<b>古いから悪いのではなく、優れているから古びない</b>のです。Gitがこれを継承したのは、賢明な選択でした。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>Gitの <code class="inline">+</code> と <code class="inline">-</code> は、<b>1974年から続く50年の遺産</b>です。Linusは新しい記法を発明する誘惑に駆られず、<b>「既に動いている良いものは、そのまま使う」</b>という UNIX 流の謙虚さで設計しました。<b>偉大な道具は、過去の偉大な道具を尊重する</b>——これが Git からの教訓です。</p>
+  </div>
+</section>
+
+<!-- ============ 07 ============ -->
+<section id="s07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>status — 親切なエラー文化</h2>
+    <span class="en">USABILITY BY HINTS</span>
+  </div>
+  <p class="pattern-desc">
+    <code class="inline">git status</code> の出力を見てください。「<b>(use "git restore..." to unstage)</b>」のような<b>ヒント</b>が大量に書かれています。
+    実は他のUNIXツールは、ここまで親切ではありません。これはGitが採用した<b>独自の文化</b>——
+    「<b>初心者にも経験者にも、次の一手を示す</b>」設計思想です。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">usability <span class="slash">/</span> user-friendliness</div>
+      <div class="t2">ユーザビリティ / 使いやすさ</div>
+      <div class="t3"><b>「ユーザーが迷わず使えるかどうかの度合い」</b>。古典的なUNIXツールは敢えてこれを犠牲にしてきたが、Gitはそこに踏み込んだ</div>
+    </div>
+    <div class="term">
+      <div class="t1">hint <span class="slash">/</span> hint message</div>
+      <div class="t2">ヒント / ヒントメッセージ</div>
+      <div class="t3"><b>「次に何をすれば良いか」を示唆する補助メッセージ</b>。Gitは <code style="font-family:'JetBrains Mono',monospace">hint:</code> から始まる行で、初学者にもプロにも次の一手を提案する</div>
+    </div>
+    <div class="term">
+      <div class="t1">verbose <span class="slash">/</span> verbose output</div>
+      <div class="t2">バーボース / 冗長な出力</div>
+      <div class="t3"><b>「敢えてたくさんの情報を出力する」スタイル</b>。古典UNIXは「成功時は無言、失敗時のみ叫ぶ」だが、Gitは積極的に語る</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">UNIXの伝統からの逸脱</span>
+      <span class="tag-desc">VERBOSE BY DESIGN</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 古典 UNIX vs Git</div>
+        <div class="compare">
+          <div>
+            <div class="heading">古典UNIX</div>
+            <ul>
+              <li>成功時は無言</li>
+              <li>エラー時のみ最低限</li>
+              <li>「もう知ってるよね?」</li>
+              <li>慣れた人向け</li>
+            </ul>
+          </div>
+          <div>
+            <div class="heading">Git</div>
+            <ul>
+              <li>状況を必ず説明</li>
+              <li>次の一手を提案</li>
+              <li>「次はこうしては?」</li>
+              <li>初学者にも親切</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="diagram" style="margin-top:14px">$ git status
+
+On branch main
+Changes not staged for commit:
+  (use "git add..." to update)
+  (use "git restore..." to discard)
+        modified: app.js
+
+no changes added to commit
+(use "git add" or "git commit -a")
+
+↑ 状況 + 次の選択肢を提示</div>
+      </div>
+      <div class="text">
+
+<h3>古典UNIXの「沈黙の美学」</h3>
+<p>古典的なUNIXツールには、<b>「成功時は何も言わない」</b>という美学があります。<code class="inline">cp file1 file2</code> でファイルをコピーする時、成功すれば画面に何も表示されません。<code class="inline">rm</code> で削除しても、無言で消える。「<b>うまくいったなら、語る必要はない</b>」という、ある種の哲学的な沈黙です。</p>
+
+<p>これは慣れたユーザーにとっては心地よい設計でした。余計な出力で画面が埋まらず、スクリプトに組み込んでも余計な処理が要らない。<b>「メッセージは情報、無言は成功」</b>という、シンプルなルールです。</p>
+
+<p>しかし、初心者にとってはこれが地獄でした。「何が起きたのか分からない」「次に何をすればいいか分からない」——古典UNIXツールには、こうした<b>「優しさ」</b>が欠落していたのです。</p>
+
+<h3>Linusが選んだ「饒舌な道具」</h3>
+<p>Gitを設計する時、Linusはこの古典的な美学を<b>意図的に破りました</b>。<code class="inline">git status</code> を打てば、現在の状況、変更されたファイル、ステージ済みの内容、次に取れる操作の選択肢——すべてが出てきます。<code class="inline">git pull</code> や <code class="inline">git push</code> も、何が起きているかを逐一説明します。</p>
+
+<p>これは古典UNIXユーザーには「<b>うるさい</b>」と感じられました。実際、初期のGitに対しては「<b>余計なメッセージが多すぎる</b>」という批判もあったようです。が、Linus は譲りませんでした。なぜか?</p>
+
+<div class="quote">
+「ツールは、慣れていない人を見捨ててはいけない。古典的UNIXの『沈黙の美学』は、慣れた人だけを優遇する設計だ」
+<span class="source">— Gitの設計思想を語る当時の解釈</span>
+</div>
+
+<h3>「hint:」という発明</h3>
+<p>後年、Gitは出力の改良を重ね、現在では<b>「hint:」から始まる補助メッセージ</b>が随所に出るようになりました。これは2010年代に導入された新しい機能ですが、思想的にはLinus が最初から持っていた方向性の延長です。</p>
+
+<p>たとえば、<code class="inline">git checkout</code> をブランチ名でなくファイル名で打った時——昔は何をしようとしたか分からないエラーが出るだけでした。今は <code class="inline">hint: Use 'git switch ...' to switch branches.</code> のように、<b>「あなたが本来やりたかったのは、おそらくコレでしょう?」</b>と提案が出ます。</p>
+
+<p>これは設計上、極めて大きな貢献です。なぜなら、Gitは複雑なツールであり、初学者は何度も同じ間違いを繰り返す宿命にあるからです。<b>道具自身が「教師」を兼ねる</b>——この発想が、Git の長期的な普及を支えました。</p>
+
+<h3>UNIX文化への反逆と、なじみのある反逆</h3>
+<p>面白いのは、この「饒舌な設計」は<b>UNIX文化への反逆</b>でありながら、<b>UNIX文化の中で受け入れられた</b>こと。なぜでしょうか?</p>
+
+<p>理由の一つは、Gitの饒舌さが<b>「機械可読性」を犠牲にしていない</b>からです。出力テキストは構造化されており、スクリプトでも処理できます。<code class="inline">--porcelain</code> オプションを付ければ機械向けの簡潔な形式に切り替わる(これも「磁器」の比喩!)。<b>人間には親切、機械には律儀</b>という両立があり得たのです。</p>
+
+<p>もう一つの理由は、ソフトウェア開発の<b>「裾野が広がった」</b>こと。2005年当時、もはやUNIX的なツールは「コンピュータ科学者の道具」ではなく、「一般のプログラマの道具」になっていました。世界中で何百万人もが使うようになったツールには、もはや「沈黙の美学」を貫く余裕はなかったのです。</p>
+
+<h3>「経験者にも初心者にも、同じツールが」</h3>
+<p>Gitの饒舌さの真価は、<b>「経験者は不快にならず、初心者は救われる」</b>絶妙なバランスにあります。経験者は出力を流し読みすればよく、必要な情報はすぐに見つかる。初心者は丁寧に読めば次の一手が示されている。同じツールが、<b>レベルに応じて違う顔を見せる</b>のです。</p>
+
+<p>これは現代のソフトウェア設計に大きな示唆を残しました。<b>「初心者向けと上級者向けを分けるのではなく、両方に対応する単一の道具を作る」</b>——この方針は、今ではモダンな CLI ツールの標準になっています。Gitが先鞭をつけた革新でした。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ INSIGHT</div>
+    <p>Git の<b>「親切すぎる」エラーメッセージ</b>は、UNIX伝統の沈黙の美学への意図的な反逆でした。<b>「経験者にも初心者にも応える」</b>という難題に、Linusは「饒舌だが機械可読」という独自の答えを出したのです。<b>古い文化を継承しつつ、必要に応じて挑戦する</b>——これも Git からの教訓です。</p>
+  </div>
+</section>
+
+<!-- ============ 08 ============ -->
+<section id="s08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>なぜコマンドラインなのか</h2>
+    <span class="en">WHY CLI</span>
+  </div>
+  <p class="pattern-desc">
+    現代では、GitKraken や SourceTree など、優れたGUIツールも存在します。
+    なのに、なぜGitの本質は<b>コマンドライン</b>に置かれ続けるのか?
+    なぜプロのエンジニアは、結局ターミナルに戻ってくるのか? 
+    答えは「<b>テキストこそが最強の道具</b>」というUNIX文化の核心にあります。
+  </p>
+
+  <div class="terms">
+    <div class="terms-head">このセクションの用語</div>
+    <div class="term">
+      <div class="t1">CLI <span class="slash">/</span> Command Line Interface</div>
+      <div class="t2">コマンドラインインターフェース</div>
+      <div class="t3"><b>「文字を入力してコンピュータを操作する仕組み」</b>。黒い画面に文字を打つあのスタイル。テキストベースで自動化と相性が良い</div>
+    </div>
+    <div class="term">
+      <div class="t1">GUI <span class="slash">/</span> Graphical User Interface</div>
+      <div class="t2">グラフィカルユーザーインターフェース</div>
+      <div class="t3"><b>「絵やボタンを使ってコンピュータを操作する仕組み」</b>。マウスでクリックする現代の一般的な操作画面。視覚的に分かりやすい</div>
+    </div>
+    <div class="term">
+      <div class="t1">automation <span class="slash">/</span> scripting</div>
+      <div class="t2">自動化 / スクリプト処理</div>
+      <div class="t3"><b>「同じ操作を機械が繰り返し実行する仕組み」</b>。CLIは入出力が全てテキストなので、これと極めて相性がよい</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">テキストの永遠性</span>
+      <span class="tag-desc">CLI AS A PHILOSOPHY</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// CLI と GUI の本質的違い</div>
+        <div class="compare">
+          <div>
+            <div class="heading">GUI</div>
+            <ul>
+              <li>視覚的・直感的</li>
+              <li>初心者に優しい</li>
+              <li>操作の記録が困難</li>
+              <li>自動化が難しい</li>
+              <li>OS/アプリ依存</li>
+            </ul>
+          </div>
+          <div>
+            <div class="heading">CLI</div>
+            <ul>
+              <li>抽象的・論理的</li>
+              <li>覚えれば速い</li>
+              <li>操作 = テキスト</li>
+              <li>そのまま自動化</li>
+              <li>環境に依存しない</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">なぜ CLI が消えないか</div>
+          <p>● <b>SSH越し</b>に動く<br>
+          ● スクリプトに<b>そのまま貼れる</b><br>
+          ● ドキュメント化が容易<br>
+          ● <b>50年経っても同じ書き方</b><br>
+          ● 機械学習の入力にもなる</p>
+        </div>
+
+        <div class="quote">
+"Text is the most powerful interface ever invented."
+<span class="source">— UNIX文化に広く伝わる言葉</span>
+        </div>
+      </div>
+      <div class="text">
+
+<h3>GUI が登場した時の予測</h3>
+<p>1980年代、AppleがマウスとGUIを持つMacintoshを発売し、その後 Windows が普及した時、多くの予測家が言いました——「<b>これでコマンドラインの時代は終わる</b>」。視覚的で直感的なGUIが、文字を覚える面倒なCLIを駆逐するだろう、と。</p>
+
+<p>実際、一般ユーザーの世界ではGUIが完全に主流になりました。スマートフォン時代の今、コマンドを打って操作する一般ユーザーは皆無に近い。が、<b>ソフトウェア開発の世界では、CLIが消えるどころか強くなり続けている</b>。なぜでしょうか?</p>
+
+<h3>テキストは、コピーできる</h3>
+<p>CLIの最大の強みは、<b>「操作がそのままテキストとして存在する」</b>ことです。あなたが <code class="inline">git checkout -b feature/login</code> と打った瞬間、それは画面に文字として残っています。これをコピーして、ドキュメントに貼り付け、メールで送り、ブログに書き、AIに質問する——すべてが同じテキストで完結します。</p>
+
+<p>GUIではこうはいきません。「右上のメニューから設定を選び、左の枠の3番目を…」と長々と説明するか、スクリーンショットを撮るしかない。<b>操作を共有する敷居が圧倒的に違う</b>のです。Stack Overflow や ChatGPT との対話で Git の知識を増やせるのは、CLI がテキストだからに他なりません。</p>
+
+<h3>SSH と CLI の永遠の相性</h3>
+<p>もう一つ、CLI が消えない決定的な理由は、<b>リモート操作との相性</b>です。世界中のサーバーは、現在もそのほとんどがLinux系のOSで動いています。リモートからこれらを操作する手段は、ほぼ唯一<b>SSH越しのコマンドライン</b>。GUIをリモートで動かすことも技術的には可能ですが、遅延、帯域、安定性のどれをとってもCLIに勝てません。</p>
+
+<p>「クラウド時代だから、ますますリモート操作が増える」——これはCLIの追い風です。AWS、Google Cloud、Azure——どのクラウドプロバイダのドキュメントも、最終的にはコマンドの羅列にたどり着きます。Gitも同じ世界の住人として、CLI を本流に据え続けるのは必然なのです。</p>
+
+<div class="quote">
+「未来のソフトウェア開発がますますクラウドとリモートに移行するなら、ますますCLIの重要性は増すだろう」
+<span class="source">— 多くの現代エンジニアの感想を要約</span>
+</div>
+
+<h3>GUIの誘惑とその陥穽</h3>
+<p>もちろん、GitにもGUIツールはあります。Git Tower、GitKraken、SourceTree、そしてVS Codeの組み込みGit機能——どれも素晴らしいツールです。初学者にとっては、コマンドを覚えるよりGUIの方が圧倒的に学習コストが低い。これは事実です。</p>
+
+<p>しかし、GUIには深い陥穽もあります。<b>「ボタンの裏で何が起きているか分からない」</b>のです。「Sync」ボタンを押した時、それは pull なのか push なのか fetch+merge なのか? エラーが起きた時、何が原因か特定するには、結局GUIの裏で動いているコマンドを理解する必要があります。</p>
+
+<p>多くの経験者が、最初は GUI から入り、エラーで詰まり、コマンドラインに行き着く——この経路を辿るのは、GUIが「<b>表層の操作を隠す</b>」設計だからです。本質を学ぶには、表層を剥がしてコマンドを直接触る必要があります。</p>
+
+<h3>自動化との不可分の関係</h3>
+<p>現代のソフトウェア開発で、<b>自動化(automation)</b>はもう避けて通れません。CI/CDパイプライン、デプロイスクリプト、テストの自動実行——全てが、内部的にはコマンドの羅列です。GitHub Actions の <code class="inline">.yml</code> ファイルを見れば、そこに書かれているのは <code class="inline">run: git checkout</code> のようなコマンドラインそのもの。</p>
+
+<p>GUIの操作は、自動化できません。マウスのクリックをマクロで再現する技術はありますが、保守不可能で実用に堪えない。<b>「自動化したいなら、CLI を学ぶしかない」</b>——これは現代の開発者にとって、避けられない真実です。</p>
+
+<h3>50年経っても、書き方は同じ</h3>
+<p>もう一つの大切な性質は、<b>「CLI は古びない」</b>ことです。1970年代のUNIXの本を開けば、そこに書かれている <code class="inline">ls -l</code> や <code class="inline">grep "pattern"</code> は、2026年でもまったく同じように動きます。50年前の知識が今でも使える分野は、コンピュータの世界では稀有です。</p>
+
+<p>Gitも同じ運命を辿るでしょう。今あなたが <code class="inline">git commit -m "..."</code> と打っているこの操作は、2070年になっても同じ書き方で動くはずです。<b>テキストインターフェースの普遍性</b>——これがCLIの真の強さなのです。</p>
+
+<h3>「CLIに戻ってくる」現象</h3>
+<p>多くのプロのエンジニアが、長年のキャリアの中で<b>「CLI に戻ってくる」</b>体験をします。最初は IDE の便利機能や GUI のGit クライアントを使う。慣れるうちに「これは何をしているのか?」が気になり、ターミナルを開く。コマンドを直接打つと、より速く、より正確で、より自由が利く。気がつくと、GUIをほぼ使わなくなっている——という変遷です。</p>
+
+<p>これは <b>「上級者がCLIを好む」</b>のではなく、<b>「CLIに辿り着いた人が上級者になる」</b>のかもしれません。テキストで全てを表現するという制約が、結果として深い理解を強要するからです。<b>Gitの本質を学ぶことは、CLI 文化に身を置くこと</b>——この事実は、これからも変わらないでしょう。</p>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">∴ FINAL THOUGHT</div>
+    <p>GitがCLIに本拠を置き続けるのは、技術的な惰性ではなく<b>思想的選択</b>です。テキストは、コピーできる。送れる。記録できる。自動化できる。50年経っても古びない——<b>これほどの汎用性を持つインターフェースを、人類はまだ他に発明していない</b>。コマンドラインで Git を操作することは、UNIX 50年の遺産を自分の指先で動かしていることなのです。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:56px">
+  <div class="tip-title">∴ NEXT VOLUME</div>
+  <p>第2巻では、Gitコマンドの背後にあるUNIX哲学を辿りました。次巻 Vol.3「<b>ブランチという発明</b>」では、Gitの真の革新——<b>軽量ブランチ</b>という発想——の起源を掘ります。なぜ他のツールでは「ブランチを切る」のが大事業だったのに、Gitでは一瞬で済むのか? その答えは、Gitの内部設計、特に<b>「コミットの参照という考え方」</b>の中にあります。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <div>GIT / GITHUB ORIGINS — VOL.02</div>
+  <div class="right">UNIX PHILOSOPHY &amp; GIT COMMANDS / コマンド設計の系譜</div>
+</footer>
+
+</body>
+</html>

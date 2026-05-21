@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕Vol.3 カテゴリ管理 マスタの要求と設計</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2940;
+  --paper:#f3f0e6;
+  --paper-2:#e4dfcd;
+  --accent:#2d5485;
+  --accent-2:#507aa8;
+  --accent-3:#8a6a3a;
+  --muted:#6a7484;
+  --line:#c6c1b0;
+  --code-bg:#1a2236;
+  --code-text:#e8e4d4;
+  --panel-bg:#ede7d3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✦";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.phase-badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700;letter-spacing:0.05em}
+.ph-req{background:#e8eef6;color:#2d5485;border:1px solid #2d5485}
+.ph-des{background:#f0ebe0;color:#8a6a3a;border:1px solid #8a6a3a}
+.ph-imp{background:#e6efe8;color:#3a6a4a;border:1px solid #3a6a4a}
+.ph-test{background:#f3e8e8;color:#9a4040;border:1px solid #9a4040}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.key{background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(45,84,133,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.screen-mock{background:#fff;border:2px solid var(--ink);padding:16px;margin:8px 0;font-family:'Noto Sans JP',sans-serif;font-size:13px;line-height:1.75}
+.screen-mock .sm-head{background:var(--accent);color:#fff;margin:-16px -16px 12px;padding:8px 14px;font-weight:700;font-size:13px}
+.screen-mock table{width:100%;border-collapse:collapse;margin-top:6px}
+.screen-mock th{background:var(--paper-2);padding:6px 10px;text-align:left;font-size:12px;border:1px solid var(--line)}
+.screen-mock td{padding:6px 10px;font-size:12px;border:1px solid var(--line)}
+.screen-mock .btn{display:inline-block;background:var(--accent);color:#fff;padding:3px 10px;font-size:11px;font-weight:700;margin:0 2px}
+.color-swatch{display:inline-block;width:14px;height:14px;border:1px solid #888;vertical-align:middle;margin-right:4px}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.3</span>
+    <span class="kind-tag">本編 ── MAIN</span>
+    <span class="rdt-tag">REQ · DESIGN · TEST</span>
+  </div>
+  <h1>カテゴリ管理<br>マスタの要求と設計</h1>
+  <div class="subtitle">VOL.03 ── CATEGORY MASTER ── 2ND CYCLE</div>
+  <p class="lead">フロー2周目。<b>US-002（カテゴリ分類）</b>を起点に、categories の<b>マスタCRUD</b>を要求→設計→テストで実装します。Vol.2 と<b>同じ型をもう一度</b>回すことで、開発フローが<b>身体に染み込みます</b>。マスタ特有の<b>UNIQUE制約のテスト</b>が新しい学びどころ。<b>2周目は定着の回</b>です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら — Vol.3 で新たに使うもの</div>
+    <p>実装の新規 import は<b>ほぼ無し</b>（Vol.2 の構成を流用）。HTML で <code>&lt;input type="color"&gt;</code> が初登場。テスト側で <code>@MybatisTest</code>（結合テスト）が初登場。<code>Ctrl + Shift + O</code> で整理、<code>Ctrl + 1</code> でクイック修正。<b>Vol.2 のコードを開きながら進める</b>のが正解。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 要求の確認（US-002）</a></li>
+    <li><a href="#s02">02 受入条件をテストケース化</a></li>
+    <li><a href="#s03">03 仕様化：マスタCRUDの設計</a></li>
+    <li><a href="#s04">04 設計①：データと制約</a></li>
+    <li><a href="#s05">05 設計②：Vol.2との差分</a></li>
+    <li><a href="#s06">06 実装</a></li>
+    <li><a href="#s07">07 テスト（単体→結合→MockMvc）</a></li>
+    <li><a href="#s08">08 ブラウザ確認＋ハマりどころ</a></li>
+    <li><a href="#s09">09 レビュー・評価＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>要求の確認（US-002）</h2><span class="phase-badge ph-req">PHASE: REQ</span><span class="en">REVISIT REQUIREMENT</span></div>
+  <p class="pattern-desc">2周目も<b>まず要求から</b>。Vol.1 で定義した <b>US-002（カテゴリ分類）</b>を確認します。Vol.2 と同じく、<b>受入条件を起点に</b>進める。「<b>要求を見てから手を動かす</b>」習慣を、2周目で確かなものにします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">US-002 と受入条件</span><span class="tag-desc">Vol.1 で定義済み</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// この巻のスコープ</div>
+        <p>Vol.3 では <b>US-002（カテゴリ分類）</b>を実現するための<b>categories マスタCRUD</b>を作ります。memos との連携（JOIN）は<b>Vol.4</b>。今回は<b>categories 単体</b>に集中します。</p>
+
+        <div class="panel-head" style="margin-top:18px">// US-002 の再掲</div>
+        <div class="role-card" style="margin-top:8px">
+          <span class="label">US-002 / SHOULD</span>
+          <div class="name">カテゴリで分類したい</div>
+          <div class="desc"><b>As a</b> メモを整理したいユーザー<br><b>I want</b> カテゴリでメモを分類したい<br><b>so that</b> 種類ごとに把握できる</div>
+        </div>
+
+        <p style="margin-top:12px"><b>関連 Issue</b>：GitHub版Vol.1 で作成した <code>#2 US-002</code>。実装後に <code>Closes #2</code>。</p>
+      </div>
+      <div class="code"><span class="code-head">// US-002 の受入条件</span>
+<span class="ann">@AC1</span> 正常系
+Given: カテゴリ名「仕事」と色を入力
+When : 保存する
+Then : カテゴリが登録され、一覧に出る
+
+<span class="ann">@AC2</span> 異常系（空の名前）
+Given: カテゴリ名が空
+When : 保存する
+Then : エラーが表示され、保存されない
+
+<span class="ann">@AC3</span> 異常系（重複名）★マスタ特有
+Given: 「仕事」が既に存在する
+When : もう一度「仕事」を登録する
+Then : 重複エラーになり、保存されない
+
+<span class="ann">@AC4</span> 正常系（並び順）
+Given: sort_order 1,2,3 のカテゴリ
+When : 一覧を表示する
+Then : sort_order 昇順で並ぶ
+
+
+<span class="comment">// ─── Vol.2 との違い ───</span>
+<span class="comment">// @AC3「重複名エラー」が新登場 ★★★</span>
+<span class="comment">// → マスタは UNIQUE 制約を持つ</span>
+<span class="comment">// → 重複チェックの受入条件が必要</span>
+<span class="comment">// → これが Vol.3 のテストの肝</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 2周目だからこそ「型」を意識する</div>
+    <p>Vol.2 で1周、Vol.3 で2周目。<b>同じ「要求→設計→テスト」の型</b>を繰り返すことで、フローが<b>身体に染み込みます</b>。「あ、ここVol.2でやったやつだ」と思えたら<b>定着のサイン</b>。<b>2周目の繰り返しは、退屈ではなく上達の本質</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>受入条件をテストケース化</h2><span class="phase-badge ph-req">PHASE: REQ→TEST</span><span class="en">AC TO TEST CASES</span></div>
+  <p class="pattern-desc">2周目も<b>テストを先に設計</b>します。Vol.2 のバリデーションに加え、マスタ特有の<b>「重複名」テスト</b>が加わります。重複チェックは<b>「DBに任せる vs Javaでチェック」</b>の設計判断が絡む重要ポイントです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">カテゴリのテストケース表</span><span class="tag-desc">重複が新要素</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テストケース一覧</div>
+        <table class="compare-tbl">
+          <thead><tr><th>入力</th><th>期待</th><th>テスト層</th></tr></thead>
+          <tbody>
+            <tr><td>空の名前</td><td>エラー</td><td>単体</td></tr>
+            <tr><td>1文字</td><td>OK</td><td>単体</td></tr>
+            <tr><td>50文字</td><td>OK</td><td>単体</td></tr>
+            <tr><td>51文字</td><td>エラー</td><td>単体</td></tr>
+            <tr><td>重複名</td><td>エラー</td><td><b>結合</b></td></tr>
+            <tr><td>正常登録</td><td>OK</td><td>結合</td></tr>
+            <tr><td>並び順昇順</td><td>順序通り</td><td>結合</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>重複名(@AC3)・並び順(@AC4)は「DB絡み」</b>なので<b>結合テスト</b>で検証。バリデーション（空・文字数）は単体で。<b>テスト層の振り分け</b>も設計です。</p>
+      </div>
+      <div class="code"><span class="code-head">// テスト層の振り分け（テストピラミッド）</span>
+<span class="comment">// ─── 単体テスト（多い・速い）───</span>
+<span class="comment">// 純粋なバリデーション</span>
+@NotBlank / @Size のチェック
+  ├ 空の名前 → エラー
+  ├ 50文字 → OK
+  └ 51文字 → エラー
+<span class="comment">// → DBなしで検証できる ★</span>
+
+
+<span class="comment">// ─── 結合テスト（中・DB絡み）───</span>
+<span class="comment">// UNIQUE制約・並び順は「DB次第」</span>
+@MybatisTest + H2
+  ├ 重複名 → DuplicateKeyException
+  └ sort_order 昇順で取得できる
+<span class="comment">// → 本物のDB（H2）が必要 ★★★</span>
+
+
+<span class="comment">// ─── なぜ重複は結合テストか ───</span>
+<span class="comment">// 重複チェックは「DBのUNIQUE制約」が守る</span>
+<span class="comment">// → Javaのロジックではなく</span>
+<span class="comment">//   DB制約の動作を確認する必要</span>
+<span class="comment">// → だから実DB（H2）でテスト ★★★</span>
+
+<span class="comment">// 別冊S3で「モックの限界」として詳説</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「どの層でテストするか」も設計判断</div>
+    <p>バリデーション（空・文字数）は<b>Javaのロジック</b>なので単体テスト。重複名・並び順は<b>DBの制約・並び替え</b>に依存するので結合テスト。<b>「何が正しさを保証しているか」でテスト層を選ぶ</b>。Javaが守るなら単体、DBが守るなら結合。<b>テスト層の選択は、責務の所在の理解</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>仕様化：マスタCRUDの設計</h2><span class="phase-badge ph-req">PHASE: SPEC</span><span class="en">SPECIFICATION</span></div>
+  <p class="pattern-desc">categories の CRUD を<b>URL設計</b>に落とします。Vol.2 の memos と<b>完全にパラレル</b>な構造。<b>「同じパターンの再利用」</b>がマスタCRUDの本質です（別冊S3で深掘り）。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">URL設計（memos とパラレル）</span><span class="tag-desc">同じ型の再利用</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 6エンドポイント（Vol.2 と同型）</div>
+        <table class="compare-tbl">
+          <thead><tr><th>操作</th><th>メソッド</th><th>URL</th></tr></thead>
+          <tbody>
+            <tr><td>一覧</td><td>GET</td><td>/categories</td></tr>
+            <tr><td>新規フォーム</td><td>GET</td><td>/categories/new</td></tr>
+            <tr><td>登録</td><td>POST</td><td>/categories</td></tr>
+            <tr><td>編集フォーム</td><td>GET</td><td>/categories/{id}/edit</td></tr>
+            <tr><td>更新</td><td>POST</td><td>/categories/{id}</td></tr>
+            <tr><td>削除</td><td>POST</td><td>/categories/{id}/delete</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><b>memos の /memos を /categories に置き換えただけ</b>。これが<b>マスタCRUDのパターン</b>。一度作れば使い回せます。</p>
+      </div>
+      <div class="code"><span class="code-head">// 完成画面イメージ</span>
+<span class="comment">// http://localhost:8080/categories</span>
+
+┌────────────────────────────┐
+│ カテゴリ管理       [+ 新規]  │
+├────────────────────────────┤
+│ # │ 名前      │ 色   │ 操作  │
+├────────────────────────────┤
+│ 1 │ ● 仕事    │#d63131│編 削 │
+│ 2 │ ● プライベート│#4a9aaa│編 削 │
+│ 3 │ ● 学習    │#6caa3a│編 削 │
+└────────────────────────────┘
+       ↑ sort_order 昇順（@AC4）
+
+
+<span class="comment">// ─── Vol.2 とのパラレル構造 ───</span>
+         Vol.2(memos)   Vol.3(categories)
+URL:     /memos         /categories
+Entity:  Memo           Category
+Mapper:  MemoMapper     CategoryMapper
+Service: MemoService    CategoryService
+Control: MemoController CategoryController
+
+<span class="comment">// → 構造が完全に同じ ★★★</span>
+<span class="comment">// → 「マスタCRUDの型」を再利用</span>
+<span class="comment">// → 別冊S3で「なぜ似るか」を理論化</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — パターンの再利用は「DRY」ではない</div>
+    <p>memos と categories のコードは似ていますが、これを<b>無理に共通化（DRY）しない</b>のが正解（別冊S2参照）。memos と categories は<b>「変更理由が違う」</b>（メモの仕様変更とカテゴリの仕様変更は別物）。<b>形が似ているだけで共通化すると、片方だけ変えたい時に困る</b>。<b>パターンの再利用 ≠ コードの共通化</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>設計①：データと制約</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">DATA &amp; CONSTRAINTS</span></div>
+  <p class="pattern-desc">Category のデータ構造を確定します。<b>UNIQUE制約（重複禁止）</b>がマスタの肝。受入条件 @AC3（重複エラー）を<b>「どこで守るか」</b>——DBの制約か、Javaのチェックか。設計判断します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Category エンティティと UNIQUE 制約</span><span class="tag-desc">重複は誰が守るか</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Category の5フィールド</div>
+        <ul>
+          <li><b>id</b>：Long・主キー</li>
+          <li><b>name</b>：String・必須・50字・<b>UNIQUE</b></li>
+          <li><b>color</b>：String・#xxxxxx</li>
+          <li><b>sortOrder</b>：Integer・並び順</li>
+          <li><b>createdAt</b>：LocalDateTime</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 重複を「DBで守る」設計</div>
+        <p>受入条件 @AC3（重複エラー）は<b>DB の UNIQUE 制約</b>で守ります。Java で「事前に findByName してチェック」は<b>避けます</b>。理由：</p>
+        <ul>
+          <li>同時アクセスで<b>両方とも「重複なし」と判定→両方INSERT</b>の競合が起きる</li>
+          <li>DB の UNIQUE 制約なら<b>確実に1つだけ</b></li>
+        </ul>
+        <p style="margin-top:8px">→ <b>正しさはDBに守らせる</b>（別冊S3）。</p>
+      </div>
+      <div class="code"><span class="code-head">// Category.java + DDL</span>
+<span class="kw">package</span> com.example.memo.entity;
+
+<span class="kw">import</span> java.time.LocalDateTime;
+<span class="kw">import</span> jakarta.validation.constraints.*;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Category</span> {
+    <span class="kw">private</span> <span class="type">Long</span> id;
+
+    <span class="ann">@NotBlank</span>(message = <span class="str">"カテゴリ名は必須"</span>)
+    <span class="ann">@Size</span>(max = <span class="num">50</span>,
+          message = <span class="str">"50文字以内"</span>)
+    <span class="kw">private</span> <span class="type">String</span> name;
+
+    <span class="kw">private</span> <span class="type">String</span> color;
+    <span class="kw">private</span> <span class="type">Integer</span> sortOrder;
+    <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+}
+
+
+<span class="comment">// ─── DDL（Vol.1で設計済み）───</span>
+<span class="kw">CREATE TABLE</span> categories (
+  id   <span class="type">BIGINT AUTO_INCREMENT PRIMARY KEY</span>,
+  name <span class="type">VARCHAR</span>(<span class="num">50</span>) <span class="kw">NOT NULL</span> <span class="ann">UNIQUE</span>,
+       <span class="comment">// ↑ @AC3 を DB が守る ★★★</span>
+  color      <span class="type">VARCHAR</span>(<span class="num">7</span>) <span class="kw">NOT NULL</span>,
+  sort_order <span class="type">INT</span> <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  created_at <span class="type">TIMESTAMP</span> <span class="kw">DEFAULT</span>
+             CURRENT_TIMESTAMP
+);
+
+
+<span class="comment">// ─── 「@AC2と@AC3で守る場所が違う」 ───</span>
+@AC2 空の名前   → <span class="kw">@NotBlank</span>（Javaが守る）
+@AC3 重複名     → <span class="kw">UNIQUE制約</span>（DBが守る）
+@AC4 並び順     → <span class="kw">ORDER BY</span>（SQLが守る）
+
+<span class="comment">// → 「何を、誰が守るか」を設計で決める ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 重複チェックはJavaでやらない</div>
+    <p>初学者がやりがちな失敗：<b>「INSERT前にfindByNameで重複チェック」</b>。これは<b>同時アクセスで破綻</b>します（2人が同時にチェック→両方「なし」→両方INSERT）。<b>DBのUNIQUE制約に任せ、違反時の例外を捕まえる</b>のが正解。<b>「正しさの最後の砦はDB」</b>。これは別冊S3でも詳しく扱います。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>設計②：Vol.2との差分</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">DIFF FROM VOL.2</span></div>
+  <p class="pattern-desc">2周目なので、設計は<b>「Vol.2 との差分」</b>で捉えます。同じ3層・同じSRP・同じDI。<b>違うのはどこか</b>だけ意識すれば、頭の負担が激減します（別冊S1の差分思考）。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.2 と Vol.3 の設計差分</span><span class="tag-desc">同じ型・違う中身</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 同じところ（再利用）</div>
+        <ul>
+          <li>3層構造（Controller/Service/Mapper）</li>
+          <li>SRP（各クラス変更理由は1つ）</li>
+          <li>DI（@RequiredArgsConstructor）</li>
+          <li>PRG パターン</li>
+          <li>@Validated + BindingResult</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 違うところ（Vol.3 の新要素）</div>
+        <table class="compare-tbl">
+          <thead><tr><th>項目</th><th>Vol.2(memos)</th><th>Vol.3(categories)</th></tr></thead>
+          <tbody>
+            <tr><td>UNIQUE</td><td>なし</td><td><b>name に UNIQUE</b></td></tr>
+            <tr><td>並び順</td><td>updated_at降順</td><td><b>sort_order昇順</b></td></tr>
+            <tr><td>updated_at</td><td>あり</td><td>なし（マスタ）</td></tr>
+            <tr><td>色入力</td><td>なし</td><td><b>input type=color</b></td></tr>
+            <tr><td>テスト</td><td>単体中心</td><td><b>結合(H2)が増える</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// 設計の差分を意識する（別冊S1の差分思考）</span>
+<span class="comment">// ─── Service：Vol.2 とほぼ同じ ───</span>
+<span class="ann">@Service</span>
+<span class="ann">@RequiredArgsConstructor</span>
+<span class="kw">public class</span> <span class="type">CategoryService</span> {
+    <span class="kw">private final</span> <span class="type">CategoryMapper</span> mapper;
+
+    <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Category</span>&gt; <span class="fn">findAll</span>() {
+        <span class="kw">return</span> mapper.<span class="fn">findAll</span>();
+    }
+    <span class="kw">public void</span> <span class="fn">create</span>(<span class="type">Category</span> c) {
+        <span class="comment">// Vol.2 と違い、日時セット不要</span>
+        <span class="comment">// （created_at は DB DEFAULT）</span>
+        <span class="kw">if</span> (c.<span class="fn">getSortOrder</span>() == <span class="kw">null</span>) {
+            c.<span class="fn">setSortOrder</span>(<span class="num">0</span>);
+        }
+        mapper.<span class="fn">insert</span>(c);
+    }
+    <span class="comment">// findById/update/delete は Vol.2 と同型</span>
+}
+
+<span class="comment">// → Vol.2 のコピペ＋差分修正で完成 ★★★</span>
+<span class="comment">// → これが「2周目の楽さ」</span>
+<span class="comment">// → 型が身についた証拠</span>
+
+
+<span class="comment">// ─── マスタは updated_at を持たない ───</span>
+<span class="comment">// 理由：カテゴリは頻繁に変わらない</span>
+<span class="comment">// → 「いつ更新したか」の重要度が低い</span>
+<span class="comment">// → 全テーブルにupdated_atは思考停止</span>
+<span class="comment">// → 要件で必要性を判断する ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 差分思考で頭の負担を半分に</div>
+    <p>別冊S1の<b>差分思考</b>がここで効きます。「ゼロから設計」ではなく<b>「Vol.2 と何が違うか」</b>で捉えると、覚える量が「既知＋差分」だけに。<b>Service はほぼコピペ、UNIQUEと並び順とテスト層だけ意識</b>。これが2周目の効率。<b>業務でも「前のアレと同じ、ここだけ違う」が最速</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>実装</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">IMPLEMENTATION</span></div>
+  <p class="pattern-desc">設計に沿って実装。Vol.2 のコピペベースで進めます。<b>Mapper の並び順（sort_order昇順）</b>と<b>View のカラーピッカー</b>が差分。クラス作成は毎回<b>「右クリック → New」</b>を明示します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Mapper（並び順がポイント）</span><span class="tag-desc">sort_order 昇順</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 作成手順</div>
+        <ol class="step-list">
+          <li><code>mapper</code> パッケージ右クリック → <span class="menu-code">New → Interface</span> → <b>CategoryMapper</b></li>
+          <li><code>resources/mapper</code> に <b>CategoryMapper.xml</b></li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// CategoryMapper.java + xml</span>
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">CategoryMapper</span> {
+    <span class="type">List</span>&lt;<span class="type">Category</span>&gt; <span class="fn">findAll</span>();
+    <span class="type">Category</span> <span class="fn">findById</span>(<span class="type">Long</span> id);
+    <span class="kw">void</span> <span class="fn">insert</span>(<span class="type">Category</span> c);
+    <span class="kw">void</span> <span class="fn">update</span>(<span class="type">Category</span> c);
+    <span class="kw">void</span> <span class="fn">deleteById</span>(<span class="type">Long</span> id);
+}
+
+
+<span class="comment">// CategoryMapper.xml（要点）</span>
+<span class="kw">&lt;select</span> id=<span class="str">"findAll"</span> resultType=<span class="str">"Category"</span><span class="kw">&gt;</span>
+  SELECT id, name, color,
+         sort_order, created_at
+    FROM categories
+   ORDER BY <span class="ann">sort_order ASC, id ASC</span>
+   <span class="comment">&lt;!-- @AC4：並び順昇順 --&gt;</span>
+<span class="kw">&lt;/select&gt;</span>
+
+<span class="kw">&lt;insert</span> id=<span class="str">"insert"</span>
+        useGeneratedKeys=<span class="str">"true"</span>
+        keyProperty=<span class="str">"id"</span><span class="kw">&gt;</span>
+  INSERT INTO categories
+    (name, color, sort_order)
+  VALUES (#{name}, #{color}, #{sortOrder})
+  <span class="comment">&lt;!-- created_at は DB DEFAULT に任せる --&gt;</span>
+<span class="kw">&lt;/insert&gt;</span>
+<span class="comment">&lt;!-- findById/update/deleteById 省略 --&gt;</span>
+
+<span class="comment">// → 2段ソート(sort_order, id)で安定 ★</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Controller / View（カラーピッカー）</span><span class="tag-desc">input type=color 初登場</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 作成手順</div>
+        <ol class="step-list">
+          <li><code>service</code> に <b>CategoryService</b>（Section 05 のコード）</li>
+          <li><code>controller</code> に <b>CategoryController</b>（memos と同型）</li>
+          <li><code>templates/categories</code> に list/new/edit.html</li>
+        </ol>
+        <p style="margin-top:10px"><b>新規フォームで色のデフォルト値をセット</b>するのがハマり防止のコツ。</p>
+      </div>
+      <div class="code"><span class="code-head">// CategoryController（要点）+ View</span>
+<span class="ann">@Controller</span>
+<span class="ann">@RequestMapping</span>(<span class="str">"/categories"</span>)
+<span class="ann">@RequiredArgsConstructor</span>
+<span class="kw">public class</span> <span class="type">CategoryController</span> {
+    <span class="kw">private final</span> <span class="type">CategoryService</span> service;
+
+    <span class="ann">@GetMapping</span>(<span class="str">"/new"</span>)
+    <span class="kw">public</span> <span class="type">String</span> <span class="fn">newForm</span>(<span class="type">Model</span> m) {
+        <span class="type">Category</span> c = <span class="kw">new</span> <span class="type">Category</span>();
+        c.<span class="fn">setColor</span>(<span class="str">"#2d5485"</span>); <span class="comment">// 初期色★</span>
+        m.<span class="fn">addAttribute</span>(<span class="str">"category"</span>, c);
+        <span class="kw">return</span> <span class="str">"categories/new"</span>;
+    }
+
+    <span class="ann">@PostMapping</span>
+    <span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+        <span class="ann">@Validated</span> <span class="ann">@ModelAttribute</span> <span class="type">Category</span> c,
+        <span class="type">BindingResult</span> br) {
+        <span class="kw">if</span> (br.<span class="fn">hasErrors</span>()) {
+            <span class="kw">return</span> <span class="str">"categories/new"</span>;
+        }
+        service.<span class="fn">create</span>(c);
+        <span class="kw">return</span> <span class="str">"redirect:/categories"</span>;
+    }
+    <span class="comment">// list/edit/update/delete は memos と同型</span>
+}
+
+
+<span class="comment">// ─── new.html のカラー入力 ───</span>
+<span class="kw">&lt;label&gt;</span>色
+  <span class="ann">&lt;input</span> type=<span class="str">"color"</span>
+         th:field=<span class="str">"*{color}"</span><span class="kw">&gt;</span>
+<span class="kw">&lt;/label&gt;</span>
+<span class="comment">// → ブラウザ標準のカラーピッカー ★</span>
+<span class="comment">// → JS不要・全OSで動く</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — UNIQUE違反の例外処理は今は最小限</div>
+    <p>重複名（@AC3）で UNIQUE 違反が起きると、現状は<b>500エラー画面</b>が出ます。<b>ユーザー向けのきれいなエラー表示は Vol.12（例外設計）</b>で本格対応。Vol.3 では「<b>DBが重複を弾く</b>」ことをテストで確認するに留めます。<b>YAGNI：必要になった巻でやる</b>。今は要点に集中します。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>テスト（単体→結合→MockMvc）</h2><span class="phase-badge ph-test">PHASE: TEST</span><span class="en">TEST</span></div>
+  <p class="pattern-desc">受入条件をテストに翻訳。<b>結合テスト（@MybatisTest + H2）が初登場</b>。重複名・並び順は<b>本物のDB</b>でないと検証できません。テストピラミッドの<b>「結合」層</b>を実際に書きます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">単体テスト — バリデーション（Vol.2 と同型）</span><span class="tag-desc">@AC2 を JUnit に</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Vol.2 の型を再利用</div>
+        <p>空の名前・文字数のバリデーションは、Vol.2 の <code>MemoValidationTest</code> と<b>同じパターン</b>。Validator で検証します。</p>
+        <ul>
+          <li><code>空のカテゴリ名はエラー()</code> ← @AC2</li>
+          <li><code>_50文字はOK() / _51文字はエラー()</code></li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// CategoryValidationTest.java（単体）</span>
+<span class="kw">class</span> <span class="type">CategoryValidationTest</span> {
+  <span class="kw">static</span> <span class="type">Validator</span> validator;
+
+  <span class="ann">@BeforeAll</span>
+  <span class="kw">static void</span> <span class="fn">setup</span>() {
+    validator = <span class="type">Validation</span>
+      .<span class="fn">buildDefaultValidatorFactory</span>()
+      .<span class="fn">getValidator</span>();
+  }
+
+  <span class="comment">// @AC2</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">空のカテゴリ名はエラー</span>() {
+    <span class="type">Category</span> c = <span class="kw">new</span> <span class="type">Category</span>();
+    c.<span class="fn">setName</span>(<span class="str">""</span>);
+    <span class="fn">assertThat</span>(validator.<span class="fn">validate</span>(c))
+      .<span class="fn">isNotEmpty</span>();
+  }
+
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">_50文字はOK</span>() {
+    <span class="type">Category</span> c = <span class="kw">new</span> <span class="type">Category</span>();
+    c.<span class="fn">setName</span>(<span class="str">"あ"</span>.<span class="fn">repeat</span>(<span class="num">50</span>));
+    <span class="fn">assertThat</span>(validator.<span class="fn">validate</span>(c))
+      .<span class="fn">isEmpty</span>();
+  }
+}
+
+<span class="comment">// → Vol.2 と同じ型 = 2周目で定着 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">結合テスト — @MybatisTest + H2（初登場）</span><span class="tag-desc">重複・並び順を実DBで</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 結合テストとは</div>
+        <p><b>本物のDB（H2インメモリ）</b>を使い、Mapper の SQL が正しく動くか検証。重複名・並び順は<b>DBの動作</b>なので、ここで確認します。</p>
+
+        <div class="panel-head" style="margin-top:18px">// セットアップ</div>
+        <ul>
+          <li><code>build.gradle/pom.xml</code> に H2 を test スコープで追加</li>
+          <li><code>src/test/resources/schema.sql</code> に DDL</li>
+          <li><code>@MybatisTest</code> で Mapper だけをテスト</li>
+        </ul>
+        <p style="margin-top:8px"><b>@MybatisTest は Mapper 層だけ</b>を軽量に起動。Service/Controller は読み込まない＝速い。</p>
+      </div>
+      <div class="code"><span class="code-head">// CategoryMapperTest.java（結合・H2）</span>
+<span class="kw">import</span> org.mybatis.spring.boot.test
+         .autoconfigure.*;
+<span class="kw">import</span> static org.assertj.core.api
+         .Assertions.*;
+
+<span class="ann">@MybatisTest</span>  <span class="comment">// Mapper層だけ起動（H2使用）</span>
+<span class="kw">class</span> <span class="type">CategoryMapperTest</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="type">CategoryMapper</span> mapper;
+
+  <span class="comment">// @AC1 + @AC4: 登録して並び順取得</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">登録したカテゴリがsort順で取れる</span>() {
+    <span class="comment">// Arrange</span>
+    <span class="type">Category</span> c1 = <span class="fn">cat</span>(<span class="str">"学習"</span>, <span class="num">3</span>);
+    <span class="type">Category</span> c2 = <span class="fn">cat</span>(<span class="str">"仕事"</span>, <span class="num">1</span>);
+    mapper.<span class="fn">insert</span>(c1);
+    mapper.<span class="fn">insert</span>(c2);
+
+    <span class="comment">// Act</span>
+    <span class="kw">var</span> list = mapper.<span class="fn">findAll</span>();
+
+    <span class="comment">// Assert：sort_order昇順</span>
+    <span class="fn">assertThat</span>(list)
+      .<span class="fn">extracting</span>(<span class="type">Category</span>::<span class="fn">getName</span>)
+      .<span class="fn">containsExactly</span>(<span class="str">"仕事"</span>, <span class="str">"学習"</span>);
+      <span class="comment">// → sort 1,3 順 = 仕事,学習 ★★★</span>
+  }
+
+  <span class="comment">// @AC3: 重複名はエラー</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">重複するカテゴリ名は登録できない</span>() {
+    mapper.<span class="fn">insert</span>(<span class="fn">cat</span>(<span class="str">"仕事"</span>, <span class="num">1</span>));
+
+    <span class="comment">// 同じ名前を再登録 → 例外</span>
+    <span class="fn">assertThatThrownBy</span>(() ->
+        mapper.<span class="fn">insert</span>(<span class="fn">cat</span>(<span class="str">"仕事"</span>, <span class="num">2</span>)))
+      .<span class="fn">isInstanceOf</span>(
+        <span class="type">DataIntegrityViolationException</span>.<span class="kw">class</span>);
+      <span class="comment">// → UNIQUE制約違反 ★★★</span>
+  }
+
+  <span class="comment">// テスト用ヘルパー</span>
+  <span class="kw">private</span> <span class="type">Category</span> <span class="fn">cat</span>(<span class="type">String</span> n, <span class="kw">int</span> s) {
+    <span class="type">Category</span> c = <span class="kw">new</span> <span class="type">Category</span>();
+    c.<span class="fn">setName</span>(n);
+    c.<span class="fn">setColor</span>(<span class="str">"#000000"</span>);
+    c.<span class="fn">setSortOrder</span>(s);
+    <span class="kw">return</span> c;
+  }
+}
+
+<span class="comment">// → 重複・並び順は「実DB」で検証 ★★★</span>
+<span class="comment">// → モックでは UNIQUE制約を再現できない</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — モックの限界、実DBの出番</div>
+    <p>Vol.2 では Mapper を<b>モック化</b>して Service をテストしました。でも<b>UNIQUE制約や並び順は「DBの機能」</b>。モックは「呼ばれたか」しか分からず、<b>DBの制約は再現できない</b>。だから<b>実DB（H2）の結合テスト</b>が必要。<b>「何をテストしたいか」でモックと実DBを使い分ける</b>（別冊S3で詳説）。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>ブラウザ確認＋ハマりどころ</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">VERIFY &amp; PITFALLS</span></div>
+  <p class="pattern-desc">テストが緑になったらブラウザでも確認。<b>カラーピッカー・並び順・重複エラー</b>を目視します。Vol.3 で踏みやすい地雷を5つ先回りします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.3 ハマりどころ 5選</span><span class="tag-desc">マスタ＋結合テストの地雷</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① @MybatisTest で schema.sql が読まれない ★★★</b></p>
+        <ul>
+          <li>原因：<code>src/test/resources/schema.sql</code> が無い／application-test.properties 未設定</li>
+          <li>対処：test配下に schema.sql を置く、H2 を依存に追加</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② H2 で MySQL 構文エラー（AUTO_INCREMENT 等）</b></p>
+        <ul>
+          <li>原因：H2 と MySQL の方言差</li>
+          <li>対処：H2 の MySQL 互換モード <code>jdbc:h2:mem:test;MODE=MySQL</code></li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ 重複テストが DuplicateKeyException で落ちない</b></p>
+        <ul>
+          <li>原因：schema.sql に UNIQUE 制約を書き忘れ</li>
+          <li>対処：<code>name VARCHAR(50) NOT NULL UNIQUE</code> を確認</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ input type=color が #000000 になる</b></p>
+        <ul>
+          <li>原因：newForm() でデフォルト色を未セット</li>
+          <li>対処：<code>c.setColor("#2d5485")</code> をセット（Section 06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 並び順が効かない</b></p>
+        <ul>
+          <li>原因：ORDER BY sort_order を書き忘れ／同値で id 順未指定</li>
+          <li>対処：<code>ORDER BY sort_order ASC, id ASC</code> の2段ソート</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 結合テストのセットアップ</span>
+<span class="comment">// ─── src/test/resources/schema.sql ───</span>
+<span class="kw">CREATE TABLE</span> categories (
+  id   <span class="type">BIGINT AUTO_INCREMENT PRIMARY KEY</span>,
+  name <span class="type">VARCHAR</span>(<span class="num">50</span>) <span class="kw">NOT NULL UNIQUE</span>,
+  color      <span class="type">VARCHAR</span>(<span class="num">7</span>),
+  sort_order <span class="type">INT DEFAULT</span> <span class="num">0</span>,
+  created_at <span class="type">TIMESTAMP DEFAULT</span>
+             CURRENT_TIMESTAMP
+);
+
+<span class="comment">// ─── application-test.properties ───</span>
+spring.datasource.url=
+  jdbc:h2:mem:test;MODE=MySQL;
+  DB_CLOSE_DELAY=-1
+spring.sql.init.mode=always
+
+
+<span class="comment">// ─── テスト実行結果 ───</span>
+CategoryValidationTest
+  ✓ 空のカテゴリ名はエラー
+  ✓ _50文字はOK
+CategoryMapperTest
+  ✓ 登録したカテゴリがsort順で取れる
+  ✓ 重複するカテゴリ名は登録できない
+
+<span class="kw">all green</span> ★★★
+
+
+<span class="comment">// ─── ブラウザ確認 ───</span>
+<span class="comment">// /categories で：</span>
+<span class="comment">// - カラーピッカーで色選択（@AC1目視）</span>
+<span class="comment">// - sort_order昇順で並ぶ（@AC4目視）</span>
+<span class="comment">// - 同名登録でエラー画面（@AC3目視）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — H2 は「速くて安定」だが MySQL ではない</div>
+    <p>H2 インメモリDBは<b>高速・テスト終了で消える</b>のが利点。ただし<b>MySQL とは方言が違う</b>ので、<code>MODE=MySQL</code> で互換性を上げます。それでも完全互換ではないので、<b>本番に近い検証が必要なら Testcontainers で実MySQL</b>を使う選択肢も（別冊S3で触れます）。<b>速さと忠実さのトレードオフ</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>レビュー・評価＆次巻へ</h2><span class="phase-badge ph-test">PHASE: REVIEW</span><span class="en">REVIEW &amp; NEXT</span></div>
+  <p class="pattern-desc">2周目を回しました。<b>US-002 を満たしたか、設計は Vol.2 と一貫しているか、テスト層は適切か</b>を振り返ります。<b>マスタCRUDの型</b>が手に入ったことを確認しましょう。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.3 卒業チェック</span><span class="tag-desc">フロー2周の評価</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 要求の達成（トレーサビリティ）</div>
+        <ul class="check-list">
+          <li>US-002 の受入条件 @AC1〜@AC4 をテスト化した</li>
+          <li>各テストが緑になった</li>
+          <li>Issue #2 をクローズできる状態</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 設計の評価</div>
+        <ul class="check-list">
+          <li>Vol.2 と一貫した3層構造で作れた</li>
+          <li>「重複は誰が守るか」を設計判断した（DB）</li>
+          <li>マスタに updated_at を持たせない判断ができた</li>
+          <li>Vol.2 との差分だけ意識して効率化できた</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// テストの評価</div>
+        <ul class="check-list">
+          <li>バリデーションは単体、DB制約は結合で振り分けた</li>
+          <li>@MybatisTest + H2 で結合テストを書いた</li>
+          <li>重複名・並び順を実DBで検証した</li>
+          <li>モックと実DBの使い分けを理解した</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.3 で完成したフロー2周目</span>
+<span class="comment">// ─── 要求（REQ）───</span>
+US-002 + 受入条件 @AC1〜4
+（@AC3 重複名 = マスタ特有）
+  ↓
+<span class="comment">// ─── 設計（DESIGN）───</span>
+Vol.2 と同型の3層
++ UNIQUE制約（重複はDBが守る）
++ Vol.2 との差分思考
+  ↓
+<span class="comment">// ─── 実装（IMPL）───</span>
+Category 一式（コピペ＋差分）
++ カラーピッカー
+  ↓
+<span class="comment">// ─── テスト（TEST）───</span>
+単体（バリデーション）
++ <span class="kw">結合（@MybatisTest+H2）← 初登場</span>
++ 重複・並び順を実DBで検証
+
+
+<span class="comment">// ─── 2周して得たもの ───</span>
+<span class="comment">// ・マスタCRUDの「型」</span>
+<span class="comment">// ・テスト層の振り分け判断</span>
+<span class="comment">// ・モック vs 実DB の使い分け</span>
+<span class="comment">// ・差分思考での効率化</span>
+
+
+<span class="comment">// 次回 Vol.4：</span>
+<span class="comment">//   memos に category_id 追加</span>
+<span class="comment">//   LEFT JOIN で1対多</span>
+<span class="comment">//   「3テーブルらしさ」が出る ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.4 へ</div>
+    <p>Vol.3 で<b>マスタCRUDの型</b>と<b>結合テスト（H2）</b>が手に入りました。次は Vol.4「<b>1対多の表示・絞り込み</b>」。<b>memos に category_id</b> を追加し、<b>LEFT JOIN でカテゴリ名を表示</b>、カテゴリ別の絞り込みを実装します。<b>resultMap の association</b> と、<b>JOIN を含む結合テスト</b>が登場。いよいよ「3テーブルらしさ」が出ます。並行して<b>別冊S3「テスト技法」</b>、<b>GitHub版Vol.3「Pull Request」</b>を進めると効果的。<b>本編Vol.4 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>VOL.03 / 14 ── CATEGORY MASTER 2ND CYCLE（本編）</span>
+</footer>
+
+</body>
+</html>

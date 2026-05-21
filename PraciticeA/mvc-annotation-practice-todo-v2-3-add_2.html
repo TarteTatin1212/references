@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集A v2 Vol.3 補足 ── エラーハンドリング編</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3d2817;
+  --paper:#f4ecd8;
+  --paper-2:#e8dcc0;
+  --accent:#a87233;
+  --accent-2:#c69558;
+  --accent-3:#6b4423;
+  --accent-4:#2d5f3f;
+  --error:#c43;
+  --muted:#7a6952;
+  --line:#c9b896;
+  --code-bg:#2a1f15;
+  --code-text:#f0e4cc;
+  --panel-bg:#faf3e0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'!';position:absolute;right:40px;top:-40px;font-size:320px;font-family:'Shippori Mincho',serif;color:var(--error);opacity:0.18;z-index:0;font-weight:700}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.v2-tag{display:inline-block;background:var(--accent-3);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+.add-tag{display:inline-block;background:var(--error);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:40px;font-weight:700;margin:18px 0 10px;line-height:1.3}
+.subtitle{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.1em;margin-bottom:14px}
+.lead{max-width:680px;font-size:15px;line-height:1.9}
+.red-warning{margin-top:24px;background:#fff;border:2px solid var(--error);padding:14px 18px;border-radius:2px;position:relative;z-index:1}
+.red-warning-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--error);font-weight:700;margin-bottom:6px}
+.toc{margin:40px 0;background:var(--paper-2);padding:20px 26px;border-left:4px solid var(--error)}
+.toc-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:8px;letter-spacing:0.05em}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:14px 22px;font-size:13px;font-family:'JetBrains Mono',monospace}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:1px}
+.toc a:hover{color:var(--error);border-bottom-color:var(--error)}
+.toc li::before{content:'— ';color:var(--accent)}
+section{margin-top:64px}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.05em}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:760px;font-size:14.5px;margin-bottom:18px;line-height:1.85}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:8px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:240px}
+.panel{background:var(--panel-bg);padding:18px 20px;border-right:1px solid var(--line);overflow-x:auto}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.05em}
+.code{background:var(--code-bg);color:var(--code-text);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre;overflow-x:auto;tab-size:2}
+.code-head{display:block;color:var(--accent-2);font-size:11px;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}
+.bad{color:#ff8a7a;font-weight:600}
+.good{color:#b5e8b0;font-weight:600}
+
+/* WHAT/HOW/WHY 3カラム */
+.whw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0}
+.whw-card{background:#fff;border:1px solid var(--line);padding:16px 18px;position:relative}
+.whw-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--paper);background:var(--accent);display:inline-block;padding:2px 10px;letter-spacing:0.15em;margin-bottom:10px}
+.whw-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;line-height:1.4}
+.whw-desc{font-size:13px;line-height:1.75}
+
+/* 用語カード */
+.term-card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent-3);padding:18px 22px;margin:14px 0}
+.term-card-label{display:inline-block;background:var(--accent-3);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:0.15em;margin-bottom:8px}
+.term-card-title{font-family:'Shippori Mincho',serif;font-size:20px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.term-card-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;margin-bottom:14px}
+.term-grid{display:grid;grid-template-columns:100px 1fr;gap:10px 18px;font-size:13.5px;line-height:1.75}
+.term-grid dt{font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;font-size:14px}
+.term-grid dd{margin:0}
+.term-grid dd code{background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px}
+
+/* 思考ステップカード */
+.think-step{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;position:relative;padding-left:60px;min-height:60px}
+.think-step::before{content:attr(data-step);position:absolute;left:14px;top:14px;background:var(--accent);color:var(--paper);width:36px;height:36px;line-height:36px;text-align:center;border-radius:50%;font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700}
+.think-step-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:4px}
+.think-step-body{font-size:13.5px;line-height:1.8}
+
+/* 探偵モード（推理ステップ） */
+.detective{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0;position:relative;padding-left:60px;min-height:60px}
+.detective::before{content:attr(data-clue);position:absolute;left:14px;top:14px;background:var(--error);color:var(--paper);width:36px;height:36px;line-height:36px;text-align:center;border-radius:50%;font-family:'Shippori Mincho',serif;font-size:14px;font-weight:700}
+.detective-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--error);font-weight:700;margin-bottom:4px}
+.detective-body{font-size:13.5px;line-height:1.8}
+
+/* エラーログ表示 */
+.error-log{background:#1a1209;color:#f0e4cc;padding:14px 18px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;border-left:4px solid var(--error);margin:10px 0;white-space:pre-wrap;overflow-x:auto}
+.error-log .hl{background:rgba(204,68,51,0.3);color:#ffcccc;padding:0 4px;border-radius:2px}
+.error-log .hl-yellow{background:rgba(255,200,138,0.25);color:#ffe5b0;padding:0 4px;border-radius:2px}
+.error-log .hl-green{background:rgba(181,232,176,0.2);color:#d0f0c8;padding:0 4px;border-radius:2px}
+
+/* before/after コード対比 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.compare-box{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:13.5px}
+.compare-ng{border-top:3px solid var(--error)}
+.compare-ok{border-top:3px solid var(--accent-4)}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;margin-bottom:8px}
+.compare-ng .compare-label{color:var(--error)}
+.compare-ok .compare-label{color:var(--accent-4)}
+
+.tip{margin:18px 0;padding:14px 20px;background:rgba(168,114,51,0.10);border-left:3px solid var(--accent)}
+.tip-label{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);font-weight:700;margin-bottom:6px;letter-spacing:0.05em}
+.tip p{font-size:13.5px;line-height:1.8}
+
+/* 図解用 */
+.flow-diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;background:#fff;border:1px solid var(--line);padding:14px 18px;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+/* 手順ガイド */
+.step-guide{background:#fff;border:1px solid var(--line);padding:14px 18px;margin:10px 0}
+.step-guide-title{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+.step-guide ol{list-style:none;counter-reset:s;margin:0}
+.step-guide li{counter-increment:s;padding:6px 0 6px 32px;position:relative;font-size:13.5px;line-height:1.7}
+.step-guide li::before{content:counter(s);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+/* チェックリスト */
+.checklist{list-style:none;margin:8px 0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:13.5px}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--accent);font-size:14px;top:3px}
+
+/* キーボードショートカット */
+.kbd{display:inline-block;background:var(--paper-2);border:1px solid var(--line);padding:0 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;border-radius:3px;color:var(--accent-3)}
+.menu{display:inline-block;background:var(--paper-2);padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--accent-3);border-radius:2px}
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 8px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:220px}
+  h1{font-size:28px}
+  .toc ul{flex-direction:column;gap:8px}
+  .whw{grid-template-columns:1fr}
+  .compare{grid-template-columns:1fr}
+  .term-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">PRACTICE BOOK A</span>
+  <span class="vol-tag">VOL.03 / 10</span>
+  <span class="v2-tag">★ v2 RENEWAL ★</span>
+  <span class="add-tag">+ ERROR HANDLING</span>
+  <h1>エラーを<br>解決する過程</h1>
+  <p class="subtitle">VOL.3 SUPPLEMENT — DEBUGGING THE ERROR</p>
+  <p class="lead">Vol.3を最後まで進めて<code style="font-family:'JetBrains Mono'">http://localhost:8080/tasks</code>を開いたら── <b>ホワイトラベルエラー</b>。コンソールには真っ赤なスタックトレース。<b>「うわ、エラーだ」と止まる前に</b>、このログを<b>探偵のように読む</b>と、必ず原因に辿り着けます。本補足は<b>実際に起きた1件の事件</b>を素材に、エラーログの読み方・原因の特定・修正・再発防止までを<b>体系的に</b>身につける章です。</p>
+
+  <div class="red-warning">
+    <div class="red-warning-title">💡 この補足の独自性</div>
+    <p style="font-size:13.5px">通常のVol.3には「ハマりどころ」セクションがあり、よくあるエラー5パターンを<b>カタログ</b>として並べました。<b>本補足はそれとは違い、たった1つのエラー</b>を<b>探偵小説のように深掘り</b>します。<b>「ログを見る → 推理する → 真犯人を特定する → 修正する」</b>の<b>1サイクルを完全に体験</b>することで、初見のエラーも怖くなくなる思考力を育てます。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS — VOL.03 ERROR HANDLING</div>
+  <ul>
+    <li><a href="#purpose">01 この補足の目的</a></li>
+    <li><a href="#symptom">02 症状を確認する</a></li>
+    <li><a href="#read-3-points">03 「3つの場所」を読むメソッド</a></li>
+    <li><a href="#apply-method">04 このエラーの3点を読む</a></li>
+    <li><a href="#identify">05 真犯人を特定する</a></li>
+    <li><a href="#why-wrong-import">06 なぜ間違ったimportが入ったか</a></li>
+    <li><a href="#fix">07 修正手順</a></li>
+    <li><a href="#verify">08 動作確認 ── 直ったことを確かめる</a></li>
+    <li><a href="#prevention">09 再発防止 ── import確認の習慣</a></li>
+    <li><a href="#common-traps">10 クラス名重複の「あるある」集</a></li>
+    <li><a href="#summary">11 エラー解決の思考フロー（まとめ）</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="purpose">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この補足の目的</h2>
+    <span class="en">WHAT / HOW / WHY</span>
+  </div>
+  <p class="pattern-desc">エラーは<b>避けるもの</b>ではなく<b>解くもの</b>です。Vol.3のハマりどころセクションが「<b>事典</b>」だとすれば、本補足は<b>「事件簿」</b>── 実際に起きた1件を最初から最後まで丁寧に追います。</p>
+
+  <div class="whw">
+    <div class="whw-card">
+      <span class="whw-label">WHAT</span>
+      <div class="whw-title">何を扱うか</div>
+      <div class="whw-desc">
+        Vol.3で<code style="font-family:'JetBrains Mono'">/tasks</code>を開いたら出た<b>500エラー</b>1件。<b>「Error instantiating class org.springframework.scheduling.config.Task」</b>という独特なメッセージから、真犯人を突き止めて修正する全過程。
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">HOW</span>
+      <div class="whw-title">どう解説するか</div>
+      <div class="whw-desc">
+        ① <b>探偵モード</b>でログを推理<br>
+        ② <b>「3点読み」</b>でスタックトレースを切り抜く<br>
+        ③ <b>真犯人の動機と手口</b>を明らかにする<br>
+        ④ <b>修正・確認・再発防止</b>まで完走
+      </div>
+    </div>
+    <div class="whw-card">
+      <span class="whw-label">WHY</span>
+      <div class="whw-title">なぜこの補足が必要か</div>
+      <div class="whw-desc">
+        エラー対応の力は<b>「実例1個を深く解く」</b>方が、<b>「100個を浅く眺める」</b>より身につくから。一度<b>事件解決の手応え</b>を経験すれば、別のエラーが来ても<b>同じ手順</b>で解ける。
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>エラーに対する<b>反射的な恐怖</b>こそが初学者最大の壁です。「赤い文字＝怖い」ではなく<b>「赤い文字＝ヒントの宝庫」</b>と思えるようになると、開発体験が一変します。この補足を読み終えた時、<b>あなたはこの種のエラーを「むしろ歓迎」できる</b>状態になっています。</p>
+  </div>
+</section>
+
+<section id="symptom">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>症状を確認する</h2>
+    <span class="en">OBSERVE THE SYMPTOM</span>
+  </div>
+  <p class="pattern-desc">事件現場の確認から始めます。<b>ブラウザに何が表示されているか</b>、<b>コンソールに何が出ているか</b>── 推理する前に<b>事実</b>を集めます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">two-witnesses</span>
+      <span class="tag-desc">ブラウザとコンソールの証言</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 証人1：ブラウザの画面</div>
+<div class="error-log"><span class="hl">Whitelabel Error Page</span>
+This application has no explicit
+mapping for /error, so you are
+seeing this as a fallback.
+
+Sun May 17 19:05:00 GMT+09:00 2026
+There was an unexpected error
+<span class="hl">(type=Internal Server Error,
+ status=500)</span>.
+
+### Error querying database...
+### The error may exist in
+  com/example/todo/mapper/
+  TaskMapper.java (best guess)
+### The error may involve
+  com.example.todo.mapper.
+  TaskMapper.findAll
+### The error occurred while
+  handling results
+### SQL: SELECT id, title, done,
+  created_at FROM tasks
+  ORDER BY id
+...
+</div>
+        <p style="font-size:13px;margin-top:14px;line-height:1.7"><b>ブラウザからの第一情報：</b><br>
+        ・ステータスコードは<b style="color:var(--error)">500（Internal Server Error）</b><br>
+        ・<b>404ではない</b>── URLは正しく見つかった<br>
+        ・サーバー側で<b>処理中に何かが壊れた</b></p>
+      </div>
+      <div class="code"><span class="code-head">// 証人2：コンソールの抜粋</span>
+
+<span class="comment">// 起動部分</span>
+Started TodoApplication in 0.271 sec
+
+<span class="comment">// アクセス時に出たログ</span>
+DEBUG c.e.todo.mapper.TaskMapper.findAll
+  ==&gt; <span class="good">Preparing: SELECT id, title,</span>
+  <span class="good">done, created_at FROM tasks</span>
+  <span class="good">ORDER BY id</span>
+  ==&gt; Parameters:
+
+<span class="bad">ERROR ... Servlet.service() ...</span>
+<span class="bad">threw exception</span>
+
+<span class="bad">org.mybatis.spring</span>
+<span class="bad">  .MyBatisSystemException:</span>
+
+<span class="hl">### Error querying database.</span>
+Cause: org.apache.ibatis.reflection
+  <span class="hl">.ReflectionException:</span>
+<span class="hl">Error instantiating class</span>
+<span class="hl">org.springframework.scheduling</span>
+<span class="hl">.config.Task</span>
+with invalid types (Runnable)
+or values (1).
+
+<span class="hl">### The error occurred while</span>
+<span class="hl">handling results</span></div>
+    </div>
+  </div>
+
+  <p style="font-size:14.5px;margin:24px 0 12px"><b>この時点で分かる事実：</b></p>
+
+  <div class="think-step" data-step="1">
+    <div class="think-step-title">起動は成功している</div>
+    <div class="think-step-body">
+      <code>Started TodoApplication in 0.271 seconds</code>が出ているので、<b>Bean生成・DI・ルーティング登録は完了</b>。Vol.1のような「起動失敗」ではない。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="2">
+    <div class="think-step-title">SQLは正しく実行されている</div>
+    <div class="think-step-body">
+      <code>==&gt; Preparing: SELECT id, title, done, created_at FROM tasks ORDER BY id</code>がログに出ている。これは<b>MyBatisがSQLをMySQLに投げて成功した</b>証拠。Vol.2の「ORDERD BY」のような<b>SQL文法エラーではない</b>。
+    </div>
+  </div>
+
+  <div class="think-step" data-step="3">
+    <div class="think-step-title">エラーは「結果を扱う段階」で起きている</div>
+    <div class="think-step-body">
+      <code>### The error occurred while <b>handling results</b></code>── <b>結果を扱う最中</b>にエラーが起きた、と明記されている。つまり<b>SQL実行は成功、その後のJava変換でこける</b>。これが今回の事件の<b>第一の手がかり</b>。
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 似た「500」でも違うエラー</div>
+    <p>Vol.2の事件（<code style="font-family:'JetBrains Mono'">ORDERD BY</code>）も500だったが、ログの様相が違います：<br>
+    ・<b>Vol.2</b>：<code>BadSqlGrammarException</code> ── <b>SQLを発行する前</b>にこけた<br>
+    ・<b>今回</b>：<code>MyBatisSystemException</code> + <code>ReflectionException</code> ── <b>SQLは成功、結果を扱う段階</b>でこけた<br>
+    同じ500でも<b>原因のレイヤーが違う</b>ので、ログの読み方も変わります。これが「ログを読む価値」です。</p>
+  </div>
+</section>
+
+<section id="read-3-points">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>「3つの場所」を読むメソッド</h2>
+    <span class="en">THE 3-POINT READING METHOD</span>
+  </div>
+  <p class="pattern-desc">Vol.3のハマりどころセクションで紹介した「<b>3点だけ読めばOK</b>」メソッドを、今回の事件に<b>本格適用</b>します。長いスタックトレースに圧倒されないための<b>道具</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">3-point-method</span>
+      <span class="tag-desc">どこを読めば原因が分かるか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// MyBatisエラーの3点読み</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">一番上の例外名</div>
+          <div class="think-step-body">
+            「<b>何の種類のエラーか</b>」を5秒で把握。<code>BadSqlGrammarException</code>ならSQL文法、<code>MyBatisSystemException</code> + <code>ReflectionException</code>なら<b>Javaクラスのインスタンス化失敗</b>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title"><code>### SQL:</code> 行</div>
+          <div class="think-step-body">
+            「<b>実際にDBに送られたSQL</b>」を確認。<b>このSQLがコンソールに出ている＝SQLは無事に走った</b>こと。SQLが出ていなければSQL作成段階でこけている。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title"><code>### The error...</code> 系の行</div>
+          <div class="think-step-body">
+            MyBatisが親切に書いてくれる<b>4つの「###」行</b>：<br>
+            ・<code>### Error querying database</code> ── 種別<br>
+            ・<code>### The error may exist in</code> ── ファイル<br>
+            ・<code>### The error may involve</code> ── メソッド<br>
+            ・<code>### The error occurred while</code> ── タイミング（<b>これが重要</b>）
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 100行のスタックトレースの中で</span>
+<span class="code-head">// 読むべき場所は実は10行以下</span>
+
+org.mybatis.spring.<span class="bad">MyBatisSystemException</span>:    <span class="comment">// ← ①例外名</span>
+
+### Error querying database.
+Cause: org.apache.ibatis.reflection
+  .<span class="bad">ReflectionException</span>:                  <span class="comment">// ← ①根本原因</span>
+
+Error instantiating class
+<span class="bad">org.springframework.scheduling</span>          <span class="comment">// ← ★最重要★</span>
+  <span class="bad">.config.Task</span>                            <span class="comment">// 真犯人の名前</span>
+with invalid types (Runnable)
+or values (1).
+
+### The error may exist in
+  com/example/todo/mapper/TaskMapper.java  <span class="comment">// ← ファイル</span>
+### The error may involve
+  com.example.todo.mapper.TaskMapper.findAll  <span class="comment">// ← メソッド</span>
+### The error occurred while
+  <span class="bad">handling results</span>                     <span class="comment">// ← ③タイミング</span>
+### SQL: SELECT id, title, done,
+  created_at FROM tasks ORDER BY id          <span class="comment">// ← ②走ったSQL</span>
+
+
+<span class="comment">// 残りの at xxx.xxx(...) は</span>
+<span class="comment">// 9割が無視してOK</span>
+<span class="comment">// 自分のコード（com.example.todo.*）の</span>
+<span class="comment">// 行があれば、そこは要チェック</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>スタックトレースは<b>「ライブラリの内部処理を通った全経路」</b>を全部記録しているので長くなります。でも実際に<b>あなたが書いたコード</b>は数ファイルだけ。<b>「com.example.todo.*」を含む行</b>と「<b>### で始まる行</b>」だけ拾えば、99%の情報が手に入ります。</p>
+  </div>
+</section>
+
+<section id="apply-method">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>このエラーの3点を読む</h2>
+    <span class="en">APPLY THE METHOD</span>
+  </div>
+  <p class="pattern-desc">前節のメソッドを<b>今回の事件</b>に適用します。3つの場所からどんな手がかりが見つかるか、<b>探偵モード</b>で読み解きます。</p>
+
+  <div class="detective" data-clue="①">
+    <div class="detective-title">手がかり① 一番上の例外名</div>
+    <div class="detective-body">
+      <code>MyBatisSystemException</code> → さらにCauseに <code>ReflectionException</code>。<br>
+      <b>意味の翻訳</b>： <b>MyBatisがJavaのリフレクション（クラスを動的に扱う仕組み）を使った時に失敗</b>した。<b>SQL文法エラーではない</b>── これだけで「SQLの書き間違い」の線は消える。
+    </div>
+  </div>
+
+  <div class="detective" data-clue="②">
+    <div class="detective-title">手がかり② <code>### SQL:</code></div>
+    <div class="detective-body">
+      <code>SELECT id, title, done, created_at FROM tasks ORDER BY id</code><br>
+      <b>意味の翻訳</b>： このSQLは<b>正しい文法</b>で、しかも<b>実際にMySQLに送られた</b>。さらにコンソールの<code>Preparing:</code>ログにも出ているので、<b>MySQLからの応答も返ってきた</b>。つまり<b>DB操作自体は無事</b>。
+    </div>
+  </div>
+
+  <div class="detective" data-clue="③">
+    <div class="detective-title">手がかり③ <code>### The error occurred while handling results</code></div>
+    <div class="detective-body">
+      <b>意味の翻訳</b>： エラーは<b>「結果（ResultSet）をJavaオブジェクトに詰める段階」</b>で発生した。SQL実行 → 結果取得 → ★ここで失敗 → Controllerに届かず。<br>
+      <b>結論</b>： <b>DBから取った結果を Task クラスに変換しようとして、何かが起きている</b>。
+    </div>
+  </div>
+
+  <div class="detective" data-clue="④">
+    <div class="detective-title">手がかり④ 例外メッセージの核心</div>
+    <div class="detective-body">
+      <code>Error instantiating class <b>org.springframework.scheduling.config.Task</b> with invalid types (Runnable) or values (1).</code><br>
+      <b>これが事件の核心</b>。MyBatisは<code>Task</code>クラスを作ろうとして、<b>そのコンストラクタにIDの値「1」を渡そうとした</b>が、コンストラクタは<code>Runnable</code>型を期待していて<b>型が合わなかった</b>── そう叫んでいる。
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">the-smoking-gun</span>
+      <span class="tag-desc">決定的証拠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// この1行が全てを語る</div>
+
+<div class="error-log">Error instantiating class
+<span class="hl">org.springframework.scheduling
+.config.Task</span>
+with invalid types <span class="hl-yellow">(Runnable)</span>
+or values <span class="hl-yellow">(1)</span>.</div>
+
+        <p style="font-size:13.5px;margin-top:14px;line-height:1.85">何かおかしいことに気付きましたか？ MyBatisが作ろうとしている<code>Task</code>クラスの<b>パッケージ名</b>を見てください：</p>
+
+        <div style="background:rgba(204,68,51,0.10);padding:12px 16px;margin-top:10px;border-left:4px solid var(--error);font-size:14px">
+          <b style="color:var(--error)">org.springframework.scheduling.config.Task</b>
+        </div>
+
+        <p style="font-size:13.5px;margin-top:14px;line-height:1.85">これは<b>Spring Frameworkが内部で持っているTaskクラス</b>（スケジューラの設定用）。── <b>あなたが作った<code>Task</code>クラス</b>のパッケージは何でしたか？</p>
+
+        <div style="background:rgba(45,95,63,0.10);padding:12px 16px;margin-top:10px;border-left:4px solid var(--accent-4);font-size:14px">
+          <b style="color:var(--accent-4)">com.example.todo.entity.Task</b>
+        </div>
+
+        <p style="font-size:13.5px;margin-top:14px;line-height:1.85"><b>名前は同じ「Task」だが、別物</b>。MyBatisは<b>間違ったTask</b>を作ろうとして爆発しています。<b>なぜそんなことが起きるのか？</b>── 次のセクションで真犯人を絞り込みます。</p>
+      </div>
+      <div class="code"><span class="code-head">// 2つのTaskクラス</span>
+
+<span class="comment">// ① あなたが作ったクラス（Vol.3で）</span>
+<span class="kw">package</span> com.example.todo.entity;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">Task</span> {
+  <span class="kw">private</span> <span class="type">Long</span> id;
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">Boolean</span> done;
+  <span class="kw">private</span> <span class="type">LocalDateTime</span> createdAt;
+}
+
+<span class="comment">// シンプルなデータ用クラス</span>
+<span class="comment">// 引数なしコンストラクタを持つ</span>
+
+
+<span class="comment">// ② Spring Framework内部のクラス</span>
+<span class="kw">package</span> org.springframework
+       .scheduling.config;
+
+<span class="kw">public abstract class</span> <span class="type">Task</span> {
+  <span class="kw">private final</span> <span class="type">Runnable</span> runnable;
+
+  <span class="kw">public</span> <span class="fn">Task</span>(<span class="type">Runnable</span> runnable) {
+    <span class="kw">this</span>.runnable = runnable;
+  }
+  ...
+}
+
+<span class="comment">// スケジューラ用の抽象クラス</span>
+<span class="comment">// Runnableを取るコンストラクタのみ</span>
+
+
+<span class="code-head" style="margin-top:18px">// MyBatisがやろうとしたこと</span>
+
+<span class="comment">// SQLの1行目： id=1, title=...</span>
+
+<span class="comment">// MyBatisの思考：</span>
+<span class="comment">// 「Taskクラスを作る」</span>
+<span class="comment">// 「コンストラクタを呼ぶ」</span>
+<span class="comment">// 「第一引数に値 1 を渡そう」</span>
+
+<span class="comment">// でも参照しているTaskは</span>
+<span class="comment">// Springの方だった</span>
+
+<span class="comment">// Springの Task(Runnable)</span>
+<span class="comment">// に Long の 1 は渡せない</span>
+
+<span class="bad">// → 型不一致で爆発</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>エラーメッセージの<b>「クラスのフルパッケージ名」</b>は<b>絶対に流し読みしてはいけない</b>場所です。「Task」と書かれていても、<b>パッケージ名まで合わせて初めて</b>同じクラス。<code>java.util.Date</code>と<code>java.sql.Date</code>、<code>java.util.List</code>と<code>java.awt.List</code>── 同名異クラスの罠は<b>Java特有のあるある</b>です。</p>
+  </div>
+</section>
+
+<section id="identify">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>真犯人を特定する</h2>
+    <span class="en">IDENTIFY THE CULPRIT</span>
+  </div>
+  <p class="pattern-desc">MyBatisが間違った<code>Task</code>を作ろうとしている── ということは、<b>誰かが間違ったTaskを指定した</b>はずです。<b>真犯人は誰か？</b> そして<b>どこに証拠が残っているか？</b></p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">whodunit</span>
+      <span class="tag-desc">真犯人の追跡</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// MyBatisはどうやってTaskを知ったか</div>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-bottom:12px">MyBatisが<b>「このSELECT結果を<code>Task</code>クラスに詰める」</b>と判断する根拠はどこか？ ── <b>Mapperの返り値の型</b>です。</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">@Select(...)
+<b>List&lt;Task&gt;</b> findAll();
+       ↑
+   この「Task」をMyBatisが読む</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:12px">そして<b>このコードの中の「Task」がどのパッケージのものか</b>を決めるのが── <b>import文</b>です。</p>
+
+        <pre style="font-family:'JetBrains Mono';font-size:12.5px;background:var(--paper-2);padding:10px;border-radius:2px;margin-top:6px;line-height:1.6">// TaskMapper.java の冒頭
+package com.example.todo.mapper;
+
+import java.util.List;
+import org.apache.ibatis.annotations.*;
+<b>import ??? .Task;</b>  ← 怪しいのはここ</pre>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:12px"><b>この「???.Task」の正体</b>を確認すれば、犯人が確定します。</p>
+      </div>
+      <div class="code"><span class="code-head">// あなたのTaskMapper.java を開いて確認</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> org.apache.ibatis.annotations.Select;
+
+<span class="comment">// ← ここの行を見てください</span>
+<span class="bad">import org.springframework.scheduling</span>
+<span class="bad">       .config.Task;</span>
+<span class="comment">// ↑ おそらくこうなっている</span>
+
+<span class="comment">// 本来は：</span>
+<span class="good">// import com.example.todo.entity.Task;</span>
+
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">TaskMapper</span> {
+
+  <span class="ann">@Select</span>(<span class="str">"SELECT id, title, done, "</span> +
+          <span class="str">"created_at FROM tasks "</span> +
+          <span class="str">"ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>();
+       <span class="comment">// ↑ この「Task」が</span>
+       <span class="comment">// import文によって</span>
+       <span class="comment">// Springのものを指している</span>
+}
+
+
+<span class="code-head" style="margin-top:18px">// 同じことが TaskController.java</span>
+<span class="code-head">// でも起きている可能性</span>
+
+<span class="comment">// もしTaskControllerでも</span>
+<span class="comment">// 間違ったimportを入れていたら</span>
+<span class="comment">// そちらも直す必要がある</span>
+
+<span class="comment">// Eclipseで両ファイルの</span>
+<span class="comment">// import 部分を確認すること</span></div>
+    </div>
+  </div>
+
+  <p style="font-size:14.5px;margin:24px 0 12px"><b>確認すべき手順：</b></p>
+
+  <div class="step-guide">
+    <div class="step-guide-title">真犯人の証拠を発見する</div>
+    <ol>
+      <li>Eclipseで <code>TaskMapper.java</code> を開く</li>
+      <li>ファイル冒頭の<code>import</code>文の集まりを見る</li>
+      <li><code>import ___ .Task;</code> の行を探す</li>
+      <li>そのパッケージ名を確認する</li>
+      <li><code>org.springframework.scheduling.config.Task</code> なら<b>これが真犯人</b></li>
+      <li>同じことを <code>TaskController.java</code> でも確認する</li>
+    </ol>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── importは「クラスの本籍地」</div>
+    <p>Javaのソースコード内で<code>Task</code>と書いた時、それが<b>どのパッケージのTaskを指すか</b>は<b>import文によって決まります</b>。複数の同名クラスが存在する場合、<b>importで指定したパッケージのもの</b>が選ばれる── これがJavaの<b>名前解決のルール</b>。importは「住所録」のようなもので、<b>同姓同名がいた時にどちらを呼ぶか</b>を決める仕組みです。</p>
+  </div>
+</section>
+
+<section id="why-wrong-import">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>なぜ間違ったimportが入ったか</h2>
+    <span class="en">WHY THE WRONG IMPORT</span>
+  </div>
+  <p class="pattern-desc">真犯人が「間違ったimport」と分かりました。でも<b>なぜそうなったのか？</b> 動機（メカニズム）を理解すれば、<b>再発防止</b>に繋がります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">eclipse-mechanism</span>
+      <span class="tag-desc">Eclipseの自動import機能の落とし穴</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 容疑者：Ctrl+Shift+O</div>
+
+        <p style="font-size:13.5px;line-height:1.85">Vol.3の手順で<b><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span></b>（Organize Imports）を使いました。これは<b>赤線で示された未importクラスを自動で追加</b>してくれる便利機能ですが、<b>同名クラスが複数ある場合に問題が起きます</b>。</p>
+
+        <p style="font-size:13.5px;line-height:1.85;margin-top:10px"><b>Eclipseの動き：</b></p>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">候補が1つだけなら → 自動で追加</div>
+          <div class="think-step-body">
+            <code>String</code>のように同名クラスが1つしかなければ、Eclipseは<b>勝手にimportを追加</b>して終わり。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">候補が複数あれば → 選択ダイアログ</div>
+          <div class="think-step-body">
+            <code>Task</code>のように<b>同名クラスがクラスパス上に複数ある</b>場合、Eclipseは<b>「Choose Imports」ダイアログ</b>を出して<b>あなたに選ばせる</b>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">問題：選択肢を流し読みする</div>
+          <div class="think-step-body">
+            ダイアログには <code>com.example.todo.entity.Task</code> と <code>org.springframework.scheduling.config.Task</code> の<b>両方</b>が表示される。<b>急いでいるとデフォルトで選ばれている方を確認せず<span class="key">Enter</span>を押してしまう</b>。これが今回の犯行手口。
+          </div>
+        </div>
+
+        <div style="background:rgba(204,68,51,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--error)">
+          <b>真相</b>： Eclipse は悪意なく<b>選択肢を提示しただけ</b>。<b>選択を間違えたのはあなた（または初期値のまま放置）</b>。これは「<b>誰でもハマるあるあるミス</b>」で、業務経験豊富な開発者でも稀に犯します。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Eclipseに表示されるダイアログ</span>
+
+┌─ Organize Imports ────────────┐
+│                                │
+│ The choice for class "Task":   │
+│                                │
+│ ○ com.example.todo.entity     │
+│    .Task                       │
+│                                │
+│ ● org.springframework          │  ← デフォルトで
+│    .scheduling.config.Task     │     こちらが選択
+│                                │
+│ [ Back ]  [ Next ]  [ Finish ] │
+└────────────────────────────┘
+
+<span class="comment">// 急いでFinishを押すと…</span>
+<span class="comment">// 間違ったTaskがimportされる</span>
+
+
+<span class="code-head" style="margin-top:18px">// なぜSpringのTaskが先頭に来るか</span>
+
+<span class="comment">// Eclipseの並び順は</span>
+<span class="comment">// アルファベット順や</span>
+<span class="comment">// 「お気に入りパッケージ」順など</span>
+<span class="comment">// 環境によって変わる</span>
+
+<span class="comment">// 偶然、Springが先に出るケースが</span>
+<span class="comment">// 多い理由：</span>
+<span class="comment">// ・Springは依存に多く含まれる</span>
+<span class="comment">// ・パッケージ階層が短い</span>
+<span class="comment">// ・既知の優先度が設定されている</span>
+
+
+<span class="code-head" style="margin-top:18px">// 真犯人の動機（まとめ）</span>
+
+事件： TaskMapperのimport間違い
+                 ↓
+動機： Eclipse自動importで
+       Springの方を選択した
+                 ↓
+原因： ・候補ダイアログ確認不足
+       ・デフォルト値のまま確定
+                 ↓
+結果： MyBatisが間違ったTaskを
+       インスタンス化しようとして
+       型不一致で爆発</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「便利機能の罠」</div>
+    <p>IDEの自動補完・自動importは<b>素晴らしい機能</b>ですが、<b>「ノールックで使うと事故る」</b>という<b>諸刃の剣</b>でもあります。経験を積むほど<b>「自動補完したものをチラ見する習慣」</b>が身につきます。<b>「IDEは助手であって、責任者はあなた」</b>── これがエディタとの正しい付き合い方です。</p>
+  </div>
+</section>
+
+<section id="fix">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>修正手順</h2>
+    <span class="en">FIX IT</span>
+  </div>
+  <p class="pattern-desc">原因が確定したので、<b>修正</b>に入ります。手順を間違えず、最短で復旧させます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">fix-steps</span>
+      <span class="tag-desc">修正手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 修正手順</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">A. TaskMapper.javaを開く</div>
+          <ol>
+            <li>パッケージ・エクスプローラーで <code>com.example.todo.mapper</code> &gt; <code>TaskMapper.java</code> をダブルクリック</li>
+            <li>ファイル冒頭のimport群を表示</li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">B. 間違ったimportを修正</div>
+          <ol>
+            <li><code>import org.springframework.scheduling.config.Task;</code> の行を見つける</li>
+            <li>その行を選択して削除（または直接書き換え）</li>
+            <li><code>import com.example.todo.entity.Task;</code> に修正</li>
+            <li><span class="key">Ctrl</span>+<span class="key">S</span> で保存</li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">C. TaskController.javaも確認</div>
+          <ol>
+            <li>TaskController.javaを開く</li>
+            <li>同じく <code>import ...Task;</code> の行を確認</li>
+            <li>もし<code>org.springframework.scheduling.config.Task</code>を指しているなら同様に修正</li>
+            <li>正しければそのまま</li>
+          </ol>
+        </div>
+
+        <div style="background:rgba(45,95,63,0.10);padding:10px 14px;margin-top:14px;font-size:13px;border-left:3px solid var(--accent-4)">
+          <b>DevToolsが効いている</b>ため、保存した時点でアプリは<b>自動再起動</b>します。コンソールに <code>Started TodoApplication</code> が再度出るまで待ちましょう。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 修正前（TaskMapper.java）</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> org.apache.ibatis.annotations.Select;
+<span class="bad">import org.springframework.scheduling.config.Task;</span>
+                                       <span class="bad">// ↑ 間違い</span>
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">TaskMapper</span> {
+  <span class="ann">@Select</span>(<span class="str">"SELECT ... FROM tasks ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>();
+}
+
+
+<span class="code-head" style="margin-top:18px">// 修正後</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> org.apache.ibatis.annotations.Select;
+<span class="good">import com.example.todo.entity.Task;</span>
+                              <span class="good">// ↑ 正しい</span>
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">TaskMapper</span> {
+  <span class="ann">@Select</span>(<span class="str">"SELECT ... FROM tasks ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Task</span>&gt; <span class="fn">findAll</span>();
+}
+
+
+<span class="code-head" style="margin-top:18px">// 別解：エディタ上で右クリック修正</span>
+
+<span class="comment">// 1. ソース上の「Task」の文字を選択</span>
+<span class="comment">// 2. 右クリック → 「ソース」</span>
+<span class="comment">//    → 「インポートの整理」</span>
+<span class="comment">// 3. 候補から正しいTaskを選び直す</span>
+<span class="comment">//    （今度は注意深く！）</span>
+
+
+<span class="code-head" style="margin-top:18px">// 別解：import文を完全削除して再生成</span>
+
+<span class="comment">// 1. 間違ったimport行を削除</span>
+<span class="comment">// 2. Ctrl+Shift+O</span>
+<span class="comment">// 3. ダイアログで正しいTaskを選ぶ</span>
+<span class="comment">//    ★必ず指でなぞって確認★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 修正のついでに整理</div>
+    <p>修正のついでに、<b>使っていないimportが残っていないか</b>も確認すると良いです。<b><span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span></b>を<b>正しいimport状態</b>から実行すると、<b>不要なimport（黄色の警告）も自動的に削除</b>されてクリーンになります。今度はダイアログが出ても候補は1つだけなので安全です。</p>
+  </div>
+</section>
+
+<section id="verify">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>動作確認 ── 直ったことを確かめる</h2>
+    <span class="en">VERIFY THE FIX</span>
+  </div>
+  <p class="pattern-desc">修正したら、<b>本当に直ったか</b>を確かめます。「動いた！」で終わりではなく、<b>意図通りの動作になっているか</b>まで見届けます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">verify-checklist</span>
+      <span class="tag-desc">動作確認の手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 段階的に確認していく</div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">A. コンソールで再起動を確認</div>
+          <ol>
+            <li>保存後、コンソールに <code>Restarting due to ...</code> のログが出る</li>
+            <li>続いて <code>Started TodoApplication in X.XXX seconds</code> が再度出る</li>
+            <li><b>赤いERRORログが新しく出ていないか</b>確認</li>
+          </ol>
+        </div>
+
+        <div class="step-guide">
+          <div class="step-guide-title">B. ブラウザで再アクセス</div>
+          <ol>
+            <li>ブラウザのアドレス欄で <code>http://localhost:8080/tasks</code> を再読み込み（<span class="key">F5</span>）</li>
+            <li>ホワイトラベルエラーではなく<b>表組み</b>が表示される</li>
+            <li>Vol.2でINSERTした3件のタスクが行として並んでいる</li>
+          </ol>
+        </div>
+
+        <p style="font-size:13px;margin-top:14px;line-height:1.85"><b>動作確認チェックリスト：</b></p>
+        <ul class="checklist">
+          <li>表組み（テーブル）が表示される</li>
+          <li>3件のタスク行が並んでいる</li>
+          <li>「ID」「タイトル」「完了」「作成日時」の4列がある</li>
+          <li>「完了」列に ✓ や - のマークがある</li>
+          <li>コンソールに ERROR ログが出ていない</li>
+          <li>コンソールに新たに <code>==&gt; Preparing: SELECT ...</code> が出ている（SQLが走った証拠）</li>
+        </ul>
+
+        <div style="background:#fff;border-left:3px solid var(--accent-4);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝事件解決！</b> 探偵としての腕前が一段上がりました。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 修正後のコンソールログ（期待値）</span>
+
+<span class="comment">// ファイル保存時</span>
+INFO Restarting due to 1 class
+     path change (1 added, 0 changed,
+     0 deleted)
+
+<span class="comment">// 再起動完了</span>
+INFO Started TodoApplication
+     in X.XXX seconds
+
+
+<span class="comment">// アクセス時のSQL実行ログ</span>
+DEBUG c.e.todo.mapper.TaskMapper.findAll
+  ==&gt; Preparing: SELECT id, title,
+      done, created_at FROM tasks
+      ORDER BY id
+  ==&gt; Parameters:
+  &lt;==      <span class="good">Total: 3</span>      <span class="comment">// 3件取得</span>
+
+<span class="comment">// もう ERROR は出ない！</span>
+
+
+<span class="code-head" style="margin-top:18px">// 期待されるブラウザ表示</span>
+
+http://localhost:8080/tasks
+
+╔════════════════════════════════╗
+║       <span class="good">TODO 一覧</span>                ║
+╠════╦═══════╦═════╦═══════════╣
+║ ID ║ タイトル║ 完了║ 作成日時  ║
+╠════╬═══════╬═════╬═══════════╣
+║  1 ║ 牛乳   ║  -  ║ 2026-...  ║
+║  2 ║ パン   ║  ✓  ║ 2026-...  ║
+║  3 ║ 卵     ║  -  ║ 2026-...  ║
+╚════╩═══════╩═════╩═══════════╝
+
+<span class="good">★ 事件解決 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「直った」と「直ったように見える」の違い</div>
+    <p>エラーが消えても<b>意図通りに動いているとは限りません</b>。例えば「全件取得」を期待しているのに1件しか出ない、「タイトル」列が空欄で表示される── これらは<b>表面的にはエラーなし</b>。だから動作確認は<b>「結果の中身まで」</b>確認します。<b>「★がついた行」「件数」「列の値」</b>── 細部までチェックする癖をつけましょう。</p>
+  </div>
+</section>
+
+<section id="prevention">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>再発防止 ── import確認の習慣</h2>
+    <span class="en">PREVENTION HABITS</span>
+  </div>
+  <p class="pattern-desc">同じ罠に二度ハマらないために、<b>習慣レベルの予防策</b>を身につけます。<b>意識ではなく行動</b>で防ぐのがコツです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prevention</span>
+      <span class="tag-desc">3つの防御テクニック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 再発防止 3 strategies</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">習慣① import後にチラ見する</div>
+          <div class="think-step-body">
+            <span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span>を押した後、<b>必ずファイル冒頭のimport群を1秒だけ眺める</b>。<code>com.example.todo.*</code>が想定通り入っているか、見慣れないパッケージ名が混ざっていないか確認。これは<b>2秒の習慣</b>で<b>1時間のデバッグ</b>を防ぎます。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">習慣② 候補ダイアログを「読む」</div>
+          <div class="think-step-body">
+            「Choose Imports」ダイアログが出たら、<b>慌てずに全候補のパッケージ名を読む</b>。<code>com.example.todo.entity.Task</code>のように<b>自分のプロジェクトのパッケージ</b>を選ぶのが原則。<b>「短いから」「上にあるから」で選ばない</b>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">習慣③ お気に入りパッケージを設定する</div>
+          <div class="think-step-body">
+            Eclipseの設定で<b>「お気に入りパッケージ」</b>を登録できます。<code>com.example.todo.entity</code>を登録しておけば、候補で優先表示されるようになる。<b>環境側の対策</b>で人的ミスを減らす。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 習慣化のためのチェックフロー</span>
+
+<span class="comment">// コードを書いた直後の流れ：</span>
+
+1. <span class="kw">Task</span> task; <span class="comment">// 赤線で出る</span>
+   ↓
+2. <span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">O</span> 押す
+   ↓
+3. ダイアログが出たら ★ココ重要★
+   - すぐに <span class="key">Enter</span> を押さない
+   - <b>候補のパッケージ名を読む</b>
+   - 自分のプロジェクトのものを選ぶ
+   ↓
+4. ファイル冒頭に視線を移し
+   import群をチラ見
+   ↓
+5. <code>com.example.todo.*</code> が
+   入っていればOK
+
+
+<span class="code-head" style="margin-top:18px">// お気に入りパッケージ設定の手順</span>
+
+<span class="comment">// 1. Eclipseの設定を開く</span>
+Window → Preferences
+
+<span class="comment">// 2. 検索ボックスに入力</span>
+Favorites と入力
+
+<span class="comment">// 3. 該当の設定画面へ移動</span>
+Java → Editor → Content Assist
+  → Favorites
+
+<span class="comment">// 4. New Type… ボタンを押す</span>
+
+<span class="comment">// 5. com.example.todo.entity</span>
+<span class="comment">//    パッケージを追加</span>
+
+<span class="comment">// これでEclipseは自分のプロジェクトの</span>
+<span class="comment">// クラスを優先するようになる</span>
+
+
+<span class="code-head" style="margin-top:18px">// プロジェクト固有の対策</span>
+
+<span class="comment">// このTODOプロジェクトでは：</span>
+<span class="comment">// ・com.example.todo.entity.Task</span>
+<span class="comment">// ・com.example.todo.mapper.TaskMapper</span>
+<span class="comment">// ・com.example.todo.controller.</span>
+<span class="comment">//   TaskController</span>
+
+<span class="comment">// この3つは必ず自プロジェクトのもの</span>
+<span class="comment">// import文で「com.example.todo」が</span>
+<span class="comment">// 含まれていなければ警戒する</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「失敗から学ぶ」を仕組み化</div>
+    <p>同じミスを繰り返さないコツは<b>「気を付ける」ではなく「仕組みで防ぐ」</b>こと。意識は疲れますが、<b>習慣やツール設定は無料で永続的に効きます</b>。今回学んだことを<b>「import後の1秒チラ見」</b>と<b>「お気に入りパッケージ登録」</b>として体に染み込ませましょう。</p>
+  </div>
+</section>
+
+<section id="common-traps">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>クラス名重複の「あるある」集</h2>
+    <span class="en">COMMON DUPLICATE TRAPS</span>
+  </div>
+  <p class="pattern-desc">同じ罠は <code>Task</code> 以外にもあります。<b>業務でハマりやすい「同名異クラス」</b>を一覧にしました。同じパターンで原因究明できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">common-collisions</span>
+      <span class="tag-desc">同名異クラスのよくある罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある衝突パターン</div>
+
+        <div class="compare">
+          <div class="compare-box compare-ng">
+            <div class="compare-label">✗ Date の罠</div>
+            <p style="font-size:12.5px;margin-top:6px"><code>java.sql.Date</code> （DB用、時刻部分なし）<br>
+            <code>java.util.Date</code> （汎用、時刻あり）<br>
+            <b>業務開発では LocalDate / LocalDateTime を使うのが今の正解</b></p>
+          </div>
+          <div class="compare-box compare-ng">
+            <div class="compare-label">✗ List の罠</div>
+            <p style="font-size:12.5px;margin-top:6px"><code>java.util.List</code> （コレクション）<br>
+            <code>java.awt.List</code> （GUI部品、ほぼ使わない）<br>
+            <b>意図せずGUIの方を入れると意味不明なエラー</b></p>
+          </div>
+          <div class="compare-box compare-ng">
+            <div class="compare-label">✗ Service の罠</div>
+            <p style="font-size:12.5px;margin-top:6px"><code>org.springframework.stereotype.Service</code><br>
+            <code>jakarta.ws.rs.Path... .Service</code> 等<br>
+            <b>SpringのServiceを入れるべき場面でJAX-RS系を入れる事故</b></p>
+          </div>
+          <div class="compare-box compare-ng">
+            <div class="compare-label">✗ Transactional の罠</div>
+            <p style="font-size:12.5px;margin-top:6px"><code>org.springframework.transaction.annotation.Transactional</code><br>
+            <code>jakarta.transaction.Transactional</code><br>
+            <b>機能が微妙に違うので注意</b>。SpringのDIで動かすなら<b>必ずSpring版</b></p>
+          </div>
+        </div>
+
+        <p style="font-size:13px;margin-top:14px;line-height:1.85"><b>共通の見分け方</b>： パッケージ名に「<code>org.springframework.*</code>」が入っていたらSpring製、「<code>java.*</code>」ならJava標準、「<code>jakarta.*</code>」ならJakarta EE。<b>自分のプロジェクトのは<code>com.example.todo.*</code></b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// クラス名の出所を見分ける手がかり</span>
+
+<span class="comment">// 1. com.example.* → 自分のプロジェクト</span>
+import com.example.todo.entity.Task;
+                <span class="good">// ← Vol.3で作ったやつ</span>
+
+<span class="comment">// 2. java.* → Java標準ライブラリ</span>
+import java.util.List;
+import java.time.LocalDateTime;
+                <span class="good">// ← 基本これらは安全</span>
+
+<span class="comment">// 3. javax.* / jakarta.* → Java EE系</span>
+import jakarta.servlet.http.HttpServlet;
+import jakarta.persistence.Entity;
+                <span class="comment">// ← Spring Boot 3+では jakarta</span>
+
+<span class="comment">// 4. org.springframework.* → Spring本体</span>
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+                <span class="comment">// ← MVCの定番</span>
+
+<span class="comment">// 5. org.apache.ibatis.* → MyBatis</span>
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
+                <span class="comment">// ← DB窓口の定番</span>
+
+<span class="comment">// 6. lombok.* → Lombok</span>
+import lombok.Data;
+import lombok.AllArgsConstructor;
+                <span class="comment">// ← ボイラープレート消し</span>
+
+
+<span class="code-head" style="margin-top:18px">// 警戒すべきimport</span>
+
+<span class="bad">// org.springframework.scheduling.*</span>
+<span class="comment">// スケジューラ用、エンティティとは別物</span>
+
+<span class="bad">// java.awt.*</span>
+<span class="comment">// GUI用、Web開発では普通使わない</span>
+
+<span class="bad">// javax.* (Spring Boot 3+で警戒)</span>
+<span class="comment">// Spring Boot 3はjakarta.*へ移行済み</span>
+<span class="comment">// 古い記事のjavax.*をコピーすると</span>
+<span class="comment">// 互換性で問題発生</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── 「パッケージ名を読む」習慣</div>
+    <p>クラス名だけ見て判断するのではなく、<b>パッケージ名の prefix まで読む</b>習慣をつけましょう。「<b>org.springframework なら Spring 製</b>」「<b>java.* なら標準ライブラリ</b>」と即座に分類できると、エラー解析の速度が劇的に上がります。<b>パッケージ名は「クラスの本籍地」</b>── 同姓同名を見分けるための重要情報です。</p>
+  </div>
+</section>
+
+<section id="summary">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>エラー解決の思考フロー（まとめ）</h2>
+    <span class="en">DEBUGGING THOUGHT FLOW</span>
+  </div>
+  <p class="pattern-desc">今回の事件解決を<b>汎用的な思考フロー</b>に抽象化します。<b>次に未知のエラーに遭遇した時</b>、このフローを思い出してください。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">debugging-flow</span>
+      <span class="tag-desc">エラー解決の思考フロー</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 9ステップ汎用フロー</div>
+
+        <div class="think-step" data-step="1">
+          <div class="think-step-title">症状を「事実」として記録する</div>
+          <div class="think-step-body">
+            ブラウザに何が出ているか／コンソールに何が出ているか／いつから出始めたか── <b>感情を交えず事実だけ</b>を集める。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="2">
+          <div class="think-step-title">エラーの「種類」を5秒で判定</div>
+          <div class="think-step-body">
+            ・<b>404</b>＝URLが見つからない<br>
+            ・<b>500 + 起動失敗</b>＝設定やBean生成の問題<br>
+            ・<b>500 + 起動成功</b>＝処理中の問題（今回はこれ）
+          </div>
+        </div>
+
+        <div class="think-step" data-step="3">
+          <div class="think-step-title">3点読みでログを切り抜く</div>
+          <div class="think-step-body">
+            ① 一番上の例外名 → エラーの<b>種別</b><br>
+            ② <code>### SQL:</code> → SQLが走ったか<br>
+            ③ <code>### The error occurred while ...</code> → どの段階で起きたか
+          </div>
+        </div>
+
+        <div class="think-step" data-step="4">
+          <div class="think-step-title">エラーメッセージを精読する</div>
+          <div class="think-step-body">
+            <b>クラス名・パッケージ名・引数の型</b>など、メッセージに含まれる<b>固有名詞</b>を全て読む。「<b>違和感</b>」（パッケージが想定外、型が想定外）を見つけたら、それが<b>手がかり</b>。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="5">
+          <div class="think-step-title">「真犯人」を絞り込む</div>
+          <div class="think-step-body">
+            違和感の出所はどのコードか？ そのコードを書いた時に何が起きたか？ ── <b>因果関係</b>を遡る。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="6">
+          <div class="think-step-title">仮説を立てて検証する</div>
+          <div class="think-step-body">
+            「<b>○○が原因なら、こうなっているはず</b>」と<b>予測</b>を立てて、実際のコードを確認。一致すれば原因確定。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="7">
+          <div class="think-step-title">修正する</div>
+          <div class="think-step-body">
+            最小限の変更で修正。<b>関係ない箇所をついでに触らない</b>のが鉄則（副作用を防ぐため）。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="8">
+          <div class="think-step-title">動作確認</div>
+          <div class="think-step-body">
+            エラーが消えた<b>だけ</b>でなく、<b>結果の中身</b>まで確認。
+          </div>
+        </div>
+
+        <div class="think-step" data-step="9">
+          <div class="think-step-title">再発防止策を考える</div>
+          <div class="think-step-body">
+            「<b>なぜこのミスを犯したか</b>」を冷静に分析し、<b>習慣やツール設定</b>で防ぐ仕組みを作る。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 今回の事件の解決フロー（実例）</span>
+
+<span class="comment">// Step 1: 事実収集</span>
+症状: ブラウザにWhitelabelエラー
+URL: http://localhost:8080/tasks
+日時: 2026-05-17 19:05
+
+<span class="comment">// Step 2: 種別判定</span>
+500 Internal Server Error
+起動成功（Started TodoApplication あり）
+→ 処理中の問題と確定
+
+<span class="comment">// Step 3: 3点読み</span>
+① MyBatisSystemException + ReflectionException
+② SQL は無事に走った
+③ 「handling results」段階でエラー
+
+<span class="comment">// Step 4: メッセージ精読</span>
+「Error instantiating class
+ org.springframework.scheduling
+ .config.Task」
+→ <span class="bad">違和感！</span>
+→ なぜSpringのTaskが出てくる？
+
+<span class="comment">// Step 5: 真犯人の絞り込み</span>
+MyBatisがTaskを参照するのは
+Mapperの<code>List&lt;Task&gt;</code>から。
+そのTaskが何を指すかは import文。
+
+<span class="comment">// Step 6: 仮説検証</span>
+仮説: TaskMapperのimport文が
+      Springのものを指している
+確認: ファイルを開いて確認
+結果: <span class="good">仮説通り</span>
+
+<span class="comment">// Step 7: 修正</span>
+import org.springframework...Task;
+        ↓
+import com.example.todo.entity.Task;
+
+<span class="comment">// Step 8: 動作確認</span>
+ブラウザで /tasks 再読み込み
+→ 表組みが表示される
+→ 3件のタスクが並ぶ
+→ <span class="good">事件解決</span>
+
+<span class="comment">// Step 9: 再発防止</span>
+習慣: import後に1秒チラ見
+設定: お気に入りパッケージ登録</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ── エラーは「学習の機会」</div>
+    <p>エラーに遭遇するたびに、<b>あなたのスキルは確実に上がります</b>。今日の事件で得たもの：<br>
+    ① <b>MyBatisのリフレクションエラーの読み方</b><br>
+    ② <b>「handling results」の意味</b><br>
+    ③ <b>パッケージ名の重要性</b><br>
+    ④ <b>Eclipse自動importの罠と対策</b><br>
+    ⑤ <b>エラー解決の9ステップ思考フロー</b><br>
+    これだけのものを<b>1つのエラーから</b>学べました。<b>エラーは敵ではなく、最高の教師</b>です。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(107,68,35,0.12)">
+  <div class="tip-label">この補足を読み終えたあなたへ</div>
+  <p>お疲れさまでした。<b>1件のエラーから、エラー解決の汎用フローまで</b>を学びました。これからVol.4・Vol.5・Vol.6と進むにつれ、別の種類のエラーにも遭遇します。でも今日身につけた<b>9ステップ思考フロー</b>はそのまま使えます。<b>「症状を見て、種別を判定し、3点読みで切り抜き、違和感を探し、仮説を立て、検証し、修正し、確認し、再発防止する」</b>── これがエンジニアの<b>標準的なデバッグ手順</b>です。<br><br>
+  次に新しいエラーに遭遇した時、<b>「またこのフローを使う番だ」</b>と思えるようになっていれば、本補足は仕事を果たせました。Vol.4以降に進んでください。今度こそ<code>/tasks</code>が美しい表組みで表示されているはずです。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK A v2</span>
+  <span>VOL.03 ADD ── ERROR HANDLING / DEBUGGING THE WRONG IMPORT</span>
+</footer>
+
+</body>
+</html>

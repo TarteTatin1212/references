@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git/GitHub編 基本コマンド Vol.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2520;
+  --paper:#f2ead9;
+  --paper-2:#e4dbc4;
+  --accent:#94633c;
+  --accent-2:#c9a876;
+  --accent-3:#5e4a36;
+  --muted:#7a6e5d;
+  --line:#c0b39a;
+  --code-bg:#1d1812;
+  --code-text:#e8dfcc;
+  --panel-bg:#e8dec9;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;font-size:15px;line-height:1.85}
+body{max-width:1180px;margin:0 auto;padding:48px 40px 80px}
+
+.page-header{position:relative;padding:36px 32px 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"❖";position:absolute;right:-10px;top:-10px;font-size:240px;color:var(--accent);opacity:0.18;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em}
+h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin:18px 0 10px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;letter-spacing:0.15em;font-family:"JetBrains Mono",monospace;margin-bottom:20px}
+.lead{max-width:640px;font-size:15px;line-height:2;color:var(--ink)}
+
+.toc{background:var(--paper-2);padding:22px 28px;margin-bottom:56px;border:1px solid var(--line)}
+.toc-title{font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:0.2em;margin-bottom:12px;color:var(--accent-3)}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc a{color:var(--ink);text-decoration:none;font-size:14px;font-family:"JetBrains Mono",monospace}
+.toc a::before{content:"— ";color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
+.section-num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;flex:1}
+.en{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted)}
+.pattern-desc{max-width:740px;margin-bottom:22px;color:var(--ink)}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-family:"JetBrains Mono",monospace;font-weight:600;color:var(--accent-3);font-size:13px}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line)}
+.panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:"JetBrains Mono",monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}
+.num{color:#f7a8d8}.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}.menu-code{color:#f7c08a;font-weight:600}
+.step{color:#c9a876;font-weight:600}.cmd{color:#b5e8b0}.flag{color:#f7c08a}
+.path{color:#a3c9ff}.added{color:#7fc97f}.removed{color:#f08080}
+
+@media(max-width:720px){
+  body{padding:24px 18px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  h1{font-size:32px}
+  .page-header::before{font-size:160px}
+  .toc ul{gap:6px 14px}
+}
+
+.flow{display:flex;flex-direction:column;gap:8px}
+.flow-item{background:#fff;border:1px solid var(--line);padding:10px 14px;font-size:13px}
+.flow-item .label{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em;display:block;margin-bottom:4px}
+.flow-arrow{text-align:center;color:var(--accent);font-size:16px;font-weight:600}
+
+.box{background:#fff;border:1px solid var(--line);padding:12px 14px;margin-bottom:10px}
+.box .box-title{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-bottom:6px;letter-spacing:0.1em}
+.box p{font-size:13px;line-height:1.7}
+
+.diagram{background:#fff;border:1px solid var(--line);padding:18px;font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.8;white-space:pre;overflow-x:auto}
+
+.tbl{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
+.tbl th,.tbl td{padding:8px 10px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{background:var(--paper-2);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.1em;font-weight:600}
+.tbl td code{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12px;color:var(--accent-3)}
+
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:12px;margin:0 1px}
+
+.tip{background:rgba(148,99,60,0.08);border-left:3px solid var(--accent);padding:16px 20px;margin:18px 0}
+.tip-title{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.15em;color:var(--accent-3);font-weight:600;margin-bottom:6px}
+.tip p{font-size:14px;line-height:1.9}
+.tip b{color:var(--accent-3)}
+
+.page-footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+.page-footer .right{text-align:right}
+
+code.inline{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12.5px;color:var(--accent-3)}
+
+.status-line{display:flex;gap:8px;font-family:"JetBrains Mono",monospace;font-size:12px;padding:4px 8px;background:#fff;border:1px solid var(--line);margin-bottom:4px;align-items:center}
+.status-line .mark{display:inline-block;width:20px;font-weight:700;text-align:center}
+.s-untracked{color:#b04030}.s-modified{color:#c47b2e}.s-staged{color:#3a7050}.s-clean{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">GIT / GITHUB</span>
+  <span class="vol-tag">VOL.02 / 09</span>
+  <h1>基本コマンド編</h1>
+  <div class="subtitle">DAILY COMMANDS</div>
+  <p class="lead">
+    Git作業の<b>9割はここで紹介する7つのコマンド</b>で回ります。
+    init / clone / status / add / commit / log / diff。
+    この7つを<b>息をするように</b>打てるようになれば、もう日常のGit操作で迷うことはなくなります。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01. git init</a></li>
+    <li><a href="#s02">02. git clone</a></li>
+    <li><a href="#s03">03. git status</a></li>
+    <li><a href="#s04">04. git add</a></li>
+    <li><a href="#s05">05. git commit</a></li>
+    <li><a href="#s06">06. git log</a></li>
+    <li><a href="#s07">07. git diff</a></li>
+    <li><a href="#s08">08. 日常ワークフロー</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>git init — リポジトリを作る</h2>
+    <span class="en">INITIALIZE</span>
+  </div>
+  <p class="pattern-desc">
+    既存のフォルダを<b>Gitで管理されるリポジトリに変える</b>コマンドです。
+    実行すると <code class="inline">.git</code> という隠しフォルダが生まれ、そこにすべての履歴が記録されていきます。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git init</span>
+      <span class="tag-desc">★★★ 最初の一手</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// init で起きること</div>
+        <div class="diagram">[ 実行前 ]
+my-app/
+├─ index.html
+└─ style.css
+
+  ↓ git init
+
+[ 実行後 ]
+my-app/
+├─ .git/         ← 誕生!
+│   ├─ HEAD
+│   ├─ config
+│   ├─ objects/
+│   └─ refs/
+├─ index.html
+└─ style.css</div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">注意 —</div>
+          <p><code class="inline">.git</code> を<b>誤って消すと履歴が全部消えます</b>。ホームディレクトリで <code class="inline">git init</code> してしまう事故も多発、要注意。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># 新規プロジェクトを始める</span>
+$ <span class="cmd">mkdir</span> my-app &amp;&amp; <span class="cmd">cd</span> my-app
+$ <span class="cmd">git init</span>
+Initialized empty Git repository in
+  /Users/taro/my-app/.git/
+
+<span class="comment"># 既存フォルダを途中から管理することも可</span>
+$ <span class="cmd">cd</span> existing-folder
+$ <span class="cmd">git init</span>
+
+<span class="comment"># --- ブランチ名を指定して初期化 ---</span>
+$ <span class="cmd">git init</span> <span class="flag">-b</span> main
+<span class="comment">              ↑ 最初から main で作る</span>
+
+<span class="comment"># --- やってしまった時の取り消し ---</span>
+$ <span class="cmd">rm</span> <span class="flag">-rf</span> .git
+<span class="comment">  ↑ これで完全にGit管理から外れる</span>
+
+<span class="comment"># --- 確認 ---</span>
+$ <span class="cmd">ls</span> <span class="flag">-la</span>
+drwxr-xr-x  .git/  <span class="comment"># ある = Git管理下</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p>1つのプロジェクトに<b>1つのリポジトリ</b>が原則。サブフォルダにさらに <code class="inline">git init</code> すると<b>ネストして混乱の元</b>になります。</p>
+  </div>
+</section>
+
+<section id="s02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>git clone — リポジトリを複製する</h2>
+    <span class="en">CLONE</span>
+  </div>
+  <p class="pattern-desc">
+    GitHubなどに置かれた<b>リモートリポジトリを自分のPCに丸ごとコピー</b>するコマンドです。
+    新しい職場で「このリポジトリから始めて」と渡されたら、まずこれを叩きます。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git clone &lt;url&gt;</span>
+      <span class="tag-desc">★★★ チーム参加の第一歩</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// clone で取得されるもの</div>
+        <div class="box">
+          <div class="box-title">取得される内容</div>
+          <p><span class="step">①</span> 最新のファイル全部<br>
+          <span class="step">②</span> <b>過去すべての履歴</b><br>
+          <span class="step">③</span> リモートの登録情報 (origin)<br>
+          <span class="step">④</span> すべてのブランチ情報</p>
+        </div>
+        <div class="diagram">github.com/team/web-app
+        │
+        │ git clone
+        ↓
+[ あなたのPC ]
+web-app/
+├─ .git/         (履歴も全部)
+├─ src/
+├─ package.json
+└─ README.md</div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">TIP —</div>
+          <p>cloneは<b>init + remote add + pull を一気にやる</b>便利コマンド。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># HTTPSでクローン (基本)</span>
+$ <span class="cmd">git clone</span> <span class="str">https://github.com/team/web-app.git</span>
+Cloning into 'web-app'...
+remote: Counting objects: 421, done.
+Receiving objects: 100% (421/421)
+
+<span class="comment"># SSHでクローン (認証設定後)</span>
+$ <span class="cmd">git clone</span> <span class="str">git@github.com:team/web-app.git</span>
+
+<span class="comment"># フォルダ名を指定して取得</span>
+$ <span class="cmd">git clone</span> <span class="str">https://github.com/team/web-app.git</span> <span class="path">my-folder</span>
+
+<span class="comment"># 特定のブランチだけ取得</span>
+$ <span class="cmd">git clone</span> <span class="flag">-b</span> develop <span class="str">...</span>
+
+<span class="comment"># 履歴を浅くする (容量節約)</span>
+$ <span class="cmd">git clone</span> <span class="flag">--depth</span> <span class="num">1</span> <span class="str">...</span>
+<span class="comment">             ↑ 最新コミットだけ取得</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">ハマりどころ —</div>
+    <p>大規模リポジトリ(GBクラス)を <code class="inline">--depth</code> なしでcloneすると<b>30分待たされる</b>ことも。読むだけなら <code class="inline">--depth 1</code>、開発するなら通常cloneと使い分けます。</p>
+  </div>
+</section>
+
+<section id="s03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>git status — 状態を確認する</h2>
+    <span class="en">STATUS</span>
+  </div>
+  <p class="pattern-desc">
+    今<b>どのファイルが</b>、<b>どのエリアに</b>、<b>どんな状態でいるか</b>を表示する、Git操作中の<b>「中継カメラ」</b>です。
+    何か操作するたびにこれを叩くのが上達への近道。<b>git statusは10秒に1回叩いていい</b>くらいの存在です。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git status</span>
+      <span class="tag-desc">★★★ 一番打つコマンド</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ファイル状態の種類</div>
+        <div class="status-line">
+          <span class="mark s-untracked">??</span>
+          <span><b style="color:#b04030">Untracked</b> — まだGit管理外</span>
+        </div>
+        <div class="status-line">
+          <span class="mark s-modified">M</span>
+          <span><b style="color:#c47b2e">Modified</b> — 変更済み、未ステージ</span>
+        </div>
+        <div class="status-line">
+          <span class="mark s-staged">A</span>
+          <span><b style="color:#3a7050">Added</b> — ステージ済み、コミット待ち</span>
+        </div>
+        <div class="status-line">
+          <span class="mark s-clean">·</span>
+          <span><b style="color:var(--muted)">Clean</b> — 変更なし、最新状態</span>
+        </div>
+        <div class="status-line">
+          <span class="mark s-modified">D</span>
+          <span><b style="color:#c47b2e">Deleted</b> — 削除した</span>
+        </div>
+        <div class="status-line">
+          <span class="mark s-modified">R</span>
+          <span><b style="color:#c47b2e">Renamed</b> — リネームした</span>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">POINT —</div>
+          <p><b>色で判断</b>: 赤=Untracked/Modified、緑=Staged。</p>
+        </div>
+      </div>
+      <div class="code">$ <span class="cmd">git status</span>
+On branch main
+Your branch is up to date with <span class="str">'origin/main'</span>.
+
+Changes to be committed:
+  (use "git restore --staged ..." to unstage)
+        <span class="added">modified:   src/app.js</span>
+        <span class="added">new file:   src/util.js</span>
+
+Changes not staged for commit:
+  (use "git add ..." to update)
+        <span class="removed">modified:   README.md</span>
+        <span class="removed">deleted:    old.txt</span>
+
+Untracked files:
+  (use "git add ..." to include)
+        <span class="removed">temp.log</span>
+
+<span class="comment"># --- 短縮表示 ---</span>
+$ <span class="cmd">git status</span> <span class="flag">-s</span>
+<span class="added">M </span> src/app.js
+<span class="added">A </span> src/util.js
+<span class="removed"> M</span> README.md
+<span class="removed">??</span> temp.log
+<span class="comment">↑左:ステージ 右:ワーキング</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">鉄則 —</div>
+    <p><b>「迷ったらstatus」</b>。何か変なエラーに遭遇したら、まず <code class="inline">git status</code>。今どの状態にいるか把握すれば、次にやるべきことが見えてきます。</p>
+  </div>
+</section>
+
+<section id="s04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>git add — ステージに乗せる</h2>
+    <span class="en">ADD / STAGE</span>
+  </div>
+  <p class="pattern-desc">
+    変更を<b>「次のコミットに含める対象」</b>として宣言するコマンド。
+    ワーキングディレクトリの変更を<b>ステージングエリアに移動</b>します。「準備が整った変更だけを選んでまとめる」ためのGit独自の仕組みです。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git add &lt;files&gt;</span>
+      <span class="tag-desc">★★★ コミットの前準備</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// add のパターン</div>
+        <table class="tbl">
+          <tr><th>書き方</th><th>意味</th></tr>
+          <tr><td><code>git add file.txt</code></td><td>1ファイルだけ</td></tr>
+          <tr><td><code>git add src/</code></td><td>フォルダ配下全部</td></tr>
+          <tr><td><code>git add .</code></td><td>カレント以下すべて</td></tr>
+          <tr><td><code>git add -A</code></td><td>削除も含めて全部</td></tr>
+          <tr><td><code>git add *.js</code></td><td>パターンマッチ</td></tr>
+          <tr><td><code>git add -p</code></td><td>変更箇所ごとに対話的選択</td></tr>
+        </table>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">裏技 —</div>
+          <p><code class="inline">git add -p</code> は<b>神機能</b>。同じファイル内の変更を、「この部分はコミットに含める、こっちは別コミット」と<b>パッチ単位で振り分け</b>できます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># 基本: ファイル指定</span>
+$ <span class="cmd">git add</span> src/app.js
+
+<span class="comment"># 複数ファイル</span>
+$ <span class="cmd">git add</span> src/app.js README.md
+
+<span class="comment"># すべてのファイル変更</span>
+$ <span class="cmd">git add</span> <span class="flag">-A</span>
+
+<span class="comment"># 拡張子で指定</span>
+$ <span class="cmd">git add</span> <span class="str">"*.js"</span>
+
+<span class="comment"># --- 対話モード (おすすめ) ---</span>
+$ <span class="cmd">git add</span> <span class="flag">-p</span> src/app.js
+
+@@ -1,3 +1,5 @@
+ function hello() {
+<span class="added">+  console.log("debug");</span>
+   return "hi";
+<span class="added">+  // TODO: cleanup</span>
+ }
+Stage this hunk [y,n,q,a,d,e,?]?
+
+<span class="comment"># y=入れる n=飛ばす s=さらに分割</span>
+
+<span class="comment"># --- やり直したい時 ---</span>
+$ <span class="cmd">git restore</span> <span class="flag">--staged</span> &lt;file&gt;
+<span class="comment">  ↑ ステージから降ろす</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">ハマりどころ —</div>
+    <p><code class="inline">git add .</code> で<b>うっかり機密ファイルや巨大ファイルをステージしてしまう</b>事故が頻発。これを防ぐのが <code class="inline">.gitignore</code>(Vol.8で詳説)です。</p>
+  </div>
+</section>
+
+<section id="s05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>git commit — 履歴に刻む</h2>
+    <span class="en">COMMIT</span>
+  </div>
+  <p class="pattern-desc">
+    ステージに乗せた変更を<b>「正式な履歴」</b>として記録するコマンド。
+    一度コミットすれば、原則として<b>その状態にはいつでも戻せる</b>ようになります。これがGitの強みの本体です。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git commit -m "message"</span>
+      <span class="tag-desc">★★★ 履歴への刻印</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// コミットメッセージの書き方</div>
+        <div class="box">
+          <div class="box-title">良いメッセージ ◯</div>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:12px">
+          fix: ログイン時の404エラーを修正<br>
+          feat: パスワード強度メーターを追加<br>
+          docs: READMEのセットアップ手順を更新</p>
+        </div>
+        <div class="box">
+          <div class="box-title">悪いメッセージ ✗</div>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:12px">
+          修正<br>
+          バグ直した<br>
+          asdfg<br>
+          WIP</p>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">定番 —</div>
+          <p><b>「動詞 + 何を + なぜ(必要なら)」</b>の形。これだけで未来の自分とチームに親切。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># 基本</span>
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"fix: ログインエラーを修正"</span>
+
+[main <span class="num">a3f2c1d</span>] fix: ログインエラーを修正
+ 2 files changed, 5 insertions(+),
+                  2 deletions(-)
+
+<span class="comment"># --- 詳しく書きたい時 ---</span>
+$ <span class="cmd">git commit</span>
+<span class="comment"># エディタが開く</span>
+
+fix: ログイン時の404エラーを修正
+
+セッショントークンの検証ロジックに
+バグがあり、未認証時に正しい404でなく
+500を返していたのを修正。
+
+#1234 を参照。
+
+<span class="comment"># --- add + commit を同時に ---</span>
+$ <span class="cmd">git commit</span> <span class="flag">-am</span> <span class="str">"update README"</span>
+<span class="comment">       ↑ 既存ファイルだけ自動add</span>
+<span class="comment">  (新規ファイルは対象外!)</span>
+
+<span class="comment"># --- 直前のコミットを修正 ---</span>
+$ <span class="cmd">git commit</span> <span class="flag">--amend</span>
+<span class="comment">       ↑ メッセージ修正 / 変更追加</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p>コミットは<b>「論理的に意味のある単位」</b>で区切るのが鉄則。「機能追加」「バグ修正」「リファクタ」を1コミットに混ぜない。後でレビューする人(未来の自分含む)が泣きます。</p>
+  </div>
+</section>
+
+<section id="s06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>git log — 履歴を見る</h2>
+    <span class="en">LOG</span>
+  </div>
+  <p class="pattern-desc">
+    過去のコミット履歴を<b>新しい順</b>に表示します。「いつ・誰が・何を変えたか」を遡れるのがGitの真価。
+    オプションが豊富で、<b>ここを使いこなせるかが中級者の境目</b>です。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git log</span>
+      <span class="tag-desc">★★★ 履歴を辿る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よく使うオプション</div>
+        <table class="tbl">
+          <tr><th>オプション</th><th>効果</th></tr>
+          <tr><td><code>--oneline</code></td><td>1行表示</td></tr>
+          <tr><td><code>--graph</code></td><td>ブランチを線で表示</td></tr>
+          <tr><td><code>-n 5</code></td><td>最新5件だけ</td></tr>
+          <tr><td><code>--all</code></td><td>全ブランチ含む</td></tr>
+          <tr><td><code>--author=&quot;Taro&quot;</code></td><td>作者で絞り込み</td></tr>
+          <tr><td><code>--since=&quot;1 week&quot;</code></td><td>期間で絞り込み</td></tr>
+          <tr><td><code>-- file.js</code></td><td>特定ファイルの履歴</td></tr>
+          <tr><td><code>-p</code></td><td>差分も表示</td></tr>
+        </table>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">定番の組み合わせ —</div>
+          <p><code class="inline">git log --oneline --graph --all</code>。これを<b>エイリアス登録しておく</b>のが鉄板。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># 普通のlog</span>
+$ <span class="cmd">git log</span>
+commit <span class="num">a3f2c1d8...</span> (HEAD -&gt; main)
+Author: Taro Yamada &lt;taro@...&gt;
+Date:   Wed May 13 10:23:45 2026
+
+    fix: ログインエラーを修正
+
+commit <span class="num">9b8e4a23...</span>
+Author: Hanako Suzuki &lt;hana@...&gt;
+Date:   Tue May 12 15:10:02 2026
+
+    feat: パスワード強度メーター追加
+
+<span class="comment"># --- 1行表示 (おすすめ) ---</span>
+$ <span class="cmd">git log</span> <span class="flag">--oneline</span>
+<span class="num">a3f2c1d</span> fix: ログインエラーを修正
+<span class="num">9b8e4a2</span> feat: パスワード強度メーター
+<span class="num">5d6f3a8</span> docs: README更新
+
+<span class="comment"># --- グラフ表示 ---</span>
+$ <span class="cmd">git log</span> <span class="flag">--oneline --graph --all</span>
+* <span class="num">a3f2c1d</span> fix: ログイン
+| * <span class="num">b7e5a92</span> feat: 通知機能
+|/
+* <span class="num">9b8e4a2</span> feat: パスワード強度
+* <span class="num">5d6f3a8</span> docs: README更新
+
+<span class="comment"># 抜けるには q キー</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">TIP —</div>
+    <p><code class="inline">~/.gitconfig</code> に <code class="inline">alias.lg = log --oneline --graph --all --decorate</code> を仕込んでおくと、<code class="inline">git lg</code> でいつでも美しいログ表示。<b>現場のGit使いはほぼ全員入れています</b>。</p>
+  </div>
+</section>
+
+<section id="s07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>git diff — 差分を見る</h2>
+    <span class="en">DIFF</span>
+  </div>
+  <p class="pattern-desc">
+    「<b>何が変わったか</b>」を行単位で表示するコマンド。
+    コミット前のチェック、コミット間の比較、ブランチ間の比較など、用途は無数にあります。
+    <code class="inline">+</code>(追加)と <code class="inline">-</code>(削除)で表示されるのが特徴。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git diff</span>
+      <span class="tag-desc">★★★ 変更内容の確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 何と何を比べているか</div>
+        <table class="tbl">
+          <tr><th>コマンド</th><th>比較対象</th></tr>
+          <tr><td><code>git diff</code></td><td>ワーキング ⇔ ステージ</td></tr>
+          <tr><td><code>git diff --staged</code></td><td>ステージ ⇔ 直近コミット</td></tr>
+          <tr><td><code>git diff HEAD</code></td><td>全変更 ⇔ 直近コミット</td></tr>
+          <tr><td><code>git diff a..b</code></td><td>コミットa ⇔ コミットb</td></tr>
+          <tr><td><code>git diff main</code></td><td>現在のブランチ ⇔ main</td></tr>
+          <tr><td><code>git diff -- file</code></td><td>特定ファイルだけ</td></tr>
+        </table>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">POINT —</div>
+          <p>3つのエリアの「<b>どこの差を見たいか</b>」でオプションが変わります。これが混乱の元なので、上の表は手元に置いておくと安心。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># 基本: 未ステージの変更を見る</span>
+$ <span class="cmd">git diff</span>
+diff --git a/app.js b/app.js
+index <span class="num">a3f2c1d</span>..<span class="num">b7e5a92</span> 100644
+--- a/app.js
++++ b/app.js
+@@ -3,7 +3,9 @@ function login(user) {
+   if (!user) {
+     return null;
+   }
+<span class="added">+  console.log("debug:", user);</span>
+   return user.token;
+<span class="removed">-  // old code</span>
+ }
+
+<span class="comment"># --- ステージ済みの差分 ---</span>
+$ <span class="cmd">git diff</span> <span class="flag">--staged</span>
+
+<span class="comment"># --- 統計のみ表示 ---</span>
+$ <span class="cmd">git diff</span> <span class="flag">--stat</span>
+ src/app.js  | 5 ++++-
+ README.md   | 2 +-
+ 2 files changed, 5 insertions(+),
+                  2 deletions(-)
+
+<span class="comment"># --- ブランチ間比較 ---</span>
+$ <span class="cmd">git diff</span> main..feature/login</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">TIP —</div>
+    <p>コミット前に必ず <code class="inline">git diff --staged</code> で「今コミットしようとしている内容」を見直す習慣を。<b>console.log の消し忘れ</b>や<b>デバッグ用コードの混入</b>を防げます。</p>
+  </div>
+</section>
+
+<section id="s08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>日常ワークフロー</h2>
+    <span class="en">DAILY WORKFLOW</span>
+  </div>
+  <p class="pattern-desc">
+    ここまでの7コマンドを<b>実際の作業の流れの中で</b>どう使うか。
+    朝の業務開始から、夕方の終業まで——<b>典型的な1日のGit操作</b>を時系列で並べてみます。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">a-day-with-git</span>
+      <span class="tag-desc">現場での実際の流れ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 1日のGitフロー</div>
+        <div class="flow">
+          <div class="flow-item"><span class="label">09:00 出社</span>git pull で最新を取得 (Vol.4)</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-item"><span class="label">09:30 作業開始</span>ファイルを編集</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-item"><span class="label">10:30 一段落</span>git status で状態確認</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-item"><span class="label">10:31</span>git diff で変更内容確認</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-item"><span class="label">10:32</span>git add で必要なものだけステージ</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-item"><span class="label">10:33</span>git commit -m で記録</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-item"><span class="label">12:00 昼前</span>git log でその日の作業を眺める</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-item"><span class="label">18:00 終業</span>git push でリモートに上げる (Vol.4)</div>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># === 典型的な1日 ===</span>
+
+<span class="comment"># [朝] 最新を取得</span>
+$ <span class="cmd">git pull</span>
+
+<span class="comment"># [作業] ファイル編集...</span>
+
+<span class="comment"># [区切り] 状態確認</span>
+$ <span class="cmd">git status</span> <span class="flag">-s</span>
+ M src/login.js
+?? src/util.js
+
+<span class="comment"># [区切り] 差分確認</span>
+$ <span class="cmd">git diff</span> src/login.js
+
+<span class="comment"># [区切り] 必要な分だけステージ</span>
+$ <span class="cmd">git add</span> src/login.js
+
+<span class="comment"># [区切り] コミット</span>
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"fix: 認証バグ修正"</span>
+
+<span class="comment"># この流れを 1日に 3〜10回 回す</span>
+<span class="comment"># それがエンジニアの普通!</span>
+
+<span class="comment"># [終業] リモートに反映</span>
+$ <span class="cmd">git push</span>
+
+<span class="comment"># [振り返り] 1日の成果</span>
+$ <span class="cmd">git log</span> <span class="flag">--oneline --since=</span><span class="str">"today"</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">鉄則 —</div>
+    <p><b>「小さく、早く、頻繁にコミット」</b>。1日1コミットは少なすぎ。<b>機能単位・修正単位</b>でこまめに記録するのが、後で履歴をたどるときに圧倒的に便利です。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px">
+  <div class="tip-title">NEXT STEP —</div>
+  <p>第2巻で<b>日常の基本コマンド7種</b>を押さえました。これで個人プロジェクトは問題なく回せるはずです。<br>
+  Vol.3「<b>ブランチとマージ編</b>」では <code class="inline">git branch / switch / merge</code> を扱います。<b>ブランチこそがGitの真骨頂</b>。「機能ごとに分岐させて並行開発、出来上がったら統合」という、現代の開発スタイルを支える仕組みを身につけましょう。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <div>GIT / GITHUB REFERENCE — VOL.02</div>
+  <div class="right">DAILY COMMANDS / 基本コマンド編</div>
+</footer>
+
+</body>
+</html>

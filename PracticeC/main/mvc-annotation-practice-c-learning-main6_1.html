@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.6 本編 @RequestParam で絞り込もう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1e2d26;
+  --paper:#e7ece2;
+  --paper-2:#d0dccc;
+  --accent:#5a8364;
+  --accent-2:#759b7e;
+  --accent-3:#1d3e2b;
+  --muted:#697867;
+  --line:#b3c1ad;
+  --code-bg:#14211a;
+  --code-text:#e7ece2;
+  --panel-bg:#eff3eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(90,131,100,0.08);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.warn-future{margin:24px 0;padding:14px 20px;background:#fff4e6;border-left:3px solid #cc7a00;font-size:13.5px}
+.warn-future .wl{font-family:'JetBrains Mono',monospace;font-size:11px;color:#cc7a00;letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.warn-future p{font-size:13.5px;line-height:1.75}
+.warn-future b{color:#7a4a00}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.mock-screen{background:#fff;border:1px solid var(--line);margin:12px 0;font-family:'Noto Sans JP',sans-serif}
+.mock-bar{background:#e0e0e0;padding:4px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#444;border-bottom:1px solid #c0c0c0}
+.mock-body{padding:16px}
+.mock-h{font-family:'Shippori Mincho',serif;font-size:18px;margin-bottom:12px;color:var(--accent-3);border-bottom:2px solid var(--accent);padding-bottom:6px;display:inline-block}
+.mock-form{background:#f8faf6;border:1px solid var(--line);padding:10px 14px;margin-bottom:14px;display:flex;gap:8px;align-items:center;font-size:13px}
+.mock-form select{padding:4px 8px;font-size:13px;border:1px solid #aaa}
+.mock-form button{padding:4px 14px;background:var(--accent);color:#fff;border:none;font-size:13px;cursor:pointer}
+.mock-subject{background:#fff;border-left:4px solid var(--accent);padding:8px 12px;margin:8px 0}
+.mock-subject .sn{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700}
+.mock-records{margin-left:18px;margin-top:4px}
+.mock-records .rec{font-size:12px;color:var(--ink);padding:2px 0;border-bottom:1px dotted var(--line)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.06 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>@RequestParam で<br>絞り込もう</h1>
+  <div class="subtitle">FILTERING ── SEARCH BY SUBJECT</div>
+  <p class="lead">
+    Vol.6は<b>「検索獲得」</b>のマイルストーンです。<br>
+    画面に<b>科目セレクトボックスと「絞り込む」ボタン</b>を追加し、選んだ科目だけ表示できるようにします。<br>
+    技術的には：<code style="font-family:'JetBrains Mono'">@RequestParam</code> でURLパラメータを受け取り、<b>新しいJOIN SQL</b>（WHERE句付き）を XML Mapper に追加します。<br>
+    Vol.5までの<b>「動くものを作る」フェーズ</b>を一通り終え、ここから<b>「実用機能を増やすフェーズ」</b>に入ります。Cの<b>中盤戦の始まり</b>。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>Vol.6で新しく登場する import は <code>org.springframework.web.bind.annotation.RequestParam</code>。<br>
+    Controllerで <code>@RequestParam</code> を書くと赤線が出るので、<code>Ctrl + Shift + O</code> で自動 import。<br>
+    また <b>「Type mismatch: cannot convert from String to Integer」</b> のような赤線は、<code>@RequestParam</code> の<b>型を Integer にしている</b>のにJava側で String 引数にしてしまったケース。型を揃えてください。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#param">04 @RequestParam の使い方</a></li>
+    <li><a href="#design">05 設計：メソッドを分ける方針</a></li>
+    <li><a href="#create">06 XMLとService・Controller・HTMLの改修</a></li>
+    <li><a href="#run">07 ブラウザで動かして確認</a></li>
+    <li><a href="#trouble">08 ハマりどころと対処</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.6の主役は<b>「URLパラメータを受けて結果を変える」技術</b>。Web開発の<b>絶対必須スキル</b>です。<code>@RequestParam</code> はその第一歩。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.6-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">URLに ?subjectId=N を付けて1科目だけ表示</div>
+          <div class="desc"><code>/subjects?subjectId=1</code> でJavaだけ表示、<code>?subjectId=2</code> でSpring Bootだけ表示など。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">画面に科目セレクトボックスを追加</div>
+          <div class="desc">「絞り込む」ボタンで送信して同じURL `/subjects?subjectId=...` に遷移する仕組み。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">パラメータなしなら今まで通り全件表示</div>
+          <div class="desc"><code>/subjects</code>（パラメータなし）はVol.4と同じ動き。後方互換を保つ。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻でできるようになる動き</span>
+
+<span class="comment">// パラメータなし → 全科目</span>
+GET /subjects
+  → 全5科目＋それぞれの記録
+
+
+<span class="comment">// 1科目に絞り込み</span>
+GET /subjects?subjectId=<span class="num">1</span>
+  → Java (5件の記録)
+
+GET /subjects?subjectId=<span class="num">2</span>
+  → Spring Boot (3件の記録)
+
+GET /subjects?subjectId=<span class="num">4</span>
+  → HTML/CSS（記録なし）
+
+
+<span class="comment">// 画面の検索フォームから送信すれば</span>
+<span class="comment">// 上記URLが自動的に生成される</span>
+
+
+<span class="comment">// Vol.5の比較URLは引き続き使える</span>
+GET /subjects/legacy
+  → Vol.2方式（N+1問題が見える）</div>
+    </div>
+  </div>
+
+  <div class="warn-future">
+    <div class="wl">FUTURE NOTE ──</div>
+    <p>Vol.6では<b>「条件付きSELECT」と「全件SELECT」を別メソッドに分ける</b>シンプルな実装をします。<b>Vol.8で動的SQL（<code>&lt;if&gt; &lt;where&gt;</code>）</b>を学ぶと、「実はこれを1つにできる」と再構築できます。<b>「シンプルに作って後で統合」</b>は業務でも有効なパターン。</p>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── ブラウザで見える画面</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.6のゴール画面は<b>セレクトボックス付きの一覧画面</b>。「すべての科目」と各科目名がドロップダウンで選べ、「絞り込む」ボタンで結果が変わる。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-screen</span>
+      <span class="tag-desc">完成画面のモック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 完成画面（パラメータなし）</div>
+        <div class="mock-screen">
+          <div class="mock-bar">▮ http://localhost:8080/subjects</div>
+          <div class="mock-body">
+            <div class="mock-h">科目別 学習記録一覧</div>
+            <div class="mock-form">
+              科目：
+              <select>
+                <option>すべての科目</option>
+                <option>Java</option>
+                <option>Spring Boot</option>
+              </select>
+              <button>絞り込む</button>
+            </div>
+            <div class="mock-subject">
+              <div class="sn">Java</div>
+              <div class="mock-records"><div class="rec">2026-05-10 ── 60分</div></div>
+            </div>
+            <div class="mock-subject">
+              <div class="sn">Spring Boot</div>
+              <div class="mock-records"><div class="rec">2026-05-11 ── 45分</div></div>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-top:8px">... 他の科目もすべて表示 ...</div>
+          </div>
+        </div>
+        <div class="panel-head" style="margin-top:14px">// 絞り込み後</div>
+        <div class="mock-screen">
+          <div class="mock-bar">▮ http://localhost:8080/subjects?subjectId=1</div>
+          <div class="mock-body">
+            <div class="mock-form">
+              科目：
+              <select>
+                <option>Java（選択中）</option>
+              </select>
+              <button>絞り込む</button>
+            </div>
+            <div class="mock-subject">
+              <div class="sn">Java</div>
+              <div class="mock-records">
+                <div class="rec">2026-05-08 ── 60分</div>
+                <div class="rec">2026-05-10 ── 60分</div>
+                <div class="rec">... 計5件 ...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// プロジェクト構造の変化</span>
+
+todo/
+├ src/main/java/com/example/todo/
+│  ├ mapper/
+│  │  └ SubjectMapper.java     <span class="comment">// 改修</span>
+│  │      <span class="kw">// + findWithRecordsBySubjectId()</span>
+│  ├ service/
+│  │  └ SubjectService.java    <span class="comment">// 改修</span>
+│  │      <span class="kw">// + findWithRecordsBySubjectId()</span>
+│  └ controller/
+│     └ SubjectController.java <span class="comment">// 改修</span>
+│         <span class="kw">// list() に @RequestParam 追加</span>
+└ src/main/resources/
+   ├ mybatis/
+   │  └ SubjectMapper.xml      <span class="comment">// 改修</span>
+   │      <span class="kw">// + &lt;select id="findWithRecords...&gt;</span>
+   └ templates/
+      └ subjects/list.html     <span class="comment">// 改修</span>
+          <span class="kw">// + form, select, button</span>
+
+
+<span class="comment">// 触るのは4ファイル＋HTML 1つ</span>
+<span class="comment">// 新規ファイル作成なし</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.6は<b>「URLパラメータを受け取って分岐する」</b>パターン。A v2 で扱った <code>@PathVariable</code> とは別物ですが、概念は似ています。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">前提知識</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前提知識</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>該当箇所</th></tr>
+          <tr><td>Controller / @GetMapping</td><td>A v2 Vol.3</td></tr>
+          <tr><td>@PathVariable / URLパス変数</td><td>A v2 Vol.6</td></tr>
+          <tr><td>resultMap + JOIN</td><td>本編 M4</td></tr>
+          <tr><td>Thymeleaf の th:each</td><td>A v2 / 本編 M2</td></tr>
+          <tr><td>HTMLのform / select / option</td><td>HTML基礎</td></tr>
+        </table>
+        <div style="margin-top:16px;font-size:13.5px"><b>新しく学ぶこと</b>：</div>
+        <ol class="step-list" style="margin-top:6px">
+          <li><code>@RequestParam</code> でクエリストリングを受け取る</li>
+          <li><code>required = false</code> でパラメータを任意化</li>
+          <li>Thymeleafで <code>th:selected</code> を使う</li>
+          <li>SQLでWHERE句付きJOINを書く</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// @PathVariable vs @RequestParam</span>
+
+<span class="comment">// ─── @PathVariable（A v2 Vol.6で習得）───</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/tasks/{id}"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">edit</span>(
+    <span class="ann">@PathVariable</span> <span class="type">Integer</span> id) { ... }
+
+<span class="comment">// URL: /tasks/3</span>
+<span class="comment">// パスの一部として渡す</span>
+<span class="comment">// → 「リソースの特定」に使う</span>
+
+
+<span class="comment">// ─── @RequestParam（Vol.6で新規）───</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/subjects"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(
+    <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+    <span class="type">Integer</span> subjectId) { ... }
+
+<span class="comment">// URL: /subjects?subjectId=1</span>
+<span class="comment">// クエリストリングとして渡す</span>
+<span class="comment">// → 「絞り込み・検索・並び替え」に使う</span>
+
+
+<span class="comment">// ─── 使い分け原則 ───</span>
+<span class="comment">// @PathVariable: 「これ」を特定する</span>
+<span class="comment">// @RequestParam: 「条件」を渡す</span>
+
+
+<span class="comment">// 詳細は別冊S6で深掘り</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="param">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>@RequestParam の使い方</h2>
+    <span class="en">@REQUESTPARAM USAGE</span>
+  </div>
+  <p class="pattern-desc"><code>@RequestParam</code> の主要オプションを整理。<b>「必須/任意」「初期値」「名前指定」</b>の3つを押さえれば実用十分です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">requestparam-options</span>
+      <span class="tag-desc">@RequestParam の3つの使い方</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのパターン</div>
+        <div class="role-card">
+          <span class="label">PATTERN 1</span>
+          <div class="name">必須パラメータ（required=true・既定）</div>
+          <div class="desc">パラメータが無いと <b>400エラー</b>。「絶対必要なパラメータ」に使う。Vol.6では使わない。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PATTERN 2</span>
+          <div class="name">任意パラメータ（required=false）</div>
+          <div class="desc">パラメータが無ければ <code>null</code> が入る。<b>Vol.6で使う方式</b>。「絞り込みなしの状態も許す」設計。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PATTERN 3</span>
+          <div class="name">初期値あり（defaultValue=&quot;...&quot;）</div>
+          <div class="desc">パラメータが無ければ既定値が入る。「並び順 = updated_at が既定」など。<b>ページング</b>でよく使う（Vol.6では未使用）。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>結論</b>：「絞り込みなしも許す」設計なら <code>required = false</code> が定石。</p>
+      </div>
+      <div class="code"><span class="code-head">// パターン別のコード</span>
+
+<span class="comment">// PATTERN 1: 必須</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">show</span>(
+    <span class="ann">@RequestParam</span>
+    <span class="type">Integer</span> id) { ... }
+<span class="comment">// /subjects → 400エラー（id 不足）</span>
+<span class="comment">// /subjects?id=1 → OK</span>
+
+
+<span class="comment">// PATTERN 2: 任意（Vol.6で使う）</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(
+    <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+    <span class="type">Integer</span> subjectId) { ... }
+<span class="comment">// /subjects → OK（subjectId=null）</span>
+<span class="comment">// /subjects?subjectId=1 → OK（1）</span>
+
+
+<span class="comment">// PATTERN 3: 初期値</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(
+    <span class="ann">@RequestParam</span>(defaultValue = <span class="str">"10"</span>)
+    <span class="type">Integer</span> limit) { ... }
+<span class="comment">// /subjects → OK（limit=10）</span>
+<span class="comment">// /subjects?limit=20 → OK（20）</span>
+
+
+<span class="comment">// ─── 名前指定 ─── </span>
+<span class="comment">// URL側とJava側で名前を変えたい時</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(
+    <span class="ann">@RequestParam</span>(name = <span class="str">"q"</span>,
+                  required = <span class="kw">false</span>)
+    <span class="type">String</span> keyword) { ... }
+<span class="comment">// /subjects?q=Java → keyword="Java"</span>
+
+
+<span class="comment">// ─── 型変換 ─── </span>
+<span class="comment">// Spring が自動で文字列→Integer等</span>
+<span class="comment">// "1" → Integer 1</span>
+<span class="comment">// "abc" → 400エラー（変換失敗）</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="design">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>設計：メソッドを分ける方針</h2>
+    <span class="en">DESIGN ── SPLIT METHODS</span>
+  </div>
+  <p class="pattern-desc">Vol.6では「全件取得」と「1科目取得」を<b>別メソッド</b>に分けます。<code>@RequestParam</code> の値の有無で<b>Service側で分岐</b>するシンプル設計。動的SQLは Vol.8 で本格化します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">design-strategy</span>
+      <span class="tag-desc">2メソッド分割設計</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 全体の流れ</div>
+        <ol class="step-list">
+          <li>Controller が <code>@RequestParam Integer subjectId</code> を受け取る</li>
+          <li>subjectIdが<code>null</code>なら <code>findAllWithRecords()</code> を呼ぶ（Vol.4既存）</li>
+          <li>subjectIdが値ありなら <code>findWithRecordsBySubjectId(subjectId)</code> を呼ぶ（新規）</li>
+          <li>結果Listを <code>"subjects"</code> としてmodel追加（型は同じ <code>List&lt;Subject&gt;</code>）</li>
+          <li>HTMLは現状のまま動く（テンプレート変更最小）</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">なぜメソッドを分けるのか</div>
+          <p><b>シンプルだから</b>。動的SQLを使えば1つにまとめられるが、初学者には<b>「メソッド名と動作が一致」している方が読みやすい</b>。Vol.8で動的SQLを学んだ後、「これを統合してみよう」とリファクタリングする伸びしろを残します。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 分岐の流れ</span>
+
+<span class="comment">// Controller</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/subjects"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(
+    <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+    <span class="type">Integer</span> subjectId,
+    <span class="type">Model</span> model) {
+
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; subjects;
+  <span class="kw">if</span> (subjectId == <span class="kw">null</span>) {
+    subjects = service.<span class="fn">findAllWithRecords</span>();
+  } <span class="kw">else</span> {
+    subjects = service
+        .<span class="fn">findWithRecordsBySubjectId</span>(subjectId);
+  }
+
+  model.<span class="fn">addAttribute</span>(<span class="str">"subjects"</span>, subjects);
+  ...
+}
+
+
+<span class="comment">// Service</span>
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>() {
+  <span class="kw">return</span> mapper.<span class="fn">findAllWithRecords</span>();
+}
+
+<span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt;
+       <span class="fn">findWithRecordsBySubjectId</span>(<span class="type">Integer</span> id) {
+  <span class="kw">return</span> mapper
+      .<span class="fn">findWithRecordsBySubjectId</span>(id);
+}
+
+
+<span class="comment">// XMLマッパー側で SELECT は2つ存在</span>
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findAllWithRecords"</span> ...&gt;
+  SELECT ... FROM subjects s
+  LEFT JOIN study_records r ON ...
+  ORDER BY s.id, r.studied_on
+&lt;/<span class="kw">select</span>&gt;
+
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findWithRecordsBySubjectId"</span> ...&gt;
+  SELECT ... FROM subjects s
+  LEFT JOIN study_records r ON ...
+  <span class="kw">WHERE s.id = #{subjectId}</span>  <span class="comment">// ← 違いはここだけ</span>
+  ORDER BY s.id, r.studied_on
+&lt;/<span class="kw">select</span>&gt;</div>
+    </div>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>XMLとService・Controller・HTMLの改修</h2>
+    <span class="en">MODIFY EVERYTHING</span>
+  </div>
+  <p class="pattern-desc">4ファイルを順番に改修します。<b>XML → Mapper.java → Service → Controller → HTML</b> の下流方向。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-xml</span>
+      <span class="tag-desc">① SubjectMapper.xml にSELECTを追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectMapper.xml</code> を開く</li>
+          <li>既存の <code>findAllWithRecords</code> の<b>下</b>に新しい select を追加</li>
+          <li><b>resultMap は既存の <code>subjectWithRecords</code> を再利用</b></li>
+          <li>SQL は <code>findAllWithRecords</code> とほぼ同じで <code>WHERE s.id = #{subjectId}</code> が増えるだけ</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">resultMap の再利用</div>
+          <p>Vol.4で定義した <code>&lt;resultMap id="subjectWithRecords"&gt;</code> は<b>そのまま再利用できる</b>のがMyBatisの利点。1つのresultMapを複数のSELECTで共有できるので、保守性が高い。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.xml（追加部分のみ）</span>
+
+<span class="comment">&lt;!-- 既存の findAllWithRecords の後に追加 --&gt;</span>
+
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findWithRecordsBySubjectId"</span>
+        <span class="ann">resultMap</span>=<span class="str">"subjectWithRecords"</span>&gt;
+  SELECT
+    s.id          AS subject_id,
+    s.name        AS subject_name,
+    s.color       AS color,
+    s.created_at  AS subject_created_at,
+    r.id          AS record_id,
+    r.subject_id  AS record_subject_id,
+    r.studied_on  AS studied_on,
+    r.minutes     AS minutes,
+    r.memo        AS memo,
+    r.created_at  AS record_created_at
+  FROM subjects s
+  LEFT JOIN study_records r
+    ON s.id = r.subject_id
+  WHERE s.id = #{subjectId}
+  ORDER BY s.id, r.studied_on
+&lt;/<span class="kw">select</span>&gt;
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・findAllWithRecords とほぼ同じSQL</span>
+<span class="comment">// ・違いは WHERE s.id = #{subjectId} のみ</span>
+<span class="comment">// ・resultMap は既存を再利用</span>
+<span class="comment">// ・#{subjectId} は @Param 不要</span>
+<span class="comment">//   （メソッド引数が1個なので自動認識）</span>
+
+
+<span class="comment">// 「コピペで似たSQLが2つ並ぶ」のは</span>
+<span class="comment">// Vol.8で動的SQLを学ぶと解消される伏線</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-mapper-java</span>
+      <span class="tag-desc">② SubjectMapper.java にメソッド宣言追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectMapper.java</code> を開く</li>
+          <li><code>findAllWithRecords()</code> の下に <code>findWithRecordsBySubjectId(Integer subjectId)</code> を追加</li>
+          <li>保存</li>
+        </ol>
+        <p style="margin-top:12px;font-size:13.5px"><b>引数が1個なら <code>@Param</code> は省略可能</b>。SQL側で <code>#{subjectId}</code> と書ければ自動的に引数名で解決されます。</p>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.java（改修後）</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> com.example.todo.entity.Subject;
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>();
+
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>();
+
+  <span class="comment">// ★ Vol.6で追加</span>
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt;
+       <span class="fn">findWithRecordsBySubjectId</span>(<span class="type">Integer</span> subjectId);
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・@Param は引数1個なら省略可</span>
+<span class="comment">// ・引数複数になる時は @Param 必須</span>
+<span class="comment">// ・戻り値は同じ List&lt;Subject&gt;</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-service</span>
+      <span class="tag-desc">③ SubjectService に新メソッド追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectService.java</code> を開く</li>
+          <li><code>findAllWithRecordsLegacy()</code> の下に <code>findWithRecordsBySubjectId()</code> を追加</li>
+          <li>保存</li>
+        </ol>
+        <p style="margin-top:12px;font-size:13.5px">Service はMapperを呼ぶだけの<b>素通し</b>。集計などの業務ロジックはまだ無いので、薄い実装でOK。</p>
+      </div>
+      <div class="code"><span class="code-head">// SubjectService.java（改修後・関連部分のみ）</span>
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public class</span> <span class="type">SubjectService</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectMapper</span> subjectMapper;
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">StudyRecordMapper</span> studyRecordMapper;
+
+  <span class="comment">// 既存メソッド省略...</span>
+
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>() {
+    <span class="kw">return</span> subjectMapper.<span class="fn">findAllWithRecords</span>();
+  }
+
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt;
+       <span class="fn">findAllWithRecordsLegacy</span>() {
+    <span class="comment">// Vol.5の内容（省略）</span>
+  }
+
+  <span class="comment">// ★ Vol.6で追加</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt;
+       <span class="fn">findWithRecordsBySubjectId</span>(<span class="type">Integer</span> subjectId) {
+    <span class="kw">return</span> subjectMapper
+        .<span class="fn">findWithRecordsBySubjectId</span>(subjectId);
+  }
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・薄い実装でOK（Mapper素通し）</span>
+<span class="comment">// ・Vol.13以降で業務ロジックが入る予定</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-controller</span>
+      <span class="tag-desc">④ SubjectController に @RequestParam 追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectController.java</code> を開く</li>
+          <li>既存の <code>list(Model model)</code> の引数に <code>@RequestParam(required = false) Integer subjectId</code> を追加</li>
+          <li>メソッド内で <code>subjectId == null</code> での分岐を実装</li>
+          <li>セレクトボックス用に<b>全科目リスト</b>も <code>model</code> に追加</li>
+          <li>import を整理（<code>Ctrl + Shift + O</code>）</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">セレクトボックスに何のデータを渡すか</div>
+          <p>HTMLのセレクトボックスに「すべての科目名」を表示するため、<b>全科目リストを別途渡す</b>必要があります。<code>model.addAttribute("allSubjects", ...)</code> で <code>findAll()</code> の結果を渡します。<b>業務ではこれを「マスタ一覧」と呼びます</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectController.java（改修後・全体）</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind.annotation.GetMapping;
+<span class="kw">import</span> org.springframework.web.bind.annotation.RequestParam;
+<span class="kw">import</span> com.example.todo.entity.Subject;
+<span class="kw">import</span> com.example.todo.service.SubjectService;
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">SubjectController</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectService</span> subjectService;
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/subjects"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(
+      <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+      <span class="type">Integer</span> subjectId,
+      <span class="type">Model</span> model) {
+
+    <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; subjects;
+    <span class="kw">if</span> (subjectId == <span class="kw">null</span>) {
+      subjects = subjectService.<span class="fn">findAllWithRecords</span>();
+    } <span class="kw">else</span> {
+      subjects = subjectService
+          .<span class="fn">findWithRecordsBySubjectId</span>(subjectId);
+    }
+
+    model.<span class="fn">addAttribute</span>(<span class="str">"subjects"</span>, subjects);
+
+    <span class="comment">// セレクトボックス用の全科目リスト</span>
+    model.<span class="fn">addAttribute</span>(<span class="str">"allSubjects"</span>,
+        subjectService.<span class="fn">findAll</span>());
+
+    <span class="comment">// 選択中の科目IDを画面に保持</span>
+    model.<span class="fn">addAttribute</span>(<span class="str">"selectedSubjectId"</span>,
+        subjectId);
+
+    <span class="kw">return</span> <span class="str">"subjects/list"</span>;
+  }
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/subjects/legacy"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">listLegacy</span>(<span class="type">Model</span> model) {
+    <span class="comment">// Vol.5の内容（省略）</span>
+  }
+}</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-template</span>
+      <span class="tag-desc">⑤ templates/subjects/list.html に検索フォーム追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>templates/subjects/list.html</code> を開く</li>
+          <li><code>&lt;h1&gt;</code> の下に <code>form</code> + <code>select</code> + <code>button</code> を追加</li>
+          <li><code>th:each</code> で全科目を <code>option</code> に展開</li>
+          <li><code>th:selected</code> で選択状態を反映</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">form の method は GET</div>
+          <p>検索フォームは <code>method="get"</code> が定石。<b>URLパラメータとして送られる</b>ので、結果ページをブックマークしたりURLをコピペで共有できる。<b>「ブックマーカブル」</b>と呼ぶ重要な特性。詳細は別冊S6で。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// list.html（改修後・全体）</span>
+
+&lt;!<span class="type">DOCTYPE</span> html&gt;
+&lt;<span class="kw">html</span> <span class="ann">xmlns:th</span>=<span class="str">"http://www.thymeleaf.org"</span>&gt;
+&lt;<span class="kw">head</span>&gt;
+  &lt;<span class="kw">meta</span> <span class="ann">charset</span>=<span class="str">"UTF-8"</span>&gt;
+  &lt;<span class="kw">title</span>&gt;科目別学習記録一覧&lt;/<span class="kw">title</span>&gt;
+&lt;/<span class="kw">head</span>&gt;
+&lt;<span class="kw">body</span>&gt;
+  &lt;<span class="kw">h1</span>&gt;科目別 学習記録一覧&lt;/<span class="kw">h1</span>&gt;
+
+  <span class="comment">&lt;!-- ★ 検索フォーム --&gt;</span>
+  &lt;<span class="kw">form</span> <span class="ann">method</span>=<span class="str">"get"</span>
+        <span class="ann">th:action</span>=<span class="str">"@{/subjects}"</span>&gt;
+    科目：
+    &lt;<span class="kw">select</span> <span class="ann">name</span>=<span class="str">"subjectId"</span>&gt;
+      &lt;<span class="kw">option</span> <span class="ann">value</span>=<span class="str">""</span>&gt;すべての科目&lt;/<span class="kw">option</span>&gt;
+      &lt;<span class="kw">option</span> <span class="ann">th:each</span>=<span class="str">"s : ${allSubjects}"</span>
+              <span class="ann">th:value</span>=<span class="str">"${s.id}"</span>
+              <span class="ann">th:text</span>=<span class="str">"${s.name}"</span>
+              <span class="ann">th:selected</span>=
+                <span class="str">"${s.id == selectedSubjectId}"</span>&gt;
+      &lt;/<span class="kw">option</span>&gt;
+    &lt;/<span class="kw">select</span>&gt;
+    &lt;<span class="kw">button</span> <span class="ann">type</span>=<span class="str">"submit"</span>&gt;絞り込む&lt;/<span class="kw">button</span>&gt;
+  &lt;/<span class="kw">form</span>&gt;
+
+  <span class="comment">&lt;!-- 結果表示（Vol.2以来同じ） --&gt;</span>
+  &lt;<span class="kw">div</span> <span class="ann">th:each</span>=<span class="str">"s : ${subjects}"</span>&gt;
+    &lt;<span class="kw">h2</span> <span class="ann">th:text</span>=<span class="str">"${s.name}"</span>&gt;&lt;/<span class="kw">h2</span>&gt;
+
+    &lt;<span class="kw">ul</span> <span class="ann">th:if</span>=<span class="str">"${!#lists.isEmpty(s.records)}"</span>&gt;
+      &lt;<span class="kw">li</span> <span class="ann">th:each</span>=<span class="str">"r : ${s.records}"</span>&gt;
+        &lt;<span class="kw">span</span> <span class="ann">th:text</span>=<span class="str">"${r.studiedOn}"</span>&gt;&lt;/<span class="kw">span</span>&gt;
+        ── 
+        &lt;<span class="kw">span</span> <span class="ann">th:text</span>=<span class="str">"${r.minutes}"</span>&gt;&lt;/<span class="kw">span</span>&gt;分
+        （&lt;<span class="kw">span</span> <span class="ann">th:text</span>=<span class="str">"${r.memo}"</span>&gt;&lt;/<span class="kw">span</span>&gt;）
+      &lt;/<span class="kw">li</span>&gt;
+    &lt;/<span class="kw">ul</span>&gt;
+
+    &lt;<span class="kw">p</span> <span class="ann">th:if</span>=<span class="str">"${#lists.isEmpty(s.records)}"</span>&gt;
+      （記録なし）
+    &lt;/<span class="kw">p</span>&gt;
+  &lt;/<span class="kw">div</span>&gt;
+
+&lt;/<span class="kw">body</span>&gt;
+&lt;/<span class="kw">html</span>&gt;</div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かして確認</h2>
+    <span class="en">RUN IN BROWSER</span>
+  </div>
+  <p class="pattern-desc">作業後、起動して<b>3つのケース</b>でURLとログを確認します。<b>絞り込みの効果</b>を体感する。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">browser-check</span>
+      <span class="tag-desc">3つの動作確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>アプリ起動中なら停止、再起動</li>
+          <li>ブラウザで <code>http://localhost:8080/subjects</code> を開く（パラメータなし）</li>
+          <li>5科目すべて表示・セレクトボックスが「すべての科目」</li>
+          <li>セレクトボックスで「Java」を選んで「絞り込む」</li>
+          <li>URLが <code>?subjectId=1</code> に変わり、Javaだけ表示される</li>
+          <li>セレクトボックスが「Java（選択中）」になっている</li>
+          <li>URLを直接 <code>http://localhost:8080/subjects?subjectId=4</code> に書き換え→「HTML/CSS」のみ表示（記録なし）</li>
+          <li>コンソールでSQLログが切り替わるのを確認</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ ここまで動けばVol.6クリア！</p>
+      </div>
+      <div class="code"><span class="code-head">// パラメータなしの時のSQLログ</span>
+
+<span class="comment">// /subjects （パラメータなし）</span>
+
+==&gt;  Preparing:
+  SELECT s.id AS subject_id ...
+  FROM subjects s
+  LEFT JOIN study_records r ...
+  ORDER BY s.id, r.studied_on
+==&gt; Parameters:
+&lt;==      Total: 11
+
+<span class="comment">// + 「allSubjects」用の追加SQL 1回</span>
+==&gt;  Preparing:
+  SELECT * FROM subjects ORDER BY id
+==&gt; Parameters:
+&lt;==      Total: 5
+
+
+<span class="code-head" style="margin-top:14px">// subjectId=1 の時のSQLログ</span>
+
+<span class="comment">// /subjects?subjectId=1</span>
+
+==&gt;  Preparing:
+  SELECT s.id AS subject_id ...
+  FROM subjects s
+  LEFT JOIN study_records r ...
+  WHERE s.id = ?
+  ORDER BY s.id, r.studied_on
+==&gt; Parameters: 1(Integer)
+&lt;==      Total: 5
+
+<span class="comment">// + 「allSubjects」用の追加SQL 1回</span>
+==&gt;  Preparing:
+  SELECT * FROM subjects ORDER BY id
+==&gt; Parameters:
+&lt;==      Total: 5
+
+
+<span class="comment">// ─── 観察ポイント ───</span>
+<span class="comment">// ・WHERE s.id = ? が追加されている</span>
+<span class="comment">// ・Parameters: 1(Integer) で値が渡ってる</span>
+<span class="comment">// ・Total が 5（Java の記録5件）</span>
+<span class="comment">// ・「allSubjects」のSQLは毎回流れる</span>
+<span class="comment">//   （セレクトボックス描画のため）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>毎回 <code>allSubjects</code> 用のSQLが流れるのは、<b>少しもったいない</b>と感じるかもしれません。実務では<b>キャッシュ</b>を入れて改善することがありますが、今回は<b>意図的に毎回呼ぶ</b>素朴な実装にしています。「<b>動くものを優先・最適化は後</b>」の方針。気付くだけで十分。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">Vol.6で<b>起きやすいトラブル6選</b>。<code>@RequestParam</code> 絡みと、Thymeleafの <code>th:selected</code> 絡みが多い。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">troubles</span>
+      <span class="tag-desc">起きやすいトラブル</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card">
+          <span class="label">TROUBLE 1</span>
+          <div class="name">Required parameter 'subjectId' is not present（400エラー）</div>
+          <div class="desc"><b>原因</b>：<code>@RequestParam</code> に <code>required = false</code> を付け忘れた。<br><b>対処</b>：<code>@RequestParam(required = false) Integer subjectId</code> と書く。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 2</span>
+          <div class="name">Failed to convert value of type 'String' to required type 'Integer'</div>
+          <div class="desc"><b>原因</b>：URLに <code>?subjectId=abc</code> など数値変換できない値が来た。<br><b>対処</b>：ユーザー入力経路（セレクトボックス）では起きないが、URL直書きで発生。実務では「文字列で受けて自分で変換」する設計に変えることも。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 3</span>
+          <div class="name">セレクトボックスが「選択中」にならない</div>
+          <div class="desc"><b>原因</b>：<code>th:selected</code> の式が間違い／<code>selectedSubjectId</code> を model に追加し忘れ。<br><b>対処</b>：<code>th:selected="${s.id == selectedSubjectId}"</code> の形を確認。コントローラ側で必ず <code>model.addAttribute("selectedSubjectId", subjectId)</code> する。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 4</span>
+          <div class="name">「すべての科目」を選んでも絞り込まれたまま</div>
+          <div class="desc"><b>原因</b>：<code>&lt;option value=""&gt;</code> の value を空文字にし忘れ → URLに <code>?subjectId=</code>（空）が付くがControllerでは null にならないことがある。<br><b>対処</b>：option の value を空文字にし、Springが自動的に空文字を null に変換するのを期待。または「すべて」のとき form をリセット。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 5</span>
+          <div class="name">th:action で /subjects に飛ばない</div>
+          <div class="desc"><b>原因</b>：<code>action="/subjects"</code> と書いた（<code>th:action</code> ではなく素のaction）。<br><b>対処</b>：<code>th:action="@{/subjects}"</code> と書く。<code>@{...}</code> は context-path を考慮するThymeleaf構文。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 6</span>
+          <div class="name">画面に「セレクトボックス＋ボタン」が出ない</div>
+          <div class="desc"><b>原因</b>：form タグ内に <code>&lt;button&gt;</code> を入れ忘れ／name="subjectId" を付け忘れ。<br><b>対処</b>：form 内に submit型のbuttonがあり、selectのname属性が "subjectId" になっているか確認。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// TROUBLE 4 の詳細</span>
+
+<span class="comment">// HTML側</span>
+&lt;<span class="kw">select</span> <span class="ann">name</span>=<span class="str">"subjectId"</span>&gt;
+  &lt;<span class="kw">option</span> <span class="ann">value</span>=<span class="str">""</span>&gt;すべての科目&lt;/<span class="kw">option</span>&gt;
+  <span class="comment">// ↑ value="" が重要</span>
+  ...
+&lt;/<span class="kw">select</span>&gt;
+
+
+<span class="comment">// 「すべての科目」を選んで送信</span>
+<span class="comment">// → URL: /subjects?subjectId=</span>
+<span class="comment">// → クエリは subjectId="" となる</span>
+
+
+<span class="comment">// Springの自動変換</span>
+<span class="comment">// 空文字 → Integer は通常 null になる</span>
+<span class="comment">// が、設定や Spring Bootバージョンで挙動が違う</span>
+
+
+<span class="comment">// ─── 安全対策（推奨） ───</span>
+
+<span class="comment">// Controller側で明示的に分岐</span>
+<span class="kw">if</span> (subjectId == <span class="kw">null</span>) {
+  <span class="comment">// 全件取得</span>
+}
+<span class="comment">// 上記で動かない場合、文字列で受けて手動変換も検討</span>
+
+
+<span class="code-head" style="margin-top:14px">// TROUBLE 5 の対処</span>
+
+<span class="comment">// ─── ✗ NG ───</span>
+&lt;<span class="kw">form</span> <span class="ann">action</span>=<span class="str">"/subjects"</span>&gt;
+<span class="comment">// → contextパスが付かない</span>
+<span class="comment">// → 動く時もあるが脆い</span>
+
+
+<span class="comment">// ─── ✓ OK ───</span>
+&lt;<span class="kw">form</span> <span class="ann">th:action</span>=<span class="str">"@{/subjects}"</span>&gt;
+<span class="comment">// → Thymeleafがcontextパスを補完</span>
+<span class="comment">// → どんなデプロイ環境でも安全</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.6本編の<b>完了チェックリスト</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol6-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li><code>SubjectMapper.xml</code> に <code>findWithRecordsBySubjectId</code> の select 追加</li>
+          <li><code>SubjectMapper.java</code> に対応メソッド宣言を追加</li>
+          <li><code>SubjectService.java</code> に対応メソッド追加</li>
+          <li><code>SubjectController.java</code> の <code>list()</code> に <code>@RequestParam</code> 追加</li>
+          <li>Controllerで <code>subjectId == null</code> での分岐実装</li>
+          <li>Controllerで <code>allSubjects</code> と <code>selectedSubjectId</code> を model 追加</li>
+          <li><code>list.html</code> に <code>form</code> + <code>select</code> + <code>button</code> 追加</li>
+          <li><code>th:action="@{/subjects}"</code> で正しいURL指定</li>
+          <li><code>th:selected="${s.id == selectedSubjectId}"</code> で選択状態反映</li>
+          <li>アプリ起動時にエラーが出ない</li>
+          <li><code>/subjects</code> で全科目表示・セレクトは「すべての科目」</li>
+          <li>セレクトで「Java」を選んで送信→<code>?subjectId=1</code> でJavaのみ表示</li>
+          <li>URLを直接書き換えても正しく動く（ブックマーカブル）</li>
+          <li>コンソールでSQLログの違いが確認できる</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.6本編完了！</b><br>
+          <b>検索獲得</b>のスキル取得です。Cの<b>中盤戦のスタート</b>。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で獲得したスキル</span>
+
+★ <span class="kw">検索獲得</span> ── 達成！
+
+  <span class="comment">// できるようになったこと:</span>
+  <span class="comment">// ・@RequestParam でURLパラメータ受取</span>
+  <span class="comment">// ・required=false で任意化</span>
+  <span class="comment">// ・WHERE句付きJOIN文の追加</span>
+  <span class="comment">// ・Thymeleafでセレクトボックス描画</span>
+  <span class="comment">// ・th:selected で選択状態保持</span>
+  <span class="comment">// ・th:action でフォーム遷移先指定</span>
+  <span class="comment">// ・GETフォームでブックマーカブル設計</span>
+
+
+<span class="code-head" style="margin-top:14px">// 次にやること</span>
+
+<span class="comment">// ① 別冊 S6 を読む</span>
+<span class="comment">//   タイトル: 「検索URLの設計思想」</span>
+<span class="comment">//   内容: クエリストリング設計 /</span>
+<span class="comment">//        RESTful検索 / ページング予告 /</span>
+<span class="comment">//        ブックマーカブル / POST vs GET</span>
+
+
+<span class="comment">// ② Vol.7 本編：</span>
+<span class="comment">//   タイトル: 「日付入力を完全攻略しよう」</span>
+<span class="comment">//   獲得スキル: LocalDate + @DateTimeFormat</span>
+<span class="comment">//   内容:</span>
+<span class="comment">//   ・新規登録画面を作る（仮実装 → 本実装）</span>
+<span class="comment">//   ・日付ハマり3選を冒頭で先回り</span>
+<span class="comment">//   ・type="date" + LocalDate の組み合わせ</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(31,62,44,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S6</div>
+    <p>本編Vol.6お疲れさまでした。<b>「検索機能」</b>を手に入れたあなたに、別冊S6「<b>検索URLの設計思想</b>」では、<b>「URLはユーザーへのインターフェース」</b>という観点で深掘りします。クエリストリングの命名／RESTfulな検索URL／ページング設計／ブックマーカブルとは何か／POST vs GET の使い分け── 業務開発で<b>「ユーザーに優しいシステム」</b>を作るための知見集です。<b>続けて別冊S6へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.06 / 15 ── REQUESTPARAM SEARCH（本編）</span>
+</footer>
+
+</body>
+</html>

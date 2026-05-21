@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.9 別冊 集計クエリの設計</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a302a;
+  --paper:#e8eae3;
+  --paper-2:#d4d8ce;
+  --accent:#a4af90;
+  --accent-2:#b5bfa2;
+  --accent-3:#606852;
+  --muted:#737a72;
+  --line:#b8c0b1;
+  --code-bg:#1f231f;
+  --code-text:#e8eae3;
+  --panel-bg:#f0f2eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✧';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#9aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(164,175,144,0.09);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.judgement-box{background:#fff;border:1px solid var(--line);padding:14px 16px;margin:14px 0}
+.judgement-box .q{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);margin-bottom:6px}
+.judgement-box .a{font-size:13px;padding-left:14px;border-left:2px solid var(--accent)}
+
+.bad-good{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.bad-good .b,.bad-good .g{background:#fff;border:1px solid var(--line);padding:12px 14px}
+.bad-good .b{border-left:3px solid #b05050}
+.bad-good .g{border-left:3px solid var(--accent)}
+.bad-good .ph{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.15em;margin-bottom:6px}
+.bad-good .b .ph{color:#b05050}
+.bad-good .g .ph{color:var(--accent)}
+.bad-good .ttl{font-family:'Shippori Mincho',serif;font-size:14px;font-weight:700;color:var(--accent-3);margin-bottom:6px}
+.bad-good p{font-size:13px}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .bad-good{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.09 / 15</span>
+    <span class="kind-tag">別冊</span>
+  </div>
+  <h1>集計クエリの<br>設計</h1>
+  <div class="subtitle">AGGREGATE QUERY DESIGN</div>
+  <p class="lead">
+    本編Vol.9で <code style="font-family:'JetBrains Mono'">COUNT / SUM / AVG / GROUP BY</code> の基本を習得しました。別冊S9では、<b>集計クエリの設計感覚</b>を深掘ります。<br>
+    キーワードは<b>「集計関数の網羅」「WHERE と HAVING の使い分け」「インデックス設計」「NULL の扱い」「DTOの命名と分離」「集計の業務感」</b>。<br>
+    Vol.11 で扱う <code style="font-family:'JetBrains Mono'">HAVING</code> の予告も入ります。<br>
+    Cの中で<b>「業務システムらしい統計画面を設計できる目」</b>を育てる別冊。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#theme">01 この別冊のテーマ</a></li>
+    <li><a href="#functions">02 集計関数の完全網羅</a></li>
+    <li><a href="#where-having">03 WHERE と HAVING の使い分け</a></li>
+    <li><a href="#nullable">04 NULL と COALESCE の扱い</a></li>
+    <li><a href="#groupby">05 GROUP BY の応用</a></li>
+    <li><a href="#perf">06 集計クエリのパフォーマンス</a></li>
+    <li><a href="#dto-design">07 DTO 設計のお作法</a></li>
+    <li><a href="#trouble">08 集計のハマりどころ</a></li>
+    <li><a href="#next">09 次の本編へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="theme">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この別冊のテーマ</h2>
+    <span class="en">THEME</span>
+  </div>
+  <p class="pattern-desc">本編Vol.9で<b>「集計の第一歩」</b>を踏み出しました。別冊S9では、業務開発で<b>「集計画面を設計するセンス」</b>を育てます。集計は<b>SQLが最も得意とする領域</b>。Java側でループするより圧倒的に速く・読みやすく書けます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-aggr-design</span>
+      <span class="tag-desc">集計設計の重要性</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 集計が問われる場面</div>
+        <div class="role-card">
+          <span class="label">場面1</span>
+          <div class="name">ダッシュボード画面</div>
+          <div class="desc">「今月の売上合計」「ユーザー数の推移」など。<b>業務システムの花形</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">場面2</span>
+          <div class="name">レポート出力</div>
+          <div class="desc">「月次レポート」「年次決算」「KPI報告」。<b>集計の精度・正確さが直接ビジネスに影響</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">場面3</span>
+          <div class="name">ランキング・統計</div>
+          <div class="desc">「TOP10商品」「平均的なユーザー行動」など。<b>ユーザー行動分析の入り口</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">場面4</span>
+          <div class="name">ヘルスチェック・運用監視</div>
+          <div class="desc">「過去1時間のエラー数」「平均応答時間」など、<b>システム自体の集計</b>。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で答える4つの問い</span>
+
+<span class="comment">// 問1: 集計関数は他に何がある？</span>
+<span class="comment">//   → MAX / MIN / DISTINCT / 統計関数</span>
+
+<span class="comment">// 問2: WHERE と HAVING の違いは？</span>
+<span class="comment">//   → 集計前 vs 集計後</span>
+
+<span class="comment">// 問3: NULL はどう扱うか？</span>
+<span class="comment">//   → COALESCE / IFNULL / IS NULL</span>
+
+<span class="comment">// 問4: 業務での DTO 設計の原則は？</span>
+<span class="comment">//   → 画面1個 = DTO 1個 を基本に</span>
+
+
+<span class="comment">// 結論を先に：</span>
+<span class="comment">// ・SQL の集計関数を覚えて DBに任せる</span>
+<span class="comment">// ・WHERE は行の絞り込み、HAVING はグループの絞り込み</span>
+<span class="comment">// ・NULL は明示的に扱う</span>
+<span class="comment">// ・DTOは画面単位で気持ちよく</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="functions">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>集計関数の完全網羅</h2>
+    <span class="en">ALL AGGREGATE FUNCTIONS</span>
+  </div>
+  <p class="pattern-desc">SQLの集計関数は本編で扱った5つ以外にも多数。<b>業務で出会う代表的なもの</b>を整理。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">all-functions</span>
+      <span class="tag-desc">主要集計関数</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 集計関数一覧</div>
+        <table class="compare-tbl">
+          <tr><th>関数</th><th>意味</th><th>業務例</th></tr>
+          <tr><td><code>COUNT(*)</code></td><td>行数</td><td>注文件数</td></tr>
+          <tr><td><code>COUNT(DISTINCT col)</code></td><td>重複除いた個数</td><td>ユニークユーザー数</td></tr>
+          <tr><td><code>SUM(col)</code></td><td>合計</td><td>売上合計</td></tr>
+          <tr><td><code>AVG(col)</code></td><td>平均</td><td>平均評価</td></tr>
+          <tr><td><code>MAX(col)</code></td><td>最大値</td><td>最高得点</td></tr>
+          <tr><td><code>MIN(col)</code></td><td>最小値</td><td>最低価格</td></tr>
+          <tr><td><code>GROUP_CONCAT(col)</code></td><td>連結（MySQL固有）</td><td>関連タグ一覧</td></tr>
+          <tr><td><code>STDDEV(col)</code></td><td>標準偏差</td><td>得点のばらつき</td></tr>
+          <tr><td><code>VARIANCE(col)</code></td><td>分散</td><td>統計分析</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>業務で最頻出</b>：<code>COUNT</code> / <code>SUM</code> / <code>AVG</code> / <code>MAX</code> / <code>MIN</code> の5つ。<b>COUNT(DISTINCT)</b> も重要。</p>
+      </div>
+      <div class="code"><span class="code-head">// 業務での集計例</span>
+
+<span class="comment">// ─── ユニーク数 ───</span>
+<span class="comment">// 「今月学習した日数」</span>
+SELECT COUNT(DISTINCT studied_on)
+FROM study_records
+WHERE studied_on &gt;= <span class="str">'2026-05-01'</span>;
+
+
+<span class="comment">// ─── 最大・最小 ───</span>
+<span class="comment">// 「最長学習時間と最短」</span>
+SELECT
+  MAX(minutes) AS longest,
+  MIN(minutes) AS shortest
+FROM study_records
+WHERE subject_id = <span class="num">1</span>;
+
+
+<span class="comment">// ─── 連結 ───</span>
+<span class="comment">// 「Javaのメモ一覧をカンマ区切り」</span>
+SELECT
+  s.name,
+  GROUP_CONCAT(r.memo SEPARATOR <span class="str">', '</span>)
+    AS all_memos
+FROM subjects s
+LEFT JOIN study_records r
+  ON s.id = r.subject_id
+WHERE s.id = <span class="num">1</span>
+GROUP BY s.id, s.name;
+
+
+<span class="comment">// ─── 統計 ───</span>
+<span class="comment">// 「学習時間のばらつき」</span>
+SELECT
+  subject_id,
+  AVG(minutes) AS mean,
+  STDDEV(minutes) AS sd
+FROM study_records
+GROUP BY subject_id;
+
+
+<span class="comment">// ─── 複合 ───</span>
+<span class="comment">// 「学習効率レポート」</span>
+SELECT
+  subject_id,
+  COUNT(*) AS sessions,
+  SUM(minutes) AS total_min,
+  AVG(minutes) AS avg_min,
+  MAX(minutes) AS longest,
+  MIN(minutes) AS shortest
+FROM study_records
+GROUP BY subject_id;</div>
+    </div>
+  </div>
+</section>
+
+<section id="where-having">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>WHERE と HAVING の使い分け</h2>
+    <span class="en">WHERE vs HAVING</span>
+  </div>
+  <p class="pattern-desc">集計クエリで<b>「絞り込み」</b>をする時、<code>WHERE</code> と <code>HAVING</code> の<b>使い分け</b>が問われます。Vol.11 で本格的に扱いますが、ここで予告。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">where-vs-having</span>
+      <span class="tag-desc">2つの絞り込みの違い</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 違いの本質</div>
+        <div class="role-card">
+          <span class="label">WHERE</span>
+          <div class="name">集計「前」の絞り込み</div>
+          <div class="desc">JOINや各行をフィルタした後で<b>GROUP BYに渡す</b>。「<b>5月の記録だけ集計したい</b>」など、<b>個別の行を絞り込む</b>場合。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">HAVING</span>
+          <div class="name">集計「後」の絞り込み</div>
+          <div class="desc">GROUP BY で集計した<b>結果</b>に対する絞り込み。「<b>合計時間が60分以上の科目だけ</b>」など、<b>集計値を条件に</b>する場合。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>判断軸</b>：「集計関数を使った条件か？」 → YES なら HAVING、NO なら WHERE。</p>
+      </div>
+      <div class="code"><span class="code-head">// WHERE と HAVING の例</span>
+
+<span class="comment">// ─── WHERE：個別行の絞り込み ───</span>
+SELECT s.id, s.name,
+       SUM(r.minutes) AS total
+FROM subjects s
+LEFT JOIN study_records r
+  ON s.id = r.subject_id
+WHERE r.studied_on &gt;= <span class="str">'2026-05-01'</span>
+  AND r.studied_on &lt;= <span class="str">'2026-05-31'</span>
+GROUP BY s.id, s.name;
+
+<span class="comment">// → 「5月の記録だけを対象に集計」</span>
+<span class="comment">// → 集計前の絞り込み</span>
+
+
+<span class="comment">// ─── HAVING：集計値の絞り込み ───</span>
+SELECT s.id, s.name,
+       SUM(r.minutes) AS total
+FROM subjects s
+LEFT JOIN study_records r
+  ON s.id = r.subject_id
+GROUP BY s.id, s.name
+HAVING total &gt;= <span class="num">60</span>;
+
+<span class="comment">// → 「合計が60分以上の科目だけ」</span>
+<span class="comment">// → 集計後の絞り込み</span>
+
+
+<span class="comment">// ─── 両方使う ───</span>
+SELECT s.id, s.name,
+       SUM(r.minutes) AS total
+FROM subjects s
+LEFT JOIN study_records r
+  ON s.id = r.subject_id
+WHERE r.studied_on &gt;= <span class="str">'2026-05-01'</span>
+GROUP BY s.id, s.name
+HAVING total &gt;= <span class="num">120</span>;
+
+<span class="comment">// → 「5月の記録のみを集計し、120分以上の科目」</span>
+
+
+<span class="comment">// ─── SQL 実行順序（重要） ───</span>
+<span class="comment">// 1. FROM / JOIN     ← テーブル結合</span>
+<span class="comment">// 2. WHERE           ← 個別行のフィルタ</span>
+<span class="comment">// 3. GROUP BY        ← グループ化</span>
+<span class="comment">// 4. HAVING          ← 集計値のフィルタ</span>
+<span class="comment">// 5. SELECT          ← 列の選択</span>
+<span class="comment">// 6. ORDER BY        ← 並び替え</span>
+<span class="comment">// 7. LIMIT           ← 件数制限</span>
+
+
+<span class="comment">// 「WHERE → GROUP BY → HAVING」</span>
+<span class="comment">// の順番を意識すると間違わない</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>WHERE に集計関数を書きたい</b>」と思った時は<b>HAVING</b>です。<code>WHERE SUM(...) &gt; 100</code> は SQL エラー。逆に「<b>WHERE で十分なのに HAVING を使う</b>」のはパフォーマンスロス（集計前の絞り込みの方が処理する行が少なくて済む）。<b>「できるだけ早い段階で絞る」</b>のがSQL最適化の鉄則。</p>
+  </div>
+</section>
+
+<section id="nullable">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>NULL と COALESCE の扱い</h2>
+    <span class="en">NULL HANDLING</span>
+  </div>
+  <p class="pattern-desc">集計クエリで<b>NULL は避けられない問題</b>。LEFT JOIN すると子テーブル側が NULL になり、SUM(NULL) は NULL になります。業務での処理パターンを整理。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">null-handling</span>
+      <span class="tag-desc">NULL処理の3パターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// NULL処理の3パターン</div>
+        <div class="role-card">
+          <span class="label">パターン1</span>
+          <div class="name">COALESCE で代替値</div>
+          <div class="desc"><code>COALESCE(val, default)</code>。<code>val</code> が NULL なら <code>default</code> を返す。<b>業務で最頻出</b>。複数引数も可：<code>COALESCE(a, b, c)</code> で「最初の非NULL」。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">パターン2</span>
+          <div class="name">IFNULL（MySQL固有）</div>
+          <div class="desc">2引数版の COALESCE。<code>IFNULL(val, 0)</code>。COALESCE と動作はほぼ同じ。<b>標準SQLは COALESCE</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">パターン3</span>
+          <div class="name">NULL のままJavaへ→ Optional / null チェック</div>
+          <div class="desc">DTO 側で <code>null</code> を許容し、画面で <code>th:text=&quot;${row.total ?: 0}&quot;</code> 等で処理。<b>業務では避けがち</b>（複雑になる）。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>推奨</b>：<b>SQL の COALESCE で 0 に</b>するのが最も安全＆シンプル。</p>
+      </div>
+      <div class="code"><span class="code-head">// NULL関連の実例</span>
+
+<span class="comment">// ─── COALESCE の使い方 ───</span>
+
+<span class="comment">// 基本</span>
+COALESCE(SUM(minutes), <span class="num">0</span>)
+<span class="comment">// SUM が NULL なら 0</span>
+
+
+<span class="comment">// 複数候補</span>
+COALESCE(nickname, real_name, <span class="str">'匿名'</span>)
+<span class="comment">// nickname→ NULL なら real_name</span>
+<span class="comment">// それも NULL なら '匿名'</span>
+
+
+<span class="comment">// 文字列連結での NULL 防御</span>
+COALESCE(memo, <span class="str">''</span>)
+<span class="comment">// memo が NULL でも空文字</span>
+
+
+<span class="comment">// ─── 業務での集計テンプレート ───</span>
+
+SELECT
+  s.id,
+  s.name,
+  COUNT(r.id) AS cnt,           <span class="comment">// NULLを数えない</span>
+  COALESCE(SUM(r.minutes), <span class="num">0</span>)
+    AS total,                  <span class="comment">// NULL を 0 に</span>
+  COALESCE(AVG(r.minutes), <span class="num">0</span>)
+    AS avg,                    <span class="comment">// 同上</span>
+  COALESCE(MAX(r.minutes), <span class="num">0</span>)
+    AS longest
+FROM subjects s
+LEFT JOIN study_records r
+  ON s.id = r.subject_id
+GROUP BY s.id, s.name
+
+
+<span class="comment">// → 全列で NULL を排除</span>
+<span class="comment">// → Java側で安心して受けられる</span>
+
+
+<span class="code-head" style="margin-top:14px">// NULL の罠</span>
+
+<span class="comment">// 1. NULL の演算</span>
+<span class="comment">// NULL + 1 = NULL  （0ではない）</span>
+<span class="comment">// NULL = NULL = NULL（true ではない）</span>
+
+
+<span class="comment">// 2. NULL の比較</span>
+<span class="comment">// WHERE col = NULL  ← 必ず false（要注意）</span>
+<span class="comment">// WHERE col IS NULL ← 正しい書き方</span>
+
+
+<span class="comment">// 3. COUNT の挙動</span>
+<span class="comment">// COUNT(*)    : 全行を数える</span>
+<span class="comment">// COUNT(col)  : col が NULL でない行</span>
+<span class="comment">// COUNT(1)    : COUNT(*) と同じ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>NULLの扱いは<b>「DB の三大難所」</b>のひとつと言われます（他に「タイムゾーン」「文字コード」）。<b>業務では「NULLを許容しない設計」</b>か<b>「明示的に処理する設計」</b>のどちらかを徹底するのが安全。<b>「曖昧なNULL」が一番危ない</b>。</p>
+  </div>
+</section>
+
+<section id="groupby">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>GROUP BY の応用</h2>
+    <span class="en">GROUP BY VARIATIONS</span>
+  </div>
+  <p class="pattern-desc"><code>GROUP BY</code> は<b>1列以上</b>を指定できます。応用パターンを紹介。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">groupby-app</span>
+      <span class="tag-desc">複数キー・関数式での GROUP BY</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 応用パターン</div>
+        <div class="role-card">
+          <span class="label">パターンA</span>
+          <div class="name">複数キーでグループ化</div>
+          <div class="desc">「科目×日付」「ユーザー×月」など、<b>2つ以上の軸で集計</b>。Vol.12 で「日別×科目」のクロス集計に発展。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">パターンB</span>
+          <div class="name">関数式でグループ化</div>
+          <div class="desc"><code>GROUP BY DATE(created_at)</code> で日単位、<code>GROUP BY MONTH(created_at)</code> で月単位。<b>時系列集計</b>でよく使う。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">パターンC</span>
+          <div class="name">CASE 式でグループ化</div>
+          <div class="desc"><code>GROUP BY CASE WHEN minutes &gt;= 60 THEN '長' ELSE '短' END</code>。<b>カテゴリ化集計</b>。業務でよく使う。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 応用パターンの例</span>
+
+<span class="comment">// ─── パターンA: 複数キー ───</span>
+<span class="comment">// 「科目別・月別の合計時間」</span>
+
+SELECT
+  s.name AS subject_name,
+  DATE_FORMAT(r.studied_on, <span class="str">'%Y-%m'</span>)
+    AS month,
+  SUM(r.minutes) AS total
+FROM subjects s
+JOIN study_records r ON s.id = r.subject_id
+GROUP BY s.name,
+         DATE_FORMAT(r.studied_on, <span class="str">'%Y-%m'</span>)
+ORDER BY month, subject_name;
+
+<span class="comment">// 結果:</span>
+<span class="comment">// subject_name | month   | total</span>
+<span class="comment">// Java         | 2026-05 |  375</span>
+<span class="comment">// Spring Boot  | 2026-05 |  255</span>
+<span class="comment">// SQL          | 2026-05 |   30</span>
+
+
+<span class="comment">// ─── パターンB: 関数式 ───</span>
+<span class="comment">// 「日別の合計時間（学習日ベース）」</span>
+
+SELECT
+  studied_on,
+  SUM(minutes) AS daily_total
+FROM study_records
+WHERE studied_on &gt;= <span class="str">'2026-05-08'</span>
+GROUP BY studied_on
+ORDER BY studied_on;
+
+<span class="comment">// → Vol.12 でこの形を使う</span>
+
+
+<span class="comment">// ─── パターンC: CASE ───</span>
+<span class="comment">// 「長時間／短時間の本数」</span>
+
+SELECT
+  CASE
+    WHEN minutes &gt;= <span class="num">60</span> THEN <span class="str">'長時間'</span>
+    ELSE <span class="str">'短時間'</span>
+  END AS duration_type,
+  COUNT(*) AS count
+FROM study_records
+GROUP BY
+  CASE
+    WHEN minutes &gt;= <span class="num">60</span> THEN <span class="str">'長時間'</span>
+    ELSE <span class="str">'短時間'</span>
+  END;
+
+<span class="comment">// 結果:</span>
+<span class="comment">// duration_type | count</span>
+<span class="comment">// 長時間        |  6</span>
+<span class="comment">// 短時間        |  3</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="perf">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>集計クエリのパフォーマンス</h2>
+    <span class="en">PERFORMANCE</span>
+  </div>
+  <p class="pattern-desc">集計クエリは<b>「全件を計算する」</b>性質上、テーブルが大きくなると遅くなります。<b>パフォーマンス改善の3つの定石</b>を押さえます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">aggr-perf</span>
+      <span class="tag-desc">集計の高速化</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 高速化の3定石</div>
+        <div class="role-card">
+          <span class="label">定石1</span>
+          <div class="name">GROUP BY 列にインデックス</div>
+          <div class="desc"><code>GROUP BY subject_id</code> なら <code>subject_id</code> 列にインデックスがあると速い。<b>頻繁に集計に使う列はINDEX化</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">定石2</span>
+          <div class="name">WHERE で集計対象を絞る</div>
+          <div class="desc">「過去1ヶ月だけ」など期間を絞れば、集計対象の行が激減。<b>WHERE → GROUP BY の順で処理</b>される性質を活かす。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">定石3</span>
+          <div class="name">集計結果のキャッシュ</div>
+          <div class="desc">同じ集計を頻繁に表示するなら、結果を<b>キャッシュ</b>するか<b>サマリーテーブル</b>を作る。大規模システムでは必須。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px">学習記録アプリは小規模なので<b>定石1だけ</b>意識すれば十分。大規模化したら定石2・3を検討。</p>
+      </div>
+      <div class="code"><span class="code-head">// インデックス設計の例</span>
+
+<span class="comment">// 集計クエリでよく使う列を INDEX化</span>
+
+<span class="kw">CREATE INDEX</span> idx_subject_id
+  <span class="kw">ON</span> study_records(subject_id);
+
+<span class="kw">CREATE INDEX</span> idx_studied_on
+  <span class="kw">ON</span> study_records(studied_on);
+
+<span class="comment">// 複合インデックス（より高速）</span>
+<span class="kw">CREATE INDEX</span> idx_subject_studied
+  <span class="kw">ON</span> study_records(subject_id, studied_on);
+
+
+<span class="comment">// ─── 検証手法 ───</span>
+
+<span class="comment">// EXPLAIN で実行計画を見る</span>
+EXPLAIN
+SELECT subject_id,
+       SUM(minutes) AS total
+FROM study_records
+WHERE studied_on &gt;= <span class="str">'2026-05-01'</span>
+GROUP BY subject_id;
+
+
+<span class="comment">// 結果に注目：</span>
+<span class="comment">// ・type が ALL → 全件スキャン（遅い）</span>
+<span class="comment">// ・type が ref → インデックス使用（速い）</span>
+<span class="comment">// ・rows: 検査する行数の予測</span>
+<span class="comment">// ・Extra: Using filesort などの情報</span>
+
+
+<span class="code-head" style="margin-top:14px">// サマリーテーブル戦略（大規模）</span>
+
+<span class="comment">// 集計結果を別テーブルに保存</span>
+<span class="kw">CREATE TABLE</span> subject_stats_daily (
+  subject_id INT,
+  date DATE,
+  total_minutes INT,
+  record_count INT,
+  PRIMARY KEY (subject_id, date)
+);
+
+
+<span class="comment">// バッチで毎日更新</span>
+<span class="comment">// 画面では集計せず、このテーブルを SELECT</span>
+
+
+<span class="comment">// → 高速だが整合性管理が必要</span>
+<span class="comment">// → 中・大規模プロジェクトの定番手法</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="dto-design">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>DTO 設計のお作法</h2>
+    <span class="en">DTO DESIGN</span>
+  </div>
+  <p class="pattern-desc">DTO は<b>画面ごとに増えていく</b>性質があります。業務で<b>「混乱しないDTO設計」</b>のお作法を整理。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">dto-design</span>
+      <span class="tag-desc">DTO命名と分離のコツ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// DTOの3原則</div>
+        <div class="role-card">
+          <span class="label">原則1</span>
+          <div class="name">「画面1個」=「DTO1個」を基本に</div>
+          <div class="desc">画面ごとに DTO を作る。<b>「使い回し」を控える</b>。再利用しようとして変更したら、別画面が壊れる事故が多い。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">原則2</span>
+          <div class="name">命名は「対象＋用途」</div>
+          <div class="desc"><code>SubjectStat</code>（科目統計）、<code>DailyTotal</code>（日別合計）、<code>UserRanking</code>（ユーザーランキング）。<b>「何の何か」</b>を一目で。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">原則3</span>
+          <div class="name">不変オブジェクト化を検討</div>
+          <div class="desc">DTO は読み取り専用なので、<code>@Value</code>（Lombok）や Java 14+ の <code>record</code> で<b>不変</b>にすると安全。Cでは <code>@Data</code> で十分。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>Cの15巻で増える DTO</b>：<code>SubjectStat</code>（Vol.9）、<code>DailyTotal</code>（Vol.12）、<code>RankingDto</code>（任意）など。</p>
+      </div>
+      <div class="code"><span class="code-head">// DTO命名・パッケージ構成</span>
+
+<span class="comment">// ─── 推奨パッケージ構造 ───</span>
+
+com.example.todo/
+├ entity/         <span class="comment">// DBテーブル対応</span>
+│   ├ Subject.java
+│   └ StudyRecord.java
+├ form/           <span class="comment">// 画面入力</span>
+│   └ StudyRecordForm.java
+├ dto/            <span class="comment">// 画面出力（読み取り）</span>
+│   ├ SubjectStat.java
+│   ├ DailyTotal.java
+│   └ Ranking.java
+├ mapper/
+├ service/
+└ controller/
+
+
+<span class="comment">// ─── 役割の明確な分離 ───</span>
+
+<span class="comment">// Entity: DBに対応する型</span>
+<span class="comment">//   ↔ DBのテーブルと1対1</span>
+
+<span class="comment">// Form: 画面から来る入力</span>
+<span class="comment">//   ↔ HTMLフォームと対応</span>
+<span class="comment">//   ↔ バリデーション持つ</span>
+
+<span class="comment">// DTO: 画面に渡す出力</span>
+<span class="comment">//   ↔ 任意の形（集計・複合）</span>
+<span class="comment">//   ↔ 読み取り専用が原則</span>
+
+
+<span class="code-head" style="margin-top:14px">// DTO のアンチパターン</span>
+
+<span class="comment">// ─── ✗ NG: 万能DTO ───</span>
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">DataDto</span> {
+  <span class="kw">private</span> <span class="type">Integer</span> id;
+  <span class="kw">private</span> <span class="type">String</span> name;
+  <span class="kw">private</span> <span class="type">Integer</span> count;
+  <span class="kw">private</span> <span class="type">Integer</span> total;
+  <span class="kw">private</span> <span class="type">Integer</span> average;
+  <span class="kw">private</span> <span class="type">LocalDate</span> date;
+  <span class="kw">private</span> <span class="type">String</span> category;
+  <span class="comment">// ... 何でも入る</span>
+}
+<span class="comment">// → 何の DTO か分からない</span>
+<span class="comment">// → どのフィールドがnullなのか不明</span>
+
+
+<span class="comment">// ─── ✓ OK: 用途別DTO ───</span>
+<span class="ann">@Data</span> <span class="kw">public class</span> <span class="type">SubjectStat</span> { ... }
+<span class="ann">@Data</span> <span class="kw">public class</span> <span class="type">DailyTotal</span> { ... }
+<span class="ann">@Data</span> <span class="kw">public class</span> <span class="type">UserRanking</span> { ... }
+<span class="comment">// → 名前で用途が分かる</span>
+<span class="comment">// → 各DTOのフィールドが意味を持つ</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>集計のハマりどころ</h2>
+    <span class="en">AGGREGATION PITFALLS</span>
+  </div>
+  <p class="pattern-desc">集計クエリで<b>業務でよくある罠</b>を4つ。本編Vol.9 で扱わなかった発展的な内容を含みます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">aggr-pitfalls</span>
+      <span class="tag-desc">集計の罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある罠</div>
+        <div class="role-card">
+          <span class="label">PITFALL 1</span>
+          <div class="name">JOIN で重複行が生まれて集計が膨らむ</div>
+          <div class="desc"><b>原因</b>：1対多×1対多 のJOIN で<b>デカルト積</b>が発生し、<code>SUM</code> が水増しされる。<br><b>対処</b>：<code>DISTINCT</code> を使うか、サブクエリで先に集計してからJOIN。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 2</span>
+          <div class="name">日付の月またぎ集計の誤り</div>
+          <div class="desc"><b>原因</b>：「今月の合計」のつもりが、月またぎでズレる。<br><b>対処</b>：<code>WHERE created_at &gt;= '2026-05-01' AND created_at &lt; '2026-06-01'</code> の半開区間。S7で学んだ通り。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 3</span>
+          <div class="name">タイムゾーンを無視した日別集計</div>
+          <div class="desc"><b>原因</b>：UTCで保存しているのにJSTで集計したい時、変換忘れで日付が1日ズレる。<br><b>対処</b>：<code>CONVERT_TZ</code> を使うか、Java側で計算前にタイムゾーン考慮。S7参照。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 4</span>
+          <div class="name">平均の計算がリアルタイムでズレる</div>
+          <div class="desc"><b>原因</b>：「過去30日の平均」を見る画面で、日付が変わると毎日数値が変動。<b>キャッシュ更新タイミング</b>と不整合。<br><b>対処</b>：「集計対象期間を明示」「キャッシュ有効期限を短く」など。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// PITFALL 1: 重複行による水増し</span>
+
+<span class="comment">// ─── 業務シナリオ ───</span>
+<span class="comment">// 「ユーザーの記録合計 + タグ情報」を集計</span>
+
+<span class="comment">// ─── ✗ NG: 単純JOIN ───</span>
+SELECT u.id,
+       SUM(r.minutes) AS total
+FROM users u
+LEFT JOIN study_records r
+  ON r.user_id = u.id
+LEFT JOIN record_tags t
+  ON t.record_id = r.id  <span class="comment">// ← 多対多</span>
+GROUP BY u.id;
+
+<span class="comment">// → 1記録に3タグ付いてたら</span>
+<span class="comment">//   SUM が 3倍に膨らむ</span>
+<span class="comment">// → 業務上アウト</span>
+
+
+<span class="comment">// ─── ✓ OK: サブクエリで先に集計 ───</span>
+SELECT u.id, COALESCE(s.total, 0) AS total
+FROM users u
+LEFT JOIN (
+  SELECT user_id, SUM(minutes) AS total
+  FROM study_records
+  GROUP BY user_id
+) s ON s.user_id = u.id;
+
+<span class="comment">// → タグの結合は別クエリで処理</span>
+
+
+<span class="code-head" style="margin-top:14px">// PITFALL 2: 月またぎの落とし穴</span>
+
+<span class="comment">// ─── ✗ NG ───</span>
+WHERE studied_on BETWEEN
+  <span class="str">'2026-05-01'</span> AND <span class="str">'2026-05-31'</span>
+<span class="comment">// → 5/31 23:59:59 のレコードが入る</span>
+<span class="comment">//   かどうかDB依存</span>
+
+
+<span class="comment">// ─── ✓ OK: 半開区間 ───</span>
+WHERE studied_on &gt;= <span class="str">'2026-05-01'</span>
+  AND studied_on &lt;  <span class="str">'2026-06-01'</span>
+
+
+<span class="comment">// ─── DATE 型なら BETWEEN OK ───</span>
+WHERE studied_on BETWEEN
+  <span class="str">'2026-05-01'</span> AND <span class="str">'2026-05-31'</span>
+<span class="comment">// DATE型は日単位なので OK</span>
+
+<span class="comment">// DATETIME型は半開区間が必須</span>
+<span class="comment">// → 統一した書き方が安全</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次の本編へ</h2>
+    <span class="en">TO THE NEXT VOLUME</span>
+  </div>
+  <p class="pattern-desc">別冊S9お疲れさまでした。<b>「集計クエリの設計感覚」</b>が育ちました。次のVol.10 では、Vol.9の素朴な表示を<b>「業務システムらしいダッシュボード」</b>に進化させます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">この別冊のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 持ち帰る5つの知見</div>
+        <div class="role-card">
+          <span class="label">知見1</span>
+          <div class="name">集計関数は5つ＋応用</div>
+          <div class="desc">COUNT / SUM / AVG / MAX / MIN がコア</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見2</span>
+          <div class="name">WHERE と HAVING は集計前後</div>
+          <div class="desc">集計関数を条件に使うなら HAVING</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見3</span>
+          <div class="name">NULL は COALESCE で 0 に</div>
+          <div class="desc">DB の三大難所のひとつ・明示処理が安全</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見4</span>
+          <div class="name">集計はDBに任せる</div>
+          <div class="desc">Javaループで集計しない・SQL関数を使う</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見5</span>
+          <div class="name">DTOは画面ごと・用途別命名</div>
+          <div class="desc">「使い回し」より「明確な役割」</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.10 本編で起きること</span>
+
+<span class="comment">// タイトル：</span>
+<span class="comment">// 「統計画面・第1段（科目別合計）」</span>
+
+<span class="comment">// やること：</span>
+<span class="comment">// 1. Vol.9の表をカード型UIに進化</span>
+<span class="comment">// 2. 「分」→「N時間M分」の表記変換</span>
+<span class="comment">// 3. 全体合計に対する各科目の割合</span>
+<span class="comment">// 4. 進捗バーで視覚化</span>
+<span class="comment">// 5. Service層に変換ロジック導入</span>
+
+<span class="comment">// 獲得スキル：</span>
+<span class="comment">// → 統計画面の素</span>
+
+
+<span class="comment">// Vol.9 の API が、</span>
+<span class="comment">// Vol.10 で 「業務システムらしい画面」 に。</span>
+<span class="comment">// Service 層に業務ロジックが本格的に入る回。</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(96,104,82,0.12)">
+    <div class="tip-label">NEXT STEP ── VOL.10 本編</div>
+    <p>別冊S9で<b>集計の感性</b>を磨きました。次のVol.10 本編「<b>統計画面・第1段（科目別合計）</b>」では、Vol.9で作った素朴な表を、<b>業務システムらしいダッシュボード</b>に進化させます。<b>Service 層に業務ロジック</b>が本格的に入る回。本編Vol.10 へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.09 / 15 ── AGGREGATE QUERY DESIGN（別冊）</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git/GitHub編 チーム運用 Vol.8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2520;
+  --paper:#dcceaf;
+  --paper-2:#c8b893;
+  --accent:#c08e58;
+  --accent-2:#c9a876;
+  --accent-3:#5a4230;
+  --muted:#7a6e5d;
+  --line:#a89578;
+  --code-bg:#161310;
+  --code-text:#e8dfcc;
+  --panel-bg:#d2c2a0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;font-size:15px;line-height:1.85}
+body{max-width:1180px;margin:0 auto;padding:48px 40px 80px}
+
+.page-header{position:relative;padding:36px 32px 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"❀";position:absolute;right:0px;top:-30px;font-size:260px;color:var(--accent);opacity:0.16;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em}
+h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin:18px 0 10px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;letter-spacing:0.15em;font-family:"JetBrains Mono",monospace;margin-bottom:20px}
+.lead{max-width:640px;font-size:15px;line-height:2;color:var(--ink)}
+
+.toc{background:var(--paper-2);padding:22px 28px;margin-bottom:56px;border:1px solid var(--line)}
+.toc-title{font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:0.2em;margin-bottom:12px;color:var(--accent-3)}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc a{color:var(--ink);text-decoration:none;font-size:14px;font-family:"JetBrains Mono",monospace}
+.toc a::before{content:"— ";color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
+.section-num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;flex:1}
+.en{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted)}
+.pattern-desc{max-width:740px;margin-bottom:22px;color:var(--ink)}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-family:"JetBrains Mono",monospace;font-weight:600;color:var(--accent-3);font-size:13px}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line)}
+.panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:"JetBrains Mono",monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}
+.num{color:#f7a8d8}.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}.step{color:#c9a876;font-weight:600}
+.cmd{color:#b5e8b0}.flag{color:#f7c08a}.branch{color:#f7a8d8}
+.added{color:#7fc97f}.removed{color:#f08080}
+.yaml-key{color:#a3c9ff}.yaml-val{color:#b5e8b0}
+
+@media(max-width:720px){
+  body{padding:24px 18px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  h1{font-size:32px}
+  .page-header::before{font-size:180px}
+  .toc ul{gap:6px 14px}
+}
+
+.box{background:#fff;border:1px solid var(--line);padding:12px 14px;margin-bottom:10px}
+.box .box-title{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-bottom:6px;letter-spacing:0.1em}
+.box p{font-size:13px;line-height:1.7}
+
+.diagram{background:#fff;border:1px solid var(--line);padding:18px;font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.8;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+.tbl{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
+.tbl th,.tbl td{padding:8px 10px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{background:var(--paper-2);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.1em;font-weight:600}
+.tbl td code{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12px;color:var(--accent-3)}
+
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:12px;margin:0 1px}
+
+.tip{background:rgba(192,142,88,0.08);border-left:3px solid var(--accent);padding:16px 20px;margin:18px 0}
+.tip-title{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.15em;color:var(--accent-3);font-weight:600;margin-bottom:6px}
+.tip p{font-size:14px;line-height:1.9}
+.tip b{color:var(--accent-3)}
+
+.page-footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+.page-footer .right{text-align:right}
+
+code.inline{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12.5px;color:var(--accent-3)}
+
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.compare > div{background:#fff;border:1px solid var(--line);padding:12px}
+.compare .heading{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.15em;margin-bottom:6px;font-weight:600}
+.compare .bad .heading{color:#b04030}
+.compare .good .heading{color:#3a7050}
+.compare p{font-size:12px}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">GIT / GITHUB</span>
+  <span class="vol-tag">VOL.08 / 09</span>
+  <h1>チーム運用編</h1>
+  <div class="subtitle">TEAM CONVENTIONS</div>
+  <p class="lead">
+    一人で書いた知識を<b>組織で活かす段階</b>に入ります。
+    .gitignore、ブランチ保護、コミット規約、CODEOWNERS——
+    どれも地味ですが、<b>「事故を防ぎ、チームの足並みを揃える」</b>ための
+    必須の仕組みです。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01. .gitignore</a></li>
+    <li><a href="#s02">02. .gitattributes</a></li>
+    <li><a href="#s03">03. ブランチ保護ルール</a></li>
+    <li><a href="#s04">04. コミットメッセージ規約</a></li>
+    <li><a href="#s05">05. CODEOWNERS</a></li>
+    <li><a href="#s06">06. タグとリリース</a></li>
+    <li><a href="#s07">07. フォーク開発フロー</a></li>
+    <li><a href="#s08">08. チームのお作法まとめ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>.gitignore — 除外設定</h2>
+    <span class="en">GITIGNORE</span>
+  </div>
+  <p class="pattern-desc">
+    <b>「Gitに管理させたくないファイル」</b>を指定する設定ファイル。
+    node_modules、ビルド成果物、ローカル設定ファイル、機密情報——
+    <b>こうしたものを誤ってコミットしない</b>ための防波堤です。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">.gitignore</span>
+      <span class="tag-desc">★★★ プロジェクトの第一歩</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よく除外するもの</div>
+        <table class="tbl">
+          <tr><th>種類</th><th>例</th></tr>
+          <tr><td>依存関係</td><td><code>node_modules/</code></td></tr>
+          <tr><td>ビルド成果物</td><td><code>dist/</code> <code>build/</code></td></tr>
+          <tr><td>ログ</td><td><code>*.log</code></td></tr>
+          <tr><td>環境変数</td><td><code>.env</code></td></tr>
+          <tr><td>IDE設定</td><td><code>.vscode/</code> <code>.idea/</code></td></tr>
+          <tr><td>OS生成物</td><td><code>.DS_Store</code> <code>Thumbs.db</code></td></tr>
+          <tr><td>キャッシュ</td><td><code>__pycache__/</code></td></tr>
+        </table>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">POINT —</div>
+          <p><code class="inline">.gitignore</code> は<b>プロジェクト最初に書く</b>。あとから追加しても<b>既に追跡されてるファイルは消えない</b>ので二度手間。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- 書き方の基本 ---</span>
+
+<span class="comment"># ディレクトリを除外 (末尾に/)</span>
+node_modules/
+dist/
+build/
+
+<span class="comment"># ファイル名で除外</span>
+*.log
+.env
+
+<span class="comment"># 特定の階層のみ</span>
+/config.local.js   <span class="comment"># ルートのみ</span>
+**/temp/           <span class="comment"># どの階層も</span>
+
+<span class="comment"># 除外の除外 (! で打ち消し)</span>
+*.log
+!important.log     <span class="comment"># これだけは含める</span>
+
+<span class="comment"># コメント (#)</span>
+<span class="comment"># 設定ファイル</span>
+.vscode/
+
+<span class="comment"># --- 言語別テンプレ ---</span>
+
+<span class="comment"># Node.js</span>
+node_modules/
+npm-debug.log*
+.env*
+dist/
+
+<span class="comment"># Python</span>
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+
+<span class="comment"># Java</span>
+*.class
+target/
+.gradle/
+
+<span class="comment"># --- 既に追跡されてる場合 ---</span>
+
+$ <span class="cmd">git rm</span> <span class="flag">--cached</span> .env
+<span class="comment">  ↑ 追跡解除 (ファイルは残す)</span>
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"chore: .envを追跡解除"</span>
+
+<span class="comment"># --- 一発生成: gitignore.io ---</span>
+
+<span class="comment"># https://www.toptal.com/developers/gitignore</span>
+<span class="comment"># 「Node, VSCode, macOS」とか指定で</span>
+<span class="comment"># 完成形のテンプレが生成される</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">あるある —</div>
+    <p><b>「うっかり <code class="inline">.env</code> をコミットしてしまった!」</b>。これは<b>業界全体の悲劇</b>です。多くの企業がこれで本番のAPIキーを漏洩してきました。プロジェクト開始時に<b>真っ先に <code class="inline">.gitignore</code></b> を整える、これだけで人生が変わります。</p>
+  </div>
+</section>
+
+<section id="s02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>.gitattributes — 属性設定</h2>
+    <span class="en">GITATTRIBUTES</span>
+  </div>
+  <p class="pattern-desc">
+    .gitattributesは<b>「ファイルごとの扱い方」</b>をGitに教えるファイル。
+    特に重要なのが<b>改行コードの統一</b>です。
+    WindowsとMac/Linuxが混在するチームで、これがないと<b>毎回全行が変更扱い</b>になる事故が起きます。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">.gitattributes</span>
+      <span class="tag-desc">★★ 改行コードの平和を守る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある設定パターン</div>
+        <div class="box">
+          <div class="box-title">改行コード問題</div>
+          <p>Windows: <code style="font-family:'JetBrains Mono',monospace">CRLF</code> (\r\n)<br>
+          Mac/Linux: <code style="font-family:'JetBrains Mono',monospace">LF</code> (\n)<br>
+          → 違うOSで触ると<b>毎行が差分扱い</b>になる悲劇</p>
+        </div>
+        <div class="box">
+          <div class="box-title">解決</div>
+          <p>.gitattributes で<b>「リポジトリ内はLFに統一」</b>を宣言。WindowsでもチェックアウトでLFに変換される。</p>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">POINT —</div>
+          <p>地味だけど<b>これがあるのとないので、チーム開発の快適度が雲泥</b>。プロジェクト開始時にセットでおく。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># === .gitattributes 標準形 ===</span>
+
+<span class="comment"># テキストは全てLFに統一</span>
+* text=auto eol=lf
+
+<span class="comment"># バイナリは触らない</span>
+*.png  binary
+*.jpg  binary
+*.pdf  binary
+*.zip  binary
+
+<span class="comment"># Windows固有のスクリプト</span>
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+<span class="comment"># 差分表示の言語ヒント</span>
+*.tsx  diff=tsx
+*.md   diff=markdown
+
+<span class="comment"># --- linguist (言語判定の調整) ---</span>
+
+<span class="comment"># GitHubの言語統計に出さない</span>
+docs/*  linguist-documentation
+vendor/* linguist-vendored
+
+<span class="comment"># 自動生成物</span>
+*.lock  linguist-generated
+dist/*  linguist-generated
+
+<span class="comment"># --- 関連設定 ---</span>
+
+<span class="comment"># Git本体での改行設定</span>
+$ <span class="cmd">git config</span> <span class="flag">--global</span> core.autocrlf input
+<span class="comment">  Windows: コミット時にCRLF→LF変換</span>
+<span class="comment">  チェックアウト時はそのまま</span>
+
+$ <span class="cmd">git config</span> <span class="flag">--global</span> core.autocrlf false
+<span class="comment">  Mac/Linux: 何もしない</span>
+<span class="comment">  (.gitattributes が効くなら不要)</span>
+
+<span class="comment"># --- 既存リポジトリに後から導入 ---</span>
+
+$ <span class="cmd">git add</span> .gitattributes
+$ <span class="cmd">git add</span> <span class="flag">--renormalize</span> .
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"chore: 改行コードを統一"</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">TIP —</div>
+    <p><b>「PRを出したら何故か全ファイルが変更扱いになってる」</b>——これは99%改行コード問題。<code class="inline">.gitattributes</code> で <code class="inline">* text=auto eol=lf</code> を入れて <code class="inline">--renormalize</code> でクリーンに。<b>OS混在チームの必須教養</b>です。</p>
+  </div>
+</section>
+
+<section id="s03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>ブランチ保護ルール</h2>
+    <span class="en">BRANCH PROTECTION</span>
+  </div>
+  <p class="pattern-desc">
+    mainブランチに<b>「直pushされたら困る」</b>「<b>レビューなしでマージされたら困る</b>」——
+    こうした事故を防ぐのが<b>ブランチ保護ルール</b>。
+    GitHubのSettings画面で設定するだけで、ルール違反のpushが<b>機械的に拒否</b>されます。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">branch protection</span>
+      <span class="tag-desc">★★★ mainを守る盾</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 設定できるルール</div>
+        <div class="box">
+          <div class="box-title">推奨ルール (定番)</div>
+          <p>◯ <b>PR必須</b> (直push禁止)<br>
+          ◯ <b>承認数 1以上</b><br>
+          ◯ <b>CIパス必須</b><br>
+          ◯ <b>会話の解決必須</b><br>
+          ◯ <b>linear historyを強制</b><br>
+          ◯ <b>force push禁止</b><br>
+          ◯ <b>削除禁止</b></p>
+        </div>
+        <div class="box">
+          <div class="box-title">適用範囲</div>
+          <p><b>Branch name pattern:</b><br>
+          <code style="font-family:'JetBrains Mono',monospace">main</code> — 厳密<br>
+          <code style="font-family:'JetBrains Mono',monospace">release/*</code> — ワイルドカード<br>
+          <code style="font-family:'JetBrains Mono',monospace">*</code> — 全ブランチ</p>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">注意 —</div>
+          <p>管理者(Admin)も例外なく適用にする「<b>Do not allow bypassing</b>」をONにしておくのが鉄壁。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- 設定の手順 ---</span>
+
+リポジトリ → Settings
+  → Branches
+  → Add branch ruleset (推奨)
+     または Add classic protection rule
+
+<span class="comment"># --- 設定項目の例 ---</span>
+
+Branch name pattern:    main
+
+[<span class="added">✓</span>] Require a pull request before merging
+    [<span class="added">✓</span>] Require approvals: 1
+    [<span class="added">✓</span>] Dismiss stale approvals on new commits
+    [<span class="added">✓</span>] Require review from Code Owners
+
+[<span class="added">✓</span>] Require status checks to pass
+    [<span class="added">✓</span>] Require branches to be up to date
+    Status checks:
+      - test
+      - lint
+      - build
+
+[<span class="added">✓</span>] Require conversation resolution
+
+[<span class="added">✓</span>] Require linear history
+    <span class="comment">(merge commitを禁止、squash/rebase推奨)</span>
+
+[<span class="added">✓</span>] Restrict deletions
+
+[<span class="added">✓</span>] Block force pushes
+
+[<span class="added">✓</span>] Do not allow bypassing the above settings
+
+<span class="comment"># --- 試しに直pushしてみる ---</span>
+
+$ <span class="cmd">git switch</span> <span class="branch">main</span>
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"直接修正"</span>
+$ <span class="cmd">git push</span>
+remote: <span class="removed">error: GH006: Protected branch update failed</span>
+remote: At least 1 approving review is required.
+
+<span class="comment"># → 守られた!</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">鉄則 —</div>
+    <p>新規リポジトリを作ったら<b>「まずブランチ保護」</b>。設定3分でチームのコード品質が一段上がります。「<b>レビューなしのmain直push</b>」が物理的に不可能になる安心感は、一度味わうと手放せません。</p>
+  </div>
+</section>
+
+<section id="s04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>コミットメッセージ規約</h2>
+    <span class="en">COMMIT CONVENTION</span>
+  </div>
+  <p class="pattern-desc">
+    現代の業界標準は<b>Conventional Commits</b>。
+    <code class="inline">type(scope): subject</code> という形で書く規約で、
+    覚えれば<b>履歴がそのまま「変更履歴 (CHANGELOG)」になる</b>強力さがあります。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">conventional commits</span>
+      <span class="tag-desc">★★★ 業界標準の書き方</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// type 一覧</div>
+        <table class="tbl">
+          <tr><th>type</th><th>意味</th></tr>
+          <tr><td><code>feat</code></td><td>新機能追加</td></tr>
+          <tr><td><code>fix</code></td><td>バグ修正</td></tr>
+          <tr><td><code>docs</code></td><td>ドキュメントのみ</td></tr>
+          <tr><td><code>style</code></td><td>整形(動作変更なし)</td></tr>
+          <tr><td><code>refactor</code></td><td>リファクタ</td></tr>
+          <tr><td><code>test</code></td><td>テスト追加・修正</td></tr>
+          <tr><td><code>chore</code></td><td>雑務(依存更新等)</td></tr>
+          <tr><td><code>perf</code></td><td>パフォーマンス改善</td></tr>
+          <tr><td><code>ci</code></td><td>CI関連</td></tr>
+        </table>
+        <div class="compare" style="margin-top:14px">
+          <div class="good">
+            <div class="heading">◯ 良い例</div>
+            <p>feat(login): JWT認証を実装<br>
+            fix(api): 404レスポンス修正<br>
+            docs: README更新</p>
+          </div>
+          <div class="bad">
+            <div class="heading">✗ 悪い例</div>
+            <p>修正<br>
+            update<br>
+            WIP<br>
+            色々直した</p>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># === 基本形 ===</span>
+
+type(scope): subject
+
+[body]
+
+[footer]
+
+<span class="comment"># --- 各要素の意味 ---</span>
+
+type    必須 (feat/fix/docs/...)
+scope   任意 影響範囲
+subject 必須 50字以内、現在形
+body    任意 詳細説明
+footer  任意 Breaking change / Issue参照
+
+<span class="comment"># === 例 ===</span>
+
+<span class="added">feat(auth): JWTトークン認証を追加</span>
+
+ログインAPIにJWT発行ロジックを実装。
+有効期限は1時間、リフレッシュトークン
+は別エンドポイントで発行する設計。
+
+Closes #42
+
+<span class="comment"># === Breaking Change ===</span>
+
+<span class="added">feat!: User APIのレスポンス形式変更</span>
+
+BREAKING CHANGE: /users の戻り値が
+配列から { data: [...] } 形式に変更。
+クライアント側の修正が必要。
+
+<span class="comment"># === 自動化との連携 ===</span>
+
+<span class="comment">"feat:"  → minor (1.X.0)</span>
+<span class="comment">"fix:"   → patch (1.0.X)</span>
+<span class="comment">"feat!:" → major (X.0.0)</span>
+
+<span class="comment"># semantic-release などのツールが</span>
+<span class="comment"># コミットメッセージから自動で:</span>
+<span class="comment">  ・バージョン番号を上げる</span>
+<span class="comment">  ・CHANGELOGを生成</span>
+<span class="comment">  ・タグを打つ</span>
+<span class="comment">  ・リリースを作る</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">TIP —</div>
+    <p>コミット規約を強制したいなら<b>commitlint + Husky</b>を導入。規約違反のコミットを<b>物理的にできなくする</b>仕組みです。最初は窮屈に感じますが、慣れると<b>「全員が同じ書き方」</b>になり、履歴を見るだけで何が起きたか分かる至福の状態に。</p>
+  </div>
+</section>
+
+<section id="s05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>CODEOWNERS — 自動レビュアー指定</h2>
+    <span class="en">CODEOWNERS</span>
+  </div>
+  <p class="pattern-desc">
+    <b>「このフォルダの変更は、この人のレビューを必須に」</b>を設定するファイル。
+    PRが作成されると、変更ファイルのオーナーが<b>自動でレビュアーに指定</b>されます。
+    大規模リポジトリでは必須の仕組み。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">CODEOWNERS</span>
+      <span class="tag-desc">★★ 責任分担を明示</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 配置場所と動作</div>
+        <div class="diagram">my-repo/
+├─ .github/
+│   └─ CODEOWNERS   ← ここに置く
+└─ src/
+
+PRが作成されると…
+変更ファイル: src/api/login.js
+   ↓
+CODEOWNERSを参照
+   ↓
+src/api/* → @backend-team
+   ↓
+自動的にレビュアー指定
+"backend-team の承認が必須" 状態に</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">活用例</div>
+          <p>◯ フロントエンド/バックエンドで分業<br>
+          ◯ 重要ファイルに必ずシニアが入る<br>
+          ◯ ドキュメントはテックライターが見る<br>
+          ◯ インフラは SRE チームが見る</p>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">POINT —</div>
+          <p>ブランチ保護の<b>Require review from Code Owners</b>と組み合わせると<b>強制力が生まれる</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># === .github/CODEOWNERS ===</span>
+
+<span class="comment"># 書式: pattern  @user1 @user2 @team</span>
+
+<span class="comment"># --- 全体のデフォルトオーナー ---</span>
+* @taro @hanako
+
+<span class="comment"># --- ディレクトリ指定 ---</span>
+/src/api/      @backend-team
+/src/ui/       @frontend-team
+/docs/         @tech-writers
+
+<span class="comment"># --- ファイル種別 ---</span>
+*.js           @js-experts
+*.ts           @ts-experts
+*.css          @design-team
+
+<span class="comment"># --- 重要ファイル ---</span>
+/package.json     @taro @senior-dev
+/.github/         @devops-team
+/Dockerfile       @devops-team
+/.env.example     @taro
+
+<span class="comment"># --- 後から書いた方が優先 ---</span>
+*.md              @tech-writers
+/CHANGELOG.md     @release-team
+<span class="comment">  ↑ CHANGELOG.md は tech-writers でなく</span>
+<span class="comment">    release-team が指定される</span>
+
+<span class="comment"># --- 否定はできない (除外不可) ---</span>
+
+<span class="comment"># --- チーム指定 ---</span>
+
+@org/team-name の形式
+<span class="comment">  例: @mycompany/backend</span>
+
+<span class="comment"># --- 動作確認 ---</span>
+
+新しいPRを作成
+  ↓
+Reviewers 欄に自動で
+@backend-team が入っていれば成功
+
+<span class="comment"># --- 注意点 ---</span>
+
+<span class="comment">パターンマッチに引っかからないファイルは</span>
+<span class="comment">レビュアー指定なし。</span>
+<span class="comment">→ 最初の "* @default" で全体を担保。</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">現場で —</div>
+    <p>CODEOWNERS は<b>「責任の所在をコードで宣言する」</b>仕組み。新人が入ってきた時に「<b>このフォルダは誰に聞けばいいの?</b>」が一目で分かる、地味だけど効果絶大なドキュメント代わりにもなります。</p>
+  </div>
+</section>
+
+<section id="s06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>タグとリリース</h2>
+    <span class="en">TAGS &amp; RELEASES</span>
+  </div>
+  <p class="pattern-desc">
+    特定のコミットに<b>「これがv1.0.0」</b>と<b>印を付ける</b>のがタグ。
+    そのタグをもとに、GitHubで<b>リリースページを作成</b>すれば、配布物として一般公開できます。
+    バージョン番号は<b>セマンティックバージョニング</b>に従うのが業界の流儀。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">tags &amp; releases</span>
+      <span class="tag-desc">★★ バージョンの管理</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// セマンティックバージョニング</div>
+        <div class="diagram">       v 1 . 2 . 3
+         │   │   │
+         │   │   └─ PATCH
+         │   │      バグ修正
+         │   │      (動作互換あり)
+         │   │
+         │   └───── MINOR
+         │          機能追加
+         │          (互換あり)
+         │
+         └───────── MAJOR
+                    互換性の破壊
+                    (BREAKING CHANGE)</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">アノテートタグ vs 軽量タグ</div>
+          <p><b>アノテート (-a)</b> = メッセージ・署名付き(推奨)<br>
+          <b>軽量</b> = 単なる別名</p>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">POINT —</div>
+          <p>リリース用タグは<b>必ずアノテート</b>で。「誰がいつなぜ切ったか」が残る。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- タグを作る ---</span>
+
+<span class="comment"># アノテートタグ (推奨)</span>
+$ <span class="cmd">git tag</span> <span class="flag">-a</span> v1.0.0 <span class="flag">-m</span> <span class="str">"Release v1.0.0"</span>
+
+<span class="comment"># 軽量タグ</span>
+$ <span class="cmd">git tag</span> v1.0.1
+
+<span class="comment"># 過去のコミットにタグ</span>
+$ <span class="cmd">git tag</span> <span class="flag">-a</span> v0.9.0 <span class="num">a3f2c1d</span> <span class="flag">-m</span> <span class="str">"..."</span>
+
+<span class="comment"># --- タグの確認 ---</span>
+$ <span class="cmd">git tag</span>
+v0.9.0
+v1.0.0
+v1.0.1
+
+$ <span class="cmd">git show</span> v1.0.0
+
+<span class="comment"># --- リモートに送る ---</span>
+
+<span class="comment"># 個別</span>
+$ <span class="cmd">git push</span> origin v1.0.0
+
+<span class="comment"># まとめて</span>
+$ <span class="cmd">git push</span> <span class="flag">--tags</span>
+
+<span class="comment"># --- タグの削除 ---</span>
+$ <span class="cmd">git tag</span> <span class="flag">-d</span> v1.0.0          <span class="comment"># ローカル</span>
+$ <span class="cmd">git push</span> origin <span class="flag">--delete</span> v1.0.0 <span class="comment"># リモート</span>
+
+<span class="comment"># --- GitHub Release作成 ---</span>
+
+<span class="comment">GitHubのRelease機能:</span>
+リポジトリ → Releases → Draft new release
+  → Tag指定 (新規 or 既存)
+  → タイトル・本文
+  → Generate release notes (自動生成)
+  → Publish release
+
+<span class="comment"># gh コマンドで一発</span>
+$ <span class="cmd">gh release create</span> v1.0.0 \
+    <span class="flag">--generate-notes</span>
+
+<span class="comment"># --- バージョン番号の決め方 ---</span>
+
+v1.0.0 → v1.0.1  (バグ修正)
+v1.0.1 → v1.1.0  (機能追加)
+v1.1.0 → v2.0.0  (破壊的変更)
+
+<span class="comment"># まだ正式版前 = 0.x.y</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">TIP —</div>
+    <p>GitHubのRelease機能は <b>「Generate release notes」</b> ボタンで前回タグからの差分をまとめてくれます。<b>コミット規約 + ConventionalCommits</b> を併用すれば、ほぼ何もせずに綺麗なリリースノートが完成。<b>これがプロのリリースワークフロー</b>です。</p>
+  </div>
+</section>
+
+<section id="s07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>フォーク開発フロー</h2>
+    <span class="en">FORK WORKFLOW</span>
+  </div>
+  <p class="pattern-desc">
+    OSSへの貢献や、書き込み権限のないリポジトリへの提案で使うのが<b>フォーク</b>。
+    本家リポジトリを自分のアカウントに丸ごとコピーして、そこから改造・PR——
+    この流れを身につけると、<b>世界中のOSSに貢献する道</b>が開けます。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">fork workflow</span>
+      <span class="tag-desc">★★ OSS貢献の入口</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 全体の流れ</div>
+        <div class="diagram">[ GitHub上 ]
+本家リポジトリ
+  github.com/upstream/lib
+       ↓ Fork ボタン
+自分のフォーク
+  github.com/taro/lib
+
+[ ローカル ]
+$ git clone (自分のフォーク)
+$ git remote add upstream (本家)
+       ↓
+ブランチを切る
+  → 変更 → push
+       ↓
+[ GitHub ]
+自分のフォーク → 本家
+へ Pull Request
+
+  → レビュー → マージ
+  → OSS貢献者デビュー!</div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">POINT —</div>
+          <p>2つのリモートを登録するのがポイント。<b>origin = 自分のフォーク</b>、<b>upstream = 本家</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- ステップ① フォーク作成 ---</span>
+
+<span class="comment">本家リポジトリの右上「Fork」ボタンをクリック</span>
+<span class="comment">→ 自分のアカウントにコピーが作成される</span>
+
+<span class="comment"># --- ステップ② クローン ---</span>
+
+$ <span class="cmd">git clone</span> <span class="str">git@github.com:taro/lib.git</span>
+$ <span class="cmd">cd</span> lib
+
+<span class="comment"># --- ステップ③ upstream を登録 ---</span>
+
+$ <span class="cmd">git remote add</span> upstream \
+    <span class="str">git@github.com:original/lib.git</span>
+
+$ <span class="cmd">git remote</span> <span class="flag">-v</span>
+origin    git@github.com:taro/lib.git
+upstream  git@github.com:original/lib.git
+
+<span class="comment"># --- ステップ④ 機能ブランチ ---</span>
+
+$ <span class="cmd">git switch</span> <span class="flag">-c</span> <span class="branch">feature/my-fix</span>
+<span class="comment"># 編集 → commit</span>
+
+<span class="comment"># --- ステップ⑤ プッシュ ---</span>
+
+$ <span class="cmd">git push</span> <span class="flag">-u</span> origin <span class="branch">feature/my-fix</span>
+
+<span class="comment"># --- ステップ⑥ PR ---</span>
+
+<span class="comment">GitHub: 自分のフォーク → "Compare &amp; pull request"</span>
+<span class="comment">  base repository: original/lib</span>
+<span class="comment">  base: main</span>
+<span class="comment">  head repository: taro/lib</span>
+<span class="comment">  compare: feature/my-fix</span>
+
+<span class="comment"># --- ステップ⑦ 本家更新の取り込み ---</span>
+
+$ <span class="cmd">git fetch</span> upstream
+$ <span class="cmd">git switch</span> <span class="branch">main</span>
+$ <span class="cmd">git merge</span> upstream/main
+$ <span class="cmd">git push</span> origin <span class="branch">main</span>
+
+<span class="comment"># 自分のフォークのmainを本家に同期</span>
+
+<span class="comment"># --- 短縮版 (gh使用) ---</span>
+
+$ <span class="cmd">gh repo fork</span> original/lib <span class="flag">--clone</span>
+$ <span class="cmd">cd</span> lib
+$ <span class="cmd">gh pr create</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">最後に —</div>
+    <p>気になるOSSに<b>typo修正PR</b>を一つ送ってみるのが、フォークフローを覚える最高の練習。<b>「自分のPRが世界中で使われるソフトにマージされた」</b>瞬間は、エンジニア人生の中でも忘れがたい体験になります。</p>
+  </div>
+</section>
+
+<section id="s08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>チームのお作法まとめ</h2>
+    <span class="en">TEAM CHECKLIST</span>
+  </div>
+  <p class="pattern-desc">
+    新しいリポジトリを始めるとき・新しいチームに入るとき、<b>確認しておくべき項目</b>のチェックリスト。
+    全部押さえれば<b>「Gitまわりで事故るチーム」</b>から抜け出せます。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">team checklist</span>
+      <span class="tag-desc">★★★ 配属時の確認事項</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 新プロジェクト立ち上げチェック</div>
+        <div class="box">
+          <div class="box-title">▼ ファイル整備</div>
+          <p>[ ] .gitignore<br>
+          [ ] .gitattributes (改行コード統一)<br>
+          [ ] README.md<br>
+          [ ] LICENSE<br>
+          [ ] .github/PULL_REQUEST_TEMPLATE.md<br>
+          [ ] .github/CODEOWNERS</p>
+        </div>
+        <div class="box">
+          <div class="box-title">▼ GitHub設定</div>
+          <p>[ ] ブランチ保護ルール (main)<br>
+          [ ] PRマージ方式の方針<br>
+          [ ] Default branchの確認<br>
+          [ ] Secretsの整備</p>
+        </div>
+        <div class="box">
+          <div class="box-title">▼ 自動化</div>
+          <p>[ ] CIワークフロー<br>
+          [ ] lint/format自動化<br>
+          [ ] Dependabot等の更新自動化</p>
+        </div>
+        <div class="box">
+          <div class="box-title">▼ チーム規約</div>
+          <p>[ ] ブランチ命名規則<br>
+          [ ] コミットメッセージ規約<br>
+          [ ] PRサイズの目安<br>
+          [ ] レビューSLA(対応期限)</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># === 配属時の質問リスト ===</span>
+
+<span class="comment"># ① ブランチ戦略</span>
+Q. GitHub Flow / Git Flow どちら?
+Q. main 以外に develop ある?
+Q. ブランチ命名規則は?
+
+<span class="comment"># ② コミット</span>
+Q. Conventional Commits 使ってる?
+Q. コミットの粒度の目安は?
+Q. WIPコミットOK?
+
+<span class="comment"># ③ レビュー</span>
+Q. 最低承認数は?
+Q. 誰がレビュアーになる?
+Q. レビュー対応の目安時間は?
+
+<span class="comment"># ④ マージ</span>
+Q. Squash / Merge / Rebase
+   どれを使う?
+Q. マージ前のCIは何が必須?
+Q. 古いブランチは自動削除?
+
+<span class="comment"># ⑤ CI/CD</span>
+Q. テストは誰が書く?
+Q. 本番デプロイのトリガーは?
+Q. 失敗時の対応フローは?
+
+<span class="comment"># ⑥ 緊急時</span>
+Q. 本番障害時のhotfix手順は?
+Q. revertの判断基準は?
+Q. ロールバックの仕組みは?
+
+<span class="comment"># === 押さえれば「強い人」 ===</span>
+
+これら全部に答えられるエンジニアは
+チームから絶大に信頼される。
+
+逆にこれを<b>新人向けに整備した文書</b>を
+書ける人は、まさに「テックリード」。</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p>これら全部を<b>「リポジトリのREADMEとCONTRIBUTING.md」</b>に書き残しておくと、新メンバーが入ってきた時に迷わない最強のチームになります。<b>「習慣を仕組みで担保する」</b>のがチーム開発の極意。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px">
+  <div class="tip-title">NEXT STEP —</div>
+  <p>第8巻で<b>「個人技」から「チーム運用」への扉</b>が完全に開きました。ここまで来れば、もうあなたは<b>「Git/GitHubを使える人」</b>ではなく、<b>「Git/GitHubで仕組みを設計できる人」</b>です。<br>
+  最終巻 Vol.9「<b>困った時のGit編</b>」は<b>Q&amp;A形式の救済巻</b>。「pushできない」「コンフリクトで詰んだ」「コミット消した」——
+  全エンジニアが何度もお世話になる、辞書のように開く<b>命綱のような巻</b>になります。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <div>GIT / GITHUB REFERENCE — VOL.08</div>
+  <div class="right">TEAM CONVENTIONS / チーム運用編</div>
+</footer>
+
+</body>
+</html>

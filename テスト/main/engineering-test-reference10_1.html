@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト編 困った時のテスト編 Vol.10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;--paper:#e8eaee;--paper-2:#d4d7df;
+  --accent:#3d4f7c;--accent-2:#5a6b94;--accent-3:#8a98b8;
+  --muted:#5a6480;--line:#b8bccc;
+  --code-bg:#1c2138;--code-text:#e8eaee;--panel-bg:#f4f5f8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:48px 64px;max-width:1280px;margin:0 auto}
+.page-header{position:relative;padding:32px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"?";position:absolute;top:-30px;right:-10px;font-size:280px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.15;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.2em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;letter-spacing:0.1em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:20px;letter-spacing:0.02em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:0.1em}
+.lead{max-width:640px;margin-top:20px;color:var(--ink);font-size:15px}
+.toc{background:var(--paper-2);padding:20px 28px;margin-bottom:56px;border-left:3px solid var(--accent)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-bottom:10px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+section.qa{margin-bottom:48px}
+.q-header{display:flex;align-items:flex-start;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.q-num{background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;padding:4px 12px;letter-spacing:0.1em;min-width:60px;text-align:center;flex-shrink:0}
+.q-text{flex:1}
+.q-text .q-label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);letter-spacing:0.2em;display:block;margin-bottom:4px}
+.q-text h2{font-family:'Shippori Mincho',serif;font-size:22px;font-weight:700;line-height:1.4}
+.answer-lead{background:rgba(61,79,124,0.08);border-left:3px solid var(--accent);padding:14px 18px;font-size:14px;margin-bottom:16px}
+.answer-lead .a-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:700;letter-spacing:0.15em;display:block;margin-bottom:4px}
+.answer-lead b{color:var(--accent);font-weight:700}
+.demo-card{background:#fff;border:1px solid var(--line)}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+.panel{background:var(--panel-bg);padding:20px 24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:20px 24px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}.code .type{color:#c2a3ff}.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}.code .ann{color:#f7c08a}
+.tip{border-left:3px solid var(--accent);background:rgba(61,79,124,0.08);padding:14px 20px;margin-top:16px;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.15em;margin-bottom:6px}
+/* NG/OKボックス */
+.bad{background:rgba(247,168,216,0.15);border:1px solid #d88;padding:10px 14px;margin:6px 0;font-size:12.5px;font-family:'JetBrains Mono',monospace}
+.good{background:rgba(181,232,176,0.18);border:1px solid #6a9;padding:10px 14px;margin:6px 0;font-size:12.5px;font-family:'JetBrains Mono',monospace}
+.bad-label,.good-label{font-size:10px;letter-spacing:0.2em;font-weight:700;display:block;margin-bottom:4px}
+.bad-label{color:#a44}.good-label{color:#386}
+/* 手順 */
+.steps{list-style:none;font-size:12.5px}
+.steps li{padding:7px 12px;background:#fff;border-left:3px solid var(--accent-3);margin-bottom:4px;display:flex;gap:10px}
+.steps li .n{background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:2px;min-width:24px;text-align:center;height:18px}
+/* エンディング */
+.ending{
+  margin-top:80px;
+  padding:48px 40px;
+  background:linear-gradient(135deg,var(--ink),var(--accent));
+  color:var(--paper);
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.ending::before{
+  content:"✓";
+  position:absolute;
+  top:-40px;
+  right:-30px;
+  font-size:280px;
+  font-family:'Shippori Mincho',serif;
+  opacity:0.08;
+  color:#fff;
+  line-height:1;
+}
+.ending > *{position:relative;z-index:1}
+.ending h2{
+  font-family:'Shippori Mincho',serif;
+  font-size:36px;
+  font-weight:700;
+  letter-spacing:0.04em;
+  margin-bottom:8px;
+}
+.subtitle-end{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  letter-spacing:0.4em;
+  color:rgba(232,234,238,0.7);
+  margin-bottom:32px;
+}
+.ending .message{
+  max-width:640px;
+  margin:0 auto 32px;
+  font-size:14px;
+  line-height:1.9;
+  text-align:left;
+}
+.ending .message b{color:#fff;font-weight:700}
+.series-list{
+  background:rgba(0,0,0,0.2);
+  padding:24px 28px;
+  text-align:left;
+  max-width:640px;
+  margin:0 auto;
+  border-left:3px solid var(--accent-3);
+}
+.series-list .h{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:rgba(232,234,238,0.7);margin-bottom:12px;display:block}
+.series-list .row{display:grid;grid-template-columns:60px 1fr;gap:12px;padding:5px 0;border-bottom:1px dashed rgba(255,255,255,0.15);font-size:13px}
+.series-list .row:last-child{border-bottom:none}
+.series-list .v{color:var(--accent-3);font-family:'JetBrains Mono',monospace;font-weight:600;font-size:11.5px}
+.page-footer{border-top:2px solid var(--ink);margin-top:60px;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+@media(max-width:720px){body{padding:24px 20px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}h1{font-size:32px}.page-header::before{font-size:180px}.ending{padding:32px 20px}.ending h2{font-size:26px}.series-list{padding:18px 14px}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="vol-tag">VOL.10 / 10 — FINAL</span>
+  <h1>困った時のテスト編</h1>
+  <div class="subtitle">エンジニアリングテスト編 — TROUBLESHOOTING Q&A</div>
+  <p class="lead">
+    シリーズ完結巻です。<b>現場で本当に困る10個の場面</b>を、Q&A形式で扱います。「テストを書く時間がない」「フレーキーが止まらない」「カバレッジを何%目指せばいい？」。辞書として何度でも開いてください。10個の答えが、あなたの現場を確実に楽にしてくれます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS — 10 QUESTIONS</div>
+  <ul>
+    <li><a href="#q01">Q.01 時間がない</a></li>
+    <li><a href="#q02">Q.02 テストが遅い</a></li>
+    <li><a href="#q03">Q.03 フレーキー多発</a></li>
+    <li><a href="#q04">Q.04 モック?本物?</a></li>
+    <li><a href="#q05">Q.05 カバレッジ何%</a></li>
+    <li><a href="#q06">Q.06 書きづらいコード</a></li>
+    <li><a href="#q07">Q.07 古いコード</a></li>
+    <li><a href="#q08">Q.08 チームが書かない</a></li>
+    <li><a href="#q09">Q.09 TDDの始め方</a></li>
+    <li><a href="#q10">Q.10 失敗が読めない</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="q01" class="qa">
+  <div class="q-header">
+    <span class="q-num">Q.01</span>
+    <div class="q-text">
+      <span class="q-label">QUESTION</span>
+      <h2>「テストを書く時間がない」と言われます</h2>
+    </div>
+  </div>
+  <div class="answer-lead">
+    <span class="a-label">A. ANSWER</span>
+    その認識は<b>順序が逆</b>です。テストを書かないから時間が足りなくなります。最初は確かに2割ほど遅く感じますが、3ヶ月後には逆転します。<b>「全部書く」のではなく「重要な部分から書き始める」</b>のが現実的なアプローチです。
+  </div>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">no time</span>
+      <span class="tag-desc">時間がないからこそ書く</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 段階的に始める手順</div>
+        <ol class="steps">
+          <li><span class="n">1</span>新規コードだけ書く (古いのは触らない)</li>
+          <li><span class="n">2</span>バグ修正時は再現テストから書く</li>
+          <li><span class="n">3</span>主要な分岐だけまず網羅</li>
+          <li><span class="n">4</span>カバレッジ目標は設けない (最初)</li>
+          <li><span class="n">5</span>3ヶ月後に変化を測る</li>
+        </ol>
+      </div>
+      <div class="code"><span class="comment">// 「時間がない」の正体</span>
+
+実際にかかる時間:
+  実装: 1h
+  テスト: 30min  <span class="ann">← 一見余分</span>
+
+しかし<span class="kw">後で起きること</span>:
+  リファクタリングで全テスト走らせる
+  → 30秒で確認完了
+
+  テストなしでリファクタ
+  → 全画面手動確認 = 2h
+
+<span class="kw">3ヶ月後の累計</span>:
+  テストあり: 開発時間 +20%
+  テストなし: 開発時間 +50〜100%
+
+       <span class="comment">↓</span>
+
+<span class="ann">テストは時間を奪う</span>のではなく
+<span class="ann">未来の時間を稼ぐ</span> 投資</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    最初の3ヶ月は<b>テストの効果を実感しにくい</b>のが普通。3ヶ月以降に「テストがあって助かった」体験が積み重なります。<b>諦めずに続ける</b>のが最大のコツです。
+  </div>
+</section>
+
+<section id="q02" class="qa">
+  <div class="q-header">
+    <span class="q-num">Q.02</span>
+    <div class="q-text">
+      <span class="q-label">QUESTION</span>
+      <h2>テストが多すぎて実行が遅い</h2>
+    </div>
+  </div>
+  <div class="answer-lead">
+    <span class="a-label">A. ANSWER</span>
+    <b>並列化・分割・適切な粒度の見直し</b>の3手で大半は解決します。CIで5分超えたら最適化のサイン。10分を超えたら<b>「人が待たなくなる」</b>分水嶺なので、本格的な対策を始めます。
+  </div>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">too slow</span>
+      <span class="tag-desc">3つの手で実行時間を短縮</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 短縮の3手</div>
+        <ol class="steps">
+          <li><span class="n">1</span>シャーディング (4並列で1/3〜1/4)</li>
+          <li><span class="n">2</span>変更影響範囲のみ実行 (test-impact)</li>
+          <li><span class="n">3</span>E2E → 結合 → 単体への置換</li>
+          <li><span class="n">4</span>テスト前の準備をbeforeAllで共有</li>
+          <li><span class="n">5</span>遅いテストの個別最適化</li>
+        </ol>
+        <div class="good" style="margin-top:10px">
+          <span class="good-label">優先順位</span>
+          まず「並列化」<br>
+          次に「分割」<br>
+          最後に「個別最適化」
+        </div>
+      </div>
+      <div class="code"><span class="comment">// 改善の典型例</span>
+
+<span class="ann">Before</span>:
+  E2E 50ケース  → 30分
+  結合 200ケース → 8分
+  単体 1000件   → 2分
+  <span class="kw">合計 40分</span>
+
+<span class="ann">After (シャーディング 4並列)</span>:
+  E2E       → 8分
+  結合      → 2分
+  単体      → 30秒
+  <span class="kw">合計 8〜9分</span>  ← 主要時間=E2E
+
+<span class="ann">After (E2Eの一部を結合に置換)</span>:
+  E2E 20ケース  → 5分
+  結合 220ケース → 2分
+  単体 1000件   → 30秒
+  <span class="kw">合計 5分</span>  ← 大幅短縮
+
+<span class="comment">// 多くの場合 E2Eが過剰</span>
+<span class="comment">// 下層に移すと劇的に速くなる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    遅いと感じたら最初に確認すべきは<b>ピラミッドの形</b>。E2Eが多すぎる場合がほとんど。<b>「結合 or 単体に置き換えられないか」</b>を1テストずつ問い直してみましょう。
+  </div>
+</section>
+
+<section id="q03" class="qa">
+  <div class="q-header">
+    <span class="q-num">Q.03</span>
+    <div class="q-text">
+      <span class="q-label">QUESTION</span>
+      <h2>フレーキーテストが多発して困っている</h2>
+    </div>
+  </div>
+  <div class="answer-lead">
+    <span class="a-label">A. ANSWER</span>
+    フレーキーは<b>放置すると組織全体の感覚を麻痺させる</b>最大の毒です。「再実行で消えるからOK」の文化が根付くと、本物のバグも見落とされます。<b>必ず根治を目指す</b>姿勢が現場文化の生命線です。
+  </div>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">flaky</span>
+      <span class="tag-desc">根治への手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 対処の順序</div>
+        <ol class="steps">
+          <li><span class="n">1</span>フレーキーを<b>検疫</b>（quarantineタグ）</li>
+          <li><span class="n">2</span>本流のCIから外す</li>
+          <li><span class="n">3</span>原因分類: 待ち / 順序 / 環境 / 外部</li>
+          <li><span class="n">4</span>原因別に根治</li>
+          <li><span class="n">5</span>修正後に検疫解除</li>
+        </ol>
+        <div class="bad" style="margin-top:10px">
+          <span class="bad-label">禁止</span>
+          無条件のリトライ常用<br>
+          retries: 5 のような設定<br>
+          → 根治を放棄する宣言
+        </div>
+      </div>
+      <div class="code"><span class="comment">// 原因別の処方箋</span>
+
+<span class="ann">原因A: 固定待ち</span>
+  <span class="bad-label" style="display:inline">NG</span> sleep(3000)
+  <span class="good-label" style="display:inline">OK</span> waitFor(...条件...)
+
+<span class="ann">原因B: テスト順序依存</span>
+  <span class="bad-label" style="display:inline">NG</span> 前テストの状態を前提
+  <span class="good-label" style="display:inline">OK</span> 各テスト内で完結
+
+<span class="ann">原因C: 共有データ衝突</span>
+  <span class="bad-label" style="display:inline">NG</span> 固定ID (user_1)
+  <span class="good-label" style="display:inline">OK</span> 一意ID (user_<span class="fn">Date</span>.<span class="fn">now</span>())
+
+<span class="ann">原因D: 外部API依存</span>
+  <span class="bad-label" style="display:inline">NG</span> 本物のAPI
+  <span class="good-label" style="display:inline">OK</span> WireMockで擬似化
+
+<span class="ann">原因E: 時刻依存</span>
+  <span class="bad-label" style="display:inline">NG</span> new Date()
+  <span class="good-label" style="display:inline">OK</span> 注入された時計を使う</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">鉄則</div>
+    フレーキー対応のメトリクスを<b>常時可視化</b>すること。「先月フレーキーが30件 → 今月50件」という傾向が見えれば、組織として手を打てる。<b>見えないものは管理できない</b>。
+  </div>
+</section>
+
+<section id="q04" class="qa">
+  <div class="q-header">
+    <span class="q-num">Q.04</span>
+    <div class="q-text">
+      <span class="q-label">QUESTION</span>
+      <h2>モックを使うべきか、本物を使うべきか分からない</h2>
+    </div>
+  </div>
+  <div class="answer-lead">
+    <span class="a-label">A. ANSWER</span>
+    判断基準は<b>「対象がプロセスを越えるか」「副作用があるか」「不可制御か」</b>の3つです。1つでも該当すればダブル化を検討。同じプロセス内の純粋なクラスなら、本物を使う方が自然です。
+  </div>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">mock or real</span>
+      <span class="tag-desc">判断基準の早見表</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 判断フロー</div>
+        <ol class="steps">
+          <li><span class="n">Q1</span>プロセスを越える? → YES なら検討</li>
+          <li><span class="n">Q2</span>副作用がある? → YES なら検討</li>
+          <li><span class="n">Q3</span>不可制御 (時刻等)? → YES なら検討</li>
+          <li><span class="n">Q4</span>テストが遅すぎる? → YES なら検討</li>
+          <li><span class="n">→</span>すべてNOなら本物を使う</li>
+        </ol>
+        <div class="good" style="margin-top:10px">
+          <span class="good-label">迷ったら</span>
+          「Stub」から始める<br>
+          複雑になったらMock検討<br>
+          動く実装が欲しい→Fake
+        </div>
+      </div>
+      <div class="code"><span class="comment">// 判断の実例</span>
+
+<span class="kw">外部API</span>:
+  ・プロセス越える ✓
+  ・不可制御 ✓
+  → <span class="ann">ダブルにする</span>
+
+<span class="kw">DB</span>:
+  ・プロセス越える ✓
+  ・副作用あり ✓
+  → 結合テストなら<span class="ann">本物</span>
+     (Testcontainers)
+  → 単体テストなら<span class="ann">ダブル</span>
+
+<span class="kw">同じプロセス内のクラス</span>:
+  ・プロセス越えない
+  ・副作用ない
+  → <span class="ann">本物を使う</span>
+  → DIで差し込めば十分
+
+<span class="kw">時刻 / ランダム</span>:
+  ・不可制御 ✓
+  → <span class="ann">ダブル必須</span>
+  → 「時刻を返す関数」を注入
+
+<span class="kw">メール送信</span>:
+  ・副作用あり ✓
+  → <span class="ann">ダブル</span>
+  → 実送信は事故の元</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    <b>過剰モックは設計の悪臭</b>。1テストで4個以上Mockが要るなら、対象クラスが他に依存しすぎている可能性大。テストが書きづらい=設計が窮屈、というシグナルとして受け取りましょう。
+  </div>
+</section>
+
+<section id="q05" class="qa">
+  <div class="q-header">
+    <span class="q-num">Q.05</span>
+    <div class="q-text">
+      <span class="q-label">QUESTION</span>
+      <h2>カバレッジは何%を目指すべきですか</h2>
+    </div>
+  </div>
+  <div class="answer-lead">
+    <span class="a-label">A. ANSWER</span>
+    一般的なWebアプリなら<b>「ライン80% + ブランチ70%」</b>が現実的な目安。ただし<b>「目標値を組織で強制」しない</b>のが重要です。グッドハートの法則どおり、目標化した瞬間に意味を失います。<b>「観察対象」として使う</b>のが正解。
+  </div>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">coverage target</span>
+      <span class="tag-desc">プロジェクト別の目安</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// プロジェクト別の目安</div>
+        <ol class="steps">
+          <li><span class="n">A</span>業務Webアプリ → ライン70〜80%</li>
+          <li><span class="n">B</span>OSSライブラリ → 85〜95%</li>
+          <li><span class="n">C</span>金融・決済 → 95%以上</li>
+          <li><span class="n">D</span>航空・医療 → MC/DC 100%</li>
+          <li><span class="n">E</span>個人プロジェクト → 気にしない</li>
+        </ol>
+        <div class="bad" style="margin-top:10px">
+          <span class="bad-label">アンチパターン</span>
+          一律「100%」を強制<br>
+          → 価値のないテストの量産<br>
+          → 全体の品質が下がる
+        </div>
+      </div>
+      <div class="code"><span class="comment">// カバレッジとの健全な付き合い</span>
+
+<span class="kw">やるべきこと</span>:
+  ・閾値「下限」を設定 (例: 70%)
+  ・PRで下がったら警告
+  ・重要モジュールに高い閾値
+  ・トレンドを見る
+
+<span class="kw">やってはいけないこと</span>:
+  ・「100%でないとマージ不可」
+  ・チーム評価指標に使う
+  ・assertのないテストを書く
+  ・カバレッジ目当てのテスト
+
+       <span class="comment">↓</span>
+
+<span class="ann">数字は鏡である</span>
+<span class="ann">磨くべきは映る対象</span>
+
+<span class="comment">// ライン80%は到達点ではない</span>
+<span class="comment">// 道半ばの観察ポイント</span>
+<span class="comment">// その先は質を上げる方向へ</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    カバレッジを上げるより、<b>ミューテーション殺害率を上げる</b>方が品質に直結します。「ライン80%・ミューテーション60%」を目指すと、量と質のバランスが整います。詳細は地図編Vol.8を参照。
+  </div>
+</section>
+
+<section id="q06" class="qa">
+  <div class="q-header">
+    <span class="q-num">Q.06</span>
+    <div class="q-text">
+      <span class="q-label">QUESTION</span>
+      <h2>テストが書きづらいコードに直面した</h2>
+    </div>
+  </div>
+  <div class="answer-lead">
+    <span class="a-label">A. ANSWER</span>
+    <b>「書きづらい」は設計のサインです</b>。コードが悪いから書きづらい。リファクタリングしてからテストを書くのが王道。<b>テスト容易性=良い設計</b>と捉えると、改善の方向が見えてきます。
+  </div>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">untestable</span>
+      <span class="tag-desc">書きづらさの原因と対処</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 書きづらさの原因</div>
+        <ol class="steps">
+          <li><span class="n">①</span>関数が大きすぎる → 分割</li>
+          <li><span class="n">②</span>依存が多すぎる → 整理 / DI</li>
+          <li><span class="n">③</span>内部状態が複雑 → 純粋関数に</li>
+          <li><span class="n">④</span>副作用とロジック混在 → 分離</li>
+          <li><span class="n">⑤</span>private多用 → 公開IFを再設計</li>
+        </ol>
+      </div>
+      <div class="code"><span class="comment">// よくある「書きづらい」コード</span>
+
+<span class="bad-label" style="display:inline">NG</span> 大きな関数 + 副作用
+<span class="kw">function</span> <span class="fn">processOrder</span>(id) {
+  <span class="kw">const</span> u = db.<span class="fn">find</span>(id);
+  <span class="kw">const</span> p = u.points * <span class="num">0.1</span>;
+  db.<span class="fn">update</span>(u.id, ...);
+  mailer.<span class="fn">send</span>(...);
+  log.<span class="fn">info</span>(...);
+}
+<span class="comment">// → テスト書こうとすると</span>
+<span class="comment">//   モック4個・準備が膨大</span>
+
+<span class="good-label" style="display:inline">OK</span> 分離した設計
+<span class="kw">function</span> <span class="fn">calcPoints</span>(u) {  <span class="ann">// 純粋</span>
+  <span class="kw">return</span> u.points * <span class="num">0.1</span>;
+}
+
+<span class="kw">function</span> <span class="fn">processOrder</span>(deps, id) {
+  <span class="kw">const</span> u = deps.repo.<span class="fn">find</span>(id);
+  <span class="kw">const</span> p = <span class="fn">calcPoints</span>(u);
+  deps.repo.<span class="fn">update</span>(u.id, p);
+  deps.mailer.<span class="fn">send</span>(u, p);
+}
+
+<span class="comment">// calcPointsは純粋関数なのでテスト楽</span>
+<span class="comment">// processOrderはDI済みなので楽</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    「テストが書きにくい」と感じたら、<b>その感覚を大事に</b>。テストファースト（地図編Vol.3）の本質はここにあります。テストが書きやすい形を選ぶことで、自然と良い設計に近づきます。
+  </div>
+</section>
+
+<section id="q07" class="qa">
+  <div class="q-header">
+    <span class="q-num">Q.07</span>
+    <div class="q-text">
+      <span class="q-label">QUESTION</span>
+      <h2>古いコード(レガシー)にテストを追加したい</h2>
+    </div>
+  </div>
+  <div class="answer-lead">
+    <span class="a-label">A. ANSWER</span>
+    レガシーコードは<b>「特性化テスト」</b>から始めます。「正しい振る舞い」を知らなくても、「現状の振る舞い」を記録するテストを書き、それを安全網としてリファクタリングする手法。<b>マイケル・フェザーズの古典『レガシーコード改善ガイド』</b>が必読です。
+  </div>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">legacy code</span>
+      <span class="tag-desc">レガシーへのテスト追加手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 攻略の手順</div>
+        <ol class="steps">
+          <li><span class="n">1</span>変えたい場所を「シーム」と呼ぶ</li>
+          <li><span class="n">2</span>シームの周辺を特性化テストで固定</li>
+          <li><span class="n">3</span>テスト緑のまま小さくリファクタ</li>
+          <li><span class="n">4</span>依存を切り離せる形に整える</li>
+          <li><span class="n">5</span>本来のテストを追加</li>
+          <li><span class="n">6</span>特性化テストは役目を終えたら削除</li>
+        </ol>
+      </div>
+      <div class="code"><span class="comment">// 特性化テスト (characterization test)</span>
+
+<span class="comment">// 古い関数 — 中身がよく分からない</span>
+<span class="kw">function</span> <span class="fn">mysteryCalc</span>(x, y, z) {
+  <span class="comment">// 200行の謎ロジック</span>
+}
+
+<span class="comment">// 「現状の振る舞い」を記録する</span>
+<span class="fn">test</span>(<span class="str">"mysteryCalc(1,2,3)"</span>, () =&gt; {
+  <span class="comment">// 実際に動かして結果を記録</span>
+  <span class="fn">expect</span>(<span class="fn">mysteryCalc</span>(<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>)).<span class="fn">toBe</span>(<span class="num">42</span>);
+});
+<span class="fn">test</span>(<span class="str">"mysteryCalc(5,5,0)"</span>, () =&gt; {
+  <span class="fn">expect</span>(<span class="fn">mysteryCalc</span>(<span class="num">5</span>,<span class="num">5</span>,<span class="num">0</span>)).<span class="fn">toBe</span>(<span class="num">0</span>);
+});
+<span class="comment">// ↑ 「正しい」とは言っていない</span>
+<span class="comment">// 「今こう動く」と言っているだけ</span>
+
+<span class="comment">// 安全網ができたので</span>
+<span class="comment">// 中をリファクタしても</span>
+<span class="comment">// 振る舞いが変わらないと確認できる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    <b>レガシーへのテスト追加は時間がかかります</b>。1日10分でもよいので<b>「触れた箇所にテストを残す」</b>を続けると、半年後には景色が変わっています。「ボーイスカウト・ルール」(来た時より美しく)を意識しましょう。
+  </div>
+</section>
+
+<section id="q08" class="qa">
+  <div class="q-header">
+    <span class="q-num">Q.08</span>
+    <div class="q-text">
+      <span class="q-label">QUESTION</span>
+      <h2>チームの他のメンバーがテストを書きません</h2>
+    </div>
+  </div>
+  <div class="answer-lead">
+    <span class="a-label">A. ANSWER</span>
+    <b>「書け」と言うのではなく、「書かないとマージできない」仕組みにする</b>のが現場の知恵です。文化を変えるのは難しいですが、構造を変えるのは比較的容易。<b>CIで強制し、PRレビューで触れる、自分が手本を示す</b>の3点セットが効きます。
+  </div>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">team culture</span>
+      <span class="tag-desc">構造でテスト文化を作る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 文化醸成の3手</div>
+        <ol class="steps">
+          <li><span class="n">1</span>CIで「テストなしの新機能は不可」</li>
+          <li><span class="n">2</span>PRテンプレに「テスト有無」欄</li>
+          <li><span class="n">3</span>レビューで必ず触れる</li>
+          <li><span class="n">4</span>自分のPRで模範を示す</li>
+          <li><span class="n">5</span>テストで救われた事例を共有</li>
+        </ol>
+        <div class="good" style="margin-top:10px">
+          <span class="good-label">効くアプローチ</span>
+          理屈で説得 → 効果薄<br>
+          仕組みで強制 → 効果大<br>
+          成功体験を語る → 文化が育つ
+        </div>
+      </div>
+      <div class="code"><span class="comment">// 段階的な仕組み導入</span>
+
+<span class="kw">第1段</span>: 観察
+  カバレッジを計測するだけ
+  まだ強制はしない
+  数値を見える化
+
+<span class="kw">第2段</span>: 推奨
+  PRテンプレに「テスト追加した?」
+  レビュアーが必ず確認
+
+<span class="kw">第3段</span>: 軽い強制
+  「新規ファイルは80%以上」
+  既存は緩く
+
+<span class="kw">第4段</span>: 全面強制
+  「PRで下がったらマージ不可」
+  ブランチ保護で構造化
+
+       <span class="comment">↓</span>
+
+<span class="ann">急に上のレベルに飛ばない</span>
+<span class="ann">反発を生まないペースで</span>
+
+<span class="comment">// 半年〜1年かけて文化を育てる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    最強の説得材料は<b>「テストのおかげで救われた」事例</b>。リファクタリングで全テストが赤くなり、本番事故を未然に防いだ、といった具体的なエピソードがチームの意識を変えます。<b>事例を意識的に集めて共有する</b>習慣を持ちましょう。
+  </div>
+</section>
+
+<section id="q09" class="qa">
+  <div class="q-header">
+    <span class="q-num">Q.09</span>
+    <div class="q-text">
+      <span class="q-label">QUESTION</span>
+      <h2>TDDを始めたいが、どう始めればよいか</h2>
+    </div>
+  </div>
+  <div class="answer-lead">
+    <span class="a-label">A. ANSWER</span>
+    最初は<b>「全部TDD」ではなく「ロジックの濃い部分だけTDD」</b>から始めます。計算・変換・バリデーションのような<b>純粋関数</b>が向いています。FizzBuzz・BowlingGame等の練習問題で<b>体に手順を染み込ませる</b>のが最短ルート。
+  </div>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">starting TDD</span>
+      <span class="tag-desc">TDDの始め方</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 最初の30日</div>
+        <ol class="steps">
+          <li><span class="n">Day1</span>FizzBuzzをTDDで(本編Vol.3)</li>
+          <li><span class="n">Day2-3</span>その他の練習問題を3個</li>
+          <li><span class="n">1週目</span>業務で純粋関数だけTDD</li>
+          <li><span class="n">2週目</span>サービス層もTDDで</li>
+          <li><span class="n">3週目</span>バグ修正は必ず再現テストから</li>
+          <li><span class="n">4週目</span>振り返って続ける範囲を決める</li>
+        </ol>
+      </div>
+      <div class="code"><span class="comment">// TDDが向く・向かない場面</span>
+
+<span class="ann">★★★ 強く向く</span>
+  ・計算ロジック
+  ・データ変換
+  ・バリデーション
+  ・パーサ・フォーマッタ
+  ・状態遷移ロジック
+
+<span class="ann">★★ 向く</span>
+  ・API定義・ハンドラ
+  ・ビジネスルール
+  ・バグ修正
+
+<span class="ann">★ 向きづらい</span>
+  ・UI / 見た目の調整
+  ・探索的なプロトタイプ
+  ・仕様未確定の領域
+
+       <span class="comment">↓</span>
+
+<span class="kw">最初は★★★に絞る</span>
+<span class="kw">体得してから広げる</span>
+
+<span class="comment">// 1日30分のTDD練習を1ヶ月</span>
+<span class="comment">// → リズムが体に入る</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    TDDは<b>「読んで理解する」より「やって体得する」</b>もの。FizzBuzlやBowlingGame、Tofuなどの古典的演習を実際に書いてみるのが最短。<b>書いた手の感覚</b>が後で効いてきます。
+  </div>
+</section>
+
+<section id="q10" class="qa">
+  <div class="q-header">
+    <span class="q-num">Q.10</span>
+    <div class="q-text">
+      <span class="q-label">QUESTION</span>
+      <h2>テストの失敗メッセージが読み解けません</h2>
+    </div>
+  </div>
+  <div class="answer-lead">
+    <span class="a-label">A. ANSWER</span>
+    まず<b>「3つの情報だけ拾う」</b>習慣を作りましょう。①テスト名 ②期待値と実際値の差分 ③スタックトレースの先頭行。これだけで原因の8割は特定できます。<b>全部読もうとしない</b>のがコツです。
+  </div>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">reading failures</span>
+      <span class="tag-desc">失敗ログを読み解く順序</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 読み方の5ステップ</div>
+        <ol class="steps">
+          <li><span class="n">1</span>テスト名を読む(何の検証だったか)</li>
+          <li><span class="n">2</span>Expected vs Received を比較</li>
+          <li><span class="n">3</span>スタックトレース先頭行へ</li>
+          <li><span class="n">4</span>該当行のコードを確認</li>
+          <li><span class="n">5</span>該当テストのArrangeを再読</li>
+        </ol>
+        <div class="good" style="margin-top:10px">
+          <span class="good-label">慣れのコツ</span>
+          毎回同じ順で読む<br>
+          1回目で全て分かろうとしない<br>
+          差分が大きい時はメモ
+        </div>
+      </div>
+      <div class="code"><span class="comment">// 典型的な失敗メッセージ</span>
+
+✗ 在庫を減らすと残数が更新される
+                  <span class="ann">↑①</span>
+
+  Expected: <span class="str">7</span>
+  Received: <span class="num">10</span>
+            <span class="ann">↑②差分</span>
+
+  at <span class="fn">stock.test.js:14:33</span>
+       <span class="ann">↑③ここを見る</span>
+  at <span class="fn">describe</span> (...)
+
+<span class="comment">// 解釈</span>
+<span class="comment">// 「在庫が10残っている」</span>
+<span class="comment">// → 減算ロジックが効いていない</span>
+<span class="comment">// → 14行目を確認</span>
+<span class="comment">// → consume()内のバグ発見</span>
+
+<span class="comment">// 全部読まなくてよい</span>
+<span class="comment">// ① テスト名</span>
+<span class="comment">// ② 期待値/実際値</span>
+<span class="comment">// ③ 場所</span>
+<span class="comment">// この3つで8割解決</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">超便利</div>
+    Playwright/Cypressには<b>スクリーンショット・ビデオ録画</b>があります。E2E失敗時はログだけでなく<b>「実際の画面」を見る</b>習慣をつけると一目で分かる失敗が多い。<code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 6px">trace: on</code>を有効にしましょう。
+  </div>
+</section>
+
+<div class="ending">
+  <h2>エンジニアリングテスト編 全10巻 完結</h2>
+  <div class="subtitle-end">★ SERIES — COMPLETE ★</div>
+  <div class="message">
+    Vol.1の<b>「入門・全体像」</b>から始まったエンジニアリングテストの旅、10巻を最後まで読み切ってくださり、ありがとうございました。<br><br>
+    AAAパターンを学び、TDDのリズムを体に入れ、テストダブルを使いこなし、設計技法で網羅し、結合とE2Eで全体を貫き、カバレッジで質を測り、CI/CDで自動化に乗せ、そして本巻で<b>「困った時の引き出し」</b>を手にしました。<br><br>
+    テストは「書ける」だけでは終わりません。<b>書いたテストが回り続け、変更を支え、ビジネス速度を生む</b>—ここまで来て、本当の価値が現れます。<br><br>
+    地図編10巻を併読すれば、本編で見てきた一つ一つの技術が、<b>歴史と構造の流れの中に位置づけられて立体的に</b>見えてくるはずです。<br><br>
+    あなたの現場で、本書が辞書として何度でも開かれることを願って。
+  </div>
+  <div class="series-list">
+    <span class="h">ENGINEERING TEST REFERENCE — VOLUMES</span>
+    <div class="row"><span class="v">VOL.01</span><span>入門・全体像編</span></div>
+    <div class="row"><span class="v">VOL.02</span><span>単体テスト基礎編</span></div>
+    <div class="row"><span class="v">VOL.03</span><span>TDD・テストファースト編</span></div>
+    <div class="row"><span class="v">VOL.04</span><span>テストダブル編</span></div>
+    <div class="row"><span class="v">VOL.05</span><span>テスト設計技法編</span></div>
+    <div class="row"><span class="v">VOL.06</span><span>結合・統合テスト編</span></div>
+    <div class="row"><span class="v">VOL.07</span><span>E2E・UIテスト編</span></div>
+    <div class="row"><span class="v">VOL.08</span><span>カバレッジ・品質測定編</span></div>
+    <div class="row"><span class="v">VOL.09</span><span>CI/CD・テスト自動化編</span></div>
+    <div class="row"><span class="v">VOL.10</span><span>困った時のテスト編 ← FINAL</span></div>
+  </div>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST REFERENCE — VOL.10 / FINAL</span>
+  <span>TROUBLESHOOTING Q&A</span>
+</footer>
+
+</body>
+</html>

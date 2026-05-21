@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジニアリングテスト 地図編 テストはどこから来たか編 Vol.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2340;
+  --paper:#f0ebe0;
+  --paper-2:#e3dcc8;
+  --accent:#3d4f7c;
+  --accent-2:#6b7a96;
+  --accent-3:#b89968;
+  --muted:#6a6457;
+  --line:#c8c0a8;
+  --code-bg:#1c2138;
+  --code-text:#f0ebe0;
+  --panel-bg:#f7f3e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Noto Sans JP',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.8;
+  padding:48px 64px;
+  max-width:1280px;
+  margin:0 auto;
+}
+.page-header{
+  position:relative;
+  padding:32px 0 40px;
+  border-bottom:2px solid var(--ink);
+  margin-bottom:48px;
+  overflow:hidden;
+}
+.page-header::before{
+  content:"⊙";
+  position:absolute;
+  top:-50px;
+  right:-20px;
+  font-size:320px;
+  font-family:'Shippori Mincho',serif;
+  color:var(--accent);
+  opacity:0.12;
+  z-index:0;
+  line-height:1;
+}
+.page-header > *{position:relative;z-index:1}
+.series-tag{
+  display:inline-block;
+  background:var(--ink);
+  color:var(--paper);
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  padding:4px 12px;
+  letter-spacing:0.2em;
+  margin-right:8px;
+}
+.map-tag{
+  display:inline-block;
+  background:var(--accent-3);
+  color:#fff;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  padding:4px 12px;
+  letter-spacing:0.2em;
+  margin-right:8px;
+}
+.vol-tag{
+  display:inline-block;
+  background:var(--accent);
+  color:var(--paper);
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  padding:4px 12px;
+  letter-spacing:0.1em;
+}
+h1{
+  font-family:'Shippori Mincho',serif;
+  font-size:42px;
+  font-weight:700;
+  margin-top:20px;
+  letter-spacing:0.02em;
+}
+.subtitle{
+  color:var(--muted);
+  font-size:14px;
+  margin-top:8px;
+  letter-spacing:0.1em;
+}
+.lead{
+  max-width:660px;
+  margin-top:20px;
+  color:var(--ink);
+  font-size:15px;
+}
+.axis-banner{
+  display:inline-block;
+  margin-top:18px;
+  background:var(--paper-2);
+  border-left:3px solid var(--accent-3);
+  padding:8px 16px;
+  font-size:12px;
+  font-family:'JetBrains Mono',monospace;
+  color:var(--ink);
+  letter-spacing:0.1em;
+}
+.toc{
+  background:var(--paper-2);
+  padding:20px 28px;
+  margin-bottom:56px;
+  border-left:3px solid var(--accent);
+}
+.toc-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--muted);
+  letter-spacing:0.2em;
+  margin-bottom:10px;
+}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{
+  color:var(--ink);
+  text-decoration:none;
+  font-size:13px;
+  position:relative;
+  padding-left:14px;
+}
+.toc a::before{
+  content:"—";
+  position:absolute;
+  left:0;
+  color:var(--accent);
+}
+.toc a:hover{color:var(--accent)}
+section{margin-bottom:64px}
+.section-header{
+  display:flex;
+  align-items:baseline;
+  gap:20px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:20px;
+}
+.section-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+  color:var(--accent);
+  font-weight:600;
+}
+.section-header h2{
+  font-family:'Shippori Mincho',serif;
+  font-size:26px;
+  font-weight:700;
+}
+.section-header .en{
+  margin-left:auto;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--muted);
+  letter-spacing:0.2em;
+}
+.pattern-desc{
+  max-width:700px;
+  font-size:14px;
+  margin-bottom:20px;
+  color:var(--ink);
+}
+.pattern-desc b{color:var(--accent);font-weight:700}
+.demo-card{
+  background:#fff;
+  border:1px solid var(--line);
+  margin-top:16px;
+}
+.demo-head{
+  background:var(--paper-2);
+  padding:10px 16px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.tag-name{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  color:var(--ink);
+  font-weight:600;
+}
+.tag-desc{
+  font-size:12px;
+  color:var(--muted);
+}
+.demo-body{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  min-height:240px;
+}
+.panel{
+  background:var(--panel-bg);
+  padding:22px 26px;
+  border-right:1px solid var(--line);
+}
+.panel-head{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:14px;
+  letter-spacing:0.1em;
+}
+.code{
+  background:var(--code-bg);
+  color:var(--code-text);
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;
+  padding:22px 26px;
+  line-height:1.7;
+  overflow-x:auto;
+  white-space:pre;
+}
+.code .kw{color:#ffc88a}
+.code .type{color:#c2a3ff}
+.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}
+.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}
+.code .ann{color:#f7c08a}
+.tip{
+  border-left:3px solid var(--accent);
+  background:rgba(61,79,124,0.07);
+  padding:14px 20px;
+  margin-top:16px;
+  font-size:13.5px;
+}
+.tip-head{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--accent);
+  font-weight:600;
+  letter-spacing:0.15em;
+  margin-bottom:6px;
+}
+.tip.copper{border-left-color:var(--accent-3);background:rgba(184,153,104,0.12)}
+.tip.copper .tip-head{color:var(--accent-3)}
+
+/* 用語の地図 専用 */
+.term-map{
+  display:grid;
+  grid-template-columns:120px 1fr;
+  gap:8px 16px;
+  font-size:13px;
+}
+.term-map dt{
+  font-family:'JetBrains Mono',monospace;
+  color:var(--accent);
+  font-weight:600;
+  padding:4px 0;
+}
+.term-map dd{
+  padding:4px 0;
+  border-bottom:1px dashed var(--line);
+}
+.term-map dt{border-bottom:1px dashed var(--line)}
+
+/* 年表 */
+.timeline{
+  position:relative;
+  padding-left:24px;
+  border-left:2px solid var(--accent-3);
+  font-size:13px;
+}
+.timeline .era{
+  position:relative;
+  padding:10px 0 10px 6px;
+}
+.timeline .era::before{
+  content:"●";
+  position:absolute;
+  left:-32px;
+  top:8px;
+  color:var(--accent-3);
+  font-size:14px;
+  background:var(--panel-bg);
+  width:22px;
+  text-align:center;
+}
+.timeline .year{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--accent);
+  font-weight:600;
+  letter-spacing:0.1em;
+  display:block;
+}
+.timeline .label{
+  font-weight:700;
+  color:var(--ink);
+  display:block;
+  margin-top:2px;
+}
+.timeline .desc{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:2px;
+  display:block;
+}
+
+/* コストカーブ */
+.cost-curve{
+  position:relative;
+  background:#fff;
+  border:1px solid var(--line);
+  padding:16px;
+  height:240px;
+}
+.cost-curve svg{width:100%;height:100%}
+
+/* 流れ図 */
+.flow-h{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  font-size:12px;
+  font-family:'JetBrains Mono',monospace;
+  margin:10px 0;
+}
+.flow-h .step{
+  background:#fff;
+  border:1px solid var(--accent-2);
+  padding:8px 12px;
+  color:var(--ink);
+}
+.flow-h .arrow{color:var(--accent);font-weight:700}
+.flow-h .step.highlight{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+
+/* 対比表 */
+.compare{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+  font-size:13px;
+  margin:10px 0;
+}
+.compare > div{
+  padding:12px 14px;
+  border:1px solid var(--line);
+  background:#fff;
+}
+.compare .head{
+  background:var(--paper-2);
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--ink);
+  font-weight:600;
+  letter-spacing:0.1em;
+}
+.compare .left.head{border-right:none}
+.compare .right.head{}
+.compare .left{border-right:none}
+
+.page-footer{
+  border-top:2px solid var(--ink);
+  margin-top:80px;
+  padding-top:24px;
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  color:var(--muted);
+  font-family:'JetBrains Mono',monospace;
+  letter-spacing:0.1em;
+}
+@media(max-width:720px){
+  body{padding:24px 20px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  h1{font-size:32px}
+  .page-header::before{font-size:200px}
+  .compare{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">TEST</span>
+  <span class="map-tag">MAP</span>
+  <span class="vol-tag">MAP VOL.01 / 10</span>
+  <h1>テストはどこから来たか編</h1>
+  <div class="subtitle">地図編 Vol.1 — ORIGIN OF SOFTWARE TESTING</div>
+  <p class="lead">
+    本編Vol.1の副読本として、<b>「そもそも、なぜ私たちはテストを書いているのか」</b>を時代の流れで読み解きます。テストという仕事は突然生まれたものではなく、ソフトウェアが社会に広がる過程で必然的に求められるようになったものです。
+  </p>
+  <span class="axis-banner">主な軸 / TIME AXIS — 時間軸で読み解く</span>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#sec01">01 テストのなかった時代</a></li>
+    <li><a href="#sec02">02 ソフトウェアが大きくなった</a></li>
+    <li><a href="#sec03">03 工程の最後にテストする時代</a></li>
+    <li><a href="#sec04">04 バグ発見が遅れるほど高くつく</a></li>
+    <li><a href="#sec05">05 「先にテストを書く」発想</a></li>
+    <li><a href="#sec06">06 自動化と継続的な検証</a></li>
+    <li><a href="#sec07">07 今、テストが仕事である理由</a></li>
+    <li><a href="#term">用語の地図</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="sec01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>テストのなかった時代</h2>
+    <span class="en">BEFORE 1970s</span>
+  </div>
+  <p class="pattern-desc">
+    1950〜60年代、ソフトウェアはごく小さなプログラムで、書いた本人がその場で動かして確認していました。<b>「テストする」という独立した行為や仕事はまだ存在しません</b>。動かしてみて変な結果が出たら、その場で直す。これが原始的な姿でした。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prehistory</span>
+      <span class="tag-desc">テストが行為として独立する前の時代</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 時間軸 — 出発点</div>
+        <div class="timeline">
+          <div class="era">
+            <span class="year">1950s</span>
+            <span class="label">プログラム黎明期</span>
+            <span class="desc">紙テープ・パンチカードで命令を入力。1つのプログラムは数十〜数百行</span>
+          </div>
+          <div class="era">
+            <span class="year">1960s</span>
+            <span class="label">「バグ」という言葉が定着</span>
+            <span class="desc">プログラムの欠陥を見つけて直すこと=デバッグ。テスト=デバッグだった</span>
+          </div>
+          <div class="era">
+            <span class="year">〜1970</span>
+            <span class="label">書いた人が動かして確認</span>
+            <span class="desc">プログラムは小さく、作者が全体を把握できた</span>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="comment">// この時代の「テスト」</span>
+
+<span class="kw">1.</span> プログラムを書く
+   <span class="comment">↓</span>
+<span class="kw">2.</span> 動かしてみる
+   <span class="comment">↓</span>
+<span class="kw">3.</span> 変な結果が出る
+   <span class="comment">↓</span>
+<span class="kw">4.</span> 原因を探して直す  <span class="ann">← デバッグ</span>
+   <span class="comment">↓</span>
+<span class="kw">5.</span> もう一度動かす
+
+<span class="comment">// テストとデバッグの</span>
+<span class="comment">// 区別はなかった</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">この時代の用語</div>
+    <b>バグ（bug）</b>＝プログラムの誤り。語源は1947年、初期のコンピュータに飛び込んだ蛾（虫=bug）が原因で動作不良が起きた逸話から。<b>デバッグ（debug）</b>＝バグを取り除く作業。「動かない原因を探して直す」こと。
+  </div>
+</section>
+
+<section id="sec02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>ソフトウェアが大きくなった</h2>
+    <span class="en">SOFTWARE GROWS</span>
+  </div>
+  <p class="pattern-desc">
+    1970年代、コンピュータの普及と共にソフトウェアは急速に大規模化しました。<b>一人では全体を把握できない</b>規模の開発が当たり前になり、書いた本人が動かして確かめるだけでは品質を保てなくなります。ここで「品質」を別の人・別の工程で守る必要が出てきました。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">software crisis</span>
+      <span class="tag-desc">規模拡大 → 品質を守る別の仕組みが必要に</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 規模の変化</div>
+        <div class="timeline">
+          <div class="era">
+            <span class="year">1960s</span>
+            <span class="label">数百〜数千行</span>
+            <span class="desc">一人で全体を理解できる</span>
+          </div>
+          <div class="era">
+            <span class="year">1970s</span>
+            <span class="label">数万〜数十万行</span>
+            <span class="desc">複数人で分担。誰も全体を知らない</span>
+          </div>
+          <div class="era">
+            <span class="year">1980s</span>
+            <span class="label">数百万行</span>
+            <span class="desc">大企業の基幹システム。失敗が会社存続に直結</span>
+          </div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          <b style="color:var(--ink)">ソフトウェア危機</b>と呼ばれた時代。プロジェクトが頻繁に遅延・予算超過・品質崩壊を起こした
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 変化の構図</span>
+
+       <span class="ann">規模小</span>     <span class="ann">規模大</span>
+       ─────    ─────
+作者    把握できる   把握できない
+責任    一人        分散
+バグ    すぐ気づく   見つからない
+品質    自然に保てる  仕組みが必要
+
+       <span class="comment">↓</span>
+
+<span class="kw">求められたもの</span>:
+  ・規律ある開発工程
+  ・品質を担保する仕組み
+  ・専門の「検証する人」</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    テストという仕事は、<b>規模が個人の理解を超えた時に必要になった</b>のです。小さなプログラムなら不要だったものが、大きくなった瞬間に不可欠になる。この因果が出発点です。
+  </div>
+</section>
+
+<section id="sec03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>工程の最後にテストする時代</h2>
+    <span class="en">WATERFALL ERA</span>
+  </div>
+  <p class="pattern-desc">
+    1980〜90年代、大規模開発を進めるための方法として「ウォーターフォール開発」が定着します。<b>要件定義 → 設計 → 実装 → テスト → リリース</b>と工程を一方向に流す進め方です。「テスト」が独立した工程として明確に区切られ、専門の「テスター」という職業も生まれました。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">waterfall</span>
+      <span class="tag-desc">テストが独立した工程として確立した時代</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ウォーターフォールの流れ</div>
+        <div class="flow-h">
+          <div class="step">要件定義</div>
+          <div class="arrow">▶</div>
+          <div class="step">設計</div>
+          <div class="arrow">▶</div>
+          <div class="step">実装</div>
+          <div class="arrow">▶</div>
+          <div class="step highlight">テスト</div>
+          <div class="arrow">▶</div>
+          <div class="step">リリース</div>
+        </div>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted);line-height:1.7">
+          滝（waterfall）が上から下に流れるように、<b style="color:var(--ink)">前の工程は完了させてから次へ</b>進む。テストは実装後にまとめて行う独立工程として位置づけられた。
+        </p>
+        <div class="compare" style="margin-top:14px">
+          <div class="head left">プログラマ</div>
+          <div class="head right">テスター</div>
+          <div class="left">機能を実装する</div>
+          <div class="right">実装されたものを検証する</div>
+        </div>
+      </div>
+      <div class="code"><span class="comment">// この時代の問題点</span>
+
+実装<span class="kw">が終わってから</span>テストを始める
+   <span class="comment">↓</span>
+重大なバグは数ヶ月後に発覚
+   <span class="comment">↓</span>
+原因が設計レベルだと
+<span class="kw">最初からやり直し</span>
+   <span class="comment">↓</span>
+プロジェクト遅延・予算超過
+
+<span class="comment">// 用語</span>
+<span class="ann">ウォーターフォール開発</span>:
+  工程を一方向に流す進め方
+
+<span class="ann">テスト工程</span>:
+  実装の後に置かれる検証フェーズ
+
+<span class="ann">テスター</span>:
+  検証を専門に行う担当者</div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>ウォーターフォール開発</b>＝開発を「要件→設計→実装→テスト→リリース」の一方向に進める方式。各工程を完了させてから次へ進むため、後戻りが難しい。<b>現在でも基幹システムや組み込み開発で採用されています</b>が、後述するアジャイル開発と対比される伝統的な手法です。
+  </div>
+</section>
+
+<section id="sec04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>バグ発見が遅れるほど高くつく</h2>
+    <span class="en">COST OF LATE BUGS</span>
+  </div>
+  <p class="pattern-desc">
+    1981年、研究者バリー・ベームが衝撃的なデータを発表しました。<b>バグは発見が遅れるほど修正コストが指数関数的に増える</b>。設計段階で見つかれば1の手間が、リリース後に発覚すると100倍以上になるという事実です。これが現代のテスト戦略すべての出発点になりました。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">cost curve</span>
+      <span class="tag-desc">後の工程で見つかるほど修正コストは跳ね上がる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 修正コストの曲線</div>
+        <div class="cost-curve">
+          <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
+            <line x1="40" y1="170" x2="310" y2="170" stroke="#1a2340" stroke-width="1.5"/>
+            <line x1="40" y1="20" x2="40" y2="170" stroke="#1a2340" stroke-width="1.5"/>
+            <text x="20" y="25" font-size="9" fill="#6a6457" font-family="JetBrains Mono">cost</text>
+            <text x="280" y="190" font-size="9" fill="#6a6457" font-family="JetBrains Mono">phase</text>
+            <path d="M 50 165 Q 130 162 180 145 Q 220 125 250 85 Q 280 40 300 25" stroke="#3d4f7c" stroke-width="2.5" fill="none"/>
+            <circle cx="60" cy="164" r="3" fill="#3d4f7c"/>
+            <circle cx="120" cy="160" r="3" fill="#3d4f7c"/>
+            <circle cx="180" cy="145" r="3" fill="#3d4f7c"/>
+            <circle cx="240" cy="95" r="3" fill="#3d4f7c"/>
+            <circle cx="295" cy="28" r="4" fill="#b89968"/>
+            <text x="50" y="184" font-size="8.5" fill="#1a2340" font-family="JetBrains Mono">要件</text>
+            <text x="110" y="184" font-size="8.5" fill="#1a2340" font-family="JetBrains Mono">設計</text>
+            <text x="170" y="184" font-size="8.5" fill="#1a2340" font-family="JetBrains Mono">実装</text>
+            <text x="225" y="184" font-size="8.5" fill="#1a2340" font-family="JetBrains Mono">テスト</text>
+            <text x="278" y="184" font-size="8.5" fill="#b89968" font-family="JetBrains Mono" font-weight="700">本番</text>
+            <text x="55" y="158" font-size="8" fill="#6a6457" font-family="JetBrains Mono">×1</text>
+            <text x="115" y="154" font-size="8" fill="#6a6457" font-family="JetBrains Mono">×5</text>
+            <text x="175" y="139" font-size="8" fill="#6a6457" font-family="JetBrains Mono">×10</text>
+            <text x="235" y="89" font-size="8" fill="#6a6457" font-family="JetBrains Mono">×30</text>
+            <text x="282" y="22" font-size="9" fill="#b89968" font-family="JetBrains Mono" font-weight="700">×100+</text>
+          </svg>
+        </div>
+        <p style="font-size:11.5px;margin-top:10px;color:var(--muted);line-height:1.6">
+          Boehm（ベーム）曲線として知られる、ソフトウェア工学の<b style="color:var(--ink)">最も重要な経験則の一つ</b>。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// なぜ後ほど高くつくのか</span>
+
+<span class="kw">設計段階で発見</span>
+  → 設計書を直すだけ
+  → コストは小さい
+
+<span class="kw">実装段階で発見</span>
+  → コードを直す
+  → やや手間
+
+<span class="kw">テスト工程で発見</span>
+  → 設計まで戻る場合あり
+  → 結構な手戻り
+
+<span class="kw">本番リリース後に発見</span>
+  → 緊急対応
+  → 既に動いている他機能への影響
+  → ユーザーへの謝罪
+  → 信頼の失墜
+  → <span class="ann">コストは何倍にも膨らむ</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">この曲線から導かれる原則</div>
+    <b>「テストはなるべく早い段階で・なるべく頻繁に」</b>。この鉄則が、後のTDD（テスト先行）・CI/CD（自動化）・テストピラミッド（高速な単体テストを多く）といった現代のテスト思想すべての根っこにあります。
+  </div>
+</section>
+
+<section id="sec05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>「先にテストを書く」発想</h2>
+    <span class="en">TDD APPEARS</span>
+  </div>
+  <p class="pattern-desc">
+    1999年、ソフトウェア開発者ケント・ベックが革命的な手法を提唱しました。それが<b>XP（エクストリームプログラミング）</b>と、その中核技法である<b>TDD（テスト駆動開発）</b>です。「実装してからテスト」という当たり前の順序を逆転させ、<b>「テストを先に書いてから実装する」</b>という発想を打ち出しました。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">test first</span>
+      <span class="tag-desc">順序を逆転させたパラダイムシフト</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 順序の逆転</div>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:4px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em">BEFORE — 従来</p>
+        <div class="flow-h">
+          <div class="step">実装</div>
+          <div class="arrow">▶</div>
+          <div class="step">テスト</div>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin:14px 0 4px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em">AFTER — TDD</p>
+        <div class="flow-h">
+          <div class="step highlight">テスト</div>
+          <div class="arrow">▶</div>
+          <div class="step">実装</div>
+          <div class="arrow">▶</div>
+          <div class="step">改善</div>
+        </div>
+        <p style="font-size:11.5px;margin-top:14px;color:var(--muted);line-height:1.7">
+          先にテストを書くことで、<b style="color:var(--ink)">「何を作るか」が明確になってから「どう作るか」を考える</b>順序に。設計の質も同時に上がる効果が知られている。
+        </p>
+      </div>
+      <div class="code"><span class="comment">// 同じ時期に登場した動き</span>
+
+<span class="ann">1999</span>  XP / TDD (Kent Beck)
+<span class="ann">2001</span>  アジャイルソフトウェア
+       開発宣言
+
+<span class="comment">// 共通する思想</span>
+  ・短いサイクルで作って試す
+  ・変化を恐れず受け入れる
+  ・動くソフトウェアを重視
+  ・自動テストが前提
+
+<span class="comment">// この流れが現代に直結している</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>XP（エクストリームプログラミング）</b>＝1999年提唱の開発手法。良い習慣を「極端に（extreme）」まで徹底するという思想。
+    <br><b>TDD（Test-Driven Development、テスト駆動開発）</b>＝テストを先に書き、それを通すコードを書き、改善する、を繰り返す手法。本編Vol.3で詳しく扱います。
+    <br><b>アジャイル開発</b>＝短いサイクルで作って試して直すを繰り返す進め方の総称。ウォーターフォールと対比される。
+  </div>
+</section>
+
+<section id="sec06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>自動化と継続的な検証</h2>
+    <span class="en">CI/CD ERA</span>
+  </div>
+  <p class="pattern-desc">
+    2000年代以降、自動テストの普及と共に<b>CI/CD（継続的インテグレーション／継続的デリバリー）</b>が広がりました。誰かがコードを変更するたびに、自動でテストが走り、合格すれば自動で公開準備まで進む。<b>テストが「時々やるイベント」から「常に回っている仕組み」へ</b>と変わった時代です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">continuous</span>
+      <span class="tag-desc">テストが日常的なバックグラウンド業務へ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 検証頻度の変化</div>
+        <div class="timeline">
+          <div class="era">
+            <span class="year">〜1990s</span>
+            <span class="label">数ヶ月に1度</span>
+            <span class="desc">リリース直前にまとめてテスト</span>
+          </div>
+          <div class="era">
+            <span class="year">2000s</span>
+            <span class="label">毎日（夜間ビルド）</span>
+            <span class="desc">毎晩自動でビルドとテストを実行</span>
+          </div>
+          <div class="era">
+            <span class="year">2010s〜</span>
+            <span class="label">毎コミット（CI）</span>
+            <span class="desc">変更するたびに自動テスト。数分でフィードバック</span>
+          </div>
+          <div class="era">
+            <span class="year">現在</span>
+            <span class="label">本番反映まで自動（CD）</span>
+            <span class="desc">テスト合格→自動デプロイ。1日に何十回も更新</span>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="comment">// 自動化サイクル</span>
+
+開発者がコード変更
+   <span class="comment">↓</span>
+git push
+   <span class="comment">↓</span>
+<span class="ann">CIサーバが起動</span>
+   <span class="comment">↓</span>
+自動でビルド
+   <span class="comment">↓</span>
+自動でテスト全実行
+   <span class="comment">↓</span>
+合格? ──── 失敗 ──→ 通知・ブロック
+   <span class="comment">↓ 成功</span>
+<span class="ann">CDで自動デプロイ</span>
+   <span class="comment">↓</span>
+本番環境に反映
+
+<span class="comment">// 人間の手はほぼ介在しない</span></div>
+    </div>
+  </div>
+  <div class="tip copper">
+    <div class="tip-head">用語の整理</div>
+    <b>CI（Continuous Integration、継続的インテグレーション）</b>＝変更を頻繁に統合し、その都度自動でビルド・テストを行う仕組み。
+    <br><b>CD（Continuous Delivery / Deployment、継続的デリバリー／デプロイメント）</b>＝CIの後、自動で配布・公開まで進める仕組み。
+    <br><b>DevOps</b>＝開発（Dev）と運用（Ops）を一体化させる文化・実践。CI/CDはその中核技術。本編Vol.9で詳しく扱います。
+  </div>
+</section>
+
+<section id="sec07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>今、テストが仕事である理由</h2>
+    <span class="en">WHY TESTING MATTERS NOW</span>
+  </div>
+  <p class="pattern-desc">
+    ここまでの流れを一本の物語として振り返ります。<b>テストは時代の必然として生まれ、規模拡大・コスト構造・思想転換・自動化という4つの波</b>を経て、今の形になりました。これは「単に良い習慣」ではなく、現代の開発で<b>避けて通れない構造的な要請</b>です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why now</span>
+      <span class="tag-desc">私たちがテストを学ぶ構造的な理由</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 全体の時間軸（まとめ）</div>
+        <div class="timeline">
+          <div class="era">
+            <span class="year">~1970</span>
+            <span class="label">テスト=デバッグ</span>
+            <span class="desc">小規模・個人完結</span>
+          </div>
+          <div class="era">
+            <span class="year">1970-80s</span>
+            <span class="label">規模拡大の波</span>
+            <span class="desc">品質を守る仕組みが必要に</span>
+          </div>
+          <div class="era">
+            <span class="year">1980-90s</span>
+            <span class="label">工程化の波</span>
+            <span class="desc">テストが独立した仕事に</span>
+          </div>
+          <div class="era">
+            <span class="year">1999-</span>
+            <span class="label">思想転換の波</span>
+            <span class="desc">TDD・アジャイルで先行化</span>
+          </div>
+          <div class="era">
+            <span class="year">2000s-</span>
+            <span class="label">自動化の波</span>
+            <span class="desc">CI/CDで常時実行へ</span>
+          </div>
+          <div class="era">
+            <span class="year">現在</span>
+            <span class="label">エンジニアリングの一部</span>
+            <span class="desc">書ける人=実装と並ぶ必須スキル</span>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="comment">// 4つの波</span>
+
+<span class="ann">①</span> 規模が個人を超えた
+   → 仕組みでの品質保証が必要
+
+<span class="ann">②</span> 修正コストの曲線
+   → 早期発見が経済合理性を持つ
+
+<span class="ann">③</span> 開発の高速化
+   → ウォーターフォールでは追いつかない
+
+<span class="ann">④</span> 信頼性=事業価値
+   → ソフトウェアが社会の基盤に
+
+       <span class="comment">↓</span>
+
+<span class="kw">結論</span>:
+  テストは「やった方が良いこと」
+  ではなく、
+  <span class="ann">「やらないと成り立たないこと」</span>
+  になった</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">本編Vol.1とのつながり</div>
+    本編Vol.1で「テストとは何か」「なぜ書くのか」「ピラミッド構造」を学びました。地図編Vol.1で学んだ<b>時間軸の物語</b>を重ねると、本編で出てきた一つ一つの内容が「歴史の必然として今そこにある」と見えてきます。ピラミッド構造もTDDもCI/CDも、すべて4つの波の答えとして生まれてきたものです。
+  </div>
+</section>
+
+<section id="term">
+  <div class="section-header">
+    <span class="section-num">★</span>
+    <h2>用語の地図</h2>
+    <span class="en">GLOSSARY</span>
+  </div>
+  <p class="pattern-desc">
+    この巻で登場した主要な用語をまとめます。<b>初学者が混乱しがちな用語を「並べて見る」ことで関係が見えてきます</b>。本編・地図編を読み進める中で何度でも戻ってきてください。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">glossary</span>
+      <span class="tag-desc">本巻で扱った用語の一覧</span>
+    </div>
+    <div class="demo-body" style="grid-template-columns:1fr">
+      <div class="panel" style="border-right:none">
+        <div class="panel-head">// 並べて見ると関係が分かる</div>
+        <dl class="term-map">
+          <dt>バグ / bug</dt><dd>プログラムの誤り・欠陥。1947年の蛾の逸話が語源</dd>
+          <dt>デバッグ / debug</dt><dd>バグを取り除く作業。「動かない原因を探して直す」</dd>
+          <dt>テスト / test</dt><dd>期待通り動くかを<b>意図的に確認する</b>行為。デバッグとは別物</dd>
+          <dt>ウォーターフォール</dt><dd>要件→設計→実装→テスト→リリースと一方向に進める開発方式</dd>
+          <dt>アジャイル</dt><dd>短サイクルで作って試して直すを繰り返す開発方式の総称</dd>
+          <dt>XP</dt><dd>Extreme Programming。1999年Kent Beck提唱のアジャイル手法の一種</dd>
+          <dt>TDD</dt><dd>Test-Driven Development。テストを先に書く開発手法（本編Vol.3で詳述）</dd>
+          <dt>CI</dt><dd>Continuous Integration。変更のたび自動でビルド・テスト</dd>
+          <dt>CD</dt><dd>Continuous Delivery/Deployment。CIの先、配布・公開まで自動化</dd>
+          <dt>DevOps</dt><dd>開発と運用を一体化する文化。CI/CDが中核技術（本編Vol.9）</dd>
+          <dt>Boehm曲線</dt><dd>バグ発見が遅いほど修正コストが指数関数的に増えることを示す経験則</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tip copper" style="margin-top:48px;border-left-width:4px;padding:18px 24px">
+  <div class="tip-head">NEXT STEP —</div>
+  本編Vol.2「単体テスト基礎編」に進むと、AAAパターンの徹底や命名規則など<b>「コードとして書く力」</b>を磨いていきます。その後の地図編Vol.2「テストの大きさを読み解く編」では、<b>テストピラミッドの上下軸</b>を構造的に解説します。なぜピラミッド型になるのか、その必然性がより深く見えるはずです。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>ENGINEERING TEST MAP — VOL.01</span>
+  <span>ORIGIN OF SOFTWARE TESTING</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.2 別冊 関連オブジェクトの取得戦略</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a302a;
+  --paper:#e7eae5;
+  --paper-2:#d3d8d0;
+  --accent:#71806f;
+  --accent-2:#8e988b;
+  --accent-3:#4c544a;
+  --muted:#707870;
+  --line:#b6c0b3;
+  --code-bg:#1f231f;
+  --code-text:#e7eae5;
+  --panel-bg:#eff2ee;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✧';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#9aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(113,128,111,0.09);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.strategy-card{background:#fff;border:1px solid var(--line);padding:14px 16px;margin:14px 0}
+.strategy-card .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em;margin-bottom:4px}
+.strategy-card .ttl{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--accent-3);margin-bottom:8px}
+.strategy-card p{font-size:13px;line-height:1.7}
+.strategy-card .pros{color:#3a6240;margin-top:6px;font-size:13px}
+.strategy-card .cons{color:#a04040;margin-top:4px;font-size:13px}
+
+.judgement-box{background:#fff;border:1px solid var(--line);padding:14px 16px;margin:14px 0}
+.judgement-box .q{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);margin-bottom:6px}
+.judgement-box .a{font-size:13px;padding-left:14px;border-left:2px solid var(--accent)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.02 / 15</span>
+    <span class="kind-tag">別冊</span>
+  </div>
+  <h1>関連オブジェクトの<br>取得戦略</h1>
+  <div class="subtitle">FETCH STRATEGIES ── HOW TO LOAD RELATED DATA</div>
+  <p class="lead">
+    本編Vol.2では、5科目それぞれに対して<b>「学習記録の取得SQL」を1回ずつ実行</b>しました──合計6回のSQL。これは<b>3つある取得戦略</b>のうちの<b>「都度取得」</b>と呼ばれる方式です。<br>
+    別冊S2では「<b>関連オブジェクトを取得する方法は何種類あるのか</b>」「<b>業務でどう選び分けるのか</b>」「<b>性能とメモリのトレードオフ</b>」を、コード抜きで設計目線で深掘りします。<br>
+    本編Vol.2で抱いた<b>「6回のSQLは多すぎでは？」という違和感</b>に、設計の観点から答える巻です。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#theme">01 この別冊のテーマ</a></li>
+    <li><a href="#what">02 「関連を取得する」とは何か</a></li>
+    <li><a href="#s1">03 戦略1: 都度取得（Vol.2の方式）</a></li>
+    <li><a href="#s2">04 戦略2: 一括取得（JOIN）</a></li>
+    <li><a href="#s3">05 戦略3: 遅延ロード</a></li>
+    <li><a href="#choose">06 業務での選択基準</a></li>
+    <li><a href="#tradeoff">07 性能とメモリのトレードオフ</a></li>
+    <li><a href="#trouble">08 戦略選択のハマりどころ</a></li>
+    <li><a href="#next">09 次の本編へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="theme">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この別冊のテーマ</h2>
+    <span class="en">THEME</span>
+  </div>
+  <p class="pattern-desc">本編Vol.2では<b>「とりあえず動かす」</b>を優先しました。しかし業務開発では、<b>「動く」と「使える」の間に大きな差</b>があります。その代表が<b>パフォーマンス（性能）</b>。本巻では、関連オブジェクト取得における<b>3つの戦略</b>を整理し、業務での選択基準を学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-strategy</span>
+      <span class="tag-desc">戦略を選ぶ意味</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 戦略選択が必要な理由</div>
+        <div class="role-card">
+          <span class="label">SCENARIO 1</span>
+          <div class="name">5科目の小さなアプリ</div>
+          <div class="desc">SQL 6回でも体感的に問題ない。<b>都度取得で OK</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">SCENARIO 2</span>
+          <div class="name">1000ユーザー × 平均20件の投稿</div>
+          <div class="desc">投稿一覧表示で<b>SQL 1001回</b>になる。明らかに遅い。<b>一括取得が必須</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">SCENARIO 3</span>
+          <div class="name">商品マスタ100万件＋画像情報</div>
+          <div class="desc">全部一括取得するとメモリが足りない。<b>遅延ロード</b>で「見る時だけ読む」設計に。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で答える問い</span>
+
+<span class="comment">// 問1: 関連を取る方法は何種類ある？</span>
+<span class="comment">//   → 3つ：都度／一括／遅延</span>
+
+<span class="comment">// 問2: それぞれの強み・弱みは？</span>
+<span class="comment">//   → 性能とメモリのトレードオフ</span>
+
+<span class="comment">// 問3: いつどれを使う？</span>
+<span class="comment">//   → データ量・利用頻度で決める</span>
+
+
+<span class="comment">// 結論を先に：</span>
+<span class="comment">// ・小データ＆毎回使う → 一括（JOIN）</span>
+<span class="comment">// ・大データ＆毎回使う → ページング</span>
+<span class="comment">// ・たまにしか使わない → 遅延ロード</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="what">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>「関連を取得する」とは何か</h2>
+    <span class="en">WHAT DOES "FETCH RELATED" MEAN</span>
+  </div>
+  <p class="pattern-desc">そもそも<b>「関連オブジェクトを取得する」</b>とはどういうことか。Java側の表現に立ち戻って整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">fetch-meaning</span>
+      <span class="tag-desc">取得の本質</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Java側の「関連を持つ」の意味</div>
+        <p>S1で学んだ通り、DBでは <b>外部キーは「多」側</b>に置かれます。一方Java側では、画面に出しやすいよう<b>親に子のリストを持たせる</b>のが自然な設計でした。</p>
+        <p style="margin-top:10px"><b>「関連を取得する」</b>とは、この<b>「親に子のリストを詰める」処理</b>のことを指します。</p>
+        <div style="background:#fff;border:1px solid var(--line);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>3つの戦略の本質</b>は、この<b>「詰める処理」</b>を<br>
+          ① いつやるか<br>
+          ② 何回SQLを発行するか<br>
+          ③ どれだけメモリに保持するか<br>
+          ── の組み合わせ違いです。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 「関連を取得する」のイメージ</span>
+
+<span class="comment">// ─── 取得前 ───</span>
+<span class="type">Subject</span> {
+  id: <span class="num">1</span>,
+  name: <span class="str">"Java"</span>,
+  records: null  <span class="comment">// 空の入れ物</span>
+}
+
+
+<span class="comment">// ─── 取得後（関連を詰めた状態）───</span>
+<span class="type">Subject</span> {
+  id: <span class="num">1</span>,
+  name: <span class="str">"Java"</span>,
+  records: [    <span class="comment">// ← ここに詰める</span>
+    StudyRecord(id=<span class="num">1</span>, ...),
+    StudyRecord(id=<span class="num">2</span>, ...),
+    StudyRecord(id=<span class="num">3</span>, ...)
+  ]
+}
+
+
+<span class="comment">// 戦略の違いは「詰め方の違い」だけ</span>
+<span class="comment">// 結果のオブジェクト構造は同じ。</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="s1">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>戦略1: 都度取得（Vol.2の方式）</h2>
+    <span class="en">STRATEGY 1: FETCH-PER-PARENT</span>
+  </div>
+  <p class="pattern-desc">本編Vol.2でやった方式です。<b>親を取った後、ループで各親に対して子を取る</b>。最も素朴な戦略。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">strategy-1</span>
+      <span class="tag-desc">都度取得の特徴</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 都度取得</div>
+        <div class="strategy-card">
+          <div class="lbl">STRATEGY 1</div>
+          <div class="ttl">都度取得（Fetch-per-parent）</div>
+          <p>親を1回取得→各親に対して子を1回ずつ取得→Service層で合体。</p>
+          <div class="pros">✓ 実装が直感的・分かりやすい</div>
+          <div class="pros">✓ 子を取得するSQLが単純</div>
+          <div class="pros">✓ 親と子のSQLを別Mapperに分離できる</div>
+          <div class="cons">✗ <b>SQLが (1+N) 回発行される</b>（N+1問題）</div>
+          <div class="cons">✗ DBとの通信回数が多い → 遅延の原因</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>業務での適用シーン</b>：親の件数が常に少ない場合（5〜10件くらいまで）。「設定マスタ」「カテゴリ一覧」のような、件数が予測可能な小規模データ。</p>
+      </div>
+      <div class="code"><span class="code-head">// SQL発行回数の計算</span>
+
+<span class="comment">// 親=N件 として</span>
+
+<span class="comment">// ① 親の取得</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> subjects;
+<span class="comment">//   → 1回</span>
+
+<span class="comment">// ② 各親に対して子の取得</span>
+<span class="kw">for</span> (<span class="kw">each</span> subject) {
+  <span class="kw">SELECT</span> * <span class="kw">FROM</span> study_records
+  <span class="kw">WHERE</span> subject_id = ?;
+}
+<span class="comment">//   → N回</span>
+
+
+<span class="comment">// = 合計（1 + N）回</span>
+
+
+<span class="comment">// N=5 なら 6回</span>
+<span class="comment">// N=100 なら 101回</span>
+<span class="comment">// N=10000 なら 10001回</span>
+<span class="comment">// → Nに比例して悪化する</span>
+
+
+<span class="comment">// これが「N+1問題」</span>
+<span class="comment">// 業務で最も警戒される性能課題のひとつ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>本編Vol.2で「<b>あえて</b>」この方式を採用したのは教育的意図です。<b>N+1問題は「知ってから直す」</b>ほうが理解が深まる。Vol.5で本格的に対策を学びますが、その前提として<b>「これは問題だ」</b>と気付ける感性を養うのが今の段階です。</p>
+  </div>
+</section>
+
+<section id="s2">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>戦略2: 一括取得（JOIN）</h2>
+    <span class="en">STRATEGY 2: EAGER JOIN</span>
+  </div>
+  <p class="pattern-desc"><b>1回のSQLで親と子の全部を取得</b>する方式。SQLが <code>JOIN</code> を使う形になります。Vol.4で<code>resultMap</code> + <code>collection</code> を使って実装します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">strategy-2</span>
+      <span class="tag-desc">一括取得の特徴</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 一括取得（JOIN）</div>
+        <div class="strategy-card">
+          <div class="lbl">STRATEGY 2</div>
+          <div class="ttl">一括取得（Eager Join）</div>
+          <p>親テーブルと子テーブルを <code>JOIN</code> し、1回のSQLで全部取得。MyBatis では <code>resultMap</code> + <code>collection</code> で親子を組み立てる。</p>
+          <div class="pros">✓ <b>SQLは常に1回</b>（N+1問題なし）</div>
+          <div class="pros">✓ DB通信が最小化</div>
+          <div class="pros">✓ 一覧画面で必ず子も必要なケースに最適</div>
+          <div class="cons">✗ JOIN結果の行が多くなる（重複あり）</div>
+          <div class="cons">✗ 子を一切使わない時もメモリに読み込む</div>
+          <div class="cons">✗ resultMapの書き方が初見ややこしい</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>業務での適用シーン</b>：「親一覧で必ず子の概要も見せる」画面。本編Vol.2のような<b>科目別記録一覧</b>はまさにこれが理想。</p>
+      </div>
+      <div class="code"><span class="code-head">// 一括取得のSQL（イメージ）</span>
+
+<span class="kw">SELECT</span>
+  s.id <span class="kw">AS</span> subject_id,
+  s.name,
+  s.color,
+  r.id <span class="kw">AS</span> record_id,
+  r.studied_on,
+  r.minutes,
+  r.memo
+<span class="kw">FROM</span> subjects s
+<span class="kw">LEFT JOIN</span> study_records r
+  <span class="kw">ON</span> s.id = r.subject_id
+<span class="kw">ORDER BY</span> s.id, r.studied_on;
+
+
+<span class="comment">// 結果（行が冗長になる）</span>
+<span class="comment">// ──────────────────────────</span>
+<span class="comment">// sid|name |color  |rid|studied  |min</span>
+<span class="comment">// ──────────────────────────</span>
+<span class="comment">//  1 |Java |#c43030| 1 |05-08    | 60</span>
+<span class="comment">//  1 |Java |#c43030| 2 |05-10    | 60</span>
+<span class="comment">//  1 |Java |#c43030| 3 |05-12    | 90</span>
+<span class="comment">//  2 |Spr  |#5a8a4a| 6 |05-11    | 45</span>
+<span class="comment">//  4 |HTML |#c4862e|null|null    |null</span>
+<span class="comment">// ──────────────────────────</span>
+
+
+<span class="comment">// MyBatisの resultMap が裏で</span>
+<span class="comment">// この冗長な行を Subject オブジェクト</span>
+<span class="comment">// + 子の List に組み立て直す</span>
+<span class="comment">// → 詳細はVol.4 / S4で</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>JOIN で1回SQLが正義</b>」と単純化しがちですが、業務では<b>「常に良い」わけではない</b>。子のデータが大量になる場合、JOIN結果が爆発的に増え、メモリ・ネットワークの両方を圧迫します。<b>件数と用途を見て選ぶ</b>のが鉄則。</p>
+  </div>
+</section>
+
+<section id="s3">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>戦略3: 遅延ロード</h2>
+    <span class="en">STRATEGY 3: LAZY LOAD</span>
+  </div>
+  <p class="pattern-desc"><b>子は最初取得せず、必要になった時だけ取得する</b>方式。「必要になるかどうか分からない」「ユーザーが詳細を見る時だけ取れば良い」という場合に有効。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">strategy-3</span>
+      <span class="tag-desc">遅延ロードの特徴</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 遅延ロード</div>
+        <div class="strategy-card">
+          <div class="lbl">STRATEGY 3</div>
+          <div class="ttl">遅延ロード（Lazy Load）</div>
+          <p>親だけ取得 → 子のリストは空のまま → アクセスされた時に初めて子を取得する。</p>
+          <div class="pros">✓ 初回ロードが軽い</div>
+          <div class="pros">✓ 子を使わないケースで無駄ゼロ</div>
+          <div class="pros">✓ 大規模データに強い</div>
+          <div class="cons">✗ アクセスの度にSQLが発生</div>
+          <div class="cons">✗ <b>意図しないN+1問題</b>が起きやすい</div>
+          <div class="cons">✗ Hibernate/JPA 側の機能で、MyBatisでは標準ではない</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>業務での適用シーン</b>：詳細画面で「クリックして展開」「タブを切り替えた時に取得」など、<b>UIのアクションをトリガー</b>にした取得。</p>
+      </div>
+      <div class="code"><span class="code-head">// 遅延ロードのイメージ</span>
+
+<span class="comment">// ─── 一覧画面（親だけ取得）───</span>
+<span class="type">List</span>&lt;<span class="type">Subject</span>&gt; subjects =
+    mapper.<span class="fn">findAll</span>();
+
+<span class="comment">// この時点で records は空（null）</span>
+
+
+<span class="comment">// ─── 詳細画面でアクセスされたら ───</span>
+<span class="type">Subject</span> s = ...;
+s.<span class="fn">getRecords</span>();
+<span class="comment">// ↑ ここで初めてSQL発行</span>
+<span class="comment">// (JPAのHibernateならProxy機構で実現)</span>
+
+
+<span class="comment">// ─── MyBatisでは ───</span>
+<span class="comment">// 遅延ロードは公式機能としてある</span>
+<span class="comment">// （fetchType="lazy"）が、</span>
+<span class="comment">// 実務では明示的なService分離（</span>
+<span class="comment">// findSubject() と findRecords()）</span>
+<span class="comment">// の方が読みやすいことが多い</span>
+
+
+<span class="comment">// ─── 隠れた罠 ───</span>
+<span class="comment">// 「ループの中で getRecords() を呼ぶ」</span>
+<span class="comment">// → 結果的にN+1問題が出現</span>
+<span class="comment">// 遅延ロードは便利だが「意図しない</span>
+<span class="comment">// アクセス」を生み出しやすい</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">TIP ──</div>
+    <p>Cでは<b>遅延ロードは扱わない</b>方針です。理由は「<b>素朴な3層設計＋明示的なService分離</b>」の方が初学者には<b>「いつSQLが発行されるか」が見える</b>ので学びやすいから。遅延ロードはJPA中心の世界で本格活用される機能なので、<b>JPA編が登場した時に深掘りすべき</b>テーマです。</p>
+  </div>
+</section>
+
+<section id="choose">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>業務での選択基準</h2>
+    <span class="en">CHOOSING IN PRACTICE</span>
+  </div>
+  <p class="pattern-desc">3戦略を整理しましたが、業務で<b>「どう選ぶか」</b>こそが本題。<b>3つの判断軸</b>で決めます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">selection-criteria</span>
+      <span class="tag-desc">選び方の3軸</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの判断軸</div>
+        <div class="judgement-box">
+          <div class="q">Q1. その画面で子データを必ず使う？</div>
+          <div class="a"><b>必ず使う</b> → 一括取得（JOIN）<br><b>たまに使う</b> → 都度取得 or 遅延</div>
+        </div>
+        <div class="judgement-box">
+          <div class="q">Q2. 親の件数は予測できる？多い？</div>
+          <div class="a"><b>少数で予測可能</b>（〜10件） → 都度取得でもOK<br><b>多い・可変</b>（数百〜） → 一括取得 or ページング必須</div>
+        </div>
+        <div class="judgement-box">
+          <div class="q">Q3. 子の量はどれくらい？</div>
+          <div class="a"><b>少ない</b> → 一括取得で問題なし<br><b>多い</b>（親1件あたり数千行） → 一括取得すると爆発する → 別画面で見せる</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 学習記録アプリの判断</span>
+
+<span class="comment">// ─── 一覧画面（subjects + records）───</span>
+
+<span class="comment">// Q1: 子を使う？ → 使う（一覧表示する）</span>
+<span class="comment">// Q2: 親の件数？ → 5〜数十（少ない）</span>
+<span class="comment">// Q3: 子の量？  → 各科目で数十〜数百</span>
+
+<span class="comment">// → 結論：一括取得（JOIN）が最適</span>
+<span class="comment">// → Vol.4 でこれに進化させる</span>
+
+
+<span class="comment">// ─── 統計画面（合計時間のみ）───</span>
+
+<span class="comment">// Q1: 子の生データ使う？ → 使わない（合計だけ）</span>
+<span class="comment">// → 結論：JOINではなく集計クエリ（GROUP BY）</span>
+<span class="comment">// → Vol.9 で扱う</span>
+
+
+<span class="comment">// ─── 詳細画面（特定科目の記録のみ）───</span>
+
+<span class="comment">// Q1: 親は1件だけ</span>
+<span class="comment">// → 結論：findSubject() + findRecords() の2回でOK</span>
+<span class="comment">// → 「都度取得」がそのまま使える</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="tradeoff">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>性能とメモリのトレードオフ</h2>
+    <span class="en">PERFORMANCE vs MEMORY</span>
+  </div>
+  <p class="pattern-desc">関連オブジェクト取得は<b>「性能（速さ）」と「メモリ消費」のトレードオフ</b>になります。両方を最大化することはできない。<b>「何を優先するか」</b>が設計判断です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">tradeoff</span>
+      <span class="tag-desc">3戦略のトレードオフ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 戦略ごとの特性</div>
+        <table class="compare-tbl">
+          <tr><th>戦略</th><th>SQL回数</th><th>メモリ</th><th>遅延感</th></tr>
+          <tr><td>都度取得</td><td>1+N回</td><td>中</td><td>悪い</td></tr>
+          <tr><td>一括取得</td><td>1回</td><td>大</td><td>良い</td></tr>
+          <tr><td>遅延ロード</td><td>必要時のみ</td><td>小（初期）</td><td>初期良／アクセス時に悪化リスク</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>結論</b>：<b>「DB通信を減らす」「メモリを減らす」のどちらか</b>を選ぶ。両方は基本的に取れない。業務では<b>DB通信を減らす（=一括取得）</b>が選ばれることが多い。</p>
+      </div>
+      <div class="code"><span class="code-head">// なぜDB通信を減らすが優先か</span>
+
+<span class="comment">// DB通信の典型的なコスト：</span>
+
+<span class="comment">// ① ネットワーク往復</span>
+<span class="comment">//   同一ホストなら1msオーダー</span>
+<span class="comment">//   別ホスト/AWSなら10〜数十ms</span>
+
+<span class="comment">// ② DBサーバの解析・実行</span>
+<span class="comment">//   毎回パース・プランニング・実行</span>
+
+<span class="comment">// ③ コネクションプールの専有</span>
+<span class="comment">//   接続数が有限なので影響大</span>
+
+
+<span class="comment">// SQL 100回 = 数百ミリ秒〜数秒</span>
+<span class="comment">// SQL 1回 = 数ミリ秒</span>
+
+<span class="comment">// → DB通信を減らす方が体感への影響大</span>
+
+
+<span class="comment">// 一方メモリ：</span>
+<span class="comment">// 最近のサーバは16〜64GB</span>
+<span class="comment">// JOINで多少増えても許容範囲</span>
+
+
+<span class="comment">// だから「迷ったらJOIN」が業界の傾向</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>早すぎる最適化は諸悪の根源</b>」（Donald Knuth）という有名な言葉があります。設計判断は<b>「測ってから決める」</b>のが鉄則。<b>まず動かして、ボトルネックを測定して、必要なら直す</b>──この順序を守るのが、業務開発の最良の進め方です。Vol.2が「あえて都度取得」だったのは、この精神に基づきます。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>戦略選択のハマりどころ</h2>
+    <span class="en">PITFALLS</span>
+  </div>
+  <p class="pattern-desc">戦略選択でやりがちな<b>3つの失敗</b>。経験者から伝授される、現場の「あるある」です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">selection-pitfalls</span>
+      <span class="tag-desc">戦略選びで失敗するパターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 戦略選びの罠</div>
+        <div class="role-card">
+          <span class="label">PITFALL 1</span>
+          <div class="name">「とりあえずJOIN」で大規模化</div>
+          <div class="desc">最初は問題なかったJOINが、データ蓄積で<b>結果セット爆発</b>。プロジェクト後半で性能問題が表面化する典型。<br><b>対策</b>：本気の業務システムなら<b>ページング前提</b>で設計する。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 2</span>
+          <div class="name">「とりあえず都度取得」で本番障害</div>
+          <div class="desc">テスト環境では10件で1+10=11回。本番では1000件で1+1000=1001回。<b>テスト環境の少データで気づけない</b>のが厄介。<br><b>対策</b>：開発時から<b>本番相当のデータ件数</b>でテストする習慣を。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 3</span>
+          <div class="name">遅延ロードを過信して意図せぬN+1</div>
+          <div class="desc">JPAで <code>List&lt;Parent&gt; parents = repo.findAll()</code> → <code>for (p : parents) p.getChildren()</code> ── 知らずにN+1が発生。<br><b>対策</b>：JPAでも<b>JOIN FETCH を明示的に使う</b>のが基本。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 性能問題の検出方法</span>
+
+<span class="comment">// ① SQLログを常に見る</span>
+<span class="comment">//   logging.level.com.example.mapper=DEBUG</span>
+<span class="comment">//   → 開発中、常にSQL発行を観察</span>
+
+
+<span class="comment">// ② スロークエリログを設定</span>
+<span class="comment">//   MySQL側で「1秒以上のSQLを記録」</span>
+<span class="comment">//   → 本番運用で性能劣化を検出</span>
+
+
+<span class="comment">// ③ 負荷テスト</span>
+<span class="comment">//   JMeter / Gatling 等で本番相当を模擬</span>
+<span class="comment">//   → リリース前にボトルネック発見</span>
+
+
+<span class="comment">// ─── 一般原則 ───</span>
+<span class="comment">// 「気付けないものは直せない」</span>
+<span class="comment">// → 観測の仕組みを最初から仕込む</span>
+
+<span class="comment">// 本編Vol.2でSQLログを見るのも、</span>
+<span class="comment">// この観測習慣を身につけるため。</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次の本編へ</h2>
+    <span class="en">TO THE NEXT VOLUME</span>
+  </div>
+  <p class="pattern-desc">別冊S2お疲れさまでした。<b>「3つの取得戦略」と「業務での選び方」</b>が見えるようになりました。Vol.4で<b>一括取得（JOIN）</b>に進化させる準備が整いました。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">この別冊のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 持ち帰る5つの知見</div>
+        <div class="role-card">
+          <span class="label">知見1</span>
+          <div class="name">取得戦略は3種類ある</div>
+          <div class="desc">都度取得 / 一括取得 / 遅延ロード</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見2</span>
+          <div class="name">業務での主流は「一括取得（JOIN）」</div>
+          <div class="desc">DB通信を減らす効果が大きい</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見3</span>
+          <div class="name">N+1問題は都度取得の代表的な落とし穴</div>
+          <div class="desc">本編Vol.2で意図的に体験</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見4</span>
+          <div class="name">「測ってから直す」が原則</div>
+          <div class="desc">早すぎる最適化は避ける</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見5</span>
+          <div class="name">SQLログは常に見る</div>
+          <div class="desc">気付けないものは直せない</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.3 本編で起きること</span>
+
+<span class="comment">// タイトル：</span>
+<span class="comment">// 「XML Mapper初登場・SELECTを移そう」</span>
+
+<span class="comment">// やること：</span>
+<span class="comment">// 1. resources/mybatis フォルダを作る</span>
+<span class="comment">// 2. SubjectMapper.xml を作る</span>
+<span class="comment">// 3. Aから引き継いだアノテーション</span>
+<span class="comment">//    @Select(...)</span>
+<span class="comment">//    の中身を XML に「移す」</span>
+<span class="comment">// 4. 動かして「同じ画面が出る」確認</span>
+
+<span class="comment">// 獲得スキル：</span>
+<span class="comment">// → XML Mapper 導入</span>
+
+
+<span class="comment">// Vol.3 の意義：</span>
+<span class="comment">// Vol.4 で resultMap を使った JOIN を</span>
+<span class="comment">// 書くために、まず XML Mapper という</span>
+<span class="comment">// 「箱」を用意する。SQL自体は変えない。</span>
+<span class="comment">// 「動くものを保ちながら箱を変える」</span>
+<span class="comment">// というリファクタリング体験です。</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(76,84,74,0.12)">
+    <div class="tip-label">NEXT STEP ── VOL.3 本編</div>
+    <p>別冊S2で<b>取得戦略の設計目線</b>が手に入りました。次のVol.3 本編「<b>XML Mapper初登場・SELECTを移そう</b>」では、ついに<b>Cのもう一つの大きな主役 XML Mapper</b>が登場します。<br>SQL自体は変えず、書く場所だけアノテーション→XMLに移す<b>リファクタリング体験</b>。Vol.4で<code>resultMap</code>を使った<b>JOIN</b>に進む布石です。<br>本編Vol.3 へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.02 / 15 ── FETCH STRATEGIES（別冊）</span>
+</footer>
+
+</body>
+</html>

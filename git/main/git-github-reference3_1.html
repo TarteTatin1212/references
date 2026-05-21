@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git/GitHub編 ブランチとマージ Vol.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2520;
+  --paper:#efe6d2;
+  --paper-2:#dfd5bd;
+  --accent:#9c6a3f;
+  --accent-2:#c9a876;
+  --accent-3:#604834;
+  --muted:#7a6e5d;
+  --line:#bbac92;
+  --code-bg:#1a1610;
+  --code-text:#e8dfcc;
+  --panel-bg:#e4dac1;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif;font-size:15px;line-height:1.85}
+body{max-width:1180px;margin:0 auto;padding:48px 40px 80px}
+
+.page-header{position:relative;padding:36px 32px 40px;border-bottom:2px solid var(--ink);margin-bottom:48px;overflow:hidden}
+.page-header::before{content:"⎇";position:absolute;right:-20px;top:-50px;font-size:300px;color:var(--accent);opacity:0.16;font-family:"Shippori Mincho",serif;line-height:1;z-index:0}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.1em}
+h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;margin:18px 0 10px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;letter-spacing:0.15em;font-family:"JetBrains Mono",monospace;margin-bottom:20px}
+.lead{max-width:640px;font-size:15px;line-height:2;color:var(--ink)}
+
+.toc{background:var(--paper-2);padding:22px 28px;margin-bottom:56px;border:1px solid var(--line)}
+.toc-title{font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:0.2em;margin-bottom:12px;color:var(--accent-3)}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc a{color:var(--ink);text-decoration:none;font-size:14px;font-family:"JetBrains Mono",monospace}
+.toc a::before{content:"— ";color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
+.section-num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:"Shippori Mincho",serif;font-size:26px;font-weight:700;flex:1}
+.en{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted)}
+.pattern-desc{max-width:740px;margin-bottom:22px;color:var(--ink)}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:14px}
+.demo-head{background:var(--paper-2);padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-family:"JetBrains Mono",monospace;font-weight:600;color:var(--accent-3);font-size:13px}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line)}
+.panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:"JetBrains Mono",monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}
+.num{color:#f7a8d8}.comment{color:#998aaa;font-style:italic}
+.ann{color:#f7c08a}.step{color:#c9a876;font-weight:600}
+.cmd{color:#b5e8b0}.flag{color:#f7c08a}.branch{color:#f7a8d8}
+.added{color:#7fc97f}.removed{color:#f08080}
+
+@media(max-width:720px){
+  body{padding:24px 18px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  h1{font-size:32px}
+  .page-header::before{font-size:200px}
+  .toc ul{gap:6px 14px}
+}
+
+.box{background:#fff;border:1px solid var(--line);padding:12px 14px;margin-bottom:10px}
+.box .box-title{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent-3);font-weight:600;margin-bottom:6px;letter-spacing:0.1em}
+.box p{font-size:13px;line-height:1.7}
+
+.diagram{background:#fff;border:1px solid var(--line);padding:18px;font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.8;white-space:pre;overflow-x:auto;color:var(--ink)}
+
+.tbl{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
+.tbl th,.tbl td{padding:8px 10px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{background:var(--paper-2);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:0.1em;font-weight:600}
+.tbl td code{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12px;color:var(--accent-3)}
+
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:"JetBrains Mono",monospace;font-size:12px;margin:0 1px}
+
+.tip{background:rgba(156,106,63,0.08);border-left:3px solid var(--accent);padding:16px 20px;margin:18px 0}
+.tip-title{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:0.15em;color:var(--accent-3);font-weight:600;margin-bottom:6px}
+.tip p{font-size:14px;line-height:1.9}
+.tip b{color:var(--accent-3)}
+
+.page-footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+.page-footer .right{text-align:right}
+
+code.inline{font-family:"JetBrains Mono",monospace;background:var(--paper-2);padding:1px 5px;font-size:12.5px;color:var(--accent-3)}
+
+.branch-list{display:flex;flex-direction:column;gap:6px}
+.b-item{background:#fff;border:1px solid var(--line);padding:8px 12px;font-family:"JetBrains Mono",monospace;font-size:12.5px;display:flex;align-items:center;gap:8px}
+.b-item .dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.b-item.current{background:var(--paper-2);font-weight:600}
+.b-item.current .dot{background:#3a7050}
+.b-item .dot{background:#bbac92}
+.b-item .star{color:#3a7050;font-weight:700}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">GIT / GITHUB</span>
+  <span class="vol-tag">VOL.03 / 09</span>
+  <h1>ブランチとマージ編</h1>
+  <div class="subtitle">BRANCHING &amp; MERGING</div>
+  <p class="lead">
+    ブランチはGitの<b>真骨頂</b>です。「機能ごとに分岐して並行開発、出来上がったら統合する」——
+    この仕組みがあるからこそ、現代の大規模開発が成り立っています。
+    本巻ではブランチの<b>作り方・切替・統合・削除</b>までを通しで身につけます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01. ブランチとは何か</a></li>
+    <li><a href="#s02">02. ブランチを作る</a></li>
+    <li><a href="#s03">03. ブランチを切り替える</a></li>
+    <li><a href="#s04">04. HEADを理解する</a></li>
+    <li><a href="#s05">05. Fast-forwardマージ</a></li>
+    <li><a href="#s06">06. 3-wayマージ</a></li>
+    <li><a href="#s07">07. ブランチの削除と整理</a></li>
+    <li><a href="#s08">08. ブランチ戦略の基礎</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="s01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>ブランチとは何か</h2>
+    <span class="en">WHAT IS A BRANCH</span>
+  </div>
+  <p class="pattern-desc">
+    ブランチは<b>「履歴の枝分かれ」</b>です。
+    本流(main)からひょいと別の道を作り、そこで自由に作業し、終わったら本流に戻して統合する——
+    この「<b>並行する平行世界</b>」を低コストで作れるのがGitの最大の特徴。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">branch concept</span>
+      <span class="tag-desc">★★★ 必修コンセプト</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 履歴の枝分かれイメージ</div>
+        <div class="diagram">          [feature/login]
+              ●─●─●
+             /
+   ●───●───●───●         ← main
+              \
+              ●─●
+        [feature/signup]
+
+各ブランチが独立した
+"並行する作業空間"
+
+mainに影響を与えずに
+新機能の実験・開発ができる</div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">POINT —</div>
+          <p>ブランチの実体は<b>「あるコミットを指す軽量なポインタ」</b>。コピーじゃないので、何個作っても容量は<b>ほぼゼロ</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># 現在のブランチ一覧</span>
+$ <span class="cmd">git branch</span>
+* <span class="branch">main</span>            <span class="comment"># * 印が現在地</span>
+  <span class="branch">feature/login</span>
+  <span class="branch">fix/header-bug</span>
+
+<span class="comment"># --- なぜブランチを使うのか? ---</span>
+
+<span class="comment"># × 直接 main で作業する場合</span>
+main: 完成 → バグ追加 → 修正 → 完成
+       <span class="removed">途中の壊れた状態が公開される</span>
+       <span class="removed">他の人の作業をブロックする</span>
+
+<span class="comment"># ◯ ブランチで作業する場合</span>
+main:    完成 ───────── マージ → 完成
+            \         /
+feature:    新機能を開発
+            <span class="added">いくら壊しても本流に影響なし</span>
+
+<span class="comment"># これが現代の開発の常識</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">鉄則 —</div>
+    <p>業務開発では<b>「mainに直接コミットしない」</b>のがお約束。何か作業するときは、必ず作業用のブランチを切る。これが<b>事故を防ぐ最大のコツ</b>です。</p>
+  </div>
+</section>
+
+<section id="s02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>ブランチを作る</h2>
+    <span class="en">CREATE BRANCH</span>
+  </div>
+  <p class="pattern-desc">
+    新しいブランチを作るのは<b>1コマンドで一瞬</b>です。
+    名前のつけ方には現場の慣習があり、それに従うとチームに馴染みやすくなります。<b>「種類/内容」</b>の形が定番です。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git branch &lt;name&gt;</span>
+      <span class="tag-desc">★★★ 作業の始まり</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ブランチ名の定番パターン</div>
+        <table class="tbl">
+          <tr><th>プレフィックス</th><th>用途</th></tr>
+          <tr><td><code>feature/</code></td><td>新機能の追加</td></tr>
+          <tr><td><code>fix/</code> / <code>bugfix/</code></td><td>バグ修正</td></tr>
+          <tr><td><code>hotfix/</code></td><td>緊急の本番修正</td></tr>
+          <tr><td><code>refactor/</code></td><td>リファクタリング</td></tr>
+          <tr><td><code>docs/</code></td><td>ドキュメント関連</td></tr>
+          <tr><td><code>chore/</code></td><td>雑務(依存更新等)</td></tr>
+        </table>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">名前の例 ◯</div>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:12px">
+          feature/user-login<br>
+          fix/header-overflow<br>
+          hotfix/payment-500-error<br>
+          docs/update-readme</p>
+        </div>
+        <div class="box">
+          <div class="box-title">避けたい名前 ✗</div>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:12px">
+          test<br>
+          taro<br>
+          new-branch<br>
+          aaa</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># 作るだけ (切り替えない)</span>
+$ <span class="cmd">git branch</span> <span class="branch">feature/login</span>
+
+<span class="comment"># 一覧確認</span>
+$ <span class="cmd">git branch</span>
+* <span class="branch">main</span>
+  <span class="branch">feature/login</span>   <span class="comment"># 作られた</span>
+
+<span class="comment"># --- 作って即切替 (定番) ---</span>
+$ <span class="cmd">git switch</span> <span class="flag">-c</span> <span class="branch">feature/login</span>
+Switched to a new branch <span class="str">'feature/login'</span>
+
+<span class="comment"># 古い書き方 (今でも動く)</span>
+$ <span class="cmd">git checkout</span> <span class="flag">-b</span> <span class="branch">feature/login</span>
+
+<span class="comment"># --- 特定のコミットから分岐 ---</span>
+$ <span class="cmd">git switch</span> <span class="flag">-c</span> <span class="branch">hotfix/bug</span> <span class="num">a3f2c1d</span>
+<span class="comment">                          ↑ ここから派生</span>
+
+<span class="comment"># --- リモートブランチから作る ---</span>
+$ <span class="cmd">git switch</span> <span class="flag">-c</span> <span class="branch">feature/x</span> origin/feature/x</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p>ブランチ名に<b>日本語やスペースは入れない</b>のが鉄則。半角英数とハイフン・スラッシュのみ。チームで命名規則が決まっていることも多いので、最初に確認しましょう。</p>
+  </div>
+</section>
+
+<section id="s03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>ブランチを切り替える</h2>
+    <span class="en">SWITCH BRANCH</span>
+  </div>
+  <p class="pattern-desc">
+    ブランチを切り替えると、<b>作業ディレクトリのファイルがそのブランチの内容に丸ごと入れ替わります</b>。
+    これがGitの「タイムマシン感」を最も実感できる瞬間。
+    <code class="inline">git switch</code>(新)と<code class="inline">git checkout</code>(旧)、どちらも知っておきます。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git switch &lt;name&gt;</span>
+      <span class="tag-desc">★★★ 平行世界への移動</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 切替で起きること</div>
+        <div class="diagram">[ main ブランチ ]
+my-app/
+├─ login.js
+├─ signup.js
+└─ README.md (古い版)
+
+  ↓ git switch feature/login
+
+[ feature/login ブランチ ]
+my-app/
+├─ login.js  (修正された版)
+├─ signup.js
+├─ login-form.js  (新規)
+└─ README.md (古い版)
+
+ファイルの内容が変わる!
+場合によっては
+新しいファイルも現れる</div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">ハマりどころ —</div>
+          <p>未コミットの変更があると<b>切替を拒否される</b>ことがあります。 → <code class="inline">git stash</code> で一時退避(Vol.5)。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># 既存のブランチに切替</span>
+$ <span class="cmd">git switch</span> <span class="branch">feature/login</span>
+Switched to branch <span class="str">'feature/login'</span>
+
+<span class="comment"># 1つ前のブランチに戻る</span>
+$ <span class="cmd">git switch</span> <span class="flag">-</span>
+Switched to branch <span class="str">'main'</span>
+
+<span class="comment"># --- switch vs checkout ---</span>
+
+<span class="comment"># 新 (Git 2.23〜推奨)</span>
+$ <span class="cmd">git switch</span> <span class="branch">main</span>
+
+<span class="comment"># 旧 (今でも有効)</span>
+$ <span class="cmd">git checkout</span> <span class="branch">main</span>
+
+<span class="comment">checkoutは機能が多すぎて分割された:</span>
+<span class="comment">  switch  — ブランチ切替専用</span>
+<span class="comment">  restore — ファイル復元専用</span>
+
+<span class="comment"># --- リモートブランチへ切替 ---</span>
+$ <span class="cmd">git fetch</span>
+$ <span class="cmd">git switch</span> <span class="branch">feature/x</span>
+<span class="comment"># 自動で追跡ブランチを作成</span>
+
+<span class="comment"># --- 強制切替 (危険・要注意) ---</span>
+$ <span class="cmd">git switch</span> <span class="flag">-f</span> <span class="branch">main</span>
+<span class="comment">     ↑ 未コミット変更を破棄</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">TIP —</div>
+    <p>業務中は<code class="inline">switch</code>を使う方が安全。<code class="inline">checkout</code>は「ファイル復元」も兼ねるため、間違えると<b>変更を消し飛ばす</b>事故が起きがち。<b>switch / restore を分けて使う</b>のが現代流です。</p>
+  </div>
+</section>
+
+<section id="s04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>HEADを理解する</h2>
+    <span class="en">HEAD POINTER</span>
+  </div>
+  <p class="pattern-desc">
+    <code class="inline">HEAD</code> はGitで頻出する概念で、<b>「現在地を指すポインタ」</b>のこと。
+    ふだんはあるブランチを指していて、そのブランチが指しているコミットが「今いる場所」になります。
+    エラーメッセージや高度な操作で必ず出てくるので、ここで掴んでおきましょう。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">HEAD</span>
+      <span class="tag-desc">★★ 現在地の指し手</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// HEADの位置イメージ</div>
+        <div class="diagram">    [HEAD]
+       ↓
+    [main]
+       ↓
+   ●───●───●───●
+
+    ↓ switch feature
+
+           [HEAD]
+              ↓
+       [feature]
+              ↓
+   ●───●───●───●
+              \
+              ●───●
+
+HEAD = 「今あなたがいる場所」
+通常はブランチ名を指す</div>
+        <div class="box" style="margin-top:14px">
+          <div class="box-title">HEAD表記の覚え方</div>
+          <p><code>HEAD</code> = 現在のコミット<br>
+          <code>HEAD~1</code> = 1つ前のコミット<br>
+          <code>HEAD~3</code> = 3つ前のコミット<br>
+          <code>HEAD^</code> = 親コミット (= HEAD~1)</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># HEADが指すコミットを確認</span>
+$ <span class="cmd">cat</span> .git/HEAD
+ref: refs/heads/main
+<span class="comment"># ↑ HEADはmainブランチを指している</span>
+
+$ <span class="cmd">git log</span> <span class="flag">-1</span> HEAD
+commit <span class="num">a3f2c1d8...</span> (HEAD -&gt; main)
+
+<span class="comment"># --- HEAD相対の参照 ---</span>
+$ <span class="cmd">git show</span> HEAD       <span class="comment"># 最新</span>
+$ <span class="cmd">git show</span> HEAD~1     <span class="comment"># 1つ前</span>
+$ <span class="cmd">git show</span> HEAD~5     <span class="comment"># 5つ前</span>
+
+<span class="comment"># --- detached HEAD状態 ---</span>
+$ <span class="cmd">git checkout</span> <span class="num">a3f2c1d</span>
+
+You are in <span class="ann">'detached HEAD'</span> state.
+<span class="comment"># ↑ ブランチでなくコミットを直接指す</span>
+<span class="comment">  そこでコミットしても "宙ぶらりん"</span>
+
+<span class="comment"># 元に戻る</span>
+$ <span class="cmd">git switch</span> <span class="branch">main</span>
+
+<span class="comment"># --- HEAD移動の確認 ---</span>
+$ <span class="cmd">git reflog</span>
+<span class="num">a3f2c1d</span> HEAD@{0}: checkout: main
+<span class="num">9b8e4a2</span> HEAD@{1}: checkout: ...</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p><b>detached HEAD</b> という警告は初学者を一番驚かせるメッセージ。「ブランチに紐づかない宙ぶらりんの状態」のことで、慌てず <code class="inline">git switch &lt;ブランチ名&gt;</code> で戻れば問題ありません。</p>
+  </div>
+</section>
+
+<section id="s05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>Fast-forwardマージ</h2>
+    <span class="en">FAST-FORWARD MERGE</span>
+  </div>
+  <p class="pattern-desc">
+    マージには<b>2種類</b>あって、まず一つ目が <b>Fast-forward(早送り)マージ</b>。
+    分岐元から本流に新しいコミットがない場合、<b>ブランチのポインタをスーッと前に進めるだけ</b>。マージコミットすら作られません。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git merge (fast-forward)</span>
+      <span class="tag-desc">★★★ 一直線な統合</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Fast-forwardの起きる条件</div>
+        <div class="diagram">[ マージ前 ]
+
+   [main]
+       ↓
+   ●───●───●
+           \
+            ●───●───●
+                    ↑
+                [feature]
+
+  ↓ git switch main
+  ↓ git merge feature
+
+[ マージ後 ]
+
+                    [main]
+                    [feature]
+                        ↓
+   ●───●───●───●───●───●
+
+mainポインタが
+featureの位置までスーッと
+前進するだけ</div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">条件 —</div>
+          <p>分岐後、<b>main側に新しいコミットが追加されていない</b>こと。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># Fast-forward マージの流れ</span>
+
+<span class="comment"># 1. mainに戻る (取り込み先へ移動)</span>
+$ <span class="cmd">git switch</span> <span class="branch">main</span>
+
+<span class="comment"># 2. 最新化 (リモートがあるなら)</span>
+$ <span class="cmd">git pull</span>
+
+<span class="comment"># 3. feature を取り込む</span>
+$ <span class="cmd">git merge</span> <span class="branch">feature/login</span>
+
+Updating <span class="num">9b8e4a2..a3f2c1d</span>
+<span class="ann">Fast-forward</span>
+ src/login.js | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+<span class="comment"># ↑ "Fast-forward" の文字が目印</span>
+
+<span class="comment"># --- Fast-forwardを禁止する ---</span>
+$ <span class="cmd">git merge</span> <span class="flag">--no-ff</span> <span class="branch">feature/login</span>
+
+<span class="comment">  ↑ 強制的にマージコミットを作る</span>
+<span class="comment">    履歴上、何を統合したか明示できる</span>
+
+<span class="comment"># --- 設定でデフォルト変更 ---</span>
+$ <span class="cmd">git config</span> <span class="flag">--global</span> merge.ff false</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">現場で —</div>
+    <p>「履歴をシンプルに保ちたい」派は<b>Fast-forward歓迎</b>。「いつどの機能が入ったか明示したい」派は<b><code class="inline">--no-ff</code></b>を強制。チームの方針で決まります。GitHubのPRマージ画面でも選択可能(Vol.6)。</p>
+  </div>
+</section>
+
+<section id="s06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>3-wayマージ</h2>
+    <span class="en">THREE-WAY MERGE</span>
+  </div>
+  <p class="pattern-desc">
+    両方のブランチに変更があると<b>Fast-forwardは使えず</b>、Gitは<b>「3-wayマージ」</b>を実行します。
+    分岐元(共通祖先)、main側の変更、feature側の変更——3点を見比べて統合し、専用の<b>マージコミット</b>を作ります。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git merge (3-way)</span>
+      <span class="tag-desc">★★★ 分岐の合流</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3-wayマージの構造</div>
+        <div class="diagram">[ マージ前 ]
+
+           [main]
+               ↓
+   ●───●───●───●
+           \
+            ●───●───●
+                    ↑
+                [feature]
+
+  ↓ git merge feature
+
+[ マージ後 ]
+
+                  [main]
+                     ↓
+   ●───●───●───●───●  ← マージコミット
+           \      /     (親が2つ!)
+            ●───●───●
+                    ↑
+                [feature]
+
+3点(共通祖先・main・feature)を
+比較して統合</div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">注意 —</div>
+          <p>同じ箇所を両方で編集していると<b>コンフリクト発生</b>(Vol.5で詳説)。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># 3-way マージの流れ</span>
+$ <span class="cmd">git switch</span> <span class="branch">main</span>
+$ <span class="cmd">git merge</span> <span class="branch">feature/login</span>
+
+Merge made by the <span class="str">'ort'</span> strategy.
+ src/login.js  | 12 ++++++++++++
+ src/auth.js   |  3 +++
+ 2 files changed, 15 insertions(+)
+
+<span class="comment"># ↑ "Merge made by..." の表示</span>
+<span class="comment">   = 3-wayマージが行われた合図</span>
+
+<span class="comment"># --- マージコミットの中身 ---</span>
+$ <span class="cmd">git log</span> <span class="flag">--graph --oneline</span>
+*   <span class="num">e9f8d27</span> Merge branch <span class="branch">'feature/login'</span>
+|\
+| * <span class="num">a3f2c1d</span> fix: 認証バグ修正
+| * <span class="num">9b8e4a2</span> feat: ログインフォーム
+* | <span class="num">5d6f3a8</span> docs: README更新
+|/
+* <span class="num">2c1b0e9</span> 共通祖先のコミット
+
+<span class="comment"># マージコミットは "親が2つ"</span>
+<span class="comment"># →分岐の合流地点になる</span>
+
+<span class="comment"># --- マージを取り消したい時 ---</span>
+$ <span class="cmd">git merge</span> <span class="flag">--abort</span>
+<span class="comment">  ↑ コンフリクト中なら中止できる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p>3-wayマージは<b>履歴に「ここで合流した」という事実を残す</b>のが特徴。後から「いつ何が取り込まれたか」を追いやすくなります。逆に、履歴のグラフが入り組んで見えるのが弱点。<b>状況に応じて Fast-forward / 3-way / Rebase(Vol.5) を使い分ける</b>のが上達のポイントです。</p>
+  </div>
+</section>
+
+<section id="s07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブランチの削除と整理</h2>
+    <span class="en">DELETE &amp; CLEANUP</span>
+  </div>
+  <p class="pattern-desc">
+    マージし終わったブランチは<b>こまめに消す</b>のが鉄則です。
+    放置するとブランチ一覧が「死んだブランチ」だらけになって、現役のブランチが埋もれてしまいます。
+    削除コマンドには<b>安全モードと強制モード</b>があり、状況で使い分けます。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git branch -d / -D</span>
+      <span class="tag-desc">★★ 整理整頓</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 削除の前後</div>
+        <div class="box">
+          <div class="box-title">削除前</div>
+          <div class="branch-list">
+            <div class="b-item current"><span class="dot"></span><span class="star">*</span> main</div>
+            <div class="b-item"><span class="dot"></span>  feature/login</div>
+            <div class="b-item"><span class="dot"></span>  feature/signup <span style="color:var(--muted);font-size:11px">(merged)</span></div>
+            <div class="b-item"><span class="dot"></span>  fix/header-bug <span style="color:var(--muted);font-size:11px">(merged)</span></div>
+            <div class="b-item"><span class="dot"></span>  experiment-old <span style="color:#b04030;font-size:11px">(未マージ)</span></div>
+          </div>
+        </div>
+        <div class="box">
+          <div class="box-title">削除後 (整理済)</div>
+          <div class="branch-list">
+            <div class="b-item current"><span class="dot"></span><span class="star">*</span> main</div>
+            <div class="b-item"><span class="dot"></span>  feature/login</div>
+          </div>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">鉄則 —</div>
+          <p>マージ済みは <code class="inline">-d</code> で、未マージを消すなら <code class="inline">-D</code>(強制)。<b>大文字Dは慎重に</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># --- 削除の基本 ---</span>
+
+<span class="comment"># 安全削除 (マージ済みのみ消せる)</span>
+$ <span class="cmd">git branch</span> <span class="flag">-d</span> <span class="branch">feature/login</span>
+Deleted branch feature/login.
+
+<span class="comment"># 未マージのを消そうとすると…</span>
+$ <span class="cmd">git branch</span> <span class="flag">-d</span> <span class="branch">experiment</span>
+error: The branch <span class="branch">'experiment'</span> is not
+fully merged.
+
+<span class="comment"># 強制削除 (本当にいい時だけ!)</span>
+$ <span class="cmd">git branch</span> <span class="flag">-D</span> <span class="branch">experiment</span>
+
+<span class="comment"># --- マージ済みブランチを列挙 ---</span>
+$ <span class="cmd">git branch</span> <span class="flag">--merged</span> main
+  feature/login
+  feature/signup
+  fix/header-bug
+<span class="comment"># ↑これらはまとめて消してOK</span>
+
+<span class="comment"># --- リモートのブランチを消す ---</span>
+$ <span class="cmd">git push</span> origin <span class="flag">--delete</span> <span class="branch">feature/x</span>
+
+<span class="comment"># --- 一括クリーンアップ ---</span>
+$ <span class="cmd">git branch</span> <span class="flag">--merged</span> main | <span class="cmd">grep</span> <span class="flag">-v</span> main \
+  | <span class="cmd">xargs</span> <span class="cmd">git branch</span> <span class="flag">-d</span>
+<span class="comment"># mainとマージ済みを一気に削除</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">TIP —</div>
+    <p>消したブランチも<b>30〜90日は復元可能</b>(<code class="inline">git reflog</code> で履歴が残るため)。なので<b>「とりあえず消す」</b>でほぼ問題ありません。気になる人は <code class="inline">git tag</code> で目印を打ってから削除すると安心。</p>
+  </div>
+</section>
+
+<section id="s08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ブランチ戦略の基礎</h2>
+    <span class="en">BRANCHING STRATEGY</span>
+  </div>
+  <p class="pattern-desc">
+    チームでブランチをどう使い分けるかを決めた<b>「お作法」</b>がブランチ戦略です。
+    代表的なものを2つ知っておけば、たいていの現場で通用します。<b>GitHub Flow</b>と<b>Git Flow</b>——名前が似てて紛らわしいですが別物。
+  </p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">github-flow vs git-flow</span>
+      <span class="tag-desc">★★ 2大流派</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの戦略の比較</div>
+        <div class="box">
+          <div class="box-title">▼ GITHUB FLOW (シンプル派)</div>
+          <p><b>使うブランチ:</b> main + feature<br>
+          <b>流れ:</b> main から feature を切り、PRでmainにマージ。<br>
+          <b>向いてる:</b> Webサービス、SaaS、継続デプロイ。<br>
+          <b>長所:</b> 覚えやすい、運用が軽い。</p>
+        </div>
+        <div class="box">
+          <div class="box-title">▼ GIT FLOW (本格派)</div>
+          <p><b>使うブランチ:</b> main / develop / feature / release / hotfix<br>
+          <b>流れ:</b> develop に機能を集積、releaseで仕上げ、mainがリリース版。<br>
+          <b>向いてる:</b> パッケージソフト、バージョン管理が厳密な製品。<br>
+          <b>長所:</b> 役割が明確。<b>短所:</b> 複雑で重い。</p>
+        </div>
+        <div class="tip" style="margin-top:14px;margin-bottom:0">
+          <div class="tip-title">結論 —</div>
+          <p>迷ったら<b>GitHub Flow</b>。世界の多くのチームがこちら。</p>
+        </div>
+      </div>
+      <div class="code"><span class="comment"># === GitHub Flow の典型 ===</span>
+
+<span class="comment"># 1. mainから機能ブランチを切る</span>
+$ <span class="cmd">git switch</span> <span class="branch">main</span>
+$ <span class="cmd">git pull</span>
+$ <span class="cmd">git switch</span> <span class="flag">-c</span> <span class="branch">feature/login</span>
+
+<span class="comment"># 2. コミットを重ねる</span>
+$ <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"..."</span>
+
+<span class="comment"># 3. プッシュしてPR (Vol.6)</span>
+$ <span class="cmd">git push</span> origin <span class="branch">feature/login</span>
+
+<span class="comment"># 4. レビュー → main にマージ</span>
+<span class="comment">   (GitHub上で操作)</span>
+
+<span class="comment"># 5. ローカル整理</span>
+$ <span class="cmd">git switch</span> <span class="branch">main</span>
+$ <span class="cmd">git pull</span>
+$ <span class="cmd">git branch</span> <span class="flag">-d</span> <span class="branch">feature/login</span>
+
+<span class="comment"># これを繰り返すのが</span>
+<span class="comment"># GitHub Flow の本体</span>
+
+<span class="comment"># --- 詳しくは Vol.8 で ---</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">POINT —</div>
+    <p>「<b>ブランチ戦略はチームごとに違う</b>」が現場の真実。新しい現場に入ったら<b>まずブランチ戦略を確認する</b>のが一流のお作法です。Git Flow派、GitHub Flow派、独自カスタム派、すべてあります。</p>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px">
+  <div class="tip-title">NEXT STEP —</div>
+  <p>第3巻で<b>ブランチによる並行開発</b>の基本が身につきました。<br>
+  Vol.4「<b>リモートリポジトリ編</b>」では、ローカルとGitHubの間を行き来する <code class="inline">remote / push / pull / fetch</code> を扱います。SSH鍵やPersonal Access Tokenといった<b>認証まわりの「最初のつまづき」</b>もまとめて解決しましょう。ここを越えれば<b>「チーム開発」</b>への扉が開きます。</p>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <div>GIT / GITHUB REFERENCE — VOL.03</div>
+  <div class="right">BRANCHING &amp; MERGING / ブランチとマージ編</div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.3 別冊 アノテーション vs XML Mapper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a302a;
+  --paper:#e8eae3;
+  --paper-2:#d3d8cf;
+  --accent:#788670;
+  --accent-2:#929c89;
+  --accent-3:#4f574a;
+  --muted:#737a72;
+  --line:#b7c0b2;
+  --code-bg:#1f231f;
+  --code-text:#e8eae3;
+  --panel-bg:#f0f2eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✧';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#9aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(120,134,112,0.09);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.dual-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.dual-grid .opt{background:#fff;border:1px solid var(--line);padding:14px 16px}
+.dual-grid .opt .ph{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:6px;letter-spacing:0.1em}
+.dual-grid .opt .title{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;color:var(--accent-3);margin-bottom:8px}
+.dual-grid .opt p{font-size:13px;line-height:1.7}
+.dual-grid .opt .pros{color:#3a6240;margin-top:6px;font-size:13px}
+.dual-grid .opt .cons{color:#a04040;margin-top:4px;font-size:13px}
+
+.judgement-box{background:#fff;border:1px solid var(--line);padding:14px 16px;margin:14px 0}
+.judgement-box .q{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);margin-bottom:6px}
+.judgement-box .a{font-size:13px;padding-left:14px;border-left:2px solid var(--accent)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .dual-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.03 / 15</span>
+    <span class="kind-tag">別冊</span>
+  </div>
+  <h1>アノテーション<br>vs XML Mapper</h1>
+  <div class="subtitle">ANNOTATION vs XML ── HOW TO CHOOSE</div>
+  <p class="lead">
+    本編Vol.3で<b>2つの書き方</b>を体験した今、当然湧いてくる疑問が「<b>結局どっちを使うべき？</b>」です。<br>
+    別冊S3では、<b>「いつアノテーションを使い／いつXMLを使うか」</b>という<b>使い分けの判断軸</b>を、業界の流れ・現場の規約・チーム開発の観点で整理します。<br>
+    結論を先に言うと：<b>シンプルなSQLはアノテーション・複雑/動的なSQLはXML・混在を恐れない</b>。<br>
+    この判断ができるようになれば、<b>「実装の道具を選ぶセンス」</b>が一段上がります。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#theme">01 この別冊のテーマ</a></li>
+    <li><a href="#two-ways">02 改めて2つの書き方</a></li>
+    <li><a href="#anno-pros">03 アノテーションの長所と短所</a></li>
+    <li><a href="#xml-pros">04 XMLの長所と短所</a></li>
+    <li><a href="#choose">05 使い分けの判断軸</a></li>
+    <li><a href="#trend">06 業界トレンドの読み方</a></li>
+    <li><a href="#convention">07 プロジェクト規約の決め方</a></li>
+    <li><a href="#trouble">08 使い分けのハマりどころ</a></li>
+    <li><a href="#next">09 次の本編へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="theme">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この別冊のテーマ</h2>
+    <span class="en">THEME</span>
+  </div>
+  <p class="pattern-desc">技術選択の場面では、必ず<b>「どっちを使うか」</b>が問われます。本巻で扱うのは「<b>アノテーションかXMLか</b>」ですが、根底にあるのは<b>「実装の道具を選ぶセンス」</b>です。これはCの全15巻を通じて磨くべき能力。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-choose</span>
+      <span class="tag-desc">選択の意義</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 「どっちでもいい」は嘘</div>
+        <p>初学者向け解説では「<b>どっちでもいいです</b>」と片付けられがち。でも実際にプロジェクトに入ると、<b>規約として片方に統一されている</b>か、<b>SQLの性質に応じて使い分けている</b>のが普通です。</p>
+        <p style="margin-top:8px"><b>「どっちでもいい」と「どっちを選ぶか」は別の問い</b>です。前者は技術的に等価という意味、後者は<b>業務上の判断</b>。</p>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          この別冊が答えるのは <b>「業務上の判断」</b> の問い。<br>
+          技術的にはどちらも動くという前提で、<b>「より良い選択」</b>を学びます。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で答える4つの問い</span>
+
+<span class="comment">// 問1: それぞれの長所・短所は？</span>
+<span class="comment">//   → SQLの可読性・型安全・保守性で比較</span>
+
+<span class="comment">// 問2: いつどっちを使う？</span>
+<span class="comment">//   → SQLの複雑度・動的SQLの有無で判断</span>
+
+<span class="comment">// 問3: 業界のトレンドはどう？</span>
+<span class="comment">//   → 「アノテ派」「XML派」「混在派」の現状</span>
+
+<span class="comment">// 問4: プロジェクト規約はどう決めるべき？</span>
+<span class="comment">//   → チーム規模・スキル・既存資産で決まる</span>
+
+
+<span class="comment">// 結論を先に：</span>
+<span class="comment">// ・短いSQL → アノテーション</span>
+<span class="comment">// ・複雑SQL → XML</span>
+<span class="comment">// ・動的SQL → 必ずXML</span>
+<span class="comment">// ・混在を恐れない</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="two-ways">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>改めて2つの書き方</h2>
+    <span class="en">TWO WAYS</span>
+  </div>
+  <p class="pattern-desc">同じSQLをアノテーションとXMLの両方で書いた場合の<b>見た目の対比</b>を改めて確認します。何が異なり、何が同じかを<b>視覚的に把握</b>するのが本セクションの目的。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">side-by-side</span>
+      <span class="tag-desc">同じSQLを2通りで書く</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 同じものを2通りで</div>
+        <table class="compare-tbl">
+          <tr><th>要素</th><th>アノテーション</th><th>XML</th></tr>
+          <tr><td>SQLの実体</td><td>Java内の文字列</td><td>XML内のテキスト</td></tr>
+          <tr><td>SQL → メソッド対応</td><td><code>@Select</code> 直下</td><td><code>id</code> 属性</td></tr>
+          <tr><td>戻り値型指定</td><td>Javaメソッドの戻り値</td><td><code>resultType</code> 属性</td></tr>
+          <tr><td>パラメータ</td><td><code>@Param</code> + <code>#{...}</code></td><td>同上</td></tr>
+          <tr><td>動的SQL</td><td><b>不可</b>（文字列連結のみ）</td><td><code>&lt;if&gt; &lt;where&gt; &lt;foreach&gt;</code></td></tr>
+          <tr><td>編集の閾値</td><td>Javaコンパイル必要</td><td>XML編集→DevToolsで反映</td></tr>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// 同じ findAll() を2通りで</span>
+
+<span class="comment">// ─── ① アノテーション版 ───</span>
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+  <span class="ann">@Select</span>(<span class="str">"SELECT * FROM subjects "</span>
+        + <span class="str">"ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>();
+}
+
+
+<span class="comment">// ─── ② XML版 ───</span>
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>();
+}
+
+&lt;<span class="kw">mapper</span>
+  <span class="ann">namespace</span>=<span class="str">"...SubjectMapper"</span>&gt;
+  &lt;<span class="kw">select</span>
+    <span class="ann">id</span>=<span class="str">"findAll"</span>
+    <span class="ann">resultType</span>=<span class="str">"...Subject"</span>&gt;
+    SELECT * FROM subjects ORDER BY id
+  &lt;/<span class="kw">select</span>&gt;
+&lt;/<span class="kw">mapper</span>&gt;
+
+
+<span class="comment">// 結果は完全に同じ</span>
+<span class="comment">// 違いは「どこに書くか」だけ</span>
+<span class="comment">// → どっちを選ぶかが判断対象</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="anno-pros">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>アノテーションの長所と短所</h2>
+    <span class="en">ANNOTATION PROS & CONS</span>
+  </div>
+  <p class="pattern-desc">アノテーションSQLは<b>「シンプル・1ファイル完結・読みやすい」</b>のが長所。一方で<b>「動的SQLが書けない・SQLが長くなると地獄」</b>が短所。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">annotation-analysis</span>
+      <span class="tag-desc">アノテーション派の評価</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 長所と短所</div>
+        <div class="dual-grid">
+          <div class="opt" style="border-left:3px solid var(--accent)">
+            <div class="ph">✓ PROS</div>
+            <div class="title">長所</div>
+            <p><b>1. シンプル・1ファイルで完結</b><br>JavaとSQLが隣にあるので、認知負荷が低い。</p>
+            <p style="margin-top:6px"><b>2. 短いSQLには圧倒的に向く</b><br>5〜10行のSQLならアノテーションが最も読みやすい。</p>
+            <p style="margin-top:6px"><b>3. 学習コストが低い</b><br>初学者にも「メソッドの上のSQL」とすぐ理解できる。</p>
+            <p style="margin-top:6px"><b>4. IDEの補完が効きやすい</b><br>Javaの世界内に閉じているので、IDEのリファクタ機能と相性◎。</p>
+          </div>
+          <div class="opt" style="border-left:3px solid #b07050">
+            <div class="ph">✗ CONS</div>
+            <div class="title">短所</div>
+            <p><b>1. 動的SQLが書けない</b><br>文字列連結だけでは <code>&lt;if&gt;</code> 系の条件分岐を表現できない。</p>
+            <p style="margin-top:6px"><b>2. 長いSQLは可読性が地獄</b><br>20行を超えると <code>+</code> 結合だらけで読めない。</p>
+            <p style="margin-top:6px"><b>3. SQLフォーマットが崩れる</b><br>キーワード強調が効かない・SQLツールにコピペしにくい。</p>
+            <p style="margin-top:6px"><b>4. SQL修正のたびに再コンパイル</b><br>XMLなら自動リスタート可能だが、Javaは要再ビルド。</p>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// アノテーションが地獄になる例</span>
+
+<span class="ann">@Select</span>(
+  <span class="str">"SELECT s.id, s.name, s.color, "</span>
+  + <span class="str">"r.id AS rid, "</span>
+  + <span class="str">"r.studied_on, r.minutes, r.memo "</span>
+  + <span class="str">"FROM subjects s "</span>
+  + <span class="str">"LEFT JOIN study_records r "</span>
+  + <span class="str">"ON s.id = r.subject_id "</span>
+  + <span class="str">"WHERE s.id = #{subjectId} "</span>
+  + <span class="str">"  AND r.studied_on BETWEEN #{from} "</span>
+  + <span class="str">"      AND #{to} "</span>
+  + <span class="str">"ORDER BY r.studied_on DESC"</span>
+)
+<span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findInPeriod</span>(...);
+
+
+<span class="comment">// このSQLは何の処理？</span>
+<span class="comment">// → "+" だらけで読めない</span>
+<span class="comment">// → SQLツールにコピペするには整形が必要</span>
+<span class="comment">// → そして「期間が指定されない場合」の条件分岐を</span>
+<span class="comment">//   入れたい時に詰む（動的SQL書けない）</span>
+
+
+<span class="comment">// XMLなら：</span>
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findInPeriod"</span> ...&gt;
+  SELECT s.id, s.name, s.color,
+         r.id AS rid, r.studied_on, r.minutes
+  FROM subjects s
+  LEFT JOIN study_records r
+    ON s.id = r.subject_id
+  &lt;<span class="kw">where</span>&gt;
+    s.id = #{subjectId}
+    &lt;<span class="kw">if</span> test=<span class="str">"from != null"</span>&gt;
+      AND r.studied_on &gt;= #{from}
+    &lt;/<span class="kw">if</span>&gt;
+  &lt;/<span class="kw">where</span>&gt;
+&lt;/<span class="kw">select</span>&gt;
+<span class="comment">// → 読みやすい・条件も柔軟</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="xml-pros">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>XMLの長所と短所</h2>
+    <span class="en">XML PROS & CONS</span>
+  </div>
+  <p class="pattern-desc">XML Mapperは<b>「複雑SQL・動的SQL・SQL職人による保守」</b>に向く。一方で<b>「ファイル分散・初期設定の手間」</b>が短所。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">xml-analysis</span>
+      <span class="tag-desc">XML派の評価</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 長所と短所</div>
+        <div class="dual-grid">
+          <div class="opt" style="border-left:3px solid var(--accent)">
+            <div class="ph">✓ PROS</div>
+            <div class="title">長所</div>
+            <p><b>1. 動的SQLが書ける</b><br><code>&lt;if&gt; &lt;where&gt; &lt;foreach&gt;</code> で条件分岐・ループが自在。Vol.6で活用。</p>
+            <p style="margin-top:6px"><b>2. SQL本来の形で書ける</b><br>キーワード強調・整形がそのまま。SQLツールへのコピペも容易。</p>
+            <p style="margin-top:6px"><b>3. <code>resultMap</code> で複雑なマッピング</b><br>JOIN結果のオブジェクト組み立て（Vol.4でやる）。</p>
+            <p style="margin-top:6px"><b>4. SQL専門家・DBAが書ける</b><br>Javaを知らなくてもXMLとSQLだけで完結。大規模プロジェクトでは強み。</p>
+          </div>
+          <div class="opt" style="border-left:3px solid #b07050">
+            <div class="ph">✗ CONS</div>
+            <div class="title">短所</div>
+            <p><b>1. ファイルが分散する</b><br>Java と XML を行き来する手間。「あれ、このSQLどっちにある？」が起きる。</p>
+            <p style="margin-top:6px"><b>2. namespace / id ミスが致命的</b><br>typo 1文字で動かない。エラーも分かりにくい。</p>
+            <p style="margin-top:6px"><b>3. XMLの構文が冗長</b><br>DOCTYPE宣言・タグ閉じ・属性引用符など、ボイラープレート多い。</p>
+            <p style="margin-top:6px"><b>4. 初期設定が必要</b><br><code>mapper-locations</code> の設定や <code>type-aliases</code> の準備など。</p>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// XMLが本領発揮するパターン</span>
+
+<span class="comment">// 例1: 複雑な JOIN + resultMap</span>
+&lt;<span class="kw">resultMap</span> <span class="ann">id</span>=<span class="str">"subjectWithRecords"</span>
+  <span class="ann">type</span>=<span class="str">"Subject"</span>&gt;
+  &lt;<span class="kw">id</span> <span class="ann">property</span>=<span class="str">"id"</span>
+      <span class="ann">column</span>=<span class="str">"subject_id"</span>/&gt;
+  &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"name"</span>
+          <span class="ann">column</span>=<span class="str">"name"</span>/&gt;
+  &lt;<span class="kw">collection</span> <span class="ann">property</span>=<span class="str">"records"</span>
+              <span class="ann">ofType</span>=<span class="str">"StudyRecord"</span>&gt;
+    &lt;<span class="kw">id</span> <span class="ann">property</span>=<span class="str">"id"</span>
+        <span class="ann">column</span>=<span class="str">"rid"</span>/&gt;
+    &lt;<span class="kw">result</span> <span class="ann">property</span>=<span class="str">"studiedOn"</span>
+            <span class="ann">column</span>=<span class="str">"studied_on"</span>/&gt;
+  &lt;/<span class="kw">collection</span>&gt;
+&lt;/<span class="kw">resultMap</span>&gt;
+<span class="comment">// → アノテーションでは表現困難</span>
+
+
+<span class="comment">// 例2: 動的な絞り込み（検索）</span>
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"search"</span>&gt;
+  SELECT * FROM study_records
+  &lt;<span class="kw">where</span>&gt;
+    &lt;<span class="kw">if</span> test=<span class="str">"subjectId != null"</span>&gt;
+      AND subject_id = #{subjectId}
+    &lt;/<span class="kw">if</span>&gt;
+    &lt;<span class="kw">if</span> test=<span class="str">"from != null"</span>&gt;
+      AND studied_on &gt;= #{from}
+    &lt;/<span class="kw">if</span>&gt;
+  &lt;/<span class="kw">where</span>&gt;
+&lt;/<span class="kw">select</span>&gt;
+<span class="comment">// → これがXML Mapperの真の強み</span>
+<span class="comment">// → Vol.6 検索で使う</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="choose">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>使い分けの判断軸</h2>
+    <span class="en">DECISION CRITERIA</span>
+  </div>
+  <p class="pattern-desc">業務での判断は<b>3つの軸</b>で決まります。<b>「SQLの複雑度」「動的SQLの有無」「保守の主体」</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">decision-criteria</span>
+      <span class="tag-desc">3つの判断軸</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの判断軸</div>
+        <div class="judgement-box">
+          <div class="q">Q1. SQLは何行くらい？</div>
+          <div class="a"><b>1〜5行</b> → アノテーション<br><b>10行以上 or JOIN</b> → XML</div>
+        </div>
+        <div class="judgement-box">
+          <div class="q">Q2. 条件分岐や動的な部分がある？</div>
+          <div class="a"><b>固定SQL</b> → どちらでも可<br><b>動的SQL必須</b> → <b>絶対XML</b></div>
+        </div>
+        <div class="judgement-box">
+          <div class="q">Q3. このSQLは誰が保守する？</div>
+          <div class="a"><b>Java開発者</b> → アノテーションで近接配置<br><b>SQL専門家/DBA</b> → XMLで分離</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>結論</b>：<b>3軸を見て総合判断</b>。「全てXML」「全てアノテーション」と画一化する必要はない。</p>
+      </div>
+      <div class="code"><span class="code-head">// 学習記録アプリでの判断</span>
+
+<span class="comment">// StudyRecordMapper.findBySubjectId</span>
+<span class="ann">@Select</span>(<span class="str">"SELECT * FROM study_records "</span>
+       + <span class="str">"WHERE subject_id = #{subjectId} "</span>
+       + <span class="str">"ORDER BY studied_on"</span>)
+
+<span class="comment">// Q1: 3行 → アノテーションでも読める</span>
+<span class="comment">// Q2: 固定SQL → アノテーションOK</span>
+<span class="comment">// Q3: Java開発者が保守</span>
+<span class="comment">// → 結論：アノテーションのまま</span>
+
+
+<span class="comment">// ─────────────────</span>
+
+
+<span class="comment">// SubjectMapper.findAllWithRecords (Vol.4で作る)</span>
+<span class="comment">// SELECT で 8列の JOIN を書く</span>
+<span class="comment">// + resultMap でオブジェクト組み立て</span>
+
+<span class="comment">// Q1: JOIN + 15行以上 → XML向き</span>
+<span class="comment">// Q2: 今のところ固定だが将来動的化の可能性</span>
+<span class="comment">// Q3: 結合パターン理解にSQL知識必要</span>
+<span class="comment">// → 結論：XML一択</span>
+
+
+<span class="comment">// ─────────────────</span>
+
+
+<span class="comment">// 検索機能 (Vol.6で作る)</span>
+<span class="comment">// 「科目絞り込み」「期間絞り込み」を組み合わせ</span>
+
+<span class="comment">// Q1: SQL自体は短いが</span>
+<span class="comment">// Q2: 動的SQL必須</span>
+<span class="comment">// → 結論：XML一択（&lt;if&gt;&lt;where&gt;が必要）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><b>「混在を恐れない」</b>のがプロの態度。1プロジェクト内で<b>「SubjectMapperはXML / StudyRecordMapperはアノテーション」</b>のような混在は<b>むしろ普通</b>です。重要なのは<b>「なぜこっちを選んだか」がチームで共有されている</b>こと。</p>
+  </div>
+</section>
+
+<section id="trend">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>業界トレンドの読み方</h2>
+    <span class="en">INDUSTRY TRENDS</span>
+  </div>
+  <p class="pattern-desc">SQL書き方の業界トレンドは時代と共に変わってきました。<b>「歴史を知る」</b>と、なぜ今の状態があるか分かります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">trend-history</span>
+      <span class="tag-desc">トレンドの変遷</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 時代ごとのトレンド</div>
+        <div class="role-card">
+          <span class="label">〜2010年頃</span>
+          <div class="name">XML黄金期</div>
+          <div class="desc">MyBatis（旧iBATIS）はXML一択時代。SQLを<b>「DBAが書く設定ファイル」</b>として扱う思想が主流。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">2010〜2015年頃</span>
+          <div class="name">アノテーション登場・コード派の台頭</div>
+          <div class="desc">「<b>XMLは冗長</b>」という反動でアノテーションSQLが好まれる時期。Spring DataやJPAも普及。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">2015〜2020年頃</span>
+          <div class="name">JPA / Hibernate の本格台頭</div>
+          <div class="desc">「<b>SQLを書かない世界</b>」を志向するJPAが人気。一方で複雑クエリは <code>@Query</code> で書く必要があり「結局SQL」と回帰も。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">2020年頃〜現在</span>
+          <div class="name">適材適所・混在許容</div>
+          <div class="desc">「JPAでもMyBatisでも目的に合えばOK」「SQLは隠さない方が良い」という<b>プラグマティック</b>な空気。Springプロジェクトでは<b>MyBatis派が再評価</b>される動き。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 業界トレンドの現在地（2026年時点）</span>
+
+<span class="comment">// ─── 日本の業務システム ───</span>
+<span class="comment">// MyBatis + XML Mapper が依然強い</span>
+<span class="comment">// 理由：</span>
+<span class="comment">// ・SIerに古くからXML文化が根強い</span>
+<span class="comment">// ・SQL職人が独立した存在として残る</span>
+<span class="comment">// ・JPAの「魔法感」を嫌う声</span>
+
+<span class="comment">// ─── ベンチャー / スタートアップ ───</span>
+<span class="comment">// JPA / Spring Data が好まれる傾向</span>
+<span class="comment">// ・素早く開発したい</span>
+<span class="comment">// ・SQLを書かない世界を志向</span>
+
+<span class="comment">// ─── 大規模Webサービス ───</span>
+<span class="comment">// MyBatis（XML中心）か独自ORM</span>
+<span class="comment">// ・性能チューニング必須</span>
+<span class="comment">// ・SQLを完全制御したい</span>
+
+
+<span class="comment">// Cでは「MyBatis + 混在」を採用</span>
+<span class="comment">// → 業界の主流に合わせつつ</span>
+<span class="comment">// → 両方の感覚を身につける設計</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="convention">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>プロジェクト規約の決め方</h2>
+    <span class="en">PROJECT CONVENTIONS</span>
+  </div>
+  <p class="pattern-desc">プロジェクトに参加した時、または立ち上げる時、<b>「SQL書き方規約」</b>をどう決めるか。実務でよくあるパターンを紹介します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">conventions</span>
+      <span class="tag-desc">よくある規約パターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 規約の例</div>
+        <div class="role-card">
+          <span class="label">パターン1</span>
+          <div class="name">全部XML</div>
+          <div class="desc">SQL専門家がいる大規模システムで多い。<b>統一感は最大</b>だが、簡単なSQLでも冗長になる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">パターン2</span>
+          <div class="name">全部アノテーション</div>
+          <div class="desc">小規模・Spring Data寄りのチームで稀に見る。<b>SQLが簡単な時に最速</b>だが、複雑化で苦しむ。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">パターン3</span>
+          <div class="name">単純SELECT のみアノテーション、それ以外XML</div>
+          <div class="desc">最も多い実用的パターン。<b>「動的SQLが必要な瞬間」を境界</b>にする。Cで採用する方針もこれ。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">パターン4</span>
+          <div class="name">INSERT/UPDATE/DELETE はアノテーション、SELECT は XML</div>
+          <div class="desc">CRUD操作の種類で分ける流派。<b>「データを書く操作は単純」「読む操作は複雑」</b>という業務感覚を反映。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 規約決定の3つのポイント</span>
+
+<span class="comment">// ① チームのSQL熟練度</span>
+<span class="comment">//   → 全員 Java エンジニアならアノテ寄り</span>
+<span class="comment">//   → DBA / SQL職人がいるなら XML 中心</span>
+
+<span class="comment">// ② 既存資産</span>
+<span class="comment">//   → 既存プロジェクトに XML が大量にある</span>
+<span class="comment">//     なら、新規部分も XML 寄せる</span>
+<span class="comment">//   → 一貫性は超重要</span>
+
+<span class="comment">// ③ 業務の複雑度</span>
+<span class="comment">//   → 単純CRUD中心ならアノテ寄り</span>
+<span class="comment">//   → 集計・検索・統計が多いなら XML 中心</span>
+
+
+<span class="comment">// ─── Cでの規約 ───</span>
+<span class="comment">// 「単純SELECT のみアノテーション</span>
+<span class="comment">//  動的/複雑SQL は XML」</span>
+
+<span class="comment">// 具体的に：</span>
+<span class="comment">// ・StudyRecordMapper.findBySubjectId → アノテ</span>
+<span class="comment">// ・SubjectMapper.findAllWithRecords → XML</span>
+<span class="comment">//   （Vol.4でJOIN+resultMap）</span>
+<span class="comment">// ・検索メソッド → XML（Vol.6で動的SQL）</span>
+<span class="comment">// ・集計メソッド → XML（Vol.9でGROUP BY）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>規約は<b>「正解」より「合意」が大事</b>。チーム内で<b>同じ判断ができる状態</b>が最重要です。「<b>Aさんはアノテで、Bさんはxmlで似たSQLを書く</b>」 が一番悪い。<b>明文化されたガイドライン</b>を最初に作るのが、品質の土台です。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>使い分けのハマりどころ</h2>
+    <span class="en">PITFALLS</span>
+  </div>
+  <p class="pattern-desc">使い分けで起きやすい<b>4つの罠</b>。実務での「あるある」です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">choosing-pitfalls</span>
+      <span class="tag-desc">使い分けの罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 罠</div>
+        <div class="role-card">
+          <span class="label">PITFALL 1</span>
+          <div class="name">「最初はアノテで…」で長期化</div>
+          <div class="desc">プロトタイプ的にアノテーションで書き始め、機能追加でSQLがどんどん長くなる。<b>気付いた時にはXMLに移行できないほどコードが増える</b>。<br><b>対策</b>：10行を超えたら<b>即XMLに移す</b>判断を。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 2</span>
+          <div class="name">XMLとアノテで同じSQLを二重定義</div>
+          <div class="desc">本編Vol.3でも触れた起動エラー。<b>移行時に削除し忘れ</b>。<br><b>対策</b>：「移行＝旧を即削除」のセットで作業。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 3</span>
+          <div class="name">同種SQLが両方の書き方で混在し統一感喪失</div>
+          <div class="desc">「<code>findById</code>はアノテで」「<code>findByEmail</code>はXMLで」という<b>同じ性質のSQLが分裂</b>。新人が混乱する。<br><b>対策</b>：<b>同種SQLは同じ方式に統一</b>するという規約を加える。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 4</span>
+          <div class="name">動的SQLが必要になって慌てる</div>
+          <div class="desc">最初固定SQLで作ったが、「検索機能足して」と言われ <code>&lt;if&gt;</code> を入れたくなり、アノテで詰む。<br><b>対策</b>：<b>将来動的化の可能性を最初に検討</b>。可能性ありなら最初からXML。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// PITFALL 1 の典型シナリオ</span>
+
+<span class="comment">// ─── 最初 ───</span>
+<span class="ann">@Select</span>(<span class="str">"SELECT * FROM tasks "</span>
+       + <span class="str">"WHERE id = #{id}"</span>)
+<span class="type">Task</span> <span class="fn">findById</span>(<span class="ann">@Param</span>(<span class="str">"id"</span>) <span class="type">Integer</span> id);
+
+
+<span class="comment">// ─── 1ヶ月後（機能追加）───</span>
+<span class="ann">@Select</span>(<span class="str">"SELECT t.*, u.name AS owner_name "</span>
+       + <span class="str">"FROM tasks t "</span>
+       + <span class="str">"LEFT JOIN users u "</span>
+       + <span class="str">"  ON t.owner_id = u.id "</span>
+       + <span class="str">"WHERE t.id = #{id}"</span>)
+<span class="type">Task</span> <span class="fn">findById</span>(...);
+
+
+<span class="comment">// ─── 3ヶ月後（さらに機能追加）───</span>
+<span class="ann">@Select</span>(<span class="str">"SELECT t.*, u.name AS owner_name, "</span>
+       + <span class="str">"COUNT(c.id) AS comment_count, "</span>
+       + <span class="str">"GROUP_CONCAT(tg.name) AS tags "</span>
+       + <span class="str">"FROM tasks t "</span>
+       + <span class="str">"LEFT JOIN users u "</span>
+       + <span class="str">"  ON t.owner_id = u.id "</span>
+       + <span class="str">"LEFT JOIN comments c "</span>
+       + <span class="str">"  ON c.task_id = t.id "</span>
+       + <span class="str">"LEFT JOIN task_tags tt "</span>
+       + <span class="str">"  ON tt.task_id = t.id "</span>
+       + <span class="str">"LEFT JOIN tags tg "</span>
+       + <span class="str">"  ON tg.id = tt.tag_id "</span>
+       + <span class="str">"WHERE t.id = #{id} "</span>
+       + <span class="str">"GROUP BY t.id, u.name"</span>)
+<span class="type">Task</span> <span class="fn">findById</span>(...);
+
+
+<span class="comment">// → もはや読めない</span>
+<span class="comment">// → でも変更履歴が大量にあり今更XML化しづらい</span>
+<span class="comment">// → 教訓: 「気付いた時には遅い」</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次の本編へ</h2>
+    <span class="en">TO THE NEXT VOLUME</span>
+  </div>
+  <p class="pattern-desc">別冊S3お疲れさまでした。<b>「2つの書き方の使い分け」</b>が見えるようになりました。次のVol.4 本編では、XMLの真骨頂 <b><code>resultMap</code> + <code>collection</code></b> でJOINを実装します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">この別冊のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 持ち帰る5つの知見</div>
+        <div class="role-card">
+          <span class="label">知見1</span>
+          <div class="name">アノテーションは短いSQLに最強</div>
+          <div class="desc">5行以内なら認知負荷が最小</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見2</span>
+          <div class="name">動的SQL = 必ずXML</div>
+          <div class="desc">これだけは妥協なし</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見3</span>
+          <div class="name">10行を超えたらXMLへ</div>
+          <div class="desc">読みやすさの分水嶺</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見4</span>
+          <div class="name">混在を恐れない</div>
+          <div class="desc">適材適所が現代の主流</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見5</span>
+          <div class="name">規約は「正解」より「合意」</div>
+          <div class="desc">チーム内で同じ判断ができる状態が最重要</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.4 本編で起きること</span>
+
+<span class="comment">// タイトル：</span>
+<span class="comment">// 「resultMapで関連を取得しよう」</span>
+
+<span class="comment">// やること：</span>
+<span class="comment">// 1. SubjectMapper.xml に</span>
+<span class="comment">//    findAllWithRecords を追加</span>
+<span class="comment">// 2. LEFT JOIN で subjects + study_records</span>
+<span class="comment">// 3. &lt;resultMap&gt; で Subject オブジェクト</span>
+<span class="comment">// 4. &lt;collection&gt; で records リスト組み立て</span>
+<span class="comment">// 5. SubjectService の</span>
+<span class="comment">//    findAllWithRecords() を</span>
+<span class="comment">//    「2回SQL方式」から</span>
+<span class="comment">//    「1回JOIN方式」に置き換え</span>
+<span class="comment">// 6. 画面は同じ・SQLは1回に減る</span>
+
+<span class="comment">// 獲得スキル：</span>
+<span class="comment">// → resultMap + collection</span>
+
+
+<span class="comment">// Vol.4 が終わると：</span>
+<span class="comment">// SQL 6回 → 1回（83%削減）</span>
+<span class="comment">// N+1問題の一段解消（残課題は別途）</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(79,87,74,0.12)">
+    <div class="tip-label">NEXT STEP ── VOL.4 本編</div>
+    <p>別冊S3で<b>「使い分けの判断軸」</b>を得ました。次のVol.4 本編「<b>resultMapで関連を取得しよう</b>」では、XMLの真骨頂である<b><code>resultMap</code> + <code>collection</code></b> を使い、本編Vol.2で意図的にやった<b>「2回SQL方式」を「1回JOIN方式」に進化</b>させます。<br>SQL 6回 → 1回。N+1問題の一段解消です。Cの中で<b>最も学びの多い巻のひとつ</b>。本編Vol.4 へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.03 / 15 ── ANNOTATION vs XML（別冊）</span>
+</footer>
+
+</body>
+</html>

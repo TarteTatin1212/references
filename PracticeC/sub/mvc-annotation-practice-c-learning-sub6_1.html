@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.6 別冊 検索URLの設計思想</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a302a;
+  --paper:#e8eae3;
+  --paper-2:#d4d8ce;
+  --accent:#909a82;
+  --accent-2:#a5af96;
+  --accent-3:#575e4d;
+  --muted:#737a72;
+  --line:#b8c0b1;
+  --code-bg:#1f231f;
+  --code-text:#e8eae3;
+  --panel-bg:#f0f2eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✧';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.18;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#9aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(144,154,130,0.09);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.dual-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.dual-grid .opt{background:#fff;border:1px solid var(--line);padding:14px 16px}
+.dual-grid .opt .ph{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:6px;letter-spacing:0.1em}
+.dual-grid .opt .title{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;color:var(--accent-3);margin-bottom:8px}
+.dual-grid .opt p{font-size:13px;line-height:1.7}
+
+.url-example{background:#f0f4ec;border:1px solid var(--line);padding:10px 14px;margin:10px 0;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--accent-3);word-break:break-all}
+
+.judgement-box{background:#fff;border:1px solid var(--line);padding:14px 16px;margin:14px 0}
+.judgement-box .q{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--accent-3);margin-bottom:6px}
+.judgement-box .a{font-size:13px;padding-left:14px;border-left:2px solid var(--accent)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .dual-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.06 / 15</span>
+    <span class="kind-tag">別冊</span>
+  </div>
+  <h1>検索URLの<br>設計思想</h1>
+  <div class="subtitle">URL DESIGN ── URLS AS USER INTERFACE</div>
+  <p class="lead">
+    本編Vol.6で <code style="font-family:'JetBrains Mono'">?subjectId=1</code> という<b>URLパラメータ</b>を初めて使いました。何気なく書いた <code style="font-family:'JetBrains Mono'">?subjectId=1</code> ですが、業務開発では<b>URL設計に明確な思想</b>があります。<br>
+    別冊S6では、<b>「URLはユーザーへのインターフェース」</b>という観点で深掘りします。クエリストリングの命名／RESTfulな検索URL／ページング設計／ブックマーカブルとは何か／POST vs GET の使い分け──<br>
+    Cの中で<b>「ユーザーに優しいURLを書く感性」</b>を磨く別冊。読み終わると、新しい画面を設計する時に<b>URL構造を最初に考える</b>姿勢が身につきます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#theme">01 この別冊のテーマ</a></li>
+    <li><a href="#url-as-ui">02 URLはインターフェース</a></li>
+    <li><a href="#querystring">03 クエリストリングの命名</a></li>
+    <li><a href="#restful">04 RESTfulな検索URL</a></li>
+    <li><a href="#pagination">05 ページングと並び順の予告</a></li>
+    <li><a href="#bookmarkable">06 ブックマーカブル / シェアラブル</a></li>
+    <li><a href="#get-post">07 GET vs POST の使い分け</a></li>
+    <li><a href="#trouble">08 URL設計のハマりどころ</a></li>
+    <li><a href="#next">09 次の本編へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="theme">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この別冊のテーマ</h2>
+    <span class="en">THEME</span>
+  </div>
+  <p class="pattern-desc">「URLなんて適当でも動く」と思いがちですが、<b>業務開発ではURL設計は最重要</b>です。URLは<b>ユーザーが直接目にする「インターフェース」</b>であり、<b>システムの構造を表すドキュメント</b>でもある。Vol.6 で書いた <code>?subjectId=1</code> の<b>裏にある考え方</b>を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">why-url-design</span>
+      <span class="tag-desc">URL設計が大事な理由</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// URL設計が問われる4つの場面</div>
+        <div class="role-card">
+          <span class="label">場面1</span>
+          <div class="name">ユーザーが目にする</div>
+          <div class="desc">URLは画面上部・ブックマーク・リンクで<b>必ず見えるもの</b>。「謎の文字列」よりも<b>意味のあるURL</b>が信頼感を与える。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">場面2</span>
+          <div class="name">SEOに影響する</div>
+          <div class="desc">Google検索は<b>URL内のキーワードも判断材料</b>にする。<code>/items?id=1</code> より <code>/products/laptop</code> の方が有利。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">場面3</span>
+          <div class="name">APIとして再利用される</div>
+          <div class="desc">画面用URLが<b>外部システムから呼ばれる</b>こともある。設計が不明瞭だと、後で他の用途に流用しづらい。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">場面4</span>
+          <div class="name">ログ・分析で参照される</div>
+          <div class="desc">アクセスログ・解析ツールで<b>URL単位で集計</b>される。意味の分かるURLは運用効率を上げる。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で答える4つの問い</span>
+
+<span class="comment">// 問1: URLパラメータの命名は何が正解？</span>
+<span class="comment">//   → 小文字・キャメル or スネーク・短く明確に</span>
+
+<span class="comment">// 問2: RESTful とは何か？</span>
+<span class="comment">//   → リソース指向 + HTTPメソッド使い分け</span>
+
+<span class="comment">// 問3: ページングはどう設計する？</span>
+<span class="comment">//   → ?page=N&size=M が定番</span>
+
+<span class="comment">// 問4: GETとPOSTはどう使い分ける？</span>
+<span class="comment">//   → 検索は GET、登録/編集は POST</span>
+
+
+<span class="comment">// 結論を先に：</span>
+<span class="comment">// ・URLは「設計」する</span>
+<span class="comment">// ・パラメータは意味が分かる名前で</span>
+<span class="comment">// ・「ブックマーカブル」を意識</span>
+<span class="comment">// ・検索は GET、更新は POST</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="url-as-ui">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>URLはインターフェース</h2>
+    <span class="en">URLS ARE UI</span>
+  </div>
+  <p class="pattern-desc">画面のボタンや入力欄を<b>「インターフェース」</b>と呼ぶように、URLも<b>「ユーザーがシステムと対話する手段」</b>の一つです。<b>URL設計はUI設計</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">url-as-ui</span>
+      <span class="tag-desc">良いURLと悪いURL</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 良いURL vs 悪いURL</div>
+        <div class="dual-grid">
+          <div class="opt" style="border-left:3px solid var(--accent)">
+            <div class="ph">✓ GOOD</div>
+            <div class="title">良いURL</div>
+            <p style="font-family:'JetBrains Mono',monospace;font-size:11.5px"><code>/subjects?subjectId=1</code></p>
+            <p style="margin-top:6px">意味が読める／短い／パラメータ名と値が一致／RESTful</p>
+          </div>
+          <div class="opt" style="border-left:3px solid #b07050">
+            <div class="ph">✗ BAD</div>
+            <div class="title">悪いURL</div>
+            <p style="font-family:'JetBrains Mono',monospace;font-size:11.5px"><code>/sbj.aspx?q=1&amp;t=js&amp;_r=8932</code></p>
+            <p style="margin-top:6px">意味不明／拡張子付き／略語／謎の数値</p>
+          </div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>「URLを見ただけで何ができる画面か分かる」</b>のが理想。</p>
+      </div>
+      <div class="code"><span class="code-head">// 実例：良いURL集</span>
+
+<span class="comment">// ─── 一覧画面 ───</span>
+<span class="kw">GET /subjects</span>
+<span class="kw">GET /products</span>
+<span class="kw">GET /users</span>
+
+
+<span class="comment">// ─── 詳細画面 ───</span>
+<span class="kw">GET /subjects/1</span>
+<span class="kw">GET /products/laptop-2024</span>
+<span class="kw">GET /users/123</span>
+
+
+<span class="comment">// ─── 絞り込み ───</span>
+<span class="kw">GET /subjects?subjectId=1</span>
+<span class="kw">GET /products?category=electronics</span>
+<span class="kw">GET /users?role=admin</span>
+
+
+<span class="comment">// ─── 検索 ───</span>
+<span class="kw">GET /search?q=Java</span>
+
+
+<span class="comment">// ─── ページング ───</span>
+<span class="kw">GET /subjects?page=2&size=20</span>
+
+
+<span class="comment">// 共通の特徴：</span>
+<span class="comment">// ・小文字</span>
+<span class="comment">// ・複数形（リソースの集合）</span>
+<span class="comment">// ・拡張子なし（.html とか付けない）</span>
+<span class="comment">// ・パラメータ名が意味を持つ</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="querystring">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>クエリストリングの命名</h2>
+    <span class="en">QUERY STRING NAMING</span>
+  </div>
+  <p class="pattern-desc">URLの <code>?</code> 以降を<b>クエリストリング</b>と呼びます。<code>?subjectId=1&size=20</code> のように <code>key=value</code> を <code>&amp;</code> で繋げる構造。<b>命名のお作法</b>があります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">naming-rules</span>
+      <span class="tag-desc">命名のお作法</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 命名のルール</div>
+        <table class="compare-tbl">
+          <tr><th>原則</th><th>説明</th></tr>
+          <tr><td>小文字優先</td><td><code>subjectId</code> はOK（キャメル）。<code>Subject_Id</code> は避ける。大文字スタートは特にNG。</td></tr>
+          <tr><td>意味を込める</td><td><code>id</code> より <code>subjectId</code>、<code>q</code> より <code>keyword</code>。<b>短さよりも明確さ</b>。</td></tr>
+          <tr><td>キャメル or スネーク</td><td><code>subjectId</code>（キャメル）／<code>subject_id</code>（スネーク）。<b>プロジェクト内で統一</b>。</td></tr>
+          <tr><td>値はURLエンコード</td><td>日本語や記号はエンコード必須。Springが自動で処理してくれることが多い。</td></tr>
+          <tr><td>真偽値は明示</td><td><code>?active=true</code> や <code>?completed=1</code>。<code>?on</code> や <code>?yes</code> は曖昧。</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>本編Vol.6で採用</b>：キャメルケース（<code>subjectId</code>）。Java側のフィールド名と揃える方針。</p>
+      </div>
+      <div class="code"><span class="code-head">// 命名の例（業界相場）</span>
+
+<span class="comment">// ─── 単数（特定リソース）───</span>
+?id=<span class="num">123</span>
+?subjectId=<span class="num">1</span>
+?userId=<span class="num">5</span>
+
+
+<span class="comment">// ─── 複数（複数指定）───</span>
+?ids=<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>
+?tags=java,spring
+
+
+<span class="comment">// ─── 検索 ───</span>
+?keyword=Java
+?q=Java         <span class="comment">// 短縮形（Google等で定番）</span>
+
+
+<span class="comment">// ─── 範囲 ───</span>
+?from=2026-01-01&to=2026-12-31
+?minPrice=<span class="num">1000</span>&maxPrice=<span class="num">5000</span>
+
+
+<span class="comment">// ─── ページング ───</span>
+?page=<span class="num">2</span>&size=<span class="num">20</span>
+
+
+<span class="comment">// ─── ソート ───</span>
+?sort=createdAt,desc
+?sort=name,asc
+
+
+<span class="comment">// ─── フィルタ（真偽）───</span>
+?active=true
+?archived=false</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>URLパラメータ命名は<b>「プロジェクトの規約に揃える」</b>のが最重要。新規プロジェクトを立ち上げる場合は最初に<b>パラメータ命名規約</b>を決める。既存プロジェクトに入る場合は<b>既存の命名を踏襲</b>する。「<b>統一感</b>」が品質の根幹。</p>
+  </div>
+</section>
+
+<section id="restful">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>RESTfulな検索URL</h2>
+    <span class="en">RESTFUL SEARCH URLS</span>
+  </div>
+  <p class="pattern-desc"><b>RESTful</b>（レストフル）とは「<b>リソースをURLで表現し、HTTPメソッドで操作する</b>」設計思想。業界で広く採用されています。検索URLもRESTfulの観点で考えると<b>美しく整います</b>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">restful-basics</span>
+      <span class="tag-desc">RESTful の基本</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// RESTfulの中心思想</div>
+        <div class="role-card">
+          <span class="label">原則1</span>
+          <div class="name">URLは「リソース」を表す</div>
+          <div class="desc"><code>/subjects</code> は「科目集合」、<code>/subjects/1</code> は「特定の科目」。<b>名詞</b>で表現（動詞ではない）。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">原則2</span>
+          <div class="name">HTTPメソッドが「動作」を表す</div>
+          <div class="desc"><code>GET</code> = 取得、<code>POST</code> = 新規作成、<code>PUT</code>/<code>PATCH</code> = 更新、<code>DELETE</code> = 削除。同じURLでもメソッドで意味が変わる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">原則3</span>
+          <div class="name">階層関係をパスで表現</div>
+          <div class="desc"><code>/subjects/1/records</code> = 「科目1の学習記録集合」。<b>親子関係を表現</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">原則4</span>
+          <div class="name">クエリストリングは「条件」</div>
+          <div class="desc">「絞り込み」「並び替え」「ページング」など、<b>同じリソースに対する条件指定</b>に使う。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// RESTful URLの例</span>
+
+<span class="comment">// ─── GET（取得）───</span>
+<span class="kw">GET</span> /subjects              <span class="comment">// 科目一覧</span>
+<span class="kw">GET</span> /subjects/<span class="num">1</span>            <span class="comment">// 科目1の詳細</span>
+<span class="kw">GET</span> /subjects?active=true  <span class="comment">// 絞り込み</span>
+
+
+<span class="comment">// ─── POST（新規作成）───</span>
+<span class="kw">POST</span> /subjects             <span class="comment">// 新しい科目を作る</span>
+
+
+<span class="comment">// ─── PUT / PATCH（更新）───</span>
+<span class="kw">PUT</span> /subjects/<span class="num">1</span>            <span class="comment">// 科目1を全更新</span>
+<span class="kw">PATCH</span> /subjects/<span class="num">1</span>          <span class="comment">// 科目1を部分更新</span>
+
+
+<span class="comment">// ─── DELETE（削除）───</span>
+<span class="kw">DELETE</span> /subjects/<span class="num">1</span>         <span class="comment">// 科目1を削除</span>
+
+
+<span class="comment">// ─── 階層関係 ───</span>
+<span class="kw">GET</span> /subjects/<span class="num">1</span>/records   <span class="comment">// 科目1の学習記録一覧</span>
+<span class="kw">POST</span> /subjects/<span class="num">1</span>/records  <span class="comment">// 科目1に記録を追加</span>
+
+
+<span class="comment">// ─── 本編Cでの採用 ───</span>
+<span class="comment">// Vol.6: GET /subjects?subjectId=1</span>
+<span class="comment">//   ↑ 一覧画面に条件で絞り込み</span>
+
+<span class="comment">// Vol.7以降: POST /records で記録登録</span>
+<span class="comment">//   PUT / PATCH は使わずPOSTで統一</span>
+<span class="comment">//   （Aと同じ方針）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">なぜRESTfulは便利か</div>
+    <p>RESTfulに従うと、<b>URLを見ただけで動作が予測できる</b>。<code>GET /subjects/1</code> は「科目1を取得するんだな」と即座に分かる。チーム開発で<b>「次に作るべきURLが自然と決まる」</b>のも大きな利点。「<b>業界共通の文法</b>」を共有しているのと同じ。</p>
+  </div>
+</section>
+
+<section id="pagination">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>ページングと並び順の予告</h2>
+    <span class="en">PAGINATION & SORTING</span>
+  </div>
+  <p class="pattern-desc">Cでは扱いませんが、業務開発で必ず登場する<b>「ページング」「並び順」</b>のURL設計も触れておきます。Vol.6の <code>@RequestParam</code> がそのまま使える発展形。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pagination-sort</span>
+      <span class="tag-desc">ページング・並び順の業界定石</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ページングの2大流派</div>
+        <div class="role-card">
+          <span class="label">流派A</span>
+          <div class="name">ページ番号方式</div>
+          <div class="desc"><code>?page=2&size=20</code>。<b>業務管理画面で定番</b>。「2ページ目、20件ずつ」を表現。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">流派B</span>
+          <div class="name">オフセット方式</div>
+          <div class="desc"><code>?offset=20&limit=10</code>。「先頭から20件飛ばして10件」。<b>API向け</b>。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>並び順</b>は <code>?sort=createdAt,desc</code> が一般的。複数項目なら <code>?sort=priority,desc&sort=name,asc</code>。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">業務でよくあるURL</div>
+          <p><code>/subjects?subjectId=1&page=2&size=20&sort=createdAt,desc</code><br>「科目1の記録、2ページ目、20件ずつ、作成日時降順」── これ全部 <code>@RequestParam</code> で受け取れます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 業務想定のURL設計</span>
+
+<span class="comment">// ─── 単純絞り込み（Vol.6で実装済み）───</span>
+GET /subjects?subjectId=<span class="num">1</span>
+
+
+<span class="comment">// ─── 期間絞り込み（Vol.7・Vol.8で扱う）───</span>
+GET /records?from=<span class="num">2026</span>-<span class="num">05</span>-<span class="num">01</span>&to=<span class="num">2026</span>-<span class="num">05</span>-<span class="num">31</span>
+
+
+<span class="comment">// ─── ページング ───</span>
+GET /records?page=<span class="num">2</span>&size=<span class="num">20</span>
+
+
+<span class="comment">// ─── 並び順 ───</span>
+GET /records?sort=studiedOn,desc
+
+
+<span class="comment">// ─── 複合 ───</span>
+GET /records
+   ?subjectId=<span class="num">1</span>
+   &from=<span class="num">2026</span>-<span class="num">05</span>-<span class="num">01</span>
+   &to=<span class="num">2026</span>-<span class="num">05</span>-<span class="num">31</span>
+   &page=<span class="num">1</span>
+   &size=<span class="num">10</span>
+   &sort=studiedOn,desc
+
+
+<span class="comment">// Controller側</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/records"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(
+    <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+    <span class="type">Integer</span> subjectId,
+
+    <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+    <span class="ann">@DateTimeFormat</span>(iso = <span class="type">ISO</span>.DATE)
+    <span class="type">LocalDate</span> from,
+
+    <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+    <span class="ann">@DateTimeFormat</span>(iso = <span class="type">ISO</span>.DATE)
+    <span class="type">LocalDate</span> to,
+
+    <span class="ann">@RequestParam</span>(defaultValue = <span class="str">"1"</span>)
+    <span class="type">Integer</span> page,
+
+    <span class="ann">@RequestParam</span>(defaultValue = <span class="str">"20"</span>)
+    <span class="type">Integer</span> size,
+    ...) { ... }
+
+
+<span class="comment">// @DateTimeFormat はVol.7で扱う</span>
+<span class="comment">// ページングはCでは深追いしない</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="bookmarkable">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ブックマーカブル / シェアラブル</h2>
+    <span class="en">BOOKMARKABLE & SHAREABLE</span>
+  </div>
+  <p class="pattern-desc"><b>「ブックマーカブル」</b>とは「<b>URLをブックマークすれば後で同じ画面に戻れる</b>」性質のこと。<b>「シェアラブル」</b>とは「<b>URLをコピペで送れば相手が同じ画面を見られる</b>」性質。<b>現代のWebアプリで最重要な品質特性</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">bookmarkable</span>
+      <span class="tag-desc">ブックマーカブルの効果</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜブックマーカブルか</div>
+        <div class="role-card">
+          <span class="label">EFFECT 1</span>
+          <div class="name">ユーザーが「お気に入り」できる</div>
+          <div class="desc">「Java の学習記録だけ表示する画面」をブックマーク → 翌日も即座にその画面を開ける。<b>UXが圧倒的に良い</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">EFFECT 2</span>
+          <div class="name">URLが情報共有手段になる</div>
+          <div class="desc">「この検索結果見て」とSlackやメールでURL送信。受け取った人が<b>同じ画面を再現</b>できる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">EFFECT 3</span>
+          <div class="name">ブラウザの戻る・進むが効く</div>
+          <div class="desc">検索条件を変えながら戻る／進むで履歴をたどれる。<b>「あの条件何だったっけ」をブラウザが覚えていてくれる</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">EFFECT 4</span>
+          <div class="name">SEOに有利</div>
+          <div class="desc">クローラーがURLパラメータごとに別ページとして扱う → 検索エンジンに各条件の画面がインデックスされる。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>本編Vol.6 で <code>method="get"</code> にしたのはこのため</b>。条件がURLに残るので<b>ブックマーカブル</b>になる。</p>
+      </div>
+      <div class="code"><span class="code-head">// ブックマーカブルにならない例</span>
+
+<span class="comment">// ─── ✗ POST フォームで検索 ───</span>
+&lt;<span class="kw">form</span> <span class="ann">method</span>=<span class="str">"post"</span>
+      <span class="ann">action</span>=<span class="str">"/subjects/search"</span>&gt;
+  &lt;<span class="kw">select</span> <span class="ann">name</span>=<span class="str">"subjectId"</span>&gt;...&lt;/<span class="kw">select</span>&gt;
+  &lt;<span class="kw">button</span>&gt;絞り込む&lt;/<span class="kw">button</span>&gt;
+&lt;/<span class="kw">form</span>&gt;
+
+<span class="comment">// 送信後のURL：</span>
+<span class="comment">// /subjects/search</span>
+<span class="comment">// → 条件がURLに残らない</span>
+<span class="comment">// → ブックマークしても再現できない</span>
+<span class="comment">// → 共有しても相手は条件を知れない</span>
+
+
+<span class="comment">// ─── ✓ GET フォームで検索 ───</span>
+&lt;<span class="kw">form</span> <span class="ann">method</span>=<span class="str">"get"</span>
+      <span class="ann">action</span>=<span class="str">"/subjects"</span>&gt;
+  &lt;<span class="kw">select</span> <span class="ann">name</span>=<span class="str">"subjectId"</span>&gt;...&lt;/<span class="kw">select</span>&gt;
+  &lt;<span class="kw">button</span>&gt;絞り込む&lt;/<span class="kw">button</span>&gt;
+&lt;/<span class="kw">form</span>&gt;
+
+<span class="comment">// 送信後のURL：</span>
+<span class="comment">// /subjects?subjectId=1</span>
+<span class="comment">// → 条件がURLに残る</span>
+<span class="comment">// → ブックマーク・共有・履歴 全部OK</span>
+
+
+<span class="comment">// ─── 実例 ───</span>
+<span class="comment">// Amazonの検索結果URLが長いのは</span>
+<span class="comment">// 「全条件を URL に含めて共有可能にする」</span>
+<span class="comment">// 設計の現れ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><b>「ブックマーカブル」</b>は<b>「ユーザーがそのアプリを愛するか」</b>に直結する品質特性です。検索結果やフィルタ条件をブックマークできるアプリは、<b>「使いやすい」</b>と感じられる。最近の業務アプリでも、<b>SPA（React/Vue）でもURL同期</b>を必ず実装するのは、この思想の延長線上。</p>
+  </div>
+</section>
+
+<section id="get-post">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>GET vs POST の使い分け</h2>
+    <span class="en">GET vs POST</span>
+  </div>
+  <p class="pattern-desc">HTTPメソッドの中で、<b>GET</b>と<b>POST</b>は最も使われる2つ。<b>「画面を表示する」のはGET、「データを変更する」のはPOST</b>が原則ですが、判断基準を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">get-vs-post</span>
+      <span class="tag-desc">使い分けの判断軸</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 使い分けの3軸</div>
+        <div class="judgement-box">
+          <div class="q">Q1. データを「読む」か「変更する」か？</div>
+          <div class="a"><b>読む（取得）</b> → GET<br><b>変更する（作成・更新・削除）</b> → POST</div>
+        </div>
+        <div class="judgement-box">
+          <div class="q">Q2. URLに条件を残したい？</div>
+          <div class="a"><b>残したい（ブックマーカブル）</b> → GET<br><b>残したくない</b> → POST</div>
+        </div>
+        <div class="judgement-box">
+          <div class="q">Q3. パラメータに機密情報を含む？</div>
+          <div class="a"><b>含む（パスワード等）</b> → POST<br><b>含まない</b> → GETでもOK</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>本編Vol.6で採用</b>：検索なので<b>GET</b>。条件をURLに残してブックマーカブルにする。</p>
+      </div>
+      <div class="code"><span class="code-head">// 使い分けの実例</span>
+
+<span class="comment">// ─── GET の場面 ───</span>
+GET /subjects             <span class="comment">// 一覧表示</span>
+GET /subjects?subjectId=<span class="num">1</span> <span class="comment">// 絞り込み</span>
+GET /subjects/<span class="num">1</span>           <span class="comment">// 詳細表示</span>
+GET /records/edit/<span class="num">5</span>      <span class="comment">// 編集画面表示</span>
+
+
+<span class="comment">// ─── POST の場面 ───</span>
+POST /records             <span class="comment">// 記録登録</span>
+POST /records/<span class="num">5</span>           <span class="comment">// 記録更新</span>
+POST /records/<span class="num">5</span>/delete    <span class="comment">// 削除</span>
+
+
+<span class="comment">// ─── GET と POST の組み合わせ ───</span>
+<span class="comment">// 編集画面 = GET（フォーム表示）</span>
+GET /records/edit/<span class="num">5</span>
+   ↓ ユーザーが値を変更
+   ↓ 送信ボタン
+<span class="comment">// 更新処理 = POST（変更を反映）</span>
+POST /records/<span class="num">5</span>
+   ↓ 成功
+<span class="comment">// 一覧画面に戻る = GET（画面表示）</span>
+GET /records
+
+
+<span class="comment">// → これが PRG パターン</span>
+<span class="comment">//   （A v2 Vol.5別冊で深掘り済み）</span>
+
+
+<span class="code-head" style="margin-top:14px">// GET の制約</span>
+
+<span class="comment">// 1. URLの長さに制限あり</span>
+<span class="comment">//    ブラウザ: 2,000〜8,000文字程度</span>
+<span class="comment">//    → 大量データの送信には不向き</span>
+
+<span class="comment">// 2. パラメータが履歴に残る</span>
+<span class="comment">//    → パスワード送信NG</span>
+
+<span class="comment">// 3. キャッシュされる</span>
+<span class="comment">//    → 結果が常に同じであるべき</span>
+
+
+<span class="comment">// POST はこれらの制約なし</span>
+<span class="comment">// だが「URLに残らない」のが両刃の剣</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>URL設計のハマりどころ</h2>
+    <span class="en">PITFALLS</span>
+  </div>
+  <p class="pattern-desc">URL設計でやりがちな<b>4つの罠</b>を紹介。実務に出てから後悔しないよう、最初に意識しておきたい点。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">url-pitfalls</span>
+      <span class="tag-desc">URL設計の罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 罠</div>
+        <div class="role-card">
+          <span class="label">PITFALL 1</span>
+          <div class="name">動詞をURLに含めてしまう</div>
+          <div class="desc"><code>/getSubjects</code>、<code>/createUser</code> のような<b>動詞URL</b>はRESTful違反。<br><b>対処</b>：URLは<b>名詞</b>。動詞はHTTPメソッドで表す。<code>GET /subjects</code>、<code>POST /users</code>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 2</span>
+          <div class="name">単数形と複数形の混在</div>
+          <div class="desc"><code>/subject/1</code> と <code>/subjects</code> が混ざる。<br><b>対処</b>：<b>業界相場は複数形で統一</b>。<code>/subjects/1</code> として複数形のリソース集合の中の1要素を指す。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 3</span>
+          <div class="name">パスパラメータとクエリストリングの混在</div>
+          <div class="desc"><code>/subjects/1?subjectId=2</code> のように<b>同じものを2箇所で指定</b>。<br><b>対処</b>：「リソース特定はパス／条件指定はクエリ」と<b>役割を明確に分ける</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">PITFALL 4</span>
+          <div class="name">POST で検索フォームを実装</div>
+          <div class="desc">本編Vol.6で説明した「ブックマーカブルでない問題」。Vol.6 で GET にしたのはこれを避けるため。<br><b>対処</b>：検索は GET。「フォームは全部 POST」と思い込まない。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// PITFALL 1 の比較</span>
+
+<span class="comment">// ─── ✗ NG: 動詞URL ───</span>
+GET  /getSubjects
+POST /createSubject
+POST /updateSubject/<span class="num">1</span>
+POST /deleteSubject/<span class="num">1</span>
+
+
+<span class="comment">// ─── ✓ OK: RESTful ───</span>
+GET    /subjects
+POST   /subjects
+PUT    /subjects/<span class="num">1</span>
+DELETE /subjects/<span class="num">1</span>
+
+
+<span class="code-head" style="margin-top:14px">// PITFALL 3 の比較</span>
+
+<span class="comment">// ─── ✗ NG ───</span>
+GET /subjects/<span class="num">1</span>?subjectId=<span class="num">2</span>
+<span class="comment">// → どちらが正？</span>
+<span class="comment">// → 1 と 2 どちらが優先？</span>
+
+
+<span class="comment">// ─── ✓ OK パターン1 ───</span>
+GET /subjects/<span class="num">1</span>
+<span class="comment">// → 科目1の詳細を表示</span>
+
+
+<span class="comment">// ─── ✓ OK パターン2 ───</span>
+GET /subjects?subjectId=<span class="num">1</span>
+<span class="comment">// → 科目1で絞り込んだ一覧</span>
+
+
+<span class="comment">// 違いを明確に。本編Vol.6はパターン2。</span>
+<span class="comment">// パターン1は将来「個別詳細画面」を作る時に使う</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次の本編へ</h2>
+    <span class="en">TO THE NEXT VOLUME</span>
+  </div>
+  <p class="pattern-desc">別冊S6お疲れさまでした。<b>「URLは設計するもの」</b>という感性が育ちました。これで「<b>URLを見ただけで意図が伝わるアプリ</b>」を作れます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">この別冊のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 持ち帰る5つの知見</div>
+        <div class="role-card">
+          <span class="label">知見1</span>
+          <div class="name">URLはユーザーインターフェース</div>
+          <div class="desc">適当に書いてはいけない・設計対象</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見2</span>
+          <div class="name">クエリストリングはキャメル小文字</div>
+          <div class="desc">命名は意味重視・プロジェクト内で統一</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見3</span>
+          <div class="name">RESTfulは業界共通言語</div>
+          <div class="desc">名詞のリソース＋HTTPメソッドの動作</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見4</span>
+          <div class="name">ブックマーカブルが重要品質</div>
+          <div class="desc">検索は GET でURL残す・愛されるアプリの条件</div>
+        </div>
+        <div class="role-card">
+          <span class="label">知見5</span>
+          <div class="name">GETは読む・POSTは変える</div>
+          <div class="desc">明確な使い分けが安全と使いやすさを生む</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// Vol.7 本編で起きること</span>
+
+<span class="comment">// タイトル：</span>
+<span class="comment">// 「日付入力を完全攻略しよう」</span>
+
+<span class="comment">// やること：</span>
+<span class="comment">// 1. 「日付ハマり3選」を冒頭で先回り</span>
+<span class="comment">// 2. 学習記録の登録フォームを作る</span>
+<span class="comment">// 3. type="date" + LocalDate の組み合わせ</span>
+<span class="comment">// 4. @DateTimeFormat の使い方</span>
+<span class="comment">// 5. 登録 → リダイレクト → 一覧表示</span>
+<span class="comment">// 6. 詳細は別冊S7で深掘り</span>
+
+<span class="comment">// 獲得スキル：</span>
+<span class="comment">// → LocalDate + @DateTimeFormat</span>
+
+
+<span class="comment">// Vol.7 の難しさ：</span>
+<span class="comment">// 日付処理は「初学者の地雷ベスト3」の常連。</span>
+<span class="comment">// 「動かない原因の8割が型の不一致」と言われる。</span>
+<span class="comment">// 本編Vol.7では先回りで全部対策する。</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(87,94,77,0.12)">
+    <div class="tip-label">NEXT STEP ── VOL.7 本編</div>
+    <p>別冊S6で<b>「URL設計の感性」</b>を得ました。次のVol.7 本編「<b>日付入力を完全攻略しよう</b>」では、<b>業務開発の地雷No.1</b>と言われる「日付処理」に正面から取り組みます。<br>冒頭で<b>「日付ハマり3選」を先回り提示</b>することで、つまずく前に対策。学習記録の登録機能を完成させ、<b>Cの中盤戦の山場</b>を越えます。本編Vol.7 へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.06 / 15 ── URL DESIGN（別冊）</span>
+</footer>
+
+</body>
+</html>

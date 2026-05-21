@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.8 本編 動的SQL（if, where）を使おう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1e2d27;
+  --paper:#e6ece2;
+  --paper-2:#cedccb;
+  --accent:#6e9277;
+  --accent-2:#88aa90;
+  --accent-3:#1f4030;
+  --muted:#697867;
+  --line:#b1c0ab;
+  --code-bg:#14211a;
+  --code-text:#e6ece2;
+  --panel-bg:#eef3ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(110,146,119,0.08);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.mock-screen{background:#fff;border:1px solid var(--line);margin:12px 0;font-family:'Noto Sans JP',sans-serif}
+.mock-bar{background:#e0e0e0;padding:4px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#444;border-bottom:1px solid #c0c0c0}
+.mock-body{padding:16px}
+.mock-h{font-family:'Shippori Mincho',serif;font-size:18px;margin-bottom:12px;color:var(--accent-3);border-bottom:2px solid var(--accent);padding-bottom:6px;display:inline-block}
+.mock-form{background:#fafdf8;border:1px solid var(--line);padding:10px 14px;margin-bottom:14px;font-size:13px}
+.mock-form .row{margin:6px 0}
+.mock-form select,.mock-form input{padding:4px 8px;font-size:13px;border:1px solid #aaa;margin-right:8px}
+.mock-form button{padding:4px 14px;background:var(--accent);color:#fff;border:none;font-size:13px;cursor:pointer}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.before-after{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.before-after .b,.before-after .a{background:#fff;border:1px solid var(--line);padding:12px 14px}
+.before-after .b{border-left:3px solid #b07050}
+.before-after .a{border-left:3px solid var(--accent)}
+.before-after .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.15em;margin-bottom:6px}
+.before-after .b .lbl{color:#b07050}
+.before-after .a .lbl{color:var(--accent)}
+.before-after .ttl{font-family:'Shippori Mincho',serif;font-size:14px;font-weight:700;color:var(--accent-3);margin-bottom:6px}
+.before-after p{font-size:13px;margin:4px 0}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .before-after{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.08 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>動的SQL<br>（if, where）を使おう</h1>
+  <div class="subtitle">DYNAMIC SQL ── MERGE TWO METHODS INTO ONE</div>
+  <p class="lead">
+    Vol.8は<b>「動的SQL獲得」</b>のマイルストーン。XML Mapper の<b>真骨頂</b>です。<br>
+    Vol.6では「全件」と「科目絞り込み」を<b>意図的に2メソッドに分けて</b>実装しました。Vol.8では <code style="font-family:'JetBrains Mono'">&lt;if&gt;</code> と <code style="font-family:'JetBrains Mono'">&lt;where&gt;</code> を使って<b>1つに統合</b>します。さらに<b>「期間で絞り込み」</b>も追加し、業務システムらしい検索画面を完成させます。<br>
+    Vol.6で蒔いた<b>伏線の回収</b>＋Vol.7で身につけた<b>LocalDate</b>の応用。<b>Cの「実用機能フェーズ」の山場</b>です。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>Vol.8では新しい Java import はあまり登場せず、<b>XMLが主舞台</b>。XML側の <code>&lt;if test="..."&gt;</code> の構文ミスは<b>起動時のエラーログ</b>で発覚します。<br>
+    また Mapper の引数が<b>複数になる</b>ので、<code>@Param</code> が<b>必須</b>になります。「Parameter 'xxx' not found」エラーが出たら <code>@Param</code> 不足を疑ってください。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#dynamic">04 動的SQL とは</a></li>
+    <li><a href="#design">05 検索条件の設計</a></li>
+    <li><a href="#create">06 ファイル改修</a></li>
+    <li><a href="#run">07 ブラウザで動かして確認</a></li>
+    <li><a href="#trouble">08 ハマりどころと対処</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.8では <b>「<code>&lt;if&gt;</code> + <code>&lt;where&gt;</code> による条件分岐SQL」</b>を学び、Vol.6で2つに分けたメソッドを<b>1つに統合</b>します。さらに<b>期間絞り込み</b>を追加。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.8-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">SubjectMapper.xml の2つの SELECT を統合</div>
+          <div class="desc"><code>findAllWithRecords</code> と <code>findWithRecordsBySubjectId</code> を、<code>searchWithRecords</code> 1つに統合。<code>&lt;if&gt;</code> で条件を動的に組み立てる。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">期間絞り込みを追加</div>
+          <div class="desc">「<code>?from=2026-05-10&amp;to=2026-05-15</code>」で<b>記録の日付範囲</b>を絞れるようにする。Vol.7で習得した <code>LocalDate</code> を使う。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">画面に期間入力欄を追加</div>
+          <div class="desc">セレクトボックスの隣に「開始日」「終了日」の <code>type="date"</code> 欄を追加。すべての検索条件が<b>1つのフォーム</b>で送信できる。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻でできるようになる検索</span>
+
+<span class="comment">// 全件</span>
+GET /subjects
+
+
+<span class="comment">// 科目で絞り込み</span>
+GET /subjects?subjectId=<span class="num">1</span>
+
+
+<span class="comment">// 期間で絞り込み（記録の日付）</span>
+GET /subjects?from=<span class="num">2026</span>-<span class="num">05</span>-<span class="num">10</span>&to=<span class="num">2026</span>-<span class="num">05</span>-<span class="num">15</span>
+
+
+<span class="comment">// 両方組み合わせ</span>
+GET /subjects?subjectId=<span class="num">1</span>
+            &from=<span class="num">2026</span>-<span class="num">05</span>-<span class="num">10</span>
+            &to=<span class="num">2026</span>-<span class="num">05</span>-<span class="num">15</span>
+
+
+<span class="comment">// すべて1つのControllerメソッド・</span>
+<span class="comment">// 1つのMapperメソッド・</span>
+<span class="comment">// 1つのSQLで対応する</span>
+
+
+<span class="comment">// これが動的SQLの威力</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>2メソッドを1つに統合</b>」── これは業務でよくある<b>「最初はシンプルに作り、必要になったら統合する」</b>のリファクタリング体験です。<b>動的SQLが書ければメソッドを増やさず条件追加できる</b>のがCoreな利点。<b>「Vol.6 でわざと2つに分けた」</b>のがVol.8 で活きる構成です。</p>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── ブラウザで見える画面</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.8 のゴール画面は<b>セレクトボックス＋日付2つの組み合わせ検索フォーム</b>。業務システムらしい検索UIに到達します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-screen</span>
+      <span class="tag-desc">完成画面のモック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 検索フォーム拡張版</div>
+        <div class="mock-screen">
+          <div class="mock-bar">▮ http://localhost:8080/subjects?subjectId=1&from=2026-05-10&to=2026-05-15</div>
+          <div class="mock-body">
+            <div class="mock-h">科目別 学習記録一覧</div>
+            <div class="mock-form">
+              <div class="row">
+                科目：<select><option>Java（選択中）</option></select>
+              </div>
+              <div class="row">
+                期間：<input type="date" value="2026-05-10" style="width:140px">
+                〜
+                <input type="date" value="2026-05-15" style="width:140px">
+              </div>
+              <div class="row" style="margin-top:8px">
+                <button>絞り込む</button>
+                <a href="#" style="margin-left:10px;font-size:12px">条件クリア</a>
+              </div>
+            </div>
+            <div style="background:#fff;border-left:4px solid var(--accent);padding:8px 12px">
+              <div style="font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-3);font-weight:700">Java</div>
+              <div style="margin-left:18px;margin-top:4px">
+                <div style="font-size:12px;padding:2px 0">2026-05-10 ── 60分（基礎構文の復習）</div>
+                <div style="font-size:12px;padding:2px 0">2026-05-12 ── 90分（コレクション）</div>
+                <div style="font-size:12px;padding:2px 0">2026-05-14 ── 120分（例外処理）</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// プロジェクト構造の変化</span>
+
+todo/
+├ src/main/java/com/example/todo/
+│  ├ mapper/
+│  │  └ SubjectMapper.java     <span class="comment">// 改修</span>
+│  │      <span class="kw">// + searchWithRecords()</span>
+│  │      <span class="kw">// （ - findWithRecordsBySubjectId 廃止）</span>
+│  ├ service/
+│  │  └ SubjectService.java    <span class="comment">// 改修</span>
+│  │      <span class="kw">// + searchWithRecords()</span>
+│  └ controller/
+│     └ SubjectController.java <span class="comment">// 改修</span>
+│         <span class="kw">// + from, to パラメータ受取</span>
+└ src/main/resources/
+   ├ mybatis/
+   │  └ SubjectMapper.xml      <span class="comment">// 改修</span>
+   │      <span class="kw">// + &lt;select id="searchWithRecords"&gt;</span>
+   │      <span class="kw">//   &lt;if&gt; + &lt;where&gt;</span>
+   └ templates/
+      └ subjects/list.html     <span class="comment">// 改修</span>
+          <span class="kw">// + 期間入力欄</span>
+
+
+<span class="comment">// 4ファイル改修</span>
+<span class="comment">// 新規ファイルなし</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.8 は<b>Vol.6（検索）とVol.7（日付）の総まとめ</b>巻。両方の知識を組み合わせます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">前提知識</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前提知識</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>該当箇所</th></tr>
+          <tr><td>XML Mapper の基本</td><td>本編 M3</td></tr>
+          <tr><td>resultMap + collection</td><td>本編 M4</td></tr>
+          <tr><td>@RequestParam の使い方</td><td>本編 M6</td></tr>
+          <tr><td>条件付き検索の素朴な実装</td><td>本編 M6</td></tr>
+          <tr><td>LocalDate + @DateTimeFormat</td><td>本編 M7</td></tr>
+          <tr><td>境界条件は半開区間で書く</td><td>別冊 S7</td></tr>
+        </table>
+        <div style="margin-top:16px;font-size:13.5px"><b>新しく学ぶこと</b>：</div>
+        <ol class="step-list" style="margin-top:6px">
+          <li>MyBatisの <code>&lt;if test="..."&gt;</code> タグ</li>
+          <li><code>&lt;where&gt;</code> タグの便利機能</li>
+          <li>OGNL（Object-Graph Navigation Language）式</li>
+          <li>複数引数のMapperでの <code>@Param</code> 必須化</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// Vol.6で分けた2メソッドの復習</span>
+
+<span class="comment">// ─── 既存（Vol.6で書いた）───</span>
+
+<span class="comment">// SubjectMapper.xml</span>
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findAllWithRecords"</span> ...&gt;
+  SELECT ... FROM subjects s
+  LEFT JOIN study_records r ...
+  ORDER BY ...
+&lt;/<span class="kw">select</span>&gt;
+
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"findWithRecordsBySubjectId"</span> ...&gt;
+  SELECT ... FROM subjects s
+  LEFT JOIN study_records r ...
+  WHERE s.id = #{subjectId}     <span class="comment">// ← 違いはここだけ</span>
+  ORDER BY ...
+&lt;/<span class="kw">select</span>&gt;
+
+
+<span class="comment">// → 2つのSELECTは ほぼ同じ</span>
+<span class="comment">// → 違いは WHERE 句の有無だけ</span>
+
+
+<span class="comment">// SubjectController</span>
+<span class="kw">if</span> (subjectId == <span class="kw">null</span>) {
+  subjects = service.<span class="fn">findAllWithRecords</span>();
+} <span class="kw">else</span> {
+  subjects = service
+      .<span class="fn">findWithRecordsBySubjectId</span>(subjectId);
+}
+
+
+<span class="comment">// → if文での分岐</span>
+<span class="comment">// → 条件が増えるとここが地獄になる</span>
+
+
+<span class="comment">// Vol.8 で動的SQLにより：</span>
+<span class="comment">// ・SQL を 1つに統合</span>
+<span class="comment">// ・Controller の if 分岐も不要に</span>
+<span class="comment">// ・条件追加が容易（期間絞り込み追加）</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="dynamic">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>動的SQL とは</h2>
+    <span class="en">WHAT IS DYNAMIC SQL</span>
+  </div>
+  <p class="pattern-desc">MyBatis の<b>動的SQL</b>は、XML内で <code>&lt;if&gt;</code> や <code>&lt;where&gt;</code> といった<b>タグを使ってSQLを動的に組み立てる</b>機能。条件によって <code>WHERE</code> 句や <code>AND</code> を出したり消したりできます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">dynamic-basics</span>
+      <span class="tag-desc">動的SQLの基本タグ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主要4タグ</div>
+        <div class="role-card">
+          <span class="label">TAG 1</span>
+          <div class="name">&lt;if test="..."&gt;</div>
+          <div class="desc">条件式が <code>true</code> ならタグの中身を出力。<code>test</code> 属性に<b>OGNL式</b>を書く。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TAG 2</span>
+          <div class="name">&lt;where&gt;</div>
+          <div class="desc">中身がある時だけ <code>WHERE</code> を付ける。先頭の余分な <code>AND</code> や <code>OR</code> も自動除去。<b>動的SQL最重要タグ</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TAG 3</span>
+          <div class="name">&lt;set&gt;</div>
+          <div class="desc"><code>UPDATE</code> 文用。<code>SET</code> 句の末尾カンマを自動除去。Vol.13 編集機能で本格的に使う予定。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TAG 4</span>
+          <div class="name">&lt;foreach&gt;</div>
+          <div class="desc">コレクションをループ展開。<code>IN (1,2,3)</code> のような複数値処理。本巻では予告のみ。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 動的SQLの動き方</span>
+
+<span class="comment">// ─── 入力パラメータが各種ある状態 ───</span>
+subjectId = <span class="num">1</span>
+from = <span class="num">2026</span>-<span class="num">05</span>-<span class="num">10</span>
+to   = <span class="num">2026</span>-<span class="num">05</span>-<span class="num">15</span>
+
+
+<span class="comment">// ─── XML側の動的SQL ───</span>
+SELECT ... FROM subjects s
+LEFT JOIN study_records r ...
+&lt;<span class="kw">where</span>&gt;
+  &lt;<span class="kw">if</span> test=<span class="str">"subjectId != null"</span>&gt;
+    AND s.id = #{subjectId}
+  &lt;/<span class="kw">if</span>&gt;
+  &lt;<span class="kw">if</span> test=<span class="str">"from != null"</span>&gt;
+    AND r.studied_on &gt;= #{from}
+  &lt;/<span class="kw">if</span>&gt;
+  &lt;<span class="kw">if</span> test=<span class="str">"to != null"</span>&gt;
+    AND r.studied_on &lt;= #{to}
+  &lt;/<span class="kw">if</span>&gt;
+&lt;/<span class="kw">where</span>&gt;
+
+
+<span class="comment">// ─── 実際に生成されるSQL（条件全部あり）───</span>
+SELECT ... FROM subjects s
+LEFT JOIN study_records r ...
+WHERE
+  s.id = ?
+  AND r.studied_on &gt;= ?
+  AND r.studied_on &lt;= ?
+
+
+<span class="comment">// ─── 条件なしの場合 ───</span>
+SELECT ... FROM subjects s
+LEFT JOIN study_records r ...
+<span class="comment">// → WHERE句自体が出ない！</span>
+
+
+<span class="comment">// ─── subjectId だけの場合 ───</span>
+SELECT ... FROM subjects s
+LEFT JOIN study_records r ...
+WHERE
+  s.id = ?
+<span class="comment">// → &lt;where&gt; が先頭の AND を自動削除</span>
+
+
+<span class="comment">// 1つのSQLが状況により形を変える</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p><code>&lt;where&gt;</code> タグの賢いところ：<b>「内容が空ならWHERE自体を出力しない」</b>＋<b>「先頭の余分なANDやORを自動除去」</b>。これがないと <code>WHERE AND s.id = ?</code> のような文法エラーが頻発します。<code>&lt;where&gt;</code> は<b>動的SQLの命綱</b>。</p>
+  </div>
+</section>
+
+<section id="design">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>検索条件の設計</h2>
+    <span class="en">SEARCH CONDITION DESIGN</span>
+  </div>
+  <p class="pattern-desc">3つの検索条件「科目」「開始日」「終了日」を<b>どのように組み合わせるか</b>を整理します。<b>各条件は独立に有無を選べる</b>のがポイント。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">condition-design</span>
+      <span class="tag-desc">3条件の組み合わせ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 8通りの組み合わせ</div>
+        <table class="compare-tbl">
+          <tr><th>科目</th><th>開始日</th><th>終了日</th><th>意味</th></tr>
+          <tr><td>-</td><td>-</td><td>-</td><td>全件</td></tr>
+          <tr><td>有</td><td>-</td><td>-</td><td>その科目すべて</td></tr>
+          <tr><td>-</td><td>有</td><td>-</td><td>開始日以降の全科目</td></tr>
+          <tr><td>-</td><td>-</td><td>有</td><td>終了日以前の全科目</td></tr>
+          <tr><td>-</td><td>有</td><td>有</td><td>期間内の全科目</td></tr>
+          <tr><td>有</td><td>有</td><td>-</td><td>その科目で開始日以降</td></tr>
+          <tr><td>有</td><td>-</td><td>有</td><td>その科目で終了日以前</td></tr>
+          <tr><td>有</td><td>有</td><td>有</td><td>すべて指定</td></tr>
+        </table>
+        <p style="margin-top:14px;font-size:13.5px"><b>8通りすべてを1つのSQLでカバー</b>するのが動的SQLの威力。<code>&lt;if&gt;</code> 3個＋<code>&lt;where&gt;</code> 1個で実現。</p>
+      </div>
+      <div class="code"><span class="code-head">// 統合する SQL の構造</span>
+
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"searchWithRecords"</span>
+        <span class="ann">resultMap</span>=<span class="str">"subjectWithRecords"</span>&gt;
+  SELECT
+    s.id          AS subject_id,
+    s.name        AS subject_name,
+    s.color       AS color,
+    s.created_at  AS subject_created_at,
+    r.id          AS record_id,
+    r.subject_id  AS record_subject_id,
+    r.studied_on  AS studied_on,
+    r.minutes     AS minutes,
+    r.memo        AS memo,
+    r.created_at  AS record_created_at
+  FROM subjects s
+  LEFT JOIN study_records r
+    ON s.id = r.subject_id
+  &lt;<span class="kw">where</span>&gt;
+    &lt;<span class="kw">if</span> test=<span class="str">"subjectId != null"</span>&gt;
+      AND s.id = #{subjectId}
+    &lt;/<span class="kw">if</span>&gt;
+    &lt;<span class="kw">if</span> test=<span class="str">"from != null"</span>&gt;
+      AND r.studied_on &gt;= #{from}
+    &lt;/<span class="kw">if</span>&gt;
+    &lt;<span class="kw">if</span> test=<span class="str">"to != null"</span>&gt;
+      AND r.studied_on &lt;= #{to}
+    &lt;/<span class="kw">if</span>&gt;
+  &lt;/<span class="kw">where</span>&gt;
+  ORDER BY s.id, r.studied_on
+&lt;/<span class="kw">select</span>&gt;
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・各 &lt;if&gt; の先頭に「AND」を必ず付ける</span>
+<span class="comment">// ・&lt;where&gt; が最初の AND を除去してくれる</span>
+<span class="comment">// ・resultMap は既存の subjectWithRecords を再利用</span>
+<span class="comment">// ・OGNL式 「!= null」 で値の有無を判定</span>
+<span class="comment">// ・from / to は LocalDate（型変換は TypeHandler）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">日付絞り込みの落とし穴</div>
+    <p>「期間内の記録だけ」を絞り込む時、<b>LEFT JOIN との組み合わせ</b>に注意。<code>r.studied_on &gt;= ?</code> を WHERE 句に書くと、<b>記録のない科目（HTML/CSS 等）</b>が消えます（LEFT JOINの結果で <code>r.studied_on</code> が NULL になり、条件が偽になるため）。<br>
+    Vol.8では<b>意図的にこの仕様</b>とし、「期間絞り込みすると記録のない科目は消える」動作を採用します（業務的にも妥当）。<b>「記録のない科目も常に表示したい」</b>場合は ON 句に条件を入れる別設計が必要。<b>別冊S8で深掘り</b>します。</p>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ファイル改修</h2>
+    <span class="en">MODIFY FILES</span>
+  </div>
+  <p class="pattern-desc"><b>4ファイルを順次改修</b>。XML → Mapper.java → Service → Controller → HTML の下流方向。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-xml</span>
+      <span class="tag-desc">① SubjectMapper.xml に searchWithRecords を追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectMapper.xml</code> を開く</li>
+          <li>新しい <code>&lt;select id="searchWithRecords"&gt;</code> を追加</li>
+          <li>古い <code>findWithRecordsBySubjectId</code> は<b>削除しない</b>（しばらく共存）</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">古いSQLは残しておく理由</div>
+          <p><b>動作確認が済むまで</b>古いメソッドは消さないのが安全。Vol.8の最後に「OKなら削除」する流れにします。<b>「動くものを保ちながら変える」</b>のVol.3でも実践した姿勢。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.xml に追加</span>
+
+<span class="comment">&lt;!-- ★ Vol.8で追加 --&gt;</span>
+
+&lt;<span class="kw">select</span> <span class="ann">id</span>=<span class="str">"searchWithRecords"</span>
+        <span class="ann">resultMap</span>=<span class="str">"subjectWithRecords"</span>&gt;
+  SELECT
+    s.id          AS subject_id,
+    s.name        AS subject_name,
+    s.color       AS color,
+    s.created_at  AS subject_created_at,
+    r.id          AS record_id,
+    r.subject_id  AS record_subject_id,
+    r.studied_on  AS studied_on,
+    r.minutes     AS minutes,
+    r.memo        AS memo,
+    r.created_at  AS record_created_at
+  FROM subjects s
+  LEFT JOIN study_records r
+    ON s.id = r.subject_id
+  &lt;<span class="kw">where</span>&gt;
+    &lt;<span class="kw">if</span> test=<span class="str">"subjectId != null"</span>&gt;
+      AND s.id = #{subjectId}
+    &lt;/<span class="kw">if</span>&gt;
+    &lt;<span class="kw">if</span> test=<span class="str">"from != null"</span>&gt;
+      AND r.studied_on &gt;= #{from}
+    &lt;/<span class="kw">if</span>&gt;
+    &lt;<span class="kw">if</span> test=<span class="str">"to != null"</span>&gt;
+      AND r.studied_on &lt;= #{to}
+    &lt;/<span class="kw">if</span>&gt;
+  &lt;/<span class="kw">where</span>&gt;
+  ORDER BY s.id, r.studied_on
+&lt;/<span class="kw">select</span>&gt;
+
+
+<span class="comment">// 既存の findAllWithRecords と</span>
+<span class="comment">// findWithRecordsBySubjectId は</span>
+<span class="comment">// 当面残しておく（後で削除）</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-mapper-java</span>
+      <span class="tag-desc">② SubjectMapper.java にメソッド追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectMapper.java</code> を開く</li>
+          <li><code>searchWithRecords</code> メソッドを追加</li>
+          <li>引数が3つあるので <b><code>@Param</code> 必須</b></li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">@Param が必須になる境界</div>
+          <p>引数が<b>1個なら @Param 省略可</b>。<b>2個以上は必須</b>。複数引数になると MyBatis が<b>引数名を見失う</b>ため。今後 Mapper のメソッドが複数引数になる場面で<b>必ず付ける</b>習慣を。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectMapper.java（改修後）</span>
+
+<span class="kw">package</span> com.example.todo.mapper;
+
+<span class="kw">import</span> java.time.LocalDate;
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="kw">import</span> org.apache.ibatis.annotations.Param;
+<span class="kw">import</span> com.example.todo.entity.Subject;
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">SubjectMapper</span> {
+
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAll</span>();
+
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">findAllWithRecords</span>();
+
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt;
+       <span class="fn">findWithRecordsBySubjectId</span>(<span class="type">Integer</span> subjectId);
+
+  <span class="comment">// ★ Vol.8で追加</span>
+  <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">searchWithRecords</span>(
+      <span class="ann">@Param</span>(<span class="str">"subjectId"</span>) <span class="type">Integer</span> subjectId,
+      <span class="ann">@Param</span>(<span class="str">"from"</span>)      <span class="type">LocalDate</span> from,
+      <span class="ann">@Param</span>(<span class="str">"to"</span>)        <span class="type">LocalDate</span> to);
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・@Param で引数名を明示</span>
+<span class="comment">// ・XMLの #{subjectId} #{from} #{to} と一致</span>
+<span class="comment">// ・LocalDate は TypeHandler が DATE 変換</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-service</span>
+      <span class="tag-desc">③ SubjectService に searchWithRecords を追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectService.java</code> を開く</li>
+          <li><code>searchWithRecords</code> メソッドを追加</li>
+          <li>import を整理</li>
+          <li>保存</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// SubjectService.java（関連部分のみ）</span>
+
+<span class="kw">import</span> java.time.LocalDate;
+<span class="comment">// 他のimportは省略</span>
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public class</span> <span class="type">SubjectService</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectMapper</span> subjectMapper;
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">StudyRecordMapper</span> studyRecordMapper;
+
+  <span class="comment">// 既存メソッド省略 ...</span>
+
+  <span class="comment">// ★ Vol.8で追加</span>
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; <span class="fn">searchWithRecords</span>(
+      <span class="type">Integer</span> subjectId,
+      <span class="type">LocalDate</span> from,
+      <span class="type">LocalDate</span> to) {
+    <span class="kw">return</span> subjectMapper
+        .<span class="fn">searchWithRecords</span>(subjectId, from, to);
+  }
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・引数3つを Mapper にそのまま渡す</span>
+<span class="comment">// ・薄い実装（Mapper素通し）</span>
+<span class="comment">// ・複雑な業務ロジックはまだ無いのでOK</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-controller</span>
+      <span class="tag-desc">④ SubjectController を統合</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>SubjectController.java</code> を開く</li>
+          <li><code>list()</code> メソッドを書き換え：<code>@RequestParam</code> で <code>from</code>、<code>to</code> を追加</li>
+          <li>if 分岐を<b>廃止</b>し、<code>searchWithRecords</code> を呼ぶ1行に</li>
+          <li><code>@DateTimeFormat</code> を <code>from</code>、<code>to</code> に付ける</li>
+          <li>selectedSubjectId のままにし、<code>selectedFrom</code> <code>selectedTo</code> もmodel追加</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">@RequestParam に @DateTimeFormat</div>
+          <p>Form と同じく、<b>Controller の @RequestParam にも @DateTimeFormat が必要</b>です。Springは「<b>どのフォーマットで来るか</b>」を毎回明示してもらわないと変換できません。<b>Vol.7で学んだ習慣をここでも実践</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// SubjectController.java（改修後）</span>
+
+<span class="kw">package</span> com.example.todo.controller;
+
+<span class="kw">import</span> java.time.LocalDate;
+<span class="kw">import</span> java.util.List;
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.format.annotation.DateTimeFormat;
+<span class="kw">import</span> org.springframework.stereotype.Controller;
+<span class="kw">import</span> org.springframework.ui.Model;
+<span class="kw">import</span> org.springframework.web.bind.annotation.GetMapping;
+<span class="kw">import</span> org.springframework.web.bind.annotation.RequestParam;
+<span class="kw">import</span> com.example.todo.entity.Subject;
+<span class="kw">import</span> com.example.todo.service.SubjectService;
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">SubjectController</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectService</span> subjectService;
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/subjects"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(
+      <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+      <span class="type">Integer</span> subjectId,
+
+      <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+      <span class="ann">@DateTimeFormat</span>(iso = <span class="type">DateTimeFormat</span>.ISO.DATE)
+      <span class="type">LocalDate</span> from,
+
+      <span class="ann">@RequestParam</span>(required = <span class="kw">false</span>)
+      <span class="ann">@DateTimeFormat</span>(iso = <span class="type">DateTimeFormat</span>.ISO.DATE)
+      <span class="type">LocalDate</span> to,
+
+      <span class="type">Model</span> model) {
+
+    <span class="comment">// ★ if 分岐が消えた</span>
+    <span class="type">List</span>&lt;<span class="type">Subject</span>&gt; subjects =
+        subjectService.<span class="fn">searchWithRecords</span>(
+            subjectId, from, to);
+
+    model.<span class="fn">addAttribute</span>(<span class="str">"subjects"</span>, subjects);
+    model.<span class="fn">addAttribute</span>(<span class="str">"allSubjects"</span>,
+        subjectService.<span class="fn">findAll</span>());
+    model.<span class="fn">addAttribute</span>(<span class="str">"selectedSubjectId"</span>,
+        subjectId);
+    model.<span class="fn">addAttribute</span>(<span class="str">"selectedFrom"</span>, from);
+    model.<span class="fn">addAttribute</span>(<span class="str">"selectedTo"</span>, to);
+
+    <span class="kw">return</span> <span class="str">"subjects/list"</span>;
+  }
+
+  <span class="ann">@GetMapping</span>(<span class="str">"/subjects/legacy"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">listLegacy</span>(<span class="type">Model</span> model) {
+    <span class="comment">// Vol.5の内容（省略）</span>
+  }
+}</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-template</span>
+      <span class="tag-desc">⑤ list.html に期間入力欄を追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>templates/subjects/list.html</code> を開く</li>
+          <li>既存のセレクトボックスの下に <code>type="date"</code> 2つを追加</li>
+          <li><code>th:value</code> で <code>selectedFrom</code> <code>selectedTo</code> を埋める</li>
+          <li>「条件クリア」リンクも追加</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">条件クリアリンク</div>
+          <p>パラメータなしで <code>/subjects</code> に遷移するだけのリンク。<code>&lt;a th:href="@{/subjects}"&gt;条件クリア&lt;/a&gt;</code>。<b>UXとして必須</b>です。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// list.html（フォーム部分のみ改修）</span>
+
+&lt;<span class="kw">form</span> <span class="ann">method</span>=<span class="str">"get"</span>
+      <span class="ann">th:action</span>=<span class="str">"@{/subjects}"</span>&gt;
+
+  &lt;<span class="kw">div</span>&gt;
+    科目：
+    &lt;<span class="kw">select</span> <span class="ann">name</span>=<span class="str">"subjectId"</span>&gt;
+      &lt;<span class="kw">option</span> <span class="ann">value</span>=<span class="str">""</span>&gt;すべての科目&lt;/<span class="kw">option</span>&gt;
+      &lt;<span class="kw">option</span>
+        <span class="ann">th:each</span>=<span class="str">"s : ${allSubjects}"</span>
+        <span class="ann">th:value</span>=<span class="str">"${s.id}"</span>
+        <span class="ann">th:text</span>=<span class="str">"${s.name}"</span>
+        <span class="ann">th:selected</span>=
+          <span class="str">"${s.id == selectedSubjectId}"</span>&gt;
+      &lt;/<span class="kw">option</span>&gt;
+    &lt;/<span class="kw">select</span>&gt;
+  &lt;/<span class="kw">div</span>&gt;
+
+  <span class="comment">&lt;!-- ★ Vol.8で追加：期間入力 --&gt;</span>
+  &lt;<span class="kw">div</span>&gt;
+    期間：
+    &lt;<span class="kw">input</span> <span class="ann">type</span>=<span class="str">"date"</span>
+           <span class="ann">name</span>=<span class="str">"from"</span>
+           <span class="ann">th:value</span>=<span class="str">"${selectedFrom}"</span>&gt;
+    〜
+    &lt;<span class="kw">input</span> <span class="ann">type</span>=<span class="str">"date"</span>
+           <span class="ann">name</span>=<span class="str">"to"</span>
+           <span class="ann">th:value</span>=<span class="str">"${selectedTo}"</span>&gt;
+  &lt;/<span class="kw">div</span>&gt;
+
+  &lt;<span class="kw">div</span>&gt;
+    &lt;<span class="kw">button</span> <span class="ann">type</span>=<span class="str">"submit"</span>&gt;絞り込む&lt;/<span class="kw">button</span>&gt;
+    &lt;<span class="kw">a</span> <span class="ann">th:href</span>=<span class="str">"@{/subjects}"</span>&gt;条件クリア&lt;/<span class="kw">a</span>&gt;
+  &lt;/<span class="kw">div</span>&gt;
+
+&lt;/<span class="kw">form</span>&gt;
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・name="from" name="to" がパラメータ名</span>
+<span class="comment">// ・th:value で LocalDate を表示</span>
+<span class="comment">//   （Thymeleafが yyyy-MM-dd 形式に変換）</span>
+<span class="comment">// ・条件クリアは単なるリンク</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かして確認</h2>
+    <span class="en">RUN IN BROWSER</span>
+  </div>
+  <p class="pattern-desc">起動して<b>4パターン</b>の検索を試します。<b>動的SQLが状況によりSQLを変える</b>のをログで確認。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">browser-check</span>
+      <span class="tag-desc">4パターンの動作確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>アプリ起動中なら停止、再起動</li>
+          <li><code>/subjects</code>（条件なし）を開く → 全科目表示</li>
+          <li>セレクトで「Java」だけ選択 → JavaのみのSQL確認</li>
+          <li>「条件クリア」して、開始日「2026-05-10」終了日「2026-05-15」を入れて送信</li>
+          <li>JavaとSpring Bootの記録のうち期間内のものだけが表示</li>
+          <li>3条件すべて入れて送信 → 「Javaの2026-05-10〜2026-05-15」が表示</li>
+          <li>コンソールでSQLが状況により変化することを確認</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ ここまで動けばVol.8クリア！</p>
+      </div>
+      <div class="code"><span class="code-head">// 4パターンのSQLログ</span>
+
+<span class="comment">// ─── ① 条件なし ───</span>
+==&gt;  Preparing: SELECT ... FROM subjects s
+              LEFT JOIN study_records r ...
+              ORDER BY s.id, r.studied_on
+==&gt; Parameters:
+<span class="comment">// → WHERE 句なし（&lt;where&gt;が消した）</span>
+
+
+<span class="comment">// ─── ② 科目のみ ───</span>
+==&gt;  Preparing: SELECT ... FROM subjects s
+              LEFT JOIN study_records r ...
+              WHERE s.id = ?
+              ORDER BY s.id, r.studied_on
+==&gt; Parameters: 1(Integer)
+
+
+<span class="comment">// ─── ③ 期間のみ ───</span>
+==&gt;  Preparing: SELECT ... FROM subjects s
+              LEFT JOIN study_records r ...
+              WHERE r.studied_on &gt;= ?
+                AND r.studied_on &lt;= ?
+              ORDER BY s.id, r.studied_on
+==&gt; Parameters: 2026-05-10(LocalDate),
+                2026-05-15(LocalDate)
+
+
+<span class="comment">// ─── ④ 3条件すべて ───</span>
+==&gt;  Preparing: SELECT ... FROM subjects s
+              LEFT JOIN study_records r ...
+              WHERE s.id = ?
+                AND r.studied_on &gt;= ?
+                AND r.studied_on &lt;= ?
+              ORDER BY s.id, r.studied_on
+==&gt; Parameters: 1(Integer),
+                2026-05-10(LocalDate),
+                2026-05-15(LocalDate)
+
+
+<span class="comment">// 1つのSQL定義が4つの形に変身</span>
+<span class="comment">// = 動的SQLの威力</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">業務での感動ポイント</div>
+    <p>「<b>新しい検索条件を1つ追加するのに、SQL を1行追加するだけ</b>」── これが動的SQLの真の威力です。Vol.6 のように<b>メソッドが増えていく</b>のではなく、<b>同じメソッドに条件を追加するだけ</b>で済む。<b>「機能拡張が安く済む」設計</b>です。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">動的SQLは便利な分、<b>ハマりどころも多い</b>。よくあるトラブル6選を整理します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">troubles</span>
+      <span class="tag-desc">起きやすいトラブル</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card">
+          <span class="label">TROUBLE 1</span>
+          <div class="name">Parameter 'subjectId' not found</div>
+          <div class="desc"><b>原因</b>：Mapper メソッドの引数が複数あるのに <code>@Param</code> 不足。<br><b>対処</b>：全引数に <code>@Param("...")</code> を付ける。引数1個なら不要だが、Vol.8 のように3つあるなら必須。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 2</span>
+          <div class="name">テスト条件で「null」が誤判定される</div>
+          <div class="desc"><b>原因</b>：<code>&lt;if test="subjectId != null"&gt;</code> と書くべきところ <code>&lt;if test="subjectId"&gt;</code> 等。OGNL式の文法ミス。<br><b>対処</b>：<code>!= null</code> を明示。文字列なら <code>!= null and subjectId != ''</code> など。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 3</span>
+          <div class="name">syntax error near 'AND'</div>
+          <div class="desc"><b>原因</b>：<code>&lt;where&gt;</code> を使わず素のWHERE句で書いた時、最初の <code>&lt;if&gt;</code> が <code>false</code> になり <code>WHERE AND ...</code> になってしまう。<br><b>対処</b>：必ず <code>&lt;where&gt;</code> タグで囲む。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 4</span>
+          <div class="name">期間絞り込みすると記録なし科目が消える</div>
+          <div class="desc"><b>原因</b>：LEFT JOIN + WHERE 句の組み合わせ。期間条件が「子テーブルが NULL」を弾く。<br><b>対処</b>：本巻では<b>意図的にこの挙動</b>とする。「記録のない科目も表示したい」場合は ON 句に条件を入れる。別冊S8で深掘り。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 5</span>
+          <div class="name">日付パラメータが LocalDate に変換できない</div>
+          <div class="desc"><b>原因</b>：Controller の <code>@RequestParam</code> に <code>@DateTimeFormat</code> 付け忘れ（Vol.7 と同じ）。<br><b>対処</b>：<code>@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)</code> を全日付パラメータに付ける。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 6</span>
+          <div class="name">「条件クリア」しても条件が残る</div>
+          <div class="desc"><b>原因</b>：「条件クリア」リンクの URL が間違っていて、パラメータを残したまま。<br><b>対処</b>：<code>&lt;a th:href="@{/subjects}"&gt;</code> でパラメータなしのURLに飛ばす。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// TROUBLE 2: OGNL式のよくある間違い</span>
+
+<span class="comment">// ─── ✗ NG ───</span>
+&lt;<span class="kw">if</span> test=<span class="str">"subjectId"</span>&gt;
+  AND s.id = #{subjectId}
+&lt;/<span class="kw">if</span>&gt;
+<span class="comment">// → Integer に対する真偽値判定で混乱</span>
+
+
+<span class="comment">// ─── ✓ OK ───</span>
+&lt;<span class="kw">if</span> test=<span class="str">"subjectId != null"</span>&gt;
+  AND s.id = #{subjectId}
+&lt;/<span class="kw">if</span>&gt;
+
+
+<span class="comment">// ─── 文字列の場合 ───</span>
+&lt;<span class="kw">if</span> test=<span class="str">"keyword != null and keyword != ''"</span>&gt;
+  AND name LIKE CONCAT(<span class="str">'%'</span>, #{keyword}, <span class="str">'%'</span>)
+&lt;/<span class="kw">if</span>&gt;
+<span class="comment">// → null と空文字の両方を判定</span>
+
+
+<span class="comment">// ─── コレクションの場合 ───</span>
+&lt;<span class="kw">if</span> test=<span class="str">"ids != null and !ids.isEmpty()"</span>&gt;
+  AND id IN
+  &lt;<span class="kw">foreach</span> ...&gt; ... &lt;/<span class="kw">foreach</span>&gt;
+&lt;/<span class="kw">if</span>&gt;
+
+
+<span class="code-head" style="margin-top:14px">// TROUBLE 4: LEFT JOIN と WHERE の罠</span>
+
+<span class="comment">// ─── 現在の Vol.8 の動作 ───</span>
+SELECT ... FROM subjects s
+LEFT JOIN study_records r
+  ON s.id = r.subject_id
+WHERE r.studied_on &gt;= '2026-05-10'
+  AND r.studied_on &lt;= '2026-05-15'
+
+<span class="comment">// → HTML/CSS（記録なし）は</span>
+<span class="comment">//   r.studied_on = NULL → 条件偽 → 消える</span>
+
+
+<span class="comment">// ─── 「記録なしも残す」設計 ───</span>
+SELECT ... FROM subjects s
+LEFT JOIN study_records r
+  ON s.id = r.subject_id
+ <span class="kw">AND</span> r.studied_on &gt;= '2026-05-10'    <span class="comment">// ★ON句に移動</span>
+ <span class="kw">AND</span> r.studied_on &lt;= '2026-05-15'
+
+<span class="comment">// → 記録なし科目も「（記録なし）」で残る</span>
+<span class="comment">// → 業務的にはどちらが正解かは要件次第</span>
+<span class="comment">// → 別冊S8で深掘り</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.8本編の<b>完了チェックリスト</b>。Vol.6の伏線を回収し、検索機能が完成した節目の巻。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol8-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li><code>SubjectMapper.xml</code> に <code>searchWithRecords</code> select 追加</li>
+          <li><code>&lt;where&gt;</code> + <code>&lt;if&gt;</code> 3個で動的条件構築</li>
+          <li><code>SubjectMapper.java</code> に対応メソッド追加（<code>@Param</code> 3つ）</li>
+          <li><code>SubjectService.java</code> に <code>searchWithRecords</code> 追加</li>
+          <li><code>SubjectController</code> の <code>list()</code> から if 分岐が消えた</li>
+          <li><code>@RequestParam</code> に <code>@DateTimeFormat</code> 付き <code>from</code>、<code>to</code> 追加</li>
+          <li><code>list.html</code> に <code>type="date"</code> 2つ追加</li>
+          <li>条件クリアリンクが動く</li>
+          <li>アプリ起動時にエラーが出ない</li>
+          <li>条件なし → 全件表示</li>
+          <li>科目のみ → その科目だけ</li>
+          <li>期間のみ → 期間内の記録があるところだけ</li>
+          <li>3条件全部 → 全条件適用</li>
+          <li>コンソールでSQLが状況により変わるのを確認</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.8本編完了！</b><br>
+          <b>動的SQL獲得</b>のスキル取得です。Vol.6 の伏線を回収。
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で獲得したスキル</span>
+
+★ <span class="kw">動的SQL獲得</span> ── 達成！
+
+  <span class="comment">// できるようになったこと:</span>
+  <span class="comment">// ・&lt;if test="..."&gt; で条件分岐</span>
+  <span class="comment">// ・&lt;where&gt; で WHERE と AND を自動制御</span>
+  <span class="comment">// ・OGNL 式の書き方</span>
+  <span class="comment">// ・@Param 複数引数の使い方</span>
+  <span class="comment">// ・複数メソッドの統合リファクタリング</span>
+  <span class="comment">// ・LEFT JOIN + WHERE の罠の理解</span>
+  <span class="comment">// ・期間絞り込みの実装</span>
+
+
+<span class="code-head" style="margin-top:14px">// 次にやること</span>
+
+<span class="comment">// ① 別冊 S8 を読む</span>
+<span class="comment">//   タイトル: 「動的SQLの世界」</span>
+<span class="comment">//   内容: 全動的SQLタグ網羅 /</span>
+<span class="comment">//        SQL生成の透明性 / SQLログの読み方 /</span>
+<span class="comment">//        ON句 vs WHERE句 / アンチパターン</span>
+
+
+<span class="comment">// ② Vol.9 本編：</span>
+<span class="comment">//   タイトル: 「GROUP BY で集計しよう」</span>
+<span class="comment">//   獲得スキル: 集計クエリ獲得</span>
+<span class="comment">//   内容:</span>
+<span class="comment">//   ・科目別合計時間を SQL で算出</span>
+<span class="comment">//   ・COUNT / SUM / AVG の使い方</span>
+<span class="comment">//   ・集計結果用のDTO作成</span>
+<span class="comment">//   ・Service層で業務ロジックが本格化</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(31,64,48,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S8</div>
+    <p>本編Vol.8お疲れさまでした。<b>動的SQL の基本</b>を手に入れたあなたに、別冊S8「<b>動的SQLの世界</b>」では、<b>全動的SQLタグの完全網羅・SQL生成の透明性・SQLログの読み方・LEFT JOIN ON句 vs WHERE句の深掘り・動的SQLのアンチパターン</b>を扱います。Vol.8で残した「ON句移動の話」もここで決着。<b>続けて別冊S8へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.08 / 15 ── DYNAMIC SQL（本編）</span>
+</footer>
+
+</body>
+</html>

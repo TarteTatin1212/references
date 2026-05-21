@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕Vol.1 プロジェクト立ち上げ＋要求定義入門</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2940;
+  --paper:#f3f0e6;
+  --paper-2:#e4dfcd;
+  --accent:#2d5485;
+  --accent-2:#507aa8;
+  --accent-3:#8a6a3a;
+  --muted:#6a7484;
+  --line:#c6c1b0;
+  --code-bg:#1a2236;
+  --code-text:#e8e4d4;
+  --panel-bg:#ede7d3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✦";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.phase-badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700;letter-spacing:0.05em}
+.ph-req{background:#e8eef6;color:#2d5485;border:1px solid #2d5485}
+.ph-des{background:#f0ebe0;color:#8a6a3a;border:1px solid #8a6a3a}
+.ph-imp{background:#e6efe8;color:#3a6a4a;border:1px solid #3a6a4a}
+.ph-test{background:#f3e8e8;color:#9a4040;border:1px solid #9a4040}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.key{background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(45,84,133,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.flow-diagram{background:#fff;border:1px solid var(--line);padding:18px;margin:14px 0;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.9;color:var(--ink)}
+.flow-diagram .ar{color:var(--accent);font-weight:700}
+.flow-diagram .ph{color:var(--accent-3);font-weight:700}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.1</span>
+    <span class="kind-tag">本編 ── MAIN</span>
+    <span class="rdt-tag">REQ · DESIGN · TEST</span>
+  </div>
+  <h1>プロジェクト立ち上げ＋<br>要求定義入門</h1>
+  <div class="subtitle">VOL.01 ── PROJECT SETUP &amp; REQUIREMENTS ENGINEERING</div>
+  <p class="lead">この新シリーズは<b>「コードを書く前に、何を・なぜ作るかを固める」</b>開発フローを軸にします。Vol.1 では<b>要求工学の入口</b>に立ち、メモ帳アプリの<b>WHO/WHAT/WHY</b>を整理し、その上で<b>環境構築と3テーブル設計</b>を進めます。<b>「動かす前に考える」</b>。これが本シリーズの背骨です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら — Vol.1 で触れる import</div>
+    <p>Vol.1 はプロジェクト立ち上げが中心なので新規 import は最小限。<code>org.springframework.boot.SpringApplication</code> 程度。Spring Initializr が自動生成するので赤線は出にくいですが、出たら <code>Ctrl + Shift + O</code> で一括整理、<code>Ctrl + 1</code> でクイック修正。<b>この2ショートカットは全巻共通の合言葉</b>です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 要求の獲得</a></li>
+    <li><a href="#s02">02 要求の分析</a></li>
+    <li><a href="#s03">03 仕様化（ストーリー＋受入条件）</a></li>
+    <li><a href="#s04">04 設計①アーキテクチャ・データ</a></li>
+    <li><a href="#s05">05 設計②3テーブルの全体像</a></li>
+    <li><a href="#s06">06 環境構築と実装の土台</a></li>
+    <li><a href="#s07">07 テストの土台を整える</a></li>
+    <li><a href="#s08">08 ブラウザ確認＋ハマりどころ</a></li>
+    <li><a href="#s09">09 レビュー・評価＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>要求の獲得</h2>
+    <span class="phase-badge ph-req">PHASE: REQ</span>
+    <span class="en">ELICITATION</span>
+  </div>
+  <p class="pattern-desc">最初にやるのは<b>コードでも設計でもなく「要求の獲得」</b>です。<b>WHO（誰のため）/ WHAT（何を）/ WHY（なぜ）</b>。中でも<b>WHY が一番抜けやすく、一番重要</b>。「メモ帳を作る」だけでは何も決まりません。<b>誰の・どんな困りごとを・なぜ解決するか</b>を言葉にします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">要求工学の全体フロー</span>
+      <span class="tag-desc">本シリーズの背骨</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ「考えてから書く」のか</div>
+        <p>設計を飛ばして書いたコードは<b>最初の1週間は速い</b>。でも<b>1か月後から壊れ始める</b>。要求を固めずに作ると<b>「作ったけど誰も使わない」</b>が起きます。</p>
+        <p style="margin-top:10px"><b>要求工学</b>は5つの活動の反復です。一直線ではなく、何度も行き来します。</p>
+
+        <div class="flow-diagram">
+[1] <span class="ph">獲得</span>   <span class="ar">→</span> 困りごとを引き出す
+      <span class="ar">↓</span>
+[2] <span class="ph">分析</span>   <span class="ar">→</span> 本当に必要なものへ
+      <span class="ar">↓</span>
+[3] <span class="ph">仕様化</span> <span class="ar">→</span> 文書・モデルに残す
+      <span class="ar">↓</span>
+[4] <span class="ph">検証</span>   <span class="ar">→</span> これで良いか確かめる
+      <span class="ar">↓</span>
+[5] <span class="ph">管理</span>   <span class="ar">→</span> 変化を追跡し続ける
+      <span class="ar">↑___</span> ループ（要求は変わる）
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// WHO / WHAT / WHY の3問</span>
+<span class="comment">// メモ帳と一口に言っても…</span>
+
+<span class="kw">WHO</span>  誰が使う？
+  - 自分専用？
+  - チーム共有？
+  - 不特定多数？
+
+<span class="kw">WHAT</span> 何を作る？
+  - 思いつきの記録？
+  - 議事録？
+  - TODO？日記？
+
+<span class="kw">WHY</span>  なぜ作る？  <span class="comment">← 最重要</span>
+  - 既存アプリの何が不満？
+  - 何を解決したい？
+
+
+<span class="comment">// ─── 同じ「メモ帳」でも… ───</span>
+<span class="comment">// 「自分用の議事録ツール」と</span>
+<span class="comment">// 「チームの共有日記」では</span>
+<span class="comment">// 全く別物になる ★★★</span>
+
+<span class="comment">// だから最初に WHO/WHAT/WHY を固める</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">ペルソナを立てる</span>
+      <span class="tag-desc">「誰のため」を1人に絞る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 本シリーズのペルソナ</div>
+        <p>要求の獲得では<b>架空の代表ユーザー（ペルソナ）</b>を立てます。<b>「みんなのため」は「誰のためでもない」</b>。1人に絞ると要求が明確になります。</p>
+        <div class="role-card" style="margin-top:10px">
+          <span class="label">PERSONA</span>
+          <div class="name">田中さん（32歳・会社員）</div>
+          <div class="desc"><b>利用場面</b>：通勤中にスマホで思いつきをメモ、夜PCで整理。<b>ゴール</b>：思いついた瞬間に素早く記録したい。<b>不満</b>：既存アプリは検索しても目的のメモが出ない。<b>技術レベル</b>：中。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 獲得段階で答えるべき質問</span>
+<span class="comment">// 本シリーズの回答：</span>
+
+Q. 誰が使う？
+A. <span class="str">"個人ユーザー（単一ユーザー前提・v1）"</span>
+
+Q. どんな場面？
+A. <span class="str">"思いつき・TODO・記録を</span>
+    <span class="str"> カテゴリとタグで整理したい"</span>
+
+Q. 既存の何が不満？
+A. <span class="str">"分類軸が1つしかなく、</span>
+    <span class="str"> 後から探しにくい"</span>
+
+Q. どのデバイス？
+A. <span class="str">"まずWebブラウザ（PC）。</span>
+    <span class="str"> 同期はv2以降"</span>
+
+
+<span class="comment">// → この回答が、3テーブル設計</span>
+<span class="comment">//   （memos + categories + tags）</span>
+<span class="comment">//   の「なぜ」になる ★★★</span>
+<span class="comment">// → 分類軸を2つ持ちたい</span>
+<span class="comment">//   = カテゴリ＋タグ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「要求」と「要件」と「仕様」は別物</div>
+    <p><b>要求</b>＝ユーザーの生の声（「探しやすいといいな」）。<b>要件</b>＝測定可能に明文化（「全文検索が500ms以内」）。<b>仕様</b>＝どう実現するか（MATCH AGAINST を使う）。<b>曖昧な声を検証可能な条件に変える</b>のが要求工学の仕事です。Vol.1 ではこの3語の区別を体に入れます。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>要求の分析</h2>
+    <span class="phase-badge ph-req">PHASE: REQ</span>
+    <span class="en">ANALYSIS</span>
+  </div>
+  <p class="pattern-desc">獲得した生の要求を<b>「機能要求・非機能要求・制約」</b>の3つに仕分けます。さらに<b>MoSCoW法</b>で「v1で何を作るか」を決める。<b>全部作ろうとすると終わらない</b>。「やらないこと」を明示するのが分析の核心です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">3カテゴリへの仕分け</span>
+      <span class="tag-desc">機能 / 非機能 / 制約</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// メモ帳アプリの仕分け</div>
+        <table class="compare-tbl">
+          <thead><tr><th>カテゴリ</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td><b>機能要求</b></td><td>作成・編集・削除・一覧・カテゴリ分類・タグ付け・検索</td></tr>
+            <tr><td><b>非機能要求</b></td><td>一覧1秒以内・データ永続化・入力検証</td></tr>
+            <tr><td><b>制約</b></td><td>単一ユーザー前提(v1)・Web(PC)・Spring Boot/MySQL</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 非機能要求は「数値」で書く</div>
+        <ul>
+          <li><b>NG</b>：「速い」「使いやすい」（測定不能）</li>
+          <li><b>OK</b>：「一覧表示は1000件で1秒以内」（測定可能）</li>
+        </ul>
+        <p style="margin-top:8px"><b>数値化が要求工学の鉄則</b>。後で検証できる形にします。</p>
+      </div>
+      <div class="code"><span class="code-head">// 非機能要求（NFR）を数値で</span>
+<span class="ann">@PERF-001</span> 一覧表示性能
+  メモ1000件でも一覧表示が
+  <span class="num">1</span>秒以内
+
+<span class="ann">@PERF-002</span> 検索性能
+  全文検索を <span class="num">500</span>ms 以内（P95）
+
+<span class="ann">@DATA-001</span> データ保全
+  登録内容はDBに永続化され、
+  アプリ再起動でも失われないこと
+
+<span class="ann">@VALID-001</span> 入力検証
+  タイトルは必須・<span class="num">200</span>文字以内
+  色は #xxxxxx 形式
+
+<span class="ann">@USAB-001</span> 使用性
+  マニュアルなしで
+  メモ作成・検索・削除ができること
+
+
+<span class="comment">// → これらが Vol.7,8,12,13 で</span>
+<span class="comment">//   テストの「合格ライン」になる ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">MoSCoW法で優先順位</span>
+      <span class="tag-desc">v1のスコープを決める</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4分類でスコープを守る</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">MUST</span>
+            <div class="name">必須</div>
+            <div class="desc">無いとリリース不可。<b>メモCRUD・一覧</b>。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">SHOULD</span>
+            <div class="name">重要</div>
+            <div class="desc">無くても動く。<b>カテゴリ・検索</b>。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">COULD</span>
+            <div class="name">あれば嬉しい</div>
+            <div class="desc">余裕があれば。<b>タグ・ピン留め</b>。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">WON'T</span>
+            <div class="name">今回やらない</div>
+            <div class="desc">v2候補。<b>同期・共同編集</b>。</div>
+          </div>
+        </div>
+        <p style="margin-top:12px;font-size:13px"><b>目安比率</b>：Must 60% / Should 20% / Could 20%。Must が80%超なら<b>絞り込み不足</b>のサイン。</p>
+      </div>
+      <div class="code"><span class="code-head">// 本シリーズの MoSCoW（全14巻の地図）</span>
+<span class="kw">[Must]</span> — Vol.2,3
+  ・メモCRUD（作成/編集/削除/一覧）
+  ・カテゴリ管理（マスタCRUD）
+
+<span class="kw">[Should]</span> — Vol.4,5,6,7
+  ・カテゴリ別の絞り込み
+  ・タグ付け（多対多）
+  ・複合検索
+
+<span class="kw">[Could]</span> — Vol.8,9,10,11
+  ・全文検索
+  ・ピン留め/並び替え/アーカイブ
+  ・一括操作/エクスポート
+
+<span class="kw">[Won't（今回のv1範囲外）]</span>
+  ・複数端末同期
+  ・共同編集
+  ・画像添付
+
+
+<span class="comment">// → 本シリーズの全14巻は</span>
+<span class="comment">//   この優先順位に沿って並ぶ ★★★</span>
+<span class="comment">// → Vol.12,13 は品質強化</span>
+<span class="comment">//   （バリデーション・性能）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「Won't（やらない）」を書く勇気</div>
+    <p>初学者ほど<b>「あれもこれも」</b>と機能を盛り込んで<b>完成しない</b>。<b>Won't を明示</b>すると「やらなくていい」と決まり、心が軽くなります。<b>同期・共同編集は v1 ではやらない</b>。これを最初に宣言するのが<b>プロのスコープ管理</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>仕様化（ストーリー＋受入条件）</h2>
+    <span class="phase-badge ph-req">PHASE: REQ</span>
+    <span class="en">SPECIFICATION</span>
+  </div>
+  <p class="pattern-desc">機能要求を<b>ユーザーストーリー</b>形式で書き、各ストーリーに<b>受入条件（Given/When/Then）</b>を添えます。これが後の<b>テストの設計図</b>になります。「<b>受入条件＝テストケース</b>」と考えてOK。要求とテストが直結する瞬間です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">ユーザーストーリー（Connextra形式）</span>
+      <span class="tag-desc">As a / I want / so that</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 書式</div>
+        <p><b>As a</b>〔ユーザー役割〕として<br><b>I want</b>〔機能・行動〕<br><b>so that</b>〔理由・価値〕</p>
+        <p style="margin-top:10px"><b>so that（理由）が肝</b>。「なぜそれが欲しいか」を必ず書く。理由が書けない機能は<b>本当に要るのか</b>疑う。</p>
+
+        <div class="panel-head" style="margin-top:18px">// INVEST チェック</div>
+        <p>良いストーリーは6条件を満たします：</p>
+        <ul>
+          <li><b>I</b>ndependent（独立）</li>
+          <li><b>N</b>egotiable（対話の余地）</li>
+          <li><b>V</b>aluable（価値がある）</li>
+          <li><b>E</b>stimable（見積もれる）</li>
+          <li><b>S</b>mall（小さい）</li>
+          <li><b>T</b>estable（テストできる）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 本シリーズのユーザーストーリー</span>
+<span class="ann">US-001</span>（Vol.2）
+As a 思いつきを記録したいユーザー
+I want すぐにメモを作成・保存したい
+so that アイデアを忘れる前に書き留められる
+
+<span class="ann">US-002</span>（Vol.3）
+As a メモを整理したいユーザー
+I want カテゴリでメモを分類したい
+so that 種類ごとに把握できる
+
+<span class="ann">US-003</span>（Vol.5）
+As a 横断的に整理したいユーザー
+I want メモに複数タグを付けたい
+so that カテゴリと別の軸でも絞れる
+
+<span class="ann">US-004</span>（Vol.7,8）
+As a 過去のメモを探したいユーザー
+I want キーワードで検索したい
+so that 目的のメモを素早く見つけられる
+
+
+<span class="comment">// → 各 US が各 Vol に対応 ★★★</span>
+<span class="comment">// → 「so that」が WHY を支える</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">受入条件（Given / When / Then）</span>
+      <span class="tag-desc">= 後のテストケース</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 書式</div>
+        <p><b>Given</b>〔前提条件〕<br><b>When</b>〔行動〕<br><b>Then</b>〔期待される結果〕</p>
+        <p style="margin-top:10px">受入条件は<b>正常系だけでなく異常系・境界値</b>も書きます。「該当なし」「空入力」も忘れずに。</p>
+
+        <div class="panel-head" style="margin-top:18px">// なぜ受入条件が重要か</div>
+        <ul>
+          <li>「完成」の定義が明確になる</li>
+          <li><b>そのままテストコードに変換</b>できる</li>
+          <li>認識のズレを防げる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// US-001（メモ作成）の受入条件</span>
+<span class="ann">@AC1</span> 正常系
+Given: タイトル「買い物」を入力した状態
+When : 保存ボタンを押す
+Then : メモが保存され、一覧に表示される
+
+<span class="ann">@AC2</span> 異常系（空タイトル）
+Given: タイトルが空の状態
+When : 保存ボタンを押す
+Then : エラーが表示され、保存されない
+
+<span class="ann">@AC3</span> 境界値（200文字）
+Given: タイトルがちょうど200文字
+When : 保存する
+Then : 正常に保存される
+
+<span class="ann">@AC4</span> 境界値の外（201文字）
+Given: タイトルが201文字
+When : 保存する
+Then : エラーが表示される
+
+
+<span class="comment">// ─── これが Vol.2 で… ───</span>
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">空タイトルはエラーになる</span>() {
+  <span class="comment">// @AC2 がそのまま JUnit テストに ★★★</span>
+}
+
+<span class="comment">// → 受入条件 = テストケース</span>
+<span class="comment">// → 要求とテストが直結する</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 受入条件はテストの設計図</div>
+    <p>Given/When/Then は、JUnit の<b>「準備（Arrange）→ 実行（Act）→ 検証（Assert）」＝AAA</b>とそのまま対応します。<b>Given=Arrange、When=Act、Then=Assert</b>。要求段階で受入条件を書いておけば、Vol.2 以降で<b>テストコードに翻訳するだけ</b>。<b>要求とテストは地続き</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>設計①アーキテクチャ・データ</h2>
+    <span class="phase-badge ph-des">PHASE: DESIGN</span>
+    <span class="en">ARCHITECTURE &amp; DATA</span>
+  </div>
+  <p class="pattern-desc">要求が固まったら<b>設計</b>へ。まず<b>アーキテクチャ（全体構造）</b>と<b>データ設計</b>を決めます。<b>「変更コストの大きい決定」を先に</b>。メモ帳のような小〜中規模アプリでは<b>レイヤード（層を分ける）で十分</b>。過剰設計は避けます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">レイヤード・アーキテクチャ</span>
+      <span class="tag-desc">Spring の3層構造そのもの</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 関心を層で分ける</div>
+        <p>フロー文書の<b>「UI→ロジック→データ」</b>は、Spring では<b>「Controller→Service→Mapper」</b>に対応します。</p>
+        <div class="flow-diagram">
+<span class="ph">[Controller層]</span> 画面・入力受付
+      <span class="ar">↓ 呼ぶ</span>
+<span class="ph">[Service層]</span> 業務ロジック
+      <span class="ar">↓ 呼ぶ</span>
+<span class="ph">[Mapper層]</span> DB保存・読込
+        </div>
+        <p style="margin-top:10px"><b>鉄則：依存は上から下へ</b>。下の層が上の層を知ってはいけない。Mapper が Controller を呼ぶ、は<b>禁止</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// フロー文書 → Spring 翻訳</span>
+<span class="comment">// 原典（JS/レイヤード）  Spring版</span>
+UI層          <span class="ar">→</span>  Controller
+ロジック層     <span class="ar">→</span>  Service
+データ層       <span class="ar">→</span>  Mapper (MyBatis)
+
+
+<span class="comment">// ─── 規模に合った構造を選ぶ ───</span>
+<span class="comment">// メモ帳は小〜中規模</span>
+<span class="comment">// → クリーンアーキテクチャは過剰</span>
+<span class="comment">// → レイヤードで必要十分 ★★★</span>
+
+
+<span class="comment">// ─── フォルダ構成は設計そのもの ───</span>
+src/main/java/com/example/memo/
+  ├ controller/   <span class="comment">// 画面</span>
+  ├ service/      <span class="comment">// ロジック</span>
+  ├ mapper/       <span class="comment">// DB</span>
+  └ entity/       <span class="comment">// データ構造</span>
+
+<span class="comment">// → 見ただけで「何をするアプリか」</span>
+<span class="comment">//   が分かるのが理想</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">データ設計 — 名詞を探す</span>
+      <span class="tag-desc">要求の「名詞」がエンティティ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 要求から名詞を抽出</div>
+        <p>要求文に出てくる<b>名詞</b>がデータの候補です。本シリーズの要求から：</p>
+        <ul>
+          <li>「<b>メモ</b>を作る」→ memos</li>
+          <li>「<b>カテゴリ</b>で分類」→ categories</li>
+          <li>「<b>タグ</b>を付ける」→ tags</li>
+        </ul>
+        <p style="margin-top:10px"><b>3つの名詞 = 3テーブル</b>。要求が自然にデータ構造を導きます。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 「事実は時点で確定する」</div>
+        <ul>
+          <li><b>created_at</b>：一度決めたら変えない</li>
+          <li><b>updated_at</b>：保存のたびに更新</li>
+        </ul>
+        <p style="margin-top:8px"><b>「いつの事実か」を意識</b>して設計します。</p>
+      </div>
+      <div class="code"><span class="code-head">// データ設計：3エンティティ</span>
+<span class="type">Memo</span>（メモ・トランザクション系）
+  - id          一意識別子
+  - title       タイトル（必須・200字）
+  - content     本文
+  - category_id カテゴリ参照（Vol.4〜）
+  - created_at  作成日時（不変）
+  - updated_at  更新日時（毎回更新）
+
+<span class="type">Category</span>（カテゴリ・マスタ系）
+  - id
+  - name        必須・UNIQUE
+  - color       #xxxxxx
+  - sort_order  並び順
+
+<span class="type">Tag</span>（タグ・マスタ系）
+  - id
+  - name        必須・UNIQUE
+
+<span class="type">memo_tags</span>（中間テーブル・多対多）
+  - memo_id
+  - tag_id
+
+
+<span class="comment">// ─── 識別子の設計判断 ───</span>
+<span class="comment">// 連番 vs UUID</span>
+<span class="comment">// → 本シリーズは学習目的で連番(AUTO_INCREMENT)</span>
+<span class="comment">// → 業務で同期を考えるなら UUID 推奨</span>
+<span class="comment">// → 「戻せる選択肢」の観点では</span>
+<span class="comment">//   後から移行も可能 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — YAGNI：必要になるまで作らない</div>
+    <p>「将来 UUID にするかも」「同期するかも」で<b>最初から重い仕組み</b>を入れるのは<b>過剰設計</b>。本シリーズは<b>連番＋localStorageではなくMySQL</b>で素直に始めます。<b>「将来のため」の8割は使われない</b>（YAGNI）。<b>測定してから最適化</b>、<b>迷ったら戻せる選択肢</b>。これが設計の判断軸です。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>設計②3テーブルの全体像</h2>
+    <span class="phase-badge ph-des">PHASE: DESIGN</span>
+    <span class="en">TABLE DESIGN</span>
+  </div>
+  <p class="pattern-desc">データ設計を<b>具体的なDDL（CREATE TABLE）</b>に落とします。<b>1対多（categories）</b>と<b>多対多（tags）</b>の両方を持つのが本シリーズの特徴。<b>関係性は要求から導かれる</b>ことを確認しながら進めます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">関係性の判定（要求ベース）</span>
+      <span class="tag-desc">なぜ1対多と多対多か</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 要求から関係性を導く</div>
+        <p><b>「メモは1つのカテゴリに属する」</b>（要求）<br>→ メモ：カテゴリ ＝ 多：1 → <b>1対多</b></p>
+        <p style="margin-top:10px"><b>「メモに複数タグ、タグも複数メモに」</b>（要求）<br>→ メモ：タグ ＝ 多：多 → <b>多対多</b>（中間テーブル必須）</p>
+
+        <div class="panel-head" style="margin-top:18px">// 判定式</div>
+        <ul>
+          <li>両側に複数あり得る → <b>多対多</b></li>
+          <li>片方だけ複数 → <b>1対多</b></li>
+          <li>両方1つ → 1対1（同テーブルで足りる）</li>
+        </ul>
+        <p style="margin-top:8px"><b>関係性は要件で決まる</b>。詳しくは別冊S1で。</p>
+      </div>
+      <div class="code"><span class="code-head">// DDL：3テーブル + 中間テーブル</span>
+<span class="kw">CREATE TABLE</span> categories (
+  id         <span class="type">BIGINT</span> <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  name       <span class="type">VARCHAR</span>(<span class="num">50</span>) <span class="kw">NOT NULL UNIQUE</span>,
+  color      <span class="type">VARCHAR</span>(<span class="num">7</span>) <span class="kw">NOT NULL</span>,
+  sort_order <span class="type">INT</span> <span class="kw">DEFAULT</span> <span class="num">0</span>,
+  created_at <span class="type">TIMESTAMP</span> <span class="kw">DEFAULT</span> CURRENT_TIMESTAMP
+);
+
+<span class="kw">CREATE TABLE</span> memos (
+  id          <span class="type">BIGINT</span> <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  title       <span class="type">VARCHAR</span>(<span class="num">200</span>) <span class="kw">NOT NULL</span>,
+  content     <span class="type">TEXT</span>,
+  category_id <span class="type">BIGINT</span>,
+  created_at  <span class="type">TIMESTAMP</span> <span class="kw">DEFAULT</span> CURRENT_TIMESTAMP,
+  updated_at  <span class="type">TIMESTAMP</span> <span class="kw">DEFAULT</span> CURRENT_TIMESTAMP
+              <span class="kw">ON UPDATE</span> CURRENT_TIMESTAMP,
+  <span class="kw">FOREIGN KEY</span> (category_id)
+    <span class="kw">REFERENCES</span> categories(id)
+    <span class="kw">ON DELETE SET NULL</span>  <span class="comment">// メモは残す</span>
+);
+
+<span class="kw">CREATE TABLE</span> tags (
+  id   <span class="type">BIGINT</span> <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  name <span class="type">VARCHAR</span>(<span class="num">50</span>) <span class="kw">NOT NULL UNIQUE</span>
+);
+
+<span class="kw">CREATE TABLE</span> memo_tags (
+  memo_id <span class="type">BIGINT NOT NULL</span>,
+  tag_id  <span class="type">BIGINT NOT NULL</span>,
+  <span class="kw">PRIMARY KEY</span> (memo_id, tag_id),
+  <span class="kw">FOREIGN KEY</span> (memo_id) <span class="kw">REFERENCES</span> memos(id)
+    <span class="kw">ON DELETE CASCADE</span>,
+  <span class="kw">FOREIGN KEY</span> (tag_id) <span class="kw">REFERENCES</span> tags(id)
+    <span class="kw">ON DELETE CASCADE</span>
+);
+
+<span class="comment">// → 削除戦略も設計の一部 ★★★</span>
+<span class="comment">// categories削除 → memoは残す(SET NULL)</span>
+<span class="comment">// memo削除 → タグ紐付けも消す(CASCADE)</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 削除戦略は設計で決める</div>
+    <p>FK の <code>ON DELETE</code> は<b>設計判断</b>。<b>SET NULL</b>（メモは残す）、<b>CASCADE</b>（連動削除）、<b>RESTRICT</b>（削除拒否）。本シリーズは「<b>メモは大事だから残す、関連付けは連動</b>」という方針。<b>「これを消したらアレはどうなる？」を最初に決める</b>のが事故を防ぐ鉄則です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>環境構築と実装の土台</h2>
+    <span class="phase-badge ph-imp">PHASE: IMPL</span>
+    <span class="en">SETUP &amp; FOUNDATION</span>
+  </div>
+  <p class="pattern-desc">設計が固まったので<b>実装の土台</b>を作ります。Spring Initializr でプロジェクト生成、Eclipse 取り込み、MySQL 接続、DDL 実行、初期データ投入。<b>「動く最初の一歩」</b>までを整えます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">環境構築の手順</span>
+      <span class="tag-desc">Spring Initializr から</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// プロジェクト生成</div>
+        <ol class="step-list">
+          <li><b>start.spring.io</b> にアクセス（Spring Initializr）</li>
+          <li>Project：<b>Maven</b>、Language：<b>Java</b>、Spring Boot：<b>3.x</b></li>
+          <li>Group：<code>com.example</code>、Artifact：<code>memo</code></li>
+          <li>Java：<b>17</b></li>
+          <li>Dependencies：<b>Spring Web / MyBatis Framework / MySQL Driver / Lombok / Thymeleaf / DevTools</b></li>
+          <li><b>GENERATE</b> → zip 解凍 → Eclipse で <span class="menu-code">Import → Existing Maven Projects</span></li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// DB作成・DDL実行</div>
+        <ol class="step-list">
+          <li>MySQL で <code>CREATE DATABASE memo_app;</code></li>
+          <li>Section 05 の DDL を実行（4テーブル）</li>
+          <li>初期データ（カテゴリ・タグ）を INSERT</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// application.properties</span>
+spring.application.name=memo
+
+<span class="comment"># DB接続</span>
+spring.datasource.url=
+  jdbc:mysql://localhost:3306/memo_app
+spring.datasource.username=root
+spring.datasource.password=パスワード
+spring.datasource.driver-class-name=
+  com.mysql.cj.jdbc.Driver
+
+<span class="comment"># MyBatis</span>
+mybatis.mapper-locations=
+  classpath:mapper/*.xml
+mybatis.type-aliases-package=
+  com.example.memo.entity
+mybatis.configuration.
+  map-underscore-to-camel-case=true
+
+<span class="comment"># SQLログ（学習中は必須）</span>
+logging.level.com.example.memo
+  .mapper=DEBUG
+
+
+<span class="comment">// ─── 初期データ ───</span>
+<span class="kw">INSERT INTO</span> categories
+  (name, color, sort_order) <span class="kw">VALUES</span>
+  (<span class="str">'仕事'</span>, <span class="str">'#d63131'</span>, <span class="num">1</span>),
+  (<span class="str">'プライベート'</span>, <span class="str">'#4a9aaa'</span>, <span class="num">2</span>),
+  (<span class="str">'学習'</span>, <span class="str">'#6caa3a'</span>, <span class="num">3</span>);
+
+<span class="kw">INSERT INTO</span> tags (name) <span class="kw">VALUES</span>
+  (<span class="str">'重要'</span>), (<span class="str">'あとで読む'</span>), (<span class="str">'アイデア'</span>);
+
+<span class="comment">// → 動作確認用のシードデータ ★</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">「動く最初の一歩」を確認</span>
+      <span class="tag-desc">Hello World 的な疎通</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 疎通確認用の簡易Controller</div>
+        <p>本格的な実装は Vol.2 から。Vol.1 では<b>「Springが起動してDBに繋がる」</b>ことだけ確認します。</p>
+        <ol class="step-list">
+          <li><code>com.example.memo</code> 直下に <code>controller</code> パッケージ作成</li>
+          <li>右クリック → <span class="menu-code">New → Class</span> → <b>HealthController</b></li>
+          <li>下記コードを入力</li>
+          <li><code>MemoApplication</code> を <span class="menu-code">Run As → Spring Boot App</span></li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// HealthController.java（疎通確認用）</span>
+<span class="kw">package</span> com.example.memo.controller;
+
+<span class="kw">import</span> org.springframework.jdbc.core.JdbcTemplate;
+<span class="kw">import</span> org.springframework.web.bind.annotation.GetMapping;
+<span class="kw">import</span> org.springframework.web.bind.annotation.RestController;
+<span class="kw">import</span> lombok.RequiredArgsConstructor;
+
+<span class="ann">@RestController</span>
+<span class="ann">@RequiredArgsConstructor</span>
+<span class="kw">public class</span> <span class="type">HealthController</span> {
+
+    <span class="kw">private final</span> <span class="type">JdbcTemplate</span> jdbc;
+
+    <span class="ann">@GetMapping</span>(<span class="str">"/health"</span>)
+    <span class="kw">public</span> <span class="type">String</span> <span class="fn">health</span>() {
+        <span class="type">Integer</span> count = jdbc.<span class="fn">queryForObject</span>(
+            <span class="str">"SELECT COUNT(*) FROM categories"</span>,
+            <span class="type">Integer</span>.<span class="kw">class</span>);
+        <span class="kw">return</span> <span class="str">"OK / categories = "</span> + count;
+    }
+}
+
+<span class="comment">// → http://localhost:8080/health</span>
+<span class="comment">// → "OK / categories = 3" と出れば</span>
+<span class="comment">//   Spring起動＆DB接続＆データ投入 全部OK ★★★</span>
+<span class="comment">// → この Controller は Vol.2 で削除してOK</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 疎通確認を最初にやる意味</div>
+    <p>いきなり本実装に入ると、エラーが出た時に<b>「Springの問題か、DBの問題か、コードの問題か」</b>切り分けできません。<b>まず疎通だけ確認</b>すれば、土台が正しいと保証された上で実装に進めます。<b>問題の切り分けを楽にする</b>のがこの一歩の価値です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>テストの土台を整える</h2>
+    <span class="phase-badge ph-test">PHASE: TEST</span>
+    <span class="en">TEST FOUNDATION</span>
+  </div>
+  <p class="pattern-desc">本シリーズは<b>テストを書きながら開発</b>します。Vol.1 では<b>テストの土台</b>を整え、<b>テストピラミッド</b>の考え方と<b>最初の1本</b>を体験します。本格的なテストは Vol.2 から、要求の受入条件を JUnit に翻訳していきます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">テストピラミッドと Spring 翻訳</span>
+      <span class="tag-desc">下を厚く、上を薄く</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3層の比率と Spring での道具</div>
+        <table class="compare-tbl">
+          <thead><tr><th>層</th><th>割合</th><th>Springでの道具</th></tr></thead>
+          <tbody>
+            <tr><td>単体</td><td><b>70%</b></td><td>JUnit5 + Mockito + AssertJ</td></tr>
+            <tr><td>結合</td><td>20%</td><td>@MybatisTest + H2/Testcontainers</td></tr>
+            <tr><td>E2E</td><td>10%</td><td>MockMvc（Spring MVC Test）</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 設計のコツ（テスト容易性）</div>
+        <p><b>「保存」「現在時刻」など外部依存</b>と、<b>純粋な計算ロジック（検索・ソート・バリデーション）</b>を分離すると、単体テストが圧倒的に書きやすい。</p>
+        <p style="margin-top:8px"><b>テストが書きにくい＝設計を見直すサイン</b>。これは本シリーズの重要な指針です。</p>
+      </div>
+      <div class="code"><span class="code-head">// フロー文書 → Spring テスト翻訳</span>
+<span class="comment">// 原典(JS/Jest)        Spring版</span>
+Jest 単体        <span class="ar">→</span> JUnit5 + Mockito
+InMemory Fake    <span class="ar">→</span> @MybatisTest + H2
+Playwright E2E   <span class="ar">→</span> MockMvc
+
+
+<span class="comment">// ─── 依存性注入（DI）でテスト容易に ───</span>
+<span class="comment">// フロー文書の「Storeを外から注入」は</span>
+<span class="comment">// Spring では @RequiredArgsConstructor</span>
+
+<span class="ann">@Service</span>
+<span class="ann">@RequiredArgsConstructor</span>
+<span class="kw">public class</span> <span class="type">MemoService</span> {
+    <span class="kw">private final</span> <span class="type">MemoMapper</span> mapper;
+    <span class="comment">// ↑ テストでは Mockito で</span>
+    <span class="comment">//   モックに差し替えられる ★★★</span>
+}
+
+<span class="comment">// テスト時：</span>
+<span class="ann">@Mock</span> <span class="type">MemoMapper</span> mapper;
+<span class="ann">@InjectMocks</span> <span class="type">MemoService</span> service;
+<span class="comment">// → 本物のDBなしでロジックをテスト</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">最初のテストを動かす</span>
+      <span class="tag-desc">JUnit が動く環境を確認</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テストの配置と作成手順</div>
+        <ol class="step-list">
+          <li>Spring Initializr 生成時に <code>spring-boot-starter-test</code> が自動で入っている</li>
+          <li>テストは <code>src/test/java/com/example/memo/</code> 配下</li>
+          <li>右クリック → <span class="menu-code">New → JUnit Test Case</span></li>
+          <li>まず「JUnit が動くか」だけ確認する1本を書く</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// AAA パターン（3ブロック）</div>
+        <ul>
+          <li><b>Arrange</b>（準備）＝ 受入条件の Given</li>
+          <li><b>Act</b>（実行）＝ When</li>
+          <li><b>Assert</b>（検証）＝ Then</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// SmokeTest.java（最初の1本）</span>
+<span class="kw">package</span> com.example.memo;
+
+<span class="kw">import</span> static org.assertj.core.api.Assertions.*;
+<span class="kw">import</span> org.junit.jupiter.api.Test;
+
+<span class="kw">class</span> <span class="type">SmokeTest</span> {
+
+    <span class="ann">@Test</span>
+    <span class="kw">void</span> <span class="fn">JUnitが動作する</span>() {
+        <span class="comment">// Arrange（準備）</span>
+        <span class="kw">int</span> a = <span class="num">2</span>;
+        <span class="kw">int</span> b = <span class="num">3</span>;
+
+        <span class="comment">// Act（実行）</span>
+        <span class="kw">int</span> sum = a + b;
+
+        <span class="comment">// Assert（検証）</span>
+        <span class="fn">assertThat</span>(sum).<span class="fn">isEqualTo</span>(<span class="num">5</span>);
+    }
+}
+
+<span class="comment">// → 右クリック → Run As → JUnit Test</span>
+<span class="comment">// → 緑のバー（成功）が出れば</span>
+<span class="comment">//   テスト環境OK ★★★</span>
+
+
+<span class="comment">// ─── テスト名は日本語でOK ───</span>
+<span class="comment">// 「何を検証しているか」が分かる名前を</span>
+<span class="comment">// 例：空タイトルはエラーになる()</span>
+<span class="comment">//     200文字は登録できる()</span>
+<span class="comment">// → Vol.2 から本格的に書いていく</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — テストは「将来の自分を救う投資」</div>
+    <p>テストの価値は<b>書いた瞬間ではなく、機能追加やリファクタの時</b>に出ます。「動いた」を確認するためではなく、<b>「これからも安心して変更できる」状態を作る</b>ために書く。Vol.1 では土台だけ。Vol.2 から<b>受入条件をテストに翻訳</b>していきます。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ブラウザ確認＋ハマりどころ</h2>
+    <span class="phase-badge ph-imp">PHASE: IMPL</span>
+    <span class="en">VERIFY &amp; PITFALLS</span>
+  </div>
+  <p class="pattern-desc">土台が整ったら<b>動作確認</b>。<code>/health</code> で疎通を確認し、JUnit の最初の1本を緑にします。Vol.1 で<b>初学者が必ず踏む環境系の地雷</b>を5つ先回りします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">Vol.1 ハマりどころ 5選</span>
+      <span class="tag-desc">環境構築の定番地雷</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① DB接続できない（Communications link failure）★★★</b></p>
+        <ul>
+          <li>原因：MySQL が起動していない／ポート違い／パスワード違い</li>
+          <li>対処：MySQL 起動確認、<code>application.properties</code> の url/username/password を再確認</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② Unknown database 'memo_app'</b></p>
+        <ul>
+          <li>原因：DB を作っていない</li>
+          <li>対処：<code>CREATE DATABASE memo_app;</code> を実行</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ Lombok の getter/setter が赤線 ★★★</b></p>
+        <ul>
+          <li>原因：Eclipse に Lombok プラグインが未導入</li>
+          <li>対処：lombok.jar を実行してEclipseにインストール → Eclipse再起動</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ ポート8080が使用中（Port already in use）</b></p>
+        <ul>
+          <li>原因：別のアプリ（or 前回起動分）が8080使用中</li>
+          <li>対処：前のプロセス停止、または <code>server.port=8081</code> に変更</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ map-underscore... が効かず全フィールド null</b></p>
+        <ul>
+          <li>原因：<code>map-underscore-to-camel-case=true</code> 書き忘れ</li>
+          <li>対処：application.properties に追記 → 再起動（Vol.2 で効いてくる）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 疎通確認チェックリスト</span>
+<span class="comment">// ① Spring 起動</span>
+コンソールに：
+  Started MemoApplication in X seconds
+<span class="comment">// → 起動成功</span>
+
+<span class="comment">// ② DB接続＋データ確認</span>
+ブラウザ: http://localhost:8080/health
+表示: OK / categories = 3
+<span class="comment">// → DB接続＆初期データOK ★★★</span>
+
+<span class="comment">// ③ JUnit 動作</span>
+SmokeTest を Run As → JUnit Test
+緑のバー
+<span class="comment">// → テスト環境OK</span>
+
+
+<span class="comment">// ─── ③が赤いとき（DB接続NG）───</span>
+Caused by:
+  com.mysql.cj.jdbc.exceptions
+    .CommunicationsException:
+  Communications link failure
+
+<span class="comment">// チェック順：</span>
+<span class="comment">// 1. MySQL は起動しているか</span>
+<span class="comment">// 2. ポート3306は合っているか</span>
+<span class="comment">// 3. username/password は正しいか</span>
+<span class="comment">// 4. memo_app DBは存在するか</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">TIP — エラーは「下から読む」</div>
+    <p>Spring の長いスタックトレースは<b>一番下の「Caused by:」</b>が真の原因。上から読むと心が折れます。<b>下から読んで「Caused by」を探す</b>のが鉄則。エラーメッセージは<b>敵ではなく道案内</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>レビュー・評価＆次巻へ</h2>
+    <span class="phase-badge ph-test">PHASE: REVIEW</span>
+    <span class="en">REVIEW &amp; NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.1 の締めは<b>レビュー・評価</b>。要求が INVEST を満たすか、設計が原則に沿うか、土台が正しく動くかを自問します。<b>「動いたから終わり」ではなく「妥当だったか」を振り返る</b>のが本シリーズの作法です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">Vol.1 卒業チェック</span>
+      <span class="tag-desc">要求・設計・土台の3観点</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 要求の評価（INVEST）</div>
+        <ul class="check-list">
+          <li>WHO/WHAT/WHY を言葉にできた</li>
+          <li>ペルソナ（田中さん）を立てた</li>
+          <li>機能/非機能/制約に仕分けた</li>
+          <li>MoSCoW で v1 スコープを決めた</li>
+          <li>ユーザーストーリーに受入条件を添えた</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 設計の評価</div>
+        <ul class="check-list">
+          <li>レイヤード（3層）構造を理解した</li>
+          <li>依存は上から下への鉄則を理解した</li>
+          <li>要求の名詞から3テーブルを導いた</li>
+          <li>削除戦略（SET NULL/CASCADE）を決めた</li>
+          <li>過剰設計を避ける判断軸（YAGNI）を持った</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 土台の評価</div>
+        <ul class="check-list">
+          <li>/health で OK / categories = 3 が出た</li>
+          <li>SmokeTest が緑になった</li>
+          <li>SQLログが DEBUG で出る設定にした</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.1 で手に入れたもの</span>
+<span class="comment">// ─── 要求（REQ）───</span>
+<span class="ann">✓</span> WHO/WHAT/WHY の整理
+<span class="ann">✓</span> ペルソナ・MoSCoW
+<span class="ann">✓</span> US＋受入条件（= テスト設計図）
+
+<span class="comment">// ─── 設計（DESIGN）───</span>
+<span class="ann">✓</span> レイヤード3層
+<span class="ann">✓</span> 3テーブル + 中間テーブルDDL
+<span class="ann">✓</span> 削除戦略
+
+<span class="comment">// ─── 実装の土台（IMPL）───</span>
+<span class="ann">✓</span> Spring Boot プロジェクト
+<span class="ann">✓</span> DB接続＋初期データ
+<span class="ann">✓</span> /health 疎通確認
+
+<span class="comment">// ─── テストの土台（TEST）───</span>
+<span class="ann">✓</span> テストピラミッド理解
+<span class="ann">✓</span> JUnit/Mockito/MockMvc の役割
+<span class="ann">✓</span> SmokeTest 1本
+
+
+<span class="comment">// 次回 Vol.2：</span>
+<span class="comment">//   US-001 を要求→設計→実装→テスト</span>
+<span class="comment">//   で一気通貫。フローを初めて1周回す ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.2 へ</div>
+    <p>Vol.1 で<b>要求工学の入口</b>と<b>設計・実装・テストの土台</b>が揃いました。次は Vol.2「<b>メモCRUD（要求→設計→テスト一周目）</b>」。<b>US-001（メモ作成）の受入条件を、JUnit テストに翻訳</b>しながら memos の CRUD を実装します。<b>開発フローを初めて1周まるごと回す</b>重要回です。並行して<b>別冊S1「要求工学の基礎」</b>で理論を、<b>GitHub版Vol.1「リポジトリ初期化」</b>で運用の土台を固めると効果的。<b>本編Vol.2 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>VOL.01 / 14 ── SETUP &amp; REQUIREMENTS（本編）</span>
+</footer>
+
+</body>
+</html>

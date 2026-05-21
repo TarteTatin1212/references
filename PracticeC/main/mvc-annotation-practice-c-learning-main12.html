@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習問題集C 学習記録アプリ Vol.12 本編 統計画面・第2段（日別＋達成率）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2c25;
+  --paper:#e3ece0;
+  --paper-2:#c9dcc9;
+  --accent:#90b096;
+  --accent-2:#a5c2aa;
+  --accent-3:#1f4432;
+  --muted:#697867;
+  --line:#aec0aa;
+  --code-bg:#13211a;
+  --code-text:#e3ece0;
+  --panel-bg:#ecf3e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px}
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✦';position:absolute;right:-10px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.warn-redline{margin:32px 0 0;padding:18px 22px;background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030}
+.warn-redline .wh{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:#7a4a10;margin-bottom:8px}
+.warn-redline p{font-size:14px;color:#5a3a08;line-height:1.75}
+.warn-redline code{font-family:'JetBrains Mono',monospace;background:#fff;padding:2px 8px;border:1px solid #d4a460;color:#7a4a10}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8aa898;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:600}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(144,176,150,0.10);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'□';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:600}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+.role-card{background:#fff;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:15px;font-weight:700;margin:4px 0}
+.role-card .desc{font-size:13px;color:var(--ink)}
+
+.mock-screen{background:#fff;border:1px solid var(--line);margin:12px 0;font-family:'Noto Sans JP'}
+.mock-bar{background:#e0e0e0;padding:4px 12px;font-family:'JetBrains Mono';font-size:11px;color:#444}
+.mock-body{padding:16px}
+.mock-h{font-family:'Shippori Mincho',serif;font-size:18px;color:var(--accent-3);border-bottom:2px solid var(--accent);padding-bottom:6px;display:inline-block;margin-bottom:12px}
+.day-bar{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px}
+.day-bar .dt{font-family:'JetBrains Mono';width:90px;color:var(--muted)}
+.day-bar .bar-wrap{flex:1;background:#e8efe5;border-radius:3px;height:18px;position:relative}
+.day-bar .bar-fill{height:100%;background:var(--accent);border-radius:3px}
+.day-bar .vl{font-family:'JetBrains Mono';width:50px;text-align:right;color:var(--accent-3);font-weight:600}
+.day-bar.zero .bar-wrap{opacity:0.4}
+.achieve-box{background:#fafdf8;border:1px solid var(--line);padding:12px 16px;margin:10px 0;display:flex;justify-content:space-between;align-items:center}
+.achieve-box .lbl{font-family:'Shippori Mincho',serif;color:var(--accent-3)}
+.achieve-box .pct{font-family:'JetBrains Mono';font-size:20px;font-weight:700;color:var(--accent)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">MVC ＆ ANNOTATION ── PRACTICE BOOK C</span>
+    <span class="vol-tag">VOL.12 / 15</span>
+    <span class="kind-tag">本編</span>
+  </div>
+  <h1>統計画面・第2段<br>（日別＋達成率）</h1>
+  <div class="subtitle">DASHBOARD vol.2 ── TIME SERIES & ACHIEVEMENT RATE</div>
+  <p class="lead">
+    Vol.12は<b>「時系列集計」</b>のマイルストーン。Cの<b>統計フェーズの最終段</b>です。<br>
+    これまでは「科目別」の集計でしたが、今巻は<b>「日別」</b>──時間軸での集計に挑みます。<code style="font-family:'JetBrains Mono'">GROUP BY studied_on</code> で日ごとの学習時間を出し、<b>推移を棒グラフ風に視覚化</b>。さらに<b>「目標時間に対する達成率」</b>も計算します。<br>
+    時系列特有の課題<b>「記録のない日（欠損日）をどう扱うか」</b>にも踏み込む、統計フェーズの集大成。
+  </p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら</div>
+    <p>Vol.12では新DTO <code>DailyStat</code>（Mapper用）と <code>DailyStatView</code>（画面用）を <code>com.example.todo.dto</code> に追加します。<br>
+    Service で日付処理に <code>java.time.LocalDate</code> を使うので import が必要。「欠損日を埋める」処理で <code>LocalDate.plusDays()</code> 等を使います。<code>Ctrl + Shift + O</code> で解決。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#mission">01 この巻でやること</a></li>
+    <li><a href="#image">02 完成イメージ</a></li>
+    <li><a href="#prereq">03 必要な前提知識</a></li>
+    <li><a href="#timeseries">04 時系列集計の考え方</a></li>
+    <li><a href="#missing-days">05 欠損日をどう扱うか</a></li>
+    <li><a href="#create">06 ファイル作成と改修</a></li>
+    <li><a href="#run">07 ブラウザで動かして確認</a></li>
+    <li><a href="#trouble">08 ハマりどころと対処</a></li>
+    <li><a href="#next">09 動作確認＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="mission">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>この巻でやること（ミッション）</h2>
+    <span class="en">MISSION</span>
+  </div>
+  <p class="pattern-desc">Vol.12では<b>「日別の学習時間」</b>を集計し、<b>推移グラフ</b>と<b>達成率</b>を表示します。「時間軸の集計」という新しい視点を獲得。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol.12-mission</span>
+      <span class="tag-desc">この巻の3つのゴール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのゴール</div>
+        <div class="role-card">
+          <span class="label">GOAL 1</span>
+          <div class="name">日別の学習時間を集計する</div>
+          <div class="desc"><code>GROUP BY studied_on</code> で「その日の合計学習時間」を出す。科目をまたいだ<b>日単位の集計</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 2</span>
+          <div class="name">欠損日を埋めて連続表示</div>
+          <div class="desc">記録のない日も「0分」として表示。<b>カレンダー的に連続した日付</b>を Service で生成して埋める。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">GOAL 3</span>
+          <div class="name">目標達成率を表示</div>
+          <div class="desc">「1日の目標 = 60分」に対する達成率を計算。<b>日別の達成バー</b>と<b>期間全体の達成率</b>を出す。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 完成後の動作</span>
+
+GET /stats/daily
+  ↓
+
+[ 日別 学習時間 ]
+目標: 1日 60分
+期間達成率: 75%（8日中6日達成）
+
+2026-05-08  ████████████ 60分 ✓
+2026-05-09  ░░░░░░░░░░░░  0分
+2026-05-10  ██████████████████ 90分 ✓
+2026-05-11  ████████ 45分
+2026-05-12  ████████████████████████ 120分 ✓
+2026-05-13  ░░░░░░░░░░░░  0分
+2026-05-14  ████████████████ 80分 ✓
+2026-05-15  ████████████ 60分 ✓
+
+
+<span class="comment">// 内部のSQL（日別集計）</span>
+SELECT
+  studied_on AS studiedOn,
+  SUM(minutes) AS totalMinutes
+FROM study_records
+GROUP BY studied_on
+ORDER BY studied_on
+
+
+<span class="comment">// → 日付ごとに合計時間が出る</span>
+<span class="comment">// → 「時間軸での集計」</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「科目別」と「日別」は<b>同じ集計でも視点が違う</b>。科目別は<b>「何に時間を使ったか」</b>、日別は<b>「いつ頑張ったか」</b>。時系列集計は<b>「習慣の可視化」</b>に直結する重要技術。学習記録アプリの<b>本来の価値</b>がここで完成します。</p>
+  </div>
+</section>
+
+<section id="image">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>完成イメージ ── ブラウザで見える画面</h2>
+    <span class="en">FINISHED IMAGE</span>
+  </div>
+  <p class="pattern-desc">Vol.12 のゴール画面は<b>日別の学習時間グラフ＋達成率</b>。「いつ頑張ったか」が一目で分かる。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">target-screen</span>
+      <span class="tag-desc">完成画面のモック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// /stats/daily の画面</div>
+        <div class="mock-screen">
+          <div class="mock-bar">▮ http://localhost:8080/stats/daily</div>
+          <div class="mock-body">
+            <div class="mock-h">日別 学習時間</div>
+            <div class="achieve-box"><span class="lbl">期間達成率（目標 60分/日）</span><span class="pct">75%</span></div>
+            <div class="day-bar"><span class="dt">05-08</span><span class="bar-wrap"><span class="bar-fill" style="width:50%"></span></span><span class="vl">60分</span></div>
+            <div class="day-bar zero"><span class="dt">05-09</span><span class="bar-wrap"></span><span class="vl">0分</span></div>
+            <div class="day-bar"><span class="dt">05-10</span><span class="bar-wrap"><span class="bar-fill" style="width:75%"></span></span><span class="vl">90分</span></div>
+            <div class="day-bar"><span class="dt">05-11</span><span class="bar-wrap"><span class="bar-fill" style="width:37%"></span></span><span class="vl">45分</span></div>
+            <div class="day-bar"><span class="dt">05-12</span><span class="bar-wrap"><span class="bar-fill" style="width:100%"></span></span><span class="vl">120分</span></div>
+            <div class="day-bar zero"><span class="dt">05-13</span><span class="bar-wrap"></span><span class="vl">0分</span></div>
+            <div class="day-bar"><span class="dt">05-14</span><span class="bar-wrap"><span class="bar-fill" style="width:66%"></span></span><span class="vl">80分</span></div>
+          </div>
+        </div>
+        <p style="margin-top:12px;font-size:13px"><b>記録のない日（05-09, 05-13）も表示</b>。欠損日を埋める処理の成果。「習慣の途切れ」が可視化される。</p>
+      </div>
+      <div class="code"><span class="code-head">// プロジェクト構造の変化</span>
+
+todo/
+├ src/main/java/com/example/todo/
+│  ├ dto/
+│  │  ├ <span class="kw">DailyStat.java</span>          <span class="comment">// ★ 新規（Mapper用）</span>
+│  │  └ <span class="kw">DailyStatView.java</span>      <span class="comment">// ★ 新規（画面用）</span>
+│  ├ mapper/
+│  │  └ StudyRecordMapper.java <span class="comment">// 改修</span>
+│  │      <span class="kw">// + findDailyStats()</span>
+│  ├ service/
+│  │  └ <span class="kw">StatsService.java</span>       <span class="comment">// ★ 新規</span>
+│  │      <span class="kw">// （統計ロジック専用に切り出し）</span>
+│  └ controller/
+│     └ StatsController.java   <span class="comment">// 改修</span>
+│         <span class="kw">// + /stats/daily</span>
+└ src/main/resources/
+   ├ mybatis/
+   │  └ StudyRecordMapper.xml  <span class="comment">// 改修 or @Select</span>
+   └ templates/stats/
+      └ <span class="kw">daily.html</span>            <span class="comment">// ★ 新規</span>
+
+
+<span class="comment">// ★ Service を分割：StatsService 新設</span>
+<span class="comment">// 統計が増えてきたので専用Serviceに集約</span>
+<span class="comment">// （SubjectService から統計ロジックを移行）</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="prereq">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>必要な前提知識</h2>
+    <span class="en">PREREQUISITES</span>
+  </div>
+  <p class="pattern-desc">Vol.12 は<b>集計（Vol.9）＋日付（Vol.7）＋画面用DTO（Vol.10）の総合</b>。さらに<b>Java での日付ループ処理</b>が加わります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">prerequisites</span>
+      <span class="tag-desc">前提知識</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前提知識</div>
+        <table class="compare-tbl">
+          <tr><th>知識</th><th>該当箇所</th></tr>
+          <tr><td>集計クエリ（GROUP BY）</td><td>本編 M9</td></tr>
+          <tr><td>LocalDate / 日付処理</td><td>本編 M7 / 別冊 S7</td></tr>
+          <tr><td>日付計算（plusDays等）</td><td>別冊 S7</td></tr>
+          <tr><td>画面用DTO / Service変換</td><td>本編 M10</td></tr>
+          <tr><td>GROUP BY 関数式</td><td>別冊 S9</td></tr>
+        </table>
+        <div style="margin-top:16px;font-size:13.5px"><b>新しく学ぶこと</b>：</div>
+        <ol class="step-list" style="margin-top:6px">
+          <li>日付での GROUP BY（時系列集計）</li>
+          <li>欠損日を Java で埋める処理</li>
+          <li>LocalDate を使った日付ループ</li>
+          <li>Map を使った日付→値の引き当て</li>
+          <li>達成率の計算</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// 「科目別」と「日別」の違い</span>
+
+<span class="comment">// ─── 科目別（Vol.9〜11）───</span>
+GROUP BY s.id, s.name
+<span class="comment">// → 科目ごとにまとめる</span>
+<span class="comment">// → 「何を勉強したか」</span>
+
+
+<span class="comment">// ─── 日別（Vol.12）───</span>
+GROUP BY studied_on
+<span class="comment">// → 日付ごとにまとめる</span>
+<span class="comment">// → 「いつ勉強したか」</span>
+
+
+<span class="comment">// ─── 時系列特有の課題 ───</span>
+
+<span class="comment">// 科目別: 全科目が subjects テーブルにある</span>
+<span class="comment">//   → LEFT JOIN で全科目を出せる</span>
+
+<span class="comment">// 日別: 「全部の日」のテーブルは無い</span>
+<span class="comment">//   → 記録のない日は SQL結果に出てこない</span>
+<span class="comment">//   → Java で日付を生成して埋める</span>
+
+
+<span class="comment">// これが「欠損日問題」</span>
+<span class="comment">// セクション05 で詳しく</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="timeseries">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>時系列集計の考え方</h2>
+    <span class="en">TIME SERIES AGGREGATION</span>
+  </div>
+  <p class="pattern-desc">時系列集計は<b>「日付でグループ化」</b>するだけ。SQL自体はシンプル。難しいのは<b>「結果の見せ方」と「欠損日」</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">timeseries-sql</span>
+      <span class="tag-desc">日別集計SQL</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 日別集計のSQL</div>
+        <p>「日付でグループ化して合計」── これだけ。<code>studied_on</code> が <code>DATE</code> 型なので、そのまま GROUP BY できます。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">DATETIME の場合は工夫が必要</div>
+          <p><code>studied_on</code> が <code>DATE</code> 型なら<b>そのまま GROUP BY</b>できます。もし <code>DATETIME</code> なら、時刻まで含むので「同じ日でも別グループ」になる。その場合は <code>GROUP BY DATE(created_at)</code> のように<b>日付部分だけ取り出す</b>。Cの <code>studied_on</code> は DATE なので問題なし。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 日別集計SQL と結果</span>
+
+<span class="comment">// ─── SQL ───</span>
+SELECT
+  studied_on   AS studiedOn,
+  SUM(minutes) AS totalMinutes,
+  COUNT(*)     AS recordCount
+FROM study_records
+GROUP BY studied_on
+ORDER BY studied_on;
+
+
+<span class="comment">// ─── 結果（記録のある日だけ）───</span>
+<span class="comment">// studiedOn  | totalMinutes | recordCount</span>
+<span class="comment">// 2026-05-08 |     60       |     1</span>
+<span class="comment">// 2026-05-10 |     90       |     1</span>
+<span class="comment">// 2026-05-11 |     45       |     1</span>
+<span class="comment">// 2026-05-12 |    120       |     2</span>
+<span class="comment">// 2026-05-14 |     80       |     1</span>
+<span class="comment">// 2026-05-15 |     60       |     1</span>
+
+
+<span class="comment">// ─── 注目：05-09 と 05-13 が無い ───</span>
+
+<span class="comment">// 記録のない日は SQL結果に出ない</span>
+<span class="comment">// study_records にその日の行がないから</span>
+
+<span class="comment">// → 「6日分」しか返ってこない</span>
+<span class="comment">// → でも画面では「8日連続」で見せたい</span>
+<span class="comment">// → 欠損日を埋める処理が必要（次セクション）</span>
+
+
+<span class="comment">// ─── 期間で絞る場合 ───</span>
+SELECT studied_on AS studiedOn,
+       SUM(minutes) AS totalMinutes
+FROM study_records
+WHERE studied_on &gt;= #{from}
+  AND studied_on &lt;= #{to}
+GROUP BY studied_on
+ORDER BY studied_on;
+
+<span class="comment">// 「5月の日別」など期間限定集計も可能</span>
+<span class="comment">// WHERE で集計前に絞る（S11の原則）</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="missing-days">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>欠損日をどう扱うか</h2>
+    <span class="en">HANDLING MISSING DAYS</span>
+  </div>
+  <p class="pattern-desc">時系列集計の<b>最大の難所</b>。「記録のない日」は SQL結果に出てこないので、<b>Java側で連続した日付を生成して埋める</b>。これが時系列の定石です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">fill-missing</span>
+      <span class="tag-desc">欠損日を埋める2つの方法</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 欠損日を埋める2方法</div>
+        <div class="role-card">
+          <span class="label">方法A</span>
+          <div class="name">Java で日付を生成して埋める（採用）</div>
+          <div class="desc">SQLの結果を <code>Map&lt;LocalDate, Integer&gt;</code> にし、<b>開始日から終了日まで Java でループ</b>。Map にない日は 0分とする。<b>シンプルで分かりやすい</b>。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">方法B</span>
+          <div class="name">SQL で日付マスタを作って LEFT JOIN</div>
+          <div class="desc">「カレンダーテーブル」や再帰CTEで全日付を生成し、集計結果と LEFT JOIN。<b>高度だがSQLが複雑</b>。大規模向け。</div>
+        </div>
+        <p style="margin-top:14px;font-size:13.5px"><b>Vol.12 では方法A</b>を採用。「<b>SQLはシンプルに・Javaで補完</b>」の方針。学習記録アプリの規模なら十分。</p>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">方法Aの流れ</div>
+          <p>① SQLで「記録のある日」だけ取得 → ② <code>Map&lt;LocalDate, Integer&gt;</code> に変換 → ③ 開始日〜終了日を <code>plusDays(1)</code> でループ → ④ 各日について Map から値を引く（なければ 0）→ ⑤ 連続した <code>DailyStatView</code> リストを作る。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 方法A：Javaで欠損日を埋める</span>
+
+<span class="comment">// ─── ① SQLで記録のある日だけ取得 ───</span>
+<span class="type">List</span>&lt;<span class="type">DailyStat</span>&gt; stats =
+    mapper.<span class="fn">findDailyStats</span>();
+<span class="comment">// → 6日分（05-09, 05-13 は無い）</span>
+
+
+<span class="comment">// ─── ② Map に変換（日付→分）───</span>
+<span class="type">Map</span>&lt;<span class="type">LocalDate</span>, <span class="type">Integer</span>&gt; map =
+    <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();
+<span class="kw">for</span> (<span class="type">DailyStat</span> s : stats) {
+  map.<span class="fn">put</span>(s.<span class="fn">getStudiedOn</span>(),
+          s.<span class="fn">getTotalMinutes</span>());
+}
+
+
+<span class="comment">// ─── ③〜⑤ 連続した日付でループ ───</span>
+<span class="type">LocalDate</span> start = <span class="type">LocalDate</span>.<span class="fn">of</span>(
+    <span class="num">2026</span>, <span class="num">5</span>, <span class="num">8</span>);
+<span class="type">LocalDate</span> end = <span class="type">LocalDate</span>.<span class="fn">of</span>(
+    <span class="num">2026</span>, <span class="num">5</span>, <span class="num">15</span>);
+
+<span class="type">List</span>&lt;<span class="type">DailyStatView</span>&gt; views =
+    <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+
+<span class="type">LocalDate</span> d = start;
+<span class="kw">while</span> (!d.<span class="fn">isAfter</span>(end)) {
+  <span class="comment">// Map にあればその値、なければ 0</span>
+  <span class="kw">int</span> min = map.<span class="fn">getOrDefault</span>(d, <span class="num">0</span>);
+
+  <span class="type">DailyStatView</span> v = <span class="kw">new</span> <span class="type">DailyStatView</span>();
+  v.<span class="fn">setStudiedOn</span>(d);
+  v.<span class="fn">setTotalMinutes</span>(min);
+  views.<span class="fn">add</span>(v);
+
+  d = d.<span class="fn">plusDays</span>(<span class="num">1</span>);  <span class="comment">// 翌日へ</span>
+}
+
+<span class="comment">// → 8日分の連続したリストが完成</span>
+<span class="comment">// → 05-09, 05-13 は 0分で埋まる</span>
+
+
+<span class="comment">// ─── getOrDefault が決め手 ───</span>
+<span class="comment">// map.getOrDefault(key, 0)</span>
+<span class="comment">// = キーがあれば値、なければ 0</span>
+<span class="comment">// → 欠損日を綺麗に 0 埋め</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">POINT ──</div>
+    <p>「<b>記録のない日も見せる</b>」のは、学習記録アプリでは<b>重要なUX</b>。「<b>5月9日はサボった</b>」が見えることで、ユーザーは習慣の途切れを自覚できる。<b>欠損日を消してしまうと「毎日やっている」ように錯覚</b>する。<b>「ないことを見せる」のも情報</b>です。</p>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ファイル作成と改修</h2>
+    <span class="en">CREATE & MODIFY</span>
+  </div>
+  <p class="pattern-desc"><b>新規 DTO 2つ＋StatsService 新設＋Mapper改修＋Controller改修＋HTML新規</b>。Service を統計専用に切り出すのが今巻のポイント。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-dtos</span>
+      <span class="tag-desc">① DailyStat / DailyStatView（新規2つ）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>dto</code> パッケージに <code>DailyStat</code> クラス作成（Mapper用）</li>
+          <li>同じく <code>DailyStatView</code> クラス作成（画面用）</li>
+          <li>それぞれ右のコードを書く</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">2つのDTOの役割</div>
+          <p>Vol.10 と同じ「Mapper用 / 画面用」の分離。<code>DailyStat</code> は SQL結果そのまま、<code>DailyStatView</code> は「日付テキスト」「達成フラグ」「バーの幅%」など画面用フィールド付き。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// DailyStat.java（Mapper用・新規）</span>
+
+<span class="kw">package</span> com.example.todo.dto;
+
+<span class="kw">import</span> java.time.LocalDate;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">DailyStat</span> {
+  <span class="kw">private</span> <span class="type">LocalDate</span> studiedOn;
+  <span class="kw">private</span> <span class="type">Integer</span> totalMinutes;
+  <span class="kw">private</span> <span class="type">Integer</span> recordCount;
+}
+
+
+<span class="comment">// DailyStatView.java（画面用・新規）</span>
+
+<span class="kw">package</span> com.example.todo.dto;
+
+<span class="kw">import</span> java.time.LocalDate;
+<span class="kw">import</span> lombok.Data;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">DailyStatView</span> {
+  <span class="kw">private</span> <span class="type">LocalDate</span> studiedOn;
+  <span class="kw">private</span> <span class="type">Integer</span> totalMinutes;
+
+  <span class="comment">// ★ 画面用フィールド</span>
+  <span class="kw">private</span> <span class="type">String</span> dateText;     <span class="comment">// "05-08"</span>
+  <span class="kw">private</span> <span class="type">String</span> timeText;     <span class="comment">// "1時間"</span>
+  <span class="kw">private</span> <span class="type">Integer</span> barWidth;    <span class="comment">// 0〜100</span>
+  <span class="kw">private</span> <span class="kw">boolean</span> achieved;   <span class="comment">// 目標達成?</span>
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・DailyStat: SQL の AS と対応</span>
+<span class="comment">// ・DailyStatView: 表示加工済み</span>
+<span class="comment">// ・achieved は目標達成フラグ</span>
+<span class="comment">// ・barWidth は棒グラフの幅(%)</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-mapper</span>
+      <span class="tag-desc">② StudyRecordMapper に findDailyStats 追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>StudyRecordMapper.java</code> に <code>findDailyStats()</code> を追加</li>
+          <li>アノテーション <code>@Select</code> で日別集計SQLを書く（XMLでも可）</li>
+          <li>import に <code>DailyStat</code> を追加</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">アノテーション or XML</div>
+          <p>シンプルな集計なので <code>@Select</code> アノテーションでもOK。複雑なら XML へ。Vol.12 では<b>@Select で簡潔に</b>書きます。「シンプルなSQLはアノテーション、複雑ならXML」の判断（A v2・Vol.3 で学んだ通り）。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// StudyRecordMapper.java（追加部分）</span>
+
+<span class="kw">import</span> com.example.todo.dto.DailyStat;
+<span class="kw">import</span> org.apache.ibatis.annotations.Select;
+<span class="comment">// 他のimportは省略</span>
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">StudyRecordMapper</span> {
+
+  <span class="comment">// 既存メソッド省略 ...</span>
+
+  <span class="comment">// ★ Vol.12で追加：日別集計</span>
+  <span class="ann">@Select</span>(<span class="str">"SELECT "</span>
+        + <span class="str">"  studied_on AS studiedOn, "</span>
+        + <span class="str">"  SUM(minutes) AS totalMinutes, "</span>
+        + <span class="str">"  COUNT(*) AS recordCount "</span>
+        + <span class="str">"FROM study_records "</span>
+        + <span class="str">"GROUP BY studied_on "</span>
+        + <span class="str">"ORDER BY studied_on"</span>)
+  <span class="type">List</span>&lt;<span class="type">DailyStat</span>&gt; <span class="fn">findDailyStats</span>();
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・@Select アノテーションで簡潔に</span>
+<span class="comment">// ・AS で DailyStat のフィールド名と一致</span>
+<span class="comment">// ・studied_on → studiedOn（キャメル）</span>
+<span class="comment">// ・記録のある日だけ返る（欠損日は無い）</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-stats-service</span>
+      <span class="tag-desc">③ StatsService（新規・統計専用）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>service</code> パッケージに <code>StatsService</code> 作成</li>
+          <li><code>findDailyStatViews()</code> を実装（欠損日埋め＋達成率）</li>
+          <li>import を整理</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">なぜ Service を分けるか</div>
+          <p>統計ロジックが増えてきたので、<b>SubjectService から統計を独立</b>させて <code>StatsService</code> に集約します。<b>「責務でクラスを分ける」</b>のリファクタリング。1クラスが大きくなりすぎるのを防ぐ業務の定石。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// StatsService.java（新規・主要部分）</span>
+
+<span class="kw">package</span> com.example.todo.service;
+
+<span class="kw">import</span> java.time.LocalDate;
+<span class="kw">import</span> java.util.*;
+<span class="kw">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="kw">import</span> org.springframework.stereotype.Service;
+<span class="kw">import</span> org.springframework.transaction.annotation.Transactional;
+<span class="kw">import</span> com.example.todo.dto.DailyStat;
+<span class="kw">import</span> com.example.todo.dto.DailyStatView;
+<span class="kw">import</span> com.example.todo.mapper.StudyRecordMapper;
+
+<span class="ann">@Service</span>
+<span class="ann">@Transactional</span>
+<span class="kw">public class</span> <span class="type">StatsService</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">StudyRecordMapper</span> studyRecordMapper;
+
+  <span class="kw">private static final</span> <span class="kw">int</span> GOAL = <span class="num">60</span>;
+  <span class="comment">// 1日の目標(分)</span>
+
+  <span class="kw">public</span> <span class="type">List</span>&lt;<span class="type">DailyStatView</span>&gt;
+       <span class="fn">findDailyStatViews</span>(
+           <span class="type">LocalDate</span> start, <span class="type">LocalDate</span> end) {
+
+    <span class="comment">// ① SQLで記録のある日だけ取得</span>
+    <span class="type">List</span>&lt;<span class="type">DailyStat</span>&gt; stats =
+        studyRecordMapper.<span class="fn">findDailyStats</span>();
+
+    <span class="comment">// ② Map に変換</span>
+    <span class="type">Map</span>&lt;<span class="type">LocalDate</span>, <span class="type">Integer</span>&gt; map =
+        <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="type">DailyStat</span> s : stats) {
+      map.<span class="fn">put</span>(s.<span class="fn">getStudiedOn</span>(),
+              s.<span class="fn">getTotalMinutes</span>());
+    }
+
+    <span class="comment">// ③ 連続した日付でループ・欠損日埋め</span>
+    <span class="type">List</span>&lt;<span class="type">DailyStatView</span>&gt; views =
+        <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+    <span class="type">LocalDate</span> d = start;
+    <span class="kw">while</span> (!d.<span class="fn">isAfter</span>(end)) {
+      <span class="kw">int</span> min = map.<span class="fn">getOrDefault</span>(d, <span class="num">0</span>);
+
+      <span class="type">DailyStatView</span> v = <span class="kw">new</span> <span class="type">DailyStatView</span>();
+      v.<span class="fn">setStudiedOn</span>(d);
+      v.<span class="fn">setTotalMinutes</span>(min);
+      v.<span class="fn">setDateText</span>(
+          <span class="type">String</span>.<span class="fn">format</span>(<span class="str">"%02d-%02d"</span>,
+              d.<span class="fn">getMonthValue</span>(),
+              d.<span class="fn">getDayOfMonth</span>()));
+      v.<span class="fn">setTimeText</span>(<span class="fn">formatMinutes</span>(min));
+      <span class="comment">// バー幅: 120分を100%とする</span>
+      v.<span class="fn">setBarWidth</span>(
+          <span class="type">Math</span>.<span class="fn">min</span>(<span class="num">100</span>, min * <span class="num">100</span> / <span class="num">120</span>));
+      v.<span class="fn">setAchieved</span>(min &gt;= GOAL);
+      views.<span class="fn">add</span>(v);
+
+      d = d.<span class="fn">plusDays</span>(<span class="num">1</span>);
+    }
+    <span class="kw">return</span> views;
+  }
+
+  <span class="comment">// 期間達成率（達成日 / 全日数）</span>
+  <span class="kw">public</span> <span class="kw">int</span> <span class="fn">calcAchievementRate</span>(
+      <span class="type">List</span>&lt;<span class="type">DailyStatView</span>&gt; views) {
+    <span class="kw">if</span> (views.<span class="fn">isEmpty</span>()) <span class="kw">return</span> <span class="num">0</span>;
+    <span class="kw">long</span> achievedDays = views.<span class="fn">stream</span>()
+        .<span class="fn">filter</span>(<span class="type">DailyStatView</span>::<span class="fn">isAchieved</span>)
+        .<span class="fn">count</span>();
+    <span class="kw">return</span> (<span class="kw">int</span>) (achievedDays * <span class="num">100</span>
+        / views.<span class="fn">size</span>());
+  }
+
+  <span class="kw">private</span> <span class="type">String</span> <span class="fn">formatMinutes</span>(<span class="kw">int</span> min) {
+    <span class="kw">if</span> (min &lt;= <span class="num">0</span>) <span class="kw">return</span> <span class="str">"0分"</span>;
+    <span class="kw">int</span> h = min / <span class="num">60</span>, m = min % <span class="num">60</span>;
+    <span class="kw">if</span> (h == <span class="num">0</span>) <span class="kw">return</span> m + <span class="str">"分"</span>;
+    <span class="kw">if</span> (m == <span class="num">0</span>) <span class="kw">return</span> h + <span class="str">"時間"</span>;
+    <span class="kw">return</span> h + <span class="str">"時間 "</span> + m + <span class="str">"分"</span>;
+  }
+}</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">modify-controller</span>
+      <span class="tag-desc">④ StatsController に /stats/daily 追加</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>StatsController.java</code> を開く</li>
+          <li><code>StatsService</code> を <code>@Autowired</code></li>
+          <li><code>/stats/daily</code> のメソッドを追加</li>
+          <li>期間（start/end）を計算して Service に渡す</li>
+          <li>保存</li>
+        </ol>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">期間の決め方</div>
+          <p>Vol.12 ではシンプルに<b>「データの最小日〜最大日」</b>または<b>「直近7日」</b>を期間とします。ここでは<b>固定で 2026-05-08〜05-15</b> の例で進めますが、業務では <code>@RequestParam</code> で期間指定できるようにするのが定石（Vol.6・Vol.8 の応用）。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// StatsController.java（追加部分）</span>
+
+<span class="kw">import</span> java.time.LocalDate;
+<span class="kw">import</span> com.example.todo.dto.DailyStatView;
+<span class="kw">import</span> com.example.todo.service.StatsService;
+<span class="comment">// 他のimportは省略</span>
+
+<span class="ann">@Controller</span>
+<span class="kw">public class</span> <span class="type">StatsController</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">SubjectService</span> subjectService;
+
+  <span class="ann">@Autowired</span>
+  <span class="kw">private</span> <span class="type">StatsService</span> statsService;  <span class="comment">// ★追加</span>
+
+  <span class="comment">// 既存の /stats は省略 ...</span>
+
+  <span class="comment">// ★ Vol.12で追加</span>
+  <span class="ann">@GetMapping</span>(<span class="str">"/stats/daily"</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">daily</span>(<span class="type">Model</span> model) {
+
+    <span class="comment">// 期間（例：固定。業務では@RequestParam）</span>
+    <span class="type">LocalDate</span> start = <span class="type">LocalDate</span>.<span class="fn">of</span>(
+        <span class="num">2026</span>, <span class="num">5</span>, <span class="num">8</span>);
+    <span class="type">LocalDate</span> end = <span class="type">LocalDate</span>.<span class="fn">of</span>(
+        <span class="num">2026</span>, <span class="num">5</span>, <span class="num">15</span>);
+
+    <span class="type">List</span>&lt;<span class="type">DailyStatView</span>&gt; views =
+        statsService.<span class="fn">findDailyStatViews</span>(
+            start, end);
+
+    <span class="kw">int</span> rate = statsService
+        .<span class="fn">calcAchievementRate</span>(views);
+
+    model.<span class="fn">addAttribute</span>(<span class="str">"days"</span>, views);
+    model.<span class="fn">addAttribute</span>(<span class="str">"rate"</span>, rate);
+    model.<span class="fn">addAttribute</span>(<span class="str">"goal"</span>, <span class="num">60</span>);
+
+    <span class="kw">return</span> <span class="str">"stats/daily"</span>;
+  }
+}
+
+
+<span class="comment">// ─── ポイント ───</span>
+<span class="comment">// ・StatsService を注入</span>
+<span class="comment">// ・期間を決めて Service に渡す</span>
+<span class="comment">// ・達成率も model に</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">create-template</span>
+      <span class="tag-desc">⑤ templates/stats/daily.html（新規）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li><code>templates/stats</code> に <code>daily.html</code> 作成</li>
+          <li>達成率ボックス＋日別バーを表示</li>
+          <li>バー幅は <code>th:style</code> で動的指定</li>
+          <li>達成日は色を変える（th:class）</li>
+          <li>保存</li>
+        </ol>
+      </div>
+      <div class="code"><span class="code-head">// templates/stats/daily.html（新規）</span>
+
+&lt;!<span class="type">DOCTYPE</span> html&gt;
+&lt;<span class="kw">html</span> <span class="ann">xmlns:th</span>=<span class="str">"http://www.thymeleaf.org"</span>&gt;
+&lt;<span class="kw">head</span>&gt;
+  &lt;<span class="kw">meta</span> <span class="ann">charset</span>=<span class="str">"UTF-8"</span>&gt;
+  &lt;<span class="kw">title</span>&gt;日別 学習時間&lt;/<span class="kw">title</span>&gt;
+  &lt;<span class="kw">style</span>&gt;
+    body { font-family: sans-serif;
+           max-width: 720px;
+           margin: 30px auto;
+           padding: 0 20px; }
+    h1 { border-bottom: 2px solid #648b6e;
+         padding-bottom: 8px; }
+    .rate {
+      background: #fafdf8;
+      border: 1px solid #ddd;
+      padding: 14px 18px;
+      margin: 16px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .rate .pct { font-size: 24px;
+                 font-weight: bold;
+                 color: #648b6e; }
+    .day { display: flex;
+           align-items: center;
+           gap: 8px;
+           margin: 5px 0; }
+    .day .dt { font-family: monospace;
+               width: 70px;
+               color: #666; }
+    .day .barwrap { flex: 1;
+                    background: #eef3eb;
+                    height: 18px;
+                    border-radius: 3px; }
+    .day .fill { height: 100%;
+                 background: #90b096;
+                 border-radius: 3px; }
+    .day.ok .fill { background: #4f8a5e; }
+    .day .vl { width: 60px;
+               text-align: right;
+               font-family: monospace;
+               font-weight: bold; }
+    .day .ck { width: 20px; color: #4f8a5e; }
+  &lt;/<span class="kw">style</span>&gt;
+&lt;/<span class="kw">head</span>&gt;
+&lt;<span class="kw">body</span>&gt;
+  &lt;<span class="kw">h1</span>&gt;日別 学習時間&lt;/<span class="kw">h1</span>&gt;
+
+  &lt;<span class="kw">div</span> <span class="ann">class</span>=<span class="str">"rate"</span>&gt;
+    &lt;<span class="kw">span</span>&gt;期間達成率
+      （目標 &lt;<span class="kw">span</span> <span class="ann">th:text</span>=<span class="str">"${goal}"</span>&gt;&lt;/<span class="kw">span</span>&gt;分/日）
+    &lt;/<span class="kw">span</span>&gt;
+    &lt;<span class="kw">span</span> <span class="ann">class</span>=<span class="str">"pct"</span>
+          <span class="ann">th:text</span>=<span class="str">"${rate} + '%'"</span>&gt;&lt;/<span class="kw">span</span>&gt;
+  &lt;/<span class="kw">div</span>&gt;
+
+  &lt;<span class="kw">div</span> <span class="ann">th:each</span>=<span class="str">"day : ${days}"</span>
+       <span class="ann">th:class</span>=<span class="str">"${day.achieved}
+                 ? 'day ok' : 'day'"</span>&gt;
+    &lt;<span class="kw">span</span> <span class="ann">class</span>=<span class="str">"dt"</span>
+          <span class="ann">th:text</span>=<span class="str">"${day.dateText}"</span>&gt;&lt;/<span class="kw">span</span>&gt;
+    &lt;<span class="kw">span</span> <span class="ann">class</span>=<span class="str">"barwrap"</span>&gt;
+      &lt;<span class="kw">span</span> <span class="ann">class</span>=<span class="str">"fill"</span>
+            <span class="ann">th:style</span>=<span class="str">"'width: ' +
+                      ${day.barWidth} + '%'"</span>&gt;
+      &lt;/<span class="kw">span</span>&gt;
+    &lt;/<span class="kw">span</span>&gt;
+    &lt;<span class="kw">span</span> <span class="ann">class</span>=<span class="str">"vl"</span>
+          <span class="ann">th:text</span>=<span class="str">"${day.timeText}"</span>&gt;&lt;/<span class="kw">span</span>&gt;
+    &lt;<span class="kw">span</span> <span class="ann">class</span>=<span class="str">"ck"</span>
+          <span class="ann">th:text</span>=<span class="str">"${day.achieved}
+                    ? '✓' : ''"</span>&gt;&lt;/<span class="kw">span</span>&gt;
+  &lt;/<span class="kw">div</span>&gt;
+
+  &lt;<span class="kw">p</span>&gt;&lt;<span class="kw">a</span> <span class="ann">th:href</span>=<span class="str">"@{/stats}"</span>&gt;
+    ← 科目別統計へ&lt;/<span class="kw">a</span>&gt;&lt;/<span class="kw">p</span>&gt;
+&lt;/<span class="kw">body</span>&gt;
+&lt;/<span class="kw">html</span>&gt;</div>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ブラウザで動かして確認</h2>
+    <span class="en">RUN IN BROWSER</span>
+  </div>
+  <p class="pattern-desc">起動して<code>/stats/daily</code> を開き、<b>日別グラフ</b>を確認。記録のない日が「0分」で表示されるのを見ます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">browser-check</span>
+      <span class="tag-desc">動作確認の手順</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 手順</div>
+        <ol class="step-list">
+          <li>アプリ起動中なら停止、再起動</li>
+          <li><code>http://localhost:8080/stats/daily</code> を開く</li>
+          <li>期間達成率が上部に表示される</li>
+          <li>05-08 から 05-15 まで<b>連続した日付</b>が並ぶ</li>
+          <li>記録のない日（05-09, 05-13）が「0分」で表示</li>
+          <li>目標達成日（60分以上）は色が濃く、✓ が付く</li>
+          <li>コンソールに日別集計SQLが1回流れる</li>
+        </ol>
+        <p style="margin-top:14px;font-weight:600;color:var(--accent-3);font-size:14px">✅ ここまで動けばVol.12クリア！</p>
+        <p style="margin-top:6px;font-size:13px">これで<b>統計フェーズが完結</b>。学習記録アプリの本来の価値が完成しました。</p>
+      </div>
+      <div class="code"><span class="code-head">// SQLログの確認</span>
+
+<span class="comment">// ─── /stats/daily のSQL ───</span>
+==&gt;  Preparing:
+  SELECT
+    studied_on AS studiedOn,
+    SUM(minutes) AS totalMinutes,
+    COUNT(*) AS recordCount
+  FROM study_records
+  GROUP BY studied_on
+  ORDER BY studied_on
+==&gt; Parameters:
+&lt;==      Total: 6
+<span class="comment">// → 記録のある6日分だけ返る</span>
+
+
+<span class="comment">// ─── 重要な観察 ───</span>
+
+<span class="comment">// SQL結果は 6日分（欠損あり）</span>
+<span class="comment">// 画面は 8日分（連続表示）</span>
+
+<span class="comment">// → 差分の 2日（05-09, 05-13）は</span>
+<span class="comment">//   Java が getOrDefault で 0埋め</span>
+
+<span class="comment">// → 「SQLでできない部分を</span>
+<span class="comment">//    Javaで補完する」典型例</span>
+
+
+<span class="comment">// ─── 達成率の計算確認 ───</span>
+
+<span class="comment">// 8日中、60分以上は何日?</span>
+<span class="comment">// 05-08(60✓) 05-10(90✓) 05-12(120✓)</span>
+<span class="comment">// 05-14(80✓) 05-15(60✓) → 5日</span>
+<span class="comment">// （05-11は45分で未達）</span>
+
+<span class="comment">// → 5/8 = 62.5% → 62%</span>
+<span class="comment">// （※データにより変動）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">業務での感動ポイント</div>
+    <p>「<b>SQLとJavaの役割分担</b>」が綺麗に決まった瞬間です。SQLは「ある日のデータを集計」、Javaは「ない日を埋めて連続化」。<b>「DBが得意なこと」と「アプリが得意なこと」を分担</b>するのが業務開発の腕の見せ所。時系列の欠損補完は<b>その典型例</b>です。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころと対処</h2>
+    <span class="en">TROUBLESHOOTING</span>
+  </div>
+  <p class="pattern-desc">Vol.12 でよくある<b>5つのハマりどころ</b>。時系列特有の罠が中心です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">troubles</span>
+      <span class="tag-desc">起きやすいトラブル</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくあるトラブル</div>
+        <div class="role-card">
+          <span class="label">TROUBLE 1</span>
+          <div class="name">記録のない日が表示されない</div>
+          <div class="desc"><b>原因</b>：SQL結果をそのまま画面に出した。欠損日埋め処理を入れ忘れ。<br><b>対処</b>：Service で <code>start〜end</code> をループし <code>getOrDefault</code> で 0埋め。これが今巻の核心。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 2</span>
+          <div class="name">無限ループになる</div>
+          <div class="desc"><b>原因</b>：<code>while</code> ループで <code>d = d.plusDays(1)</code> を書き忘れた。<code>LocalDate</code> は不変なので <code>plusDays</code> の戻り値を代入しないと進まない。<br><b>対処</b>：<code>d = d.plusDays(1)</code>（代入を忘れない）。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 3</span>
+          <div class="name">Map のキーで日付が一致しない</div>
+          <div class="desc"><b>原因</b>：DB から来た <code>LocalDate</code> と生成した <code>LocalDate</code> の比較。<code>LocalDate</code> は <code>equals</code> で正しく比較できるが、<code>LocalDateTime</code> だと時刻差で一致しない。<br><b>対処</b>：<code>studied_on</code> は DATE 型なので <code>LocalDate</code> で受ければOK。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 4</span>
+          <div class="name">バー幅が100%を超えて崩れる</div>
+          <div class="desc"><b>原因</b>：120分を100%とする計算で、120分超のデータがあると幅が100%超に。<br><b>対処</b>：<code>Math.min(100, ...)</code> で上限を100%に制限。</div>
+        </div>
+        <div class="role-card">
+          <span class="label">TROUBLE 5</span>
+          <div class="name">達成率が0%や変な値</div>
+          <div class="desc"><b>原因</b>：日数が0でゼロ除算、または整数除算で小数が消える。<br><b>対処</b>：<code>if (views.isEmpty()) return 0</code>。<code>achievedDays * 100 / size</code> の順（先に掛ける）。</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// TROUBLE 2: LocalDate の不変性</span>
+
+<span class="comment">// ─── ✗ NG: 進まない（無限ループ）───</span>
+<span class="type">LocalDate</span> d = start;
+<span class="kw">while</span> (!d.<span class="fn">isAfter</span>(end)) {
+  ...
+  d.<span class="fn">plusDays</span>(<span class="num">1</span>);  <span class="comment">// ← 戻り値を捨ててる！</span>
+}
+<span class="comment">// LocalDate は不変オブジェクト</span>
+<span class="comment">// plusDays は「新しいLocalDate」を返すだけ</span>
+<span class="comment">// d 自体は変わらない → 無限ループ</span>
+
+
+<span class="comment">// ─── ✓ OK: 戻り値を代入 ───</span>
+<span class="type">LocalDate</span> d = start;
+<span class="kw">while</span> (!d.<span class="fn">isAfter</span>(end)) {
+  ...
+  d = d.<span class="fn">plusDays</span>(<span class="num">1</span>);  <span class="comment">// ← 代入する</span>
+}
+
+
+<span class="code-head" style="margin-top:14px">// TROUBLE 5: 達成率の計算順序</span>
+
+<span class="comment">// ─── ✗ NG: 整数除算で先に割る ───</span>
+<span class="kw">int</span> rate = (achievedDays / size) * <span class="num">100</span>;
+<span class="comment">// 5/8 = 0（整数除算）→ 0*100 = 0%</span>
+
+
+<span class="comment">// ─── ✓ OK: 先に掛ける ───</span>
+<span class="kw">int</span> rate = (<span class="kw">int</span>)(achievedDays * <span class="num">100</span>
+                / size);
+<span class="comment">// 5*100=500 → 500/8 = 62 → 62%</span>
+
+
+<span class="comment">// 整数演算は「掛けてから割る」が鉄則</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>✅ 動作確認＆次巻へ</h2>
+    <span class="en">CHECKLIST & NEXT</span>
+  </div>
+  <p class="pattern-desc">Vol.12本編の<b>完了チェックリスト</b>。統計フェーズ完結の節目。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">vol12-checklist</span>
+      <span class="tag-desc">完了チェック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックリスト</div>
+        <ul class="check-list">
+          <li><code>DailyStat.java</code>（Mapper用）作成</li>
+          <li><code>DailyStatView.java</code>（画面用）作成</li>
+          <li><code>StudyRecordMapper</code> に <code>findDailyStats()</code> 追加</li>
+          <li><code>@Select</code> で <code>GROUP BY studied_on</code> 集計</li>
+          <li><code>StatsService.java</code> 新規作成（統計専用）</li>
+          <li>欠損日埋め処理（<code>getOrDefault</code> + 日付ループ）</li>
+          <li><code>d = d.plusDays(1)</code> の代入（不変性の罠回避）</li>
+          <li>バー幅の上限制限（<code>Math.min(100, ...)</code>）</li>
+          <li>達成率計算（掛けてから割る・ゼロ除算回避）</li>
+          <li><code>StatsController</code> に <code>/stats/daily</code> 追加</li>
+          <li><code>templates/stats/daily.html</code> 作成</li>
+          <li>アプリ起動時にエラーが出ない</li>
+          <li><code>/stats/daily</code> で連続した日付が表示</li>
+          <li>記録のない日が「0分」で表示</li>
+          <li>達成日（60分以上）に色＋✓が付く</li>
+          <li>期間達成率が上部に表示</li>
+        </ul>
+        <div style="background:#fff;border-left:3px solid var(--accent);padding:10px 14px;margin-top:14px;font-size:13px">
+          <b>全項目クリア＝Vol.12本編完了！</b><br>
+          <b>時系列集計</b>のスキル達成。統計フェーズ（Vol.9〜12）完結！
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// この巻で獲得したスキル</span>
+
+★ <span class="kw">時系列集計</span> ── 達成！
+
+  <span class="comment">// できるようになったこと:</span>
+  <span class="comment">// ・GROUP BY studied_on（日別集計）</span>
+  <span class="comment">// ・欠損日を Java で埋める</span>
+  <span class="comment">// ・LocalDate の日付ループ</span>
+  <span class="comment">// ・Map.getOrDefault での補完</span>
+  <span class="comment">// ・達成率の計算</span>
+  <span class="comment">// ・Service の責務分割（StatsService）</span>
+  <span class="comment">// ・SQLとJavaの役割分担</span>
+
+
+<span class="code-head" style="margin-top:14px">// 統計フェーズ完結！</span>
+
+<span class="comment">// Vol.9  集計の基礎（GROUP BY）</span>
+<span class="comment">// Vol.10 集計のUI化（ダッシュボード）</span>
+<span class="comment">// Vol.11 集計の応用（HAVING）</span>
+<span class="comment">// Vol.12 時系列集計（日別＋達成率）✓</span>
+
+
+<span class="code-head" style="margin-top:14px">// 次にやること</span>
+
+<span class="comment">// ① 別冊 S12「時系列データの扱い」</span>
+
+<span class="comment">// ② Vol.13 本編：</span>
+<span class="comment">//   「複数テーブル更新と@Transactional応用」</span>
+<span class="comment">//   獲得スキル: トランザクション応用</span>
+<span class="comment">//   → Cの「完成フェーズ」に突入</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(31,68,50,0.12)">
+    <div class="tip-label">NEXT STEP ── 別冊S12</div>
+    <p>本編Vol.12お疲れさまでした。<b>時系列集計</b>のスキルで<b>統計フェーズが完結</b>しました。別冊S12「<b>時系列データの扱い</b>」では、<b>「時系列データの設計」「欠損補完の戦略」「移動平均・累積」「カレンダーテーブル」「時系列のパフォーマンス」</b>を扱います。Cの統計フェーズの締めくくり。<b>続けて別冊S12へ進みましょう。</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MVC ＆ ANNOTATION ── PRACTICE BOOK C / LEARNING APP</span>
+  <span>VOL.12 / 15 ── DASHBOARD vol.2（本編）</span>
+</footer>
+
+</body>
+</html>

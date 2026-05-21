@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕GitHub版 Vol.8 GitHub ActionsでCI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2f38;
+  --paper:#f0ede4;
+  --paper-2:#e2ddc8;
+  --accent:#c95444;
+  --accent-2:#5a6270;
+  --accent-3:#2da44e;
+  --muted:#6a7080;
+  --line:#cac4b2;
+  --code-bg:#1c2026;
+  --code-text:#e8e4dc;
+  --panel-bg:#faf5e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"⎇";position:absolute;right:-10px;top:-30px;font-size:300px;color:var(--accent);opacity:0.17;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-2);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.yml-key{color:#79c0ff}
+.menu-code{color:#ffd0a0;font-weight:700}
+.prompt{color:#7eb87e}
+.gh-out{color:#a8b8c8}
+.key{background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(201,84,68,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-2);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff;font-size:12.5px}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-2);font-family:'JetBrains Mono',monospace}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.gh-mock{background:#0d1117;color:#c9d1d9;border:1px solid #2a313a;border-radius:6px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.75;margin:8px 0}
+.gh-mock .gh-bar{color:#7d8590;border-bottom:1px solid #2a313a;padding-bottom:6px;margin-bottom:8px;font-size:11px}
+.gh-mock .gh-check{color:#3fb950}
+.gh-mock .gh-x{color:#f85149}
+.gh-mock .gh-run{color:#d29922}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.GH8</span>
+    <span class="kind-tag">GitHub版 ── CI</span>
+    <span class="rdt-tag">AUTOMATED TESTING</span>
+  </div>
+  <h1>GitHub Actions で CI<br>テストを自動化する</h1>
+  <div class="subtitle">GH.08 ── CONTINUOUS INTEGRATION</div>
+  <p class="lead">RDT版の集大成。これまで<b>手で実行</b>してきたテストを、<b>push や PR のたびに自動実行</b>します。<b>GitHub Actions</b> でCI（継続的インテグレーション）を構築。Vol.GH6 のブランチ保護に<b>「テスト通過必須」</b>を追加し、<b>「壊れたコードは絶対に main に入らない」</b>品質ゲートを完成させます。別冊S3のテストが、ついに自動化されます。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 GitHub版の赤線対策</div>
+    <p>Vol.GH8で詰まる場面：YAML のインデント崩れ（スペース2つが基本、タブNG）、ワークフローファイルの置き場所（<code>.github/workflows/</code>）、CI環境にDBがなくてテスト失敗（H2なら不要、Testcontainersは設定必要）。<b>Section 07 で対処</b>。最初の CI 構築は試行錯誤が普通なので、<b>失敗ログを読んで直す</b>のが学びです。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 この巻のミッション</a></li>
+    <li><a href="#s02">02 CIとは何か</a></li>
+    <li><a href="#s03">03 GitHub Actions の構造</a></li>
+    <li><a href="#s04">04 CIワークフローを書く</a></li>
+    <li><a href="#s05">05 CIの動作とPR連携</a></li>
+    <li><a href="#s06">06 ステータスチェック必須化</a></li>
+    <li><a href="#s07">07 ハマりどころ＋NEXT</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>この巻のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">Vol.GH8 のゴールは<b>「テストを自動化し、品質ゲートを完成させる」</b>。これまで別冊S3で書いてきたテストを<b>手で実行</b>していましたが、<b>「実行し忘れ」</b>があると意味がない。CIで<b>push のたびに自動実行</b>し、<b>テストが通らないコードはマージできない</b>状態を作ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">「手で実行」から「自動実行」へ</span><span class="tag-desc">RDTのTを自動化</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// これまでの課題</div>
+        <ul>
+          <li>テストは書いた（別冊S3・各本編）</li>
+          <li>でも<b>実行は手動</b>（実行し忘れがありうる）</li>
+          <li>「push 後にテストが落ちていた」に気づけない</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// CIで解決</div>
+        <ul>
+          <li>push/PR で<b>自動的にテスト実行</b></li>
+          <li>落ちたら<b>即通知</b></li>
+          <li>ブランチ保護と連携して<b>マージをブロック</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// RDT の完成形</div>
+        <p>R（要求）→D（設計）→<b>T（テスト）が自動で回る</b>。Vol.GH6 の品質ゲートに<b>テスト通過</b>が加わり、<b>「壊れたコードが main に入らない」</b>が完成。</p>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH8 で完成する品質ゲート</span>
+<span class="comment">// ─── これまで（手動テスト）───</span>
+コードを書く
+  ↓
+（テストを手で実行…忘れることも）★
+  ↓
+push
+  ↓
+（落ちてても気づかない可能性）
+
+
+<span class="comment">// ─── Vol.GH8（CI自動化）───</span>
+コードを書く
+  ↓
+push / PR
+  ↓
+<span class="kw">CI が自動でテスト実行</span> ★★★
+  ↓
+  ✓ 全部 green → マージ可能
+  ✗ 1つでも fail → マージ不可
+  ↓
+main は常に「テスト通過済み」
+
+
+<span class="comment">// ─── 品質ゲートの完成 ───</span>
+Vol.GH6: PR必須・レビュー必須
+   ＋
+Vol.GH8: <span class="kw">テスト通過必須</span> ★★★
+   ＝
+「壊れたコードは絶対に main に入らない」
+
+<span class="comment">// → RDT の T（テスト）が</span>
+<span class="comment">//   仕組みで保証される</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — テストは「自動実行されて初めて意味を持つ」</div>
+    <p>どんなに良いテストを書いても、<b>実行されなければ無意味</b>。「忙しくてテストせずに push」「実行を忘れた」——人は必ずミスします。CIは<b>テスト実行を人の意志から切り離し</b>、<b>機械的に毎回実行</b>する。別冊S3で築いたテストが、CIによって<b>「書いただけ」から「常に守ってくれる」</b>存在に変わる。これがRDT版の<b>テスト戦略の完成</b>です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>CIとは何か</h2><span class="en">WHAT IS CI</span></div>
+  <p class="pattern-desc"><b>CI（継続的インテグレーション）</b>とは、<b>コードの変更を頻繁に統合し、その都度自動でビルド・テスト</b>する習慣・仕組み。「<b>早く・小さく・自動で</b>」検証することで、問題を<b>早期に発見</b>します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">CI の考え方</span><span class="tag-desc">早期発見が価値</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// CI の核心</div>
+        <ul>
+          <li>変更を<b>頻繁に</b>統合（ためこまない）</li>
+          <li>その都度<b>自動でビルド・テスト</b></li>
+          <li>問題を<b>早く・小さいうちに発見</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// なぜ早期発見が大事か</div>
+        <p>別冊S1の<b>1:10:100の法則</b>。バグも<b>見つかるのが遅いほど直すコストが増大</b>。CIで「push の瞬間に発見」できれば、最も安く直せる。</p>
+
+        <div class="panel-head" style="margin-top:18px">// CI で自動化すること</div>
+        <ul>
+          <li><b>ビルド</b>：コンパイルが通るか</li>
+          <li><b>テスト</b>：全テストが緑か（別冊S3）</li>
+          <li>（発展）静的解析・カバレッジ等</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// CI の価値</span>
+<span class="comment">// ─── CI がない世界 ───</span>
+各自が手元で開発
+  ↓
+たまにまとめて統合
+  ↓
+「コンパイル通らない」
+「他人の変更とぶつかった」
+「テストが落ちてる」
+  → まとめて大量の問題が噴出 ★
+  → 原因特定が困難（どの変更?）
+
+
+<span class="comment">// ─── CI がある世界 ───</span>
+変更を頻繁に push
+  ↓
+push のたびに自動ビルド・テスト
+  ↓
+問題があれば即発見
+  → 「さっきの変更が原因」と明確 ★★★
+  → 小さいうちに直せる
+
+
+<span class="comment">// ─── 別冊S1 の 1:10:100 ───</span>
+バグ発見が早いほど安い：
+  push直後に発見：    1（即直せる）
+  レビューで発見：    10
+  本番で発見：       100 ★★★
+
+<span class="comment">// → CI は「最速で発見」する仕組み</span>
+<span class="comment">// → 別冊S1の要求工学と同じ思想</span>
+
+
+<span class="comment">// ─── CI / CD ───</span>
+CI（継続的インテグレーション）:
+  ビルド・テストの自動化 ← Vol.GH8
+CD（継続的デリバリー/デプロイ）:
+  リリースの自動化 ← 発展（本シリーズ範囲外）</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — CI は「1:10:100」を最小化する仕組み</div>
+    <p>別冊S1の<b>1:10:100の法則</b>（問題は発見が遅いほど高くつく）は、バグにも当てはまります。CIは<b>「push の瞬間にテスト」</b>で、バグを<b>最速・最安で発見</b>する仕組み。「本番で発覚（100倍）」を「push直後に発覚（1倍）」に変える。要求工学（別冊S1）の早期発見思想を、<b>テストとビルドに適用</b>したのがCI。RDT版の理念が、運用にまで一貫しています。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>GitHub Actions の構造</h2><span class="en">GITHUB ACTIONS STRUCTURE</span></div>
+  <p class="pattern-desc"><b>GitHub Actions</b> は GitHub に組み込まれた<b>CI/CD ツール</b>。<code>.github/workflows/</code> に <b>YAML ファイル</b>を置くだけで、push などをきっかけに<b>自動でジョブを実行</b>。基本構造を理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ワークフローの構成要素</span><span class="tag-desc">YAML で定義</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主要な概念</div>
+        <table class="compare-tbl">
+          <thead><tr><th>用語</th><th>意味</th></tr></thead>
+          <tbody>
+            <tr><td>Workflow</td><td>自動化の定義全体（YAML 1ファイル）</td></tr>
+            <tr><td>Trigger（on）</td><td>きっかけ（push/PR等）</td></tr>
+            <tr><td>Job</td><td>実行単位（ビルド・テスト等）</td></tr>
+            <tr><td>Step</td><td>ジョブ内の各手順</td></tr>
+            <tr><td>Action</td><td>再利用可能な部品</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 置き場所</div>
+        <p><code>.github/workflows/ci.yml</code>。このパスに YAML を置くと、GitHub が<b>自動で認識</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// YAML の注意</div>
+        <p><b>インデントが命</b>（スペース2つ、タブNG）。階層構造をインデントで表す。</p>
+      </div>
+      <div class="code"><span class="code-head">// GitHub Actions の構造</span>
+<span class="comment"># .github/workflows/ci.yml</span>
+
+<span class="yml-key">name</span>: CI            <span class="comment"># ワークフロー名</span>
+
+<span class="yml-key">on</span>:                  <span class="comment"># トリガー（きっかけ）</span>
+  <span class="yml-key">push</span>:
+    <span class="yml-key">branches</span>: [ main ]
+  <span class="yml-key">pull_request</span>:
+    <span class="yml-key">branches</span>: [ main ]
+<span class="comment"># → main への push/PR で起動 ★</span>
+
+<span class="yml-key">jobs</span>:                <span class="comment"># 実行する仕事</span>
+  <span class="yml-key">build</span>:             <span class="comment"># ジョブ名</span>
+    <span class="yml-key">runs-on</span>: ubuntu-latest  <span class="comment"># 実行環境</span>
+    <span class="yml-key">steps</span>:           <span class="comment"># 手順（上から順に）</span>
+      - <span class="yml-key">name</span>: コード取得
+        <span class="yml-key">uses</span>: actions/checkout@v4
+      - <span class="yml-key">name</span>: JDK設定
+        <span class="yml-key">uses</span>: actions/setup-java@v4
+      - <span class="yml-key">name</span>: テスト実行
+        <span class="yml-key">run</span>: ./mvnw test
+
+
+<span class="comment"># ─── 構造の階層 ───</span>
+Workflow（ci.yml）
+ └ on（トリガー）
+ └ jobs
+     └ build（ジョブ）
+         └ steps
+             └ checkout（部品を使う）
+             └ setup-java
+             └ test（コマンド実行）★
+
+
+<span class="comment"># ─── uses と run ───</span>
+uses: 既存の Action（部品）を使う
+run:  シェルコマンドを実行
+<span class="comment"># → 部品の再利用＋自前コマンド</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Action は「再利用できる部品」</div>
+    <p>GitHub Actions の <code>uses:</code> は<b>「他人が作った再利用可能な部品」</b>を使う仕組み。<code>actions/checkout</code>（コード取得）や <code>actions/setup-java</code>（Java環境構築）など、<b>定番作業は既製の Action</b> を使えば一行で済む。自分でシェルを書くのは <code>run:</code>。「<b>車輪の再発明をしない</b>」のはコードと同じ（別冊S2のDRY）。Marketplace に無数の Action があります。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>CIワークフローを書く</h2><span class="en">WRITE WORKFLOW</span></div>
+  <p class="pattern-desc">本シリーズ用の CI ワークフローを書きます。<b>push/PR でビルド＆テスト</b>。Spring Boot プロジェクトの定番構成です。別冊S3のテスト（単体＋H2結合）を自動で回します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">本シリーズの CI ワークフロー</span><span class="tag-desc">ビルド＋テスト</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 作成手順</div>
+        <ol class="step-list">
+          <li>リポジトリに <code>.github/workflows/</code> フォルダを作る</li>
+          <li><code>ci.yml</code> を作成</li>
+          <li>トリガー・ジョブ・ステップを記述</li>
+          <li>コミット＆push</li>
+          <li>Actions タブで実行を確認</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// ステップの流れ</div>
+        <ul>
+          <li>コードを取得（checkout）</li>
+          <li>JDK 17 をセットアップ</li>
+          <li>依存をキャッシュ（高速化）</li>
+          <li><b>テスト実行</b>（mvnw test）</li>
+        </ul>
+        <p style="margin-top:8px">単体＋H2結合テストは<b>外部DB不要</b>なので、この構成で動く。</p>
+      </div>
+      <div class="code"><span class="code-head">// .github/workflows/ci.yml</span>
+<span class="yml-key">name</span>: CI
+
+<span class="yml-key">on</span>:
+  <span class="yml-key">push</span>:
+    <span class="yml-key">branches</span>: [ main ]
+  <span class="yml-key">pull_request</span>:
+    <span class="yml-key">branches</span>: [ main ]
+
+<span class="yml-key">jobs</span>:
+  <span class="yml-key">test</span>:
+    <span class="yml-key">runs-on</span>: ubuntu-latest
+    <span class="yml-key">steps</span>:
+      <span class="comment"># 1. コードを取得</span>
+      - <span class="yml-key">name</span>: Checkout
+        <span class="yml-key">uses</span>: actions/checkout@v4
+
+      <span class="comment"># 2. JDK 17 をセットアップ</span>
+      - <span class="yml-key">name</span>: Set up JDK 17
+        <span class="yml-key">uses</span>: actions/setup-java@v4
+        <span class="yml-key">with</span>:
+          <span class="yml-key">java-version</span>: <span class="str">'17'</span>
+          <span class="yml-key">distribution</span>: <span class="str">'temurin'</span>
+          <span class="yml-key">cache</span>: maven   <span class="comment"># 依存をキャッシュ（高速化）</span>
+
+      <span class="comment"># 3. テスト実行 ★★★</span>
+      - <span class="yml-key">name</span>: Run tests
+        <span class="yml-key">run</span>: ./mvnw test
+        <span class="comment"># → 単体＋H2結合テストが走る</span>
+        <span class="comment"># → 別冊S3のテストが自動実行 ★</span>
+
+
+<span class="comment"># ─── キャッシュの効果 ───</span>
+<span class="comment"># cache: maven で依存DLを再利用</span>
+<span class="comment"># → 2回目以降の CI が高速に ★</span>
+
+
+<span class="comment"># ─── FULLTEXT（Vol.8）のテストは? ───</span>
+<span class="comment"># Testcontainers は CI でも動く（Dockerあり）</span>
+<span class="comment"># が、まずは H2 で動くテストから自動化</span>
+<span class="comment"># → 段階的に拡張（YAGNI）★</span>
+
+
+<span class="comment"># ─── コミット ───</span>
+<span class="prompt">$</span> <span class="kw">git add</span> .github/workflows/ci.yml
+<span class="prompt">$</span> <span class="kw">git commit -m</span> <span class="str">"ci: GitHub Actions でテスト自動化"</span>
+<span class="prompt">$</span> <span class="kw">git push</span>
+<span class="comment"># → push した瞬間に CI が動き出す ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — まず「H2で動くテスト」から自動化する</div>
+    <p>CI の最初の一歩は<b>「外部依存なしで動くテスト」</b>から。本シリーズの単体テストと H2 結合テストは<b>外部DBが不要</b>なので、CI で素直に動きます。Vol.8 の FULLTEXT（Testcontainers）は Docker が要りますが、GitHub Actions は Docker 対応なので追加可能。ただし<b>最初から全部欲張らず、動くものから</b>（YAGNI＝別冊S2）。<b>「まず緑にする」→「徐々に拡張」</b>がCI構築のコツです。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>CIの動作とPR連携</h2><span class="en">CI IN ACTION</span></div>
+  <p class="pattern-desc">CI を push すると<b>自動で動き出します</b>。<b>Actions タブ</b>で実行状況を確認。PR では<b>チェック結果が表示</b>され、テストの成否が一目で分かる。Vol.GH3 の PR フローと連携します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">CI の実行とPRでの表示</span><span class="tag-desc">緑・赤が一目</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// CI 実行の流れ</div>
+        <ol style="margin-left:20px">
+          <li>feature ブランチで開発→push</li>
+          <li>CI が自動起動</li>
+          <li>Actions タブで進行を確認</li>
+          <li>PR を作ると<b>PR画面にチェック結果</b></li>
+          <li>緑なら安心してマージ</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// PR での表示</div>
+        <ul>
+          <li><b>緑のチェック</b>：全テスト通過</li>
+          <li><b>赤の×</b>：テスト失敗（詳細ログへ）</li>
+          <li><b>黄の●</b>：実行中</li>
+        </ul>
+        <p style="margin-top:8px">レビュアーは<b>「テストが通っているPR」</b>だけを安心してレビューできる。</p>
+      </div>
+      <div class="code"><span class="code-head">// CI の実行とPR連携</span>
+<span class="comment">// ─── Actions タブ（実行状況）───</span>
+<div class="gh-mock">
+<span class="gh-bar">Actions / CI</span>
+<span class="gh-check">✓</span> ci: テスト自動化  main
+   CI · 42s
+
+<span class="gh-check">✓</span> feat(memo): ピン留め追加
+   CI · 38s
+   <span class="gh-check">✓</span> test (ubuntu-latest)
+     ✓ Checkout
+     ✓ Set up JDK 17
+     ✓ Run tests
+       42 tests passed ★
+</div>
+
+
+<span class="comment">// ─── PR 画面でのチェック表示 ───</span>
+<div class="gh-mock">
+<span class="gh-bar">Pull Request #9</span>
+feat(memo): ピン留め機能を追加
+
+<span class="gh-check">✓</span> All checks have passed
+   <span class="gh-check">✓</span> CI / test (pull_request)
+
+This branch has no conflicts
+[ Merge pull request ] ← 緑なら安心 ★★★
+</div>
+
+
+<span class="comment">// ─── テストが落ちた場合 ───</span>
+<div class="gh-mock">
+<span class="gh-bar">Pull Request #10</span>
+<span class="gh-x">✗</span> Some checks were not successful
+   <span class="gh-x">✗</span> CI / test (pull_request)
+      MemoSearchTest.キーワード検索 FAILED
+      expected: 1 but was: 0
+
+[ Details ] ← ログで原因確認
+</div>
+<span class="comment">// → 落ちた箇所が即分かる ★★★</span>
+<span class="comment">// → マージ前に修正できる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — CIは「レビュー前の門番」になる</div>
+    <p>CIがあると、レビュアーの負担が減ります。<b>「テストが通っているか」をCIが先にチェック</b>してくれるので、人間は<b>「設計やロジックの妥当性」</b>という人にしかできない判断に集中できる。Vol.GH3 のセルフレビューも、CIが緑なことを前提に<b>「動くのは保証済み、では設計は?」</b>と進められる。<b>機械にできることは機械に、人は人にしかできないことを</b>——役割分担の好例です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>ステータスチェック必須化</h2><span class="en">REQUIRED STATUS CHECKS</span></div>
+  <p class="pattern-desc">CIの仕上げ。Vol.GH6 のブランチ保護に<b>「CIが通らないとマージ不可」</b>を追加します。これで<b>「テストが落ちたコードは物理的に main に入れない」</b>。品質ゲートが完全に閉じます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ブランチ保護にCIを連携</span><span class="tag-desc">テスト通過を必須に</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 設定手順</div>
+        <ol class="step-list">
+          <li>Settings → Branches → main の保護ルール編集</li>
+          <li><b>Require status checks to pass</b> をオン</li>
+          <li>必須にするチェック（CI の test）を選択</li>
+          <li>保存</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// 効果</div>
+        <p>CI が通らない PR は<b>マージボタンが押せなく</b>なる。Vol.GH6 の「PR必須・レビュー必須」に<b>「テスト通過必須」</b>が加わる。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 品質ゲートの完成</div>
+        <p>これで main へのマージには<b>①PR ②レビュー承認 ③テスト通過</b>の全てが必要。<b>3重のゲート</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// ステータスチェック必須化</span>
+<span class="comment">// ─── ブランチ保護の追加設定 ───</span>
+<div class="gh-mock">
+<span class="gh-bar">Settings / Branches / main</span>
+<span class="gh-check">☑</span> Require a pull request
+   （Vol.GH6で設定済み）
+<span class="gh-check">☑</span> Require approvals: 1
+   （Vol.GH6で設定済み）
+<span class="gh-check">☑</span> Require status checks
+   to pass before merging ★NEW
+   <span class="gh-check">☑</span> CI / test  ← 必須に指定
+</div>
+
+
+<span class="comment">// ─── 完成した品質ゲート ───</span>
+main にマージするには：
+  ① PR を作る（Vol.GH3）
+  ② レビュー承認（Vol.GH6）
+  ③ <span class="kw">CI のテストが全部通る</span>（Vol.GH8）★★★
+  ↓ 全部クリアして初めて
+  マージ可能
+
+
+<span class="comment">// ─── テストが落ちたPRの状態 ───</span>
+<div class="gh-mock">
+<span class="gh-x">✗</span> Required statuses must pass
+<span class="gh-x">✗</span> CI / test — Failing
+
+Merging is blocked
+[ Merge ] ← グレーアウト（押せない）★★★
+</div>
+<span class="comment">// → テストが落ちたコードは</span>
+<span class="comment">//   物理的に main に入れない ★★★</span>
+
+
+<span class="comment">// ─── RDT の完成 ───</span>
+R 要求 → Issue・テンプレート
+D 設計 → 3層・PR・レビュー
+T テスト → <span class="kw">CIで自動実行・必須化</span> ★★★
+<span class="comment">// → 要求から検証まで仕組みで一貫</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「3重のゲート」で main を守る</div>
+    <p>Vol.GH8 完了時、main へのマージには<b>①PR ②レビュー承認 ③CI通過</b>の3つが必須に。これが<b>3重の品質ゲート</b>。①で変更を可視化、②で人間が設計を確認、③で機械が動作を保証。<b>人と機械の両面</b>から守る。「急いでるから」「自分のコードだから」という<b>例外を仕組みで許さない</b>。RDT版の<b>T（テスト）が、運用レベルで完成</b>した瞬間です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>ハマりどころ＋NEXT STEP</h2><span class="en">PITFALLS &amp; NEXT</span></div>
+  <p class="pattern-desc">CI構築で陥りやすい地雷を5つ。<b>★★★ 印は特に頻発</b>。最初のCI構築は試行錯誤が普通なので、落ち着いて対処します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.GH8 ハマりどころ 5選</span><span class="tag-desc">CI構築の試行錯誤</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① YAML のインデント崩れ ★★★</b></p>
+        <ul>
+          <li>スペースとタブ混在・階層ズレ</li>
+          <li>対処：スペース2つで統一、タブ禁止。エディタで可視化</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② ローカルで通るがCIで落ちる ★★★</b></p>
+        <ul>
+          <li>環境差（JDKバージョン・タイムゾーン・依存）</li>
+          <li>対処：CIのJDK/環境をローカルと揃える</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ ワークフローが起動しない</b></p>
+        <ul>
+          <li>置き場所・ファイル名・on の設定ミス</li>
+          <li>対処：<code>.github/workflows/*.yml</code> を正確に、on を確認</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ DBが必要なテストがCIで失敗</b></p>
+        <ul>
+          <li>Testcontainers 等で Docker/設定不足</li>
+          <li>対処：まずH2テストから。Testcontainersは段階的に</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ CIが遅すぎる</b></p>
+        <ul>
+          <li>毎回ゼロから依存DL</li>
+          <li>対処：<code>cache: maven</code> で依存をキャッシュ</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 主要な対処</span>
+<span class="comment"># ─── ① YAML インデント ───</span>
+<span class="ann">NG:</span>
+jobs:
+	test:        <span class="comment"># タブ → エラー ★</span>
+    runs-on: ...  <span class="comment"># インデントずれ</span>
+
+<span class="ann">OK:</span>
+jobs:
+  test:        <span class="comment"># スペース2つ ★</span>
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ...  <span class="comment"># さらに2つ</span>
+
+
+<span class="comment"># ─── ② 環境を揃える ───</span>
+<span class="comment"># ローカルが JDK17 なら CI も17</span>
+<span class="yml-key">java-version</span>: <span class="str">'17'</span>  <span class="comment"># ← ローカルと一致 ★</span>
+
+
+<span class="comment"># ─── ③ 起動確認 ───</span>
+<span class="comment"># Actions タブにワークフローが</span>
+<span class="comment"># 表示されない → パス/ファイル名を確認</span>
+.github/workflows/ci.yml  ✓
+
+
+<span class="comment"># ─── ⑤ キャッシュで高速化 ───</span>
+<span class="yml-key">cache</span>: maven
+<span class="comment"># → 依存DLを再利用、CIが速くなる ★</span>
+
+
+<span class="comment"># ─── CI構築は試行錯誤が普通 ───</span>
+<span class="comment"># 失敗ログを読んで直すの繰り返し</span>
+<span class="comment"># → 落ちても焦らず、ログから原因特定</span>
+<span class="comment"># → 別冊S7「ログで原因を追う」と同じ ★</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">GH8 達成チェック</span><span class="tag-desc">品質ゲート完成</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェック</div>
+        <ul class="check-list">
+          <li>CI（継続的インテグレーション）を説明できる</li>
+          <li>CIが1:10:100を最小化すると理解</li>
+          <li>GitHub Actions の構造（on/jobs/steps）が分かる</li>
+          <li>CI ワークフローを書ける</li>
+          <li>push/PR でテストが自動実行される</li>
+          <li>PR でチェック結果を確認できる</li>
+          <li>ステータスチェックを必須化できた</li>
+          <li>3重の品質ゲートを理解した</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH8 で手に入れた力</span>
+✓ <span class="str">"テストをpush/PRで自動実行できる"</span>
+
+✓ <span class="str">"GitHub Actions でCIを構築できる"</span>
+
+✓ <span class="str">"CIで問題を最速で発見"</span>
+
+✓ <span class="str">"テスト通過を必須化できる"</span>
+
+✓ <span class="str">"3重の品質ゲートを完成させた"</span>
+
+✓ <span class="str">"RDTのTが仕組みで保証される"</span>
+
+
+<span class="comment">// → 品質ゲートが完全に閉じた ★★★</span>
+<span class="comment">// → 壊れたコードは main に入らない</span>
+<span class="comment">// → RDT が運用レベルで完成</span>
+
+<span class="comment">// 次回 Vol.GH9：</span>
+<span class="comment">//   依存管理・Dependabot</span>
+<span class="comment">//   またはリリース管理（タグ・GitHub Releases）</span>
+<span class="comment">//   本編Vol.10以降と連動</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.GH9 へ</div>
+    <p>Vol.GH8 で<b>CIによるテスト自動化</b>を実現し、<b>3重の品質ゲート（PR・レビュー・テスト通過）</b>が完成しました。RDT版の<b>T（テスト）が運用レベルで保証</b>される状態です。次は Vol.GH9「<b>依存管理とリリース編</b>」。<b>ライブラリの更新（Dependabot）</b>や<b>バージョンタグ・GitHub Releases</b>で、アプリの「育て方・届け方」を学びます。本編Vol.10「一括操作」以降と並行して進めましょう。<b>本編Vol.10 → Vol.GH9 の順</b>がおすすめです。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>GH.08 / 14 ── CONTINUOUS INTEGRATION（GitHub版）</span>
+</footer>
+
+</body>
+</html>
