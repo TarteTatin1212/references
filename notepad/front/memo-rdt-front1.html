@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕フロント別冊 Vol.1 入門・画面の全体像</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3a2a26;
+  --paper:#f4ece2;
+  --paper-2:#ecdfd0;
+  --accent:#d2694a;
+  --accent-2:#e0916f;
+  --accent-3:#a8804a;
+  --muted:#8a7568;
+  --line:#d8c8b6;
+  --code-bg:#2a211e;
+  --code-text:#f0e6da;
+  --panel-bg:#fbf4ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"❖";position:absolute;right:-10px;top:-20px;font-size:280px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff6ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#e0a888;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #4a3a34;padding-bottom:6px}
+.kw{color:#ffb88a}
+.tagx{color:#f7a8d8}
+.attr{color:#a3c9ff}
+.str{color:#b5e8b0}
+.thx{color:#e0c088}
+.comment{color:#9a8578;font-style:italic}
+.txt{color:#f0e6da}
+.tip{background:rgba(210,105,74,0.08);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-3)}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:200px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.F1</span>
+    <span class="kind-tag">フロント別冊 ── FRONT</span>
+    <span class="rdt-tag">VIEW LAYER</span>
+  </div>
+  <h1>入門・画面の全体像<br>サーバーが描く画面</h1>
+  <div class="subtitle">FRONT.01 ── OVERVIEW OF THE VIEW LAYER</div>
+  <p class="lead">このフロント別冊は、本編が<b>サラッと流した「画面側」</b>だけを深掘りするシリーズです。本シリーズの画面は<b>Thymeleafテンプレート</b>。普通のHTMLとは違い、<b>サーバー（Java）がデータを埋め込んで完成させる</b>HTMLです。第1巻では、その<b>全体像と立ち位置</b>をつかみます。「なぜ静的HTMLじゃないのか」「画面ファイルはどこに置くのか」から始めましょう。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 フロント別冊で最初に腑に落とすこと</div>
+    <p>このアプリの画面は <code>.html</code> ですが、<b>ダブルクリックでブラウザで開いても正しく動きません</b>。<code>th:text</code> 等の属性は<b>サーバーが処理して初めて値が入る</b>からです。必ず <code>./gradlew bootRun</code> で起動し、<code>http://localhost:8080</code> 経由で見ます。「ファイルを直接開く」のではなく「サーバーに描いてもらう」——これが出発点です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 このシリーズの狙い</a></li>
+    <li><a href="#s02">02 静的HTML vs サーバー生成</a></li>
+    <li><a href="#s03">03 Thymeleafの立ち位置</a></li>
+    <li><a href="#s04">04 画面ファイルの置き場所</a></li>
+    <li><a href="#s05">05 画面が表示されるまでの流れ</a></li>
+    <li><a href="#s06">06 CSSとJSの置き場所</a></li>
+    <li><a href="#s07">07 全9巻のロードマップ</a></li>
+    <li><a href="#s08">08 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>このシリーズの狙い</h2><span class="en">PURPOSE</span></div>
+  <p class="pattern-desc">本編（main）は<b>サーバーサイドの設計</b>（要求→設計→実装→テスト）が主役で、画面は<b>サラッと</b>扱ってきました。このフロント別冊は、その<b>画面側（Thymeleaf・CSS・JavaScript）だけを丁寧に</b>解説する補完シリーズです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">本編とフロント別冊の役割分担</span><span class="tag-desc">深掘りする場所が違う</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 本編 main が扱うこと</div>
+        <ul>
+          <li>要求→設計→実装→テスト</li>
+          <li>Entity / Mapper / Service / Controller</li>
+          <li>SQL・トランザクション・例外設計</li>
+        </ul>
+        <p style="margin-top:8px">画面は「こう表示します」と<b>サラッと</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// フロント別冊 front が扱うこと</div>
+        <ul>
+          <li><b>Thymeleaf構文</b>（th:text/each/if…）</li>
+          <li><b>CSS設計</b>（変数・レイアウト）</li>
+          <li><b>JavaScript</b>（最小限の画面操作）</li>
+        </ul>
+        <p style="margin-top:8px">画面を<b>じっくり</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 守備範囲のイメージ</span>
+<span class="comment">// ─── 1つのメモ作成画面を例に ───</span>
+
+ブラウザ
+  │  ① 画面を表示・操作
+  │     ← <span class="kw">フロント別冊の領域</span> ❖
+  ▼
+Controller（URL受付）
+  │
+Service（業務ロジック）
+  │     ← <span class="kw">本編 main の領域</span>
+  │
+Mapper → DB
+  ▼
+画面に結果を表示
+        ← <span class="kw">フロント別冊の領域</span> ❖
+
+
+<span class="comment">// ─── 同じアプリを別の角度から見る ───</span>
+本編:    「データをどう処理するか」
+フロント別冊: 「画面をどう作るか」
+<span class="comment">// → 両方そろって1つのアプリ ★</span>
+
+
+<span class="comment">// ─── このシリーズで身につくこと ───</span>
+✓ Thymeleafで動的な画面を組める
+✓ CSSで整った見た目を作れる
+✓ 最小限のJSで操作性を上げられる
+✓ 画面のトラブルを自力で解決できる</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「画面が分かると、アプリ全体が見える」</div>
+    <p>サーバーサイドの設計を学んでも、<b>画面が作れないとアプリは完成しません</b>。逆に、画面の仕組みが分かると<b>「サーバーが返したデータが、どう画面に出るか」</b>が見えて、本編の理解も深まります。このフロント別冊は、本編と<b>セットで読む</b>と効果的。本編で「画面はこう表示」と流した部分を、こちらで<b>「なぜそう書くのか」</b>まで掘り下げます。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>静的HTML vs サーバー生成</h2><span class="en">STATIC VS SERVER-RENDERED</span></div>
+  <p class="pattern-desc">普通のWebサイトの<b>静的HTML</b>と、このアプリの<b>サーバー生成HTML</b>は別物です。静的HTMLは<b>「書いた内容がそのまま表示」</b>、サーバー生成は<b>「サーバーがデータを埋めて完成させる」</b>。この違いを理解することが出発点です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">2種類のHTMLの違い</span><span class="tag-desc">いつ中身が決まるか</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 静的HTML</div>
+        <p>ファイルに書いた内容が<b>そのまま</b>表示される。中身は<b>固定</b>。ダブルクリックで開ける。</p>
+
+        <div class="panel-head" style="margin-top:18px">// サーバー生成HTML（Thymeleaf）</div>
+        <p><code>th:text</code> 等の<b>「印」</b>を書いておき、サーバーが<b>データを埋めて</b>完成HTMLを作る。中身は<b>表示のたびに変わる</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 比較</div>
+        <table class="compare-tbl">
+          <thead><tr><th></th><th>静的</th><th>サーバー生成</th></tr></thead>
+          <tbody>
+            <tr><td>中身</td><td>固定</td><td><b>動的</b></td></tr>
+            <tr><td>開き方</td><td>直接</td><td>サーバー経由</td></tr>
+            <tr><td>データ</td><td>埋め込み済</td><td>毎回挿入</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// 静的 vs サーバー生成</span>
+<span class="comment">// ─── 静的HTML（中身は固定）───</span>
+<span class="tagx">&lt;h1&gt;</span><span class="txt">会議メモ</span><span class="tagx">&lt;/h1&gt;</span>
+<span class="comment">// → いつ見ても「会議メモ」</span>
+<span class="comment">// → メモが変わっても固定のまま ★</span>
+
+
+<span class="comment">// ─── サーバー生成（Thymeleaf）───</span>
+<span class="tagx">&lt;h1</span> <span class="thx">th:text=</span><span class="str">"${memo.title}"</span><span class="tagx">&gt;</span><span class="txt">タイトル</span><span class="tagx">&lt;/h1&gt;</span>
+<span class="comment">// → サーバーが memo.title を埋める</span>
+<span class="comment">// → メモごとに中身が変わる ★★★</span>
+<span class="comment">// → 「タイトル」は仮表示（後述）</span>
+
+
+<span class="comment">// ─── サーバー処理の前後 ───</span>
+処理前（テンプレート）:
+  &lt;h1 th:text="${memo.title}"&gt;タイトル&lt;/h1&gt;
+        ↓ サーバーが memo.title=会議メモ を埋める
+処理後（ブラウザに届くHTML）:
+  &lt;h1&gt;会議メモ&lt;/h1&gt;
+<span class="comment">// → ブラウザは普通のHTMLとして受け取る ★</span>
+
+
+<span class="comment">// ─── だから直接開くと動かない ───</span>
+ファイルをダブルクリック
+  → th:text が処理されない
+  → 「タイトル」（仮表示）のまま ★
+  → 必ずサーバー経由で見る</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — タグの中の文字は「仮表示（プレビュー用）」</div>
+    <p><code>&lt;h1 th:text="${memo.title}"&gt;タイトル&lt;/h1&gt;</code> の<b>「タイトル」</b>という文字に注目。これは<b>サーバー処理後には消えて、実際の値（会議メモ等）に置き換わります</b>。なぜ書くかというと、<b>デザイナーが静的に開いたときのプレビュー</b>のため。Thymeleaf の賢いところで、<b>「サーバーなしでも、おおよその見た目が分かる」</b>。本番では必ず <code>th:text</code> の値で上書きされます。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>Thymeleafの立ち位置</h2><span class="en">WHERE THYMELEAF SITS</span></div>
+  <p class="pattern-desc"><b>Thymeleaf</b>は、Spring Boot で標準的に使われる<b>テンプレートエンジン</b>です。「テンプレート（ひな型）」に「データ」を流し込んで、完成HTMLを生成します。<b>HTMLの中に特別な属性（th:〜）を書く</b>のが特徴です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">テンプレートエンジンの仕事</span><span class="tag-desc">ひな型＋データ＝完成HTML</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テンプレートエンジンとは</div>
+        <p><b>ひな型（テンプレート）</b>に<b>データ</b>を流し込み、<b>完成したHTML</b>を作る道具。料理に例えれば<b>「型」に「具材」を入れて成形</b>するイメージ。</p>
+
+        <div class="panel-head" style="margin-top:18px">// Thymeleafの特徴</div>
+        <ul>
+          <li><b>HTMLの属性</b>として書く（<code>th:〜</code>）</li>
+          <li>普通のHTMLとして<b>そのまま開ける</b>（仮表示）</li>
+          <li>Spring と<b>統合</b>されている</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// なぜ採用されるか</div>
+        <p>HTMLとして自然で<b>読みやすく</b>、デザイナーとも<b>協業しやすい</b>。Spring Boot の<b>定番</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// テンプレートエンジンの流れ</span>
+<span class="comment">// ─── 3つの材料 ───</span>
+① テンプレート（list.html）
+   &lt;tr th:each="m : ${memos}"&gt;
+     &lt;td th:text="${m.title}"&gt;&lt;/td&gt;
+   &lt;/tr&gt;
+
+② データ（Controllerが渡す）
+   memos = [会議メモ, 買い物, Java学習]
+
+③ Thymeleafが合成
+        ↓
+完成HTML:
+   &lt;tr&gt;&lt;td&gt;会議メモ&lt;/td&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt;買い物&lt;/td&gt;&lt;/tr&gt;
+   &lt;tr&gt;&lt;td&gt;Java学習&lt;/td&gt;&lt;/tr&gt;
+<span class="comment">// → データの数だけ行が増える ★★★</span>
+
+
+<span class="comment">// ─── th:属性の正体 ───</span>
+th:text  → 中身のテキストを差し替え
+th:each  → 繰り返し
+th:if    → 条件で表示/非表示
+th:href  → リンク先を組み立て
+<span class="comment">// → 全部「HTMLの属性」として書く ★</span>
+<span class="comment">// → 普通のブラウザは th: を無視するので</span>
+<span class="comment">//   静的に開いても崩れない</span>
+
+
+<span class="comment">// ─── 他の選択肢との違い ───</span>
+JSP        : 古い・非推奨
+Thymeleaf  : Spring Boot 標準・推奨 ★
+React/Vue  : フロント分離型（本シリーズ対象外）</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Thymeleafは「HTMLを壊さない」のが強み</div>
+    <p>Thymeleaf の最大の特徴は<b>「属性として書くので、HTMLとして自然」</b>なこと。<code>th:text</code> は普通のブラウザなら<b>無視される</b>ので、テンプレートを<b>そのまま開いてもデザインが崩れません</b>。これにより<b>デザイナーとプログラマーが同じファイルを扱える</b>。古い JSP のように<b>HTMLの中にコードが混ざって読めなくなる</b>こともない。「HTMLを尊重する」のが、Thymeleaf が好まれる理由です。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>画面ファイルの置き場所</h2><span class="en">WHERE FILES GO</span></div>
+  <p class="pattern-desc">Thymeleafテンプレートには<b>決まった置き場所</b>があります。<code>src/main/resources/templates/</code> 配下です。Controller が返す<b>ビュー名</b>と、ファイルの<b>パス</b>が対応します。この約束を理解しましょう。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">テンプレートの配置ルール</span><span class="tag-desc">ビュー名＝パス</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 置き場所の基本</div>
+        <p>テンプレートは <code>src/main/resources/templates/</code> 配下。Controller が返す<b>文字列（ビュー名）</b>が、この配下の<b>ファイルパス</b>に対応する。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 対応の例</div>
+        <table class="compare-tbl">
+          <thead><tr><th>Controllerの戻り値</th><th>ファイル</th></tr></thead>
+          <tbody>
+            <tr><td><code>"memos/list"</code></td><td>templates/memos/list.html</td></tr>
+            <tr><td><code>"memos/form"</code></td><td>templates/memos/form.html</td></tr>
+            <tr><td><code>"error/404"</code></td><td>templates/error/404.html</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 機能ごとにフォルダ分け</div>
+        <p>memos/・categories/・error/ のように<b>機能でフォルダ分け</b>すると整理しやすい。</p>
+      </div>
+      <div class="code"><span class="code-head">// テンプレートの配置</span>
+<span class="comment">// ─── ディレクトリ構造 ───</span>
+src/main/resources/templates/
+├ memos/
+│   ├ list.html      <span class="comment"># メモ一覧</span>
+│   ├ form.html      <span class="comment"># 作成/編集</span>
+│   └ show.html      <span class="comment"># 詳細</span>
+├ categories/
+│   ├ list.html
+│   └ form.html
+└ error/
+    ├ 404.html
+    └ 500.html
+
+
+<span class="comment">// ─── Controller との対応 ───</span>
+<span class="ann">@GetMapping</span>("/memos")
+public String list(Model model) {
+    model.addAttribute("memos", ...);
+    return <span class="str">"memos/list"</span>;
+    <span class="comment">// → templates/memos/list.html を表示 ★</span>
+}
+<span class="comment">// 戻り値の文字列 = templates配下のパス</span>
+<span class="comment">// （.html は省略）</span>
+
+
+<span class="comment">// ─── Model でデータを渡す ───</span>
+model.addAttribute(<span class="str">"memos"</span>, memoList);
+            ↓
+テンプレートで ${memos} として使える ★★★
+<span class="comment">// → サーバー → 画面 のデータの受け渡し</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「ビュー名」と「ファイルパス」は鏡うつし</div>
+    <p>Controller の <code>return "memos/list"</code> と、ファイル <code>templates/memos/list.html</code> は<b>必ず一致</b>します。これがズレると「テンプレートが見つからない」エラーに（フロント別冊Vol.9で扱います）。覚え方は<b>「templates/ を起点に、戻り値の文字列＋.html」</b>。Model に <code>addAttribute</code> した名前が、テンプレートで <code>${名前}</code> として使える——この<b>サーバーと画面の橋渡し</b>が、画面表示の基本構造です。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>画面が表示されるまでの流れ</h2><span class="en">REQUEST TO RENDER</span></div>
+  <p class="pattern-desc">URLを開いてから画面が出るまで、<b>裏で何が起きているか</b>を追います。<b>ブラウザ→Controller→Service→Mapper→DB→テンプレート→ブラウザ</b>という一連の流れ。これが分かると、画面の不具合の原因も特定しやすくなります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">リクエストから描画まで</span><span class="tag-desc">裏側の旅</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 一覧画面が出るまで</div>
+        <ol style="margin-left:18px">
+          <li>ブラウザが <code>/memos</code> をリクエスト</li>
+          <li>Controller が受け取る</li>
+          <li>Service→Mapper→DB でメモ取得</li>
+          <li>Model にデータを載せる</li>
+          <li>テンプレート（list.html）にデータを流す</li>
+          <li>完成HTMLをブラウザに返す</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// フロントが関わるのは</div>
+        <p><b>①リクエスト</b>と<b>⑤テンプレート</b>と<b>⑥表示</b>。間（②〜④）は本編の領域。</p>
+      </div>
+      <div class="code"><span class="code-head">// 画面表示の全行程</span>
+<span class="comment">// ─── 一覧 /memos を開く ───</span>
+
+🌐 ブラウザ
+   「GET /memos ください」
+   │  ← フロント（リンク・URL）❖
+   ▼
+🎯 MemoController
+   list() メソッドが受付
+   │
+   ▼
+⚙ MemoService → MemoMapper → 🗄 DB
+   メモ一覧を取得
+   │  ← 本編 main の領域
+   ▼
+📦 Model
+   model.addAttribute("memos", list)
+   │
+   ▼
+📄 list.html（テンプレート）
+   th:each で memos を行に展開
+   │  ← フロント（Thymeleaf）❖
+   ▼
+🌐 ブラウザ
+   完成HTMLを表示
+      ← フロント（CSS・JS）❖
+
+
+<span class="comment">// ─── 不具合の切り分けに役立つ ───</span>
+「データが表示されない」とき：
+  - DBにデータがある？（本編）
+  - Modelに載せた？（本編）
+  - th:each の書き方は？（フロント）★
+  - ${名前} が一致してる？（フロント）★
+<span class="comment">// → 流れが分かると原因を絞れる ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 流れが分かると「どこが悪いか」を切り分けられる</div>
+    <p>「データが画面に出ない」とき、原因は<b>複数の場所</b>にありえます。DBが空（本編）、Modelに載せ忘れ（本編）、<code>th:each</code> の書き方ミス（フロント）、<code>${名前}</code> の不一致（フロント）。<b>流れを知っていれば、上流から順に確認</b>できる。「DBにはある→Modelにも載った→なら画面側の問題」と<b>切り分け</b>られる。これが<b>デバッグの基本</b>。フロント別冊Vol.9 で詳しく扱います。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>CSSとJSの置き場所</h2><span class="en">CSS &amp; JS LOCATION</span></div>
+  <p class="pattern-desc"><b>CSS と JavaScript</b> は、テンプレートとは別の場所<code>src/main/resources/static/</code> に置きます。これらは<b>静的ファイル</b>として、そのままブラウザに配信されます。テンプレートからの<b>読み込み方</b>も確認します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">静的ファイルの配置と読み込み</span><span class="tag-desc">static配下に置く</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 置き場所</div>
+        <ul>
+          <li>CSS → <code>static/css/</code></li>
+          <li>JS → <code>static/js/</code></li>
+          <li>画像 → <code>static/images/</code></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// テンプレートと違う点</div>
+        <p>テンプレートは<b>サーバーが加工</b>するが、static は<b>そのまま配信</b>。CSS/JSは加工不要なので static に置く。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 読み込みは @{} で</div>
+        <p>テンプレートから <code>th:href="@{/css/style.css}"</code> で読み込む。<code>@{}</code> が<b>正しいパスに解決</b>してくれる。</p>
+      </div>
+      <div class="code"><span class="code-head">// CSS/JS の配置と読み込み</span>
+<span class="comment">// ─── 配置 ───</span>
+src/main/resources/static/
+├ css/
+│   └ style.css
+└ js/
+    └ bulk-select.js  <span class="comment"># Vol.10で使用</span>
+
+
+<span class="comment">// ─── テンプレートから読み込む ───</span>
+<span class="tagx">&lt;link</span> <span class="attr">rel=</span><span class="str">"stylesheet"</span>
+      <span class="thx">th:href=</span><span class="str">"@{/css/style.css}"</span><span class="tagx">&gt;</span>
+
+<span class="tagx">&lt;script</span> <span class="thx">th:src=</span><span class="str">"@{/js/bulk-select.js}"</span><span class="tagx">&gt;&lt;/script&gt;</span>
+<span class="comment">// → @{/css/...} は static/ を起点に解決 ★</span>
+
+
+<span class="comment">// ─── @{} を使う理由 ───</span>
+<span class="kw">NG:</span> href="/css/style.css"
+  <span class="comment">// → アプリの公開パスが変わると壊れる ★</span>
+<span class="kw">OK:</span> th:href="@{/css/style.css}"
+  <span class="comment">// → コンテキストパスを自動で考慮 ★★★</span>
+
+
+<span class="comment">// ─── ブラウザからのアクセス ───</span>
+http://localhost:8080/css/style.css
+<span class="comment">// → static/css/style.css が配信される</span>
+<span class="comment">// → static/ の部分はURLに出ない ★</span>
+
+
+<span class="comment">// ─── 本シリーズのJS事情 ───</span>
+<span class="comment">// 前半（Vol.1〜6）はJSなし</span>
+<span class="comment">// JS登場は Vol.10 の一括選択のみ</span>
+<span class="comment">// → サーバーサイド中心だから ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — リンクやパスは必ず @{} で書く</div>
+    <p>CSS・JS・画像・リンクのパスは、<b>直接書かず必ず <code>@{}</code> で囲みます</b>。<code>th:href="@{/css/style.css}"</code> のように。理由は、アプリの<b>公開パス（コンテキストパス）が変わっても、自動で正しいパスに解決</b>してくれるから。<code>href="/css/..."</code> と直書きすると、デプロイ環境によって<b>パスがずれて読み込めなく</b>なる。<b>「パスは @{} で組み立てる」</b>のが Thymeleaf の鉄則です。フロント別冊Vol.2 で詳しく扱います。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>全9巻のロードマップ</h2><span class="en">ROADMAP</span></div>
+  <p class="pattern-desc">このフロント別冊シリーズ<b>全9巻の地図</b>です。本編の各巻に対応しながら、画面側を段階的に深掘りします。「今どこを学んでいるか」を見失わないよう、全体像を持っておきましょう。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">フロント別冊 全9巻</span><span class="tag-desc">本編と対応</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 巻構成</div>
+        <table class="compare-tbl">
+          <thead><tr><th>Vol</th><th>テーマ</th><th>対応本編</th></tr></thead>
+          <tbody>
+            <tr><td>F1</td><td>画面の全体像（本巻）</td><td>全体</td></tr>
+            <tr><td>F2</td><td>Thymeleaf基本構文</td><td>Vol.2</td></tr>
+            <tr><td>F3</td><td>フォームと入力</td><td>Vol.2・12</td></tr>
+            <tr><td>F4</td><td>CSS設計とレイアウト</td><td>Vol.2〜4</td></tr>
+            <tr><td>F5</td><td>一覧・絞り込み・条件表示</td><td>Vol.4・5</td></tr>
+            <tr><td>F6</td><td>チェックボックスと複数選択</td><td>Vol.5・10</td></tr>
+            <tr><td>F7</td><td>JavaScript連携</td><td>Vol.10</td></tr>
+            <tr><td>F8</td><td>共通レイアウトと部品化</td><td>Vol.14</td></tr>
+            <tr><td>F9</td><td>困った時の画面編（Q&amp;A）</td><td>全体</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// 学習の道のり</span>
+<span class="comment">// ─── 基礎（F1〜F3）───</span>
+F1 画面の全体像     ← いまここ ❖
+F2 Thymeleaf構文    （表示の基本）
+F3 フォームと入力   （ユーザー入力）
+
+
+<span class="comment">// ─── 見た目と表示（F4〜F6）───</span>
+F4 CSS設計          （整った見た目）
+F5 条件表示・絞り込み（動的な一覧）
+F6 複数選択         （チェックボックス）
+
+
+<span class="comment">// ─── 発展（F7〜F8）───</span>
+F7 JavaScript連携   （操作性の向上）
+F8 共通レイアウト   （部品化・重複排除）
+
+
+<span class="comment">// ─── 仕上げ（F9）───</span>
+F9 困った時の画面編 （トラブル解決）
+
+
+<span class="comment">// ─── このシリーズを終えると ───</span>
+✓ Thymeleafで自在に画面が組める
+✓ CSSで整った見た目が作れる
+✓ JSで操作性を上げられる
+✓ 画面の不具合を自力で直せる ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 本編とセットで読むと理解が倍速に</div>
+    <p>このフロント別冊は、<b>本編の対応巻とセット</b>で読むのがおすすめ。例えば本編Vol.2（メモCRUD）を読んだら、フロント別冊F2（Thymeleaf構文）・F3（フォーム）を読む。本編で<b>「画面はこう表示します」と流した部分</b>を、フロント別冊で<b>「なぜそう書くのか」</b>まで理解できる。<b>サーバー側と画面側、両輪で学ぶ</b>と、アプリ開発の全体像が立体的に見えてきます。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">第1巻で<b>画面側の全体像</b>がつかめました。次巻からは、いよいよ<b>Thymeleafの具体的な書き方</b>に入ります。まずは表示の基本——<code>th:text</code>・<code>th:each</code>・<code>th:if</code> から。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">F1 達成チェック</span><span class="tag-desc">全体像をつかんだ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>静的HTMLとサーバー生成HTMLの違いが分かる</li>
+          <li>Thymeleafがテンプレートエンジンだと理解した</li>
+          <li>th:属性はサーバーが処理すると分かる</li>
+          <li>テンプレートの置き場所（templates/）を知った</li>
+          <li>CSS/JSは static/ に置くと分かる</li>
+          <li>ビュー名とファイルパスの対応を理解</li>
+          <li>パスは @{} で書くと分かる</li>
+          <li>全9巻のロードマップを把握した</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// F1 で手に入れた全体像</span>
+✓ <span class="str">"画面はサーバーが描く（th:が印）"</span>
+
+✓ <span class="str">"直接開かず bootRun 経由で見る"</span>
+
+✓ <span class="str">"テンプレートは templates/ に"</span>
+
+✓ <span class="str">"CSS/JS は static/ に"</span>
+
+✓ <span class="str">"パスは @{} で組み立てる"</span>
+
+✓ <span class="str">"ビュー名 = ファイルパス"</span>
+
+
+<span class="comment">// 次回 フロント別冊F2：</span>
+<span class="comment">//   Thymeleaf基本構文</span>
+<span class="comment">//   th:text / th:each / th:if / th:href</span>
+<span class="comment">//   メモCRUD3画面を題材に</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── フロント別冊 VOL.F2 へ</div>
+    <p>第1巻で<b>「画面側の全体像」</b>をつかみました。画面はサーバーが描くこと、テンプレートとstaticの置き場所、データの流れが見えたはずです。次は<b>フロント別冊F2「Thymeleaf基本構文編」</b>。本編Vol.2 のメモCRUD画面を題材に、<b><code>th:text</code>（表示）・<code>th:each</code>（繰り返し）・<code>th:if</code>（条件）・<code>th:href</code>（リンク）</b>という、Thymeleaf の<b>最頻出4構文</b>を一つずつ手を動かして覚えます。これが分かれば、動的な画面の8割が作れます。<b>フロント別冊F2 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（FRONTEND SUPPLEMENT）</span>
+  <span>FRONT.01 / 9 ── OVERVIEW OF THE VIEW LAYER</span>
+</footer>
+
+</body>
+</html>

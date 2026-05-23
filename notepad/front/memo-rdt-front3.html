@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕フロント別冊 Vol.3 フォームと入力</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3a2a26;
+  --paper:#f4ece2;
+  --paper-2:#ecdfd0;
+  --accent:#d2694a;
+  --accent-2:#e0916f;
+  --accent-3:#a8804a;
+  --muted:#8a7568;
+  --line:#d8c8b6;
+  --code-bg:#2a211e;
+  --code-text:#f0e6da;
+  --panel-bg:#fbf4ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"❖";position:absolute;right:-10px;top:-20px;font-size:280px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff6ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#e0a888;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #4a3a34;padding-bottom:6px}
+.kw{color:#ffb88a}
+.tagx{color:#f7a8d8}
+.attr{color:#a3c9ff}
+.str{color:#b5e8b0}
+.thx{color:#e0c088}
+.comment{color:#9a8578;font-style:italic}
+.txt{color:#f0e6da}
+.tip{background:rgba(210,105,74,0.08);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-3)}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:200px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.F3</span>
+    <span class="kind-tag">フロント別冊 ── FRONT</span>
+    <span class="rdt-tag">FORM &amp; INPUT</span>
+  </div>
+  <h1>フォームと入力<br>画面からサーバーへ</h1>
+  <div class="subtitle">FRONT.03 ── FORMS &amp; USER INPUT</div>
+  <p class="lead">対応する本編は<b>Vol.2（CRUD）とVol.12（バリデーション）</b>。F2 までは<b>サーバー→画面（表示）</b>でしたが、今回は逆向きの<b>画面→サーバー（入力）</b>。<b><code>th:object</code>（フォーム全体）</b>・<b><code>th:field</code>（各項目）</b>・<b><code>th:errors</code>（エラー表示）</b>を学びます。検証エラーで戻ってきたとき<b>入力値が消えない</b>仕組み、エラーメッセージの<b>出し方</b>まで。フォームは<b>ユーザーとの対話の窓口</b>です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 つまずきやすいポイント先回り</div>
+    <p>① <code>th:field="*{title}"</code> は <code>th:object</code> とセット（<code>*{}</code> は object の中身を指す）／② <code>th:field</code> は <code>name</code>・<code>id</code>・<code>value</code> を<b>自動で生成</b>する／③ エラー表示は <code>th:errors="*{title}"</code> ／④ 入力値の保持は<b>「同じフォームオブジェクトを返す」</b>だけで自動。手動でvalueを書く必要はありません。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 フォームの仕組み</a></li>
+    <li><a href="#s02">02 th:object でフォームを束ねる</a></li>
+    <li><a href="#s03">03 th:field で項目を結ぶ</a></li>
+    <li><a href="#s04">04 th:errors でエラー表示</a></li>
+    <li><a href="#s05">05 入力値の保持</a></li>
+    <li><a href="#s06">06 作成フォームを組み立てる</a></li>
+    <li><a href="#s07">07 フォームのあるある失敗</a></li>
+    <li><a href="#s08">08 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>フォームの仕組み</h2><span class="en">HOW FORMS WORK</span></div>
+  <p class="pattern-desc">フォームは<b>ユーザーの入力をサーバーに送る</b>仕組み。<code>&lt;form&gt;</code> で囲み、送信ボタンを押すと、入力内容が<b>Controller に届く</b>。Thymeleaf は、この<b>送信と受け取りを楽にする</b>構文を用意しています。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">フォーム送信の流れ</span><span class="tag-desc">入力→送信→受取</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// フォームの基本</div>
+        <ul>
+          <li><code>&lt;form method="post" action="..."&gt;</code> で囲む</li>
+          <li>入力欄（input/textarea/select）を置く</li>
+          <li>送信ボタンで Controller に届く</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// Thymeleafが楽にすること</div>
+        <ul>
+          <li>フォームと<b>Javaオブジェクトを結ぶ</b></li>
+          <li>各項目を<b>自動でひも付け</b></li>
+          <li>エラーを<b>その場に表示</b></li>
+          <li>入力値を<b>自動で保持</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 受け取る側（本編）</div>
+        <p>Controller が <code>@ModelAttribute MemoForm</code> で受け取る（本編Vol.2）。</p>
+      </div>
+      <div class="code"><span class="code-head">// フォーム送信の全体像</span>
+<span class="comment">// ─── 画面（フォーム）───</span>
+<span class="tagx">&lt;form</span> <span class="thx">th:object=</span><span class="str">"${memoForm}"</span>
+      <span class="attr">method=</span><span class="str">"post"</span>
+      <span class="thx">th:action=</span><span class="str">"@{/memos}"</span><span class="tagx">&gt;</span>
+  <span class="tagx">&lt;input</span> <span class="thx">th:field=</span><span class="str">"*{title}"</span><span class="tagx">&gt;</span>
+  <span class="tagx">&lt;button&gt;</span><span class="txt">保存</span><span class="tagx">&lt;/button&gt;</span>
+<span class="tagx">&lt;/form&gt;</span>
+       │ 送信
+       ▼
+<span class="comment">// ─── サーバー（本編Vol.2）───</span>
+<span class="ann">@PostMapping</span>("/memos")
+String create(<span class="ann">@ModelAttribute</span> MemoForm form)
+<span class="comment"># → title 等が form に詰まって届く ★★★</span>
+
+
+<span class="comment">// ─── Thymeleafが面倒を見る4つ ───</span>
+① th:object → フォーム全体を1オブジェクトに
+② th:field  → 各項目を自動ひも付け
+③ th:errors → エラーをその場に表示
+④ 入力保持  → エラー時に値が消えない
+
+
+<span class="comment">// ─── 表示(F2)との違い ───</span>
+表示: サーバー → 画面（${...} で出す）
+入力: 画面 → サーバー（*{...} で送る）★
+<span class="comment"># → 向きが逆。記号も ${} → *{} に</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — フォームは「双方向」、だから専用構文がある</div>
+    <p>表示（F2）は<b>サーバー→画面の一方向</b>でしたが、フォームは<b>双方向</b>：①画面に<b>初期値を表示</b>し、②ユーザーが編集し、③<b>サーバーに送り</b>、④エラーなら<b>値を保ったまま戻す</b>。この複雑なやり取りを、Thymeleaf は <code>th:object</code>/<code>th:field</code>/<code>th:errors</code> の<b>3点セット</b>で楽にしてくれます。手で <code>value="..."</code> や <code>name="..."</code> を書く必要がなくなるのが利点です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>th:object でフォームを束ねる</h2><span class="en">TH:OBJECT</span></div>
+  <p class="pattern-desc"><code>th:object</code> は<b>「このフォームは、どのJavaオブジェクトと対応するか」</b>を宣言します。<code>th:object="${memoForm}"</code> で「このフォームは memoForm」と結ぶ。以降、中の項目は <code>*{...}</code> で<b>短く</b>書けます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">th:object の役割</span><span class="tag-desc">フォームと箱を結ぶ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// th:object とは</div>
+        <p><code>&lt;form th:object="${memoForm}"&gt;</code> ＝「このフォームの入力は memoForm という箱に入る」と宣言。</p>
+
+        <div class="panel-head" style="margin-top:18px">// ${} と *{} の関係</div>
+        <p>object を宣言すると、中では <code>*{title}</code> ＝ <code>${memoForm.title}</code> の<b>短縮形</b>。毎回 memoForm を書かなくて済む。</p>
+
+        <div class="panel-head" style="margin-top:18px">// Controller が箱を用意</div>
+        <p>表示前に Controller が <code>model.addAttribute("memoForm", new MemoForm())</code> で<b>空の箱</b>を渡す（本編Vol.2）。</p>
+      </div>
+      <div class="code"><span class="code-head">// th:object の使い方</span>
+<span class="comment">// ─── フォームにオブジェクトを結ぶ ───</span>
+<span class="tagx">&lt;form</span> <span class="thx">th:object=</span><span class="str">"${memoForm}"</span> <span class="attr">method=</span><span class="str">"post"</span><span class="tagx">&gt;</span>
+  <span class="comment">&lt;!-- 以降 *{} は memoForm の中身 --&gt;</span>
+  <span class="tagx">&lt;input</span> <span class="thx">th:field=</span><span class="str">"*{title}"</span><span class="tagx">&gt;</span>
+  <span class="tagx">&lt;input</span> <span class="thx">th:field=</span><span class="str">"*{content}"</span><span class="tagx">&gt;</span>
+<span class="tagx">&lt;/form&gt;</span>
+
+
+<span class="comment">// ─── ${} と *{} の関係 ───</span>
+th:object="${memoForm}" を宣言すると…
+
+*{title}   = ${memoForm.title}
+*{content} = ${memoForm.content}
+<span class="comment"># → *{} は object 内への近道 ★★★</span>
+<span class="comment"># → memoForm を毎回書かずに済む</span>
+
+
+<span class="comment">// ─── Controller が箱を渡す（本編Vol.2）───</span>
+<span class="ann">@GetMapping</span>("/memos/new")
+String newForm(Model model) {
+  model.addAttribute("memoForm",
+                     new MemoForm());  <span class="comment"># 空の箱 ★</span>
+  return "memos/form";
+}
+<span class="comment"># → 表示時に空の memoForm を用意</span>
+<span class="comment"># → これがないと th:object でエラー ★</span>
+
+
+<span class="comment">// ─── 編集時は値入りの箱 ───</span>
+<span class="comment"># 編集画面では既存メモの値を詰めた</span>
+<span class="comment"># memoForm を渡す → 既存値が初期表示される</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — th:object には「Controllerが用意した箱」が必要</div>
+    <p><code>th:object="${memoForm}"</code> を使うには、Controller が表示前に <code>model.addAttribute("memoForm", ...)</code> で<b>箱（オブジェクト）を渡しておく</b>必要があります。新規作成なら<b>空の箱</b>、編集なら<b>既存値を詰めた箱</b>。これを忘れると「memoForm が無い」エラーに（フロント別冊F9の頻出トラブル）。「<b>フォームを表示する前に、対応する箱を Model に載せる</b>」——これが本編Vol.2 のController と画面の約束です。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>th:field で項目を結ぶ</h2><span class="en">TH:FIELD</span></div>
+  <p class="pattern-desc"><code>th:field</code> は<b>入力欄1つ1つを、オブジェクトの項目に結ぶ</b>魔法の属性。<code>th:field="*{title}"</code> と書くだけで、<b>name・id・value が自動生成</b>される。手書きの手間とミスが激減します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">th:field の自動生成</span><span class="tag-desc">3つを一度に</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// th:field が生成するもの</div>
+        <p><code>th:field="*{title}"</code> 1つで、<b>name・id・value の3つ</b>を自動生成。</p>
+        <table class="compare-tbl">
+          <thead><tr><th>属性</th><th>生成される値</th></tr></thead>
+          <tbody>
+            <tr><td><code>name</code></td><td>title（送信時のキー）</td></tr>
+            <tr><td><code>id</code></td><td>title（label連携用）</td></tr>
+            <tr><td><code>value</code></td><td>現在の値（保持用）</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 各入力欄での使い方</div>
+        <p>input・textarea・select・checkbox すべてで <code>th:field</code> が使える。型に応じて<b>適切に処理</b>される。</p>
+      </div>
+      <div class="code"><span class="code-head">// th:field の使い方</span>
+<span class="comment">// ─── テキスト入力 ───</span>
+<span class="tagx">&lt;input</span> <span class="attr">type=</span><span class="str">"text"</span> <span class="thx">th:field=</span><span class="str">"*{title}"</span><span class="tagx">&gt;</span>
+        ↓ サーバー処理後
+<span class="tagx">&lt;input</span> <span class="attr">type=</span><span class="str">"text"</span> <span class="attr">id=</span><span class="str">"title"</span>
+       <span class="attr">name=</span><span class="str">"title"</span> <span class="attr">value=</span><span class="str">"会議メモ"</span><span class="tagx">&gt;</span>
+<span class="comment"># → name/id/value が自動生成 ★★★</span>
+
+
+<span class="comment">// ─── テキストエリア ───</span>
+<span class="tagx">&lt;textarea</span> <span class="thx">th:field=</span><span class="str">"*{content}"</span><span class="tagx">&gt;&lt;/textarea&gt;</span>
+<span class="comment"># → 中身に現在値が入る</span>
+
+
+<span class="comment">// ─── セレクト（本編Vol.4）───</span>
+<span class="tagx">&lt;select</span> <span class="thx">th:field=</span><span class="str">"*{categoryId}"</span><span class="tagx">&gt;</span>
+  <span class="tagx">&lt;option</span> <span class="attr">value=</span><span class="str">""</span><span class="tagx">&gt;</span><span class="txt">未分類</span><span class="tagx">&lt;/option&gt;</span>
+  <span class="tagx">&lt;option</span> <span class="thx">th:each=</span><span class="str">"c : ${categories}"</span>
+          <span class="thx">th:value=</span><span class="str">"${c.id}"</span>
+          <span class="thx">th:text=</span><span class="str">"${c.name}"</span><span class="tagx">&gt;&lt;/option&gt;</span>
+<span class="tagx">&lt;/select&gt;</span>
+<span class="comment"># → 現在の categoryId が自動で selected に ★</span>
+
+
+<span class="comment">// ─── チェックボックス（F6で詳しく）───</span>
+<span class="tagx">&lt;input</span> <span class="attr">type=</span><span class="str">"checkbox"</span>
+       <span class="thx">th:field=</span><span class="str">"*{tagIds}"</span> <span class="thx">th:value=</span><span class="str">"${tag.id}"</span><span class="tagx">&gt;</span>
+<span class="comment"># → リストに含まれていれば自動でcheck ★</span>
+
+
+<span class="comment">// ─── label との連携 ───</span>
+<span class="tagx">&lt;label</span> <span class="attr">for=</span><span class="str">"title"</span><span class="tagx">&gt;</span><span class="txt">タイトル</span><span class="tagx">&lt;/label&gt;</span>
+<span class="tagx">&lt;input</span> <span class="thx">th:field=</span><span class="str">"*{title}"</span><span class="tagx">&gt;</span>
+<span class="comment"># → id=title が自動生成されるので for と連携 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — th:field を使えば name/value を手書きしない</div>
+    <p><code>th:field</code> の最大の利点は<b>「name・id・value を手で書かなくていい」</b>こと。手書きだと <code>name="title"</code> のタイプミスで<b>送信されない</b>、<code>value</code> の書き忘れで<b>入力値が保持されない</b>といったミスが起きがち。<code>th:field="*{title}"</code> なら<b>全部自動・一貫</b>。しかも<b>select の selected、checkbox の checked も自動</b>判定。「<b>入力欄は th:field で結ぶ</b>」と覚えれば、フォームのミスが激減します。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>th:errors でエラー表示</h2><span class="en">TH:ERRORS</span></div>
+  <p class="pattern-desc">入力が不正なとき、<code>th:errors</code> で<b>エラーメッセージをその場に表示</b>します。本編Vol.12 のバリデーション（<code>@NotBlank</code> 等）と連携し、「タイトルを入力してください」を<b>該当欄の近く</b>に出せます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">th:errors の表示</span><span class="tag-desc">該当欄にエラー</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 基本</div>
+        <p><code>th:errors="*{title}"</code> ＝「title の検証エラーがあれば、そのメッセージを表示」。エラーが無ければ<b>何も出ない</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 本編との連携（Vol.12）</div>
+        <p>Form クラスの <code>@NotBlank(message="...")</code> のメッセージが、ここに表示される。サーバー側の検証と画面が<b>連動</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// エラー時のスタイル</div>
+        <p><code>th:errorclass</code> で、エラー時だけ<b>赤枠などのクラス</b>を付けられる。</p>
+      </div>
+      <div class="code"><span class="code-head">// th:errors の使い方</span>
+<span class="comment">// ─── 基本：該当欄の下に出す ───</span>
+<span class="tagx">&lt;input</span> <span class="thx">th:field=</span><span class="str">"*{title}"</span><span class="tagx">&gt;</span>
+<span class="tagx">&lt;span</span> <span class="attr">class=</span><span class="str">"error"</span> <span class="thx">th:errors=</span><span class="str">"*{title}"</span><span class="tagx">&gt;&lt;/span&gt;</span>
+<span class="comment"># → titleにエラーがあればメッセージ表示</span>
+<span class="comment"># → 無ければ span ごと消える ★</span>
+
+
+<span class="comment">// ─── 本編Vol.12 との連携 ───</span>
+<span class="comment"># Form クラス側:</span>
+@NotBlank(message = "タイトルを入力してください")
+@Size(max = 100, message = "100文字以内で")
+private String title;
+        ↓ 検証エラー時
+<span class="comment"># 画面側 th:errors に message が表示 ★★★</span>
+<span class="comment"># 「タイトルを入力してください」</span>
+
+
+<span class="comment">// ─── エラー時だけスタイルを変える ───</span>
+<span class="tagx">&lt;input</span> <span class="thx">th:field=</span><span class="str">"*{title}"</span>
+       <span class="thx">th:errorclass=</span><span class="str">"is-invalid"</span><span class="tagx">&gt;</span>
+<span class="comment"># → エラー時だけ is-invalid クラスが付く</span>
+<span class="comment"># → CSSで赤枠などにできる ★</span>
+
+
+<span class="comment">// ─── 全エラーをまとめて表示 ───</span>
+<span class="tagx">&lt;ul</span> <span class="thx">th:if=</span><span class="str">"${#fields.hasErrors('*')}"</span><span class="tagx">&gt;</span>
+  <span class="tagx">&lt;li</span> <span class="thx">th:each=</span><span class="str">"e : ${#fields.errors('*')}"</span>
+      <span class="thx">th:text=</span><span class="str">"${e}"</span><span class="tagx">&gt;&lt;/li&gt;</span>
+<span class="tagx">&lt;/ul&gt;</span>
+<span class="comment"># → フォーム上部に全エラーを一覧表示 ★</span>
+
+
+<span class="comment">// ─── 検証の流れ（本編Vol.12）───</span>
+入力 → @Validated で検証 → エラーあり
+  → 同じフォーム画面に戻す
+  → th:errors がメッセージ表示 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — エラーメッセージは Form クラスの message で決まる</div>
+    <p>画面に出る「タイトルを入力してください」という文言は、<b>画面側ではなく Form クラスの <code>@NotBlank(message="...")</code> で定義</b>されています（本編Vol.12）。画面の <code>th:errors</code> は<b>「そのメッセージを表示する場所」</b>を指定するだけ。だから<b>文言を変えたいときは Form クラスを直す</b>。「<b>検証ルールとメッセージはサーバー側、表示位置は画面側</b>」という役割分担を理解すると、エラー表示が自在になります。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>入力値の保持</h2><span class="en">PRESERVING INPUT</span></div>
+  <p class="pattern-desc">検証エラーで戻ったとき、<b>ユーザーが入力した値が消えない</b>のは大事なUX。Thymeleaf では <code>th:field</code> を使い、Controller が<b>同じフォームオブジェクトを返す</b>だけで、入力値が<b>自動で保持</b>されます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">入力保持の仕組み</span><span class="tag-desc">消えないのは自動</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ保持が大事か</div>
+        <p>長文を書いて<b>1か所のミスで全部消える</b>のは最悪のUX。エラー時も<b>入力を保ったまま</b>修正できるべき。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 仕組み（自動）</div>
+        <ol style="margin-left:18px">
+          <li>送信された値は form に入る</li>
+          <li>検証エラーで<b>同じ form を返す</b></li>
+          <li><code>th:field</code> が form の値を value に</li>
+          <li>→ 入力値が<b>そのまま表示</b></li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// 手動だと大変</div>
+        <p><code>th:field</code> なしで <code>value</code> を手書きすると、保持を<b>自分で書く</b>羽目に。<code>th:field</code> なら自動。</p>
+      </div>
+      <div class="code"><span class="code-head">// 入力値の保持</span>
+<span class="comment">// ─── Controller（本編Vol.2,12）───</span>
+<span class="ann">@PostMapping</span>("/memos")
+String create(<span class="ann">@Validated @ModelAttribute</span>
+              MemoForm form,
+              BindingResult br) {
+  if (br.hasErrors()) {
+    return "memos/form";  <span class="comment"># 同じformを返す ★</span>
+    <span class="comment"># → form には送信値が入ったまま</span>
+  }
+  service.create(form);
+  return "redirect:/memos";
+}
+<span class="comment"># → エラー時、form をそのまま画面へ ★★★</span>
+
+
+<span class="comment">// ─── 画面（自動で保持）───</span>
+<span class="tagx">&lt;input</span> <span class="thx">th:field=</span><span class="str">"*{title}"</span><span class="tagx">&gt;</span>
+<span class="comment"># → form.title の値が value に入る</span>
+<span class="comment"># → ユーザーが打った「会議メモ」が残る ★</span>
+<span class="comment"># → 手で value を書く必要なし</span>
+
+
+<span class="comment">// ─── 手動だと（th:field なし）───</span>
+<span class="kw">面倒:</span>
+&lt;input name="title"
+       th:value="${memoForm.title}"&gt;
+<span class="comment"># → value を自分で書く必要あり ★</span>
+<span class="kw">楽:</span>
+&lt;input th:field="*{title}"&gt;
+<span class="comment"># → name も value も自動 ★★★</span>
+
+
+<span class="comment">// ─── 保持されない原因（F9で詳しく）───</span>
+<span class="comment"># ・エラー時に new Form() を作り直している</span>
+<span class="comment"># ・redirect している（値が消える）</span>
+<span class="comment"># → エラー時は return "view"（リダイレクトしない）★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — エラー時は「リダイレクトせず、同じformを返す」</div>
+    <p>入力値が保持される鍵は、Controller が検証エラー時に<b>リダイレクトせず、送信された form をそのまま画面に返す</b>こと（<code>return "memos/form"</code>）。もし <code>redirect:</code> すると<b>form の値が失われ、入力が消えます</b>。「<b>成功したらリダイレクト（PRG）、エラーなら同じ画面を返す</b>」——本編Vol.2・12 のこの使い分けが、入力保持を支えています。<code>th:field</code> と組めば、保持は完全に自動です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>作成フォームを組み立てる</h2><span class="en">BUILD THE FORM</span></div>
+  <p class="pattern-desc">学んだ <code>th:object</code>・<code>th:field</code>・<code>th:errors</code> を<b>全部使って</b>、本編Vol.2 のメモ作成フォームを組み立てます。<b>新規・編集兼用</b>にする工夫も。これが実際の form.html です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">memos/form.html の全体</span><span class="tag-desc">3点セットの合わせ技</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 使う構文</div>
+        <ul>
+          <li><b>th:object</b>：memoForm と結ぶ</li>
+          <li><b>th:field</b>：各入力欄をひも付け</li>
+          <li><b>th:errors</b>：エラーをその場に</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 新規・編集の兼用</div>
+        <p>送信先（action）を<b>id の有無で切り替え</b>。id があれば編集（/memos/{id}）、なければ新規（/memos）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 1ファイルで両対応</div>
+        <p>新規も編集も<b>同じ form.html</b>。重複を避ける（本編の関心の分離・F8で深掘り）。</p>
+      </div>
+      <div class="code"><span class="code-head">// templates/memos/form.html</span>
+<span class="comment">&lt;!-- 新規/編集で送信先を切り替え --&gt;</span>
+<span class="tagx">&lt;form</span> <span class="thx">th:object=</span><span class="str">"${memoForm}"</span> <span class="attr">method=</span><span class="str">"post"</span>
+  <span class="thx">th:action=</span><span class="str">"${id} != null
+    ? @{/memos/{id}(id=${id})}
+    : @{/memos}"</span><span class="tagx">&gt;</span>
+
+  <span class="comment">&lt;!-- タイトル --&gt;</span>
+  <span class="tagx">&lt;div</span> <span class="attr">class=</span><span class="str">"field"</span><span class="tagx">&gt;</span>
+    <span class="tagx">&lt;label</span> <span class="attr">for=</span><span class="str">"title"</span><span class="tagx">&gt;</span><span class="txt">タイトル</span><span class="tagx">&lt;/label&gt;</span>
+    <span class="tagx">&lt;input</span> <span class="attr">type=</span><span class="str">"text"</span> <span class="thx">th:field=</span><span class="str">"*{title}"</span>
+           <span class="thx">th:errorclass=</span><span class="str">"is-invalid"</span><span class="tagx">&gt;</span>
+    <span class="tagx">&lt;span</span> <span class="attr">class=</span><span class="str">"error"</span>
+          <span class="thx">th:errors=</span><span class="str">"*{title}"</span><span class="tagx">&gt;&lt;/span&gt;</span>
+  <span class="tagx">&lt;/div&gt;</span>
+
+  <span class="comment">&lt;!-- 本文 --&gt;</span>
+  <span class="tagx">&lt;div</span> <span class="attr">class=</span><span class="str">"field"</span><span class="tagx">&gt;</span>
+    <span class="tagx">&lt;label</span> <span class="attr">for=</span><span class="str">"content"</span><span class="tagx">&gt;</span><span class="txt">本文</span><span class="tagx">&lt;/label&gt;</span>
+    <span class="tagx">&lt;textarea</span> <span class="thx">th:field=</span><span class="str">"*{content}"</span>
+              <span class="attr">rows=</span><span class="str">"6"</span><span class="tagx">&gt;&lt;/textarea&gt;</span>
+    <span class="tagx">&lt;span</span> <span class="attr">class=</span><span class="str">"error"</span>
+          <span class="thx">th:errors=</span><span class="str">"*{content}"</span><span class="tagx">&gt;&lt;/span&gt;</span>
+  <span class="tagx">&lt;/div&gt;</span>
+
+  <span class="tagx">&lt;button</span> <span class="attr">type=</span><span class="str">"submit"</span><span class="tagx">&gt;</span><span class="txt">保存</span><span class="tagx">&lt;/button&gt;</span>
+  <span class="tagx">&lt;a</span> <span class="thx">th:href=</span><span class="str">"@{/memos}"</span><span class="tagx">&gt;</span><span class="txt">キャンセル</span><span class="tagx">&lt;/a&gt;</span>
+<span class="tagx">&lt;/form&gt;</span>
+
+<span class="comment"># → object/field/errors の3点セット完成 ★★★</span>
+<span class="comment"># → 新規も編集も1ファイルで対応</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 新規と編集は「1つのフォーム」で兼用できる</div>
+    <p>新規作成フォームと編集フォームは<b>ほぼ同じ</b>なので、<b>1つの form.html で兼用</b>するのが定石。違いは<b>送信先（action）だけ</b>——新規は <code>/memos</code>、編集は <code>/memos/{id}</code>。これを <code>th:action="${id} != null ? ... : ..."</code> の三項演算子で切り替えます。<b>同じ画面を2つ作らない</b>のは、本編で学んだ<b>「重複を避ける（DRY）」</b>の画面版。コードが減ればバグも減ります。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>フォームのあるある失敗</h2><span class="en">FORM PITFALLS</span></div>
+  <p class="pattern-desc">フォームで<b>初心者がハマる失敗</b>を5つ。<code>th:object</code> の箱の渡し忘れ、<code>*{}</code> と <code>${}</code> の混同など。知っていれば数分で抜けられます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">フォームあるある 5選</span><span class="tag-desc">先に知れば回避できる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① Controllerが箱を渡し忘れ ★★★</b></p>
+        <ul>
+          <li>th:object で「memoForm が無い」エラー</li>
+          <li>対処：表示前に addAttribute（Section 02）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② *{} と ${} を混同</b></p>
+        <ul>
+          <li>object内は *{}、外は ${}</li>
+          <li>対処：field/errors は *{}</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ エラー時に redirect して値が消える ★★★</b></p>
+        <ul>
+          <li>入力が全部消える</li>
+          <li>対処：エラー時は return "view"（Section 05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ BindingResult の位置ミス</b></p>
+        <ul>
+          <li>@Validated の直後に置かないと400</li>
+          <li>対処：検証対象の直後（本編Vol.12）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ ファイル送信で enctype 忘れ</b></p>
+        <ul>
+          <li>ファイルが送られない（本編Vol.11）</li>
+          <li>対処：enctype="multipart/form-data"</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// あるある失敗の対処</span>
+<span class="comment">// ─── ① 箱の渡し忘れ ───</span>
+<span class="kw">NG:</span> 新規画面で memoForm を渡さない
+<span class="comment"># → th:object でエラー ★</span>
+<span class="kw">OK:</span>
+model.addAttribute("memoForm", new MemoForm());
+return "memos/form";
+
+
+<span class="comment">// ─── ② *{} と ${} ───</span>
+<span class="kw">object内（フォーム項目）:</span> *{title}
+<span class="kw">object外（一覧表示等）:</span>   ${memo.title}
+<span class="comment"># → field/errors は必ず *{} ★★★</span>
+
+
+<span class="comment">// ─── ③ エラー時のreturn ───</span>
+<span class="kw">NG:</span> if(br.hasErrors())
+       return "redirect:/memos/new";
+<span class="comment"># → 入力値が消える ★★★</span>
+<span class="kw">OK:</span> if(br.hasErrors())
+       return "memos/form";
+<span class="comment"># → form を返すので値が残る ★</span>
+
+
+<span class="comment">// ─── ⑤ ファイル送信（本編Vol.11）───</span>
+<span class="kw">NG:</span> &lt;form method="post"&gt;
+<span class="kw">OK:</span> &lt;form method="post"
+         enctype="multipart/form-data"&gt;
+
+
+<span class="comment">// ─── 良いフォームの条件 ───</span>
+✓ 表示前に箱を addAttribute
+✓ field/errors は *{}
+✓ エラー時はリダイレクトしない
+✓ BindingResult は直後に
+✓ ファイルは enctype 指定 ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — フォームトラブルの多くは「箱」と「returnの仕方」</div>
+    <p>フォーム関連のトラブルで多いのは<b>2つ</b>：<b>①Controller が表示前にフォームの箱（オブジェクト）を渡し忘れ</b>（th:object でエラー）、<b>②エラー時に redirect して入力値が消える</b>。どちらも<b>サーバー側（Controller）の書き方</b>が原因で、画面側は正しいことが多い。「画面が変なときは、Controller も疑う」。本編とフロント別冊を<b>両方理解</b>していると、こうした切り分けが速くなります。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">フォームの<b>3点セット</b>が身につきました。データの表示（F2）と入力（F3）ができれば、画面の<b>機能</b>はほぼ作れます。次は<b>見た目</b>——CSS設計とレイアウトに進みます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">F3 達成チェック</span><span class="tag-desc">入力の基本を習得</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>フォームの双方向の流れが分かる</li>
+          <li>th:object でフォームを束ねられる</li>
+          <li>th:field で項目を結べる（name/value自動）</li>
+          <li>th:errors でエラー表示できる</li>
+          <li>入力値の保持の仕組みを理解</li>
+          <li>新規・編集を1フォームで兼用できる</li>
+          <li>あるある失敗を知っている</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// F3 で手に入れた3点セット</span>
+✓ <span class="str">"th:object — フォーム全体を束ねる"</span>
+
+✓ <span class="str">"th:field — 項目を結ぶ（自動生成）"</span>
+
+✓ <span class="str">"th:errors — エラーをその場に"</span>
+
+✓ <span class="str">"入力保持は同じformを返すだけ"</span>
+
+
+<span class="comment">// 表示(F2) + 入力(F3) で</span>
+<span class="comment">// 画面の「機能」はほぼ作れる ★★★</span>
+
+<span class="comment">// 次回 フロント別冊F4：</span>
+<span class="comment">//   CSS設計とレイアウト</span>
+<span class="comment">//   :root変数・命名・テーブル/カード</span>
+<span class="comment">//   レスポンシブの考え方</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── フロント別冊 VOL.F4 へ</div>
+    <p>F2（表示）とF3（入力）で、画面の<b>「機能」</b>はほぼ作れるようになりました。データを出し、ユーザーの入力を受け取れる。次は<b>フロント別冊F4「CSS設計とレイアウト編」</b>。同じ機能でも<b>見た目が整っているか</b>でアプリの印象は大きく変わります。<code>:root</code> でのCSS変数管理、クラスの命名、テーブル・カードのレイアウト、そして<b>レスポンシブ（スマホ対応）</b>の考え方を学びます。本編の各巻で使ってきた <code>style.css</code> の<b>設計思想</b>を解き明かします。<b>フロント別冊F4 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（FRONTEND SUPPLEMENT）</span>
+  <span>FRONT.03 / 9 ── FORMS &amp; USER INPUT</span>
+</footer>
+
+</body>
+</html>

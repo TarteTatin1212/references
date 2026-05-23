@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕GitHub版 Vol.11 コントリビューションとプロジェクト運営</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a2f38;
+  --paper:#f0ede4;
+  --paper-2:#e2ddc8;
+  --accent:#c95444;
+  --accent-2:#5a6270;
+  --accent-3:#2da44e;
+  --muted:#6a7080;
+  --line:#cac4b2;
+  --code-bg:#1c2026;
+  --code-text:#e8e4dc;
+  --panel-bg:#faf5e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"⎇";position:absolute;right:-10px;top:-30px;font-size:300px;color:var(--accent);opacity:0.17;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-2);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:36px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.prompt{color:#7eb87e}
+.gh-out{color:#a8b8c8}
+.key{background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(201,84,68,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-2);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff;font-size:12.5px}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-2);font-family:'JetBrains Mono',monospace}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.gh-mock{background:#0d1117;color:#c9d1d9;border:1px solid #2a313a;border-radius:6px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.75;margin:8px 0}
+.gh-mock .gh-bar{color:#7d8590;border-bottom:1px solid #2a313a;padding-bottom:6px;margin-bottom:8px;font-size:11px}
+.gh-mock .gh-h{color:#e6edf3;font-weight:700}
+.gh-mock .gh-green{color:#3fb950}
+.gh-mock .gh-blue{color:#58a6ff}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:26px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.GH11</span>
+    <span class="kind-tag">GitHub版 ── COMMUNITY</span>
+    <span class="rdt-tag">CONTRIBUTION</span>
+  </div>
+  <h1>コントリビューションと<br>プロジェクト運営</h1>
+  <div class="subtitle">GH.11 ── CONTRIBUTION &amp; PROJECT GOVERNANCE</div>
+  <p class="lead">これまで<b>「一人で開発する」</b>仕組みを整えてきました。今回は<b>「他者の貢献を受け入れる」</b>仕組み。<b>CONTRIBUTING.md</b>（貢献の手引き）、<b>LICENSE</b>（使用許諾）、<b>行動規範</b>。リポジトリを<b>公開し、みんなで育てる</b>ための土台を作ります。RDT版で築いた<b>「仕組みで品質を守る」</b>が、チーム・コミュニティに広がる回です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 GitHub版の赤線対策</div>
+    <p>Vol.GH11で詰まる場面：ライセンスの選び方の迷い（「とりあえずMIT」で良いか）、CONTRIBUTING の置き場所、行動規範の必要性への疑問。<b>Section 07 で対処</b>。これらは<b>「あれば親切」</b>な文書で、コードのように動作テストはできませんが、<b>プロジェクトの顔</b>になります。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 この巻のミッション</a></li>
+    <li><a href="#s02">02 コントリビューションとは</a></li>
+    <li><a href="#s03">03 CONTRIBUTING.md</a></li>
+    <li><a href="#s04">04 ライセンスの選択</a></li>
+    <li><a href="#s05">05 行動規範とコミュニティ</a></li>
+    <li><a href="#s06">06 貢献を受け入れる運営</a></li>
+    <li><a href="#s07">07 ハマりどころ＋NEXT</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>この巻のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">Vol.GH11 のゴールは<b>「他者が参加できるプロジェクトにする」</b>こと。これまで Vol.GH1〜10 で<b>「一人で安全・確実に開発する」</b>仕組みを作りました。今回はそれを<b>「みんなで育てる」</b>段階へ。貢献のルール・ライセンス・行動規範を整えます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">「一人」から「みんな」へ</span><span class="tag-desc">開かれたプロジェクト</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// これまでとの違い</div>
+        <p>Vol.GH1〜10 は<b>「開発者（自分）のための仕組み」</b>。Vol.GH11 は<b>「参加者（他者）のための仕組み」</b>。視点が<b>内から外へ</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 公開プロジェクトに必要な3文書</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">文書1</span>
+            <div class="name">CONTRIBUTING</div>
+            <div class="desc"><b>貢献の手引き</b>。どう参加するか。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">文書2</span>
+            <div class="name">LICENSE</div>
+            <div class="desc"><b>使用許諾</b>。どう使ってよいか。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">文書3</span>
+            <div class="name">行動規範</div>
+            <div class="desc"><b>振る舞いのルール</b>。安心して参加できる場。</div>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 公開プロジェクトの構成</span>
+<span class="comment">// ─── これまで（一人の開発）───</span>
+README       使い方（Vol.GH5）
+.gitignore   機密除外（Vol.GH7）
+CI           自動テスト（Vol.GH8）
+リリース      公開（Vol.GH9）
+保守          安全維持（Vol.GH10）
+
+
+<span class="comment">// ─── 今回（みんなで育てる）───</span>
+memo-app/
+├ README.md          使い方（既存）
+├ CONTRIBUTING.md    貢献の手引き ★
+├ LICENSE            使用許諾 ★
+├ CODE_OF_CONDUCT.md 行動規範 ★
+└ .github/
+    ├ ISSUE_TEMPLATE/    （Vol.GH7）
+    └ pull_request_template.md
+
+
+<span class="comment">// ─── 視点の転換 ───</span>
+これまで: 「自分が開発しやすく」
+今回:    「他者が参加しやすく」★★★
+       - どう貢献すればいいか（CONTRIBUTING）
+       - 使っていいのか（LICENSE）
+       - 安心して参加できるか（行動規範）
+
+
+<span class="comment">// ─── RDT版の精神が広がる ───</span>
+<span class="comment">// 「仕組みで品質を守る」が</span>
+<span class="comment">// 「仕組みでコミュニティを支える」へ ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 公開とは「他者を迎え入れる」こと</div>
+    <p>リポジトリを公開するのは、単にコードを見せるだけではありません。<b>「他者が使い・貢献できる場を作る」</b>こと。そのためには<b>「どう参加するか（CONTRIBUTING）」「使ってよいか（LICENSE）」「安心できるか（行動規範）」</b>を示す必要がある。これらがないと、訪問者は<b>「貢献していいか分からない」「使っていいか不安」</b>になる。Vol.GH11 は、<b>プロジェクトを「開く」</b>ための準備です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>コントリビューションとは</h2><span class="en">WHAT IS CONTRIBUTION</span></div>
+  <p class="pattern-desc"><b>コントリビューション（貢献）</b>とは、<b>他者がプロジェクトに参加すること</b>。コード修正だけでなく、<b>バグ報告・ドキュメント改善・提案</b>も貢献。これまで学んだ<b>Issue・PR・Fork</b>が、貢献の手段になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">貢献の種類と流れ</span><span class="tag-desc">コードだけではない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 貢献の種類</div>
+        <ul>
+          <li><b>コード</b>：機能追加・バグ修正のPR</li>
+          <li><b>報告</b>：バグ報告・改善提案のIssue</li>
+          <li><b>ドキュメント</b>：READMEの誤字修正等</li>
+          <li><b>レビュー</b>：他者のPRを確認</li>
+        </ul>
+        <p style="margin-top:8px"><b>コードを書かなくても貢献できる</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// Fork & PR の流れ</div>
+        <p>外部の人は<b>リポジトリを Fork（複製）</b>し、自分の複製で作業→<b>PR</b>で本家に提案。これまでの PR（Vol.GH3）の応用。</p>
+
+        <div class="panel-head" style="margin-top:18px">// これまでの仕組みが活きる</div>
+        <p>Issue（Vol.GH4）、PR（Vol.GH3）、テンプレート（Vol.GH7）、CI（Vol.GH8）——全部が<b>貢献を受け入れる土台</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// コントリビューションの全体像</span>
+<span class="comment">// ─── 貢献はコードだけではない ───</span>
+コード貢献:
+  バグ修正・機能追加のPR
+報告貢献:
+  「ここがバグ」とIssue
+  「こんな機能が欲しい」と提案
+ドキュメント貢献:
+  READMEの誤字修正・説明追加
+レビュー貢献:
+  他者のPRを確認・コメント
+<span class="comment">// → 誰でも何かしら貢献できる ★</span>
+
+
+<span class="comment">// ─── 外部貢献者の Fork & PR ───</span>
+本家リポジトリ
+  ↓ ① Fork（自分のアカウントに複製）
+あなたの Fork
+  ↓ ② clone して作業
+  ↓ ③ ブランチで修正（Vol.GH2）
+  ↓ ④ Fork に push
+  ↓ ⑤ 本家に PR（Vol.GH3）
+本家のメンテナがレビュー
+  ↓ CI（Vol.GH8）が走る
+  ↓ OK ならマージ
+<span class="comment">// → 外部の人も安全に貢献できる ★★★</span>
+
+
+<span class="comment">// ─── これまでの仕組みが土台に ───</span>
+Issue（Vol.GH4）  → 報告・提案の受付
+PR（Vol.GH3）     → コード貢献の受付
+テンプレート（GH7）→ 記述の統一
+CI（Vol.GH8）     → 貢献の品質を自動チェック
+保護（Vol.GH6）   → mainを守る
+<span class="comment">// → 全部が「貢献を受け入れる」仕組み ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — これまでの仕組みは「貢献を受け入れる土台」だった</div>
+    <p>Vol.GH1〜10 で作った仕組み——Issue、PR、テンプレート、CI、ブランチ保護——は、実は<b>「他者の貢献を安全に受け入れる」</b>ための土台でもありました。外部の人がPRを出しても、<b>CIが品質をチェック</b>し、<b>ブランチ保護がmainを守る</b>。「知らない人のコードでも、仕組みが安全を保証」する。RDT版で積み上げた<b>「仕組みで品質を守る」</b>が、<b>コミュニティ運営でこそ真価を発揮</b>します。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>CONTRIBUTING.md</h2><span class="en">CONTRIBUTING GUIDE</span></div>
+  <p class="pattern-desc"><b>CONTRIBUTING.md</b> は<b>「貢献の手引き」</b>。「どう環境を作るか」「どうPRを出すか」「どんなルールか」を書く。これがあると<b>貢献者が迷わない</b>。RDT版の規約（コミット規約・テスト必須等）を明文化します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">貢献の手引きを書く</span><span class="tag-desc">迷わせない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// CONTRIBUTING に書くこと</div>
+        <ul>
+          <li><b>環境構築</b>：セットアップ手順</li>
+          <li><b>開発フロー</b>：ブランチ・コミット規約</li>
+          <li><b>テスト</b>：テストの実行・追加方法</li>
+          <li><b>PRの出し方</b>：レビューの流れ</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// RDT版のルールを明文化</div>
+        <p>これまで暗黙だった<b>「Conventional Commits（Vol.GH6）」「テスト必須（Vol.GH8）」「受入条件を書く（Vol.GH7）」</b>を文書化。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 配置</div>
+        <p>ルートまたは <code>.github/</code> に <code>CONTRIBUTING.md</code>。GitHub が<b>PR作成時に自動でリンク表示</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// CONTRIBUTING.md（RDT版）</span>
+<span class="kw"># コントリビューションガイド</span>
+
+メモ帳アプリへの貢献歓迎です！
+
+<span class="kw">## 環境構築</span>
+1. このリポジトリを Fork
+2. clone して `./gradlew bootRun`
+3. 環境変数 DB_PASSWORD を設定（README参照）
+   <span class="comment"># → Vol.GH5,7 の内容</span>
+
+<span class="kw">## 開発フロー</span>
+1. Issue を作成（or 既存Issueを確認）
+2. ブランチを切る: `feature/xxx`
+   <span class="comment"># → Vol.GH2</span>
+3. 変更してコミット
+   <span class="comment"># → Conventional Commits（Vol.GH6）</span>
+   例: `feat(memo): タグ機能を追加`
+4. テストを追加・実行
+   <span class="comment"># → 全テスト緑が必須（Vol.GH8）</span>
+5. PR を作成
+   <span class="comment"># → テンプレートに沿って（Vol.GH7）</span>
+
+<span class="kw">## コミット規約</span>
+- feat: 機能追加
+- fix: バグ修正
+- docs: ドキュメント
+（Conventional Commits 準拠・Vol.GH6）
+
+<span class="kw">## テスト</span>
+- 新機能には必ずテストを追加
+- `./gradlew test` で全緑を確認
+- CI が自動で確認します（Vol.GH8）
+
+<span class="kw">## PR のルール</span>
+- 受入条件を満たすこと
+- CI が緑であること
+- レビュー承認後マージ
+
+
+<span class="comment">// ─── 効果：PR作成時に表示 ───</span>
+<div class="gh-mock">
+<span class="gh-bar">Open a pull request</span>
+<span class="gh-blue">📋 CONTRIBUTING.md を読みましたか？</span>
+本文（テンプレート・Vol.GH7）:
+## 受入条件
+- [ ] ...
+</div>
+<span class="comment">// → 貢献者が迷わず参加できる ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — CONTRIBUTING は「暗黙のルールの明文化」</div>
+    <p>CONTRIBUTING.md の本質は<b>「これまで暗黙だったルールを言葉にする」</b>こと。あなたの頭の中にある<b>「コミットはこう書く」「テストは必須」「PRはこう出す」</b>——これらは、新しい貢献者には分かりません。文書化することで<b>「誰でも同じやり方で参加できる」</b>。RDT版で積み上げた規約（Vol.GH6,7,8）を明文化すれば、<b>品質を保ったまま、参加の門戸が開く</b>。これは別冊S2の「暗黙知を形式知に」する設計でもあります。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>ライセンスの選択</h2><span class="en">CHOOSING A LICENSE</span></div>
+  <p class="pattern-desc"><b>ライセンス</b>は<b>「このコードをどう使ってよいか」</b>を定める法的な許諾。<b>ライセンスがないと、他者は使えない</b>（法的にグレー）。代表的なライセンスの特徴と、<b>選び方</b>を理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ライセンスの種類と選択</span><span class="tag-desc">使ってよいかを定める</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ライセンスがないと</div>
+        <p>ライセンス未記載のコードは<b>「全権利が作者に」</b>＝他者は<b>法的に使えない</b>（公開していても）。使ってもらうには<b>ライセンスが必須</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 代表的なライセンス</div>
+        <table class="compare-tbl">
+          <thead><tr><th>ライセンス</th><th>特徴</th></tr></thead>
+          <tbody>
+            <tr><td><b>MIT</b></td><td>最も自由・シンプル</td></tr>
+            <tr><td>Apache 2.0</td><td>特許条項あり</td></tr>
+            <tr><td>GPL</td><td>派生物も公開義務</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 選び方</div>
+        <ul>
+          <li><b>自由に使ってほしい</b>→ MIT（個人プロジェクトの定番）</li>
+          <li><b>派生物も公開させたい</b>→ GPL</li>
+          <li>迷ったら<b>MIT</b>（シンプル・寛容）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// ライセンスの選択</span>
+<span class="comment">// ─── ライセンスがないと… ───</span>
+ライセンス未記載のコード
+  = 著作権法上「全権利が作者」
+  = 他者は使用・改変・再配布できない
+<span class="comment">// → 公開していても「使えない」★</span>
+<span class="comment">// → 使ってもらうにはライセンス必須</span>
+
+
+<span class="comment">// ─── MIT ライセンス（定番）───</span>
+<span class="comment"># LICENSE ファイル</span>
+MIT License
+
+Copyright (c) 2024 あなたの名前
+
+Permission is hereby granted, free of
+charge, to any person obtaining a copy...
+（自由に使用・改変・再配布してよい）
+（ただし無保証）
+
+<span class="comment">// → 最も自由・シンプル ★</span>
+<span class="comment">// → 「自由に使ってOK、自己責任で」</span>
+
+
+<span class="comment">// ─── ライセンスの選択フロー ───</span>
+自由に使ってほしい？
+  → Yes: MIT（個人の定番）★
+派生物も公開させたい？
+  → Yes: GPL
+特許も考慮？
+  → Apache 2.0
+迷ったら？
+  → MIT（寛容・シンプル）
+
+
+<span class="comment">// ─── GitHub での追加（簡単）───</span>
+<span class="comment"># リポジトリで Add file → Create</span>
+<span class="comment"># ファイル名 "LICENSE" と打つと</span>
+<span class="comment"># GitHub がライセンス選択UIを出す ★</span>
+<span class="comment"># → MIT等を選ぶと雛形が入る</span>
+<span class="comment"># → 名前・年を埋めるだけ</span>
+
+
+<span class="comment">// ─── 注意：法的な話 ───</span>
+<span class="comment">// ライセンスは法的な許諾</span>
+<span class="comment">// → 業務・組織では法務に確認を</span>
+<span class="comment">// → 個人学習なら MIT で十分 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「公開＝自由に使える」ではない、ライセンスが必須</div>
+    <p>よくある誤解：<b>「GitHubで公開したから、誰でも使っていい」</b>——これは間違い。<b>ライセンスがないコードは、法的に「全権利が作者」</b>で、他者は使えません。「使ってほしい」なら<b>ライセンスを明示</b>する必要がある。個人プロジェクトなら<b>MIT（自由・シンプル）</b>が定番。GitHub には<b>ライセンス選択UI</b>があり、簡単に追加できる。<b>「公開」と「使用許諾」は別物</b>と覚えておきましょう。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>行動規範とコミュニティ</h2><span class="en">CODE OF CONDUCT</span></div>
+  <p class="pattern-desc"><b>行動規範（Code of Conduct）</b>は<b>「参加者がどう振る舞うべきか」</b>を定める。<b>誰もが安心して参加できる場</b>を作るためのルール。コードの品質と同じく、<b>コミュニティの健全さも仕組みで守る</b>という発想です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">安心して参加できる場づくり</span><span class="tag-desc">振る舞いのルール</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 行動規範とは</div>
+        <p>参加者の<b>振る舞いの基準</b>。「敬意を持って」「建設的に」「差別をしない」等。<b>安心して参加できる場</b>を保証する。</p>
+
+        <div class="panel-head" style="margin-top:18px">// なぜ必要か</div>
+        <ul>
+          <li>誰もが<b>萎縮せず参加</b>できる</li>
+          <li>問題行動への<b>対応基準</b>が明確</li>
+          <li>プロジェクトの<b>価値観</b>を示す</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 定番のテンプレート</div>
+        <p><b>Contributor Covenant</b> という広く使われる雛形がある。ゼロから書かず、<b>定番を採用</b>（別冊S2のKISS：車輪の再発明をしない）。</p>
+      </div>
+      <div class="code"><span class="code-head">// 行動規範</span>
+<span class="comment">// ─── CODE_OF_CONDUCT.md ───</span>
+<span class="kw"># 行動規範</span>
+
+<span class="kw">## 私たちの約束</span>
+このプロジェクトの参加者として、
+私たちは誰もが harassment のない
+体験ができるよう努めます。
+
+<span class="kw">## 期待される行動</span>
+- 他者への敬意を持つ
+- 建設的なフィードバック
+- 異なる視点を尊重する
+- コミュニティのために協力する
+
+<span class="kw">## 許容されない行動</span>
+- 差別的な言動
+- 個人攻撃・嫌がらせ
+- 他者のプライバシー侵害
+
+<span class="kw">## 対応</span>
+違反は [連絡先] へ報告してください。
+メンテナが適切に対応します。
+
+
+<span class="comment">// ─── Contributor Covenant（定番）───</span>
+<span class="comment"># 広く使われる行動規範のテンプレート</span>
+<span class="comment"># https://www.contributor-covenant.org</span>
+<span class="comment"># → ゼロから書かず定番を採用 ★</span>
+<span class="comment"># → 多くのOSSが採用（信頼性）</span>
+
+
+<span class="comment">// ─── 「コミュニティも仕組みで守る」 ───</span>
+コード品質: CI・テスト・規約で守る
+            （Vol.GH6,8）
+       ↓ 同じ発想
+コミュニティ: 行動規範で守る ★★★
+            「安心して参加できる場」
+
+
+<span class="comment">// ─── GitHub の表示 ───</span>
+<span class="comment"># CODE_OF_CONDUCT.md を置くと</span>
+<span class="comment"># リポジトリの「Community」タブに表示</span>
+<span class="comment"># → プロジェクトの健全さを示す ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「コードの品質」と「コミュニティの健全さ」は両輪</div>
+    <p>RDT版では<b>コードの品質を仕組み（CI・テスト・規約）で守って</b>きました。行動規範は、<b>同じ発想をコミュニティに適用</b>したもの。「<b>安心して参加できる場</b>」を、ルールという仕組みで保証する。優れたコードがあっても、<b>コミュニティが荒れていれば誰も参加しない</b>。逆に、健全なコミュニティは<b>多くの貢献を集める</b>。<b>技術と人、両方の健全さ</b>が、長く続くプロジェクトを作ります。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>貢献を受け入れる運営</h2><span class="en">ACCEPTING CONTRIBUTIONS</span></div>
+  <p class="pattern-desc">外部から<b>PRが来たとき、どう対応するか</b>。これまでの<b>レビュー・CI</b>がそのまま活きます。さらに<b>「貢献者への感謝」「丁寧なフィードバック」</b>という、運営の心構えも大切です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">外部PRへの対応</span><span class="tag-desc">仕組み＋心構え</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 外部PRの対応フロー</div>
+        <ol class="step-list">
+          <li>CIが自動で走る（Vol.GH8）</li>
+          <li>CONTRIBUTING に沿っているか確認</li>
+          <li>コードをレビュー（建設的に）</li>
+          <li>必要なら修正を依頼</li>
+          <li>OKならマージ＋感謝</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// メンテナの心構え</div>
+        <ul>
+          <li><b>感謝を伝える</b>：貢献は善意</li>
+          <li><b>建設的に</b>：否定でなく改善提案</li>
+          <li><b>明確に</b>：何を直すか具体的に</li>
+          <li><b>行動規範に沿って</b>：敬意を持つ</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 仕組みが支える</div>
+        <p>CI（Vol.GH8）が<b>品質を自動チェック</b>するので、メンテナは<b>「設計・方針」のレビューに集中</b>できる。</p>
+      </div>
+      <div class="code"><span class="code-head">// 貢献を受け入れる運営</span>
+<span class="comment">// ─── 外部PRが来たとき ───</span>
+<div class="gh-mock">
+<span class="gh-bar">Pull request from contributor-x</span>
+<span class="gh-h">feat(search): 検索履歴を追加</span>
+<span class="gh-green">✓ CI / test (passed)</span>
+<span class="gh-green">✓ CI / build (passed)</span>
+
+メンテナのコメント:
+"素晴らしい貢献をありがとうございます！🎉
+1点だけ、テストを追加いただけますか？
+それ以外は完璧です。"
+</div>
+<span class="comment">// → 感謝＋建設的フィードバック ★★★</span>
+
+
+<span class="comment">// ─── レビューの心構え（行動規範）───</span>
+<span class="ann">NG:</span> 「このコードはダメ」
+<span class="comment">// → 否定的・貢献者が萎縮 ★</span>
+
+<span class="ann">OK:</span> 「ありがとうございます！
+     ここをこう変えると、より良くなります」
+<span class="comment">// → 感謝＋具体的な改善提案 ★★★</span>
+
+
+<span class="comment">// ─── 仕組みが運営を支える ───</span>
+CI（Vol.GH8）
+  → テストの合否を自動判定
+  → メンテナは「動くか」を確認不要
+ブランチ保護（Vol.GH6）
+  → 未レビューのマージを防ぐ
+CONTRIBUTING（今回）
+  → 「ルールはここ」と示せる
+<span class="comment">// → 仕組みがある分、人は「対話」に集中 ★</span>
+
+
+<span class="comment">// ─── 「貢献は善意」を忘れない ───</span>
+<span class="comment">// 外部貢献者は時間を使って</span>
+<span class="comment">// 善意で貢献してくれている</span>
+<span class="comment">// → 感謝と敬意を持って対応 ★★★</span>
+<span class="comment">// → 良い運営が良い貢献を呼ぶ</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「仕組み」が整うほど、人は「対話」に集中できる</div>
+    <p>面白いことに、<b>仕組み（CI・規約・保護）が整うほど、メンテナは人との対話に集中できます</b>。「テストが通るか」はCIが判定するので、メンテナは<b>「設計の方針」「貢献者への感謝」</b>に時間を使える。仕組みが<b>機械的な確認を肩代わり</b>し、人は<b>人にしかできないこと（対話・判断・感謝）</b>に注力する。RDT版で築いた仕組みは、<b>「良いコミュニティ運営」の余裕</b>を生むのです。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>ハマりどころ＋NEXT STEP</h2><span class="en">PITFALLS &amp; NEXT</span></div>
+  <p class="pattern-desc">コミュニティ運営で陥りやすい点を5つ。コードと違い<b>「人」が関わる</b>ので、技術以外の配慮も必要です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.GH11 ハマりどころ 5選</span><span class="tag-desc">人が関わる難しさ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① ライセンスを付けずに公開 ★★★</b></p>
+        <ul>
+          <li>「公開＝使ってOK」と誤解</li>
+          <li>対処：LICENSE を必ず追加（Section 04）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② CONTRIBUTING がなく貢献者が迷う</b></p>
+        <ul>
+          <li>「どう参加すれば?」が不明</li>
+          <li>対処：手引きを明文化（Section 03）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ 否定的なレビューで貢献者が離れる ★★★</b></p>
+        <ul>
+          <li>厳しい言葉で萎縮させる</li>
+          <li>対処：感謝＋建設的に（Section 06・行動規範）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 行動規範を「不要」と軽視</b></p>
+        <ul>
+          <li>小さなプロジェクトでも安心の土台</li>
+          <li>対処：定番テンプレートを採用（Section 05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ PRを放置する</b></p>
+        <ul>
+          <li>貢献者の善意を無駄にする</li>
+          <li>対処：早めに反応（せめて「確認します」）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 主要な対処</span>
+<span class="comment">// ─── ① ライセンスを必ず ───</span>
+<span class="comment"># 公開リポジトリには LICENSE を置く</span>
+<span class="comment"># 個人なら MIT が定番（Section 04）★★★</span>
+
+
+<span class="comment">// ─── ③ 建設的なレビュー ───</span>
+<span class="ann">NG:</span> "間違っています"
+<span class="ann">OK:</span> "ありがとうございます。
+     ○○すると更に良くなります"
+<span class="comment">// → 感謝＋改善提案（Section 06）★★★</span>
+
+
+<span class="comment">// ─── 公開前チェックリスト ───</span>
+□ README（使い方・Vol.GH5）
+□ LICENSE（使用許諾）★★★
+□ CONTRIBUTING（貢献の手引き）
+□ CODE_OF_CONDUCT（行動規範）
+□ Issue/PRテンプレート（Vol.GH7）
+□ CI（Vol.GH8）
+□ ブランチ保護（Vol.GH6）
+<span class="comment">// → これで「開かれたプロジェクト」★★★</span>
+
+
+<span class="comment">// ─── 「人」への配慮 ───</span>
+✓ ライセンスで「使ってよい」を明示
+✓ CONTRIBUTINGで「参加できる」を示す
+✓ 行動規範で「安心」を保証
+✓ 感謝と敬意で対応
+✓ 放置しない</div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">GH11 達成チェック</span><span class="tag-desc">開かれたプロジェクトに</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェック</div>
+        <ul class="check-list">
+          <li>コントリビューションの種類を理解した</li>
+          <li>これまでの仕組みが貢献の土台と分かる</li>
+          <li>CONTRIBUTING を書ける</li>
+          <li>ライセンスの必要性と選び方が分かる</li>
+          <li>行動規範の意義を理解した</li>
+          <li>外部PRに建設的に対応できる</li>
+          <li>「公開≠使用許諾」が分かった</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.GH11 で手に入れた力</span>
+✓ <span class="str">"他者を迎え入れる仕組み"</span>
+
+✓ <span class="str">"CONTRIBUTINGで参加を導く"</span>
+
+✓ <span class="str">"ライセンスで使用を許諾"</span>
+
+✓ <span class="str">"行動規範で安心を保証"</span>
+
+✓ <span class="str">"感謝と敬意で運営する"</span>
+
+
+<span class="comment">// → 「開かれたプロジェクト」が完成 ★★★</span>
+<span class="comment">// → 一人開発からコミュニティへ</span>
+
+<span class="comment">// 次回 Vol.GH12（予定）：</span>
+<span class="comment">//   GitHub Pages でドキュメント公開</span>
+<span class="comment">//   またはプロジェクトの可視化（バッジ等）</span>
+<span class="comment">//   本編Vol.13 の性能と連動</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.GH12 へ</div>
+    <p>Vol.GH11 で<b>「コントリビューションとプロジェクト運営」</b>の仕組みが整い、<b>一人開発から開かれたプロジェクト</b>へと進化しました。CONTRIBUTING・LICENSE・行動規範で、他者を迎え入れる準備が完了。RDT版で築いた<b>「仕組みで品質を守る」</b>が、<b>「仕組みでコミュニティを支える」</b>へと広がりました。次は Vol.GH12「<b>プロジェクトの可視化編</b>」。READMEバッジ・GitHub Pages 等で、プロジェクトの状態を<b>見える化</b>します。本編Vol.13「ページネーション＆性能」と並行して進めましょう。<b>本編Vol.13 → Vol.GH12 の順</b>がおすすめです。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>GH.11 / 14 ── CONTRIBUTION &amp; GOVERNANCE（GitHub版）</span>
+</footer>
+
+</body>
+</html>

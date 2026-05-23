@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕Vol.12 バリデーションと例外設計</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2940;
+  --paper:#f3f0e6;
+  --paper-2:#e4dfcd;
+  --accent:#2d5485;
+  --accent-2:#507aa8;
+  --accent-3:#8a6a3a;
+  --muted:#6a7484;
+  --line:#c6c1b0;
+  --code-bg:#1a2236;
+  --code-text:#e8e4d4;
+  --panel-bg:#ede7d3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✦";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.phase-badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700;letter-spacing:0.05em}
+.ph-req{background:#e8eef6;color:#2d5485;border:1px solid #2d5485}
+.ph-des{background:#f0ebe0;color:#8a6a3a;border:1px solid #8a6a3a}
+.ph-imp{background:#e6efe8;color:#3a6a4a;border:1px solid #3a6a4a}
+.ph-test{background:#f3e8e8;color:#9a4040;border:1px solid #9a4040}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.key{background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(45,84,133,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.12</span>
+    <span class="kind-tag">本編 ── MAIN</span>
+    <span class="rdt-tag">REQ · DESIGN · TEST</span>
+  </div>
+  <h1>バリデーションと<br>例外設計</h1>
+  <div class="subtitle">VOL.12 ── VALIDATION &amp; EXCEPTION HANDLING</div>
+  <p class="lead">これまで各所に<b>散らばっていた検証とエラー処理</b>を、ついに<b>体系的に整理</b>します。<b>Bean Validation</b> で入力検証を本格化、<b>@ControllerAdvice</b> で例外を集約。Vol.3 のUNIQUE違反<b>500エラー</b>、Vol.11 のパース失敗——<b>「白い500画面」を「親切なエラー画面」に変える</b>。別冊S7（例外）＋S11（バリデーション）の<b>守りの両輪</b>が実装になる集大成です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら — Vol.12 で新たに使うもの</div>
+    <p>新規 import：<code>jakarta.validation.constraints.*</code>（@NotBlank等）、<code>org.springframework.validation.annotation.Validated</code>、<code>org.springframework.web.bind.annotation.ControllerAdvice / ExceptionHandler</code>、<code>lombok.extern.slf4j.Slf4j</code>（ログ）。例外クラスは<b>右クリック→New→Class</b>で作成（RuntimeException継承）。<b>別冊S7・S11を開きながら</b>進めましょう。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 要求の確認（堅牢性）</a></li>
+    <li><a href="#s02">02 受入条件をテストケース化</a></li>
+    <li><a href="#s03">03 仕様化：守りの全体像</a></li>
+    <li><a href="#s04">04 設計①：バリデーション</a></li>
+    <li><a href="#s05">05 設計②：例外の集約</a></li>
+    <li><a href="#s06">06 実装</a></li>
+    <li><a href="#s07">07 テスト（正常系と異常系）</a></li>
+    <li><a href="#s08">08 ブラウザ確認＋ハマりどころ</a></li>
+    <li><a href="#s09">09 レビュー・評価＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>要求の確認（堅牢性）</h2><span class="phase-badge ph-req">PHASE: REQ</span><span class="en">REVISIT REQUIREMENT</span></div>
+  <p class="pattern-desc">いつも通り<b>まず要求から</b>。今回は機能追加でなく<b>「品質要求（非機能要求）」</b>。これまで先送りにしてきた<b>「不正な入力・異常時に優雅に振る舞う」</b>を実現します。別冊S1の<b>非機能要求（堅牢性）</b>の実践です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">先送りにしてきた品質要求</span><span class="tag-desc">堅牢性の実現</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// これまで先送りにしたもの</div>
+        <p>本シリーズでは何度も<b>「例外処理は Vol.12 で」</b>と先送りしました：</p>
+        <ul>
+          <li>Vol.3：カテゴリ名重複の<b>500エラー</b></li>
+          <li>Vol.11：インポートのパース失敗</li>
+          <li>「存在しないメモを開く」</li>
+        </ul>
+        <p style="margin-top:8px">YAGNI（別冊S2）で後回しにした<b>堅牢性</b>を、いよいよ実現。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 品質要求（非機能・別冊S1）</div>
+        <div class="role-card" style="margin-top:8px">
+          <span class="label">品質要求 / 堅牢性</span>
+          <div class="name">不正入力・異常に強くしたい</div>
+          <div class="desc"><b>As a</b> アプリの利用者<br><b>I want</b> 間違えても親切に教えてほしい<br><b>so that</b> 安心して使え、何が悪いか分かる</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 品質要求の受入条件</span>
+<span class="ann">@AC1</span> 入力検証
+Given: タイトルが空のフォーム
+When : 保存しようとする
+Then : 「タイトルは必須です」と表示
+       （保存されず、入力画面に戻る）
+
+<span class="ann">@AC2</span> 業務エラーの親切な表示
+Given: 既存と同名のカテゴリ
+When : 作成しようとする
+Then : 「既に存在します」と親切に表示
+       （Vol.3の500エラーを解消）★★★
+
+<span class="ann">@AC3</span> 存在しないリソース
+Given: 存在しないメモのURL
+When : アクセスする
+Then : 「メモが見つかりません」と表示
+       （404画面・白い500でない）
+
+<span class="ann">@AC4</span> 想定外エラーの安全な処理
+Given: 想定外の例外が発生
+When : それが起きる
+Then : 技術詳細を隠し、簡潔なエラー表示
+       （ログには詳細を記録）★
+
+<span class="ann">@AC5</span> 検証はサーバ側で必ず ★★★
+Given: 画面検証を回避した不正入力
+When : サーバに届く
+Then : サーバ側で弾かれる（別冊S11）
+
+
+<span class="comment">// ─── 別冊S7（例外）＋S11（検証）の実装 ───</span>
+<span class="comment">// 守りの両輪が形になる ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 堅牢性は「機能」ではなく「品質」の要求</div>
+    <p>Vol.12 は新しい機能を作りません。代わりに<b>「品質（堅牢性）」</b>を高めます。これも立派な要求——別冊S1の<b>非機能要求</b>。「動く」だけでなく<b>「不正入力でも壊れない」「異常時に親切」</b>。これまでYAGNI（別冊S2）で<b>先送りしてきた</b>のは正しい判断でした。動くものができ、使われ、<b>「もっと堅牢に」という要求が明確になった今</b>こそ、実装の好機です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>受入条件をテストケース化</h2><span class="phase-badge ph-req">PHASE: REQ→TEST</span><span class="en">AC TO TEST CASES</span></div>
+  <p class="pattern-desc">堅牢性の受入条件をテストに。<b>「異常系のテスト」</b>が中心。これまでは正常系中心でしたが、今回は<b>「わざと不正な入力・異常を起こして、正しく対処するか」</b>を検証します。別冊S3の<b>異常系テスト</b>の本領発揮です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">異常系のテストケース</span><span class="tag-desc">わざと壊して確認</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テストケース一覧</div>
+        <table class="compare-tbl">
+          <thead><tr><th>検証</th><th>期待</th><th>層</th></tr></thead>
+          <tbody>
+            <tr><td>空タイトル送信</td><td>検証エラー</td><td>結合</td></tr>
+            <tr><td>長すぎるタイトル</td><td>検証エラー</td><td>結合</td></tr>
+            <tr><td>重複カテゴリ</td><td>親切なエラー</td><td>結合</td></tr>
+            <tr><td>存在しないメモ</td><td>404</td><td>結合</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// MockMvc で検証する</div>
+        <p>バリデーション・例外ハンドリングは<b>Web層の動作</b>。<b>MockMvc</b>（本編Vol.2で既出）で「不正入力→検証エラー」を検証。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 異常系テストの価値（別冊S3）</div>
+        <p>正常系は「動く」を確認。<b>異常系は「壊れない・親切」を確認</b>。堅牢性は異常系テストで保証。</p>
+      </div>
+      <div class="code"><span class="code-head">// 受入条件 → テスト層</span>
+<span class="comment">// ─── 結合テスト（MockMvc）───</span>
+
+@AC1 空タイトル
+  → POST /memos（title空）
+  → 入力画面に戻る＋エラーメッセージ
+  → メモは保存されない
+
+@AC2 重複カテゴリ
+  → 既存と同名で POST
+  → 親切なエラー画面（500でない）★★★
+
+@AC3 存在しないメモ
+  → GET /memos/99999
+  → 404 画面（白い500でない）★
+
+
+<span class="comment">// ─── 異常系テストが中心（別冊S3）───</span>
+<span class="comment">// これまで：正常系（動く）中心</span>
+<span class="comment">// Vol.12：異常系（壊れない・親切）★★★</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">空タイトルは検証エラー</span>() {
+  mockMvc.<span class="fn">perform</span>(<span class="fn">post</span>(<span class="str">"/memos"</span>)
+      .<span class="fn">param</span>(<span class="str">"title"</span>, <span class="str">""</span>)  <span class="comment">// 空</span>
+      .<span class="fn">param</span>(<span class="str">"content"</span>, <span class="str">"本文"</span>))
+    <span class="comment">// 入力画面に戻る（リダイレクトせず）</span>
+    .<span class="fn">andExpect</span>(<span class="fn">status</span>().<span class="fn">isOk</span>())
+    .<span class="fn">andExpect</span>(<span class="fn">view</span>().<span class="fn">name</span>(
+      <span class="str">"memos/form"</span>))
+    <span class="comment">// 検証エラーがある</span>
+    .<span class="fn">andExpect</span>(<span class="fn">model</span>()
+      .<span class="fn">attributeHasFieldErrors</span>(
+        <span class="str">"memoForm"</span>, <span class="str">"title"</span>));
+  <span class="comment">// → 空タイトルが弾かれる（@AC1）★★★</span>
+}
+
+
+<span class="comment">// ─── 「壊れないこと」もテストする ───</span>
+<span class="comment">// 異常系テストがあると…</span>
+<span class="comment">// 「不正入力でちゃんと弾くか」を保証</span>
+<span class="comment">// → 堅牢性が回帰しない（別冊S3）★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「異常系テスト」こそ堅牢性の証明</div>
+    <p>これまでのテストは主に<b>正常系（うまくいく道）</b>でした。Vol.12 では<b>異常系（わざと不正な入力・異常を起こす）</b>のテストが中心。「空タイトル→弾かれるか」「重複→親切なエラーか」「存在しないID→404か」。<b>「壊れないこと・親切に対処すること」をテストで証明</b>する。別冊S3で学んだ<b>「異常系テストの重要性」</b>が、堅牢性という形で結実します。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>仕様化：守りの全体像</h2><span class="phase-badge ph-req">PHASE: SPEC</span><span class="en">SPECIFICATION</span></div>
+  <p class="pattern-desc">守りの<b>全体像</b>を仕様化します。別冊S7＋S11で学んだ<b>「入力エラーはバリデーション、業務エラーは例外」</b>の使い分けを、メモ帳の各場面に当てはめます。<b>エラーの分類と対処方針</b>を決めます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">エラーの分類と対処方針</span><span class="tag-desc">使い分けの整理</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// エラーの3分類（別冊S7,S11）</div>
+        <table class="compare-tbl">
+          <thead><tr><th>種類</th><th>手段</th><th>表示</th></tr></thead>
+          <tbody>
+            <tr><td>入力エラー</td><td>バリデーション</td><td>フォーム再表示</td></tr>
+            <tr><td>業務エラー</td><td>例外</td><td>専用エラー画面</td></tr>
+            <tr><td>システムエラー</td><td>例外</td><td>汎用エラー画面</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// メモ帳での具体例</div>
+        <ul>
+          <li><b>入力</b>：空タイトル→バリデーション</li>
+          <li><b>業務</b>：カテゴリ重複・メモ未検出→例外</li>
+          <li><b>システム</b>：DB障害・パース失敗→例外</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 表示の方針（別冊S7）</div>
+        <p>ユーザーには<b>分かりやすく＋直し方</b>。技術詳細は<b>ログ</b>へ。</p>
+      </div>
+      <div class="code"><span class="code-head">// 守りの全体像</span>
+<span class="comment">// ─── エラーの分類（別冊S7,S11）───</span>
+
+① 入力エラー → バリデーション
+   例: 空タイトル、長すぎ
+   対処: フォームに戻して再入力を促す
+   「入口で防げる」（別冊S11）★
+
+② 業務エラー → 例外
+   例: カテゴリ名重複、メモ未検出
+   対処: 専用の親切なエラー画面
+   「処理して初めて分かる」（別冊S7）★
+
+③ システムエラー → 例外
+   例: DB障害、想定外
+   対処: 汎用エラー画面＋ログ
+   「技術詳細は隠す」（別冊S7）★★★
+
+
+<span class="comment">// ─── 「入口で防げるか」で判断（別冊S11）───</span>
+入力を見て分かる？
+  → Yes: バリデーション
+  → No（DBに聞く等）: 例外
+
+
+<span class="comment">// ─── 表示の方針（別冊S7）───</span>
+ユーザー向け:
+  - 分かりやすい言葉
+  - 直し方を示す
+  - 次の行動（戻るリンク等）
+開発者向け（ログ）:
+  - 技術的詳細
+  - スタックトレース
+<span class="comment">// → 見せる相手で内容を変える ★★★</span>
+
+
+<span class="comment">// ─── メモ帳の守りマップ ───</span>
+フォーム入力 → @Validated（バリデーション）
+カテゴリ重複 → DuplicateException（例外）
+メモ未検出   → NotFoundException（例外）
+想定外       → Exception（汎用処理）
+<span class="comment">// → 全部 @ControllerAdvice で集約（Section 05）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — エラー処理は「分類してから設計する」</div>
+    <p>エラー処理を設計するとき、いきなりコードを書くのでなく<b>「エラーを分類する」</b>のが先。<b>入力エラー・業務エラー・システムエラー</b>——種類ごとに<b>対処と表示が違う</b>（別冊S7,S11）。「何のエラーで、どう対処し、何を見せるか」を整理してから実装する。分類があると<b>「このエラーはバリデーション? 例外?」</b>と迷わない。<b>設計は分類から</b>——これが守りを体系的にするコツです。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>設計①：バリデーション</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">VALIDATION DESIGN</span></div>
+  <p class="pattern-desc">別冊S11の<b>Bean Validation</b>を本格適用します。フォームクラスに<b>@NotBlank/@Size</b> 等を宣言、<b>@Validated</b> で自動検証。これまで断片的だった検証を<b>体系化</b>。インポート（Vol.11）にも同じルールを適用します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Bean Validation の本格適用</span><span class="tag-desc">宣言的に検証</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// フォームに検証を宣言（別冊S11）</div>
+        <p>各フォームクラスに<b>検証ルールをアノテーションで宣言</b>。検証ロジックを毎回書かない（KISS）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 検証ルール（メモ帳）</div>
+        <ul>
+          <li>タイトル：<b>必須・100文字以内</b></li>
+          <li>本文：<b>2000文字以内</b></li>
+          <li>カテゴリ名：<b>必須・50文字以内</b></li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 親切なメッセージ（別冊S11）</div>
+        <p>各ルールに<b>「直し方が分かるメッセージ」</b>を付ける。「タイトルは100文字以内で入力してください」。</p>
+      </div>
+      <div class="code"><span class="code-head">// バリデーションの設計</span>
+<span class="comment">// ─── MemoForm に検証を宣言（別冊S11）───</span>
+<span class="kw">import</span> jakarta.validation.constraints.*;
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">MemoForm</span> {
+
+  <span class="ann">@NotBlank</span>(message =
+    <span class="str">"タイトルを入力してください"</span>)
+  <span class="ann">@Size</span>(max = <span class="num">100</span>, message =
+    <span class="str">"タイトルは100文字以内で入力してください"</span>)
+  <span class="kw">private</span> <span class="type">String</span> title;
+
+  <span class="ann">@Size</span>(max = <span class="num">2000</span>, message =
+    <span class="str">"本文は2000文字以内で入力してください"</span>)
+  <span class="kw">private</span> <span class="type">String</span> content;
+
+  <span class="ann">@NotNull</span>(message =
+    <span class="str">"カテゴリを選択してください"</span>)
+  <span class="kw">private</span> <span class="type">Long</span> categoryId;
+}
+<span class="comment">// → ルールを宣言、親切なメッセージ ★★★</span>
+
+
+<span class="comment">// ─── CategoryForm も同様 ───</span>
+<span class="ann">@NotBlank</span>(message = <span class="str">"カテゴリ名は必須"</span>)
+<span class="ann">@Size</span>(max = <span class="num">50</span>)
+<span class="kw">private</span> <span class="type">String</span> name;
+
+
+<span class="comment">// ─── Controller で @Validated ───</span>
+<span class="ann">@PostMapping</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+    <span class="ann">@Validated</span> <span class="ann">@ModelAttribute</span>
+    <span class="type">MemoForm</span> form,
+    <span class="type">BindingResult</span> br,  <span class="comment">// 検証結果（直後に置く）</span>
+    <span class="type">Model</span> model) {
+
+  <span class="kw">if</span> (br.<span class="fn">hasErrors</span>()) {
+    <span class="comment">// 検証エラー → 入力画面に戻す（@AC1）</span>
+    <span class="fn">setupForm</span>(model);
+    <span class="kw">return</span> <span class="str">"memos/form"</span>;
+  }
+  service.<span class="fn">create</span>(form);
+  <span class="kw">return</span> <span class="str">"redirect:/memos"</span>;
+}
+<span class="comment">// → サーバ側で必ず検証（別冊S11・@AC5）★★★</span>
+
+
+<span class="comment">// ─── インポートにも同じルール（Vol.11）───</span>
+<span class="comment">// Validator を使い、インポートデータも</span>
+<span class="comment">// 同じ @NotBlank/@Size で検証できる</span>
+<span class="comment">// → 「入力源が違っても同じルール」（別冊S11）★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — BindingResult は検証対象の「直後」に置く</div>
+    <p>Spring の落とし穴：<code>@Validated</code> を付けた引数の<b>直後に BindingResult を置く</b>必要があります。<code>create(@Validated MemoForm form, BindingResult br)</code> の順序が重要。間に他の引数を挟むと<b>検証エラーで例外が飛ぶ</b>（400エラー）。「検証対象とBindingResultはペア」と覚える。これは初学者がハマりやすい点（Section 08）。順序を守れば、<code>br.hasErrors()</code> で検証結果を扱えます。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>設計②：例外の集約</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">EXCEPTION HANDLING</span></div>
+  <p class="pattern-desc"><b>別冊S7の集大成</b>。業務例外を<b>独自例外クラス（RuntimeException継承）</b>で定義し、<b>@ControllerAdvice</b> で<b>一括ハンドリング</b>。Vol.3 のUNIQUE違反500エラーを、ここで<b>親切なエラー画面</b>に変えます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">@ControllerAdvice で例外を集約（別冊S7）</span><span class="tag-desc">白い500を親切な画面に</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 独自例外クラス（別冊S7）</div>
+        <p><b>RuntimeException を継承</b>した業務例外を定義。<code>MemoNotFoundException</code>、<code>DuplicateCategoryException</code> 等。<b>右クリック→New→Class</b>で作成。</p>
+
+        <div class="panel-head" style="margin-top:18px">// @ControllerAdvice で集約（別冊S7）</div>
+        <p>全Controllerの例外を<b>1か所で捕まえる</b>。例外の種類に応じた<b>親切なエラー画面</b>を返す。Controller は try-catch 不要。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 表示とログの分離（別冊S7）</div>
+        <ul>
+          <li>ユーザー：分かりやすいメッセージ</li>
+          <li>ログ：技術詳細・スタックトレース</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 例外の集約（別冊S7）</span>
+<span class="comment">// ─── 独自例外（RuntimeException継承）───</span>
+<span class="kw">public class</span> <span class="type">MemoNotFoundException</span>
+    <span class="kw">extends</span> <span class="type">RuntimeException</span> {  <span class="comment">// 非チェック</span>
+  <span class="kw">public</span> <span class="fn">MemoNotFoundException</span>(<span class="type">Long</span> id) {
+    <span class="kw">super</span>(<span class="str">"メモが見つかりません: id="</span> + id);
+  }
+}
+<span class="comment">// → RuntimeException継承（別冊S7）★</span>
+<span class="comment">// → @Transactionalで自動ロールバック</span>
+
+
+<span class="comment">// ─── @ControllerAdvice で集約（別冊S7）───</span>
+<span class="kw">import</span> org.springframework.web.bind
+         .annotation.*;
+
+<span class="ann">@Slf4j</span>
+<span class="ann">@ControllerAdvice</span>  <span class="comment">// 全Controller横断 ★★★</span>
+<span class="kw">public class</span> <span class="type">GlobalExceptionHandler</span> {
+
+  <span class="comment">// メモ未検出 → 404（@AC3）</span>
+  <span class="ann">@ExceptionHandler</span>(
+    <span class="type">MemoNotFoundException</span>.<span class="kw">class</span>)
+  <span class="ann">@ResponseStatus</span>(<span class="type">HttpStatus</span>.NOT_FOUND)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">handleNotFound</span>(
+      <span class="type">MemoNotFoundException</span> e,
+      <span class="type">Model</span> model) {
+    log.<span class="fn">warn</span>(e.<span class="fn">getMessage</span>());  <span class="comment">// ログ</span>
+    model.<span class="fn">addAttribute</span>(<span class="str">"message"</span>,
+      <span class="str">"メモが見つかりませんでした"</span>);
+    <span class="kw">return</span> <span class="str">"error/404"</span>;  <span class="comment">// 親切な画面</span>
+  }
+
+  <span class="comment">// カテゴリ重複 → 親切に（@AC2）★★★</span>
+  <span class="comment">// Vol.3の500エラーをここで解消！</span>
+  <span class="ann">@ExceptionHandler</span>(
+    <span class="type">DuplicateCategoryException</span>.<span class="kw">class</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">handleDuplicate</span>(
+      <span class="type">DuplicateCategoryException</span> e,
+      <span class="type">Model</span> model) {
+    model.<span class="fn">addAttribute</span>(<span class="str">"message"</span>,
+      <span class="str">"そのカテゴリ名は既に存在します"</span>);
+    <span class="kw">return</span> <span class="str">"error/conflict"</span>;
+  }
+
+  <span class="comment">// 想定外 → 汎用＋詳細隠す（@AC4）★★★</span>
+  <span class="ann">@ExceptionHandler</span>(<span class="type">Exception</span>.<span class="kw">class</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">handleAll</span>(
+      <span class="type">Exception</span> e, <span class="type">Model</span> model) {
+    log.<span class="fn">error</span>(<span class="str">"想定外エラー"</span>, e);  <span class="comment">// 詳細はログ</span>
+    model.<span class="fn">addAttribute</span>(<span class="str">"message"</span>,
+      <span class="str">"エラーが発生しました"</span>);  <span class="comment">// 簡潔に</span>
+    <span class="kw">return</span> <span class="str">"error/500"</span>;
+  }
+}
+<span class="comment">// → 全例外を集約、親切な画面＋ログ ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Vol.3 の「500エラー」が、ここでついに解消される</div>
+    <p>本シリーズの伏線回収：<b>Vol.3 でカテゴリ名を重複させると出た「白い500エラー」</b>を、Vol.12 で<b>ついに親切なエラー画面に変えます</b>。当時は「これは Vol.12 で解消します」と先送りにしていました（別冊S7でも触れた）。<b>DataIntegrityViolationException</b> や独自の <code>DuplicateCategoryException</code> を <code>@ControllerAdvice</code> で捕まえ、「そのカテゴリ名は既に存在します」と表示。<b>長く引っ張った伏線が、守りの集大成として回収</b>されます。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>実装</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">IMPLEMENTATION</span></div>
+  <p class="pattern-desc">設計に沿って実装。<b>例外クラス（新規作成）</b>、<b>@ControllerAdvice</b>、<b>Service で例外を投げる</b>、<b>エラー画面（View）</b>。クラス作成は<b>「右クリック → New → Class」</b>を明示します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">例外クラスとServiceの実装</span><span class="tag-desc">投げる側を作る</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 作成手順</div>
+        <ol class="step-list">
+          <li><code>exception</code> パッケージを作成</li>
+          <li>右クリック→New→Class で例外クラス</li>
+          <li><code>RuntimeException</code> を継承（別冊S7）</li>
+          <li>Service で適切に例外を投げる</li>
+          <li>@ControllerAdvice で集約（Section 05）</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// Service が例外を投げる</div>
+        <p>「メモ未検出」「カテゴリ重複」を検知したら<b>例外を投げる</b>。Controller は catch せず、@ControllerAdvice に任せる（別冊S7）。</p>
+      </div>
+      <div class="code"><span class="code-head">// 例外クラスとService</span>
+<span class="comment">// ─── exception パッケージに作成 ───</span>
+<span class="comment">// 右クリック → New → Class</span>
+
+<span class="comment">// MemoNotFoundException.java</span>
+<span class="kw">public class</span> <span class="type">MemoNotFoundException</span>
+    <span class="kw">extends</span> <span class="type">RuntimeException</span> {
+  <span class="kw">public</span> <span class="fn">MemoNotFoundException</span>(<span class="type">Long</span> id) {
+    <span class="kw">super</span>(<span class="str">"メモが見つかりません: id="</span> + id);
+  }
+}
+
+<span class="comment">// DuplicateCategoryException.java</span>
+<span class="kw">public class</span> <span class="type">DuplicateCategoryException</span>
+    <span class="kw">extends</span> <span class="type">RuntimeException</span> {
+  <span class="kw">public</span> <span class="fn">DuplicateCategoryException</span>(
+      <span class="type">String</span> name) {
+    <span class="kw">super</span>(<span class="str">"カテゴリ名が重複: "</span> + name);
+  }
+}
+
+
+<span class="comment">// ─── Service が例外を投げる（別冊S7）───</span>
+<span class="kw">public</span> <span class="type">Memo</span> <span class="fn">findById</span>(<span class="type">Long</span> id) {
+  <span class="type">Memo</span> memo = mapper.<span class="fn">findById</span>(id);
+  <span class="kw">if</span> (memo == <span class="kw">null</span>) {
+    <span class="kw">throw new</span> <span class="type">MemoNotFoundException</span>(id);
+    <span class="comment">// → 投げっぱなし、catchしない（別冊S7）★</span>
+  }
+  <span class="kw">return</span> memo;
+}
+
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">createCategory</span>(<span class="type">CategoryForm</span> f) {
+  <span class="comment">// 重複チェック（業務エラー）</span>
+  <span class="kw">if</span> (categoryMapper.<span class="fn">existsByName</span>(
+      f.<span class="fn">getName</span>())) {
+    <span class="kw">throw new</span> <span class="type">DuplicateCategoryException</span>(
+      f.<span class="fn">getName</span>());
+    <span class="comment">// → 業務例外を投げる（別冊S7）★★★</span>
+  }
+  categoryMapper.<span class="fn">insert</span>(...);
+}
+<span class="comment">// → Service は例外を投げるだけ</span>
+<span class="comment">// → 表示は @ControllerAdvice が担当</span></div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">エラー画面（View）の実装</span><span class="tag-desc">親切な表示</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// エラー画面</div>
+        <p><code>error/</code> 配下に<b>404・conflict・500</b>の画面を作成。<b>分かりやすいメッセージ＋戻るリンク</b>（別冊S7,S8）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// フォームのエラー表示（別冊S11）</div>
+        <p>バリデーションエラーは<b>各フィールドの近くに表示</b>（th:errors）。「どこを直すか」が一目。</p>
+      </div>
+      <div class="code"><span class="code-head">// エラー画面とフォーム表示</span>
+<span class="comment">// ─── error/404.html（別冊S7,S8）───</span>
+<span class="kw">&lt;div</span> class=<span class="str">"error-page"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;h1&gt;</span>😢 メモが見つかりません<span class="kw">&lt;/h1&gt;</span>
+  <span class="kw">&lt;p</span> th:text=<span class="str">"${message}"</span><span class="kw">&gt;</span><span class="kw">&lt;/p&gt;</span>
+  <span class="kw">&lt;a</span> href=<span class="str">"/memos"</span><span class="kw">&gt;</span>メモ一覧に戻る<span class="kw">&lt;/a&gt;</span>
+<span class="kw">&lt;/div&gt;</span>
+<span class="comment">// → 分かりやすい＋戻るリンク（別冊S8）★</span>
+<span class="comment">// → 技術詳細は出さない（別冊S7）</span>
+
+
+<span class="comment">// ─── error/conflict.html ───</span>
+<span class="kw">&lt;div</span> class=<span class="str">"error-page"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;h1&gt;</span>⚠ 重複しています<span class="kw">&lt;/h1&gt;</span>
+  <span class="kw">&lt;p</span> th:text=<span class="str">"${message}"</span><span class="kw">&gt;</span><span class="kw">&lt;/p&gt;</span>
+  <span class="kw">&lt;a</span> href=<span class="str">"/categories"</span><span class="kw">&gt;</span>
+    カテゴリ一覧に戻る<span class="kw">&lt;/a&gt;</span>
+<span class="kw">&lt;/div&gt;</span>
+<span class="comment">// → Vol.3の500エラーがこの画面に！★★★</span>
+
+
+<span class="comment">// ─── フォームのエラー表示（別冊S11）───</span>
+<span class="kw">&lt;input</span> th:field=<span class="str">"*{title}"</span>
+  class=<span class="str">"form-control"</span>
+  th:errorclass=<span class="str">"is-invalid"</span><span class="kw">&gt;</span>
+<span class="kw">&lt;span</span> class=<span class="str">"error"</span>
+  th:errors=<span class="str">"*{title}"</span><span class="kw">&gt;</span><span class="kw">&lt;/span&gt;</span>
+<span class="comment">// → 「タイトルを入力してください」が</span>
+<span class="comment">//   入力欄の真下に表示（別冊S8,S11）★★★</span>
+<span class="comment">// → どこを直すか一目</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Controller は「投げっぱなし」、表示は集約に任せる（別冊S7）</div>
+    <p>実装の要点は<b>「Service は例外を投げるだけ、Controller は catch しない、表示は @ControllerAdvice」</b>という役割分担（別冊S7）。各 Controller に try-catch を書くと<b>コードが重複し汚れる</b>。代わりに<b>例外を投げっぱなしにし、@ControllerAdvice が一括で親切な画面に変換</b>。これで Controller は<b>正常系だけ</b>を書けてスッキリ。<b>「関心の分離」（別冊S2）</b>の実践です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>テスト（正常系と異常系）</h2><span class="phase-badge ph-test">PHASE: TEST</span><span class="en">TEST</span></div>
+  <p class="pattern-desc">バリデーション・例外ハンドリングを<b>MockMvc</b> で検証。<b>異常系（不正入力・例外）</b>が中心。「弾かれるか・親切なエラーか」を確認します。既存テスト（正常系）も緑のままを保ちます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">MockMvc で異常系を検証</span><span class="tag-desc">弾く・親切に</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 検証ポイント</div>
+        <ul>
+          <li><b>@AC1</b>：空タイトル→検証エラー</li>
+          <li><b>@AC2</b>：重複→親切なエラー画面</li>
+          <li><b>@AC3</b>：存在しないメモ→404</li>
+        </ul>
+        <p style="margin-top:8px"><b>異常系テスト</b>で堅牢性を保証。既存の正常系テストも壊していないか確認。</p>
+      </div>
+      <div class="code"><span class="code-head">// MemoValidationTest.java（MockMvc）</span>
+<span class="ann">@WebMvcTest</span>(<span class="type">MemoController</span>.<span class="kw">class</span>)
+<span class="kw">class</span> <span class="type">MemoValidationTest</span> {
+  <span class="ann">@Autowired</span> <span class="type">MockMvc</span> mockMvc;
+  <span class="ann">@MockBean</span> <span class="type">MemoService</span> service;
+
+  <span class="comment">// @AC1 空タイトルは検証エラー</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">空タイトルは弾かれる</span>() <span class="kw">throws</span> ... {
+    mockMvc.<span class="fn">perform</span>(<span class="fn">post</span>(<span class="str">"/memos"</span>)
+        .<span class="fn">param</span>(<span class="str">"title"</span>, <span class="str">""</span>)
+        .<span class="fn">param</span>(<span class="str">"categoryId"</span>, <span class="str">"1"</span>))
+      <span class="comment">// 入力画面に戻る（保存しない）</span>
+      .<span class="fn">andExpect</span>(<span class="fn">view</span>().<span class="fn">name</span>(
+        <span class="str">"memos/form"</span>))
+      .<span class="fn">andExpect</span>(<span class="fn">model</span>()
+        .<span class="fn">attributeHasFieldErrors</span>(
+          <span class="str">"memoForm"</span>, <span class="str">"title"</span>));
+    <span class="comment">// → 空タイトルが弾かれる（@AC1）★★★</span>
+    <span class="comment">// → service.create は呼ばれない</span>
+    <span class="fn">verify</span>(service, <span class="fn">never</span>())
+      .<span class="fn">create</span>(<span class="fn">any</span>());
+  }
+
+  <span class="comment">// @AC3 存在しないメモは404</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">存在しないメモは404</span>() <span class="kw">throws</span> ... {
+    <span class="comment">// Service が例外を投げる設定</span>
+    <span class="fn">when</span>(service.<span class="fn">findById</span>(<span class="num">99999L</span>))
+      .<span class="fn">thenThrow</span>(
+        <span class="kw">new</span> <span class="type">MemoNotFoundException</span>(<span class="num">99999L</span>));
+
+    mockMvc.<span class="fn">perform</span>(<span class="fn">get</span>(<span class="str">"/memos/99999"</span>))
+      .<span class="fn">andExpect</span>(<span class="fn">status</span>().<span class="fn">isNotFound</span>())
+      .<span class="fn">andExpect</span>(<span class="fn">view</span>().<span class="fn">name</span>(
+        <span class="str">"error/404"</span>));
+    <span class="comment">// → 404画面（白い500でない）★★★</span>
+    <span class="comment">// → @ControllerAdvice が効いている</span>
+  }
+
+  <span class="comment">// @AC1（正常）正しい入力は通る</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">正しい入力は保存される</span>() <span class="kw">throws</span> ... {
+    mockMvc.<span class="fn">perform</span>(<span class="fn">post</span>(<span class="str">"/memos"</span>)
+        .<span class="fn">param</span>(<span class="str">"title"</span>, <span class="str">"正常なメモ"</span>)
+        .<span class="fn">param</span>(<span class="str">"categoryId"</span>, <span class="str">"1"</span>))
+      .<span class="fn">andExpect</span>(<span class="fn">redirectedUrl</span>(
+        <span class="str">"/memos"</span>));
+    <span class="fn">verify</span>(service).<span class="fn">create</span>(<span class="fn">any</span>());
+    <span class="comment">// → 正常系も維持（壊していない）★</span>
+  }
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「正しい入力は通る」も必ずテストする</div>
+    <p>異常系テスト（弾く）に集中するあまり、<b>「正しい入力はちゃんと通る」</b>のテストを忘れがち。検証を厳しくしすぎて<b>「正常な入力まで弾く」</b>バグもある。だから<b>「不正は弾く」と「正常は通す」の両方</b>をテストする。「空タイトルは弾く」かつ「正しいタイトルは保存される」。<b>守りを固めても、正常な利用を妨げない</b>——これを両方のテストで保証します。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>ブラウザ確認＋ハマりどころ</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">VERIFY &amp; PITFALLS</span></div>
+  <p class="pattern-desc">テストが緑になったらブラウザで確認。<b>わざと不正な操作</b>をして、親切なエラーが出るか試す。Vol.12 で踏みやすいバリデーション・例外特有の地雷を5つ先回りします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.12 ハマりどころ 5選</span><span class="tag-desc">検証・例外特有の地雷</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① BindingResult の位置ミス ★★★</b></p>
+        <ul>
+          <li>@Validated の直後に置かないと400エラー</li>
+          <li>対処：検証対象の直後に BindingResult（Section 04）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② 例外を握りつぶす ★★★</b></p>
+        <ul>
+          <li>catch して何もしない（別冊S7）</li>
+          <li>対処：投げて @ControllerAdvice に任せる（Section 05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ 画面検証だけでサーバ検証なし ★★★</b></p>
+        <ul>
+          <li>JS回避で不正データが通る（別冊S11）</li>
+          <li>対処：@Validated でサーバ検証（Section 04）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ エラー画面に技術詳細を露出</b></p>
+        <ul>
+          <li>スタックトレースが見える（別冊S7）</li>
+          <li>対処：ユーザーには簡潔に、詳細はログ（Section 05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ @ControllerAdvice が効かない</b></p>
+        <ul>
+          <li>例外がチェック例外、または catch済み</li>
+          <li>対処：RuntimeException継承、catchしない（別冊S7）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// テスト＆ブラウザ確認</span>
+<span class="comment">// ─── テスト結果 ───</span>
+MemoValidationTest
+  ✓ 空タイトルは弾かれる
+  ✓ 存在しないメモは404
+  ✓ 正しい入力は保存される
+（既存テストも全て緑）
+
+<span class="kw">all green</span> ★★★
+
+
+<span class="comment">// ─── ① BindingResult の位置 ───</span>
+<span class="ann">NG:</span>
+create(@Validated MemoForm f,
+       Model model,          <span class="comment">// 間に挟む</span>
+       BindingResult br)     <span class="comment">// → 400エラー ★</span>
+
+<span class="ann">OK:</span>
+create(@Validated MemoForm f,
+       BindingResult br,     <span class="comment">// 直後 ★★★</span>
+       Model model)
+
+
+<span class="comment">// ─── ② 握りつぶさない（別冊S7）───</span>
+<span class="ann">NG:</span> try { ... } catch (Exception e) {}
+<span class="comment">// → エラーが消える ★★★</span>
+<span class="ann">OK:</span> 投げて @ControllerAdvice に任せる
+
+
+<span class="comment">// ─── ブラウザ確認（わざと不正操作）───</span>
+<span class="comment">// - 空タイトルで保存→エラー表示（@AC1）</span>
+<span class="comment">// - 100文字超のタイトル→エラー</span>
+<span class="comment">// - 既存と同名カテゴリ作成</span>
+<span class="comment">//   → 親切なエラー（Vol.3の500解消！）★★★</span>
+<span class="comment">// - /memos/99999 にアクセス→404</span>
+<span class="comment">// - エラー画面に技術詳細が出ていないか</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — Vol.3 で見た「500エラー」を、自分で再現して解消を確認</div>
+    <p>ブラウザ確認で<b>ぜひ試したい</b>のが、<b>Vol.3 で遭遇した「カテゴリ名重複の500エラー」を再現</b>すること。既存と同じカテゴリ名で作成してみる。以前は<b>白い500エラー</b>だったのが、今度は<b>「そのカテゴリ名は既に存在します」と親切な画面</b>に。<b>長く引っ張った問題が解決した瞬間</b>を、自分の目で確認する。これは RDT版を通して<b>「動くものを育ててきた」達成感</b>を味わえる場面です。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>レビュー・評価＆次巻へ</h2><span class="phase-badge ph-test">PHASE: REVIEW</span><span class="en">REVIEW &amp; NEXT</span></div>
+  <p class="pattern-desc">バリデーションと例外設計を実装しました。<b>守りの両輪（別冊S7＋S11）</b>が形になり、<b>堅牢性</b>が大きく向上。Vol.3 から引っ張った500エラーも解消。<b>「壊れにくく、親切なアプリ」</b>になったか振り返ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.12 卒業チェック</span><span class="tag-desc">守りの両輪を習得</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 要求の達成</div>
+        <ul class="check-list">
+          <li>品質要求（堅牢性）の @AC1〜@AC5 をテスト化</li>
+          <li>各テストが緑になった</li>
+          <li>既存テストも緑のまま</li>
+          <li>先送りにした例外処理を実現した</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 設計の評価（別冊S7,S11）</div>
+        <ul class="check-list">
+          <li>Bean Validation で検証を体系化した</li>
+          <li>サーバ側検証を必ず行った</li>
+          <li>独自例外（RuntimeException継承）を定義</li>
+          <li>@ControllerAdvice で例外を集約した</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 伏線回収</div>
+        <ul class="check-list">
+          <li>Vol.3 のUNIQUE違反500エラーを解消</li>
+          <li>Vol.11 のパース失敗を親切に</li>
+          <li>表示とログを分離した（別冊S7）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.12 で完成したフロー</span>
+<span class="comment">// ─── 要求（REQ）───</span>
+品質要求（堅牢性・別冊S1）
+@AC2 業務エラー・@AC5 サーバ検証
+  ↓
+<span class="comment">// ─── 設計（DESIGN）───</span>
+バリデーション（別冊S11）
++ 例外の集約（別冊S7）
++ エラーの分類
+  ↓
+<span class="comment">// ─── 実装（IMPL）───</span>
+Bean Validation（@Validated）
++ 独自例外 + @ControllerAdvice
++ 親切なエラー画面
+  ↓
+<span class="comment">// ─── テスト（TEST）───</span>
+異常系テスト（弾く・親切）
++ 正常系も維持
+
+
+<span class="comment">// ─── 守りの両輪が完成 ───</span>
+別冊S11（バリデーション）
+  → 異常を未然に防ぐ
+別冊S7（例外設計）
+  → 起きた異常を優雅に対処
+<span class="comment">// → 両輪そろって堅牢に ★★★</span>
+
+
+<span class="comment">// ─── 長年の伏線を回収 ───</span>
+Vol.3  カテゴリ重複500 → 解消 ★
+Vol.11 パース失敗 → 親切に ★
+<span class="comment">// → 「育ててきた」アプリが堅牢に</span>
+
+
+<span class="comment">// 次回 Vol.13：</span>
+<span class="comment">//   ページネーション＆性能</span>
+<span class="comment">//   大量データの一覧表示</span>
+<span class="comment">//   完成に向けた仕上げ ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.13 へ</div>
+    <p>Vol.12 で<b>バリデーションと例外設計</b>を実装し、<b>守りの両輪（別冊S7＋S11）</b>が完成しました。堅牢性が大きく向上し、Vol.3 から引っ張った500エラーも解消。<b>「壊れにくく、親切なアプリ」</b>になりました。次は Vol.13「<b>ページネーション＆性能</b>」。メモが大量になっても<b>「一覧をページ分割して快適に表示」</b>します。別冊S2の<b>「測定してから最適化」</b>、Vol.8 の性能改善の知識が再び活きる。完成（Vol.14）に向けた最後の仕上げです。並行して<b>別冊S12</b>、<b>GitHub版Vol.12</b>を進めると効果的。<b>本編Vol.13 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>VOL.12 / 14 ── VALIDATION &amp; EXCEPTION HANDLING（本編）</span>
+</footer>
+
+</body>
+</html>

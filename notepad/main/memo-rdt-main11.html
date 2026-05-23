@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕Vol.11 エクスポートとインポート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2940;
+  --paper:#f3f0e6;
+  --paper-2:#e4dfcd;
+  --accent:#2d5485;
+  --accent-2:#507aa8;
+  --accent-3:#8a6a3a;
+  --muted:#6a7484;
+  --line:#c6c1b0;
+  --code-bg:#1a2236;
+  --code-text:#e8e4d4;
+  --panel-bg:#ede7d3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head,.menu-code{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✦";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:40px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.phase-badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700;letter-spacing:0.05em}
+.ph-req{background:#e8eef6;color:#2d5485;border:1px solid #2d5485}
+.ph-des{background:#f0ebe0;color:#8a6a3a;border:1px solid #8a6a3a}
+.ph-imp{background:#e6efe8;color:#3a6a4a;border:1px solid #3a6a4a}
+.ph-test{background:#f3e8e8;color:#9a4040;border:1px solid #9a4040}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.menu-code{color:#ffd0a0;font-weight:700}
+.key{background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;display:inline-block;margin:0 1px;font-family:'JetBrains Mono',monospace}
+.tip{background:rgba(45,84,133,0.07);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.step-list{list-style:none;counter-reset:step;margin:14px 0}
+.step-list li{counter-increment:step;padding:8px 0 8px 38px;position:relative;font-size:13.5px;line-height:1.8;border-bottom:1px dotted var(--line)}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:8px;width:26px;height:26px;background:var(--accent);color:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.step-list li:last-child{border-bottom:none}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:30px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.11</span>
+    <span class="kind-tag">本編 ── MAIN</span>
+    <span class="rdt-tag">REQ · DESIGN · TEST</span>
+  </div>
+  <h1>エクスポートと<br>インポート</h1>
+  <div class="subtitle">VOL.11 ── EXPORT &amp; IMPORT</div>
+  <p class="lead">メモを<b>ファイルに書き出し・読み込み</b>します。<b>エクスポート</b>でバックアップ、<b>インポート</b>で復元・一括登録。別冊S10で学んだ<b>「CSV/JSONの使い分け」「文字コードの明示」「ライブラリでパース」「取り込みの検証」「部分失敗の報告」</b>が実装で形に。<b>「外部とデータをやり取りする」</b>新しいテーマです。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 赤線が出たら — Vol.11 で新たに使うもの</div>
+    <p>実装の新規 import：<code>com.fasterxml.jackson.databind.ObjectMapper</code>（JSON・Spring標準で同梱）。CSV を使うなら OpenCSV を <code>pom.xml</code> に追加（chore コミット）。<code>org.springframework.web.multipart.MultipartFile</code>（ファイルアップロード）。<code>java.nio.charset.StandardCharsets</code>（文字コード）。<b>別冊S10を開きながら</b>進めましょう。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 要求の確認（データ移行）</a></li>
+    <li><a href="#s02">02 受入条件をテストケース化</a></li>
+    <li><a href="#s03">03 仕様化：形式と画面</a></li>
+    <li><a href="#s04">04 設計①：エクスポート</a></li>
+    <li><a href="#s05">05 設計②：インポートと検証</a></li>
+    <li><a href="#s06">06 実装</a></li>
+    <li><a href="#s07">07 テスト（往復と異常データ）</a></li>
+    <li><a href="#s08">08 ブラウザ確認＋ハマりどころ</a></li>
+    <li><a href="#s09">09 レビュー・評価＆次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>要求の確認（データ移行）</h2><span class="phase-badge ph-req">PHASE: REQ</span><span class="en">REVISIT REQUIREMENT</span></div>
+  <p class="pattern-desc">いつも通り<b>まず要求から</b>。使い込むと「<b>大事なメモが消えたら困る</b>」「<b>別環境にメモを移したい</b>」というニーズが。これが<b>データ移行（エクスポート/インポート）</b>の要求。新しいユーザーストーリー US-006 として定義します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">US-006 と背景</span><span class="tag-desc">バックアップと移行</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜデータ移行が必要か</div>
+        <p>メモが増えると<b>「失いたくない」</b>という気持ちが強まります。<b>バックアップ</b>、別環境への<b>移行</b>、他アプリからの<b>取り込み</b>——これらが US-006。</p>
+
+        <div class="panel-head" style="margin-top:18px">// US-006</div>
+        <div class="role-card" style="margin-top:8px">
+          <span class="label">US-006 / COULD</span>
+          <div class="name">メモをバックアップ・移行したい</div>
+          <div class="desc"><b>As a</b> 大事なメモを持つユーザー<br><b>I want</b> メモをファイルに書き出し、読み込みたい<br><b>so that</b> バックアップや別環境への移行ができる</div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// エクスポートとインポート（別冊S10）</div>
+        <ul>
+          <li><b>エクスポート</b>：DB→ファイル（易）</li>
+          <li><b>インポート</b>：ファイル→DB（難・検証必須）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// US-006 の受入条件</span>
+<span class="ann">@AC1</span> エクスポート
+Given: メモが複数ある
+When : エクスポートする
+Then : 全メモがJSONファイルで出力される
+
+<span class="ann">@AC2</span> インポート（正常）
+Given: 正しいJSONファイル
+When : インポートする
+Then : メモがDBに登録される
+
+<span class="ann">@AC3</span> 往復の一貫性 ★
+Given: エクスポートしたファイル
+When : それをインポートする
+Then : 元のメモが復元される
+       （export→importで内容が一致）
+
+<span class="ann">@AC4</span> 不正データの検証 ★★★
+Given: タイトルが空の行を含むファイル
+When : インポートする
+Then : 不正な行は登録されず、報告される
+       （正しい行は登録される）
+
+<span class="ann">@AC5</span> 文字化けしない ★
+Given: 日本語を含むメモ
+When : export → import する
+Then : 日本語が正しく保持される（UTF-8）
+
+
+<span class="comment">// ─── @AC3 往復・@AC4 検証が肝（別冊S10）───</span>
+<span class="comment">// export→importで元に戻る</span>
+<span class="comment">// 不正データは弾いて報告</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「往復で元に戻る」がエクスポート/インポートの正しさ</div>
+    <p>エクスポート/インポートの<b>最も重要な性質</b>が@AC3「<b>往復の一貫性</b>」。<b>エクスポートしたファイルをインポートすると、元のメモが復元される</b>。これが崩れると「バックアップしたのに復元できない」という最悪の事態に。別冊S10の<b>「エクスポートの形式をインポートが受け入れる」</b>を、テストで保証する（Section 07）。<b>往復して一致するか</b>——これがデータ移行の信頼性の核心です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>受入条件をテストケース化</h2><span class="phase-badge ph-req">PHASE: REQ→TEST</span><span class="en">AC TO TEST CASES</span></div>
+  <p class="pattern-desc">受入条件をテストに。<b>特に重要なのが@AC3（往復）と@AC4（不正データ検証）</b>。別冊S10の<b>「インポートは検証してから」「部分失敗は報告」</b>を、テストで実証します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">テストケースと検証戦略</span><span class="tag-desc">往復と異常データ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テストケース一覧</div>
+        <table class="compare-tbl">
+          <thead><tr><th>検証</th><th>期待</th><th>層</th></tr></thead>
+          <tbody>
+            <tr><td>エクスポート形式</td><td>正しいJSON</td><td>単体</td></tr>
+            <tr><td>インポート（正常）</td><td>DB登録</td><td>結合</td></tr>
+            <tr><td>往復の一貫性</td><td><b>元に戻る</b></td><td>結合</td></tr>
+            <tr><td>不正行の検証</td><td><b>弾いて報告</b></td><td>単体/結合</td></tr>
+            <tr><td>日本語の保持</td><td>化けない</td><td>結合</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 往復テスト（@AC3）</div>
+        <p><b>export→importで元と一致</b>を検証。「書き出して読み込んだら同じ」が確認できる強力なテスト。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 不正データテスト（@AC4）</div>
+        <p><b>わざと壊れたデータ</b>を入れ、「不正行は弾かれ、報告される」を確認（別冊S10）。</p>
+      </div>
+      <div class="code"><span class="code-head">// 受入条件 → テスト層</span>
+<span class="comment">// ─── 往復テスト（@AC3）★★★ ───</span>
+<span class="comment">// export → import で元に戻るか</span>
+@Test 往復で内容が一致():
+  1. メモ3件を用意
+  2. エクスポート（JSON文字列に）
+  3. （DBをクリア）
+  4. そのJSONをインポート
+  5. メモが3件、内容が元と一致
+<span class="comment">// → 「書き出して読み込むと同じ」★★★</span>
+<span class="comment">// → バックアップ/復元の信頼性を保証</span>
+
+
+<span class="comment">// ─── 不正データテスト（@AC4）★★★ ───</span>
+@Test 不正な行は弾いて報告():
+  1. 正常2件＋不正1件（タイトル空）
+     のJSONを用意
+  2. インポート
+  3. 正常2件は登録される
+  4. 不正1件は登録されない
+  5. 「1件失敗（タイトルが空）」と報告
+<span class="comment">// → 別冊S10：検証＋部分失敗の報告</span>
+
+
+<span class="comment">// ─── 文字化けテスト（@AC5）───</span>
+@Test 日本語が保持される():
+  「会議メモ・重要」をexport→import
+  → 元の日本語と一致（UTF-8）★
+
+
+<span class="comment">// ─── エクスポートは単体でも検証可 ───</span>
+<span class="comment">// List&lt;Memo&gt; → JSON文字列 が正しいか</span>
+<span class="comment">// → Jackson の変換結果を検証</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「往復テスト」は1つで多くを保証する強力なテスト</div>
+    <p>@AC3 の<b>往復テスト（export→import→一致）</b>は、1つで<b>「エクスポートが正しい」「インポートが正しい」「両者の形式が合っている」</b>を同時に保証する強力なテスト。もし途中でデータが欠ける・形式がずれるなら、<b>往復で一致しなくなる</b>ので検出できる。「ラウンドトリップテスト」とも呼ばれ、<b>シリアライズ/パースの正しさを検証する定番</b>。データ移行機能には必ず入れたいテストです。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>仕様化：形式と画面</h2><span class="phase-badge ph-req">PHASE: SPEC</span><span class="en">SPECIFICATION</span></div>
+  <p class="pattern-desc">形式と画面を仕様化します。別冊S10の<b>「タグがあるなら JSON」</b>に従い、<b>JSON形式</b>を採用。エクスポートは<b>ダウンロード</b>、インポートは<b>ファイルアップロード</b>。文字コードは<b>UTF-8</b>で統一します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">形式の決定と画面設計</span><span class="tag-desc">JSON・UTF-8</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 形式：JSON（別冊S10）</div>
+        <p>メモには<b>タグ（多対多）</b>がある。CSVだと表現が苦しいので<b>JSON</b>を採用（別冊S10・S4のカンマ区切り地獄を回避）。タグを配列で自然に表現。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 文字コード：UTF-8</div>
+        <p>日本語を扱うので<b>UTF-8を明示</b>（別冊S10）。書き出し・読み込み両方で指定。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 画面とURL</div>
+        <table class="compare-tbl">
+          <thead><tr><th>操作</th><th>URL</th></tr></thead>
+          <tbody>
+            <tr><td>エクスポート</td><td>GET /memos/export</td></tr>
+            <tr><td>インポート</td><td>POST /memos/import</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code"><span class="code-head">// 形式と画面の仕様</span>
+<span class="comment">// ─── エクスポートのJSON形式（別冊S10）───</span>
+[
+  {
+    "title": "会議メモ",
+    "content": "明日10時から",
+    "category": "仕事",
+    "tags": ["重要", "急ぎ"],  <span class="comment">// 配列で自然 ★</span>
+    "pinned": true,
+    "archived": false
+  },
+  ...
+]
+<span class="comment">// → タグを配列で表現（JSONの強み）</span>
+<span class="comment">// → メモの状態も含めて完全バックアップ</span>
+
+
+<span class="comment">// ─── エクスポート（ダウンロード）───</span>
+GET /memos/export
+  ↓
+レスポンス：
+  Content-Type: application/json
+  Content-Disposition:
+    attachment; filename="memos.json"
+  charset=UTF-8  ← 文字コード明示 ★
+  ↓
+ブラウザがダウンロード
+
+
+<span class="comment">// ─── インポート（アップロード）───</span>
+POST /memos/import
+  （multipart/form-data でファイル）
+  ↓
+ファイルを読み込み（UTF-8）
+  ↓
+検証 → 登録 → 結果報告
+
+
+<span class="comment">// ─── 画面イメージ ───</span>
+┌──────────────────────────────┐
+│ データ管理                     │
+│ [メモをエクスポート]           │
+│                                │
+│ インポート:                    │
+│ [ファイルを選択] [取り込む]    │
+└──────────────────────────────┘</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 状態（pinned/archived）も含めて「完全な」バックアップに</div>
+    <p>エクスポートで悩むのが<b>「どこまで含めるか」</b>。タイトル・本文だけでなく、Vol.9 で追加した<b>カテゴリ・タグ・pinned・archived も含める</b>と、<b>完全なバックアップ</b>になる。「往復で完全に元に戻る（@AC3）」ためには、<b>復元に必要な情報を全て含める</b>必要がある。JSON なら構造的に全部入れられる（別冊S10）。<b>「何を保存すれば元に戻るか」</b>を考えて形式を設計します。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>設計①：エクスポート</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">EXPORT DESIGN</span></div>
+  <p class="pattern-desc">まず<b>易しいエクスポート</b>から（別冊S10：易しい方から）。メモを取得し、<b>Jackson で JSON にシリアライズ</b>、ファイルとしてダウンロード。<b>自前で書かずライブラリ</b>に任せます（別冊S10）。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">エクスポートの設計</span><span class="tag-desc">Jacksonでシリアライズ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 処理の流れ</div>
+        <ol class="step-list">
+          <li>全メモを取得（カテゴリ・タグ込み）</li>
+          <li>エクスポート用のDTOに変換</li>
+          <li>Jackson で JSON にシリアライズ</li>
+          <li>UTF-8 でダウンロードレスポンス</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// エクスポート用DTO</div>
+        <p>Memo エンティティをそのまま出すのでなく、<b>エクスポート用のDTO</b>を作る。「ファイルに出すべき情報だけ」を整理（id等の内部情報は除く判断も）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// なぜDTOか</div>
+        <p>エンティティ直出しだと<b>内部構造が漏れる</b>＋将来の変更で<b>形式が壊れる</b>。DTOで<b>「外部に出す形」を固定</b>（別冊S2の関心の分離）。</p>
+      </div>
+      <div class="code"><span class="code-head">// エクスポートの設計</span>
+<span class="comment">// ─── エクスポート用DTO ───</span>
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">MemoExport</span> {
+  <span class="kw">private</span> <span class="type">String</span> title;
+  <span class="kw">private</span> <span class="type">String</span> content;
+  <span class="kw">private</span> <span class="type">String</span> category;   <span class="comment">// 名前（idでなく）</span>
+  <span class="kw">private</span> <span class="type">List</span>&lt;<span class="type">String</span>&gt; tags; <span class="comment">// 名前の配列</span>
+  <span class="kw">private boolean</span> pinned;
+  <span class="kw">private boolean</span> archived;
+}
+<span class="comment">// → 「外部に出す形」を固定 ★</span>
+<span class="comment">// → idは出さない（環境で変わるので）</span>
+<span class="comment">// → カテゴリ/タグは名前で（移行しやすい）</span>
+
+
+<span class="comment">// ─── Service：エクスポート ───</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">exportToJson</span>() <span class="kw">throws</span> ... {
+  <span class="type">List</span>&lt;<span class="type">Memo</span>&gt; memos =
+    mapper.<span class="fn">findAllWithDetails</span>();
+  <span class="type">List</span>&lt;<span class="type">MemoExport</span>&gt; dtos = memos.<span class="fn">stream</span>()
+    .<span class="fn">map</span>(<span class="kw">this</span>::<span class="fn">toExport</span>)
+    .<span class="fn">toList</span>();
+  <span class="comment">// Jackson でシリアライズ（別冊S10）</span>
+  <span class="kw">return</span> objectMapper
+    .<span class="fn">writerWithDefaultPrettyPrinter</span>()
+    .<span class="fn">writeValueAsString</span>(dtos);
+  <span class="comment">// → List → JSON文字列 ★</span>
+}
+
+
+<span class="comment">// ─── Controller：ダウンロード ───</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/export"</span>)
+<span class="kw">public</span> <span class="type">ResponseEntity</span>&lt;<span class="type">byte</span>[]&gt; <span class="fn">export</span>()
+    <span class="kw">throws</span> ... {
+  <span class="type">String</span> json = service.<span class="fn">exportToJson</span>();
+  <span class="kw">byte</span>[] body = json.<span class="fn">getBytes</span>(
+    <span class="type">StandardCharsets</span>.UTF_8);  <span class="comment">// UTF-8 ★★★</span>
+
+  <span class="kw">return</span> <span class="type">ResponseEntity</span>.<span class="fn">ok</span>()
+    .<span class="fn">header</span>(<span class="str">"Content-Disposition"</span>,
+      <span class="str">"attachment; filename=memos.json"</span>)
+    .<span class="fn">contentType</span>(
+      <span class="type">MediaType</span>.APPLICATION_JSON)
+    .<span class="fn">body</span>(body);
+  <span class="comment">// → UTF-8 でダウンロード ★★★</span>
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — エクスポートは「DTO」で外部形式を固定する</div>
+    <p>エクスポートで <b>Memo エンティティを直接 JSON 化しない</b>のが定石。理由：①<b>内部構造（id等）が漏れる</b>、②<b>エンティティを変更すると外部形式が勝手に変わる</b>（互換性破壊）。代わりに<b>MemoExport という専用DTO</b>を作り、「外部に出す形」を固定する。これは別冊S2の<b>関心の分離</b>。「内部の都合」と「外部との約束」を分けることで、<b>将来の変更に強い</b>エクスポートになります。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>設計②：インポートと検証</h2><span class="phase-badge ph-des">PHASE: DESIGN</span><span class="en">IMPORT &amp; VALIDATION</span></div>
+  <p class="pattern-desc"><b>別冊S10の集大成</b>。難しいインポートを設計します。<b>パース→検証→登録→報告</b>の流れ。「<b>外部データは信用しない</b>」（別冊S10）に従い、<b>1行ずつ検証</b>し、<b>不正行を弾いて報告</b>します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">インポートの設計（検証中心）</span><span class="tag-desc">信じる前に確かめる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// インポートの流れ（別冊S10）</div>
+        <ol class="step-list">
+          <li>ファイルを UTF-8 で読み込み</li>
+          <li>Jackson で JSON をパース</li>
+          <li><b>1件ずつ検証</b>（必須・長さ等）</li>
+          <li>正常な行だけ登録（カテゴリ/タグは名前で解決）</li>
+          <li>結果（成功/失敗）を報告</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// 検証内容（別冊S10）</div>
+        <ul>
+          <li>タイトルが空でないか（@NotBlank相当）</li>
+          <li>長さは適切か（@Size相当）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 部分失敗の方針（別冊S9,S10）</div>
+        <p><b>正しい行は登録、不正行は理由付きで報告</b>（方針B+C）。「97件成功、3件失敗（理由）」。</p>
+      </div>
+      <div class="code"><span class="code-head">// インポートの設計</span>
+<span class="comment">// ─── インポート結果の型 ───</span>
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">ImportResult</span> {
+  <span class="kw">private int</span> successCount;
+  <span class="kw">private</span> <span class="type">List</span>&lt;<span class="type">String</span>&gt; errors;
+  <span class="comment">// 例: ["行3: タイトルが空", ...]</span>
+}
+
+
+<span class="comment">// ─── Service：インポート（別冊S10）───</span>
+<span class="ann">@Transactional</span>  <span class="comment">// 登録をまとめる（別冊S5）</span>
+<span class="kw">public</span> <span class="type">ImportResult</span> <span class="fn">importFromJson</span>(
+    <span class="type">MultipartFile</span> file) <span class="kw">throws</span> ... {
+
+  <span class="comment">// ① UTF-8 で読み込み（別冊S10）★★★</span>
+  <span class="type">String</span> json = <span class="kw">new</span> <span class="type">String</span>(
+    file.<span class="fn">getBytes</span>(),
+    <span class="type">StandardCharsets</span>.UTF_8);
+
+  <span class="comment">// ② パース（Jackson・別冊S10）</span>
+  <span class="type">List</span>&lt;<span class="type">MemoExport</span>&gt; rows =
+    objectMapper.<span class="fn">readValue</span>(json,
+      <span class="kw">new</span> <span class="type">TypeReference</span>&lt;&gt;(){});
+
+  <span class="type">ImportResult</span> result = <span class="kw">new</span> <span class="type">ImportResult</span>();
+  <span class="kw">int</span> line = <span class="num">0</span>;
+  <span class="kw">for</span> (<span class="type">MemoExport</span> row : rows) {
+    line++;
+    <span class="comment">// ③ 検証（別冊S10）★★★</span>
+    <span class="kw">if</span> (row.<span class="fn">getTitle</span>() == <span class="kw">null</span>
+        || row.<span class="fn">getTitle</span>().<span class="fn">isBlank</span>()) {
+      result.<span class="fn">addError</span>(
+        <span class="str">"行"</span> + line + <span class="str">": タイトルが空"</span>);
+      <span class="kw">continue</span>;  <span class="comment">// この行はスキップ</span>
+    }
+    <span class="kw">if</span> (row.<span class="fn">getTitle</span>().<span class="fn">length</span>() &gt; <span class="num">100</span>) {
+      result.<span class="fn">addError</span>(
+        <span class="str">"行"</span> + line + <span class="str">": タイトルが長すぎ"</span>);
+      <span class="kw">continue</span>;
+    }
+    <span class="comment">// ④ 登録（カテゴリ/タグは名前で解決）</span>
+    <span class="fn">registerMemo</span>(row);
+    result.<span class="fn">incrementSuccess</span>();
+  }
+  <span class="comment">// ⑤ 結果を返す（別冊S10：報告）★★★</span>
+  <span class="kw">return</span> result;
+}
+<span class="comment">// → 検証してから登録、失敗は報告</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — インポートの「カテゴリ/タグは名前で解決」</div>
+    <p>エクスポートでカテゴリ・タグを<b>名前</b>で出した（id でなく）のは、インポート時に<b>「名前で既存を探す、なければ作る」</b>ができるから。id は環境ごとに違うので使えない。「仕事」というカテゴリ名でインポート→既存の「仕事」があれば紐付け、なければ新規作成。<b>「名前ベースで解決」</b>することで、<b>別環境への移行</b>が可能になる。これがエクスポートで名前を使った理由です。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>実装</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">IMPLEMENTATION</span></div>
+  <p class="pattern-desc">設計に沿って実装。<b>エクスポート（ダウンロード）</b>、<b>インポート（アップロード＋検証）</b>、<b>結果表示</b>。Jackson は Spring 同梱なので追加不要。<b>MultipartFile</b> でファイルを受け取ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Controller の実装</span><span class="tag-desc">ダウンロードとアップロード</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// インポートControllerのポイント</div>
+        <ul>
+          <li><code>@RequestParam MultipartFile file</code> で受け取る</li>
+          <li>Service で検証＋登録</li>
+          <li>結果（成功/失敗）を画面に表示</li>
+          <li>パースエラー等は例外ハンドリング（Vol.12へ）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// MemoController（インポート）</span>
+<span class="comment">// ─── インポート画面表示 ───</span>
+<span class="ann">@GetMapping</span>(<span class="str">"/data"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">dataPage</span>() {
+  <span class="kw">return</span> <span class="str">"memos/data"</span>;
+}
+
+
+<span class="comment">// ─── インポート実行 ───</span>
+<span class="ann">@PostMapping</span>(<span class="str">"/import"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">importMemos</span>(
+    <span class="ann">@RequestParam</span>(<span class="str">"file"</span>)
+    <span class="type">MultipartFile</span> file,
+    <span class="type">RedirectAttributes</span> ra) {
+
+  <span class="kw">if</span> (file.<span class="fn">isEmpty</span>()) {
+    ra.<span class="fn">addFlashAttribute</span>(<span class="str">"error"</span>,
+      <span class="str">"ファイルを選択してください"</span>);
+    <span class="kw">return</span> <span class="str">"redirect:/memos/data"</span>;
+  }
+
+  <span class="kw">try</span> {
+    <span class="type">ImportResult</span> result =
+      service.<span class="fn">importFromJson</span>(file);
+    <span class="comment">// 結果を報告（別冊S10）★★★</span>
+    ra.<span class="fn">addFlashAttribute</span>(<span class="str">"result"</span>, result);
+  } <span class="kw">catch</span> (<span class="type">Exception</span> e) {
+    <span class="comment">// パース失敗等（別冊S7）</span>
+    ra.<span class="fn">addFlashAttribute</span>(<span class="str">"error"</span>,
+      <span class="str">"ファイルの形式が不正です"</span>);
+  }
+  <span class="kw">return</span> <span class="str">"redirect:/memos/data"</span>;
+}
+
+
+<span class="comment">// ─── data.html（画面）───</span>
+<span class="comment">&lt;!-- エクスポート --&gt;</span>
+<span class="kw">&lt;a</span> href=<span class="str">"/memos/export"</span><span class="kw">&gt;</span>
+  メモをエクスポート（JSON）
+<span class="kw">&lt;/a&gt;</span>
+
+<span class="comment">&lt;!-- インポート --&gt;</span>
+<span class="kw">&lt;form</span> method=<span class="str">"post"</span>
+  action=<span class="str">"/memos/import"</span>
+  enctype=<span class="str">"multipart/form-data"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;input</span> type=<span class="str">"file"</span> name=<span class="str">"file"</span>
+    accept=<span class="str">".json"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;button&gt;</span>取り込む<span class="kw">&lt;/button&gt;</span>
+<span class="kw">&lt;/form&gt;</span>
+<span class="comment">// → enctype が重要（ファイル送信）★</span>
+
+<span class="comment">&lt;!-- 結果表示（別冊S10）--&gt;</span>
+<span class="kw">&lt;div</span> th:if=<span class="str">"${result}"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;p</span> th:text=<span class="str">"${result.successCount}</span>
+    <span class="str">+ '件取り込みました'"</span><span class="kw">&gt;</span><span class="kw">&lt;/p&gt;</span>
+  <span class="kw">&lt;ul</span> th:if=<span class="str">"${!result.errors.isEmpty()}"</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;li</span> th:each=<span class="str">"e : ${result.errors}"</span>
+      th:text=<span class="str">"${e}"</span><span class="kw">&gt;</span><span class="kw">&lt;/li&gt;</span>
+  <span class="kw">&lt;/ul&gt;</span>
+<span class="kw">&lt;/div&gt;</span>
+<span class="comment">// → 成功件数＋失敗理由を表示（別冊S10）★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — ファイルアップロードは enctype="multipart/form-data" が必須</div>
+    <p>ファイルをアップロードするフォームは、<b><code>enctype="multipart/form-data"</code></b> が必須。これがないと<b>ファイルが送信されない</b>（ファイル名だけ送られる等）。初学者がよく忘れる罠（Section 08）。また <code>accept=".json"</code> で<b>選択時にJSONファイルを促す</b>とUXが良い（別冊S8）。ファイル送信は通常のフォーム送信と<b>仕組みが違う</b>ことを覚えておきましょう。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>テスト（往復と異常データ）</h2><span class="phase-badge ph-test">PHASE: TEST</span><span class="en">TEST</span></div>
+  <p class="pattern-desc">エクスポート/インポートをテスト。<b>核心は@AC3（往復で一致）と@AC4（不正データの検証）</b>。別冊S10の<b>「往復テスト」「検証＋報告」</b>を実装します。日本語の保持（@AC5）も確認します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">往復テストと異常データテスト</span><span class="tag-desc">信頼性を保証</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 検証ポイント</div>
+        <ul>
+          <li><b>@AC3</b>：export→importで元に戻る ★★★</li>
+          <li><b>@AC4</b>：不正行を弾いて報告 ★★★</li>
+          <li><b>@AC5</b>：日本語が化けない</li>
+        </ul>
+        <p style="margin-top:8px"><b>往復テスト</b>がエクスポート/インポート両方の正しさを一度に保証（別冊S10）。</p>
+      </div>
+      <div class="code"><span class="code-head">// MemoImportExportTest.java（結合）</span>
+<span class="ann">@SpringBootTest</span>
+<span class="ann">@Transactional</span>
+<span class="kw">class</span> <span class="type">MemoImportExportTest</span> {
+  <span class="ann">@Autowired</span> <span class="type">MemoDataService</span> service;
+  <span class="ann">@Autowired</span> <span class="type">MemoMapper</span> mapper;
+
+  <span class="comment">// @AC3 往復で一致 ★★★</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">エクスポートしてインポートすると元に戻る</span>()
+      <span class="kw">throws</span> <span class="type">Exception</span> {
+    <span class="comment">// メモ2件を用意（日本語・タグ付き）</span>
+    <span class="fn">setupMemos</span>();
+
+    <span class="comment">// エクスポート</span>
+    <span class="type">String</span> json = service.<span class="fn">exportToJson</span>();
+
+    <span class="comment">// DBをクリア（全削除）</span>
+    mapper.<span class="fn">deleteAll</span>();
+
+    <span class="comment">// インポート（ファイルに見立てて）</span>
+    <span class="type">MultipartFile</span> file = <span class="fn">toFile</span>(json);
+    <span class="type">ImportResult</span> r =
+      service.<span class="fn">importFromJson</span>(file);
+
+    <span class="comment">// 元の2件が復元される ★★★</span>
+    <span class="fn">assertThat</span>(r.<span class="fn">getSuccessCount</span>())
+      .<span class="fn">isEqualTo</span>(<span class="num">2</span>);
+    <span class="kw">var</span> restored = mapper.<span class="fn">findAllWithDetails</span>();
+    <span class="fn">assertThat</span>(restored)
+      .<span class="fn">extracting</span>(<span class="type">Memo</span>::<span class="fn">getTitle</span>)
+      .<span class="fn">containsExactlyInAnyOrder</span>(
+        <span class="str">"会議メモ"</span>, <span class="str">"買い物"</span>);
+    <span class="comment">// → 往復で元に戻る ★★★</span>
+    <span class="comment">// → 日本語も保持（@AC5）</span>
+  }
+
+  <span class="comment">// @AC4 不正行を弾いて報告 ★★★</span>
+  <span class="ann">@Test</span>
+  <span class="kw">void</span> <span class="fn">不正な行は登録されず報告される</span>()
+      <span class="kw">throws</span> <span class="type">Exception</span> {
+    <span class="comment">// 正常1件＋不正1件（タイトル空）のJSON</span>
+    <span class="type">String</span> json = <span class="str">"""
+      [
+        {"title":"正常メモ","content":"a"},
+        {"title":"","content":"b"}
+      ]
+      """</span>;
+    <span class="type">MultipartFile</span> file = <span class="fn">toFile</span>(json);
+
+    <span class="type">ImportResult</span> r =
+      service.<span class="fn">importFromJson</span>(file);
+
+    <span class="comment">// 正常1件は登録、不正1件は失敗</span>
+    <span class="fn">assertThat</span>(r.<span class="fn">getSuccessCount</span>())
+      .<span class="fn">isEqualTo</span>(<span class="num">1</span>);
+    <span class="fn">assertThat</span>(r.<span class="fn">getErrors</span>())
+      .<span class="fn">hasSize</span>(<span class="num">1</span>)
+      .<span class="fn">first</span>().asString()
+      .<span class="fn">contains</span>(<span class="str">"タイトルが空"</span>);
+    <span class="comment">// → 検証＋報告（別冊S10）★★★</span>
+  }
+}</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — テストデータの JSON は「テキストブロック」で書くと読みやすい</div>
+    <p>Java 17 の<b>テキストブロック（<code>"""..."""</code>）</b>を使うと、テスト用の JSON を<b>そのままの形で書ける</b>。エスケープ地獄（<code>"{\"title\":...}"</code>）を避けられて、テストが読みやすい。不正データのテスト（@AC4）では<b>「わざと壊れたJSON」</b>を用意するので、テキストブロックが便利。本シリーズは Java 17 なので、こうした<b>モダンな構文</b>も活用します。テストの可読性も品質のうちです。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>ブラウザ確認＋ハマりどころ</h2><span class="phase-badge ph-imp">PHASE: IMPL</span><span class="en">VERIFY &amp; PITFALLS</span></div>
+  <p class="pattern-desc">テストが緑になったらブラウザで確認。<b>エクスポート→ファイル確認→インポート</b>の往復を実際に試す。Vol.11 で踏みやすいデータ入出力特有の地雷を5つ先回りします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.11 ハマりどころ 5選</span><span class="tag-desc">データ入出力特有の地雷</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① enctype 忘れでファイルが送られない ★★★</b></p>
+        <ul>
+          <li>multipart/form-data がないと送信失敗</li>
+          <li>対処：form に enctype を付ける（Section 06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② 文字コード未指定で文字化け ★★★</b></p>
+        <ul>
+          <li>UTF-8 を明示せず日本語が化ける</li>
+          <li>対処：read/write 両方で UTF-8（別冊S10・Section 04,05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ インポートを無検証で登録 ★★★</b></p>
+        <ul>
+          <li>不正データがそのままDBに</li>
+          <li>対処：1件ずつ検証（別冊S10・Section 05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ パース失敗で500エラー</b></p>
+        <ul>
+          <li>壊れたJSONで例外→白い500画面</li>
+          <li>対処：try-catchで親切なエラー（別冊S7・Vol.12へ）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 巨大ファイルで止まる</b></p>
+        <ul>
+          <li>アップロードサイズ上限・メモリ</li>
+          <li>対処：max-file-size 設定、件数制限（別冊S9,S10）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// テスト＆ブラウザ確認</span>
+<span class="comment">// ─── テスト結果 ───</span>
+MemoImportExportTest
+  ✓ エクスポートしてインポートすると元に戻る
+  ✓ 不正な行は登録されず報告される
+  ✓ 日本語が保持される
+
+<span class="kw">all green</span> ★★★
+
+
+<span class="comment">// ─── ① enctype の確認 ───</span>
+<span class="ann">NG:</span> &lt;form method="post" action="/import"&gt;
+<span class="comment">// → ファイルが送られない ★</span>
+<span class="ann">OK:</span> &lt;form ... enctype="multipart/form-data"&gt;
+<span class="comment">// → ファイルが正しく送信 ★★★</span>
+
+
+<span class="comment">// ─── ⑤ アップロードサイズ上限 ───</span>
+<span class="comment"># application.properties</span>
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+<span class="comment">// → 巨大ファイル対策（別冊S9）★</span>
+
+
+<span class="comment">// ─── ブラウザ確認（往復を実際に試す）───</span>
+1. メモを数件作る（日本語・タグ付き）
+2. エクスポート → memos.json がDL
+3. ファイルを開いて中身確認
+   → 日本語が化けてないか（@AC5）
+   → タグが配列で入っているか
+4. メモを削除
+5. memos.json をインポート
+   → 元のメモが復元される（@AC3）★★★
+6. 不正なJSONもインポートしてみる
+   → エラーが親切に出るか（@AC4, ④）</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — エクスポートしたファイルを「実際に開いて」確認する</div>
+    <p>ブラウザ確認では、<b>エクスポートした JSON ファイルを実際にテキストエディタで開く</b>のが大事。「日本語が化けていないか」「タグが配列になっているか」「必要な情報が全部入っているか」を<b>目で見る</b>。テストでは気づきにくい<b>「ファイルとしての見た目」</b>を確認できる。そして<b>そのファイルを本当にインポートして往復</b>する。<b>「自分でバックアップ→復元を体験」</b>するのが、データ移行機能の最終確認です。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>レビュー・評価＆次巻へ</h2><span class="phase-badge ph-test">PHASE: REVIEW</span><span class="en">REVIEW &amp; NEXT</span></div>
+  <p class="pattern-desc">エクスポート/インポートを実装しました。<b>往復で元に戻るか、不正データを弾けたか、文字化けしないか</b>を振り返ります。「<b>外部とデータをやり取りする</b>」を一通り経験した回でした。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Vol.11 卒業チェック</span><span class="tag-desc">データ移行の習得</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 要求の達成</div>
+        <ul class="check-list">
+          <li>US-006 の @AC1〜@AC5 をテスト化した</li>
+          <li>各テストが緑になった</li>
+          <li>既存テストも緑のまま</li>
+          <li>バックアップ・移行ができるようになった</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 設計の評価（別冊S10）</div>
+        <ul class="check-list">
+          <li>JSON形式を選んだ（タグを配列で）</li>
+          <li>UTF-8 を明示した（文字化け対策）</li>
+          <li>Jackson でパース（自前で書かない）</li>
+          <li>DTOで外部形式を固定した</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// インポートの評価</div>
+        <ul class="check-list">
+          <li>1件ずつ検証した（外部データを信用しない）</li>
+          <li>不正行を弾いて報告した（部分失敗）</li>
+          <li>往復で元に戻ることを保証した</li>
+          <li>カテゴリ/タグを名前で解決した</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.11 で完成したフロー</span>
+<span class="comment">// ─── 要求（REQ）───</span>
+US-006 データ移行
+@AC3 往復一致・@AC4 検証が肝
+  ↓
+<span class="comment">// ─── 設計（DESIGN）───</span>
+JSON＋UTF-8（別冊S10）
++ DTOで外部形式を固定
++ インポートは検証＋報告
+  ↓
+<span class="comment">// ─── 実装（IMPL）───</span>
+Jacksonでシリアライズ/パース
++ MultipartFileでアップロード
++ 1件ずつ検証
+  ↓
+<span class="comment">// ─── テスト（TEST）───</span>
+往復テスト（export→import一致）
++ 不正データの検証＋報告
++ 日本語の保持
+
+
+<span class="comment">// ─── Vol.11 で得たもの ───</span>
+<span class="comment">// ・データ入出力（CSV/JSON）</span>
+<span class="comment">// ・文字コードの扱い</span>
+<span class="comment">// ・外部データの検証</span>
+<span class="comment">// ・往復テストの考え方</span>
+
+
+<span class="comment">// 次回 Vol.12：</span>
+<span class="comment">//   バリデーション＆例外設計</span>
+<span class="comment">//   入力検証の本格化・@ControllerAdvice</span>
+<span class="comment">//   別冊S7の例外設計が実装に ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── VOL.12 へ</div>
+    <p>Vol.11 で<b>エクスポート/インポート</b>を実装し、<b>データ移行</b>ができるようになりました。「外部とデータをやり取りする」を経験し、検証の重要性も実感しました。次は Vol.12「<b>バリデーション＆例外設計</b>」。これまで各所に散らばっていた<b>入力検証</b>を本格的に整理し、<b>@ControllerAdvice で例外を集約</b>します。別冊S7（例外設計）・別冊S11（バリデーション）で学んだ理論が、ついに<b>本格実装</b>に。Vol.3 のUNIQUE違反500エラー、Vol.11 のパース失敗——これらを<b>親切なエラー</b>に変えます。並行して<b>別冊S11</b>、<b>GitHub版Vol.11</b>を進めると効果的。<b>本編Vol.12 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>VOL.11 / 14 ── EXPORT &amp; IMPORT（本編）</span>
+</footer>
+
+</body>
+</html>

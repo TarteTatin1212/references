@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕別冊S11 バリデーションと防御的プログラミングの理論</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a3540;
+  --paper:#ece8de;
+  --paper-2:#d8d4c6;
+  --accent:#6a8590;
+  --accent-2:#8aa0a8;
+  --accent-3:#a07050;
+  --muted:#707a82;
+  --line:#c2c0b4;
+  --code-bg:#252a32;
+  --code-text:#e6e2d6;
+  --panel-bg:#f3eee2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"✧";position:absolute;right:-20px;top:-20px;font-size:300px;color:var(--accent);opacity:0.18;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff8ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#8aa898;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #3a4458;padding-bottom:6px}
+.kw{color:#ffc88a}
+.type{color:#c2a3ff}
+.fn{color:#a3c9ff}
+.str{color:#b5e8b0}
+.num{color:#f7a8d8}
+.comment{color:#7a8a82;font-style:italic}
+.ann{color:#f7c08a}
+.tip{background:rgba(106,133,144,0.10);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.ngok{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.ng,.ok{padding:12px 14px;font-size:13px;line-height:1.75;border:1px solid;border-radius:2px}
+.ng{background:#fbeae0;border-color:#d6927a;color:#7a3818}
+.ng .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#9a4828}
+.ok{background:#e6f0e8;border-color:#7ea886;color:#28503a}
+.ok .lb{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:4px;color:#3a6a4a}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:220px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}.ngok{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.S11</span>
+    <span class="kind-tag">別冊 ── SUB</span>
+    <span class="rdt-tag">VALIDATION</span>
+  </div>
+  <h1>バリデーションと<br>防御的プログラミング</h1>
+  <div class="subtitle">SUB.11 ── VALIDATION &amp; DEFENSIVE PROGRAMMING</div>
+  <p class="lead">本編Vol.12 で<b>バリデーション＆例外設計</b>を本格実装します。別冊S11では、その土台となる<b>入力検証の理論</b>を深掘りします。<b>なぜ検証するのか</b>、<b>どこで検証するのか</b>、<b>どう伝えるのか</b>、<b>防御的プログラミング</b>。別冊S7（例外設計）と対になる<b>「入力を守る」</b>知識です。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 別冊S11で腑に落とす3つの問い</div>
+    <p>① なぜ<b>「画面で検証したから安心」ではいけない</b>のか／② <b>どの層</b>で何を検証するのか／③ <b>エラーメッセージ</b>はどう書けばユーザーが直せるのか — この3問に自分の言葉で答えられたらS11卒業です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 別冊S11のミッション</a></li>
+    <li><a href="#s02">02 なぜ検証するのか</a></li>
+    <li><a href="#s03">03 検証する場所（多層防御）</a></li>
+    <li><a href="#s04">04 Bean Validation</a></li>
+    <li><a href="#s05">05 防御的プログラミング</a></li>
+    <li><a href="#s06">06 エラーメッセージの設計</a></li>
+    <li><a href="#s07">07 バリデーションと例外の連携</a></li>
+    <li><a href="#s08">08 バリデーションあるある失敗</a></li>
+    <li><a href="#s09">09 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>別冊S11のミッション</h2><span class="en">MISSION</span></div>
+  <p class="pattern-desc">別冊S11は<b>「入力を正しく検証する設計を理解する」</b>回。本編Vol.12 で<b>バリデーションを本格化</b>します。これまで各所に<b>断片的に</b>あった検証（Vol.2 の @NotBlank、Vol.11 のインポート検証）を、<b>体系的に整理</b>。「<b>不正な入力からアプリを守る</b>」理論を固めます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">これまでの検証を体系化する</span><span class="tag-desc">断片から体系へ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// これまで散らばっていた検証</div>
+        <ul>
+          <li>Vol.2：@NotBlank/@Size（フォーム）</li>
+          <li>Vol.3：UNIQUE制約（DB）</li>
+          <li>Vol.11：インポートの検証（手動）</li>
+        </ul>
+        <p style="margin-top:8px">これらは<b>バラバラ</b>に作ってきました。Vol.12 で<b>体系的に整理</b>します。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 別冊S7 との関係</div>
+        <p>別冊S7は<b>「例外（異常が起きた後）」</b>の設計。別冊S11は<b>「バリデーション（異常を未然に防ぐ）」</b>。<b>守りの両輪</b>です。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 別冊S11のゴール</div>
+        <ul class="check-list">
+          <li>なぜ検証が必要か説明できる</li>
+          <li>どこで検証するか判断できる</li>
+          <li>Bean Validation を理解</li>
+          <li>防御的プログラミングを実践できる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// バリデーションの位置づけ</span>
+<span class="comment">// ─── 守りの両輪 ───</span>
+バリデーション（別冊S11）:
+  異常を「未然に防ぐ」
+  → 不正な入力を入口で弾く
+
+例外設計（別冊S7）:
+  異常が「起きた後」の対処
+  → 起きた異常を優雅に処理
+
+<span class="comment">// → 両方そろって「堅牢なアプリ」★★★</span>
+
+
+<span class="comment">// ─── これまでの検証（断片的）───</span>
+Vol.2  @NotBlank（タイトル必須）
+Vol.3  UNIQUE（カテゴリ名重複）
+Vol.11 インポートの手動検証
+       ↓
+Vol.12 で体系化・統合 ★
+
+
+<span class="comment">// ─── 検証の全体像 ───</span>
+入力（画面/API/ファイル）
+  ↓ 【バリデーション】← 別冊S11
+  - 必須か / 形式か / 範囲内か
+  ↓ OK
+業務処理
+  ↓ 異常が起きたら【例外】← 別冊S7
+ユーザーへ親切に伝える
+
+
+<span class="comment">// → 入口で守り、起きたら対処 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — バリデーションは「異常を未然に防ぐ」守り</div>
+    <p>別冊S7（例外設計）が<b>「異常が起きた後の対処」</b>なら、別冊S11（バリデーション）は<b>「異常を未然に防ぐ守り」</b>。両者は<b>セット</b>。入口でしっかり検証（バリデーション）すれば、後段で起きる異常が減る。それでも起きた異常は例外で対処。「<b>防げるものは防ぎ、防げないものに備える</b>」——これが堅牢なアプリの守りの設計です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>なぜ検証するのか</h2><span class="en">WHY VALIDATE</span></div>
+  <p class="pattern-desc"><b>「なぜ入力を検証するのか」</b>。理由は3つ：<b>正しいデータを保つ・アプリを壊さない・セキュリティ</b>。「ユーザーは正しく入力してくれる」という<b>楽観は禁物</b>。別冊S6・S10の<b>「外部入力は信用しない」</b>と一貫します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">検証する3つの理由</span><span class="tag-desc">楽観は禁物</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 検証する3つの理由</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <span class="label">理由1</span>
+            <div class="name">データの正しさ</div>
+            <div class="desc">空タイトルや異常値が<b>DBに入らない</b>ようにする。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">理由2</span>
+            <div class="name">アプリの安定</div>
+            <div class="desc">想定外の入力で<b>クラッシュしない</b>ようにする。</div>
+          </div>
+          <div class="role-card">
+            <span class="label">理由3</span>
+            <div class="name">セキュリティ</div>
+            <div class="desc"><b>悪意ある入力</b>（インジェクション等）を防ぐ。</div>
+          </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px">// 「ユーザーは間違える」前提</div>
+        <p>ユーザーは<b>悪気なく間違える</b>。長すぎる入力、空欄、変な文字。さらに<b>悪意ある攻撃者</b>もいる。「正しく使ってくれる」は<b>幻想</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 検証しないと起きること</span>
+<span class="comment">// ─── 理由1：データの正しさ ───</span>
+検証なし → 空タイトルのメモがDBに
+  → 一覧で「（無題）」が大量に
+  → データが汚れる ★
+
+
+<span class="comment">// ─── 理由2：アプリの安定 ───</span>
+検証なし → 100万文字のタイトル
+  → DB列の上限超過でエラー
+  → 想定外の入力でクラッシュ ★
+
+
+<span class="comment">// ─── 理由3：セキュリティ ───</span>
+検証なし → 悪意ある入力
+  → SQLインジェクション（別冊S6）
+  → XSS（スクリプト埋め込み）
+  → セキュリティ事故 ★★★
+
+
+<span class="comment">// ─── 「ユーザーは間違える」前提 ───</span>
+楽観: 「みんな正しく入力するはず」
+  → 幻想 ★
+
+現実:
+  - 悪気なく間違える（空欄、長すぎ）
+  - 勘違いで変な値
+  - 悪意ある攻撃者
+  → だから検証が必要 ★★★
+
+
+<span class="comment">// ─── 別冊S6,S10 と一貫 ───</span>
+<span class="comment">// S6：SQLインジェクション → 入力を疑う</span>
+<span class="comment">// S10：インポートデータ → 検証する</span>
+<span class="comment">// S11：あらゆる入力 → 検証する</span>
+<span class="comment">// → 「外部入力は信用しない」が一貫 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「ユーザーは正しく入力する」という楽観を捨てる</div>
+    <p>バリデーションの出発点は<b>「ユーザーは間違えるし、悪意ある人もいる」</b>という前提。「みんな正しく使ってくれるはず」という楽観は、<b>データ汚染・クラッシュ・セキュリティ事故</b>を招く。これは別冊S6（SQLインジェクション）、別冊S10（インポート検証）と<b>同じ精神</b>。<b>「あらゆる外部入力は、正しいと証明されるまで疑う」</b>——防御の基本姿勢です。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>検証する場所（多層防御）</h2><span class="en">WHERE TO VALIDATE</span></div>
+  <p class="pattern-desc"><b>「どこで検証するか」</b>。答えは<b>「複数の層で」</b>（多層防御）。<b>画面（JS）・サーバ（Java）・DB（制約）</b>。それぞれ役割が違う。<b>「画面で検証したから安心」は危険</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">多層での検証</span><span class="tag-desc">各層に役割</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの検証層</div>
+        <table class="compare-tbl">
+          <thead><tr><th>層</th><th>役割</th></tr></thead>
+          <tbody>
+            <tr><td>画面（JS）</td><td>即フィードバック（UX）</td></tr>
+            <tr><td><b>サーバ（Java）</b></td><td><b>本当の防御線</b></td></tr>
+            <tr><td>DB（制約）</td><td>最後の砦</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 画面検証だけでは危険 ★★★</div>
+        <p>JSの検証は<b>簡単に回避できる</b>（ブラウザの開発者ツール、APIを直接叩く）。だから<b>サーバ側の検証が必須</b>。画面検証は<b>UXのため</b>、サーバ検証は<b>守りのため</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 本シリーズの方針</div>
+        <p><b>サーバ検証（Bean Validation）を中心</b>に、DB制約（UNIQUE等）で最後の砦。画面検証は補助。</p>
+      </div>
+      <div class="code"><span class="code-head">// 多層防御</span>
+<span class="comment">// ─── 3層の検証 ───</span>
+① 画面（JS）
+   即座にフィードバック
+   「タイトルを入力してください」
+   → UX向上（待たせない）
+   ※ 簡単に回避できる ★
+
+② サーバ（Java/Bean Validation）★★★
+   @NotBlank @Size など
+   → 本当の防御線
+   → 必ず通る・回避不可
+
+③ DB（制約）
+   NOT NULL, UNIQUE, 長さ制限
+   → 最後の砦
+   → アプリのバグでも守る
+
+
+<span class="comment">// ─── 画面検証だけの危険 ───</span>
+<span class="comment">// JSの検証は…</span>
+- ブラウザの開発者ツールで無効化できる
+- APIを直接叩けば素通り
+- JSが動かない環境もある
+<span class="comment">// → 画面検証「だけ」は穴だらけ ★★★</span>
+<span class="comment">// → サーバ検証が必須</span>
+
+
+<span class="comment">// ─── なぜ多層か ───</span>
+<span class="comment">// 1層が破られても次の層が守る</span>
+<span class="comment">// 画面すり抜け → サーバが弾く</span>
+<span class="comment">// サーバのバグ → DB制約が弾く</span>
+<span class="comment">// → 「多層防御」で堅牢に ★★★</span>
+
+
+<span class="comment">// ─── 本シリーズの実例 ───</span>
+画面: th:errors で表示
+サーバ: @NotBlank @Size（Vol.2,12）
+DB: UNIQUE（Vol.3）, NOT NULL
+<span class="comment">// → 3層で守ってきた</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「サーバ側検証」は絶対に省略しない</div>
+    <p>最も重要な原則：<b>「サーバ側の検証は絶対に省略しない」</b>。画面（JS）の検証は<b>簡単に回避できる</b>ので、それだけに頼るのは<b>無防備</b>。攻撃者は API を直接叩いてくる。<b>画面検証はUX（親切さ）のため、サーバ検証は守りのため</b>と役割が違う。「画面でチェックしてるから大丈夫」は<b>最も危険な思い込み</b>。本シリーズは Bean Validation でサーバ検証を必ず行います。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>Bean Validation</h2><span class="en">BEAN VALIDATION</span></div>
+  <p class="pattern-desc">Java の標準的な検証の仕組み<b>Bean Validation</b>。<b>アノテーション（@NotBlank, @Size 等）</b>でルールを宣言。Spring と統合され、<b>@Validated</b> で自動検証。Vol.2 で少し使いましたが、ここで体系的に理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">アノテーションによる検証</span><span class="tag-desc">宣言的に書く</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主なアノテーション</div>
+        <table class="compare-tbl">
+          <thead><tr><th>注釈</th><th>意味</th></tr></thead>
+          <tbody>
+            <tr><td><code>@NotNull</code></td><td>null でない</td></tr>
+            <tr><td><code>@NotBlank</code></td><td>空白でない（文字列）</td></tr>
+            <tr><td><code>@Size</code></td><td>長さ範囲</td></tr>
+            <tr><td><code>@Min/@Max</code></td><td>数値範囲</td></tr>
+            <tr><td><code>@Email</code></td><td>メール形式</td></tr>
+            <tr><td><code>@Pattern</code></td><td>正規表現</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 宣言的の利点</div>
+        <p>検証ルールを<b>フィールドに宣言</b>するだけ。検証ロジックを<b>毎回書かない</b>（別冊S2のKISS）。ルールが<b>一目で分かる</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// Bean Validation</span>
+<span class="comment">// ─── フォームクラスにルールを宣言 ───</span>
+<span class="kw">public class</span> <span class="type">MemoForm</span> {
+
+  <span class="ann">@NotBlank</span>(message = <span class="str">"タイトルは必須です"</span>)
+  <span class="ann">@Size</span>(max = <span class="num">100</span>,
+    message = <span class="str">"タイトルは100文字以内"</span>)
+  <span class="kw">private</span> <span class="type">String</span> title;
+
+  <span class="ann">@Size</span>(max = <span class="num">2000</span>,
+    message = <span class="str">"本文は2000文字以内"</span>)
+  <span class="kw">private</span> <span class="type">String</span> content;
+
+  <span class="ann">@NotNull</span>(message = <span class="str">"カテゴリを選択"</span>)
+  <span class="kw">private</span> <span class="type">Long</span> categoryId;
+}
+<span class="comment">// → ルールをフィールドに宣言 ★</span>
+<span class="comment">// → 検証ロジックを毎回書かない（KISS）</span>
+
+
+<span class="comment">// ─── Controller で自動検証 ───</span>
+<span class="ann">@PostMapping</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+    <span class="ann">@Validated</span> <span class="ann">@ModelAttribute</span>
+    <span class="type">MemoForm</span> form,
+    <span class="type">BindingResult</span> br) {  <span class="comment">// 検証結果</span>
+
+  <span class="kw">if</span> (br.<span class="fn">hasErrors</span>()) {
+    <span class="comment">// 検証エラーがあれば入力画面に戻す</span>
+    <span class="kw">return</span> <span class="str">"memos/form"</span>;
+  }
+  <span class="comment">// 検証OK → 処理続行 ★</span>
+  service.<span class="fn">create</span>(form);
+  <span class="kw">return</span> <span class="str">"redirect:/memos"</span>;
+}
+<span class="comment">// → @Validated で自動検証</span>
+<span class="comment">// → BindingResult にエラーが入る</span>
+
+
+<span class="comment">// ─── 画面でエラー表示（Thymeleaf）───</span>
+&lt;input th:field="*{title}"&gt;
+&lt;span th:errors="*{title}"&gt;&lt;/span&gt;
+<span class="comment">// → 「タイトルは必須です」が表示 ★</span>
+
+
+<span class="comment">// ─── ネストした検証 ───</span>
+<span class="comment">// @Valid でオブジェクト内も検証</span>
+<span class="comment">// リストの各要素も検証できる</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 検証ルールは「宣言」する、ロジックを書かない</div>
+    <p>Bean Validation の良さは<b>「検証を宣言的に書ける」</b>こと。<code>if (title == null || title.isEmpty())</code> という<b>検証ロジックを毎回書く</b>代わりに、<code>@NotBlank</code> と<b>宣言</b>するだけ。これは別冊S2の<b>KISS（自前で書かない）</b>の実践。ルールがフィールドに集まるので<b>「何が必須か」が一目で分かる</b>。検証ロジックの重複もなくなる。<b>宣言的なコードは、読みやすく間違いにくい</b>のです。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>防御的プログラミング</h2><span class="en">DEFENSIVE PROGRAMMING</span></div>
+  <p class="pattern-desc"><b>防御的プログラミング</b>とは、<b>「想定外の入力・状態に備えてコードを書く」</b>考え方。null チェック、引数の検証、早期リターン。<b>「起きないはず」を信じない</b>。バリデーションの精神をコード全体に広げます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">防御的プログラミングの実践</span><span class="tag-desc">想定外に備える</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主な技法</div>
+        <ul>
+          <li><b>引数の検証</b>：メソッド冒頭で前提を確認</li>
+          <li><b>早期リターン</b>：異常なら早く抜ける</li>
+          <li><b>null 安全</b>：Optional, null チェック</li>
+          <li><b>不変性</b>：変更されない設計</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// ガード節（早期リターン）</div>
+        <p>メソッド冒頭で<b>異常な条件を弾く</b>（ガード節）。「正常な道」をネストの外に出す。読みやすく安全。</p>
+
+        <div class="panel-head" style="margin-top:18px">// やりすぎ注意</div>
+        <p>ただし<b>全部に過剰な防御</b>は冗長（YAGNI・別冊S2）。<b>「外部との境界」を重点的に</b>守る。内部のメソッドまで毎回チェックは過剰。</p>
+      </div>
+      <div class="code"><span class="code-head">// 防御的プログラミング</span>
+<span class="comment">// ─── ガード節（早期リターン）───</span>
+<span class="kw">public void</span> <span class="fn">bulkArchive</span>(<span class="type">List</span>&lt;<span class="type">Long</span>&gt; ids) {
+  <span class="comment">// 冒頭で異常を弾く（ガード節）★</span>
+  <span class="kw">if</span> (ids == <span class="kw">null</span> || ids.<span class="fn">isEmpty</span>()) {
+    <span class="kw">return</span>;  <span class="comment">// 早期リターン（別冊S9でも実践）</span>
+  }
+  <span class="comment">// ここから先は ids が有効と保証される</span>
+  mapper.<span class="fn">bulkArchive</span>(ids);
+}
+<span class="comment">// → 「正常な道」が読みやすい ★</span>
+
+
+<span class="comment">// ─── 引数の検証 ───</span>
+<span class="kw">public</span> <span class="type">Memo</span> <span class="fn">findById</span>(<span class="type">Long</span> id) {
+  <span class="comment">// 前提を確認（防御）</span>
+  <span class="type">Objects</span>.<span class="fn">requireNonNull</span>(id, <span class="str">"idは必須"</span>);
+  ...
+}
+
+
+<span class="comment">// ─── null 安全（Optional）───</span>
+<span class="kw">public</span> <span class="type">Optional</span>&lt;<span class="type">Memo</span>&gt; <span class="fn">find</span>(<span class="type">Long</span> id) {
+  <span class="kw">return</span> <span class="type">Optional</span>.<span class="fn">ofNullable</span>(
+    mapper.<span class="fn">findById</span>(id));
+}
+<span class="comment">// 呼び出し側：</span>
+service.<span class="fn">find</span>(id)
+  .<span class="fn">orElseThrow</span>(() ->
+    <span class="kw">new</span> <span class="type">MemoNotFoundException</span>(id));
+<span class="comment">// → null を型で表現、見落とし防止 ★</span>
+
+
+<span class="comment">// ─── やりすぎ注意（別冊S2のYAGNI）───</span>
+<span class="ann">過剰:</span>
+<span class="comment">// 内部の全メソッドで全引数をチェック</span>
+<span class="comment">// → 冗長・読みにくい ★</span>
+
+<span class="ann">適切:</span>
+<span class="comment">// 「外部との境界」を重点的に守る</span>
+<span class="comment">// - Controller（入力の入口）</span>
+<span class="comment">// - public API のメソッド</span>
+<span class="comment">// - インポート（別冊S10）</span>
+<span class="comment">// → 信頼境界で守る ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 防御は「信頼境界」で重点的に</div>
+    <p>防御的プログラミングは大事ですが、<b>「全部に過剰な防御」は逆効果</b>（冗長・読みにくい）。重点を置くべきは<b>「信頼境界」</b>——<b>外部とアプリの境目</b>（Controller、public API、インポート）。ここを<b>しっかり守れば、内部は信頼して書ける</b>。「入口で守り、中は信頼」というメリハリ。別冊S2のYAGNIと同じく、<b>必要なところに必要なだけ</b>の防御が、良いバランスです。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>エラーメッセージの設計</h2><span class="en">ERROR MESSAGE DESIGN</span></div>
+  <p class="pattern-desc">検証で<b>「エラーをどう伝えるか」</b>も重要。<b>ユーザーが「何を・どう直せばいいか」分かる</b>メッセージが理想。別冊S7（ユーザー向け表示）・別冊S8（UX）と繋がる、<b>親切な検証</b>の設計です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">良いエラーメッセージ</span><span class="tag-desc">直し方が分かる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 良いメッセージの条件</div>
+        <ul>
+          <li><b>何が問題か</b>：「タイトルが空です」</li>
+          <li><b>どう直すか</b>：「100文字以内で入力」</li>
+          <li><b>具体的に</b>：「現在120文字」</li>
+          <li><b>その場で</b>：該当フィールドの近くに表示</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 悪いメッセージ</div>
+        <ul>
+          <li>「エラー」（何が?）</li>
+          <li>「入力値が不正です」（どこが?）</li>
+          <li>技術的すぎる（「ConstraintViolation」）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 別冊S7,S8 との連携</div>
+        <p>別冊S7「ユーザーに分かりやすく」、別冊S8「迷わせない」が、エラーメッセージにも当てはまる。</p>
+      </div>
+      <div class="code"><span class="code-head">// エラーメッセージの設計</span>
+<span class="comment">// ─── 悪いメッセージ ───</span>
+<span class="ann">✗</span> 「エラー」
+   → 何が問題か不明 ★
+<span class="ann">✗</span> 「入力値が不正です」
+   → どのフィールドか不明
+<span class="ann">✗</span> 「ConstraintViolationException」
+   → 技術的すぎる（別冊S7）★
+
+
+<span class="comment">// ─── 良いメッセージ ───</span>
+<span class="ann">✓</span> 「タイトルを入力してください」
+   → 何を・どうするか明確 ★
+<span class="ann">✓</span> 「タイトルは100文字以内で
+     入力してください（現在120文字）」
+   → 具体的・直し方が分かる ★★★
+<span class="ann">✓</span> 該当フィールドの真下に表示
+   → どこが問題か一目（別冊S8）
+
+
+<span class="comment">// ─── Bean Validation の message ───</span>
+@NotBlank(message =
+  <span class="str">"タイトルを入力してください"</span>)
+@Size(max = 100, message =
+  <span class="str">"タイトルは100文字以内で入力してください"</span>)
+<span class="comment">// → message でユーザー向け文言を指定 ★</span>
+
+
+<span class="comment">// ─── 表示位置（別冊S8：迷わせない）───</span>
+&lt;input th:field="*{title}"&gt;
+&lt;span class="error"
+  th:errors="*{title}"&gt;&lt;/span&gt;
+<span class="comment">// → 該当フィールドの真下にエラー</span>
+<span class="comment">// → 「どこを直すか」が一目 ★★★</span>
+
+
+<span class="comment">// ─── 複数エラーをまとめて ───</span>
+<span class="comment">// 1つ直す→次のエラー…の繰り返しは苦痛</span>
+<span class="comment">// → 全エラーを一度に表示するのが親切</span>
+<span class="comment">// → Bean Validation は全項目を検証して返す</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — エラーメッセージは「直し方」まで伝える</div>
+    <p>良いエラーメッセージは<b>「何が問題か」だけでなく「どう直すか」</b>まで伝える。「タイトルが長すぎます」より<b>「タイトルは100文字以内で入力してください（現在120文字）」</b>。ユーザーが<b>「あと20文字減らせばいい」</b>と即分かる。これは別冊S7（ユーザーに分かりやすく）、別冊S8（迷わせない）の実践。<b>エラーは「責める」のでなく「導く」</b>もの。親切なエラーが、良いUXを作ります。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>バリデーションと例外の連携</h2><span class="en">VALIDATION &amp; EXCEPTION</span></div>
+  <p class="pattern-desc">別冊S7（例外）と別冊S11（バリデーション）が<b>どう連携するか</b>。<b>「入力エラーはバリデーション、業務エラーは例外」</b>と使い分け。本編Vol.12 では両方を<b>@ControllerAdvice で統合</b>します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">バリデーションと例外の使い分け</span><span class="tag-desc">守りの両輪を統合</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 使い分け</div>
+        <table class="compare-tbl">
+          <thead><tr><th>種類</th><th>手段</th><th>例</th></tr></thead>
+          <tbody>
+            <tr><td>入力エラー</td><td>バリデーション</td><td>空タイトル</td></tr>
+            <tr><td>業務エラー</td><td>例外</td><td>重複・未検出</td></tr>
+            <tr><td>システムエラー</td><td>例外</td><td>DB障害</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// なぜ使い分けるか</div>
+        <ul>
+          <li><b>入力エラー</b>：入口で防げる→バリデーション＋フォーム再表示</li>
+          <li><b>業務エラー</b>：処理して初めて分かる→例外</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// Vol.12 での統合</div>
+        <p>バリデーションエラーは<b>BindingResult</b>、業務例外は<b>@ControllerAdvice</b>。両方で<b>親切なエラー表示</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// バリデーションと例外の連携</span>
+<span class="comment">// ─── 入力エラー → バリデーション ───</span>
+<span class="comment">// 「タイトルが空」は入口で防げる</span>
+<span class="ann">@Validated</span> <span class="type">MemoForm</span> form,
+<span class="type">BindingResult</span> br
+  ↓
+<span class="kw">if</span> (br.<span class="fn">hasErrors</span>())
+  <span class="kw">return</span> <span class="str">"form"</span>;  <span class="comment">// 再表示</span>
+<span class="comment">// → バリデーションで弾く（別冊S11）★</span>
+
+
+<span class="comment">// ─── 業務エラー → 例外 ───</span>
+<span class="comment">// 「カテゴリ名が重複」は</span>
+<span class="comment">// DBに問い合わせて初めて分かる</span>
+<span class="kw">if</span> (categoryExists(name))
+  <span class="kw">throw new</span> <span class="type">DuplicateException</span>(name);
+<span class="comment">// → 例外で対処（別冊S7）★</span>
+
+
+<span class="comment">// ─── @ControllerAdvice で統合（Vol.12）───</span>
+<span class="ann">@ControllerAdvice</span>
+<span class="kw">class</span> <span class="type">GlobalExceptionHandler</span> {
+  <span class="comment">// 業務例外をハンドリング（別冊S7）</span>
+  <span class="ann">@ExceptionHandler</span>(<span class="type">DuplicateException</span>.<span class="kw">class</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">handleDup</span>(...) {
+    <span class="kw">return</span> <span class="str">"error/conflict"</span>;
+  }
+}
+<span class="comment">// → 入力エラー：BindingResult＋フォーム</span>
+<span class="comment">// → 業務例外：@ControllerAdvice</span>
+<span class="comment">// → 両方で親切なエラー表示 ★★★</span>
+
+
+<span class="comment">// ─── 守りの全体像（S7＋S11）───</span>
+入力
+  ↓ バリデーション（別冊S11）
+  → 入力エラーは入口で弾く
+  ↓ OK
+業務処理
+  ↓ 例外（別冊S7）
+  → 業務/システムエラーを対処
+  ↓
+@ControllerAdvice で集約表示
+<span class="comment">// → 守りの両輪が連携 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「入口で防げるか」でバリデーションと例外を分ける</div>
+    <p>使い分けの基準は<b>「入口で防げるか」</b>。「タイトルが空」は<b>入力を見ただけで分かる</b>→バリデーション。「カテゴリ名が重複」は<b>DBに聞いて初めて分かる</b>→例外。前者は<b>フォーム再表示で「直してもらう」</b>、後者は<b>例外で「対処する」</b>。本編Vol.12 では、別冊S7（例外）と別冊S11（バリデーション）の<b>両方の理論を統合</b>し、あらゆるエラーを親切に扱います。<b>守りの両輪が揃う</b>回です。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>バリデーションあるある失敗</h2><span class="en">VALIDATION PITFALLS</span></div>
+  <p class="pattern-desc">バリデーションで<b>初心者が踏みやすい失敗</b>を5つ。<b>画面検証だけ・過剰防御・不親切なメッセージ</b>など。別冊S2・S6・S7の知識で回避できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">バリデーションあるある 5選</span><span class="tag-desc">先人の轍を踏まない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 画面検証だけでサーバ検証なし ★★★</b></p>
+        <ul>
+          <li>JS回避でサーバに不正データ</li>
+          <li>対処：サーバ検証を必ず（Section 03）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② 検証ロジックを各所に重複</b></p>
+        <ul>
+          <li>同じチェックをあちこちに手書き</li>
+          <li>対処：Bean Validation で宣言的に（Section 04）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ エラーメッセージが不親切 ★★★</b></p>
+        <ul>
+          <li>「エラー」だけで直し方不明</li>
+          <li>対処：何を・どう直すかを伝える（Section 06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 過剰な防御で冗長</b></p>
+        <ul>
+          <li>内部の全メソッドで全チェック</li>
+          <li>対処：信頼境界で重点的に（Section 05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 入力エラーを例外にする（逆も）</b></p>
+        <ul>
+          <li>空タイトルで例外を投げる等</li>
+          <li>対処：入口で防げるかで使い分け（Section 07）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// あるある失敗の対処</span>
+<span class="comment">// ─── ① サーバ検証を必ず ───</span>
+<span class="ann">NG:</span> JS だけで検証
+<span class="comment">// → API直叩きで素通り ★</span>
+<span class="ann">OK:</span> @Validated でサーバ検証
+<span class="comment">// → 必ず通る防御線 ★★★</span>
+
+
+<span class="comment">// ─── ② 重複を宣言で解消 ───</span>
+<span class="ann">NG:</span>
+<span class="comment">// Controller A, B, C で同じ if チェック</span>
+if (title == null || title.isEmpty()) ...
+<span class="ann">OK:</span>
+@NotBlank private String title;
+<span class="comment">// → 1か所に宣言、自動適用 ★★★</span>
+
+
+<span class="comment">// ─── ③ 親切なメッセージ ───</span>
+<span class="ann">NG:</span> message = "エラー"
+<span class="ann">OK:</span> message =
+  "タイトルは100文字以内で入力してください"
+<span class="comment">// → 直し方が分かる ★★★</span>
+
+
+<span class="comment">// ─── ⑤ 適切な使い分け ───</span>
+入力エラー（空・長さ）→ バリデーション
+業務エラー（重複・未検出）→ 例外
+<span class="comment">// → 「入口で防げるか」で判断 ★★★</span>
+
+
+<span class="comment">// ─── 良いバリデーションの条件 ───</span>
+✓ サーバ検証を必ず
+✓ Bean Validation で宣言的
+✓ 親切なメッセージ
+✓ 信頼境界で重点的に
+✓ 例外と適切に使い分け ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — バリデーションは「守りの集大成」</div>
+    <p>バリデーションは、別冊の守りの理論が集まる分野です。<b>S2</b>（KISS：宣言的に書く）、<b>S6</b>（外部入力を疑う）、<b>S7</b>（例外との連携・親切な表示）、<b>S10</b>（インポートの検証）が全て関わる。本編Vol.12 では、これらを統合して<b>「あらゆる不正入力からアプリを守る」</b>仕組みを作る。RDT版で積み上げた<b>「外部入力は信用しない」</b>という一貫した姿勢が、ここで完成形になります。</p>
+  </div>
+</section>
+
+<!-- SECTION 09 -->
+<section id="s09">
+  <div class="section-header"><span class="section-num">09</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">別冊S11 で<b>バリデーションと防御的プログラミングの理論</b>が頭に入りました。本編Vol.12 で<b>バリデーション＆例外設計</b>を実装するとき、別冊S7と合わせて<b>守りの全体像</b>が見えるはずです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">S11 達成チェック</span><span class="tag-desc">バリデーションを語れる人になった</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>検証する3つの理由を説明できる</li>
+          <li>「ユーザーは間違える」前提を持てた</li>
+          <li>多層防御（画面/サーバ/DB）を理解</li>
+          <li>サーバ検証は省略しないと分かる</li>
+          <li>Bean Validation を宣言的に使える</li>
+          <li>防御的プログラミングを信頼境界で実践</li>
+          <li>親切なエラーメッセージを書ける</li>
+          <li>バリデーションと例外を使い分けられる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// 別冊S11 で手に入れた検証理論</span>
+✓ <span class="str">"ユーザーは間違える・悪意もある"</span>
+
+✓ <span class="str">"多層防御、サーバ検証は必須"</span>
+
+✓ <span class="str">"Bean Validation で宣言的に"</span>
+
+✓ <span class="str">"防御は信頼境界で重点的に"</span>
+
+✓ <span class="str">"エラーは直し方まで伝える"</span>
+
+✓ <span class="str">"入口で防げるかでバリデーションと例外を分ける"</span>
+
+
+<span class="comment">// あなたは「バリデーションを語れる」</span>
+<span class="comment">// エンジニアに近づいた ★★★</span>
+
+<span class="comment">// 次回 本編Vol.12：</span>
+<span class="comment">//   バリデーション＆例外設計</span>
+<span class="comment">//   Bean Validation の本格化</span>
+<span class="comment">//   @ControllerAdvice で例外集約</span>
+<span class="comment">//   別冊S7＋S11 の理論が実装に ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── 本編 VOL.12 へ</div>
+    <p>別冊S11 で<b>「バリデーションと防御的プログラミングの理論」</b>を獲得しました。次は本編Vol.12「<b>バリデーション＆例外設計</b>」。別冊S7（例外設計）と別冊S11（バリデーション）の<b>両理論が、ついに本格実装</b>されます。これまで散らばっていた検証を<b>Bean Validation で体系化</b>し、業務例外を<b>@ControllerAdvice で集約</b>。Vol.3 のUNIQUE違反500エラー、Vol.11 のパース失敗——<b>白い500画面を、親切なエラー画面に変える</b>。守りの両輪が揃う集大成の回。<b>本編Vol.12 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（REQUIREMENTS · DESIGN · TEST）</span>
+  <span>SUB.11 / 14 ── VALIDATION &amp; DEFENSIVE PROGRAMMING（別冊）</span>
+</footer>
+
+</body>
+</html>

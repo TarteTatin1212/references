@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕フロント別冊 Vol.6 チェックボックスと複数選択</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3a2a26;
+  --paper:#f4ece2;
+  --paper-2:#ecdfd0;
+  --accent:#d2694a;
+  --accent-2:#e0916f;
+  --accent-3:#a8804a;
+  --muted:#8a7568;
+  --line:#d8c8b6;
+  --code-bg:#2a211e;
+  --code-text:#f0e6da;
+  --panel-bg:#fbf4ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"❖";position:absolute;right:-10px;top:-20px;font-size:280px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff6ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#e0a888;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #4a3a34;padding-bottom:6px}
+.kw{color:#ffb88a}
+.tagx{color:#f7a8d8}
+.attr{color:#a3c9ff}
+.str{color:#b5e8b0}
+.thx{color:#e0c088}
+.js{color:#a3c9ff}
+.comment{color:#9a8578;font-style:italic}
+.txt{color:#f0e6da}
+.tip{background:rgba(210,105,74,0.08);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-3)}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:200px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.F6</span>
+    <span class="kind-tag">フロント別冊 ── FRONT</span>
+    <span class="rdt-tag">CHECKBOX &amp; MULTI-SELECT</span>
+  </div>
+  <h1>チェックボックスと<br>複数選択</h1>
+  <div class="subtitle">FRONT.06 ── CHECKBOXES &amp; MULTIPLE SELECTION</div>
+  <p class="lead">対応する本編は<b>Vol.5（タグ複数選択）とVol.10（一括操作）</b>。「1つ選ぶ」から「<b>複数を一度に選ぶ</b>」へ。タグを複数チェックして<b>List にバインド</b>する仕組み、メモを<b>一括選択して操作</b>するUI、そして<b>全選択</b>を学びます。<code>th:field</code> がチェックボックスでどう働くか、複数値が<b>どうサーバーに届くか</b>を理解します。フォーム（F3）の知識が、複数選択へと発展します。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 チェックボックスでつまずく点</div>
+    <p>① 複数チェックボックスは<b>同じ name</b>（例 <code>tagIds</code>）にする／② <code>th:field="*{tagIds}"</code> なら<b>選択済みが自動でcheck</b>される／③ サーバー側は <code>List&lt;Long&gt;</code> で受け取る／④ 1つもチェックしないと<b>その項目は送られない</b>（空リスト対策が必要・本編Vol.10）。この4点が複数選択の要です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 チェックボックスの仕組み</a></li>
+    <li><a href="#s02">02 複数選択とListバインド</a></li>
+    <li><a href="#s03">03 th:field でチェック状態</a></li>
+    <li><a href="#s04">04 一括操作のチェックボックス</a></li>
+    <li><a href="#s05">05 全選択を作る（JS）</a></li>
+    <li><a href="#s06">06 選択件数の確認</a></li>
+    <li><a href="#s07">07 複数選択のあるある失敗</a></li>
+    <li><a href="#s08">08 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>チェックボックスの仕組み</h2><span class="en">HOW CHECKBOXES WORK</span></div>
+  <p class="pattern-desc">チェックボックスは<b>「オン/オフ」を選ぶ入力</b>。テキスト入力と違う特徴があります。<b>チェックしたものだけ送信</b>され、<b>同じ name にすると複数値</b>になる。まずこの基本を理解します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">チェックボックスの特徴</span><span class="tag-desc">テキスト入力とは違う</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// チェックボックスの基本</div>
+        <ul>
+          <li><code>type="checkbox"</code> でオン/オフ</li>
+          <li><b>チェックした分だけ</b>送信される</li>
+          <li>未チェックは<b>送られない</b>（重要）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// テキスト入力との違い</div>
+        <table class="compare-tbl">
+          <thead><tr><th></th><th>text</th><th>checkbox</th></tr></thead>
+          <tbody>
+            <tr><td>送信</td><td>常に</td><td><b>チェック時のみ</b></td></tr>
+            <tr><td>値</td><td>入力文字</td><td>value属性</td></tr>
+            <tr><td>複数</td><td>―</td><td><b>同nameで可</b></td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// value が大事</div>
+        <p>チェック時に<b>何の値を送るか</b>は <code>value</code> で決まる。タグなら <code>value="${tag.id}"</code>。</p>
+      </div>
+      <div class="code"><span class="code-head">// チェックボックスの仕組み</span>
+<span class="comment">// ─── 基本 ───</span>
+<span class="tagx">&lt;input</span> <span class="attr">type=</span><span class="str">"checkbox"</span>
+       <span class="attr">name=</span><span class="str">"agree"</span> <span class="attr">value=</span><span class="str">"yes"</span><span class="tagx">&gt;</span>
+<span class="comment"># チェックすると agree=yes が送信</span>
+<span class="comment"># チェックしないと…何も送られない ★</span>
+
+
+<span class="comment">// ─── テキストとの違い ───</span>
+&lt;input type="text" name="title"&gt;
+  → 空でも title= が送られる
+&lt;input type="checkbox" name="ok"&gt;
+  → 未チェックなら ok 自体が送られない ★★★
+<span class="comment"># この違いが後で重要（空リスト対策）</span>
+
+
+<span class="comment">// ─── 同じ name で複数 ───</span>
+<span class="tagx">&lt;input</span> <span class="attr">type=</span><span class="str">"checkbox"</span> <span class="attr">name=</span><span class="str">"tagIds"</span> <span class="attr">value=</span><span class="str">"1"</span><span class="tagx">&gt;</span> 重要
+<span class="tagx">&lt;input</span> <span class="attr">type=</span><span class="str">"checkbox"</span> <span class="attr">name=</span><span class="str">"tagIds"</span> <span class="attr">value=</span><span class="str">"2"</span><span class="tagx">&gt;</span> 急ぎ
+<span class="tagx">&lt;input</span> <span class="attr">type=</span><span class="str">"checkbox"</span> <span class="attr">name=</span><span class="str">"tagIds"</span> <span class="attr">value=</span><span class="str">"3"</span><span class="tagx">&gt;</span> 会議
+
+1と3をチェック → tagIds=1&tagIds=3 が送信
+<span class="comment"># → 同じ name で複数値 ★★★</span>
+<span class="comment"># → サーバーは List で受け取る（次節）</span>
+
+
+<span class="comment">// ─── value の役割 ───</span>
+value="${tag.id}"
+<span class="comment"># → チェック時にこの id が送られる</span>
+<span class="comment"># → 「どのタグを選んだか」を id で伝える ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — チェックボックスは「未チェックなら送られない」</div>
+    <p>チェックボックスの<b>最重要の特性</b>：<b>チェックしたものだけ送信され、未チェックは送られない</b>。テキスト入力が「空でも送る」のと対照的。だから<b>「1つもチェックしないと、その項目自体が送られてこない」</b>。これが本編Vol.10 の<b>「空リスト対策」</b>に繋がる——「0件選択」だとサーバーに <code>tagIds</code> が届かず null になる。複数選択を扱うなら、この特性を<b>必ず</b>頭に入れておきましょう。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>複数選択とListバインド</h2><span class="en">LIST BINDING</span></div>
+  <p class="pattern-desc">同じ name のチェックボックス群は、サーバー側で<b>List として受け取れます</b>。本編Vol.5 のタグ選択がこれ。チェックした<b>タグIDのリスト</b>が <code>List&lt;Long&gt; tagIds</code> に入る。<b>画面の複数選択とJavaのListが繋がる</b>仕組みです。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">複数値→Listへ</span><span class="tag-desc">画面とJavaを繋ぐ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Listバインドの流れ</div>
+        <ol style="margin-left:18px">
+          <li>同じ name="tagIds" で複数チェック</li>
+          <li>tagIds=1&tagIds=3 が送信</li>
+          <li>サーバーが <code>List&lt;Long&gt;</code> に変換</li>
+          <li>[1, 3] として受け取る</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// Form クラス側（本編Vol.5）</div>
+        <p><code>private List&lt;Long&gt; tagIds;</code> と定義すれば、複数値が<b>自動でListに</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// th:each でチェックボックス生成</div>
+        <p>タグ一覧を <code>th:each</code> で回し、各タグのチェックボックスを生成。</p>
+      </div>
+      <div class="code"><span class="code-head">// 複数選択とListバインド</span>
+<span class="comment">// ─── 画面：th:each でチェックボックス生成 ───</span>
+<span class="tagx">&lt;div</span> <span class="attr">class=</span><span class="str">"tag-checks"</span><span class="tagx">&gt;</span>
+  <span class="tagx">&lt;label</span> <span class="thx">th:each=</span><span class="str">"tag : ${tags}"</span>
+         <span class="attr">class=</span><span class="str">"tag-check"</span><span class="tagx">&gt;</span>
+    <span class="tagx">&lt;input</span> <span class="attr">type=</span><span class="str">"checkbox"</span>
+           <span class="attr">name=</span><span class="str">"tagIds"</span>
+           <span class="thx">th:value=</span><span class="str">"${tag.id}"</span><span class="tagx">&gt;</span>
+    <span class="tagx">&lt;span</span> <span class="thx">th:text=</span><span class="str">"${tag.name}"</span><span class="tagx">&gt;&lt;/span&gt;</span>
+  <span class="tagx">&lt;/label&gt;</span>
+<span class="tagx">&lt;/div&gt;</span>
+<span class="comment"># → タグの数だけチェックボックス生成 ★</span>
+<span class="comment"># → 全部 name="tagIds"（同じ名前）</span>
+
+
+<span class="comment">// ─── 送信されるデータ ───</span>
+「重要」(id=1)と「会議」(id=3)をチェック
+  → tagIds=1&tagIds=3
+
+
+<span class="comment">// ─── サーバー：Listで受け取る（Vol.5）───</span>
+<span class="comment"># Form クラス:</span>
+public class MemoForm {
+  private String title;
+  private List&lt;Long&gt; tagIds;  <span class="comment"># List ★★★</span>
+}
+        ↓
+tagIds = [1, 3] として受け取れる
+<span class="comment"># → 画面の複数選択 = JavaのList ★★★</span>
+
+
+<span class="comment">// ─── Controller（本編Vol.6）───</span>
+<span class="ann">@PostMapping</span>("/memos")
+String create(<span class="ann">@ModelAttribute</span> MemoForm form) {
+  <span class="comment"># form.getTagIds() で [1,3] が取れる</span>
+  service.create(form);  <span class="comment"># タグ付け</span>
+}
+<span class="comment"># → サーバーで memo_tags に保存（Vol.6）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「同じ name」が複数値を List にまとめる鍵</div>
+    <p>複数選択の核心は<b>「チェックボックスを全部同じ name にする」</b>こと。<code>name="tagIds"</code> で統一すると、チェックした値が <code>tagIds=1&tagIds=3</code> と<b>同じキーで複数</b>送られ、サーバー側の <code>List&lt;Long&gt; tagIds</code> に<b>自動でまとまる</b>。もし name をバラバラ（tagId1, tagId2…）にすると、Listにならず扱いづらい。「<b>複数選びたいものは、同じ name で並べる</b>」——これが画面とサーバーを繋ぐ約束です。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>th:field でチェック状態</h2><span class="en">CHECKED STATE</span></div>
+  <p class="pattern-desc">編集画面では、<b>既に付いているタグを最初からチェック済み</b>にしたい。<code>th:field="*{tagIds}"</code> を使えば、<b>選択済みのタグが自動でチェック</b>される。手動で <code>checked</code> を判定する必要がありません。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">th:field の自動チェック</span><span class="tag-desc">選択済みを反映</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 編集時の課題</div>
+        <p>メモ編集で「既に付いているタグ」を<b>チェック済み</b>で表示したい。手動だと面倒。</p>
+
+        <div class="panel-head" style="margin-top:18px">// th:field が解決</div>
+        <p><code>th:field="*{tagIds}"</code> ＋ <code>th:value="${tag.id}"</code>。<b>tagIds に含まれる id のチェックボックスを自動でcheck</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 手動との比較</div>
+        <p>手動なら <code>th:checked="${#lists.contains(...)}"</code> と書く必要が。<code>th:field</code> なら一発。</p>
+      </div>
+      <div class="code"><span class="code-head">// th:field でチェック状態</span>
+<span class="comment">// ─── th:field で自動チェック ───</span>
+<span class="tagx">&lt;label</span> <span class="thx">th:each=</span><span class="str">"tag : ${tags}"</span><span class="tagx">&gt;</span>
+  <span class="tagx">&lt;input</span> <span class="attr">type=</span><span class="str">"checkbox"</span>
+         <span class="thx">th:field=</span><span class="str">"*{tagIds}"</span>
+         <span class="thx">th:value=</span><span class="str">"${tag.id}"</span><span class="tagx">&gt;</span>
+  <span class="tagx">&lt;span</span> <span class="thx">th:text=</span><span class="str">"${tag.name}"</span><span class="tagx">&gt;&lt;/span&gt;</span>
+<span class="tagx">&lt;/label&gt;</span>
+<span class="comment"># → memoForm.tagIds に tag.id が含まれれば</span>
+<span class="comment">#   自動で checked になる ★★★</span>
+
+
+<span class="comment">// ─── 仕組み ───</span>
+編集対象メモのタグ = [1, 3]（重要・会議）
+memoForm.tagIds = [1, 3]
+        ↓ th:field が判定
+  tag.id=1（重要）→ ☑ checked
+  tag.id=2（急ぎ）→ ☐
+  tag.id=3（会議）→ ☑ checked
+<span class="comment"># → 既存のタグが最初からチェック済み ★</span>
+
+
+<span class="comment">// ─── 手動だと面倒（参考）───</span>
+<span class="kw">th:field なし:</span>
+&lt;input type="checkbox" name="tagIds"
+  th:value="${tag.id}"
+  th:checked="${#lists.contains(
+    memoForm.tagIds, tag.id)}"&gt;
+<span class="comment"># → contains 判定を自分で書く ★</span>
+
+<span class="kw">th:field あり:</span>
+&lt;input type="checkbox"
+  th:field="*{tagIds}"
+  th:value="${tag.id}"&gt;
+<span class="comment"># → 判定不要、自動 ★★★</span>
+
+
+<span class="comment">// ─── F3の th:field と一貫 ───</span>
+<span class="comment"># テキストもチェックボックスも同じ th:field</span>
+<span class="comment"># → 型に応じて適切に処理してくれる ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — th:field はチェックボックスでも「状態の自動反映」</div>
+    <p>F3 で学んだ <code>th:field</code> は、テキスト入力では <code>value</code> を、セレクトでは <code>selected</code> を自動生成しました。<b>チェックボックスでは <code>checked</code> を自動判定</b>します。<code>th:field="*{tagIds}"</code> と <code>th:value="${tag.id}"</code> を組めば、<b>tagIds に含まれる id のチェックボックスだけ checked</b>に。「<b>th:field は、入力欄の種類を問わず"現在の状態"を反映する」</b>万能属性。手動の <code>contains</code> 判定が不要になります。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>一括操作のチェックボックス</h2><span class="en">BULK SELECTION</span></div>
+  <p class="pattern-desc">本編Vol.10 の<b>一括操作</b>。一覧の各行にチェックボックスを置き、選んだメモを<b>まとめてアーカイブ・削除</b>。タグ選択（F6前半）と同じ仕組みで、<b>メモIDのリスト</b>を送ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">一括操作のUI</span><span class="tag-desc">行ごとにチェック</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 構成</div>
+        <ul>
+          <li>一覧全体を<b>1つの form で囲む</b></li>
+          <li>各行に <code>name="ids"</code> のチェックボックス</li>
+          <li>一括ボタン（アーカイブ／削除）</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// formaction で送信先を分岐</div>
+        <p>同じ選択を、アーカイブと削除で使い分け。ボタンの <code>formaction</code> で送信先を変える（本編Vol.10）。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 送られるデータ</div>
+        <p>チェックした行の <code>ids=1&ids=5&ids=8</code> が <code>List&lt;Long&gt; ids</code> に。タグ選択と同じ。</p>
+      </div>
+      <div class="code"><span class="code-head">// 一括操作のチェックボックス</span>
+<span class="comment">&lt;!-- 一覧全体を form で囲む --&gt;</span>
+<span class="tagx">&lt;form</span> <span class="attr">id=</span><span class="str">"bulkForm"</span> <span class="attr">method=</span><span class="str">"post"</span><span class="tagx">&gt;</span>
+  <span class="comment">&lt;!-- 一括ボタン（送信先を分岐）--&gt;</span>
+  <span class="tagx">&lt;button</span> <span class="attr">type=</span><span class="str">"submit"</span>
+    <span class="thx">th:formaction=</span><span class="str">"@{/memos/bulk/archive}"</span><span class="tagx">&gt;</span>
+    <span class="txt">一括アーカイブ</span>
+  <span class="tagx">&lt;/button&gt;</span>
+  <span class="tagx">&lt;button</span> <span class="attr">type=</span><span class="str">"submit"</span>
+    <span class="thx">th:formaction=</span><span class="str">"@{/memos/bulk/delete}"</span>
+    <span class="attr">onclick=</span><span class="str">"return confirmDelete()"</span><span class="tagx">&gt;</span>
+    <span class="txt">一括削除</span>
+  <span class="tagx">&lt;/button&gt;</span>
+
+  <span class="comment">&lt;!-- 各行にチェックボックス --&gt;</span>
+  <span class="tagx">&lt;tr</span> <span class="thx">th:each=</span><span class="str">"memo : ${memos}"</span><span class="tagx">&gt;</span>
+    <span class="tagx">&lt;td&gt;</span>
+      <span class="tagx">&lt;input</span> <span class="attr">type=</span><span class="str">"checkbox"</span>
+             <span class="attr">name=</span><span class="str">"ids"</span>
+             <span class="thx">th:value=</span><span class="str">"${memo.id}"</span>
+             <span class="attr">class=</span><span class="str">"memo-check"</span><span class="tagx">&gt;</span>
+    <span class="tagx">&lt;/td&gt;</span>
+    <span class="tagx">&lt;td</span> <span class="thx">th:text=</span><span class="str">"${memo.title}"</span><span class="tagx">&gt;&lt;/td&gt;</span>
+  <span class="tagx">&lt;/tr&gt;</span>
+<span class="tagx">&lt;/form&gt;</span>
+
+
+<span class="comment">// ─── 送られるデータ ───</span>
+id=1,5,8 をチェック → ids=1&ids=5&ids=8
+  → サーバー List&lt;Long&gt; ids = [1,5,8] ★
+
+
+<span class="comment">// ─── formaction で分岐（Vol.10）───</span>
+同じチェック選択を…
+  [一括アーカイブ] → /memos/bulk/archive
+  [一括削除]       → /memos/bulk/delete
+<span class="comment"># → 選択は共通、操作で送信先を変える ★★★</span>
+
+
+<span class="comment">// ─── Controller（本編Vol.10）───</span>
+<span class="ann">@PostMapping</span>("/memos/bulk/archive")
+String bulkArchive(
+  <span class="ann">@RequestParam</span>(required=false)
+  List&lt;Long&gt; ids) { ... }
+<span class="comment"># → タグ選択と全く同じ仕組み ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — タグ選択も一括操作も「同じ name で List」の応用</div>
+    <p>本編Vol.5 のタグ複数選択と、Vol.10 の一括操作は<b>全く同じ仕組み</b>です。「<b>同じ name のチェックボックス → List で受け取る</b>」。タグなら <code>name="tagIds"</code>、一括操作なら <code>name="ids"</code>。一度この型を理解すれば、<b>「複数のものを選んで一度に処理する」UI は全部同じ</b>パターンで作れる。違いは<b>formaction で送信先を分ける</b>くらい。応用が効く、汎用的なテクニックです。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>全選択を作る（JS）</h2><span class="en">SELECT ALL</span></div>
+  <p class="pattern-desc">一括操作で便利な<b>「全選択」チェックボックス</b>。これは<b>JavaScript</b>が必要な数少ない場面（本シリーズ初のJS）。ヘッダーのチェックで<b>全行を一括オン/オフ</b>します。シンプルなJSで実現できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">全選択チェックボックス</span><span class="tag-desc">JSで一括操作</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ JS が必要か</div>
+        <p>「全選択を押したら全行をチェック」は<b>ブラウザ上の動き</b>。サーバーは関係ない。だから<b>JavaScript</b>で行う。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 仕組み</div>
+        <ol style="margin-left:18px">
+          <li>ヘッダーに「全選択」チェックボックス</li>
+          <li>変化したら全 .memo-check を同じ状態に</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// JSの置き場所（F1復習）</div>
+        <p><code>static/js/bulk-select.js</code> に書き、<code>th:src="@{/js/bulk-select.js}"</code> で読み込む。</p>
+      </div>
+      <div class="code"><span class="code-head">// 全選択（static/js/bulk-select.js）</span>
+<span class="comment">// ─── 画面：全選択チェックボックス ───</span>
+<span class="tagx">&lt;th&gt;</span>
+  <span class="tagx">&lt;input</span> <span class="attr">type=</span><span class="str">"checkbox"</span> <span class="attr">id=</span><span class="str">"selectAll"</span><span class="tagx">&gt;</span>
+<span class="tagx">&lt;/th&gt;</span>
+<span class="comment"># 各行は class="memo-check"（前節）</span>
+
+
+<span class="comment">// ─── JS：全選択の制御 ───</span>
+<span class="js">document</span>.<span class="js">addEventListener</span>(<span class="str">'DOMContentLoaded'</span>,
+() => {
+  <span class="kw">const</span> all = document
+    .<span class="js">getElementById</span>(<span class="str">'selectAll'</span>);
+  <span class="kw">const</span> checks = document
+    .<span class="js">querySelectorAll</span>(<span class="str">'.memo-check'</span>);
+
+  <span class="comment">// 全選択チェックの変化を監視</span>
+  all.<span class="js">addEventListener</span>(<span class="str">'change'</span>, () => {
+    checks.<span class="js">forEach</span>(c => {
+      c.checked = all.checked;  <span class="comment">// 全行を同じ状態に ★</span>
+    });
+  });
+});
+<span class="comment"># → 全選択ON → 全行ON / OFF → 全行OFF ★★★</span>
+
+
+<span class="comment">// ─── 読み込み（F1復習）───</span>
+<span class="tagx">&lt;script</span> <span class="thx">th:src=</span><span class="str">"@{/js/bulk-select.js}"</span><span class="tagx">&gt;&lt;/script&gt;</span>
+<span class="comment"># → static/js/ から読み込む</span>
+
+
+<span class="comment">// ─── DOMContentLoaded の意味 ───</span>
+<span class="comment"># HTMLの読み込み完了後にJSを動かす</span>
+<span class="comment"># → 要素が存在してから操作（安全）★</span>
+<span class="comment"># → これがないと「要素が無い」エラーも</span>
+
+
+<span class="comment">// ─── 本シリーズ初のJS ───</span>
+<span class="comment"># 前半(Vol.1〜6)はJSなしで来た</span>
+<span class="comment"># 一括操作で初めてJSが必要に ★</span>
+<span class="comment"># → 詳しくはフロント別冊F7で</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — JSは「サーバーでできないブラウザ上の動き」に使う</div>
+    <p>「全選択」は<b>JavaScriptが必要な典型例</b>。なぜなら<b>「ボタンを押した瞬間に画面のチェックを変える」</b>のは、サーバーに行かず<b>ブラウザ上で完結する動き</b>だから。Thymeleaf（サーバー）は<b>画面を描くまで</b>が仕事で、描いた後の<b>その場の操作</b>はJSの領域。「<b>表示はThymeleaf、その場の動きはJS</b>」という役割分担。本シリーズは前半JSなしでしたが、ここで初めて登場。詳しくはフロント別冊F7 で扱います。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>選択件数の確認</h2><span class="en">SELECTION COUNT</span></div>
+  <p class="pattern-desc">一括削除のような<b>危険な操作</b>では、<b>「何件選んだか」を確認</b>させるのが親切。<b>0件なら警告</b>、<b>削除前に件数を表示</b>。本編Vol.10 の「件数確認」を、JSで実装します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">削除前の件数確認</span><span class="tag-desc">誤操作を防ぐ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ確認するか</div>
+        <ul>
+          <li>一括削除は<b>取り返しがつかない</b></li>
+          <li><b>0件選択</b>で実行 → 何も起きないと不親切</li>
+          <li><b>件数を見せて</b>誤操作を防ぐ</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// JSで実装</div>
+        <ol style="margin-left:18px">
+          <li>チェック済みの数を数える</li>
+          <li>0件なら「選択してください」</li>
+          <li>1件以上なら「N件削除しますか?」</li>
+        </ol>
+
+        <div class="panel-head" style="margin-top:18px">// 本編Vol.10 と対応</div>
+        <p>サーバー側でも空リストガード（Vol.10）。<b>画面でもサーバーでも</b>守る（多層防御）。</p>
+      </div>
+      <div class="code"><span class="code-head">// 選択件数の確認（JS）</span>
+<span class="comment">// ─── 削除前の確認関数 ───</span>
+<span class="kw">function</span> <span class="js">confirmDelete</span>() {
+  <span class="comment">// チェック済みの数を数える</span>
+  <span class="kw">const</span> n = document
+    .<span class="js">querySelectorAll</span>(
+      <span class="str">'.memo-check:checked'</span>).length;
+
+  <span class="comment">// 0件なら警告（@AC3・Vol.10）</span>
+  <span class="kw">if</span> (n === <span class="kw">0</span>) {
+    <span class="js">alert</span>(<span class="str">'メモを選択してください'</span>);
+    <span class="kw">return false</span>;  <span class="comment"># 送信中止 ★</span>
+  }
+
+  <span class="comment">// 件数を見せて確認</span>
+  <span class="kw">return</span> <span class="js">confirm</span>(
+    n + <span class="str">'件を完全に削除します。\n'</span>
+    + <span class="str">'この操作は取り消せません。'</span>);
+  <span class="comment"># → OKで送信、キャンセルで中止 ★★★</span>
+}
+
+
+<span class="comment">// ─── ボタンに紐付け（前節）───</span>
+&lt;button onclick="return confirmDelete()"&gt;
+  一括削除
+&lt;/button&gt;
+<span class="comment"># → false を返すと送信されない ★</span>
+
+
+<span class="comment">// ─── :checked セレクタ ───</span>
+'.memo-check:checked'
+<span class="comment"># → チェック済みの要素だけ取得</span>
+<span class="comment"># → .length で件数が分かる ★</span>
+
+
+<span class="comment">// ─── 多層防御（本編Vol.10）───</span>
+画面（JS）: 0件なら警告・件数確認
+       +
+サーバー: 空リストガード（Vol.10）
+<span class="comment"># → 画面が突破されてもサーバーが守る ★★★</span>
+<span class="comment"># → フロント別冊F4・本編の「多層防御」</span>
+
+
+<span class="comment">// ─── 件数表示でUX向上 ───</span>
+<span class="comment"># 「3件削除します」と具体的に</span>
+<span class="comment"># → 「全部消えるところだった」と気づける ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 危険な操作ほど「件数を見せて」確認する</div>
+    <p>一括削除のような<b>取り返しのつかない操作</b>では、<b>「3件を削除します」と件数を具体的に見せて</b>確認するのが鉄則。ただ「削除しますか?」より、<b>件数があると「全選択で100件消えるところだった!」と気づける</b>。また<b>0件選択は警告</b>して送信を止める。これは画面側の親切。ただし<b>画面のJSは回避できる</b>ので、本編Vol.10 のように<b>サーバー側でも空リストガード</b>を必ず入れる。<b>画面とサーバー、両方で守る</b>のが安全です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>複数選択のあるある失敗</h2><span class="en">PITFALLS</span></div>
+  <p class="pattern-desc">チェックボックス・複数選択で<b>初心者がハマる失敗</b>を5つ。name の不統一、value 忘れ、0件未対応など。知っていれば回避できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">複数選択あるある 5選</span><span class="tag-desc">先に知れば回避できる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① name がバラバラで List にならない ★★★</b></p>
+        <ul>
+          <li>tagId1, tagId2 と別名にする</li>
+          <li>対処：全部同じ name="tagIds"（Section 02）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② value 忘れで何が選ばれたか不明</b></p>
+        <ul>
+          <li>value がないと "on" が送られる</li>
+          <li>対処：th:value="${tag.id}"（Section 01）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ 0件選択を想定しない ★★★</b></p>
+        <ul>
+          <li>未チェックだと項目が送られず null</li>
+          <li>対処：JS警告＋サーバーガード（Section 06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 編集時にチェックが反映されない</b></p>
+        <ul>
+          <li>既存タグがチェックされない</li>
+          <li>対処：th:field を使う（Section 03）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ JSが要素を見つけられない</b></p>
+        <ul>
+          <li>HTML読込前にJSが走る</li>
+          <li>対処：DOMContentLoaded（Section 05）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// あるある失敗の対処</span>
+<span class="comment">// ─── ① name を統一 ───</span>
+<span class="kw">NG:</span> name="tagId1" name="tagId2"
+<span class="comment"># → List にまとまらない ★</span>
+<span class="kw">OK:</span> name="tagIds"（全部同じ）★★★
+
+
+<span class="comment">// ─── ② value を付ける ───</span>
+<span class="kw">NG:</span> &lt;input type="checkbox" name="ids"&gt;
+<span class="comment"># → チェックすると "on" が送られる ★</span>
+<span class="kw">OK:</span> th:value="${memo.id}"
+<span class="comment"># → どのメモか id で分かる</span>
+
+
+<span class="comment">// ─── ③ 0件対策（画面＋サーバー）───</span>
+画面: if(n===0){ alert(...); return false; }
+サーバー: if(ids==null||ids.isEmpty()) return;
+<span class="comment"># → 両方で守る（多層防御）★★★</span>
+
+
+<span class="comment">// ─── ④ 編集時のチェック ───</span>
+<span class="kw">NG:</span> name="tagIds"（th:fieldなし）
+<span class="comment"># → 既存タグがチェックされない</span>
+<span class="kw">OK:</span> th:field="*{tagIds}" th:value="${tag.id}"
+<span class="comment"># → 自動でチェック済みに ★</span>
+
+
+<span class="comment">// ─── ⑤ JSのタイミング ───</span>
+<span class="kw">OK:</span> document.addEventListener(
+       'DOMContentLoaded', () => {...});
+<span class="comment"># → HTML読込後に実行（安全）★</span>
+
+
+<span class="comment">// ─── 良い複数選択の条件 ───</span>
+✓ name を統一して List に
+✓ value で値を明示
+✓ 0件は画面＋サーバーで対策
+✓ 編集は th:field でチェック反映
+✓ JSは DOMContentLoaded 後 ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 複数選択の基本は「name 統一・value 明示・0件対策」</div>
+    <p>複数選択で押さえるべき3点：<b>①name を統一</b>（List にまとめる）、<b>②value を明示</b>（何を選んだか伝える）、<b>③0件を対策</b>（未チェックだと送られない特性への備え）。特に③は<b>画面（JS警告）とサーバー（空リストガード）の両方</b>で守る——本編Vol.10 で学んだ通り。チェックボックスの<b>「チェックした分だけ送られる」</b>という特性を理解していれば、これらの対策が<b>なぜ必要か</b>も腑に落ちます。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">複数選択とチェックボックスが扱えるようになりました。全選択や件数確認で<b>少しJavaScript</b>も登場しました。次は、その<b>JavaScript</b>を本格的に——画面に動きを付ける方法を学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">F6 達成チェック</span><span class="tag-desc">複数選択を習得</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>チェックボックスの特性（未チェックは送られない）が分かる</li>
+          <li>同じ name で List にバインドできる</li>
+          <li>th:field でチェック状態を反映できる</li>
+          <li>一括操作のチェックボックスを作れる</li>
+          <li>formaction で送信先を分岐できる</li>
+          <li>全選択をJSで実装できる</li>
+          <li>件数確認で誤操作を防げる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// F6 で手に入れた複数選択技術</span>
+✓ <span class="str">"同じnameで複数値→List"</span>
+
+✓ <span class="str">"th:field でチェック状態を反映"</span>
+
+✓ <span class="str">"一括操作のチェックボックス"</span>
+
+✓ <span class="str">"全選択をJSで実装"</span>
+
+✓ <span class="str">"件数確認で誤操作防止"</span>
+
+
+<span class="comment">// タグ選択も一括操作も同じパターン ★★★</span>
+
+<span class="comment">// 次回 フロント別冊F7：</span>
+<span class="comment">//   JavaScript連携</span>
+<span class="comment">//   件数表示・全選択・削除前confirm</span>
+<span class="comment">//   最小限のJS設計・データ受け渡し</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── フロント別冊 VOL.F7 へ</div>
+    <p>F6 で<b>「複数選択」</b>を習得し、全選択や件数確認で<b>JavaScript</b>に少し触れました。次は<b>フロント別冊F7「JavaScript連携編」</b>。本編Vol.10 の一括操作を題材に、<b>JSの基本</b>（要素の取得・イベント・DOM操作）、<b>サーバーから渡したデータをJSで使う</b>方法（<code>th:inline</code>）、そして<b>「最小限のJSで操作性を上げる」設計</b>を学びます。本シリーズは<b>サーバーサイド中心</b>なので、JSは<b>「必要な所だけ、シンプルに」</b>が方針。その勘所をお伝えします。<b>フロント別冊F7 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（FRONTEND SUPPLEMENT）</span>
+  <span>FRONT.06 / 9 ── CHECKBOXES &amp; MULTIPLE SELECTION</span>
+</footer>
+
+</body>
+</html>

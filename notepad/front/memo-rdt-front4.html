@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕フロント別冊 Vol.4 CSS設計とレイアウト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3a2a26;
+  --paper:#f4ece2;
+  --paper-2:#ecdfd0;
+  --accent:#d2694a;
+  --accent-2:#e0916f;
+  --accent-3:#a8804a;
+  --muted:#8a7568;
+  --line:#d8c8b6;
+  --code-bg:#2a211e;
+  --code-text:#f0e6da;
+  --panel-bg:#fbf4ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"❖";position:absolute;right:-10px;top:-20px;font-size:280px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff6ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#e0a888;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #4a3a34;padding-bottom:6px}
+.kw{color:#ffb88a}
+.tagx{color:#f7a8d8}
+.attr{color:#a3c9ff}
+.str{color:#b5e8b0}
+.thx{color:#e0c088}
+.sel{color:#f7a8d8}
+.prop{color:#a3c9ff}
+.val{color:#b5e8b0}
+.comment{color:#9a8578;font-style:italic}
+.txt{color:#f0e6da}
+.tip{background:rgba(210,105,74,0.08);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-3)}
+.swatch{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:5px;border:1px solid rgba(0,0,0,0.15)}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:200px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.F4</span>
+    <span class="kind-tag">フロント別冊 ── FRONT</span>
+    <span class="rdt-tag">CSS DESIGN</span>
+  </div>
+  <h1>CSS設計とレイアウト<br>整った見た目の作法</h1>
+  <div class="subtitle">FRONT.04 ── CSS DESIGN &amp; LAYOUT</div>
+  <p class="lead">対応する本編は<b>Vol.2〜4</b>。同じ機能でも<b>見た目が整っているか</b>でアプリの印象は大きく変わります。ここでは本編で使ってきた <code>style.css</code> の<b>設計思想</b>を解き明かします。<b><code>:root</code> でのCSS変数管理</b>、<b>クラスの命名</b>、<b>テーブル・カードのレイアウト</b>、そして<b>レスポンシブ（スマホ対応）</b>。「行き当たりばったり」ではなく<b>「設計して書く」</b>CSSを学びます。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 CSSで散らかさないための4原則</div>
+    <p>① 色・余白などの値は <code>:root</code> の<b>変数</b>にまとめる（バラ撒かない）／② クラス名は<b>役割で命名</b>（<code>.red</code> でなく <code>.btn-danger</code>）／③ レイアウトは <code>flex</code>/<code>grid</code> を基本に／④ スマホ対応は <code>@media</code> で<b>幅が狭いとき</b>だけ調整。この4つを守れば、CSSは驚くほど管理しやすくなります。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 CSSの基本構造</a></li>
+    <li><a href="#s02">02 :root でデザイン変数</a></li>
+    <li><a href="#s03">03 クラスの命名</a></li>
+    <li><a href="#s04">04 テーブルのレイアウト</a></li>
+    <li><a href="#s05">05 カードとフォームのレイアウト</a></li>
+    <li><a href="#s06">06 レスポンシブ対応</a></li>
+    <li><a href="#s07">07 CSSのあるある失敗</a></li>
+    <li><a href="#s08">08 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>CSSの基本構造</h2><span class="en">CSS BASICS</span></div>
+  <p class="pattern-desc">CSSは<b>「どの要素を、どう飾るか」</b>を書くもの。<b>セレクタ</b>（どれを）＋<b>プロパティ</b>（何を）＋<b>値</b>（どう）の3点。本編の <code>style.css</code> も、この基本の積み重ねです。まず構造を確認します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">CSSの3要素</span><span class="tag-desc">セレクタ・プロパティ・値</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ルールの形</div>
+        <p><b>セレクタ { プロパティ: 値; }</b>。「.btn という要素を、背景色を珊瑚色に」。</p>
+
+        <div class="panel-head" style="margin-top:18px">// セレクタの種類</div>
+        <table class="compare-tbl">
+          <thead><tr><th>記法</th><th>対象</th></tr></thead>
+          <tbody>
+            <tr><td><code>h1</code></td><td>全 h1 タグ</td></tr>
+            <tr><td><code>.btn</code></td><td>class="btn"</td></tr>
+            <tr><td><code>#main</code></td><td>id="main"</td></tr>
+            <tr><td><code>.card p</code></td><td>card内のp</td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// 読み込み（F1復習）</div>
+        <p><code>th:href="@{/css/style.css}"</code> で読み込む。</p>
+      </div>
+      <div class="code"><span class="code-head">// CSSの基本構造</span>
+<span class="comment">/* ─── ルールの形 ─── */</span>
+<span class="sel">.btn</span> {
+  <span class="prop">background</span>: <span class="val">#d2694a</span>;  <span class="comment">/* 値 */</span>
+  <span class="prop">color</span>: <span class="val">#fff</span>;
+  <span class="prop">padding</span>: <span class="val">6px 16px</span>;
+}
+<span class="comment">/* セレクタ .btn の要素を飾る */</span>
+
+
+<span class="comment">/* ─── セレクタいろいろ ─── */</span>
+<span class="sel">h1</span> { ... }          <span class="comment">/* 全h1 */</span>
+<span class="sel">.btn</span> { ... }        <span class="comment">/* class="btn" */</span>
+<span class="sel">.card</span> <span class="sel">p</span> { ... }     <span class="comment">/* card内のp */</span>
+<span class="sel">.btn:hover</span> { ... }  <span class="comment">/* マウス乗せた時 */</span>
+
+
+<span class="comment">/* ─── 本シリーズの方針 ─── */</span>
+<span class="comment">/* ・class中心（タグ直接指定は最小限）*/</span>
+<span class="comment">/* ・1つの style.css にまとめる */</span>
+<span class="comment">/* ・上から「全体→部品」の順で書く */</span>
+
+
+<span class="comment">/* ─── ファイルの構成（本編style.css）─── */</span>
+1. :root         <span class="comment">/* デザイン変数 */</span>
+2. * / body      <span class="comment">/* 全体の土台 */</span>
+3. .container    <span class="comment">/* レイアウト枠 */</span>
+4. .btn など     <span class="comment">/* 共通部品 */</span>
+5. .memo-table   <span class="comment">/* 機能別 */</span>
+6. @media        <span class="comment">/* スマホ対応 */</span>
+<span class="comment">/* → 「土台→部品→個別」の順 ★ */</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — CSSは「上から土台→部品→個別」の順で書く</div>
+    <p>CSSファイルは<b>書く順番</b>が大事。本編の <code>style.css</code> は<b>「①変数 → ②全体の土台（body等）→ ③共通部品（btn等）→ ④機能別（テーブル等）→ ⑤スマホ対応」</b>の順。大きいものから小さいものへ。この順序だと<b>「どこに何を書いたか」が探しやすく</b>、後から崩れにくい。CSSが散らかる原因の多くは<b>「順番がバラバラ」</b>。まず構成を決めて書くのが、整ったCSSの第一歩です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>:root でデザイン変数</h2><span class="en">CSS VARIABLES</span></div>
+  <p class="pattern-desc">CSS設計の<b>最重要テクニック</b>が <code>:root</code> での<b>変数（カスタムプロパティ）</b>。色や余白を<b>1か所にまとめて名前を付け</b>、各所から呼び出す。「色を変えたい」が<b>1行の修正</b>で済むようになります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">CSS変数の威力</span><span class="tag-desc">1か所変えれば全部変わる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// :root とは</div>
+        <p>ページ全体の<b>変数置き場</b>。<code>--accent: #d2694a;</code> のように<b>名前付き</b>で値を定義。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 使い方</div>
+        <p><code>var(--accent)</code> で呼び出す。色を変えたいときは<b>:root の1行だけ</b>直せば、使っている全箇所に反映。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 本編のカラーパレット</div>
+        <p><span class="swatch" style="background:#3a4a6a"></span>主色　<span class="swatch" style="background:#f5f3ec"></span>背景　<span class="swatch" style="background:#d8d4c6"></span>線。これらを変数化。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 何を変数にするか</div>
+        <ul>
+          <li>色（テーマカラー・背景・線）</li>
+          <li>余白の基準値</li>
+          <li>角丸・影など繰り返す値</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// :root でデザイン変数</span>
+<span class="comment">/* ─── 変数を定義（本編style.css）─── */</span>
+<span class="sel">:root</span> {
+  <span class="prop">--ink</span>: <span class="val">#2a2f38</span>;     <span class="comment">/* 文字色 */</span>
+  <span class="prop">--paper</span>: <span class="val">#f5f3ec</span>;   <span class="comment">/* 背景 */</span>
+  <span class="prop">--accent</span>: <span class="val">#3a4a6a</span>;  <span class="comment">/* 主色 */</span>
+  <span class="prop">--line</span>: <span class="val">#d8d4c6</span>;    <span class="comment">/* 罫線 */</span>
+  <span class="prop">--radius</span>: <span class="val">4px</span>;      <span class="comment">/* 角丸 */</span>
+}
+
+
+<span class="comment">/* ─── 使う：var() で呼び出す ─── */</span>
+<span class="sel">body</span> {
+  <span class="prop">background</span>: <span class="val">var(--paper)</span>;
+  <span class="prop">color</span>: <span class="val">var(--ink)</span>;
+}
+<span class="sel">.btn</span> {
+  <span class="prop">background</span>: <span class="val">var(--accent)</span>;
+  <span class="prop">border-radius</span>: <span class="val">var(--radius)</span>;
+}
+
+
+<span class="comment">/* ─── 変数の威力 ─── */</span>
+<span class="comment">/* テーマ色を変えたい！ */</span>
+<span class="kw">変数なし:</span>
+  #3a4a6a を使った全箇所を探して置換 ★
+  → 漏れ・ミスが起きる
+<span class="kw">変数あり:</span>
+  --accent: #3a4a6a → #c0392b に1行変更
+  → 使用箇所すべてに反映 ★★★
+
+
+<span class="comment">/* ─── このシリーズの色設計 ─── */</span>
+<span class="comment">/* 本編=藍紺 / 別冊=水浅葱 / GitHub=チャコール */</span>
+<span class="comment">/* → 各シリーズで :root だけ差し替え ★ */</span>
+<span class="comment">/* → 構造は同じ、色だけ変える */</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「同じ値が2回以上出たら変数にする」</div>
+    <p>CSS変数を使う判断は単純：<b>「同じ値（色・余白）が2回以上出てきたら変数にする」</b>。主色 <code>#3a4a6a</code> はボタン・見出し・リンクで何度も使う→ <code>--accent</code> に。これは本編で学んだ<b>DRY（繰り返さない）</b>のCSS版。変数化すれば「テーマ色を変えたい」が<b>1行</b>で済み、<b>色の不統一も防げる</b>。実際このフロント別冊シリーズも、<code>:root</code> の色だけ変えて<b>珊瑚×砂色</b>にしています。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>クラスの命名</h2><span class="en">NAMING CLASSES</span></div>
+  <p class="pattern-desc">クラス名は<b>「見た目」でなく「役割」で名付ける</b>のが鉄則。<code>.red</code>（赤い）ではなく <code>.btn-danger</code>（危険なボタン）。役割で名付ければ、<b>後で色を変えても名前が嘘にならない</b>。命名は地味ですが重要です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">役割ベースの命名</span><span class="tag-desc">見た目で名付けない</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 良い命名・悪い命名</div>
+        <table class="compare-tbl">
+          <thead><tr><th>悪い（見た目）</th><th>良い（役割）</th></tr></thead>
+          <tbody>
+            <tr><td><code>.red</code></td><td><code>.error</code></td></tr>
+            <tr><td><code>.big-text</code></td><td><code>.title</code></td></tr>
+            <tr><td><code>.box1</code></td><td><code>.memo-card</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="panel-head" style="margin-top:18px">// なぜ役割で名付けるか</div>
+        <p><code>.red</code> だと「赤をやめて青に」したとき<b>名前が嘘</b>になる。<code>.error</code> なら<b>色を変えても意味が通る</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 命名の一貫性</div>
+        <p>本編では <code>.btn</code>/<code>.cat-tag</code>/<code>.tag-chip</code>/<code>.flash</code> など、<b>機能を表す名前</b>で統一。</p>
+      </div>
+      <div class="code"><span class="code-head">// クラスの命名</span>
+<span class="comment">/* ─── 見た目で名付ける（NG）─── */</span>
+<span class="sel">.red</span> { color: red; }
+<span class="comment">/* → 「赤をやめたい」とき名前が嘘に ★ */</span>
+<span class="sel">.mt20</span> { margin-top: 20px; }
+<span class="comment">/* → 余白を変えたら名前と不一致 ★ */</span>
+
+
+<span class="comment">/* ─── 役割で名付ける（OK）─── */</span>
+<span class="sel">.error</span> { color: var(--accent); }
+<span class="comment">/* → 色を変えても「エラー」の意味は不変 ★ */</span>
+<span class="sel">.btn</span> { ... }
+<span class="sel">.btn-danger</span> { ... }  <span class="comment">/* 削除ボタン等 */</span>
+
+
+<span class="comment">/* ─── 本編で使った命名（役割ベース）─── */</span>
+.container   <span class="comment">/* レイアウト枠 */</span>
+.btn         <span class="comment">/* ボタン共通 */</span>
+.memo-table  <span class="comment">/* メモ一覧の表 */</span>
+.cat-tag     <span class="comment">/* カテゴリの札 */</span>
+.tag-chip    <span class="comment">/* タグの小札 */</span>
+.flash       <span class="comment">/* 通知メッセージ */</span>
+.error       <span class="comment">/* エラー文 */</span>
+<span class="comment">/* → 全部「何のためか」が分かる名前 ★★★ */</span>
+
+
+<span class="comment">/* ─── 複数語はハイフンで ─── */</span>
+.memo-card  .tag-chip  .btn-danger
+<span class="comment">/* → ケバブケース（小文字+ハイフン）が定番 */</span>
+
+
+<span class="comment">/* ─── 共通＋個別の組み合わせ ─── */</span>
+&lt;button class="btn btn-danger"&gt;削除&lt;/button&gt;
+<span class="comment">/* btn=共通スタイル + btn-danger=赤色 ★ */</span>
+<span class="comment">/* → 共通部分を再利用できる */</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「色を変えたら名前が嘘になる」名前は避ける</div>
+    <p>命名の良し悪しを判断する簡単なテスト：<b>「もし色やサイズを変えたら、名前が嘘にならないか?」</b>。<code>.red</code> は青にしたら嘘。<code>.error</code> は何色でも「エラー」のまま正しい。<code>.big</code> は小さくしたら嘘。<code>.title</code> はサイズに関係なく正しい。<b>「見た目」は変わるが「役割」は変わりにくい</b>。だから役割で名付ける。これは本編の<b>「意図を表す名前を付ける」</b>という設計原則の、CSS版です。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>テーブルのレイアウト</h2><span class="en">TABLE LAYOUT</span></div>
+  <p class="pattern-desc">メモ一覧で使う<b>テーブル</b>のスタイリング。<code>border-collapse</code> で罫線を整え、ヘッダーを区別し、行に余白を。本編Vol.2〜4 の <code>.memo-table</code> を題材に、<b>読みやすい表</b>の作り方を学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">テーブルの整え方</span><span class="tag-desc">罫線・余白・ヘッダー</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テーブルの基本</div>
+        <ul>
+          <li><code>border-collapse: collapse</code>：罫線を重ねて1本に</li>
+          <li><code>th/td</code> に <code>padding</code>：行に余白</li>
+          <li><code>th</code> に背景色：ヘッダーを区別</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 幅の調整</div>
+        <p><code>width: 100%</code> で横いっぱい。列幅は内容に応じて自動、または <code>th</code> に <code>width</code> 指定。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 操作列の工夫</div>
+        <p>編集・削除ボタンの列は <code>white-space: nowrap</code> で<b>折り返さない</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// .memo-table（本編Vol.2〜4）</span>
+<span class="comment">/* ─── 基本 ─── */</span>
+<span class="sel">.memo-table</span> {
+  <span class="prop">width</span>: <span class="val">100%</span>;
+  <span class="prop">border-collapse</span>: <span class="val">collapse</span>;
+  <span class="comment">/* → 罫線を重ねて1本に ★ */</span>
+}
+
+
+<span class="comment">/* ─── セルの余白と罫線 ─── */</span>
+<span class="sel">.memo-table th</span>,
+<span class="sel">.memo-table td</span> {
+  <span class="prop">padding</span>: <span class="val">8px 10px</span>;
+  <span class="prop">border-bottom</span>: <span class="val">1px solid var(--line)</span>;
+  <span class="prop">text-align</span>: <span class="val">left</span>;
+}
+
+
+<span class="comment">/* ─── ヘッダーを区別 ─── */</span>
+<span class="sel">.memo-table th</span> {
+  <span class="prop">background</span>: <span class="val">var(--paper-2)</span>;
+  <span class="prop">font-size</span>: <span class="val">13px</span>;
+}
+
+
+<span class="comment">/* ─── 操作列は折り返さない ─── */</span>
+<span class="sel">.ops</span> {
+  <span class="prop">white-space</span>: <span class="val">nowrap</span>;
+}
+<span class="comment">/* → 編集/削除が縦に崩れない ★ */</span>
+
+
+<span class="comment">/* ─── 空行の案内 ─── */</span>
+<span class="sel">.empty</span> {
+  <span class="prop">text-align</span>: <span class="val">center</span>;
+  <span class="prop">color</span>: <span class="val">var(--muted)</span>;
+}
+
+
+<span class="comment">/* ─── 仕上げ：ホバーで行を強調（任意）─── */</span>
+<span class="sel">.memo-table tbody tr:hover</span> {
+  <span class="prop">background</span>: <span class="val">#faf8f2</span>;
+}
+<span class="comment">/* → マウスを乗せた行が分かりやすく ★ */</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — テーブルは「border-collapse」で罫線を整える</div>
+    <p>表を作って<b>「罫線が二重に見える」</b>のは、<code>border-collapse</code> を指定していないから。デフォルトでは各セルの罫線が<b>離れて二重</b>になる。<code>border-collapse: collapse</code> を <code>table</code> に付けると、<b>隣接する罫線が重なって1本</b>になり、すっきりします。これはテーブルスタイリングの<b>最初の一手</b>。あとは <code>th/td</code> に <code>padding</code> で余白を与えれば、ぐっと読みやすい表になります。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>カードとフォームのレイアウト</h2><span class="en">CARD &amp; FORM LAYOUT</span></div>
+  <p class="pattern-desc">詳細画面の<b>カード</b>、入力画面の<b>フォーム</b>のレイアウト。<code>flexbox</code> や余白設計で、<b>整然と並べる</b>。本編の <code>.content</code>・<code>.field</code> を題材に、<b>見やすい配置</b>のコツを学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">カードとフォームの配置</span><span class="tag-desc">余白とflexで整える</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// カード（詳細表示）</div>
+        <p>本文を<b>枠で囲い</b>、内側に余白。<code>border</code>＋<code>padding</code>＋<code>border-radius</code> で「カード」に。改行を保つ <code>white-space: pre-wrap</code> も。</p>
+
+        <div class="panel-head" style="margin-top:18px">// フォームの項目（field）</div>
+        <p>各項目を <code>.field</code> で<b>縦に積む</b>。label を上、input を下、間に余白。<code>input</code> は <code>width:100%</code> で揃える。</p>
+
+        <div class="panel-head" style="margin-top:18px">// flexbox で横並び</div>
+        <p>タグのチップやボタンを横に並べるには <code>display:flex</code> ＋ <code>gap</code>。折り返しは <code>flex-wrap</code>。</p>
+      </div>
+      <div class="code"><span class="code-head">// カードとフォーム</span>
+<span class="comment">/* ─── カード（詳細の本文）─── */</span>
+<span class="sel">.content</span> {
+  <span class="prop">background</span>: <span class="val">#fff</span>;
+  <span class="prop">padding</span>: <span class="val">16px</span>;
+  <span class="prop">border</span>: <span class="val">1px solid var(--line)</span>;
+  <span class="prop">border-radius</span>: <span class="val">6px</span>;
+  <span class="prop">white-space</span>: <span class="val">pre-wrap</span>;
+  <span class="comment">/* → 改行・空白を保って表示 ★ */</span>
+}
+
+
+<span class="comment">/* ─── フォームの各項目 ─── */</span>
+<span class="sel">.field</span> {
+  <span class="prop">margin-bottom</span>: <span class="val">16px</span>;
+}
+<span class="sel">.field label</span> {
+  <span class="prop">display</span>: <span class="val">block</span>;     <span class="comment">/* labelを上に */</span>
+  <span class="prop">font-weight</span>: <span class="val">bold</span>;
+  <span class="prop">margin-bottom</span>: <span class="val">4px</span>;
+}
+<span class="sel">.field input</span>,
+<span class="sel">.field textarea</span> {
+  <span class="prop">width</span>: <span class="val">100%</span>;        <span class="comment">/* 横幅を揃える */</span>
+  <span class="prop">padding</span>: <span class="val">8px</span>;
+  <span class="prop">border</span>: <span class="val">1px solid var(--line)</span>;
+  <span class="prop">border-radius</span>: <span class="val">4px</span>;
+}
+
+
+<span class="comment">/* ─── flexで横並び（タグチップ等）─── */</span>
+<span class="sel">.tag-checks</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">flex-wrap</span>: <span class="val">wrap</span>;   <span class="comment">/* 入りきらなければ折返し */</span>
+  <span class="prop">gap</span>: <span class="val">8px</span>;            <span class="comment">/* 要素間の余白 ★ */</span>
+}
+<span class="comment">/* → チェックボックスがきれいに並ぶ ★★★ */</span>
+
+
+<span class="comment">/* ─── エラー時の入力欄を赤枠に ─── */</span>
+<span class="sel">.is-invalid</span> {
+  <span class="prop">border-color</span>: <span class="val">#c0392b</span>;
+}
+<span class="comment">/* → th:errorclass="is-invalid" と連携（F3）★ */</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 横並びは「float」でなく「flexbox」で</div>
+    <p>要素を横に並べたいとき、古い <code>float</code> ではなく<b><code>display: flex</code> ＋ <code>gap</code></b> を使うのが現代の定番。<code>flex</code> は<b>並べ方・揃え方・余白</b>を簡単に制御でき、<code>gap</code> で<b>要素間の間隔</b>もすっきり。<code>flex-wrap: wrap</code> を足せば<b>画面幅に応じて自動で折り返し</b>てくれる（次節のレスポンシブにも繋がる）。タグチップ、ボタン群、メニューなど、<b>横並びは全部 flex</b>で考えると整理できます。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>レスポンシブ対応</h2><span class="en">RESPONSIVE DESIGN</span></div>
+  <p class="pattern-desc"><b>レスポンシブ</b>とは、PC・スマホ・タブレットなど<b>画面幅に応じて見た目を調整</b>すること。<code>@media</code> で「幅が狭いとき」のスタイルを追加します。本編のHTML教材も、この仕組みでスマホ対応しています。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">@media で画面幅対応</span><span class="tag-desc">狭いとき調整</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// レスポンシブの考え方</div>
+        <p>基本のスタイルを書き、<code>@media</code> で<b>「幅が狭いときだけ」上書き</b>。PC向けを基本に、スマホで調整するのが分かりやすい。</p>
+
+        <div class="panel-head" style="margin-top:18px">// viewport の指定（必須）</div>
+        <p>HTMLの <code>&lt;head&gt;</code> に <code>&lt;meta name="viewport"&gt;</code> が必要。これがないとスマホで正しく縮小されない。</p>
+
+        <div class="panel-head" style="margin-top:18px">// よくある調整</div>
+        <ul>
+          <li>余白を狭く（padding削減）</li>
+          <li>横並びを縦並びに（flex-direction）</li>
+          <li>文字サイズを少し小さく</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// レスポンシブ対応</span>
+<span class="comment">/* ─── ① HTMLに viewport（必須）─── */</span>
+&lt;meta name="viewport"
+      content="width=device-width,
+               initial-scale=1.0"&gt;
+<span class="comment">/* → これがないとスマホで縮小されない ★★★ */</span>
+
+
+<span class="comment">/* ─── ② 基本スタイル（PC向け）─── */</span>
+<span class="sel">.container</span> {
+  <span class="prop">max-width</span>: <span class="val">760px</span>;
+  <span class="prop">padding</span>: <span class="val">24px 20px</span>;
+}
+
+
+<span class="comment">/* ─── ③ @media で狭い時を上書き ─── */</span>
+<span class="sel">@media (max-width: 720px)</span> {
+  <span class="sel">.container</span> {
+    <span class="prop">padding</span>: <span class="val">16px 12px</span>;  <span class="comment">/* 余白を狭く */</span>
+  }
+  <span class="sel">h1</span> {
+    <span class="prop">font-size</span>: <span class="val">20px</span>;       <span class="comment">/* 見出し小さく */</span>
+  }
+  <span class="sel">.filter</span> {
+    <span class="prop">flex-direction</span>: <span class="val">column</span>; <span class="comment">/* 縦並びに */</span>
+  }
+}
+<span class="comment">/* → 画面幅720px以下で適用 ★★★ */</span>
+
+
+<span class="comment">/* ─── ブレークポイントの目安 ─── */</span>
+~480px   スマホ（縦）
+~768px   タブレット
+769px~   PC
+<span class="comment">/* → 本シリーズは720px前後で1段階だけ */</span>
+<span class="comment">/* → 凝りすぎず「狭い時の最低限」でOK ★ */</span>
+
+
+<span class="comment">/* ─── flexは自然にレスポンシブ ─── */</span>
+.tag-checks { display: flex; flex-wrap: wrap; }
+<span class="comment">/* → 幅が狭まると自動で折り返す */</span>
+<span class="comment">/* → @media なしでもある程度対応 ★ */</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — まず viewport、それから @media</div>
+    <p>スマホ対応で<b>一番忘れがち</b>なのが、HTMLの <code>&lt;meta name="viewport"&gt;</code>。これが無いと、スマホは<b>PC幅で表示して全体を縮小</b>するため、文字が極小になる。まずこれを入れる。その上で <code>@media (max-width: ...)</code> で<b>「幅が狭いときだけ」</b>余白や並びを調整する。凝りすぎず<b>「狭い時の最低限の調整」</b>で十分。<code>flex-wrap</code> を使っておけば、<code>@media</code> なしでもある程度自動で対応してくれます。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>CSSのあるある失敗</h2><span class="en">CSS PITFALLS</span></div>
+  <p class="pattern-desc">CSSで<b>初心者がハマる失敗</b>を5つ。<code>!important</code> の乱用、値の直書き、viewport 忘れなど。知っていれば散らからないCSSが書けます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">CSSあるある 5選</span><span class="tag-desc">先に知れば回避できる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① 色・余白を直書きでバラ撒く ★★★</b></p>
+        <ul>
+          <li>同じ色が各所に散り、変更困難</li>
+          <li>対処：:root の変数に（Section 02）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② !important を乱用</b></p>
+        <ul>
+          <li>後で上書きできず詰む</li>
+          <li>対処：セレクタを工夫、importantは最終手段</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ 見た目でクラス命名</b></p>
+        <ul>
+          <li>.red など、変更で名前が嘘に</li>
+          <li>対処：役割で命名（Section 03）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ viewport 忘れでスマホ崩れ ★★★</b></p>
+        <ul>
+          <li>スマホで文字が極小</li>
+          <li>対処：meta viewport を入れる（Section 06）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ CSSの変更が反映されない</b></p>
+        <ul>
+          <li>ブラウザキャッシュが原因のことも</li>
+          <li>対処：スーパーリロード／開発時はcache=false</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// あるある失敗の対処</span>
+<span class="comment">/* ─── ① 値の直書き ─── */</span>
+<span class="kw">NG:</span>
+.btn { background: #3a4a6a; }
+.title { color: #3a4a6a; }
+.link { color: #3a4a6a; }
+<span class="comment">/* → 同じ色が散在、変更が大変 ★ */</span>
+<span class="kw">OK:</span>
+:root { --accent: #3a4a6a; }
+.btn { background: var(--accent); }
+<span class="comment">/* → 1か所で管理 ★★★ */</span>
+
+
+<span class="comment">/* ─── ② !important 乱用 ─── */</span>
+<span class="kw">NG:</span> .btn { color: red !important; }
+<span class="comment">/* → 後で上書きできない ★ */</span>
+<span class="kw">OK:</span> セレクタを具体的に書いて優先度で解決</span>
+
+
+<span class="comment">/* ─── ⑤ 反映されない時 ─── */</span>
+<span class="comment">/* application.properties で開発時: */</span>
+spring.thymeleaf.cache=false
+<span class="comment">/* + ブラウザでスーパーリロード */</span>
+<span class="comment">/*   (Ctrl+Shift+R / Cmd+Shift+R) ★ */</span>
+
+
+<span class="comment">/* ─── 良いCSSの条件 ─── */</span>
+✓ 値は :root の変数に
+✓ !important は最終手段
+✓ クラスは役割で命名
+✓ viewport を入れる
+✓ 反映されない時はキャッシュ疑う ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「変更が反映されない」はキャッシュをまず疑う</div>
+    <p>CSSを直したのに<b>画面が変わらない</b>とき、コードが正しければ<b>ブラウザのキャッシュ</b>が原因のことが多い。ブラウザは一度読んだCSSを<b>使い回す</b>ため。対処は<b>スーパーリロード（Ctrl+Shift+R / Cmd+Shift+R）</b>。開発中は <code>application.properties</code> に <code>spring.thymeleaf.cache=false</code> を入れておくと、テンプレートの変更も即反映される。「直したのに変わらない」で悩む時間を、この知識で減らせます。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">CSSの<b>設計・レイアウト・レスポンシブ</b>が身につきました。見た目を整える土台ができたので、次は<b>動的な一覧表示</b>——カテゴリ・タグの表示や絞り込みに戻ります。Thymeleaf と CSS の合わせ技です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">F4 達成チェック</span><span class="tag-desc">CSS設計を習得</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>CSSの基本構造（セレクタ・プロパティ・値）が分かる</li>
+          <li>:root でデザイン変数を使える</li>
+          <li>同じ値は変数化すると判断できる</li>
+          <li>クラスを役割で命名できる</li>
+          <li>テーブルを整えられる（border-collapse）</li>
+          <li>flexで横並びレイアウトを作れる</li>
+          <li>@media でレスポンシブ対応できる</li>
+          <li>viewport の重要性を知っている</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// F4 で手に入れたCSS設計</span>
+✓ <span class="str">":rootの変数で値を一元管理"</span>
+
+✓ <span class="str">"クラスは役割で命名する"</span>
+
+✓ <span class="str">"テーブルはborder-collapse"</span>
+
+✓ <span class="str">"横並びはflexbox + gap"</span>
+
+✓ <span class="str">"viewport + @media でスマホ対応"</span>
+
+
+<span class="comment">// 機能(F2,F3) + 見た目(F4) が揃った ★★★</span>
+
+<span class="comment">// 次回 フロント別冊F5：</span>
+<span class="comment">//   一覧・絞り込み・条件表示</span>
+<span class="comment">//   カテゴリ列・タグチップ・絞り込みセレクト</span>
+<span class="comment">//   th:selected / 条件分岐表示</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── フロント別冊 VOL.F5 へ</div>
+    <p>F4 で<b>「整った見た目」</b>を作る土台ができました。CSS変数・命名・レイアウト・レスポンシブ。次は<b>フロント別冊F5「一覧・絞り込み・条件表示編」</b>。本編Vol.4・5 の一覧画面を題材に、<b>カテゴリ列・タグチップの表示</b>、<b>絞り込みセレクト</b>（<code>th:selected</code> で現在の選択を保持）、<b>条件によって表示を変える</b>テクニックを学びます。F2 の <code>th:each</code>/<code>th:if</code> と F4 の CSS を<b>組み合わせ</b>て、実用的な一覧画面を完成させます。<b>フロント別冊F5 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（FRONTEND SUPPLEMENT）</span>
+  <span>FRONT.04 / 9 ── CSS DESIGN &amp; LAYOUT</span>
+</footer>
+
+</body>
+</html>

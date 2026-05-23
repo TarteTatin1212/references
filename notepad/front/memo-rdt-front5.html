@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ開発実践〔RDT〕フロント別冊 Vol.5 一覧・絞り込み・条件表示</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3a2a26;
+  --paper:#f4ece2;
+  --paper-2:#ecdfd0;
+  --accent:#d2694a;
+  --accent-2:#e0916f;
+  --accent-3:#a8804a;
+  --muted:#8a7568;
+  --line:#d8c8b6;
+  --code-bg:#2a211e;
+  --code-text:#f0e6da;
+  --panel-bg:#fbf4ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;font-size:15px}
+body{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+h1,h2,h3,.section-num,.en{font-family:'Shippori Mincho',serif}
+code,.key,.tag-name,.code-head{font-family:'JetBrains Mono',monospace}
+.page-header{position:relative;padding:56px 0 36px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:"❖";position:absolute;right:-10px;top:-20px;font-size:280px;color:var(--accent);opacity:0.16;z-index:0;line-height:1;font-family:'Shippori Mincho',serif}
+.page-header>*{position:relative;z-index:1}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.series-tag{background:var(--ink);color:var(--paper);padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.vol-tag{background:var(--accent);color:#fff;padding:4px 12px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kind-tag{border:1.5px solid var(--accent-3);color:var(--accent-3);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700}
+.rdt-tag{background:var(--accent-3);color:var(--paper);padding:3px 11px;font-size:11px;letter-spacing:0.1em;font-weight:700;font-family:'JetBrains Mono',monospace}
+.page-header h1{font-size:38px;font-weight:700;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:0.05em;margin-bottom:18px}
+.lead{max-width:680px;font-size:15px;color:var(--ink);line-height:1.9}
+.warn-redline{background:#fff6ee;border:1px solid #d4a460;border-left:5px solid #c08030;padding:14px 18px;margin-top:24px;border-radius:2px}
+.warn-redline .wh{font-weight:700;color:#9a5018;margin-bottom:6px;font-size:14px}
+.warn-redline p{font-size:14px;line-height:1.8}
+.warn-redline code{background:#fff;padding:1px 6px;border:1px solid #d4a460;font-size:12.5px;color:#7a4010;border-radius:2px}
+.toc{background:var(--paper-2);padding:18px 24px;margin:32px 0 44px;border-left:4px solid var(--accent)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+.toc li{font-size:13.5px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted transparent;padding-bottom:1px}
+.toc a::before{content:"— ";color:var(--accent);font-weight:700}
+section{margin-bottom:64px}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:12px;border-bottom:1px solid var(--ink);margin-bottom:18px;flex-wrap:wrap}
+.section-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Shippori Mincho',serif;line-height:1}
+.section-header h2{font-size:24px;font-weight:700;color:var(--ink);flex:1;line-height:1.3}
+.en{font-size:11px;letter-spacing:0.18em;color:var(--muted);font-weight:500}
+.pattern-desc{max-width:780px;margin-bottom:20px;line-height:1.9;font-size:14.5px}
+.demo-card{background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.demo-head{background:var(--paper-2);padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tag-name{font-size:13px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag-desc{font-size:12.5px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.panel{background:var(--panel-bg);padding:20px 22px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:12px;letter-spacing:0.1em;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.panel p{font-size:13.5px;line-height:1.85;margin-bottom:10px}
+.panel ul,.panel ol{margin-left:18px;font-size:13.5px;line-height:1.85}
+.panel li{margin-bottom:4px}
+.panel b{color:var(--ink);font-weight:700}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.code-head{color:#e0a888;font-size:11px;margin-bottom:10px;letter-spacing:0.05em;display:block;border-bottom:1px dashed #4a3a34;padding-bottom:6px}
+.kw{color:#ffb88a}
+.tagx{color:#f7a8d8}
+.attr{color:#a3c9ff}
+.str{color:#b5e8b0}
+.thx{color:#e0c088}
+.sel{color:#f7a8d8}
+.prop{color:#a3c9ff}
+.val{color:#b5e8b0}
+.comment{color:#9a8578;font-style:italic}
+.txt{color:#f0e6da}
+.tip{background:rgba(210,105,74,0.08);border-left:3px solid var(--accent);padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.85}
+.tip .th{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.tip b{color:var(--ink)}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.role-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px}
+.role-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.1em;display:block;margin-bottom:4px}
+.role-card .name{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.role-card .desc{font-size:13px;line-height:1.75;color:var(--ink)}
+.check-list{list-style:none;margin:10px 0}
+.check-list li{padding:5px 0 5px 28px;position:relative;font-size:13.5px;line-height:1.8}
+.check-list li::before{content:"□";position:absolute;left:0;top:3px;color:var(--accent);font-size:18px;font-weight:700}
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;color:var(--accent-3);padding:8px 12px;text-align:left;font-size:11.5px;letter-spacing:0.05em;border:1px solid var(--line);font-weight:700}
+.compare-tbl td{padding:8px 12px;border:1px solid var(--line);line-height:1.7;background:#fff}
+.compare-tbl td b{color:var(--accent)}
+.compare-tbl td code{background:var(--paper-2);padding:1px 5px;font-size:11.5px;color:var(--accent-3)}
+.page-footer{margin-top:60px;padding-top:24px;border-top:2px solid var(--ink);font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media (max-width:720px){body{padding:0 18px 60px}.page-header h1{font-size:28px}.page-header::before{font-size:200px}.demo-body{grid-template-columns:1fr}.panel{border-right:none;border-bottom:1px solid var(--line)}.role-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tags">
+    <span class="series-tag">MEMO APP — RDT EDITION</span>
+    <span class="vol-tag">VOL.F5</span>
+    <span class="kind-tag">フロント別冊 ── FRONT</span>
+    <span class="rdt-tag">LIST &amp; FILTER</span>
+  </div>
+  <h1>一覧・絞り込み・条件表示<br>動的な一覧画面</h1>
+  <div class="subtitle">FRONT.05 ── LIST, FILTER &amp; CONDITIONAL DISPLAY</div>
+  <p class="lead">対応する本編は<b>Vol.4・5</b>。一覧画面に<b>カテゴリ列・タグチップ</b>を表示し、<b>絞り込みセレクト</b>で「このカテゴリだけ」を表示する。選んだ値を保持する<b><code>th:selected</code></b>、状況に応じて表示を変える<b>条件分岐</b>。F2 の <code>th:each</code>/<code>th:if</code> と F4 の CSS を<b>組み合わせて</b>、実用的な一覧を完成させます。「<b>データを見やすく・絞り込めるように</b>」が今回のテーマです。</p>
+
+  <div class="warn-redline">
+    <div class="wh">💡 一覧・絞り込みでつまずく点</div>
+    <p>① 絞り込みは <code>&lt;form method="get"&gt;</code>（検索はGET）／② 選択を保持するのは <code>th:selected="${現在値 == 候補値}"</code>／③ <code>onchange="this.form.submit()"</code> で<b>選んだ瞬間に送信</b>／④ タグ等の<b>子リストは入れ子の th:each</b> で展開。これらを押さえれば、絞り込み付き一覧が作れます。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#s01">01 一覧に情報を足す</a></li>
+    <li><a href="#s02">02 カテゴリ列の表示</a></li>
+    <li><a href="#s03">03 タグチップの表示（入れ子each）</a></li>
+    <li><a href="#s04">04 絞り込みセレクト</a></li>
+    <li><a href="#s05">05 th:selected で選択保持</a></li>
+    <li><a href="#s06">06 条件で表示を変える</a></li>
+    <li><a href="#s07">07 一覧表示のあるある失敗</a></li>
+    <li><a href="#s08">08 次巻への橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- SECTION 01 -->
+<section id="s01">
+  <div class="section-header"><span class="section-num">01</span><h2>一覧に情報を足す</h2><span class="en">ENRICH THE LIST</span></div>
+  <p class="pattern-desc">F2 で作った素朴な一覧に、本編Vol.4・5 で<b>カテゴリ・タグ</b>が加わります。一覧は<b>「ぱっと見て分かる」</b>のが命。何の情報を、どう見せるかを設計します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">一覧の進化</span><span class="tag-desc">情報を見やすく足す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 一覧に足すもの</div>
+        <ul>
+          <li><b>カテゴリ列</b>（Vol.4）：色付きの札で</li>
+          <li><b>タグ列</b>（Vol.5）：複数の小札で</li>
+          <li><b>絞り込み</b>（Vol.4）：カテゴリで選別</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 見やすさの原則</div>
+        <ul>
+          <li><b>色</b>で分類を一目で（カテゴリ色）</li>
+          <li><b>チップ</b>で複数情報をコンパクトに</li>
+          <li><b>絞り込み</b>で必要な分だけ表示</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 使う道具</div>
+        <p>F2 の <code>th:each</code>/<code>th:if</code>＋F4 の CSS（チップ・札のスタイル）の<b>合わせ技</b>。</p>
+      </div>
+      <div class="code"><span class="code-head">// 一覧の進化</span>
+<span class="comment">// ─── F2時点（素朴）───</span>
+| タイトル | 更新日時 | 操作 |
+| 会議メモ | 05-01    | 編集 |
+
+
+<span class="comment">// ─── Vol.4・5（情報リッチ）───</span>
+| タイトル | カテゴリ | タグ      | 更新 | 操作 |
+| 会議メモ | [仕事]  | 重要 急ぎ | 05-01| 編集 |
+| 買い物   | [私用]  | ―        | 05-01| 編集 |
+        ↑色付き札  ↑小札（複数）
+<span class="comment">// → 一目で分類とタグが分かる ★★★</span>
+
+
+<span class="comment">// ─── 絞り込み（Vol.4）───</span>
+カテゴリで絞り込み: [仕事 ▼]
+        ↓
+| 会議メモ | [仕事] | ... |
+（仕事のメモだけ表示）
+<span class="comment">// → 必要な分だけ見られる ★</span>
+
+
+<span class="comment">// ─── 使う技術 ───</span>
+th:each   行・タグの繰り返し（F2）
+th:if     カテゴリ有無の出し分け（F2）
+th:href   絞り込みリンク（F2）
+&lt;select&gt;  絞り込みフォーム（今回）
+CSS       チップ・札のスタイル（F4）
+<span class="comment">// → これまでの総合 ★★★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 一覧は「情報量」と「見やすさ」のバランス</div>
+    <p>一覧画面の設計で大事なのは<b>「必要な情報を、見やすく」</b>のバランス。情報を詰め込みすぎると<b>ごちゃつき</b>、少なすぎると<b>役に立たない</b>。メモ帳なら「タイトル・カテゴリ・タグ・更新日時」が適量。<b>カテゴリは色付き札、タグは小さなチップ</b>と<b>視覚的に区別</b>すれば、情報が多くても整理されて見える。「<b>何を見せ、何を省くか</b>」も画面設計の一部です。</p>
+  </div>
+</section>
+
+<!-- SECTION 02 -->
+<section id="s02">
+  <div class="section-header"><span class="section-num">02</span><h2>カテゴリ列の表示</h2><span class="en">CATEGORY COLUMN</span></div>
+  <p class="pattern-desc">本編Vol.4 で、メモに<b>カテゴリ</b>が紐づきました。一覧にカテゴリ名を<b>色付きの札</b>で表示します。カテゴリが<b>未設定（null）の場合</b>の出し分けも、<code>th:if</code> で対応します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">カテゴリ列の組み立て</span><span class="tag-desc">色付き札＋null対応</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 表示の方針</div>
+        <ul>
+          <li>カテゴリ<b>あり</b>：色付きの札で名前</li>
+          <li>カテゴリ<b>なし（null）</b>：「未分類」</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 色を動的に（th:style）</div>
+        <p>カテゴリごとの色を <code>th:style</code> で札の背景に。データ駆動の色付け。</p>
+
+        <div class="panel-head" style="margin-top:18px">// null チェックは必須（F2復習）</div>
+        <p><code>memo.category</code> が null のとき <code>.name</code> を触ると落ちる。<code>th:if</code> で守る。</p>
+      </div>
+      <div class="code"><span class="code-head">// カテゴリ列の表示</span>
+<span class="comment">&lt;!-- 一覧の各行のカテゴリ列 --&gt;</span>
+<span class="tagx">&lt;td&gt;</span>
+  <span class="comment">&lt;!-- カテゴリあり：色付き札 --&gt;</span>
+  <span class="tagx">&lt;span</span> <span class="thx">th:if=</span><span class="str">"${memo.category != null}"</span>
+        <span class="attr">class=</span><span class="str">"cat-tag"</span>
+        <span class="thx">th:style=</span><span class="str">"'background:'
+              + ${memo.category.color}"</span>
+        <span class="thx">th:text=</span><span class="str">"${memo.category.name}"</span><span class="tagx">&gt;</span><span class="txt">仕事</span><span class="tagx">&lt;/span&gt;</span>
+
+  <span class="comment">&lt;!-- カテゴリなし：未分類 --&gt;</span>
+  <span class="tagx">&lt;span</span> <span class="thx">th:if=</span><span class="str">"${memo.category == null}"</span>
+        <span class="attr">class=</span><span class="str">"cat-none"</span><span class="tagx">&gt;</span><span class="txt">未分類</span><span class="tagx">&lt;/span&gt;</span>
+<span class="tagx">&lt;/td&gt;</span>
+<span class="comment"># → ありなしで出し分け（F2のth:if）★★★</span>
+<span class="comment"># → null を直接触らないので安全</span>
+
+
+<span class="comment">/* ─── CSS（F4の知識）─── */</span>
+<span class="sel">.cat-tag</span> {
+  <span class="prop">display</span>: <span class="val">inline-block</span>;
+  <span class="prop">padding</span>: <span class="val">2px 10px</span>;
+  <span class="prop">border-radius</span>: <span class="val">12px</span>;   <span class="comment">/* 丸い札 */</span>
+  <span class="prop">font-size</span>: <span class="val">12px</span>;
+  <span class="prop">color</span>: <span class="val">#fff</span>;
+}
+<span class="sel">.cat-none</span> {
+  <span class="prop">color</span>: <span class="val">var(--muted)</span>;
+  <span class="prop">font-size</span>: <span class="val">12px</span>;
+}
+
+
+<span class="comment">// ─── th:style で動的な色 ───</span>
+th:style="'background:' + ${memo.category.color}"
+<span class="comment"># category.color が #3a4a6a なら</span>
+<span class="comment"># → style="background:#3a4a6a" ★</span>
+<span class="comment"># → カテゴリごとに違う色の札に</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — データ駆動の色は th:style で、固定の色は CSS で</div>
+    <p>色の付け方には2種類あります。<b>カテゴリごとに変わる色</b>（データに入っている）は <code>th:style="'background:' + ${...}"</code> で<b>動的に</b>。<b>全カテゴリ共通の形・サイズ</b>（角丸・余白・文字色）は <code>.cat-tag</code> クラスで<b>CSSに</b>。「<b>変わるものは th:style、変わらないものは CSS</b>」と分ければ、見た目が整いつつ、データに応じた表現もできる。役割分担がきれいになります。</p>
+  </div>
+</section>
+
+<!-- SECTION 03 -->
+<section id="s03">
+  <div class="section-header"><span class="section-num">03</span><h2>タグチップの表示（入れ子each）</h2><span class="en">TAG CHIPS</span></div>
+  <p class="pattern-desc">本編Vol.5 で、1つのメモに<b>複数のタグ</b>が付くようになりました。一覧の各行で、<b>タグの数だけ小さなチップ</b>を並べます。<b>「行の繰り返し」の中で「タグの繰り返し」</b>——入れ子の <code>th:each</code> です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">入れ子の th:each</span><span class="tag-desc">行の中でタグを繰り返す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 入れ子の繰り返し</div>
+        <p>外側：<code>th:each="memo : ${memos}"</code>（行）。内側：<code>th:each="tag : ${memo.tags}"</code>（タグ）。<b>各メモのタグ分</b>チップを並べる。</p>
+
+        <div class="panel-head" style="margin-top:18px">// タグが空の場合</div>
+        <p>タグなしのメモは <code>th:if="${#lists.isEmpty(memo.tags)}"</code> で「―」表示。</p>
+
+        <div class="panel-head" style="margin-top:18px">// チップのスタイル（F4）</div>
+        <p>小さく・横並び・折り返し。<code>display:inline-block</code> や flex で。</p>
+      </div>
+      <div class="code"><span class="code-head">// タグチップの表示（入れ子each）</span>
+<span class="comment">&lt;!-- 一覧の各行（外側のeach）--&gt;</span>
+<span class="tagx">&lt;tr</span> <span class="thx">th:each=</span><span class="str">"memo : ${memos}"</span><span class="tagx">&gt;</span>
+  ...
+  <span class="comment">&lt;!-- タグ列：内側のeach --&gt;</span>
+  <span class="tagx">&lt;td&gt;</span>
+    <span class="tagx">&lt;span</span> <span class="thx">th:each=</span><span class="str">"tag : ${memo.tags}"</span>
+          <span class="attr">class=</span><span class="str">"tag-chip"</span>
+          <span class="thx">th:text=</span><span class="str">"${tag.name}"</span><span class="tagx">&gt;</span><span class="txt">タグ</span><span class="tagx">&lt;/span&gt;</span>
+    <span class="comment">&lt;!-- タグが無いとき --&gt;</span>
+    <span class="tagx">&lt;span</span> <span class="thx">th:if=</span><span class="str">"${#lists.isEmpty(memo.tags)}"</span>
+          <span class="attr">class=</span><span class="str">"cat-none"</span><span class="tagx">&gt;</span><span class="txt">―</span><span class="tagx">&lt;/span&gt;</span>
+  <span class="tagx">&lt;/td&gt;</span>
+<span class="tagx">&lt;/tr&gt;</span>
+<span class="comment"># 外: memoを繰り返す</span>
+<span class="comment"># 内: その memo.tags を繰り返す ★★★</span>
+<span class="comment"># → メモごとに、タグの数だけチップ</span>
+
+
+<span class="comment">// ─── 表示イメージ ───</span>
+会議メモ | [重要][急ぎ][会議]  ← 3チップ
+買い物   | ―                  ← タグなし
+Java学習 | [学習]             ← 1チップ
+
+
+<span class="comment">/* ─── CSS（F4）─── */</span>
+<span class="sel">.tag-chip</span> {
+  <span class="prop">display</span>: <span class="val">inline-block</span>;
+  <span class="prop">padding</span>: <span class="val">1px 8px</span>;
+  <span class="prop">margin</span>: <span class="val">1px</span>;
+  <span class="prop">border-radius</span>: <span class="val">10px</span>;
+  <span class="prop">font-size</span>: <span class="val">11px</span>;
+  <span class="prop">background</span>: <span class="val">var(--paper-2)</span>;
+}
+<span class="comment">/* → 小さな丸チップが横に並ぶ ★ */</span>
+
+
+<span class="comment">// ─── データの前提（本編Vol.5）───</span>
+<span class="comment"># memo.tags は List&lt;Tag&gt;</span>
+<span class="comment"># MyBatis の collection で取得済み</span>
+<span class="comment"># → 画面は「あるものを並べるだけ」 ★</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 入れ子の each は「外＝親、内＝子のリスト」</div>
+    <p>入れ子の <code>th:each</code> は、<b>外側が親（メモ）、内側が子のリスト（そのメモのタグ）</b>。<code>th:each="memo : ${memos}"</code> の中で <code>th:each="tag : ${memo.tags}"</code> と書く。内側は<b>外側で取り出した memo の中の tags</b> を繰り返す。これで「<b>各メモごとに、そのタグだけを並べる</b>」ができる。本編Vol.5 の MyBatis <code>collection</code> で <code>memo.tags</code> が取れているので、画面は<b>「あるものを並べるだけ」</b>。サーバーとの連携が活きる場面です。</p>
+  </div>
+</section>
+
+<!-- SECTION 04 -->
+<section id="s04">
+  <div class="section-header"><span class="section-num">04</span><h2>絞り込みセレクト</h2><span class="en">FILTER SELECT</span></div>
+  <p class="pattern-desc">本編Vol.4 の<b>カテゴリ絞り込み</b>。セレクトボックスでカテゴリを選ぶと、そのカテゴリのメモだけ表示。<b>検索系はGETフォーム</b>を使い、<b>選んだ瞬間に送信</b>する工夫も加えます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">絞り込みフォーム</span><span class="tag-desc">GET＋自動送信</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ GET か</div>
+        <p>絞り込み・検索は<b>GET</b>。理由：URLに条件が残り（<code>?categoryId=3</code>）、<b>ブックマーク・共有・戻る</b>ができる。POST は登録・更新用。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 選んだ瞬間に送信</div>
+        <p><code>onchange="this.form.submit()"</code> で、セレクトを変えた<b>瞬間にフォーム送信</b>。ボタン不要で快適。</p>
+
+        <div class="panel-head" style="margin-top:18px">// オプションの生成</div>
+        <p>カテゴリ一覧を <code>th:each</code> で <code>&lt;option&gt;</code> に展開。「すべて」の選択肢も用意。</p>
+      </div>
+      <div class="code"><span class="code-head">// 絞り込みセレクト</span>
+<span class="comment">&lt;!-- GETフォームで絞り込み --&gt;</span>
+<span class="tagx">&lt;form</span> <span class="attr">method=</span><span class="str">"get"</span> <span class="thx">th:action=</span><span class="str">"@{/memos}"</span><span class="tagx">&gt;</span>
+  <span class="tagx">&lt;label&gt;</span><span class="txt">カテゴリで絞り込み：</span><span class="tagx">&lt;/label&gt;</span>
+  <span class="tagx">&lt;select</span> <span class="attr">name=</span><span class="str">"categoryId"</span>
+          <span class="attr">onchange=</span><span class="str">"this.form.submit()"</span><span class="tagx">&gt;</span>
+    <span class="comment">&lt;!-- すべて（絞り込み解除）--&gt;</span>
+    <span class="tagx">&lt;option</span> <span class="attr">value=</span><span class="str">""</span><span class="tagx">&gt;</span><span class="txt">すべて</span><span class="tagx">&lt;/option&gt;</span>
+    <span class="comment">&lt;!-- カテゴリ一覧を展開 --&gt;</span>
+    <span class="tagx">&lt;option</span> <span class="thx">th:each=</span><span class="str">"cat : ${categories}"</span>
+            <span class="thx">th:value=</span><span class="str">"${cat.id}"</span>
+            <span class="thx">th:text=</span><span class="str">"${cat.name}"</span><span class="tagx">&gt;&lt;/option&gt;</span>
+  <span class="tagx">&lt;/select&gt;</span>
+<span class="tagx">&lt;/form&gt;</span>
+
+
+<span class="comment">// ─── 送信されるURL ───</span>
+「仕事」を選ぶと…
+  → GET /memos?categoryId=3 ★
+  → URLに条件が残る（共有・戻る可能）
+
+
+<span class="comment">// ─── なぜ GET か ───</span>
+<span class="kw">GET（絞り込み・検索）:</span>
+  URLに条件 → ブックマーク可・戻れる ★
+<span class="kw">POST（登録・更新）:</span>
+  URLに残らない → 二重送信を防ぐ
+
+
+<span class="comment">// ─── onchange の効果 ───</span>
+onchange="this.form.submit()"
+<span class="comment"># → 選んだ瞬間にフォーム送信 ★</span>
+<span class="comment"># → 「絞り込みボタン」を押す手間が省ける</span>
+
+
+<span class="comment">// ─── Controller（本編Vol.4）───</span>
+<span class="ann">@GetMapping</span>("/memos")
+String list(<span class="ann">@RequestParam</span>(required=false)
+            Long categoryId, Model model)
+<span class="comment"># → categoryId で絞り込んで返す</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 絞り込み・検索は GET、登録・更新は POST</div>
+    <p>フォームの <code>method</code> の使い分けは明確：<b>絞り込み・検索は GET、登録・更新・削除は POST</b>。GET は<b>条件がURLに残る</b>ので、「このカテゴリの一覧」を<b>ブックマーク・共有・ブラウザの戻る</b>で再現できる。検索結果のURLを送れるのもGETのおかげ。一方、データを変える操作は<b>POST</b>（URLに残らず、リロードでの二重送信を防ぐ）。本編のPRGパターンとも一貫した、Webの基本ルールです。</p>
+  </div>
+</section>
+
+<!-- SECTION 05 -->
+<section id="s05">
+  <div class="section-header"><span class="section-num">05</span><h2>th:selected で選択保持</h2><span class="en">PRESERVE SELECTION</span></div>
+  <p class="pattern-desc">絞り込んだ後、セレクトボックスが<b>「すべて」に戻ってしまう</b>と不便。<b>今選んでいるカテゴリを保持</b>するのが <code>th:selected</code>。「現在の値と一致する選択肢」を選択状態にします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">th:selected の保持</span><span class="tag-desc">選んだ状態を維持</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 問題</div>
+        <p>「仕事」で絞り込んだのに、セレクトが「すべて」表示だと<b>今の絞り込みが分からない</b>。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 解決：th:selected</div>
+        <p><code>th:selected="${cat.id == selectedCategoryId}"</code> ＝「現在選択中のIDと一致する選択肢」を selected に。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 必要なもの</div>
+        <p>Controller が<b>「現在選んでいるID」</b>を <code>selectedCategoryId</code> として渡す（本編Vol.4）。</p>
+      </div>
+      <div class="code"><span class="code-head">// th:selected で選択保持</span>
+<span class="comment">// ─── 問題：絞り込み後にリセット ───</span>
+「仕事」を選ぶ → /memos?categoryId=3
+  → 一覧は仕事だけ（正しい）
+  → でもセレクトは「すべて」表示 ★
+  → 今の絞り込みが分からない
+
+
+<span class="comment">// ─── 解決：th:selected ───</span>
+<span class="tagx">&lt;option</span> <span class="thx">th:each=</span><span class="str">"cat : ${categories}"</span>
+        <span class="thx">th:value=</span><span class="str">"${cat.id}"</span>
+        <span class="thx">th:text=</span><span class="str">"${cat.name}"</span>
+        <span class="thx">th:selected=</span><span class="str">"${cat.id
+                    == selectedCategoryId}"</span><span class="tagx">&gt;&lt;/option&gt;</span>
+<span class="comment"># → 現在のIDと一致する選択肢が selected ★★★</span>
+<span class="comment"># → 「仕事」が選ばれた状態を維持</span>
+
+
+<span class="comment">// ─── 仕組み ───</span>
+selectedCategoryId = 3（仕事）のとき
+  cat.id=1 → th:selected="false"
+  cat.id=3 → th:selected="true"  ★ 選択
+  cat.id=5 → th:selected="false"
+<span class="comment"># → id=3 の option だけ selected に</span>
+
+
+<span class="comment">// ─── Controller が現在値を渡す（Vol.4）───</span>
+<span class="ann">@GetMapping</span>("/memos")
+String list(<span class="ann">@RequestParam</span>(required=false)
+            Long categoryId, Model model) {
+  model.addAttribute("memos", ...);
+  model.addAttribute("categories", ...);
+  model.addAttribute("selectedCategoryId",
+                     categoryId);  <span class="comment"># 現在値 ★</span>
+  return "memos/list";
+}
+<span class="comment"># → 選んだIDを画面に渡すから保持できる</span>
+
+
+<span class="comment">// ─── th:field なら自動（F3復習）───</span>
+<span class="comment"># フォームオブジェクトを使う場合は</span>
+<span class="comment"># th:field="*{categoryId}" で selected も自動 ★</span>
+<span class="comment"># （絞り込みは単純なので th:selected を明示）</span></div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「選んだ状態の保持」はユーザーの迷子を防ぐ</div>
+    <p>絞り込みやフォームで<b>「選んだ状態が保持される」</b>のは、地味ですが<b>ユーザー体験を大きく左右</b>します。絞り込んだのにセレクトが初期値だと、ユーザーは<b>「今、何で絞り込んでいるか分からず迷子」</b>に。<code>th:selected</code>（または <code>th:field</code>）で<b>現在の状態を画面に映す</b>ことで、「今こうなっている」が一目で分かる。本編Vol.4 の Controller が「現在値」を渡すのは、この保持のためです。</p>
+  </div>
+</section>
+
+<!-- SECTION 06 -->
+<section id="s06">
+  <div class="section-header"><span class="section-num">06</span><h2>条件で表示を変える</h2><span class="en">CONDITIONAL DISPLAY</span></div>
+  <p class="pattern-desc">状況に応じて<b>表示を変える</b>テクニックの整理。「結果が0件なら案内」「絞り込み中なら解除リンク」など。F2 の <code>th:if</code> を発展させ、<b>ユーザーに親切な一覧</b>を作ります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">状況に応じた表示</span><span class="tag-desc">親切な出し分け</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある条件表示</div>
+        <ul>
+          <li>結果0件 → 「該当なし」案内</li>
+          <li>絞り込み中 → 「解除」リンク</li>
+          <li>件数表示 → 「3件中」</li>
+          <li>ピン留め → 📌マーク</li>
+        </ul>
+
+        <div class="panel-head" style="margin-top:18px">// 使う構文</div>
+        <p><code>th:if</code>/<code>th:unless</code>（F2）、三項演算子、<code>#lists.isEmpty</code> など。</p>
+
+        <div class="panel-head" style="margin-top:18px">// 親切さの工夫</div>
+        <p>「0件」のとき<b>ただ空白</b>でなく<b>「メモがありません。作成しますか?」</b>と次の行動を促す。</p>
+      </div>
+      <div class="code"><span class="code-head">// 条件で表示を変える</span>
+<span class="comment">// ─── ① 0件の案内 ───</span>
+<span class="tagx">&lt;tr</span> <span class="thx">th:if=</span><span class="str">"${#lists.isEmpty(memos)}"</span><span class="tagx">&gt;</span>
+  <span class="tagx">&lt;td</span> <span class="attr">colspan=</span><span class="str">"5"</span> <span class="attr">class=</span><span class="str">"empty"</span><span class="tagx">&gt;</span>
+    <span class="txt">メモがありません</span>
+    <span class="tagx">&lt;a</span> <span class="thx">th:href=</span><span class="str">"@{/memos/new}"</span><span class="tagx">&gt;</span><span class="txt">作成する</span><span class="tagx">&lt;/a&gt;</span>
+  <span class="tagx">&lt;/td&gt;</span>
+<span class="tagx">&lt;/tr&gt;</span>
+<span class="comment"># → 空でも次の行動を促す（親切）★★★</span>
+
+
+<span class="comment">// ─── ② 絞り込み中の解除リンク ───</span>
+<span class="tagx">&lt;a</span> <span class="thx">th:if=</span><span class="str">"${selectedCategoryId != null}"</span>
+   <span class="thx">th:href=</span><span class="str">"@{/memos}"</span><span class="tagx">&gt;</span><span class="txt">絞り込みを解除</span><span class="tagx">&lt;/a&gt;</span>
+<span class="comment"># → 絞り込み中だけ「解除」を表示 ★</span>
+
+
+<span class="comment">// ─── ③ 件数表示 ───</span>
+<span class="tagx">&lt;p</span> <span class="thx">th:text=</span><span class="str">"'全 ' + ${#lists.size(memos)}
+        + ' 件'"</span><span class="tagx">&gt;&lt;/p&gt;</span>
+<span class="comment"># → 「全 3 件」</span>
+
+
+<span class="comment">// ─── ④ ピン留めマーク（Vol.9）───</span>
+<span class="tagx">&lt;span</span> <span class="thx">th:if=</span><span class="str">"${memo.pinned}"</span><span class="tagx">&gt;</span><span class="txt">📌</span><span class="tagx">&lt;/span&gt;</span>
+<span class="comment"># → pinned=true のメモだけ📌</span>
+
+
+<span class="comment">// ─── ⑤ 三項で簡潔に ───</span>
+<span class="tagx">&lt;td</span> <span class="thx">th:text=</span><span class="str">"${memo.archived}
+        ? '(アーカイブ済)' : '通常'"</span><span class="tagx">&gt;&lt;/td&gt;</span>
+<span class="comment"># → 状態をラベルで出し分け ★</span>
+
+
+<span class="comment">// ─── 親切な一覧の条件 ───</span>
+✓ 0件でも次の行動を示す
+✓ 絞り込み状態が分かる
+✓ 件数が見える
+✓ 状態（ピン・アーカイブ）が一目 ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 「0件」のときこそ、画面の親切さが問われる</div>
+    <p>一覧が<b>0件のとき、ただ空白</b>だとユーザーは<b>「壊れた? 読み込み中?」</b>と不安に。良い画面は<b>「メモがありません。作成しますか?」</b>と<b>状況の説明＋次の行動</b>を示す。これは本編の「ユーザーに分かりやすく」の画面版。<b>「データがある時」だけでなく「無い時・絞り込んで0件の時」</b>まで設計するのが、親切なフロントエンド。<code>th:if</code> での空チェックは、こうした配慮の入り口です。</p>
+  </div>
+</section>
+
+<!-- SECTION 07 -->
+<section id="s07">
+  <div class="section-header"><span class="section-num">07</span><h2>一覧表示のあるある失敗</h2><span class="en">LIST PITFALLS</span></div>
+  <p class="pattern-desc">一覧・絞り込みで<b>初心者がハマる失敗</b>を5つ。null 未対応、選択保持忘れ、GET/POST 取り違えなど。知っていれば回避できます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">一覧表示あるある 5選</span><span class="tag-desc">先に知れば回避できる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <p><b>① カテゴリ null で落ちる ★★★</b></p>
+        <ul>
+          <li>未分類メモで .name を直接参照</li>
+          <li>対処：th:if で null チェック（Section 02）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>② 絞り込み後に選択が戻る ★★★</b></p>
+        <ul>
+          <li>セレクトが「すべて」に戻る</li>
+          <li>対処：th:selected で保持（Section 05）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>③ 絞り込みを POST にする</b></p>
+        <ul>
+          <li>URLに残らず共有・戻るができない</li>
+          <li>対処：絞り込みは GET（Section 04）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>④ 入れ子 each の変数名が衝突</b></p>
+        <ul>
+          <li>外も内も同じ変数名にする</li>
+          <li>対処：memo/tag と別名に（Section 03）</li>
+        </ul>
+
+        <p style="margin-top:12px"><b>⑤ 0件のとき空白で不親切</b></p>
+        <ul>
+          <li>何も出ず壊れて見える</li>
+          <li>対処：空の案内を出す（Section 06）</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// あるある失敗の対処</span>
+<span class="comment">// ─── ① null チェック ───</span>
+<span class="kw">NG:</span> th:text="${memo.category.name}"
+<span class="comment"># category=null で落ちる ★</span>
+<span class="kw">OK:</span> th:if="${memo.category != null}"
+       th:text="${memo.category.name}"
+
+
+<span class="comment">// ─── ② 選択保持 ───</span>
+<span class="kw">NG:</span> th:selected 無し → 毎回「すべて」
+<span class="kw">OK:</span> th:selected="${cat.id
+                   == selectedCategoryId}"
+
+
+<span class="comment">// ─── ③ GET/POST ───</span>
+<span class="kw">NG:</span> &lt;form method="post"&gt; で絞り込み
+<span class="kw">OK:</span> &lt;form method="get"&gt; で絞り込み ★
+
+
+<span class="comment">// ─── ④ 変数名の衝突 ───</span>
+<span class="kw">NG:</span>
+&lt;tr th:each="x : ${memos}"&gt;
+  &lt;span th:each="x : ${x.tags}"&gt;  <span class="comment"># 同名 x ★</span>
+<span class="kw">OK:</span>
+&lt;tr th:each="memo : ${memos}"&gt;
+  &lt;span th:each="tag : ${memo.tags}"&gt; <span class="comment"># 別名 ★</span>
+
+
+<span class="comment">// ─── 良い一覧の条件 ───</span>
+✓ null は th:if で守る
+✓ 選択は th:selected で保持
+✓ 絞り込みは GET
+✓ 入れ子は変数名を分ける
+✓ 0件は親切に案内 ★★★</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="th">POINT — 一覧トラブルの多くは「null」と「状態保持」</div>
+    <p>一覧画面のトラブルで多いのは<b>2つ</b>：<b>①カテゴリ等の null を未対応で落ちる</b>、<b>②絞り込みやソートの状態が保持されない</b>。①は <code>th:if</code> での null チェック、②は <code>th:selected</code>/<code>th:field</code> での状態保持で解決。どちらも<b>「データが無い・選択がある」という"通常じゃない状態"への配慮</b>。正常系（全部データがある）だけでなく、<b>「null・空・選択中」も想定</b>するのが、堅牢な一覧画面のコツです。</p>
+  </div>
+</section>
+
+<!-- SECTION 08 -->
+<section id="s08">
+  <div class="section-header"><span class="section-num">08</span><h2>次巻への橋渡し</h2><span class="en">NEXT STEP</span></div>
+  <p class="pattern-desc">動的な一覧と絞り込みが作れるようになりました。次は<b>「複数選択」</b>——チェックボックスでタグを複数選んだり、メモを一括選択したり。<code>th:field</code> と List のバインドを掘り下げます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">F5 達成チェック</span><span class="tag-desc">一覧・絞り込みを習得</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 卒業チェックリスト</div>
+        <ul class="check-list">
+          <li>一覧にカテゴリ・タグを表示できる</li>
+          <li>カテゴリの色を th:style で動的に</li>
+          <li>入れ子 each でタグチップを並べられる</li>
+          <li>絞り込みセレクトを GET で作れる</li>
+          <li>onchange で自動送信できる</li>
+          <li>th:selected で選択を保持できる</li>
+          <li>0件・絞り込み中など条件表示できる</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// F5 で手に入れた一覧技術</span>
+✓ <span class="str">"カテゴリ列・タグチップの表示"</span>
+
+✓ <span class="str">"入れ子each で子リストを展開"</span>
+
+✓ <span class="str">"絞り込みは GET + onchange"</span>
+
+✓ <span class="str">"th:selected で選択を保持"</span>
+
+✓ <span class="str">"0件など条件で親切に表示"</span>
+
+
+<span class="comment">// 実用的な一覧画面が作れる ★★★</span>
+
+<span class="comment">// 次回 フロント別冊F6：</span>
+<span class="comment">//   チェックボックスと複数選択</span>
+<span class="comment">//   タグの複数選択・th:fieldとListバインド</span>
+<span class="comment">//   一括選択UI</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px">
+    <div class="th">NEXT STEP ── フロント別冊 VOL.F6 へ</div>
+    <p>F5 で<b>「動的な一覧と絞り込み」</b>が作れるようになりました。情報を見やすく表示し、絞り込み、状態を保持する。次は<b>フロント別冊F6「チェックボックスと複数選択編」</b>。本編Vol.5 のタグ複数選択、Vol.10 の一括操作を題材に、<b>チェックボックスと List のバインド</b>（<code>th:field</code> で複数値を扱う）、<b>全選択UI</b>などを学びます。「1つ選ぶ」から「<b>複数を一度に</b>」へ。フォーム（F3）の知識がさらに発展します。<b>フロント別冊F6 へ進みましょう</b>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>MEMO APP ── RDT EDITION（FRONTEND SUPPLEMENT）</span>
+  <span>FRONT.05 / 9 ── LIST, FILTER &amp; CONDITIONAL DISPLAY</span>
+</footer>
+
+</body>
+</html>
