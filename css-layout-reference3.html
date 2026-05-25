@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSSレイアウト Flexbox応用編 Vol.3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:       #111830;
+      --paper:     #e9ecf7;
+      --paper-2:   #d7dcf2;
+      --accent:    #3d56be;
+      --accent-2:  #5e76d8;
+      --accent-3:  #8c9ee8;
+      --muted:     #59648a;
+      --line:      #aeb8da;
+      --code-bg:   #0c1222;
+      --code-text: #cdd6ff;
+      --panel-bg:  #cad1ed;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--ink);
+      background: var(--paper);
+    }
+
+    /* ─── PAGE HEADER ─── */
+    .page-header {
+      position: relative;
+      overflow: hidden;
+      padding: 48px 56px 40px;
+      border-bottom: 2px solid var(--ink);
+    }
+    .page-header::before {
+      content: '⊠';
+      position: absolute;
+      right: 36px;
+      top: -10px;
+      font-size: 220px;
+      color: var(--ink);
+      opacity: 0.07;
+      line-height: 1;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .page-header > * { position: relative; z-index: 1; }
+    .header-tags { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+    .series-tag {
+      background: var(--ink);
+      color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      letter-spacing: 0.08em;
+    }
+    .vol-tag {
+      background: var(--accent);
+      color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      letter-spacing: 0.06em;
+    }
+    .page-header h1 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: 0.02em;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .lead {
+      max-width: 640px;
+      font-size: 15px;
+      line-height: 1.9;
+    }
+
+    /* ─── TOC ─── */
+    .toc {
+      background: var(--paper-2);
+      padding: 18px 56px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 0;
+      list-style: none;
+    }
+    .toc li a {
+      display: inline-block;
+      padding: 4px 16px 4px 0;
+      font-size: 13px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .toc li a::before { content: '— '; color: var(--muted); }
+    .toc li a:hover { color: var(--accent-2); text-decoration: underline; }
+
+    /* ─── MAIN ─── */
+    main { max-width: 1100px; margin: 0 auto; padding: 56px 40px 80px; }
+
+    /* ─── SECTION ─── */
+    section { margin-bottom: 64px; }
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 16px;
+    }
+    .section-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-2);
+      letter-spacing: 0.05em;
+    }
+    .section-header h2 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .en {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-left: auto;
+    }
+    .pattern-desc {
+      font-size: 14.5px;
+      line-height: 1.9;
+      max-width: 680px;
+      margin-bottom: 20px;
+    }
+
+    /* ─── DEMO CARD ─── */
+    .demo-card {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .demo-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--paper-2);
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .tag-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(61,86,190,0.1);
+      padding: 2px 8px;
+      border-radius: 2px;
+    }
+    .tag-desc { font-size: 12px; color: var(--muted); }
+    .demo-body { display: grid; grid-template-columns: 1fr 1fr; }
+
+    /* ─── PANEL ─── */
+    .panel {
+      background: var(--panel-bg);
+      padding: 24px;
+      border-right: 1px solid var(--line);
+    }
+    .panel-head {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      letter-spacing: 0.06em;
+    }
+
+    /* ─── CODE ─── */
+    .code {
+      background: var(--code-bg);
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.75;
+      color: var(--code-text);
+      overflow-x: auto;
+    }
+    .code pre { white-space: pre; }
+    .kw      { color: #ffc88a; }
+    .type    { color: #c2a3ff; }
+    .fn      { color: #a3c9ff; }
+    .str     { color: #b5e8b0; }
+    .num     { color: #f7a8d8; }
+    .comment { color: #5868a8; }
+    .prop    { color: #a3c9ff; }
+    .val     { color: #b5e8b0; }
+    .sel     { color: #f7c08a; }
+
+    /* ─── TIP ─── */
+    .tip {
+      border-left: 3px solid var(--accent);
+      background: rgba(61,86,190,0.06);
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 14px;
+      line-height: 1.9;
+    }
+    .tip strong {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-2);
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+    .tip.warn { border-left-color: #c44f4f; background: rgba(196,79,79,0.05); }
+    .tip.warn strong { color: #c44f4f; }
+
+    /* ════════════════════════════
+       LIVE FLEX DEMOS
+    ════════════════════════════ */
+
+    .fi {
+      background: rgba(61,86,190,0.16);
+      border: 1.5px solid var(--accent-2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 2px;
+      min-width: 32px;
+      min-height: 34px;
+      padding: 4px 6px;
+    }
+    .fi-a { background: rgba(61,86,190,0.20); border-color: var(--accent); }
+    .fi-b { background: rgba(61,86,190,0.13); }
+    .fi-c { background: rgba(61,86,190,0.07); }
+    .fi-warn {
+      background: rgba(196,79,79,0.15);
+      border: 1.5px solid #c44f4f;
+      color: #c44f4f;
+    }
+
+    .flex-box {
+      display: flex;
+      background: rgba(255,255,255,0.5);
+      border: 1.5px dashed var(--accent-3);
+      padding: 7px;
+      border-radius: 2px;
+      gap: 5px;
+    }
+    .lbl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .lbl-ok  { color: var(--accent); }
+    .lbl-ng  { color: #c44f4f; }
+
+    /* flex-grow demo */
+    .grow-demo-row {
+      margin-bottom: 10px;
+    }
+
+    /* flex-shrink demo */
+    .shrink-container {
+      width: 200px;
+      display: flex;
+      gap: 4px;
+      background: rgba(255,255,255,0.5);
+      border: 1.5px dashed var(--accent-3);
+      padding: 6px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    /* flex-basis demo */
+    .basis-row {
+      margin-bottom: 8px;
+    }
+
+    /* flex-wrap demo */
+    .wrap-demo {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      background: rgba(255,255,255,0.5);
+      border: 1.5px dashed var(--accent-3);
+      padding: 8px;
+      border-radius: 2px;
+      width: 220px;
+    }
+    .nowrap-demo {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 6px;
+      background: rgba(255,255,255,0.5);
+      border: 1.5px dashed #c44f4f;
+      padding: 8px;
+      border-radius: 2px;
+      width: 220px;
+      overflow: hidden;
+    }
+
+    /* ─── NAV BAR DEMO ─── */
+    .nav-demo {
+      background: var(--ink);
+      padding: 0 20px;
+      height: 52px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 2px;
+    }
+    .nav-logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--paper);
+      letter-spacing: 0.05em;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 12px;
+      color: rgba(233,236,247,0.75);
+      text-decoration: none;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    .nav-links a:hover { color: var(--paper); }
+    .nav-cta {
+      background: var(--accent);
+      color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 7px 14px;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    /* ─── CARD GRID DEMO ─── */
+    .card-grid-demo {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .card-demo-item {
+      flex: 1 1 120px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .card-demo-img {
+      background: rgba(61,86,190,0.12);
+      border: 1px solid var(--accent-3);
+      height: 44px;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--accent-2);
+    }
+    .card-demo-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .card-demo-text {
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.5;
+      flex: 1;
+    }
+    .card-demo-btn {
+      align-self: flex-end;
+      background: var(--accent);
+      color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      padding: 4px 10px;
+      border-radius: 2px;
+      margin-top: auto;
+    }
+
+    /* ─── MIN-WIDTH DEMO ─── */
+    .minw-row {
+      margin-bottom: 12px;
+    }
+    .minw-container {
+      width: 240px;
+      display: flex;
+      gap: 6px;
+      background: rgba(255,255,255,0.5);
+      border: 1.5px dashed var(--accent-3);
+      padding: 8px;
+      border-radius: 2px;
+    }
+    .minw-fixed {
+      flex-shrink: 0;
+      width: 60px;
+      background: rgba(61,86,190,0.18);
+      border: 1.5px solid var(--accent-2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--accent);
+      padding: 6px;
+      text-align: center;
+      border-radius: 2px;
+    }
+    .minw-text-bad {
+      flex: 1;
+      background: rgba(196,79,79,0.12);
+      border: 1.5px solid #c44f4f;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #c44f4f;
+      padding: 6px;
+      border-radius: 2px;
+      white-space: nowrap;
+      overflow: visible;
+    }
+    .minw-text-ok {
+      flex: 1;
+      min-width: 0;
+      background: rgba(61,86,190,0.12);
+      border: 1.5px solid var(--accent-2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--accent);
+      padding: 6px;
+      border-radius: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ─── SHORTHAND TABLE ─── */
+    .sh-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .sh-table th {
+      background: rgba(61,86,190,0.12);
+      padding: 7px 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--accent);
+      text-align: left;
+      border: 1px solid var(--line);
+    }
+    .sh-table td {
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      font-size: 11px;
+      vertical-align: top;
+      line-height: 1.6;
+    }
+    .sh-table tr:nth-child(even) td { background: rgba(61,86,190,0.04); }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 720px) {
+      .page-header { padding: 32px 24px 28px; }
+      .page-header h1 { font-size: 28px; }
+      .toc { padding: 14px 24px; }
+      main { padding: 32px 20px 60px; }
+      .demo-body { grid-template-columns: 1fr; }
+      .panel { border-right: none; border-bottom: 1px solid var(--line); }
+    }
+
+    /* ─── FOOTER ─── */
+    .page-footer {
+      border-top: 2px solid var(--ink);
+      padding: 20px 56px;
+      background: var(--paper-2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     PAGE HEADER
+════════════════════════════════════════════ -->
+<header class="page-header">
+  <div class="header-tags">
+    <span class="series-tag">CSS LAYOUT REFERENCE</span>
+    <span class="vol-tag">Vol.3</span>
+  </div>
+  <h1>Flexbox 応用編</h1>
+  <div class="subtitle">FLEXBOX ADVANCED — BLUEPRINT SERIES</div>
+  <p class="lead">
+    Vol.2で覚えた4本柱に加え、このVol.3では<b>子要素の「伸び縮み」</b>を制御する
+    <code>flex-grow</code>・<code>flex-shrink</code>・<code>flex-basis</code>を攻略します。
+    そして折り返し表示の<code>flex-wrap</code>、さらに
+    <b>「ナビバー」「カードグリッド」という現場で毎日使う実用パターン</b>も実際に組み立てます。
+    Flexboxを「なんとなく使う」から「意図して使う」レベルへ引き上げましょう。
+  </p>
+</header>
+
+<!-- ═══════════════════════════════════════════
+     TOC
+════════════════════════════════════════════ -->
+<nav class="toc">
+  <ul>
+    <li><a href="#flex-grow">flex-grow</a></li>
+    <li><a href="#flex-shrink">flex-shrink</a></li>
+    <li><a href="#flex-basis">flex-basis</a></li>
+    <li><a href="#flex-shorthand">flexショートハンド</a></li>
+    <li><a href="#flex-wrap">flex-wrap</a></li>
+    <li><a href="#nav-pattern">実践①ナビバー</a></li>
+    <li><a href="#card-pattern">実践②カードグリッド</a></li>
+    <li><a href="#min-width">ハマりどころ：min-width</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════ -->
+<main>
+
+  <!-- ─── 01 flex-grow ─── -->
+  <section id="flex-grow">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>flex-grow — 余白を分け合って伸びる</h2>
+      <span class="en">FLEX GROW</span>
+    </div>
+    <p class="pattern-desc">
+      <code>flex-grow</code>はコンテナに余白があるとき、<b>その余白をどの比率で分け合って伸びるか</b>を指定します。
+      デフォルトは<code>0</code>（伸びない）。<code>1</code>を指定した要素が余白を全て受け取り、
+      複数あれば数値の比率で分け合います。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">flex-grow</span>
+        <span class="tag-desc">余白の分配比率 / デフォルト0（伸びない）</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// grow値による伸び方の違い（実際のflex）</div>
+
+          <div class="grow-demo-row">
+            <div class="lbl">全員 grow:0（デフォルト）→ 余白が余る</div>
+            <div class="flex-box">
+              <div class="fi fi-a" style="flex-grow:0;">A<br><span style="font-size:9px;">grow:0</span></div>
+              <div class="fi fi-b" style="flex-grow:0;">B<br><span style="font-size:9px;">grow:0</span></div>
+              <div class="fi fi-c" style="flex-grow:0;">C<br><span style="font-size:9px;">grow:0</span></div>
+            </div>
+          </div>
+
+          <div class="grow-demo-row">
+            <div class="lbl lbl-ok">全員 grow:1 → 余白を等分して伸びる</div>
+            <div class="flex-box">
+              <div class="fi fi-a" style="flex-grow:1; justify-content:center; flex-direction:column; text-align:center;">A<br><span style="font-size:9px;">grow:1</span></div>
+              <div class="fi fi-b" style="flex-grow:1; justify-content:center; flex-direction:column; text-align:center;">B<br><span style="font-size:9px;">grow:1</span></div>
+              <div class="fi fi-c" style="flex-grow:1; justify-content:center; flex-direction:column; text-align:center;">C<br><span style="font-size:9px;">grow:1</span></div>
+            </div>
+          </div>
+
+          <div class="grow-demo-row">
+            <div class="lbl lbl-ok">A:grow:2 / B:grow:1 / C:grow:1 → 2:1:1で分配</div>
+            <div class="flex-box">
+              <div class="fi fi-a" style="flex-grow:2; justify-content:center; flex-direction:column; text-align:center;">A<br><span style="font-size:9px;">grow:2</span></div>
+              <div class="fi fi-b" style="flex-grow:1; justify-content:center; flex-direction:column; text-align:center;">B<br><span style="font-size:9px;">grow:1</span></div>
+              <div class="fi fi-c" style="flex-grow:1; justify-content:center; flex-direction:column; text-align:center;">C<br><span style="font-size:9px;">grow:1</span></div>
+            </div>
+          </div>
+
+          <div class="grow-demo-row">
+            <div class="lbl lbl-ok">A:grow:1 のみ → Aだけが余白を全取り</div>
+            <div class="flex-box">
+              <div class="fi fi-a" style="flex-grow:1; justify-content:center; flex-direction:column; text-align:center;">A<br><span style="font-size:9px;">grow:1</span></div>
+              <div class="fi fi-b" style="flex-grow:0;">B<br><span style="font-size:9px;">grow:0</span></div>
+              <div class="fi fi-c" style="flex-grow:0;">C<br><span style="font-size:9px;">grow:0</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* flex-grow の仕組み */</span>
+<span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+}
+
+<span class="comment">/* デフォルト：伸びない */</span>
+<span class="sel">.item</span> { <span class="prop">flex-grow</span>: <span class="val">0</span>; }
+
+<span class="comment">/* 全員等分 */</span>
+<span class="sel">.item</span> { <span class="prop">flex-grow</span>: <span class="val">1</span>; }
+
+<span class="comment">/* 2:1:1 の比率で分配 */</span>
+<span class="sel">.item-a</span> { <span class="prop">flex-grow</span>: <span class="val">2</span>; }
+<span class="sel">.item-b</span> { <span class="prop">flex-grow</span>: <span class="val">1</span>; }
+<span class="sel">.item-c</span> { <span class="prop">flex-grow</span>: <span class="val">1</span>; }
+
+<span class="comment">/* ━━ よくある実用パターン ━━━━━━━━
+   サイドバー固定 / メイン伸縮      */</span>
+<span class="sel">.sidebar</span> {
+  <span class="prop">flex-grow</span>: <span class="val">0</span>;
+  <span class="prop">width</span>: <span class="val">240px</span>;  <span class="comment">/* 固定幅 */</span>
+}
+<span class="sel">.main</span> {
+  <span class="prop">flex-grow</span>: <span class="val">1</span>;  <span class="comment">/* 残りを全部 */</span>
+}
+
+<span class="comment">/* ナビリンクが右端まで伸びる検索バー */</span>
+<span class="sel">.search-input</span> {
+  <span class="prop">flex-grow</span>: <span class="val">1</span>;
+  <span class="prop">min-width</span>: <span class="val">0</span>;  <span class="comment">/* 後述の罠対策 */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 02 flex-shrink ─── -->
+  <section id="flex-shrink">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>flex-shrink — はみ出た分を縮む</h2>
+      <span class="en">FLEX SHRINK</span>
+    </div>
+    <p class="pattern-desc">
+      <code>flex-shrink</code>は<code>flex-grow</code>の逆で、<b>コンテナをはみ出した時に縮む比率</b>を指定します。
+      デフォルトは<code>1</code>（縮む）。<code>0</code>にすると「絶対に縮まない＝固定幅」になります。
+      「アイコンが潰れる！」を防ぐのに必須の知識です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">flex-shrink</span>
+        <span class="tag-desc">はみ出た時の縮み比率 / デフォルト1（縮む）</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// shrink:0 vs shrink:1（幅の狭いコンテナで比較）</div>
+
+          <div class="minw-row">
+            <div class="lbl lbl-ng">❌ shrink:1（デフォルト）→ 全員が縮んで崩れる</div>
+            <div class="shrink-container" style="border-color:#c44f4f;">
+              <div class="fi fi-warn" style="flex-shrink:1; width:80px; font-size:9px;">ロゴ<br>shrink:1</div>
+              <div class="fi fi-warn" style="flex-shrink:1; width:80px; font-size:9px;">長いテキスト<br>shrink:1</div>
+              <div class="fi fi-warn" style="flex-shrink:1; width:80px; font-size:9px;">ボタン<br>shrink:1</div>
+            </div>
+          </div>
+
+          <div class="minw-row">
+            <div class="lbl lbl-ok">✅ ロゴだけ shrink:0 → ロゴが潰れない</div>
+            <div class="shrink-container">
+              <div class="fi fi-a" style="flex-shrink:0; width:56px; font-size:9px; text-align:center;">ロゴ<br>shrink:0</div>
+              <div class="fi fi-b" style="flex-shrink:1; flex:1; font-size:9px; text-align:center; min-width:0;">伸縮テキスト<br>shrink:1</div>
+              <div class="fi fi-a" style="flex-shrink:0; width:44px; font-size:9px; text-align:center;">CTA<br>shrink:0</div>
+            </div>
+          </div>
+
+          <div style="margin-top:10px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // 「潰れてほしくない要素」に shrink:0 を付ける
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* flex-shrink の仕組み */</span>
+
+<span class="comment">/* デフォルト：縮む（はみ出たら圧縮） */</span>
+<span class="sel">.item</span> { <span class="prop">flex-shrink</span>: <span class="val">1</span>; }
+
+<span class="comment">/* 縮まない（固定サイズ確保）*/</span>
+<span class="sel">.item</span> { <span class="prop">flex-shrink</span>: <span class="val">0</span>; }
+
+<span class="comment">/* ━━ 実用パターン ━━━━━━━━━━━━━━━
+   ナビバー：ロゴは固定、検索は伸縮  */</span>
+<span class="sel">.nav-logo</span> {
+  <span class="prop">flex-shrink</span>: <span class="val">0</span>; <span class="comment">/* 絶対縮まない */</span>
+  <span class="prop">width</span>: <span class="val">120px</span>;
+}
+<span class="sel">.nav-search</span> {
+  <span class="prop">flex-grow</span>:   <span class="val">1</span>; <span class="comment">/* 余白を埋める */</span>
+  <span class="prop">flex-shrink</span>: <span class="val">1</span>; <span class="comment">/* 縮んでもOK */</span>
+  <span class="prop">min-width</span>:   <span class="val">0</span>; <span class="comment">/* 後述の罠対策 */</span>
+}
+<span class="sel">.nav-btn</span> {
+  <span class="prop">flex-shrink</span>: <span class="val">0</span>; <span class="comment">/* ボタンも固定 */</span>
+}
+
+<span class="comment">/* アイコン・アバター・バッジは
+   shrink:0 が鉄則 */</span>
+<span class="sel">.avatar</span> {
+  <span class="prop">flex-shrink</span>: <span class="val">0</span>;
+  <span class="prop">width</span>:  <span class="val">40px</span>;
+  <span class="prop">height</span>: <span class="val">40px</span>;
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 03 flex-basis ─── -->
+  <section id="flex-basis">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>flex-basis — 伸縮前の基準サイズ</h2>
+      <span class="en">FLEX BASIS</span>
+    </div>
+    <p class="pattern-desc">
+      <code>flex-basis</code>はgrow/shrinkが働く<b>前の基準サイズ</b>です。
+      <code>width</code>と似ていますが、flexの文脈では<code>flex-basis</code>が優先されます。
+      <code>auto</code>（デフォルト）はコンテンツ幅を基準にします。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">flex-basis</span>
+        <span class="tag-desc">grow/shrink の起点となるサイズ / width より優先</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// basis:auto vs basis:0 vs basis:固定値</div>
+
+          <div class="basis-row">
+            <div class="lbl">basis:auto（デフォルト）→ コンテンツ幅が基準</div>
+            <div class="flex-box">
+              <div class="fi fi-a" style="flex:1 1 auto; text-align:center; flex-direction:column;">短い<br><span style="font-size:9px;">basis:auto</span></div>
+              <div class="fi fi-b" style="flex:1 1 auto; text-align:center; flex-direction:column;">少し長めテキスト<br><span style="font-size:9px;">basis:auto</span></div>
+              <div class="fi fi-c" style="flex:1 1 auto; text-align:center; flex-direction:column;">中<br><span style="font-size:9px;">basis:auto</span></div>
+            </div>
+          </div>
+
+          <div class="basis-row">
+            <div class="lbl lbl-ok">basis:0 + grow:1 → 余白を完全均等に分配</div>
+            <div class="flex-box">
+              <div class="fi fi-a" style="flex:1 1 0; text-align:center; flex-direction:column;">短い<br><span style="font-size:9px;">basis:0</span></div>
+              <div class="fi fi-b" style="flex:1 1 0; text-align:center; flex-direction:column;">少し長めテキスト<br><span style="font-size:9px;">basis:0</span></div>
+              <div class="fi fi-c" style="flex:1 1 0; text-align:center; flex-direction:column;">中<br><span style="font-size:9px;">basis:0</span></div>
+            </div>
+          </div>
+
+          <div class="basis-row">
+            <div class="lbl lbl-ok">basis:120px → 全員120pxから伸縮スタート</div>
+            <div class="flex-box">
+              <div class="fi fi-a" style="flex:1 1 120px; text-align:center; flex-direction:column; font-size:10px;">A<br><span style="font-size:9px;">basis:120px</span></div>
+              <div class="fi fi-b" style="flex:1 1 120px; text-align:center; flex-direction:column; font-size:10px;">B<br><span style="font-size:9px;">basis:120px</span></div>
+            </div>
+          </div>
+
+          <div style="margin-top:6px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // basis:0はコンテンツ幅を無視して均等にできる
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* flex-basis の値の種類 */</span>
+
+<span class="comment">/* コンテンツ幅を基準（デフォルト）*/</span>
+<span class="sel">.item</span> { <span class="prop">flex-basis</span>: <span class="val">auto</span>; }
+
+<span class="comment">/* 幅ゼロから伸縮（完全均等に最適）*/</span>
+<span class="sel">.item</span> { <span class="prop">flex-basis</span>: <span class="val">0</span>; }
+
+<span class="comment">/* 固定の基準幅を持たせる */</span>
+<span class="sel">.item</span> { <span class="prop">flex-basis</span>: <span class="val">200px</span>; }
+<span class="sel">.item</span> { <span class="prop">flex-basis</span>: <span class="val">30%</span>; }
+
+<span class="comment">/* ━━ basis vs width ━━━━━━━━━━━━━━
+  flex環境では flex-basis が width より
+  優先される（basisがautoならwidthを参照）
+
+  flex-basis: auto  → width に従う
+  flex-basis: 0     → コンテンツ幅無視
+  flex-basis: 200px → これが基準幅
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */</span>
+
+<span class="comment">/* 完全均等カラムの鉄板 */</span>
+<span class="sel">.col</span> {
+  <span class="prop">flex</span>: <span class="val">1 1 0</span>;
+  <span class="comment">/* grow:1 shrink:1 basis:0 */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 04 flex ショートハンド ─── -->
+  <section id="flex-shorthand">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>flex ショートハンド早見表</h2>
+      <span class="en">FLEX SHORTHAND</span>
+    </div>
+    <p class="pattern-desc">
+      <code>flex</code>プロパティは<code>flex-grow</code>・<code>flex-shrink</code>・<code>flex-basis</code>の3つをまとめた<b>ショートハンド</b>です。
+      現場では個別指定より<b>ショートハンドの定番値</b>を覚えて使う方が実用的です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">flex: grow shrink basis</span>
+        <span class="tag-desc">3つをまとめて指定 / 定番の書き方を覚える</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel" style="padding:16px;">
+          <div class="panel-head">// よく使う定番値と意味</div>
+          <table class="sh-table">
+            <tr>
+              <th>書き方</th>
+              <th>展開後</th>
+              <th>使いどころ</th>
+            </tr>
+            <tr>
+              <td><span class="mono">flex: 1</span></td>
+              <td><span class="mono">1 1 0</span></td>
+              <td>均等伸縮。最もよく使う ★★★</td>
+            </tr>
+            <tr>
+              <td><span class="mono">flex: auto</span></td>
+              <td><span class="mono">1 1 auto</span></td>
+              <td>コンテンツ幅を保ちつつ伸縮</td>
+            </tr>
+            <tr>
+              <td><span class="mono">flex: none</span></td>
+              <td><span class="mono">0 0 auto</span></td>
+              <td>伸縮しない完全固定 ★★</td>
+            </tr>
+            <tr>
+              <td><span class="mono">flex: 0 0 200px</span></td>
+              <td><span class="mono">0 0 200px</span></td>
+              <td>200px固定（サイドバー等）</td>
+            </tr>
+            <tr>
+              <td><span class="mono">flex: 2</span></td>
+              <td><span class="mono">2 1 0</span></td>
+              <td>他の2倍の幅を取る</td>
+            </tr>
+          </table>
+          <div style="margin-top:12px; display:flex; gap:6px;">
+            <div class="flex-box" style="flex:1;">
+              <div class="fi fi-a" style="flex:1; flex-direction:column; text-align:center; font-size:9px;">flex:1</div>
+              <div class="fi fi-b" style="flex:none; width:54px; flex-direction:column; text-align:center; font-size:9px;">flex:none</div>
+              <div class="fi fi-c" style="flex:2; flex-direction:column; text-align:center; font-size:9px;">flex:2</div>
+            </div>
+          </div>
+          <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--accent); margin-top:5px;">
+            flex:1 / flex:none（固定）/ flex:2（倍幅）
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* flex ショートハンドの定番 */</span>
+
+<span class="comment">/* ★★★ 均等伸縮 */</span>
+<span class="sel">.col</span> { <span class="prop">flex</span>: <span class="val">1</span>; }
+<span class="comment">/* = flex-grow:1 shrink:1 basis:0 */</span>
+
+<span class="comment">/* 伸縮しない固定 */</span>
+<span class="sel">.icon</span> { <span class="prop">flex</span>: <span class="val">none</span>; }
+<span class="comment">/* = 0 0 auto */</span>
+
+<span class="comment">/* 固定幅（サイドバー等）*/</span>
+<span class="sel">.sidebar</span> {
+  <span class="prop">flex</span>: <span class="val">0 0 240px</span>;
+  <span class="comment">/* = grow:0 shrink:0 basis:240px */</span>
+}
+
+<span class="comment">/* メインは残りを全部 */</span>
+<span class="sel">.main</span> {
+  <span class="prop">flex</span>: <span class="val">1</span>;
+  <span class="prop">min-width</span>: <span class="val">0</span>; <span class="comment">/* 後述の罠対策 */</span>
+}
+
+<span class="comment">/* 3カラム均等レイアウト */</span>
+<span class="sel">.col-3</span> > <span class="sel">*</span> {
+  <span class="prop">flex</span>: <span class="val">1 1 0</span>;
+  <span class="comment">/* basis:0でコンテンツ幅に左右されない */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip">
+      <strong>TIP —</strong>
+      現場で最もよく見るのは<b><code>flex: 1</code>（均等伸縮）</b>と<b><code>flex: none</code>（固定）</b>の組み合わせです。
+      「残りの幅を全部くれ」→<code>flex: 1</code>、「絶対に縮まないでくれ」→<code>flex: none</code>、この2つを使い分けるだけで8割のケースに対応できます。
+    </div>
+  </section>
+
+  <!-- ─── 05 flex-wrap ─── -->
+  <section id="flex-wrap">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>flex-wrap — 折り返し</h2>
+      <span class="en">FLEX WRAP</span>
+    </div>
+    <p class="pattern-desc">
+      Flexboxはデフォルトで<b>「絶対に1行に収めようとする」</b>性質があります。
+      <code>flex-wrap: wrap</code>を指定すると、コンテナからはみ出た要素が次の行に折り返します。
+      レスポンシブなカード並びの基本テクニックです。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">flex-wrap</span>
+        <span class="tag-desc">nowrap（デフォルト）/ wrap / wrap-reverse</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// nowrap vs wrap の違い（幅200pxのコンテナ）</div>
+
+          <div style="margin-bottom:14px;">
+            <div class="lbl lbl-ng">❌ nowrap（デフォルト）→ 全員を1行に押し込む</div>
+            <div class="nowrap-demo">
+              <div class="fi fi-warn" style="min-width:55px; font-size:9px; text-align:center;">A</div>
+              <div class="fi fi-warn" style="min-width:55px; font-size:9px; text-align:center;">B</div>
+              <div class="fi fi-warn" style="min-width:55px; font-size:9px; text-align:center;">C</div>
+              <div class="fi fi-warn" style="min-width:55px; font-size:9px; text-align:center;">D</div>
+            </div>
+            <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:#c44f4f; margin-top:3px;">↑ はみ出ても無理やり1行</div>
+          </div>
+
+          <div>
+            <div class="lbl lbl-ok">✅ wrap → はみ出たら次の行に折り返す</div>
+            <div class="wrap-demo">
+              <div class="fi fi-a" style="min-width:55px; font-size:9px; text-align:center;">A</div>
+              <div class="fi fi-b" style="min-width:55px; font-size:9px; text-align:center;">B</div>
+              <div class="fi fi-c" style="min-width:55px; font-size:9px; text-align:center;">C</div>
+              <div class="fi fi-a" style="min-width:55px; font-size:9px; text-align:center;">D</div>
+            </div>
+            <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--accent); margin-top:3px;">↑ 自然に折り返してくれる</div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* flex-wrap の値 */</span>
+<span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+
+  <span class="comment">/* 1行に押し込む（デフォルト）*/</span>
+  <span class="prop">flex-wrap</span>: <span class="val">nowrap</span>;
+
+  <span class="comment">/* 折り返しあり ★ */</span>
+  <span class="prop">flex-wrap</span>: <span class="val">wrap</span>;
+
+  <span class="comment">/* 折り返し（逆順）*/</span>
+  <span class="prop">flex-wrap</span>: <span class="val">wrap-reverse</span>;
+}
+
+<span class="comment">/* ━━ レスポンシブカードの鉄板 ━━━━━
+  flex-wrap + flex-basis で
+  「幅が広ければ横並び、狭ければ縦積み」
+  をメディアクエリなしで実現できる    */</span>
+<span class="sel">.cards</span> {
+  <span class="prop">display</span>:   <span class="val">flex</span>;
+  <span class="prop">flex-wrap</span>: <span class="val">wrap</span>;
+  <span class="prop">gap</span>:       <span class="val">16px</span>;
+}
+<span class="sel">.card</span> {
+  <span class="prop">flex</span>: <span class="val">1 1 280px</span>;
+  <span class="comment">/* 280px以上なら横並び */</span>
+  <span class="comment">/* 幅が足りなくなったら折り返す */</span>
+}
+
+<span class="comment">/* align-content で折り返し後の
+   行間も調整できる */</span>
+<span class="sel">.container</span> {
+  <span class="prop">align-content</span>: <span class="val">flex-start</span>;
+  <span class="comment">/* center / space-between なども */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip">
+      <strong>POINT —</strong>
+      <code>flex: 1 1 280px</code>（basis:280px）＋<code>flex-wrap: wrap</code>は<b>「コンテナが広い時は横並び、狭い時は縦積み」を自動で切り替える</b>レスポンシブの鉄板です。メディアクエリを書かなくてもカードグリッドが完成します。実際に次のセクションで使います。
+    </div>
+  </section>
+
+  <!-- ─── 06 実践①ナビバー ─── -->
+  <section id="nav-pattern">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>実践パターン① ナビゲーションバー</h2>
+      <span class="en">NAVBAR PATTERN</span>
+    </div>
+    <p class="pattern-desc">
+      Flexboxが最も輝く場面の一つがナビバーです。
+      <b>「ロゴ左端・リンク中央・CTAボタン右端」</b>という定番レイアウトがわずか数行で完成します。
+      grow/shrink/justify-content の組み合わせを実例で確認しましょう。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">navbar</span>
+        <span class="tag-desc">space-between + align-items:center の定番構成</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 実際に動くナビバープレビュー</div>
+          <!-- 実際のナビバーデモ -->
+          <nav class="nav-demo">
+            <div class="nav-logo">⊞ BRAND</div>
+            <ul class="nav-links">
+              <li><a href="#">機能</a></li>
+              <li><a href="#">料金</a></li>
+              <li><a href="#">ドキュメント</a></li>
+            </ul>
+            <div class="nav-cta">無料で始める</div>
+          </nav>
+          <div style="margin-top:12px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // ロゴ左端 / リンク中央 / CTA右端
+          </div>
+
+          <div style="margin-top:14px; font-size:11px; line-height:1.6;">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent-2); margin-bottom:6px; font-weight:600;">構造の解説</div>
+            <div style="background:rgba(255,255,255,0.6); border:1px solid var(--line); padding:8px; border-radius:2px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <div style="background:rgba(61,86,190,0.2); border:1px solid var(--accent-2); padding:3px 8px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); flex-shrink:0;">flex-shrink:0</div>
+                <span style="font-size:11px; color:var(--muted);">ロゴ → 絶対に縮まない</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <div style="background:rgba(61,86,190,0.2); border:1px solid var(--accent-2); padding:3px 8px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); flex-shrink:0;">space-between</div>
+                <span style="font-size:11px; color:var(--muted);">3要素を両端+中央に配置</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div style="background:rgba(61,86,190,0.2); border:1px solid var(--accent-2); padding:3px 8px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); flex-shrink:0;">align-items:center</div>
+                <span style="font-size:11px; color:var(--muted);">全要素を縦中央に揃える</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* ── ナビバーの定番 CSS ── */</span>
+<span class="sel">nav</span> {
+  <span class="prop">display</span>:         <span class="val">flex</span>;
+  <span class="prop">justify-content</span>: <span class="val">space-between</span>;
+  <span class="prop">align-items</span>:     <span class="val">center</span>;
+  <span class="prop">padding</span>:         <span class="val">0 24px</span>;
+  <span class="prop">height</span>:          <span class="val">60px</span>;
+  <span class="prop">background</span>:      <span class="val">#111</span>;
+}
+
+<span class="comment">/* ロゴ：絶対縮まない */</span>
+<span class="sel">.nav-logo</span> {
+  <span class="prop">flex-shrink</span>: <span class="val">0</span>;
+}
+
+<span class="comment">/* リンクリスト：それ自体もflex */</span>
+<span class="sel">.nav-links</span> {
+  <span class="prop">display</span>:     <span class="val">flex</span>;
+  <span class="prop">align-items</span>: <span class="val">center</span>;
+  <span class="prop">gap</span>:         <span class="val">24px</span>;
+  <span class="prop">list-style</span>:  <span class="val">none</span>;
+}
+
+<span class="comment">/* CTAボタン：縮まない */</span>
+<span class="sel">.nav-cta</span> {
+  <span class="prop">flex-shrink</span>: <span class="val">0</span>;
+}
+
+<span class="comment">/* ─ 検索バー入りバージョン ─ */</span>
+<span class="sel">nav</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">gap</span>:     <span class="val">16px</span>;
+}
+<span class="sel">.search</span> {
+  <span class="prop">flex</span>:      <span class="val">1</span>;    <span class="comment">/* 残りを全部 */</span>
+  <span class="prop">min-width</span>: <span class="val">0</span>;   <span class="comment">/* 縮み対策 */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 07 実践②カードグリッド ─── -->
+  <section id="card-pattern">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2>実践パターン② カードグリッド</h2>
+      <span class="en">CARD GRID PATTERN</span>
+    </div>
+    <p class="pattern-desc">
+      <code>flex-wrap</code>と<code>flex-basis</code>を組み合わせると、<b>レスポンシブなカード並び</b>がメディアクエリなしで完成します。
+      さらにカード内でも<code>flex-direction: column</code>を使うと「ボタンを常に下端に固定」できます。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">card-grid</span>
+        <span class="tag-desc">flex-wrap:wrap + flex:1 1 280px でレスポンシブ対応</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// カードグリッド（ボタン下端固定つき）</div>
+          <div class="card-grid-demo">
+            <div class="card-demo-item">
+              <div class="card-demo-img">IMAGE</div>
+              <div class="card-demo-title">カードA</div>
+              <div class="card-demo-text">短めの説明文です。</div>
+              <div class="card-demo-btn">詳しく見る →</div>
+            </div>
+            <div class="card-demo-item">
+              <div class="card-demo-img">IMAGE</div>
+              <div class="card-demo-title">カードB</div>
+              <div class="card-demo-text">こちらは少し長めの説明文が入っても大丈夫です。ボタンは常に下端に揃います。</div>
+              <div class="card-demo-btn">詳しく見る →</div>
+            </div>
+            <div class="card-demo-item">
+              <div class="card-demo-img">IMAGE</div>
+              <div class="card-demo-title">カードC</div>
+              <div class="card-demo-text">説明文。</div>
+              <div class="card-demo-btn">詳しく見る →</div>
+            </div>
+          </div>
+          <div style="margin-top:10px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // ボタンが全カードで下端に揃っている
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* ── カードグリッドのCSS ── */</span>
+<span class="sel">.card-grid</span> {
+  <span class="prop">display</span>:   <span class="val">flex</span>;
+  <span class="prop">flex-wrap</span>: <span class="val">wrap</span>;
+  <span class="prop">gap</span>:       <span class="val">20px</span>;
+}
+
+<span class="sel">.card</span> {
+  <span class="prop">flex</span>:    <span class="val">1 1 280px</span>; <span class="comment">/* 280px基準で伸縮 */</span>
+  <span class="prop">max-width</span>: <span class="val">360px</span>;   <span class="comment">/* 広がりすぎ防止 */</span>
+
+  <span class="comment">/* ↓ カード内もflex（縦方向）*/</span>
+  <span class="prop">display</span>:        <span class="val">flex</span>;
+  <span class="prop">flex-direction</span>: <span class="val">column</span>;
+  <span class="prop">gap</span>:            <span class="val">8px</span>;
+}
+
+<span class="comment">/* 本文が伸びてボタンを下に押す */</span>
+<span class="sel">.card-body</span> {
+  <span class="prop">flex</span>: <span class="val">1</span>; <span class="comment">/* 余った空間を全部受け取る */</span>
+}
+
+<span class="comment">/* ボタンは常にカード下端 */</span>
+<span class="sel">.card-btn</span> {
+  <span class="prop">align-self</span>: <span class="val">flex-end</span>;
+  <span class="prop">margin-top</span>: <span class="val">auto</span>; <span class="comment">/* さらに確実に下へ */</span>
+}
+
+<span class="comment">/* レスポンシブ動作：
+  画面幅が広い → 横3列並び
+  狭くなる    → 2列 → 1列
+  ← メディアクエリ不要！ */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 08 ハマりどころ：min-width ─── -->
+  <section id="min-width">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2>ハマりどころ：min-width: 0 問題</h2>
+      <span class="en">MIN-WIDTH TRAP</span>
+    </div>
+    <p class="pattern-desc">
+      Flexアイテムには<b>デフォルトで<code>min-width: auto</code>（コンテンツが収まる最小幅）</b>が設定されています。
+      これが原因で「<code>flex: 1</code>を指定してもはみ出る」「テキストが切れない」という問題が起きます。
+      解決策は<b><code>min-width: 0</code>を追加するだけ</b>です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">min-width: 0</span>
+        <span class="tag-desc">flex:1 なのに縮まない → min-width:0 で解決 ★★★</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// min-width の有無で変わる動作</div>
+
+          <div class="minw-row">
+            <div class="lbl lbl-ng">❌ min-width指定なし → テキストがはみ出る</div>
+            <div class="minw-container" style="border-color:#c44f4f;">
+              <div class="minw-fixed">アイコン</div>
+              <div class="minw-text-bad" style="flex:1;">とても長いテキストがここに入るとはみ出してしまう問題</div>
+            </div>
+          </div>
+
+          <div class="minw-row">
+            <div class="lbl lbl-ok">✅ min-width:0 追加 → 正常に縮んで省略</div>
+            <div class="minw-container">
+              <div class="minw-fixed">アイコン</div>
+              <div class="minw-text-ok">とても長いテキストがここに入るとはみ出してしまう問題</div>
+            </div>
+          </div>
+
+          <div style="margin-top:10px; background:rgba(61,86,190,0.06); border:1px solid var(--accent-3); padding:8px 12px; border-radius:2px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--accent);">
+            min-width: 0 → 縮める許可を与える<br>
+            overflow: hidden → はみ出しを隠す<br>
+            text-overflow: ellipsis → 「...」で省略
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* ★★★ flex:1 なのに縮まない罠 ★★★ */</span>
+
+<span class="comment">/* NG: こうなりがち */</span>
+<span class="sel">.text-col</span> {
+  <span class="prop">flex</span>: <span class="val">1</span>;
+  <span class="comment">/* ← min-width: auto が残っている */</span>
+  <span class="comment">/* ← コンテンツ幅より縮めない    */</span>
+}
+
+<span class="comment">/* ✅ OK: min-width:0 を追加 */</span>
+<span class="sel">.text-col</span> {
+  <span class="prop">flex</span>:      <span class="val">1</span>;
+  <span class="prop">min-width</span>: <span class="val">0</span>; <span class="comment">/* ← これだけ！*/</span>
+}
+
+<span class="comment">/* テキスト省略もセットで */</span>
+<span class="sel">.text-ellipsis</span> {
+  <span class="prop">flex</span>:          <span class="val">1</span>;
+  <span class="prop">min-width</span>:     <span class="val">0</span>;
+  <span class="prop">overflow</span>:      <span class="val">hidden</span>;
+  <span class="prop">white-space</span>:   <span class="val">nowrap</span>;
+  <span class="prop">text-overflow</span>: <span class="val">ellipsis</span>;
+}
+
+<span class="comment">/* min-width:0 を使う典型ケース */</span>
+<span class="comment">/* ・flex:1 なのにはみ出る      */</span>
+<span class="comment">/* ・コードブロックが親を突き破る*/</span>
+<span class="comment">/* ・長いURLが折り返さない      */</span>
+<span class="comment">/* ・画像や表が縮まない         */</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip warn">
+      <strong>ハマりどころ ★★★ —</strong>
+      「<b><code>flex: 1</code>を書いたのに要素が縮まず親からはみ出す</b>」——これはFlexboxで一番多い詰まりポイントです。<code>min-width: auto</code>というデフォルト値のせいで、コンテンツ幅より小さくなれない状態になっています。困ったらとりあえず<code>min-width: 0</code>を試してください。これ一発で解決することが非常に多いです。
+    </div>
+  </section>
+
+  <!-- ─── NEXT STEP ─── -->
+  <div class="tip" style="margin-top: 48px;">
+    <strong>NEXT STEP — Vol.4 へ</strong>
+    Flexboxが完全に使いこなせるようになりました。
+    次のVol.4では<b>Grid基礎編</b>に入ります。
+    FlexboxはI次元（横か縦の1方向）でしたが、Gridは<b>行と列の2次元を同時にコントロール</b>できます。
+    <code>grid-template-columns</code>・<code>fr単位</code>・<code>repeat()</code>を覚えるだけで
+    複雑なページレイアウトが一気に組めるようになります。
+    <b>「ヘッダー・サイドバー・メイン・フッター」の4分割もGridなら5行で完成します。</b>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════ -->
+<footer class="page-footer">
+  <span>CSS LAYOUT REFERENCE — Vol.3 Flexbox応用編</span>
+  <span>BLUEPRINT SERIES / 全6巻</span>
+</footer>
+
+</body>
+</html>

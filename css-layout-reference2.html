@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSSレイアウト Flexbox基礎編 Vol.2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:       #141933;
+      --paper:     #eceff9;
+      --paper-2:   #dae0f5;
+      --accent:    #3449b0;
+      --accent-2:  #546ad4;
+      --accent-3:  #8298e8;
+      --muted:     #5a6485;
+      --line:      #b2bce0;
+      --code-bg:   #0e1326;
+      --code-text: #d4dbff;
+      --panel-bg:  #cfd8f0;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--ink);
+      background: var(--paper);
+    }
+
+    /* ─── PAGE HEADER ─── */
+    .page-header {
+      position: relative;
+      overflow: hidden;
+      padding: 48px 56px 40px;
+      border-bottom: 2px solid var(--ink);
+      background: var(--paper);
+    }
+    .page-header::before {
+      content: '⊟';
+      position: absolute;
+      right: 36px;
+      top: -10px;
+      font-size: 220px;
+      color: var(--ink);
+      opacity: 0.07;
+      line-height: 1;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .page-header > * { position: relative; z-index: 1; }
+    .header-tags { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+    .series-tag {
+      background: var(--ink);
+      color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      letter-spacing: 0.08em;
+    }
+    .vol-tag {
+      background: var(--accent);
+      color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      letter-spacing: 0.06em;
+    }
+    .page-header h1 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: 0.02em;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .lead {
+      max-width: 640px;
+      font-size: 15px;
+      line-height: 1.9;
+      color: var(--ink);
+    }
+
+    /* ─── TOC ─── */
+    .toc {
+      background: var(--paper-2);
+      padding: 18px 56px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 0;
+      list-style: none;
+    }
+    .toc li a {
+      display: inline-block;
+      padding: 4px 16px 4px 0;
+      font-size: 13px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .toc li a::before { content: '— '; color: var(--muted); }
+    .toc li a:hover { color: var(--accent-2); text-decoration: underline; }
+
+    /* ─── MAIN ─── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 56px 40px 80px;
+    }
+
+    /* ─── SECTION ─── */
+    section { margin-bottom: 64px; }
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 16px;
+    }
+    .section-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-2);
+      letter-spacing: 0.05em;
+    }
+    .section-header h2 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .en {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-left: auto;
+    }
+    .pattern-desc {
+      font-size: 14.5px;
+      line-height: 1.9;
+      max-width: 680px;
+      margin-bottom: 20px;
+    }
+
+    /* ─── DEMO CARD ─── */
+    .demo-card {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .demo-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--paper-2);
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .tag-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(52,73,176,0.1);
+      padding: 2px 8px;
+      border-radius: 2px;
+    }
+    .tag-desc { font-size: 12px; color: var(--muted); }
+    .demo-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ─── PANEL ─── */
+    .panel {
+      background: var(--panel-bg);
+      padding: 24px;
+      border-right: 1px solid var(--line);
+    }
+    .panel-head {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      letter-spacing: 0.06em;
+    }
+
+    /* ─── CODE PANEL ─── */
+    .code {
+      background: var(--code-bg);
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.75;
+      color: var(--code-text);
+      overflow-x: auto;
+    }
+    .code pre { white-space: pre; }
+    .kw      { color: #ffc88a; }
+    .type    { color: #c2a3ff; }
+    .fn      { color: #a3c9ff; }
+    .str     { color: #b5e8b0; }
+    .num     { color: #f7a8d8; }
+    .comment { color: #6070aa; }
+    .prop    { color: #a3c9ff; }
+    .val     { color: #b5e8b0; }
+    .sel     { color: #f7c08a; }
+
+    /* ─── TIP ─── */
+    .tip {
+      border-left: 3px solid var(--accent);
+      background: rgba(52,73,176,0.06);
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 14px;
+      line-height: 1.9;
+    }
+    .tip strong {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-2);
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+    .tip.warn { border-left-color: #c44f4f; background: rgba(196,79,79,0.05); }
+    .tip.warn strong { color: #c44f4f; }
+
+    /* ════════════════════════════
+       LIVE FLEX DEMOS
+    ════════════════════════════ */
+
+    /* 共通フレックスアイテム */
+    .fi {
+      background: rgba(52,73,176,0.18);
+      border: 1.5px solid var(--accent-2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 2px;
+      min-width: 36px;
+      min-height: 36px;
+      padding: 4px 8px;
+    }
+    .fi-sm { min-width: 28px; min-height: 28px; font-size: 10px; padding: 3px 6px; }
+    .fi-tall { min-height: 60px; }
+    .fi-taller { min-height: 80px; }
+    .fi-a { background: rgba(52,73,176,0.20); }
+    .fi-b { background: rgba(52,73,176,0.14); }
+    .fi-c { background: rgba(52,73,176,0.08); }
+
+    /* flex container */
+    .flex-demo {
+      background: rgba(255,255,255,0.55);
+      border: 1.5px dashed var(--accent-3);
+      padding: 8px;
+      border-radius: 2px;
+    }
+
+    /* before/after 比較 */
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .compare-col { }
+    .compare-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    /* justify-content grid */
+    .jc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .jc-item {
+      background: rgba(255,255,255,0.55);
+      border: 1px solid var(--line);
+      padding: 6px;
+      border-radius: 2px;
+    }
+    .jc-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--accent-2);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    /* align-items grid */
+    .ai-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .ai-item {
+      background: rgba(255,255,255,0.55);
+      border: 1px solid var(--line);
+      padding: 6px;
+      border-radius: 2px;
+    }
+    .ai-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--accent-2);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    /* direction demo */
+    .dir-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .dir-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--accent-2);
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    /* center demo */
+    .center-demo {
+      background: rgba(255,255,255,0.55);
+      border: 1.5px dashed var(--accent-3);
+      height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 2px;
+    }
+
+    /* align-self demo */
+    .as-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      background: rgba(255,255,255,0.55);
+      border: 1.5px dashed var(--accent-3);
+      padding: 8px;
+      height: 90px;
+      border-radius: 2px;
+    }
+    .as-self-end {
+      align-self: flex-end;
+    }
+    .as-self-center {
+      align-self: center;
+    }
+    .as-self-stretch {
+      align-self: stretch;
+      min-height: unset;
+    }
+
+    /* gap demo */
+    .gap-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .gap-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    /* shrink warn demo */
+    .shrink-demo {
+      background: rgba(255,255,255,0.55);
+      border: 1.5px dashed var(--accent-3);
+      padding: 8px;
+      display: flex;
+      gap: 4px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .shrink-item-warn {
+      background: rgba(196,79,79,0.15);
+      border: 1.5px solid #c44f4f;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #c44f4f;
+      padding: 4px 6px;
+      border-radius: 2px;
+      white-space: nowrap;
+      flex-shrink: 1;
+      min-width: 0;
+    }
+    .shrink-item-ok {
+      background: rgba(52,73,176,0.15);
+      border: 1.5px solid var(--accent-2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--accent);
+      padding: 4px 6px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 720px) {
+      .page-header { padding: 32px 24px 28px; }
+      .page-header h1 { font-size: 28px; }
+      .toc { padding: 14px 24px; }
+      main { padding: 32px 20px 60px; }
+      .demo-body { grid-template-columns: 1fr; }
+      .panel { border-right: none; border-bottom: 1px solid var(--line); }
+      .jc-grid { grid-template-columns: 1fr 1fr; }
+      .ai-grid { grid-template-columns: 1fr 1fr; }
+      .dir-grid { grid-template-columns: 1fr; }
+      .gap-compare { grid-template-columns: 1fr; }
+    }
+
+    /* ─── FOOTER ─── */
+    .page-footer {
+      border-top: 2px solid var(--ink);
+      padding: 20px 56px;
+      background: var(--paper-2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     PAGE HEADER
+════════════════════════════════════════════ -->
+<header class="page-header">
+  <div class="header-tags">
+    <span class="series-tag">CSS LAYOUT REFERENCE</span>
+    <span class="vol-tag">Vol.2</span>
+  </div>
+  <h1>Flexbox 基礎編</h1>
+  <div class="subtitle">FLEXBOX FUNDAMENTALS — BLUEPRINT SERIES</div>
+  <p class="lead">
+    <code>display: flex</code> の一行を書くだけで、子要素の並び方が劇的に変わります。
+    このVol.2では<b>Flexboxの核心となる4つのプロパティ</b>——
+    <code>flex-direction</code>・<code>justify-content</code>・<code>align-items</code>・<code>gap</code>——を徹底的に身につけます。
+    <b>この4つで実務の横並び問題の8割は解決できます。</b>
+  </p>
+</header>
+
+<!-- ═══════════════════════════════════════════
+     TOC
+════════════════════════════════════════════ -->
+<nav class="toc">
+  <ul>
+    <li><a href="#concept">Flexboxの親子関係</a></li>
+    <li><a href="#display-flex">display: flex</a></li>
+    <li><a href="#flex-direction">flex-direction</a></li>
+    <li><a href="#justify-content">justify-content</a></li>
+    <li><a href="#align-items">align-items</a></li>
+    <li><a href="#gap">gap</a></li>
+    <li><a href="#align-self">align-self</a></li>
+    <li><a href="#center">垂直中央寄せ定番パターン</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════ -->
+<main>
+
+  <!-- ─── 01 Flexboxの親子関係 ─── -->
+  <section id="concept">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>Flexboxの親子関係</h2>
+      <span class="en">FLEX CONTAINER &amp; ITEMS</span>
+    </div>
+    <p class="pattern-desc">
+      Flexboxには<b>必ず「親（コンテナ）」と「子（アイテム）」の関係</b>があります。
+      <code>display: flex</code>を指定するのは<b>親だけ</b>。すると直接の子要素が自動的にflexアイテムになります。
+      孫要素には影響しません。この「1段だけ」という感覚が超重要です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">flex-container + flex-items</span>
+        <span class="tag-desc">flexを書くのは親だけ / 子は自動でアイテムになる</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 親にdisplay:flex → 直接の子だけ並ぶ</div>
+          <!-- 通常フロー（before） -->
+          <div class="compare-label" style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#c44f4f; margin-bottom:5px;">❌ display:flex なし（通常フロー）</div>
+          <div style="background:rgba(255,255,255,0.55); border:1.5px dashed #c44f4f; padding:8px; margin-bottom:12px; border-radius:2px;">
+            <div class="fi fi-a" style="margin-bottom:4px;">A</div>
+            <div class="fi fi-b" style="margin-bottom:4px;">B</div>
+            <div class="fi fi-c">C</div>
+          </div>
+          <!-- Flexbox（after） -->
+          <div class="compare-label" style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); margin-bottom:5px;">✅ display:flex あり（横に並ぶ）</div>
+          <div class="flex-demo" style="display:flex; gap:6px;">
+            <div class="fi fi-a">A</div>
+            <div class="fi fi-b">B</div>
+            <div class="fi fi-c">C</div>
+          </div>
+          <div style="margin-top:10px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // 親に1行書くだけ。子は何も変えない。
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* HTML構造 */</span>
+<span class="comment">/* &lt;div class="container"&gt;  ← 親 */</span>
+<span class="comment">/*   &lt;div&gt;A&lt;/div&gt;  ← 子（アイテム）*/</span>
+<span class="comment">/*   &lt;div&gt;B&lt;/div&gt;  ← 子（アイテム）*/</span>
+<span class="comment">/*   &lt;div&gt;C&lt;/div&gt;  ← 子（アイテム）*/</span>
+<span class="comment">/* &lt;/div&gt;                          */</span>
+
+<span class="comment">/* CSSは親にだけ書く */</span>
+<span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;  <span class="comment">/* ← これだけ！ */</span>
+}
+
+<span class="comment">/* 子には何も書かなくていい */</span>
+<span class="comment">/* → 自動でflex-itemになる  */</span>
+
+<span class="comment">/* ━━ 重要な原則 ━━━━━━━━━━━━━━━━
+   flex が効くのは「直接の子」だけ。
+   孫要素には影響しない。
+   孫も並べたい → 子にもdisplay:flex
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */</span>
+
+<span class="comment">/* NG: 孫には効かない */</span>
+<span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+}
+<span class="comment">/* &lt;div&gt;  ← 子（✅ アイテム）</span>
+<span class="comment">     &lt;span&gt; ← 孫（❌ 影響なし） */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 02 display: flex ─── -->
+  <section id="display-flex">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>display: flex が変えるもの</h2>
+      <span class="en">DISPLAY FLEX</span>
+    </div>
+    <p class="pattern-desc">
+      <code>display: flex</code>を書いた瞬間、子要素には<b>3つの変化</b>が起きます。
+      横に並ぶだけでなく、子要素の幅や高さの振る舞いも変わります。この変化を知っておくと「なぜこうなるの？」が減ります。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">display: flex</span>
+        <span class="tag-desc">書いた瞬間に起きる3つの変化</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// flex指定後の子要素の変化</div>
+          <div style="font-size:12px; margin-bottom:14px;">
+            <div style="display:flex; gap:6px; margin-bottom:10px; background:rgba(255,255,255,0.5); border:1.5px dashed var(--accent-3); padding:8px; border-radius:2px;">
+              <div class="fi fi-a" style="width:auto;">幅が<br>コンテンツ分</div>
+              <div class="fi fi-b" style="width:auto;">B</div>
+              <div class="fi fi-c" style="width:auto;">コンテンツ幅</div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); margin-bottom:6px;">① 子の幅 → コンテンツ分だけに縮む</div>
+
+            <div style="display:flex; align-items:stretch; gap:6px; margin-bottom:10px; background:rgba(255,255,255,0.5); border:1.5px dashed var(--accent-3); padding:8px; border-radius:2px; height:70px;">
+              <div class="fi fi-a" style="flex:none; width:50px; height:auto; min-height:unset; align-self:stretch;">背高</div>
+              <div class="fi fi-b" style="flex:none; width:50px; height:auto; min-height:unset; align-self:stretch;">B</div>
+              <div class="fi fi-c" style="flex:none; width:50px; height:auto; min-height:unset; align-self:stretch;">C</div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); margin-bottom:6px;">② 子の高さ → 一番高い子に合わせて揃う</div>
+
+            <div style="display:flex; gap:6px; background:rgba(255,255,255,0.5); border:1.5px dashed var(--accent-3); padding:8px; border-radius:2px;">
+              <div class="fi fi-a">左端</div>
+              <div class="fi fi-b">から</div>
+              <div class="fi fi-c">並ぶ</div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); margin-top:6px;">③ 並び → デフォルトは左端から横一列</div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* display:flex の初期値を確認 */</span>
+<span class="sel">.container</span> {
+  <span class="prop">display</span>:         <span class="val">flex</span>;
+
+  <span class="comment">/* 以下は書かなくても同じ */</span>
+  <span class="prop">flex-direction</span>:  <span class="val">row</span>;       <span class="comment">/* 横並び */</span>
+  <span class="prop">flex-wrap</span>:       <span class="val">nowrap</span>;    <span class="comment">/* 折り返しなし */</span>
+  <span class="prop">justify-content</span>: <span class="val">flex-start</span>;<span class="comment">/* 左寄せ */</span>
+  <span class="prop">align-items</span>:     <span class="val">stretch</span>;   <span class="comment">/* 高さ揃え */</span>
+}
+
+<span class="comment">/* ← これが flex の「素の状態」 */</span>
+
+<span class="comment">/* 子要素に起きる変化まとめ */</span>
+<span class="comment">/* ① 幅が auto → コンテンツ分だけ */</span>
+<span class="comment">/* ② 高さが auto → コンテナ高さいっぱい */</span>
+<span class="comment">/*   （align-items: stretch のせい） */</span>
+<span class="comment">/* ③ 左端から横一列に並ぶ */</span>
+
+<span class="comment">/* block要素でも inline要素でも
+   flex-itemになると同じ動作 */</span>
+<span class="sel">span</span> {
+  <span class="comment">/* flexアイテムになったspanには
+     width/height が効く! */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip">
+      <strong>TIP —</strong>
+      flexアイテムには<code>display</code>の種類（block/inline等）に関係なく<b>width・heightが効きます</b>。Vol.1で「spanにwidthが効かない」と学びましたが、<code>display: flex</code>の親を持つspanなら幅指定が通ります。これは覚えておくと超便利です。
+    </div>
+  </section>
+
+  <!-- ─── 03 flex-direction ─── -->
+  <section id="flex-direction">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>flex-direction — 主軸の方向</h2>
+      <span class="en">FLEX DIRECTION</span>
+    </div>
+    <p class="pattern-desc">
+      Flexboxには<b>「主軸（main axis）」</b>という概念があります。アイテムが並ぶ方向です。
+      <code>flex-direction</code>でこの方向を変えられます。横か縦か、順方向か逆方向か——4択です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">flex-direction</span>
+        <span class="tag-desc">row / column / row-reverse / column-reverse</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 4方向の並び比較（実際のflex）</div>
+          <div class="dir-grid">
+            <div>
+              <div class="dir-label">row（デフォルト）</div>
+              <div class="flex-demo" style="display:flex; flex-direction:row; gap:5px;">
+                <div class="fi fi-sm fi-a">A</div>
+                <div class="fi fi-sm fi-b">B</div>
+                <div class="fi fi-sm fi-c">C</div>
+              </div>
+            </div>
+            <div>
+              <div class="dir-label">row-reverse</div>
+              <div class="flex-demo" style="display:flex; flex-direction:row-reverse; gap:5px;">
+                <div class="fi fi-sm fi-a">A</div>
+                <div class="fi fi-sm fi-b">B</div>
+                <div class="fi fi-sm fi-c">C</div>
+              </div>
+            </div>
+            <div>
+              <div class="dir-label">column</div>
+              <div class="flex-demo" style="display:flex; flex-direction:column; gap:5px;">
+                <div class="fi fi-sm fi-a">A</div>
+                <div class="fi fi-sm fi-b">B</div>
+                <div class="fi fi-sm fi-c">C</div>
+              </div>
+            </div>
+            <div>
+              <div class="dir-label">column-reverse</div>
+              <div class="flex-demo" style="display:flex; flex-direction:column-reverse; gap:5px;">
+                <div class="fi fi-sm fi-a">A</div>
+                <div class="fi fi-sm fi-b">B</div>
+                <div class="fi fi-sm fi-c">C</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:12px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // reverseはHTMLの順番を変えずに見た目を逆にする
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+
+  <span class="comment">/* 横並び（左→右）デフォルト */</span>
+  <span class="prop">flex-direction</span>: <span class="val">row</span>;
+
+  <span class="comment">/* 横並び（右→左）*/</span>
+  <span class="prop">flex-direction</span>: <span class="val">row-reverse</span>;
+
+  <span class="comment">/* 縦並び（上→下）*/</span>
+  <span class="prop">flex-direction</span>: <span class="val">column</span>;
+
+  <span class="comment">/* 縦並び（下→上）*/</span>
+  <span class="prop">flex-direction</span>: <span class="val">column-reverse</span>;
+}
+
+<span class="comment">/* ━━ 主軸と交差軸 ━━━━━━━━━━━━━━━━
+  direction: row の場合
+    主軸   → 水平方向（横）
+    交差軸 → 垂直方向（縦）
+
+  direction: column の場合
+    主軸   → 垂直方向（縦）
+    交差軸 → 水平方向（横）
+
+  justify-content は 主軸
+  align-items     は 交差軸
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip">
+      <strong>POINT —</strong>
+      <code>flex-direction: column</code>を使うと縦並びのflexになります。<b>スマホ対応でよく使う定番パターン</b>です。横並びのレイアウトをメディアクエリで<code>column</code>に切り替えるだけでレスポンシブが完成します。また<code>reverse</code>系はHTMLの順番を変えずに表示順を逆にできるので、アクセシビリティ的にも有用です。
+    </div>
+  </section>
+
+  <!-- ─── 04 justify-content ─── -->
+  <section id="justify-content">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>justify-content — 主軸の揃え方</h2>
+      <span class="en">JUSTIFY CONTENT</span>
+    </div>
+    <p class="pattern-desc">
+      <code>justify-content</code>は<b>主軸方向のアイテム配置</b>を制御します。
+      「左寄せ・右寄せ・中央・均等」など<b>6つの値</b>を覚えれば実務で困りません。
+      これだけで「ナビの間隔」「ボタンの位置」問題が全部解決します。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">justify-content</span>
+        <span class="tag-desc">主軸（flex-direction: row なら横方向）の配置</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 6種類の配置（実際のflex）</div>
+          <div class="jc-grid">
+            <div class="jc-item">
+              <div class="jc-label">flex-start（デフォルト）</div>
+              <div style="display:flex; justify-content:flex-start; gap:4px; background:rgba(52,73,176,0.05); padding:4px; border:1px solid var(--line);">
+                <div class="fi fi-sm fi-a">A</div>
+                <div class="fi fi-sm fi-b">B</div>
+                <div class="fi fi-sm fi-c">C</div>
+              </div>
+            </div>
+            <div class="jc-item">
+              <div class="jc-label">flex-end</div>
+              <div style="display:flex; justify-content:flex-end; gap:4px; background:rgba(52,73,176,0.05); padding:4px; border:1px solid var(--line);">
+                <div class="fi fi-sm fi-a">A</div>
+                <div class="fi fi-sm fi-b">B</div>
+                <div class="fi fi-sm fi-c">C</div>
+              </div>
+            </div>
+            <div class="jc-item">
+              <div class="jc-label">center</div>
+              <div style="display:flex; justify-content:center; gap:4px; background:rgba(52,73,176,0.05); padding:4px; border:1px solid var(--line);">
+                <div class="fi fi-sm fi-a">A</div>
+                <div class="fi fi-sm fi-b">B</div>
+                <div class="fi fi-sm fi-c">C</div>
+              </div>
+            </div>
+            <div class="jc-item">
+              <div class="jc-label">space-between</div>
+              <div style="display:flex; justify-content:space-between; background:rgba(52,73,176,0.05); padding:4px; border:1px solid var(--line);">
+                <div class="fi fi-sm fi-a">A</div>
+                <div class="fi fi-sm fi-b">B</div>
+                <div class="fi fi-sm fi-c">C</div>
+              </div>
+            </div>
+            <div class="jc-item">
+              <div class="jc-label">space-around</div>
+              <div style="display:flex; justify-content:space-around; background:rgba(52,73,176,0.05); padding:4px; border:1px solid var(--line);">
+                <div class="fi fi-sm fi-a">A</div>
+                <div class="fi fi-sm fi-b">B</div>
+                <div class="fi fi-sm fi-c">C</div>
+              </div>
+            </div>
+            <div class="jc-item">
+              <div class="jc-label">space-evenly</div>
+              <div style="display:flex; justify-content:space-evenly; background:rgba(52,73,176,0.05); padding:4px; border:1px solid var(--line);">
+                <div class="fi fi-sm fi-a">A</div>
+                <div class="fi fi-sm fi-b">B</div>
+                <div class="fi fi-sm fi-c">C</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+
+  <span class="comment">/* 左寄せ（デフォルト）*/</span>
+  <span class="prop">justify-content</span>: <span class="val">flex-start</span>;
+
+  <span class="comment">/* 右寄せ */</span>
+  <span class="prop">justify-content</span>: <span class="val">flex-end</span>;
+
+  <span class="comment">/* 中央寄せ */</span>
+  <span class="prop">justify-content</span>: <span class="val">center</span>;
+
+  <span class="comment">/* 両端を揃えて等間隔 ★★★ */</span>
+  <span class="prop">justify-content</span>: <span class="val">space-between</span>;
+
+  <span class="comment">/* 各アイテムの左右に等間隔 */</span>
+  <span class="prop">justify-content</span>: <span class="val">space-around</span>;
+
+  <span class="comment">/* 全ての隙間を完全均等 */</span>
+  <span class="prop">justify-content</span>: <span class="val">space-evenly</span>;
+}
+
+<span class="comment">/* 使用頻度ランキング */</span>
+<span class="comment">/* ★★★ space-between（ナビバーに定番）*/</span>
+<span class="comment">/* ★★★ center（中央寄せ）           */</span>
+<span class="comment">/* ★★  flex-end（右寄せ）           */</span>
+<span class="comment">/* ★   space-evenly（メニュー等）   */</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip">
+      <strong>POINT —</strong>
+      <code>space-between</code>は<b>ナビゲーションバーで最もよく使われる値</b>です。「ロゴを左端、メニューを右端」は<code>space-between</code>一発で完成します。<code>space-around</code>と<code>space-evenly</code>は似ていますが、端の隙間の計算方式が違います。端まできちんと揃えたいなら<code>space-between</code>が直感的です。
+    </div>
+  </section>
+
+  <!-- ─── 05 align-items ─── -->
+  <section id="align-items">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>align-items — 交差軸の揃え方</h2>
+      <span class="en">ALIGN ITEMS</span>
+    </div>
+    <p class="pattern-desc">
+      <code>align-items</code>は<b>交差軸（主軸と垂直の方向）のアイテム配置</b>です。
+      <code>flex-direction: row</code>なら縦方向の揃え方になります。
+      「高さの違う要素を縦方向にどう揃えるか」——これで<b>垂直中央寄せ</b>が実現できます。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">align-items</span>
+        <span class="tag-desc">交差軸（rowなら縦方向）の揃え方</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 5種類の縦揃え（実際のflex・高さ違いで確認）</div>
+          <div class="ai-grid">
+            <div class="ai-item">
+              <div class="ai-label">stretch（デフォルト）</div>
+              <div style="display:flex; align-items:stretch; gap:4px; background:rgba(52,73,176,0.05); padding:4px; height:70px; border:1px solid var(--line);">
+                <div class="fi fi-a" style="width:36px; min-height:unset; align-self:auto; flex:1;">A</div>
+                <div class="fi fi-b" style="width:36px; min-height:unset; align-self:auto; flex:1;">B</div>
+                <div class="fi fi-c" style="width:36px; min-height:unset; align-self:auto; flex:1;">C</div>
+              </div>
+            </div>
+            <div class="ai-item">
+              <div class="ai-label">flex-start</div>
+              <div style="display:flex; align-items:flex-start; gap:4px; background:rgba(52,73,176,0.05); padding:4px; height:70px; border:1px solid var(--line);">
+                <div class="fi fi-a fi-tall" style="width:36px; min-height:50px;">A</div>
+                <div class="fi fi-b" style="width:36px;">B</div>
+                <div class="fi fi-c" style="width:36px; min-height:40px;">C</div>
+              </div>
+            </div>
+            <div class="ai-item">
+              <div class="ai-label">flex-end</div>
+              <div style="display:flex; align-items:flex-end; gap:4px; background:rgba(52,73,176,0.05); padding:4px; height:70px; border:1px solid var(--line);">
+                <div class="fi fi-a fi-tall" style="width:36px; min-height:50px;">A</div>
+                <div class="fi fi-b" style="width:36px;">B</div>
+                <div class="fi fi-c" style="width:36px; min-height:40px;">C</div>
+              </div>
+            </div>
+            <div class="ai-item">
+              <div class="ai-label">center ★★★</div>
+              <div style="display:flex; align-items:center; gap:4px; background:rgba(52,73,176,0.05); padding:4px; height:70px; border:1px solid var(--line);">
+                <div class="fi fi-a fi-tall" style="width:36px; min-height:50px;">A</div>
+                <div class="fi fi-b" style="width:36px;">B</div>
+                <div class="fi fi-c" style="width:36px; min-height:40px;">C</div>
+              </div>
+            </div>
+            <div class="ai-item">
+              <div class="ai-label">baseline</div>
+              <div style="display:flex; align-items:baseline; gap:4px; background:rgba(52,73,176,0.05); padding:4px; height:70px; border:1px solid var(--line);">
+                <div class="fi fi-a" style="width:36px; font-size:16px;">A</div>
+                <div class="fi fi-b" style="width:36px; font-size:10px;">B</div>
+                <div class="fi fi-c" style="width:36px; font-size:13px;">C</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+
+  <span class="comment">/* 高さいっぱいに伸ばす（デフォルト）*/</span>
+  <span class="prop">align-items</span>: <span class="val">stretch</span>;
+
+  <span class="comment">/* 上揃え */</span>
+  <span class="prop">align-items</span>: <span class="val">flex-start</span>;
+
+  <span class="comment">/* 下揃え */</span>
+  <span class="prop">align-items</span>: <span class="val">flex-end</span>;
+
+  <span class="comment">/* 縦方向に中央揃え ★★★ */</span>
+  <span class="prop">align-items</span>: <span class="val">center</span>;
+
+  <span class="comment">/* テキストのベースラインで揃える */</span>
+  <span class="prop">align-items</span>: <span class="val">baseline</span>;
+}
+
+<span class="comment">/* ━━ justify と align の違い ━━━━━━━
+  justify-content → 主軸（横）方向
+  align-items     → 交差軸（縦）方向
+  
+  direction: row の場合
+  justify = 横  /  align = 縦
+  
+  direction: column の場合
+  justify = 縦  /  align = 横
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip warn">
+      <strong>ハマりどころ ★★★ —</strong>
+      <code>align-items: stretch</code>（デフォルト）は<b>子要素の高さをコンテナいっぱいに引き伸ばします</b>。「なぜかdivが異様に縦長になる！」と感じたらこれが原因です。<code>align-items: flex-start</code>を指定するとコンテンツの高さに戻ります。
+    </div>
+  </section>
+
+  <!-- ─── 06 gap ─── -->
+  <section id="gap">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>gap — アイテム間の余白</h2>
+      <span class="en">GAP</span>
+    </div>
+    <p class="pattern-desc">
+      <code>gap</code>はflexアイテム同士の間隔を一括指定できるプロパティです。
+      <b>marginで調整するより断然スマートで、最初・最後のアイテムに不要な余白が付きません。</b>
+      現代のCSSではgapが標準になっています。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">gap</span>
+        <span class="tag-desc">アイテム間の隙間を一発指定 / margin要らず</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// margin vs gap 比較</div>
+          <div class="gap-compare">
+            <div>
+              <div class="gap-label">❌ margin-right で調整（古い方法）</div>
+              <div style="display:flex; background:rgba(255,255,255,0.55); border:1.5px dashed #c44f4f; padding:8px; border-radius:2px;">
+                <div class="fi fi-a" style="margin-right:8px;">A</div>
+                <div class="fi fi-b" style="margin-right:8px;">B</div>
+                <div class="fi fi-c">C</div>
+                <span style="font-size:9px; font-family:'JetBrains Mono',monospace; color:#c44f4f; margin-left:4px; align-self:center;">最後だけ除外が必要</span>
+              </div>
+            </div>
+            <div>
+              <div class="gap-label">✅ gap で指定（現代の書き方）</div>
+              <div style="display:flex; gap:8px; background:rgba(255,255,255,0.55); border:1.5px dashed var(--accent-3); padding:8px; border-radius:2px;">
+                <div class="fi fi-a">A</div>
+                <div class="fi fi-b">B</div>
+                <div class="fi fi-c">C</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:14px;">
+            <div class="gap-label">// row-gap と column-gap を別々に指定</div>
+            <div style="display:flex; flex-wrap:wrap; row-gap:12px; column-gap:6px; background:rgba(255,255,255,0.55); border:1.5px dashed var(--accent-3); padding:8px; border-radius:2px; width:180px;">
+              <div class="fi fi-sm fi-a">A</div>
+              <div class="fi fi-sm fi-b">B</div>
+              <div class="fi fi-sm fi-c">C</div>
+              <div class="fi fi-sm fi-a">D</div>
+              <div class="fi fi-sm fi-b">E</div>
+            </div>
+            <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--accent); margin-top:6px;">row-gap:12px / column-gap:6px</div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+
+  <span class="comment">/* 縦横同じ隙間 */</span>
+  <span class="prop">gap</span>: <span class="val">16px</span>;
+
+  <span class="comment">/* 縦と横を別々に */</span>
+  <span class="prop">gap</span>: <span class="val">12px 24px</span>; <span class="comment">/* row col */</span>
+
+  <span class="comment">/* それぞれ個別指定 */</span>
+  <span class="prop">row-gap</span>:    <span class="val">12px</span>;
+  <span class="prop">column-gap</span>: <span class="val">24px</span>;
+}
+
+<span class="comment">/* NG: margin-right で調整（古い） */</span>
+<span class="sel">.item</span> { <span class="prop">margin-right</span>: <span class="val">16px</span>; }
+<span class="sel">.item:last-child</span> {
+  <span class="prop">margin-right</span>: <span class="val">0</span>; <span class="comment">/* 最後だけ除外 */</span>
+}
+
+<span class="comment">/* ✅ gap ならこれだけ（シンプル）*/</span>
+<span class="sel">.container</span> { <span class="prop">gap</span>: <span class="val">16px</span>; }
+
+<span class="comment">/* gap は Grid でも使える（Vol.4）*/</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 07 align-self ─── -->
+  <section id="align-self">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2>align-self — 個別アイテムの縦揃え</h2>
+      <span class="en">ALIGN SELF</span>
+    </div>
+    <p class="pattern-desc">
+      <code>align-items</code>がコンテナ全体の設定なのに対し、<code>align-self</code>は<b>特定の子要素1つだけ</b>の縦揃えを上書きできます。
+      「他は上揃えでも、このボタンだけ下に置きたい」という時に使います。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">align-self</span>
+        <span class="tag-desc">子要素に書く / 親のalign-itemsを個別上書き</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 親: align-items: flex-start / 子は個別指定</div>
+          <div class="as-container" style="height:110px; align-items:flex-start;">
+            <div class="fi fi-a" style="flex:1; min-height:unset; height:40px; align-self:flex-start;">
+              <div style="font-size:9px; text-align:center;">align-self<br>:flex-start</div>
+            </div>
+            <div class="fi fi-b" style="flex:1; min-height:unset; height:40px; align-self:center;">
+              <div style="font-size:9px; text-align:center;">align-self<br>:center</div>
+            </div>
+            <div class="fi fi-c" style="flex:1; min-height:unset; height:40px; align-self:flex-end;">
+              <div style="font-size:9px; text-align:center;">align-self<br>:flex-end</div>
+            </div>
+            <div class="fi fi-a" style="flex:1; min-height:unset; align-self:stretch;">
+              <div style="font-size:9px; text-align:center;">align-self<br>:stretch</div>
+            </div>
+          </div>
+          <div style="margin-top:10px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // 子要素側に書く → 親の設定を上書き
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* 親: 全体の縦揃えを設定 */</span>
+<span class="sel">.container</span> {
+  <span class="prop">display</span>:     <span class="val">flex</span>;
+  <span class="prop">align-items</span>: <span class="val">flex-start</span>;
+}
+
+<span class="comment">/* 子: 個別に上書き */</span>
+<span class="sel">.item-a</span> {
+  <span class="prop">align-self</span>: <span class="val">flex-start</span>; <span class="comment">/* 上 */</span>
+}
+<span class="sel">.item-b</span> {
+  <span class="prop">align-self</span>: <span class="val">center</span>;     <span class="comment">/* 中央 */</span>
+}
+<span class="sel">.item-c</span> {
+  <span class="prop">align-self</span>: <span class="val">flex-end</span>;   <span class="comment">/* 下 */</span>
+}
+<span class="sel">.item-d</span> {
+  <span class="prop">align-self</span>: <span class="val">stretch</span>;    <span class="comment">/* 伸ばす */</span>
+}
+
+<span class="comment">/* 実用例：カードの「もっと見る」ボタン */</span>
+<span class="sel">.card</span> {
+  <span class="prop">display</span>:        <span class="val">flex</span>;
+  <span class="prop">flex-direction</span>: <span class="val">column</span>;
+}
+<span class="sel">.card .btn</span> {
+  <span class="prop">align-self</span>: <span class="val">flex-end</span>;
+  <span class="prop">margin-top</span>: <span class="val">auto</span>; <span class="comment">/* 下に押し込む */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 08 垂直中央寄せ定番パターン ─── -->
+  <section id="center">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2>垂直中央寄せ 定番パターン</h2>
+      <span class="en">PERFECT CENTERING</span>
+    </div>
+    <p class="pattern-desc">
+      CSSで長年の難問だった「縦横中央揃え」が、flexbox2行で解決できます。
+      <b>これはCSSで最もよく使われる鉄板パターン</b>です。必ず覚えてください。
+      ボタン内テキスト、カードの内容、ヒーロービジュアル——至る所で使えます。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">perfect centering</span>
+        <span class="tag-desc">justify-content: center ＋ align-items: center = 完全中央</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 完全中央寄せ（実際のflex）</div>
+          <div class="center-demo" style="height:120px; border-radius:2px;">
+            <div class="fi fi-a" style="width:80px; height:50px;">中央！</div>
+          </div>
+          <div style="margin-top:14px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); margin-bottom:10px;">
+            // 応用：ボタン内テキストを中央に
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <div style="display:inline-flex; align-items:center; gap:6px; background:var(--accent); color:var(--paper); padding:10px 20px; font-size:13px; font-family:'JetBrains Mono',monospace; border-radius:2px; cursor:pointer;">
+              ▶ 送信する
+            </div>
+            <div style="display:inline-flex; align-items:center; gap:6px; background:transparent; color:var(--accent); padding:10px 20px; font-size:13px; font-family:'JetBrains Mono',monospace; border-radius:2px; border:1.5px solid var(--accent); cursor:pointer;">
+              ✕ キャンセル
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* ★★★ 完全中央寄せの鉄板 ★★★ */</span>
+<span class="sel">.center-box</span> {
+  <span class="prop">display</span>:         <span class="val">flex</span>;
+  <span class="prop">justify-content</span>: <span class="val">center</span>; <span class="comment">/* 横：中央 */</span>
+  <span class="prop">align-items</span>:     <span class="val">center</span>; <span class="comment">/* 縦：中央 */</span>
+}
+<span class="comment">/* ↑ この2行だけ！   */</span>
+<span class="comment">/* ↑ 昔は苦労したのが嘘のよう */</span>
+
+<span class="comment">/* ─ ボタンの中央揃え ─ */</span>
+<span class="sel">.btn</span> {
+  <span class="prop">display</span>:         <span class="val">inline-flex</span>;
+  <span class="prop">align-items</span>:     <span class="val">center</span>;
+  <span class="prop">gap</span>:             <span class="val">6px</span>;   <span class="comment">/* アイコン+テキスト */</span>
+  <span class="prop">padding</span>:         <span class="val">10px 20px</span>;
+}
+
+<span class="comment">/* ─ 画面全体の中央 ─ */</span>
+<span class="sel">body</span> {
+  <span class="prop">display</span>:         <span class="val">flex</span>;
+  <span class="prop">justify-content</span>: <span class="val">center</span>;
+  <span class="prop">align-items</span>:     <span class="val">center</span>;
+  <span class="prop">min-height</span>:      <span class="val">100vh</span>;
+}
+
+<span class="comment">/* ─ ナビバーの定番 ─ */</span>
+<span class="sel">nav</span> {
+  <span class="prop">display</span>:         <span class="val">flex</span>;
+  <span class="prop">justify-content</span>: <span class="val">space-between</span>;
+  <span class="prop">align-items</span>:     <span class="val">center</span>;
+  <span class="prop">padding</span>:         <span class="val">0 24px</span>;
+  <span class="prop">height</span>:          <span class="val">60px</span>;
+}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip warn">
+      <strong>ハマりどころ ★★ —</strong>
+      「<code>justify-content: center</code>を書いたのに中央にならない！」——これはコンテナに<b>幅（width）または高さ（height）が設定されていない</b>場合によく起きます。コンテナがコンテンツと同じ幅・高さなら、中央寄せしても見た目が変わりません。<code>width: 100%</code>や<code>min-height: 100vh</code>など、親に広がりを持たせてから指定しましょう。
+    </div>
+  </section>
+
+  <!-- ─── NEXT STEP ─── -->
+  <div class="tip" style="margin-top: 48px;">
+    <strong>NEXT STEP — Vol.3 へ</strong>
+    Flexboxの4本柱（<code>flex-direction</code>・<code>justify-content</code>・<code>align-items</code>・<code>gap</code>）が身につきました。
+    次のVol.3では<b>Flexbox応用編</b>に進みます。
+    <code>flex-grow</code>・<code>flex-shrink</code>・<code>flex-basis</code>で子要素の<b>「伸び縮み」</b>を制御する方法、
+    折り返し表示の<code>flex-wrap</code>、そして実際のUIパターン（ナビバー・カード並び）を組み立てます。
+    <b>「子要素の幅が思い通りにならない」問題はVol.3で完全に解決します。</b>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════ -->
+<footer class="page-footer">
+  <span>CSS LAYOUT REFERENCE — Vol.2 Flexbox基礎編</span>
+  <span>BLUEPRINT SERIES / 全6巻</span>
+</footer>
+
+</body>
+</html>

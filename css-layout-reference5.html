@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSSレイアウト Grid応用編 Vol.5</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:       #0d1524;
+      --paper:     #e3e8f3;
+      --paper-2:   #d1d9eb;
+      --accent:    #4c62c6;
+      --accent-2:  #677fde;
+      --accent-3:  #8fa0ec;
+      --muted:     #4d5e88;
+      --line:      #a2b2d6;
+      --code-bg:   #090e1c;
+      --code-text: #c4cefc;
+      --panel-bg:  #c2cae6;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 15px; line-height: 1.8;
+      color: var(--ink); background: var(--paper);
+    }
+
+    /* ─── PAGE HEADER ─── */
+    .page-header {
+      position: relative; overflow: hidden;
+      padding: 48px 56px 40px; border-bottom: 2px solid var(--ink);
+    }
+    .page-header::before {
+      content: '▦';
+      position: absolute; right: 36px; top: -10px;
+      font-size: 220px; color: var(--ink);
+      opacity: 0.07; line-height: 1; pointer-events: none; z-index: 0;
+    }
+    .page-header > * { position: relative; z-index: 1; }
+    .header-tags { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+    .series-tag {
+      background: var(--ink); color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600; padding: 3px 10px; letter-spacing: 0.08em;
+    }
+    .vol-tag {
+      background: var(--accent); color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600; padding: 3px 10px; letter-spacing: 0.06em;
+    }
+    .page-header h1 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 42px; font-weight: 700;
+      line-height: 1.25; letter-spacing: 0.02em; margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 13px; color: var(--muted);
+      letter-spacing: 0.05em; margin-bottom: 16px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .lead { max-width: 640px; font-size: 15px; line-height: 1.9; }
+
+    /* ─── TOC ─── */
+    .toc { background: var(--paper-2); padding: 18px 56px; border-bottom: 1px solid var(--line); }
+    .toc ul { display: flex; flex-wrap: wrap; gap: 4px 0; list-style: none; }
+    .toc li a {
+      display: inline-block; padding: 4px 16px 4px 0;
+      font-size: 13px; color: var(--accent); text-decoration: none;
+    }
+    .toc li a::before { content: '— '; color: var(--muted); }
+    .toc li a:hover { color: var(--accent-2); text-decoration: underline; }
+
+    /* ─── MAIN ─── */
+    main { max-width: 1100px; margin: 0 auto; padding: 56px 40px 80px; }
+
+    /* ─── SECTION ─── */
+    section { margin-bottom: 64px; }
+    .section-header {
+      display: flex; align-items: baseline; gap: 16px;
+      padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 16px;
+    }
+    .section-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; font-weight: 600; color: var(--accent-2); letter-spacing: 0.05em;
+    }
+    .section-header h2 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 26px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .en {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--muted);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-left: auto;
+    }
+    .pattern-desc { font-size: 14.5px; line-height: 1.9; max-width: 680px; margin-bottom: 20px; }
+
+    /* ─── DEMO CARD ─── */
+    .demo-card { border: 1px solid var(--line); background: #fff; border-radius: 2px; overflow: hidden; }
+    .demo-head {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--paper-2); padding: 10px 20px; border-bottom: 1px solid var(--line);
+    }
+    .tag-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight: 600; color: var(--accent);
+      background: rgba(76,98,198,0.1); padding: 2px 8px; border-radius: 2px;
+    }
+    .tag-desc { font-size: 12px; color: var(--muted); }
+    .demo-body { display: grid; grid-template-columns: 1fr 1fr; }
+
+    /* ─── PANEL ─── */
+    .panel { background: var(--panel-bg); padding: 24px; border-right: 1px solid var(--line); }
+    .panel-head {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--muted); margin-bottom: 14px; letter-spacing: 0.06em;
+    }
+
+    /* ─── CODE ─── */
+    .code {
+      background: var(--code-bg); padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; line-height: 1.75; color: var(--code-text); overflow-x: auto;
+    }
+    .code pre { white-space: pre; }
+    .kw      { color: #ffc88a; }
+    .type    { color: #c2a3ff; }
+    .fn      { color: #a3c9ff; }
+    .str     { color: #b5e8b0; }
+    .num     { color: #f7a8d8; }
+    .comment { color: #465898; }
+    .prop    { color: #a3c9ff; }
+    .val     { color: #b5e8b0; }
+    .sel     { color: #f7c08a; }
+
+    /* ─── TIP ─── */
+    .tip {
+      border-left: 3px solid var(--accent);
+      background: rgba(76,98,198,0.06);
+      padding: 16px 20px; margin: 20px 0;
+      font-size: 14px; line-height: 1.9;
+    }
+    .tip strong {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600;
+      color: var(--accent-2); letter-spacing: 0.1em; margin-bottom: 6px;
+    }
+    .tip.warn { border-left-color: #c44f4f; background: rgba(196,79,79,0.05); }
+    .tip.warn strong { color: #c44f4f; }
+
+    /* ════════════════════════════
+       GRID DEMO CELLS
+    ════════════════════════════ */
+    .gc {
+      background: rgba(76,98,198,0.15);
+      border: 1.5px solid var(--accent-2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600; color: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 2px; padding: 6px 4px; min-height: 34px; text-align: center;
+    }
+    .gc-hi  { background: rgba(76,98,198,0.28); border-color: var(--accent); color: var(--accent); }
+    .gc-mid { background: rgba(76,98,198,0.14); }
+    .gc-lo  { background: rgba(76,98,198,0.07); border-color: var(--accent-3); color: var(--accent-2); }
+    .gc-ghost { background: rgba(76,98,198,0.03); border: 1.5px dashed var(--accent-3); color: var(--accent-3); }
+
+    .grid-wrap {
+      background: rgba(255,255,255,0.45);
+      border: 1.5px dashed var(--accent-3);
+      padding: 7px; border-radius: 2px;
+    }
+    .lbl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--muted); margin-bottom: 5px;
+    }
+    .lbl-ok { color: var(--accent); }
+    .lbl-ng { color: #c44f4f; }
+
+    /* ─── LINE NUMBER BADGES ─── */
+    .line-badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; font-weight: 700;
+      background: #c44f4f; color: #fff;
+      padding: 0 4px; border-radius: 2px; margin: 0 1px;
+    }
+
+    /* ─── GRID-COLUMN POSITION DEMO ─── */
+    .pos-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      position: relative;
+    }
+    .pos-header-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      margin-bottom: 2px;
+    }
+    .pos-line-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; color: #c44f4f; font-weight: 700;
+      text-align: center;
+    }
+
+    /* ─── AREAS DEMO ─── */
+    .areas-demo {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      grid-template-rows: 38px 110px 34px;
+      grid-template-areas:
+        "header  header"
+        "sidebar main"
+        "footer  footer";
+      gap: 5px;
+    }
+    .area-cell {
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 600;
+      border-radius: 2px; border: 1.5px solid var(--accent-2);
+    }
+    .area-header  { grid-area: header;  background: var(--accent); color: var(--paper); }
+    .area-sidebar { grid-area: sidebar; background: rgba(76,98,198,0.18); color: var(--accent); }
+    .area-main    { grid-area: main;    background: rgba(76,98,198,0.08); color: var(--accent-2); }
+    .area-footer  { grid-area: footer;  background: var(--ink); color: rgba(195,210,252,0.7); }
+
+    /* ─── MAGAZINE LAYOUT DEMO ─── */
+    .magazine-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: 80px 60px 60px;
+      gap: 5px;
+    }
+    .mag-cell {
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 600;
+      border-radius: 2px;
+      padding: 4px;
+      text-align: center;
+    }
+    .mag-hero {
+      grid-column: 1 / 3;
+      grid-row: 1 / 3;
+      background: var(--accent);
+      color: var(--paper);
+      font-size: 12px;
+    }
+    .mag-side {
+      grid-column: 3 / 4;
+      grid-row: 1 / 2;
+      background: rgba(76,98,198,0.18);
+      color: var(--accent); border: 1.5px solid var(--accent-2);
+    }
+    .mag-side2 {
+      grid-column: 3 / 4;
+      grid-row: 2 / 3;
+      background: rgba(76,98,198,0.10);
+      color: var(--accent); border: 1.5px solid var(--accent-3);
+    }
+    .mag-bot1 {
+      grid-column: 1 / 2;
+      grid-row: 3 / 4;
+      background: rgba(76,98,198,0.14);
+      color: var(--accent); border: 1.5px solid var(--accent-2);
+    }
+    .mag-bot2 {
+      grid-column: 2 / 3;
+      grid-row: 3 / 4;
+      background: rgba(76,98,198,0.10);
+      color: var(--accent); border: 1.5px solid var(--accent-3);
+    }
+    .mag-bot3 {
+      grid-column: 3 / 4;
+      grid-row: 3 / 4;
+      background: rgba(76,98,198,0.07);
+      color: var(--accent-2); border: 1.5px solid var(--accent-3);
+    }
+
+    /* ─── AUTO-FIT VS AUTO-FILL ─── */
+    .autofill-demo {
+      background: rgba(255,255,255,0.45);
+      border: 1.5px dashed var(--accent-3);
+      padding: 8px; border-radius: 2px;
+    }
+
+    /* ─── IMPLICIT GRID DEMO ─── */
+    .implicit-bad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      background: rgba(255,255,255,0.45);
+      border: 1.5px dashed #c44f4f;
+      padding: 8px; border-radius: 2px;
+    }
+    .implicit-ok {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: minmax(34px, auto);
+      gap: 4px;
+      background: rgba(255,255,255,0.45);
+      border: 1.5px dashed var(--accent-3);
+      padding: 8px; border-radius: 2px;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 720px) {
+      .page-header { padding: 32px 24px 28px; }
+      .page-header h1 { font-size: 28px; }
+      .toc { padding: 14px 24px; }
+      main { padding: 32px 20px 60px; }
+      .demo-body { grid-template-columns: 1fr; }
+      .panel { border-right: none; border-bottom: 1px solid var(--line); }
+      .magazine-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ─── FOOTER ─── */
+    .page-footer {
+      border-top: 2px solid var(--ink);
+      padding: 20px 56px; background: var(--paper-2);
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════
+     PAGE HEADER
+════════════════════════════════════ -->
+<header class="page-header">
+  <div class="header-tags">
+    <span class="series-tag">CSS LAYOUT REFERENCE</span>
+    <span class="vol-tag">Vol.5</span>
+  </div>
+  <h1>Grid 応用編</h1>
+  <div class="subtitle">CSS GRID ADVANCED — BLUEPRINT SERIES</div>
+  <p class="lead">
+    Vol.4で作れるようになった「均等な格子」を、このVol.5では<b>「意図した位置に意図したサイズで配置する」</b>レベルへ引き上げます。
+    <code>grid-column</code>・<code>grid-template-areas</code>によるセル指定と、
+    <code>auto-fit + minmax</code>による<b>メディアクエリなしの完全レスポンシブグリッド</b>を習得しましょう。
+    Gridを使いこなせると、CSSレイアウトで「できないこと」がほぼなくなります。
+  </p>
+</header>
+
+<!-- ═══════════════════════════════════
+     TOC
+════════════════════════════════════ -->
+<nav class="toc">
+  <ul>
+    <li><a href="#grid-lines">グリッドライン</a></li>
+    <li><a href="#grid-column-row">grid-column / grid-row</a></li>
+    <li><a href="#span">span で複数セル</a></li>
+    <li><a href="#areas">grid-template-areas</a></li>
+    <li><a href="#auto-flow">grid-auto-flow</a></li>
+    <li><a href="#minmax">minmax()</a></li>
+    <li><a href="#auto-fit">auto-fit vs auto-fill</a></li>
+    <li><a href="#magazine">実践：雑誌風レイアウト</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════════
+     MAIN
+════════════════════════════════════ -->
+<main>
+
+  <!-- ─── 01 グリッドライン ─── -->
+  <section id="grid-lines">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>グリッドラインを理解する</h2>
+      <span class="en">GRID LINES</span>
+    </div>
+    <p class="pattern-desc">
+      Gridの配置を理解するには<b>「ライン番号」</b>の概念が必須です。
+      列や行の<b>区切り線に番号が振られていて</b>、その番号を使って要素の位置とサイズを指定します。
+      3列なら縦のラインは1〜4番（左端が1、右端が4）、負の番号は右端から数えます。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">grid-lines</span>
+        <span class="tag-desc">列ライン番号（3列 = ライン1〜4）/ 負の番号は右端から</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 3列グリッドのライン番号</div>
+
+          <!-- ライン番号ヘッダー -->
+          <div style="display:grid; grid-template-columns:14px repeat(3,1fr) 14px; margin-bottom:2px; padding:0 7px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#c44f4f; font-weight:700; text-align:center;">1</div>
+            <div></div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#c44f4f; font-weight:700; text-align:right; padding-right:0;">2</div>
+            <div></div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#c44f4f; font-weight:700; text-align:right; padding-right:0;">3</div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#c44f4f; font-weight:700; text-align:right;">4</div>
+          </div>
+
+          <!-- グリッド本体 -->
+          <div class="grid-wrap" style="display:grid; grid-template-columns:repeat(3,1fr); gap:4px; position:relative;">
+            <div class="gc gc-mid" style="font-size:9px;">col 1</div>
+            <div class="gc gc-mid" style="font-size:9px;">col 2</div>
+            <div class="gc gc-mid" style="font-size:9px;">col 3</div>
+            <div class="gc gc-lo" style="font-size:9px;">row 2</div>
+            <div class="gc gc-lo" style="font-size:9px;">row 2</div>
+            <div class="gc gc-lo" style="font-size:9px;">row 2</div>
+          </div>
+
+          <!-- 負の番号説明 -->
+          <div style="margin-top:10px; display:grid; grid-template-columns:repeat(3,1fr); gap:4px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--accent-2); text-align:center; background:rgba(76,98,198,0.06); padding:3px; border-radius:2px;">-4 / 1</div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--accent-2); text-align:center; background:rgba(76,98,198,0.06); padding:3px; border-radius:2px;">-3 / 2</div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--accent-2); text-align:center; background:rgba(76,98,198,0.06); padding:3px; border-radius:2px;">-2 / 3</div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted); margin-top:3px; text-align:right; padding-right:4px;">-1（右端）</div>
+          <div style="margin-top:10px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // -1 は常に最後のライン（列数不問）
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* 3列グリッドのライン番号 */</span>
+<span class="comment">/*                         */</span>
+<span class="comment">/*  1   2   3   4          */</span>
+<span class="comment">/*  |   |   |   |          */</span>
+<span class="comment">/*  [col1][col2][col3]      */</span>
+<span class="comment">/*  -4  -3  -2  -1         */</span>
+<span class="comment">/*  ↑ 負の番号は右から数える */</span>
+
+<span class="comment">/* 要素を2列目から3列目に配置 */</span>
+<span class="sel">.item</span> {
+  <span class="prop">grid-column</span>: <span class="val">2 / 3</span>;
+  <span class="comment">/* ライン2から始まりライン3で終わる */</span>
+  <span class="comment">/* = 2列目のセル1つ分              */</span>
+}
+
+<span class="comment">/* 全幅に広げる（列数に関係なく） */</span>
+<span class="sel">.full-width</span> {
+  <span class="prop">grid-column</span>: <span class="val">1 / -1</span>;
+  <span class="comment">/* 1（左端）から -1（右端）まで */</span>
+}
+
+<span class="comment">/* 行ラインも同じ考え方 */</span>
+<span class="comment">/* 2行グリッドなら 行ライン 1〜3 */</span>
+<span class="sel">.item</span> {
+  <span class="prop">grid-row</span>: <span class="val">1 / 3</span>;
+  <span class="comment">/* 行ライン1から3 = 2行にまたがる */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 02 grid-column / grid-row ─── -->
+  <section id="grid-column-row">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>grid-column / grid-row — 位置の明示指定</h2>
+      <span class="en">GRID COLUMN &amp; ROW</span>
+    </div>
+    <p class="pattern-desc">
+      <code>grid-column: 開始ライン / 終了ライン</code>で要素の<b>横方向の位置とサイズ</b>を指定します。
+      <code>grid-row</code>は縦方向の制御です。この2つで「どのマス目に、何マス分置くか」が完全に決まります。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">grid-column / grid-row</span>
+        <span class="tag-desc">開始ライン / 終了ライン で位置を確定する</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 4列×3行グリッドでの明示配置</div>
+
+          <div class="lbl">各要素に grid-column・grid-row を指定</div>
+          <div class="grid-wrap" style="display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(3,36px); gap:4px;">
+            <!-- A: col 1/3, row 1/2 -->
+            <div class="gc gc-hi" style="grid-column:1/3; grid-row:1/2; font-size:10px;">A<br><span style="font-size:8px; font-weight:400;">col 1/3 row 1/2</span></div>
+            <!-- B: col 3/5, row 1/3 -->
+            <div class="gc gc-mid" style="grid-column:3/5; grid-row:1/3; font-size:10px;">B<br><span style="font-size:8px; font-weight:400;">col 3/5 row 1/3</span></div>
+            <!-- C: col 1/2, row 2/4 -->
+            <div class="gc gc-lo" style="grid-column:1/2; grid-row:2/4; font-size:10px;">C<br><span style="font-size:8px; font-weight:400;">col 1/2 row 2/4</span></div>
+            <!-- D: col 2/3, row 2/3 -->
+            <div class="gc gc-ghost" style="grid-column:2/3; grid-row:2/3; font-size:9px;">D</div>
+            <!-- E: col 2/4, row 3/4 -->
+            <div class="gc gc-mid" style="grid-column:2/4; grid-row:3/4; font-size:10px;">E: col 2/4</div>
+            <!-- F: col 4/5, row 3/4 -->
+            <div class="gc gc-ghost" style="grid-column:4/5; grid-row:3/4; font-size:9px;">F</div>
+          </div>
+
+          <div style="margin-top:10px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // 要素が重なることもできる（z-indexで前後制御）
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="num">4</span>, <span class="val">1fr</span>);
+  <span class="prop">grid-template-rows</span>: <span class="fn">repeat</span>(<span class="num">3</span>, <span class="val">80px</span>);
+  <span class="prop">gap</span>: <span class="val">8px</span>;
+}
+
+<span class="comment">/* A: 1〜2列目、1行目 */</span>
+<span class="sel">.item-a</span> {
+  <span class="prop">grid-column</span>: <span class="val">1 / 3</span>; <span class="comment">/* 2列分 */</span>
+  <span class="prop">grid-row</span>:    <span class="val">1 / 2</span>; <span class="comment">/* 1行分 */</span>
+}
+
+<span class="comment">/* B: 3〜4列目、1〜2行目 */</span>
+<span class="sel">.item-b</span> {
+  <span class="prop">grid-column</span>: <span class="val">3 / 5</span>; <span class="comment">/* 2列分 */</span>
+  <span class="prop">grid-row</span>:    <span class="val">1 / 3</span>; <span class="comment">/* 2行分 */</span>
+}
+
+<span class="comment">/* 全幅（列数に関係なく右端まで）*/</span>
+<span class="sel">.full</span> {
+  <span class="prop">grid-column</span>: <span class="val">1 / -1</span>;
+}
+
+<span class="comment">/* 省略形：列だけ指定（行は自動）*/</span>
+<span class="sel">.item</span> {
+  <span class="prop">grid-column</span>: <span class="val">2</span>; <span class="comment">/* = 2 / 3 */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 03 span ─── -->
+  <section id="span">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>span — 「何マス分」で指定する</h2>
+      <span class="en">SPAN</span>
+    </div>
+    <p class="pattern-desc">
+      ライン番号の代わりに<code>span N</code>を使うと<b>「何マス分占めるか」</b>で指定できます。
+      絶対的な位置より相対的なサイズで考えたいときに便利で、カラム数を変更しても崩れにくくなります。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">grid-column: span N</span>
+        <span class="tag-desc">「ライン番号」ではなく「何マス分」という指定</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// span を使った配置パターン（4列）</div>
+
+          <div class="lbl lbl-ok">span: 行き先ではなく「幅の広さ」で指定</div>
+          <div class="grid-wrap" style="display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin-bottom:12px;">
+            <div class="gc gc-hi" style="grid-column:span 2; font-size:9px; text-align:center;">span 2<br><span style="font-weight:400;">2列分</span></div>
+            <div class="gc gc-mid" style="font-size:9px;">auto</div>
+            <div class="gc gc-lo" style="font-size:9px;">auto</div>
+            <div class="gc gc-ghost" style="font-size:9px;">auto</div>
+            <div class="gc gc-mid" style="grid-column:span 3; font-size:9px; text-align:center;">span 3（3列分）</div>
+            <div class="gc gc-ghost" style="font-size:9px;">auto</div>
+          </div>
+
+          <div class="lbl lbl-ok">start ライン + span の組み合わせ</div>
+          <div class="grid-wrap" style="display:grid; grid-template-columns:repeat(4,1fr); gap:4px;">
+            <div class="gc gc-lo" style="font-size:9px;">auto</div>
+            <div class="gc gc-hi" style="grid-column:2 / span 2; font-size:9px; text-align:center;">2 / span 2<br><span style="font-weight:400;">2列目から2列分</span></div>
+            <div class="gc gc-lo" style="font-size:9px;">auto</div>
+            <div class="gc gc-mid" style="grid-column:1 / span 4; font-size:9px; text-align:center;">1 / span 4（全幅）</div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* span N: 何マス分かで指定 */</span>
+
+<span class="comment">/* 2列分占める */</span>
+<span class="sel">.item</span> {
+  <span class="prop">grid-column</span>: <span class="val">span 2</span>;
+  <span class="comment">/* = 自動配置の位置から2列分 */</span>
+}
+
+<span class="comment">/* 2列目から始まって2列分 */</span>
+<span class="sel">.item</span> {
+  <span class="prop">grid-column</span>: <span class="val">2 / span 2</span>;
+  <span class="comment">/* = ライン2から始まり2列占める */</span>
+  <span class="comment">/* = grid-column: 2 / 4 と同じ  */</span>
+}
+
+<span class="comment">/* 行方向も同様 */</span>
+<span class="sel">.item</span> {
+  <span class="prop">grid-row</span>: <span class="val">span 2</span>; <span class="comment">/* 2行分 */</span>
+}
+
+<span class="comment">/* ━━ span vs ライン番号 ━━━━━━━━━━━
+  ライン番号 → 絶対配置。位置が変わると壊れる
+  span      → 相対サイズ。列数変更に強い
+  
+  テンプレートを組む時 → span が柔軟
+  厳密に位置を固定したい → ライン番号
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 04 grid-template-areas ─── -->
+  <section id="areas">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>grid-template-areas — 名前付きエリア</h2>
+      <span class="en">GRID TEMPLATE AREAS</span>
+    </div>
+    <p class="pattern-desc">
+      <code>grid-template-areas</code>は<b>「部屋に名前をつけてレイアウトを図として書く」</b>画期的な機能です。
+      CSS上でASCIIアートのように配置を描くので、コードを見ただけでレイアウトが一目でわかります。
+      チームでの開発や複雑なページ構造に特に威力を発揮します。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">grid-template-areas</span>
+        <span class="tag-desc">レイアウトをASCII図で描く / grid-area で部屋を割り当て</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 名前付きエリアのプレビュー</div>
+
+          <div class="areas-demo">
+            <div class="area-cell area-header">header</div>
+            <div class="area-cell area-sidebar" style="flex-direction:column; gap:5px; padding:8px; justify-content:flex-start; align-items:flex-start;">
+              <div style="font-size:10px; font-weight:700; margin-bottom:4px;">sidebar</div>
+              <div style="background:rgba(76,98,198,0.12); padding:3px 8px; border-radius:2px; font-size:9px; width:100%;">ナビ 01</div>
+              <div style="background:rgba(76,98,198,0.12); padding:3px 8px; border-radius:2px; font-size:9px; width:100%;">ナビ 02</div>
+            </div>
+            <div class="area-cell area-main" style="flex-direction:column; gap:4px; padding:10px; align-items:flex-start; justify-content:flex-start;">
+              <div style="font-size:10px; font-weight:700; margin-bottom:2px;">main</div>
+              <div style="height:6px; background:var(--line); border-radius:2px; width:90%; margin-bottom:2px;"></div>
+              <div style="height:6px; background:var(--line); border-radius:2px; width:75%;"></div>
+            </div>
+            <div class="area-cell area-footer">footer</div>
+          </div>
+
+          <div style="margin-top:12px; background:rgba(255,255,255,0.55); border:1px solid var(--line); padding:8px 12px; border-radius:2px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); line-height:1.7;">
+            "header  header"<br>
+            "sidebar main&nbsp;&nbsp;"<br>
+            "footer  footer"
+          </div>
+          <div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); margin-top:5px;">
+            // コードがそのままレイアウト図になる
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* ① 親：エリアの図を描く */</span>
+<span class="sel">.page</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="val">240px 1fr</span>;
+  <span class="prop">grid-template-rows</span>: <span class="val">60px 1fr 60px</span>;
+  <span class="prop">grid-template-areas</span>:
+    <span class="str">"header  header"</span>
+    <span class="str">"sidebar main"</span>
+    <span class="str">"footer  footer"</span>;
+  <span class="prop">min-height</span>: <span class="val">100vh</span>;
+  <span class="prop">gap</span>: <span class="val">0</span>;
+}
+
+<span class="comment">/* ② 子：エリア名を割り当てる */</span>
+<span class="sel">header</span>  { <span class="prop">grid-area</span>: <span class="val">header</span>;  }
+<span class="sel">nav</span>     { <span class="prop">grid-area</span>: <span class="val">sidebar</span>; }
+<span class="sel">main</span>    { <span class="prop">grid-area</span>: <span class="val">main</span>;    }
+<span class="sel">footer</span>  { <span class="prop">grid-area</span>: <span class="val">footer</span>;  }
+
+<span class="comment">/* ━━ 覚えておくと便利 ━━━━━━━━━━━━
+  . （ドット）→ 空白セル
+  
+  "header header"
+  "sidebar ."    ← . = 空きセル
+  "footer footer"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */</span>
+
+<span class="comment">/* レスポンシブ対応も直感的 */</span>
+<span class="sel">@media (max-width: 768px)</span> {
+  <span class="sel">.page</span> {
+    <span class="prop">grid-template-columns</span>: <span class="val">1fr</span>;
+    <span class="prop">grid-template-areas</span>:
+      <span class="str">"header"</span>
+      <span class="str">"main"</span>
+      <span class="str">"sidebar"</span>
+      <span class="str">"footer"</span>;
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip">
+      <strong>POINT —</strong>
+      <code>grid-template-areas</code>のもう一つの強みは<b>レスポンシブ対応の書きやすさ</b>です。
+      メディアクエリ内で<code>grid-template-areas</code>の図を描き直すだけで、サイドバーをメインの下に移動するなどの変更が直感的にできます。複雑なページほど威力を発揮します。
+    </div>
+  </section>
+
+  <!-- ─── 05 grid-auto-flow ─── -->
+  <section id="auto-flow">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>grid-auto-flow — 自動配置の方向</h2>
+      <span class="en">GRID AUTO FLOW</span>
+    </div>
+    <p class="pattern-desc">
+      位置指定のない要素は<b>自動配置アルゴリズム</b>によって空きマスに流し込まれます。
+      <code>grid-auto-flow</code>でその方向（横→縦 or 縦→横）と、
+      隙間を詰める<code>dense</code>モードを制御できます。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">grid-auto-flow</span>
+        <span class="tag-desc">row（デフォルト）/ column / dense</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// auto-flow の違い（3列グリッド）</div>
+
+          <div class="lbl">row（デフォルト）→ 横方向に流れ込む</div>
+          <div class="grid-wrap" style="display:grid; grid-template-columns:repeat(3,1fr); grid-auto-flow:row; gap:4px; margin-bottom:12px;">
+            <div class="gc gc-hi" style="font-size:9px; grid-column:span 2;">span 2</div>
+            <div class="gc gc-lo" style="font-size:9px;">3</div>
+            <div class="gc gc-mid" style="font-size:9px;">4</div>
+            <div class="gc gc-lo" style="font-size:9px;">5</div>
+            <div class="gc gc-lo" style="font-size:9px;">6</div>
+          </div>
+
+          <div class="lbl lbl-ng">row（隙間が生まれる）→ dense で解決</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:4px;">
+            <div>
+              <div class="lbl lbl-ng" style="margin-bottom:3px;">auto-flow: row</div>
+              <div class="grid-wrap" style="display:grid; grid-template-columns:repeat(3,1fr); grid-auto-flow:row; gap:3px;">
+                <div class="gc gc-hi" style="font-size:8px; grid-column:span 2;">big</div>
+                <div class="gc gc-lo" style="font-size:8px;">2</div>
+                <div class="gc gc-lo" style="font-size:8px;">3</div>
+                <div class="gc gc-lo" style="font-size:8px;">4</div>
+                <div class="gc gc-lo" style="font-size:8px;">5</div>
+              </div>
+              <div style="font-size:9px; font-family:'JetBrains Mono',monospace; color:#c44f4f; margin-top:3px;">↑ 右に隙間</div>
+            </div>
+            <div>
+              <div class="lbl lbl-ok" style="margin-bottom:3px;">auto-flow: dense</div>
+              <div class="grid-wrap" style="display:grid; grid-template-columns:repeat(3,1fr); grid-auto-flow:dense; gap:3px;">
+                <div class="gc gc-hi" style="font-size:8px; grid-column:span 2;">big</div>
+                <div class="gc gc-lo" style="font-size:8px;">2</div>
+                <div class="gc gc-lo" style="font-size:8px;">3</div>
+                <div class="gc gc-lo" style="font-size:8px;">4</div>
+                <div class="gc gc-lo" style="font-size:8px;">5</div>
+              </div>
+              <div style="font-size:9px; font-family:'JetBrains Mono',monospace; color:var(--accent); margin-top:3px;">↑ 隙間を詰める</div>
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="sel">.grid</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="num">3</span>, <span class="val">1fr</span>);
+
+  <span class="comment">/* 横方向に順番に配置（デフォルト）*/</span>
+  <span class="prop">grid-auto-flow</span>: <span class="val">row</span>;
+
+  <span class="comment">/* 縦方向に順番に配置 */</span>
+  <span class="prop">grid-auto-flow</span>: <span class="val">column</span>;
+
+  <span class="comment">/* 隙間を詰める（表示順は崩れる）*/</span>
+  <span class="prop">grid-auto-flow</span>: <span class="val">dense</span>;
+
+  <span class="comment">/* column + dense の組み合わせ */</span>
+  <span class="prop">grid-auto-flow</span>: <span class="val">column dense</span>;
+}
+
+<span class="comment">/* dense の注意点 */</span>
+<span class="comment">/* ・HTML の順番と表示順がずれる    */</span>
+<span class="comment">/* ・スクリーンリーダーは HTML順    */</span>
+<span class="comment">/* ・写真ギャラリーなど「順不同OK」*/</span>
+<span class="comment">/*   な場合に使う                  */</span>
+
+<span class="comment">/* 自動生成行の高さも指定できる */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-auto-rows</span>: <span class="fn">minmax</span>(<span class="num">120px</span>, <span class="val">auto</span>);
+  <span class="comment">/* 最小120px・コンテンツで伸びる */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 06 minmax() ─── -->
+  <section id="minmax">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>minmax() — 最小・最大幅を設定</h2>
+      <span class="en">MINMAX FUNCTION</span>
+    </div>
+    <p class="pattern-desc">
+      <code>minmax(最小値, 最大値)</code>は<b>「最低○○px確保しつつ最大○○frまで伸びる」</b>という柔軟な幅指定ができます。
+      <code>repeat(auto-fill, minmax(280px, 1fr))</code>の組み合わせは、
+      <b>レスポンシブカードグリッドの現代的な定番</b>です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">minmax(min, max)</span>
+        <span class="tag-desc">最小幅と最大幅を同時に指定 / auto-fill との合わせ技が強力</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// minmax の動作（コンテナ幅変化に対応）</div>
+
+          <div class="lbl lbl-ok">minmax(80px, 1fr) → 最低80px、余れば1frで伸びる</div>
+          <div class="grid-wrap" style="display:grid; grid-template-columns:repeat(3, minmax(60px,1fr)); gap:4px; margin-bottom:12px;">
+            <div class="gc gc-hi" style="font-size:9px;">min:60<br>max:1fr</div>
+            <div class="gc gc-mid" style="font-size:9px;">min:60<br>max:1fr</div>
+            <div class="gc gc-lo" style="font-size:9px;">min:60<br>max:1fr</div>
+          </div>
+
+          <div class="lbl lbl-ok">repeat(auto-fill, minmax(80px,1fr)) → 幅に応じて列数が変わる ★★★</div>
+          <div class="grid-wrap" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(65px,1fr)); gap:4px; margin-bottom:4px;">
+            <div class="gc gc-hi" style="font-size:9px;">A</div>
+            <div class="gc gc-mid" style="font-size:9px;">B</div>
+            <div class="gc gc-lo" style="font-size:9px;">C</div>
+            <div class="gc gc-ghost" style="font-size:9px;">D</div>
+            <div class="gc gc-mid" style="font-size:9px;">E</div>
+          </div>
+          <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--accent); margin-bottom:12px;">
+            ← コンテナ幅に収まるだけ並べる
+          </div>
+
+          <div style="background:rgba(76,98,198,0.07); border:1px solid var(--accent-3); padding:8px 12px; border-radius:2px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--accent); line-height:1.8;">
+            minmax(280px, 1fr) とは…<br>
+            ・幅280px以上あれば横に並ぶ<br>
+            ・280px未満になったら折り返す<br>
+            ・余った幅は1frで均等に伸びる
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* minmax(最小, 最大) */</span>
+
+<span class="comment">/* 最低100px・最大1fr */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>:
+    <span class="fn">minmax</span>(<span class="num">100px</span>, <span class="val">1fr</span>) <span class="fn">minmax</span>(<span class="num">100px</span>, <span class="val">1fr</span>);
+}
+
+<span class="comment">/* ★★★ レスポンシブカードの鉄板 */</span>
+<span class="sel">.card-grid</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>:
+    <span class="fn">repeat</span>(<span class="val">auto-fill</span>, <span class="fn">minmax</span>(<span class="num">280px</span>, <span class="val">1fr</span>));
+  <span class="prop">gap</span>: <span class="val">24px</span>;
+}
+<span class="comment">/* ↑ 280px確保できる分だけ列を作る
+      余白は1frで均等に広げる
+      メディアクエリ不要！ */</span>
+
+<span class="comment">/* auto-rows にも使える */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-auto-rows</span>: <span class="fn">minmax</span>(<span class="num">200px</span>, <span class="val">auto</span>);
+  <span class="comment">/* 行の最低高さを200pxに保ちつつ
+     コンテンツが増えたら伸びる */</span>
+}
+
+<span class="comment">/* min-contentとmax-contentも使える */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>:
+    <span class="fn">minmax</span>(<span class="val">min-content</span>, <span class="val">1fr</span>);
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 07 auto-fit vs auto-fill ─── -->
+  <section id="auto-fit">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2>auto-fit vs auto-fill の違い</h2>
+      <span class="en">AUTO-FIT VS AUTO-FILL</span>
+    </div>
+    <p class="pattern-desc">
+      <code>auto-fill</code>と<code>auto-fit</code>はどちらも「収まるだけ列を作る」ですが、
+      <b>アイテムが少ない時の余白の扱いが違います</b>。
+      要素が少ない時に右端まで引き伸ばしたければ<code>auto-fit</code>、
+      余白をそのまま残すなら<code>auto-fill</code>です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">auto-fill vs auto-fit</span>
+        <span class="tag-desc">アイテムが少ない時だけ挙動が違う</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 3アイテムだけある時の比較</div>
+
+          <div class="lbl lbl-ng" style="margin-bottom:4px;">auto-fill → 空列が残る（右に余白）</div>
+          <div class="autofill-demo" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(65px,1fr)); gap:4px; margin-bottom:14px; border-color:#c44f4f;">
+            <div class="gc gc-hi" style="font-size:9px;">A</div>
+            <div class="gc gc-mid" style="font-size:9px;">B</div>
+            <div class="gc gc-lo" style="font-size:9px;">C</div>
+          </div>
+
+          <div class="lbl lbl-ok" style="margin-bottom:4px;">auto-fit → 空列を折りたたみ・3アイテムが引き伸びる</div>
+          <div class="autofill-demo" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(65px,1fr)); gap:4px; margin-bottom:14px;">
+            <div class="gc gc-hi" style="font-size:9px;">A</div>
+            <div class="gc gc-mid" style="font-size:9px;">B</div>
+            <div class="gc gc-lo" style="font-size:9px;">C</div>
+          </div>
+
+          <div style="background:rgba(76,98,198,0.07); border:1px solid var(--accent-3); padding:8px 12px; border-radius:2px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--accent); line-height:1.8;">
+            アイテムが多い時 → 同じ動作<br>
+            アイテムが少ない時 → 違いが出る<br><br>
+            カード並び → auto-fill が自然<br>
+            「常に幅いっぱい」→ auto-fit
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* auto-fill: 空のトラックを保持 */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>:
+    <span class="fn">repeat</span>(<span class="val">auto-fill</span>, <span class="fn">minmax</span>(<span class="num">200px</span>, <span class="val">1fr</span>));
+}
+<span class="comment">/* アイテム3つ、4列分の幅がある場合：
+   [A][B][C][空]  ← 空列が残る    */</span>
+
+<span class="comment">/* auto-fit: 空トラックを折りたたむ */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>:
+    <span class="fn">repeat</span>(<span class="val">auto-fit</span>, <span class="fn">minmax</span>(<span class="num">200px</span>, <span class="val">1fr</span>));
+}
+<span class="comment">/* アイテム3つ、4列分の幅がある場合：
+   [ A  ][ B  ][ C  ]  ← 3列に広がる */</span>
+
+<span class="comment">/* ━━ どちらを使う？ ━━━━━━━━━━━━━
+  カードグリッド（枚数増減する）
+  → auto-fill が意図通りになりやすい
+  
+  「常にコンテナ幅いっぱいに広げたい」
+  → auto-fit が適切
+  
+  迷ったら auto-fill から試す
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 08 実践：雑誌風レイアウト ─── -->
+  <section id="magazine">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2>実践：雑誌風グリッドレイアウト</h2>
+      <span class="en">MAGAZINE LAYOUT</span>
+    </div>
+    <p class="pattern-desc">
+      <code>grid-column</code>と<code>grid-row</code>を使ったセルまたぎで、<b>雑誌・ニュースサイト風の不均一なカード配置</b>が作れます。
+      メインビジュアルを大きく、サブ記事を小さく——Gridでなければ作れないレイアウトです。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">magazine-grid</span>
+        <span class="tag-desc">spanで大きさを変えた記事カードの配置</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 雑誌風 3列×3行グリッド（実際のGrid）</div>
+          <div class="magazine-grid">
+            <div class="mag-cell mag-hero">
+              <div>
+                <div style="font-size:10px; margin-bottom:4px; opacity:0.7;">FEATURE</div>
+                <div style="font-size:12px; font-weight:700;">メイン記事<br>col 1-2 / row 1-2</div>
+              </div>
+            </div>
+            <div class="mag-cell mag-side">サブ A<br><span style="font-size:8px; font-weight:400;">col 3 / row 1</span></div>
+            <div class="mag-cell mag-side2">サブ B<br><span style="font-size:8px; font-weight:400;">col 3 / row 2</span></div>
+            <div class="mag-cell mag-bot1">記事 C<br><span style="font-size:8px; font-weight:400;">col 1 / row 3</span></div>
+            <div class="mag-cell mag-bot2">記事 D<br><span style="font-size:8px; font-weight:400;">col 2 / row 3</span></div>
+            <div class="mag-cell mag-bot3">記事 E<br><span style="font-size:8px; font-weight:400;">col 3 / row 3</span></div>
+          </div>
+          <div style="margin-top:10px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // メインが 2列×2行分 を占有している
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="sel">.magazine</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="num">3</span>, <span class="val">1fr</span>);
+  <span class="prop">grid-template-rows</span>: <span class="val">300px 200px 200px</span>;
+  <span class="prop">gap</span>: <span class="val">12px</span>;
+}
+
+<span class="comment">/* ヒーロー：2列 × 2行を占有 */</span>
+<span class="sel">.hero</span> {
+  <span class="prop">grid-column</span>: <span class="val">1 / 3</span>; <span class="comment">/* 1〜2列目 */</span>
+  <span class="prop">grid-row</span>:    <span class="val">1 / 3</span>; <span class="comment">/* 1〜2行目 */</span>
+}
+
+<span class="comment">/* サイド上：3列目・1行目 */</span>
+<span class="sel">.side-a</span> {
+  <span class="prop">grid-column</span>: <span class="val">3 / 4</span>;
+  <span class="prop">grid-row</span>:    <span class="val">1 / 2</span>;
+}
+
+<span class="comment">/* サイド下：3列目・2行目 */</span>
+<span class="sel">.side-b</span> {
+  <span class="prop">grid-column</span>: <span class="val">3 / 4</span>;
+  <span class="prop">grid-row</span>:    <span class="val">2 / 3</span>;
+}
+
+<span class="comment">/* 下段 3記事：自動配置に任せる */</span>
+<span class="sel">.article-c</span>,
+<span class="sel">.article-d</span>,
+<span class="sel">.article-e</span> {
+  <span class="comment">/* 位置指定なし → 3行目に自動配置 */</span>
+}
+
+<span class="comment">/* spanを使う書き方（同じ結果）*/</span>
+<span class="sel">.hero</span> {
+  <span class="prop">grid-column</span>: <span class="val">1 / span 2</span>;
+  <span class="prop">grid-row</span>:    <span class="val">1 / span 2</span>;
+}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip warn">
+      <strong>ハマりどころ ★★ —</strong>
+      明示的に配置した要素と自動配置の要素が<b>重なってしまう</b>ことがあります。
+      これは意図しないセルに自動配置されたときに起こります。
+      全要素に<code>grid-column</code>/<code>grid-row</code>を明示するか、<code>grid-auto-flow: dense</code>で詰め直すか、
+      あるいは<code>grid-template-areas</code>で全エリアを宣言するかで回避できます。
+    </div>
+  </section>
+
+  <!-- ─── NEXT STEP ─── -->
+  <div class="tip" style="margin-top: 48px;">
+    <strong>NEXT STEP — Vol.6 へ</strong>
+    FlexboxとGridが完全に使いこなせるようになりました。最後のVol.6では<b>position編</b>です。
+    <code>relative</code>・<code>absolute</code>・<code>fixed</code>・<code>sticky</code>——
+    これらは<b>通常フローから要素を「切り離す」</b>特殊な配置です。
+    バッジのオーバーレイ・固定ヘッダー・モーダル・追従サイドバーなど、
+    <b>FlexとGridだけでは作れないUI部品</b>がここで全て作れるようになります。
+    シリーズの締めくくりとして position の全技法を完全解説します。
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════
+     FOOTER
+════════════════════════════════════ -->
+<footer class="page-footer">
+  <span>CSS LAYOUT REFERENCE — Vol.5 Grid応用編</span>
+  <span>BLUEPRINT SERIES / 全6巻</span>
+</footer>
+
+</body>
+</html>

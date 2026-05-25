@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSSレイアウト Grid基礎編 Vol.4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:       #0f1728;
+      --paper:     #e6ebf5;
+      --paper-2:   #d4dcee;
+      --accent:    #4358c4;
+      --accent-2:  #6274de;
+      --accent-3:  #8e9eec;
+      --muted:     #52608a;
+      --line:      #a8b8dc;
+      --code-bg:   #0b101e;
+      --code-text: #c8d2ff;
+      --panel-bg:  #c6ceea;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--ink);
+      background: var(--paper);
+    }
+
+    /* ─── PAGE HEADER ─── */
+    .page-header {
+      position: relative;
+      overflow: hidden;
+      padding: 48px 56px 40px;
+      border-bottom: 2px solid var(--ink);
+    }
+    .page-header::before {
+      content: '⊞';
+      position: absolute;
+      right: 36px; top: -10px;
+      font-size: 220px;
+      color: var(--ink);
+      opacity: 0.07;
+      line-height: 1;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .page-header > * { position: relative; z-index: 1; }
+    .header-tags { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+    .series-tag {
+      background: var(--ink); color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600;
+      padding: 3px 10px; letter-spacing: 0.08em;
+    }
+    .vol-tag {
+      background: var(--accent); color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600;
+      padding: 3px 10px; letter-spacing: 0.06em;
+    }
+    .page-header h1 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 42px; font-weight: 700;
+      line-height: 1.25; letter-spacing: 0.02em; margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 13px; color: var(--muted);
+      letter-spacing: 0.05em; margin-bottom: 16px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .lead { max-width: 640px; font-size: 15px; line-height: 1.9; }
+
+    /* ─── TOC ─── */
+    .toc {
+      background: var(--paper-2);
+      padding: 18px 56px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc ul { display: flex; flex-wrap: wrap; gap: 4px 0; list-style: none; }
+    .toc li a {
+      display: inline-block; padding: 4px 16px 4px 0;
+      font-size: 13px; color: var(--accent); text-decoration: none;
+    }
+    .toc li a::before { content: '— '; color: var(--muted); }
+    .toc li a:hover { color: var(--accent-2); text-decoration: underline; }
+
+    /* ─── MAIN ─── */
+    main { max-width: 1100px; margin: 0 auto; padding: 56px 40px 80px; }
+
+    /* ─── SECTION ─── */
+    section { margin-bottom: 64px; }
+    .section-header {
+      display: flex; align-items: baseline; gap: 16px;
+      padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 16px;
+    }
+    .section-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; font-weight: 600;
+      color: var(--accent-2); letter-spacing: 0.05em;
+    }
+    .section-header h2 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 26px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .en {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--muted);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-left: auto;
+    }
+    .pattern-desc { font-size: 14.5px; line-height: 1.9; max-width: 680px; margin-bottom: 20px; }
+
+    /* ─── DEMO CARD ─── */
+    .demo-card { border: 1px solid var(--line); background: #fff; border-radius: 2px; overflow: hidden; }
+    .demo-head {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--paper-2); padding: 10px 20px; border-bottom: 1px solid var(--line);
+    }
+    .tag-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight: 600; color: var(--accent);
+      background: rgba(67,88,196,0.1); padding: 2px 8px; border-radius: 2px;
+    }
+    .tag-desc { font-size: 12px; color: var(--muted); }
+    .demo-body { display: grid; grid-template-columns: 1fr 1fr; }
+
+    /* ─── PANEL ─── */
+    .panel { background: var(--panel-bg); padding: 24px; border-right: 1px solid var(--line); }
+    .panel-head {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--muted); margin-bottom: 14px; letter-spacing: 0.06em;
+    }
+
+    /* ─── CODE ─── */
+    .code {
+      background: var(--code-bg); padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; line-height: 1.75; color: var(--code-text); overflow-x: auto;
+    }
+    .code pre { white-space: pre; }
+    .kw      { color: #ffc88a; }
+    .type    { color: #c2a3ff; }
+    .fn      { color: #a3c9ff; }
+    .str     { color: #b5e8b0; }
+    .num     { color: #f7a8d8; }
+    .comment { color: #4e60a8; }
+    .prop    { color: #a3c9ff; }
+    .val     { color: #b5e8b0; }
+    .sel     { color: #f7c08a; }
+
+    /* ─── TIP ─── */
+    .tip {
+      border-left: 3px solid var(--accent);
+      background: rgba(67,88,196,0.06);
+      padding: 16px 20px; margin: 20px 0;
+      font-size: 14px; line-height: 1.9;
+    }
+    .tip strong {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600;
+      color: var(--accent-2); letter-spacing: 0.1em; margin-bottom: 6px;
+    }
+    .tip.warn { border-left-color: #c44f4f; background: rgba(196,79,79,0.05); }
+    .tip.warn strong { color: #c44f4f; }
+
+    /* ════════════════════════════
+       GRID DEMO COMPONENTS
+    ════════════════════════════ */
+
+    /* 汎用グリッドセル */
+    .gc {
+      background: rgba(67,88,196,0.16);
+      border: 1.5px solid var(--accent-2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600;
+      color: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 2px; padding: 6px 4px; min-height: 34px;
+      text-align: center;
+    }
+    .gc-a { background: rgba(67,88,196,0.22); border-color: var(--accent); }
+    .gc-b { background: rgba(67,88,196,0.15); }
+    .gc-c { background: rgba(67,88,196,0.09); }
+    .gc-d { background: rgba(67,88,196,0.06); border-color: var(--accent-3); }
+
+    .grid-wrap {
+      background: rgba(255,255,255,0.5);
+      border: 1.5px dashed var(--accent-3);
+      padding: 7px; border-radius: 2px;
+    }
+
+    .glbl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--muted); margin-bottom: 5px;
+    }
+    .glbl-ok { color: var(--accent); }
+    .glbl-ng { color: #c44f4f; }
+
+    /* flex vs grid 比較 */
+    .vs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .vs-col { }
+    .vs-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 600;
+      margin-bottom: 5px; padding: 2px 6px;
+      display: inline-block; border-radius: 2px;
+    }
+    .vs-label-flex { background: rgba(30,120,80,0.12); color: #1a6a44; }
+    .vs-label-grid { background: rgba(67,88,196,0.12); color: var(--accent); }
+
+    /* fr unit demo */
+    .fr-demo-row { margin-bottom: 10px; }
+
+    /* repeat demo */
+    .repeat-row { margin-bottom: 10px; }
+
+    /* template-rows demo */
+    .rows-demo {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+
+    /* page layout demo */
+    .page-layout-demo {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      grid-template-rows: 44px 1fr 36px;
+      gap: 5px;
+      height: 220px;
+    }
+    .pl-header {
+      grid-column: 1 / -1;
+      background: var(--accent);
+      color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600;
+      display: flex; align-items: center; padding: 0 14px;
+      border-radius: 2px;
+    }
+    .pl-sidebar {
+      background: rgba(67,88,196,0.18);
+      border: 1.5px solid var(--accent-2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--accent);
+      padding: 10px; border-radius: 2px;
+    }
+    .pl-sidebar-item {
+      padding: 4px 6px; margin-bottom: 3px;
+      border-radius: 2px; background: rgba(67,88,196,0.1);
+      font-size: 10px;
+    }
+    .pl-main {
+      background: rgba(255,255,255,0.65);
+      border: 1.5px solid var(--line);
+      padding: 10px; border-radius: 2px;
+      font-size: 11px; color: var(--muted);
+    }
+    .pl-main-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600; color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .pl-main-line {
+      height: 6px; background: var(--line);
+      border-radius: 2px; margin-bottom: 4px;
+    }
+    .pl-footer {
+      grid-column: 1 / -1;
+      background: var(--ink);
+      color: rgba(200,210,255,0.6);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 2px;
+    }
+
+    /* gap demo */
+    .gap-row { margin-bottom: 10px; }
+
+    /* auto-fill demo */
+    .autofill-wrap {
+      background: rgba(255,255,255,0.5);
+      border: 1.5px dashed var(--accent-3);
+      padding: 8px; border-radius: 2px;
+    }
+
+    /* line names diagram */
+    .line-diagram {
+      position: relative;
+      padding: 8px;
+    }
+    .line-num {
+      position: absolute;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: #c44f4f;
+      font-weight: 700;
+    }
+
+    /* grid track table */
+    .track-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .track-table th {
+      background: rgba(67,88,196,0.1);
+      padding: 6px 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 600;
+      color: var(--accent); text-align: left;
+      border: 1px solid var(--line);
+    }
+    .track-table td {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      font-size: 11px; vertical-align: top; line-height: 1.6;
+    }
+    .track-table tr:nth-child(even) td { background: rgba(67,88,196,0.03); }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 720px) {
+      .page-header { padding: 32px 24px 28px; }
+      .page-header h1 { font-size: 28px; }
+      .toc { padding: 14px 24px; }
+      main { padding: 32px 20px 60px; }
+      .demo-body { grid-template-columns: 1fr; }
+      .panel { border-right: none; border-bottom: 1px solid var(--line); }
+      .vs-grid { grid-template-columns: 1fr; }
+      .page-layout-demo { grid-template-columns: 100px 1fr; height: 180px; }
+    }
+
+    /* ─── FOOTER ─── */
+    .page-footer {
+      border-top: 2px solid var(--ink);
+      padding: 20px 56px; background: var(--paper-2);
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════
+     PAGE HEADER
+════════════════════════════════════ -->
+<header class="page-header">
+  <div class="header-tags">
+    <span class="series-tag">CSS LAYOUT REFERENCE</span>
+    <span class="vol-tag">Vol.4</span>
+  </div>
+  <h1>Grid 基礎編</h1>
+  <div class="subtitle">CSS GRID FUNDAMENTALS — BLUEPRINT SERIES</div>
+  <p class="lead">
+    Flexboxが「1方向の並び」なら、Gridは<b>「行と列の2次元を同時に操る」</b>仕組みです。
+    <code>grid-template-columns</code>で列の数と幅を宣言するだけで、子要素が自動的に格子状に並びます。
+    <b><code>fr</code>単位と<code>repeat()</code>の2つを覚えるだけで、
+    複雑なページレイアウトが驚くほど少ないコードで完成します。</b>
+  </p>
+</header>
+
+<!-- ═══════════════════════════════════
+     TOC
+════════════════════════════════════ -->
+<nav class="toc">
+  <ul>
+    <li><a href="#flex-vs-grid">FlexとGridの使い分け</a></li>
+    <li><a href="#display-grid">display: grid</a></li>
+    <li><a href="#columns">grid-template-columns</a></li>
+    <li><a href="#fr">fr単位</a></li>
+    <li><a href="#repeat">repeat()</a></li>
+    <li><a href="#rows">grid-template-rows</a></li>
+    <li><a href="#gap">gap</a></li>
+    <li><a href="#page-layout">実践：ページレイアウト</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════════
+     MAIN
+════════════════════════════════════ -->
+<main>
+
+  <!-- ─── 01 FlexとGridの使い分け ─── -->
+  <section id="flex-vs-grid">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>FlexとGridの使い分け</h2>
+      <span class="en">FLEX VS GRID</span>
+    </div>
+    <p class="pattern-desc">
+      「Flexがあれば十分では？」——いいえ、<b>得意な場面が違います</b>。
+      Flexは「コンテンツの量に合わせて柔軟に並べる1次元」、
+      Gridは「先にマス目を宣言して配置する2次元」です。どちらが優れているのではなく、<b>目的で選びます</b>。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">flex vs grid</span>
+        <span class="tag-desc">1次元と2次元、コンテンツ起点とレイアウト起点の違い</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// それぞれの得意な場面</div>
+          <div class="vs-grid">
+            <div class="vs-col">
+              <div class="vs-label vs-label-flex">Flexbox 向き</div>
+              <!-- 実際のFlexで描画 -->
+              <div style="display:flex; flex-wrap:wrap; gap:5px; background:rgba(30,120,80,0.06); border:1.5px dashed #2a8a58; padding:8px; border-radius:2px; margin-bottom:8px;">
+                <div style="background:rgba(30,120,80,0.15); border:1px solid #2a8a58; padding:3px 10px; font-family:'JetBrains Mono',monospace; font-size:10px; color:#1a6a44; border-radius:2px;">ナビリンク</div>
+                <div style="background:rgba(30,120,80,0.15); border:1px solid #2a8a58; padding:3px 10px; font-family:'JetBrains Mono',monospace; font-size:10px; color:#1a6a44; border-radius:2px;">機能</div>
+                <div style="background:rgba(30,120,80,0.15); border:1px solid #2a8a58; padding:3px 14px; font-family:'JetBrains Mono',monospace; font-size:10px; color:#1a6a44; border-radius:2px;">ブログ</div>
+                <div style="background:rgba(30,120,80,0.15); border:1px solid #2a8a58; padding:3px 8px; font-family:'JetBrains Mono',monospace; font-size:10px; color:#1a6a44; border-radius:2px;">Contact</div>
+              </div>
+              <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:#1a6a44;">
+                ・ナビバーのリンク並び<br>
+                ・ボタングループ<br>
+                ・アイコン+テキスト横並び<br>
+                ・コンテンツ量が可変
+              </div>
+            </div>
+            <div class="vs-col">
+              <div class="vs-label vs-label-grid">Grid 向き</div>
+              <!-- 実際のGridで描画 -->
+              <div style="display:grid; grid-template-columns:1fr 1fr; grid-template-rows:28px 1fr; gap:4px; background:rgba(67,88,196,0.06); border:1.5px dashed var(--accent-3); padding:8px; border-radius:2px; margin-bottom:8px; height:90px;">
+                <div style="grid-column:1/-1; background:var(--accent); border-radius:2px; display:flex; align-items:center; padding:0 8px; font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:600; color:var(--paper);">header</div>
+                <div style="background:rgba(67,88,196,0.18); border:1px solid var(--accent-2); border-radius:2px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--accent);">sidebar</div>
+                <div style="background:rgba(67,88,196,0.08); border:1px solid var(--line); border-radius:2px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--accent);">main</div>
+              </div>
+              <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--accent);">
+                ・ページ全体の骨格<br>
+                ・カードの格子並び<br>
+                ・先に「マス目」を決める<br>
+                ・行と列を揃えたい
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* Flexbox → コンテンツが主役 */</span>
+<span class="comment">/* 「並べたいものがある → 並べる」*/</span>
+<span class="sel">.nav</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">gap</span>: <span class="val">16px</span>;
+  <span class="comment">/* リンクが増減しても自動で調整 */</span>
+}
+
+<span class="comment">/* Grid → レイアウトが主役 */</span>
+<span class="comment">/* 「先にマス目を作る → 配置する」*/</span>
+<span class="sel">.page</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="val">240px 1fr</span>;
+  <span class="prop">grid-template-rows</span>: <span class="val">60px 1fr 60px</span>;
+  <span class="comment">/* 先に設計図を書く */</span>
+}
+
+<span class="comment">/* ━━ 迷ったら ━━━━━━━━━━━━━━━━━━━
+  1方向（横か縦）→ Flex
+  2方向（行と列）→ Grid
+  ページの骨格  → Grid
+  コンポーネント内部 → Flex が多い
+  
+  両方使う→ Grid でページを作り
+            中身の要素は Flex で並べる
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 02 display: grid ─── -->
+  <section id="display-grid">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>display: grid が変えるもの</h2>
+      <span class="en">DISPLAY GRID</span>
+    </div>
+    <p class="pattern-desc">
+      <code>display: grid</code>を書いただけでは見た目は変わりません。
+      Flexと違い、<b>Gridは列（または行）の定義がセットで必要</b>です。
+      <code>grid-template-columns</code>で列を宣言した瞬間に格子が生まれます。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">display: grid</span>
+        <span class="tag-desc">grid単体では何も変わらない / 列定義とセットで使う</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 3ステップで格子を作る</div>
+
+          <div class="glbl glbl-ng">① display:grid だけ → 通常フローのまま（変化なし）</div>
+          <div class="grid-wrap" style="border-color:#c44f4f; display:grid; margin-bottom:12px;">
+            <div class="gc gc-a">A（幅100%のまま）</div>
+            <div class="gc gc-b">B（縦に積まれる）</div>
+            <div class="gc gc-c">C</div>
+          </div>
+
+          <div class="glbl glbl-ok">② + grid-template-columns → 列が生まれる</div>
+          <div class="grid-wrap" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; margin-bottom:12px;">
+            <div class="gc gc-a">A</div>
+            <div class="gc gc-b">B</div>
+            <div class="gc gc-c">C</div>
+            <div class="gc gc-d">D</div>
+            <div class="gc gc-a">E</div>
+            <div class="gc gc-b">F</div>
+          </div>
+
+          <div class="glbl glbl-ok">③ + gap → 間隔が生まれる</div>
+          <div class="grid-wrap" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+            <div class="gc gc-a">A</div>
+            <div class="gc gc-b">B</div>
+            <div class="gc gc-c">C</div>
+            <div class="gc gc-d">D</div>
+            <div class="gc gc-a">E</div>
+            <div class="gc gc-b">F</div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* ① displayだけでは何も変わらない */</span>
+<span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="comment">/* ← これだけでは通常フローのまま */</span>
+}
+
+<span class="comment">/* ② 列を宣言して格子を作る */</span>
+<span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="val">1fr 1fr 1fr</span>;
+  <span class="comment">/* ← 3列均等な格子が生まれる */</span>
+}
+
+<span class="comment">/* ③ gap で間隔を追加 */</span>
+<span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="val">1fr 1fr 1fr</span>;
+  <span class="prop">gap</span>: <span class="val">16px</span>;
+  <span class="comment">/* ← 完成 */</span>
+}
+
+<span class="comment">/* ━━ Gridの設計図的な発想 ━━━━━━━
+  1. 列の数と幅を決める
+     grid-template-columns
+  2. 行の高さを決める（任意）
+     grid-template-rows
+  3. 子要素を配置する
+     → 自動 or 手動で指定
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 03 grid-template-columns ─── -->
+  <section id="columns">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>grid-template-columns — 列の定義</h2>
+      <span class="en">GRID TEMPLATE COLUMNS</span>
+    </div>
+    <p class="pattern-desc">
+      <code>grid-template-columns</code>は<b>列の数と各列の幅を宣言します</b>。
+      値を半角スペースで区切って並べると、その数だけ列が生まれます。
+      px・%・fr・auto など複数の単位を混在させることも可能です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">grid-template-columns</span>
+        <span class="tag-desc">スペース区切りで列を宣言 / 値の数 = 列数</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 様々な列定義のバリエーション</div>
+
+          <div class="fr-demo-row">
+            <div class="glbl">200px 1fr → 固定＋残り</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:80px 1fr; gap:4px;">
+              <div class="gc gc-a" style="font-size:9px; text-align:center;">80px<br>固定</div>
+              <div class="gc gc-b" style="font-size:9px; text-align:center;">1fr<br>残り全部</div>
+            </div>
+          </div>
+
+          <div class="fr-demo-row">
+            <div class="glbl">1fr 2fr 1fr → 比率で分割</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:1fr 2fr 1fr; gap:4px;">
+              <div class="gc gc-a" style="font-size:9px;">1fr</div>
+              <div class="gc gc-b" style="font-size:9px;">2fr（倍幅）</div>
+              <div class="gc gc-c" style="font-size:9px;">1fr</div>
+            </div>
+          </div>
+
+          <div class="fr-demo-row">
+            <div class="glbl">auto auto auto → コンテンツ幅で等分</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:auto auto auto; gap:4px;">
+              <div class="gc gc-a" style="font-size:9px;">短い</div>
+              <div class="gc gc-b" style="font-size:9px;">少し長め</div>
+              <div class="gc gc-c" style="font-size:9px;">中</div>
+            </div>
+          </div>
+
+          <div class="fr-demo-row">
+            <div class="glbl">240px 1fr 200px → 左右固定・中央可変</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:65px 1fr 55px; gap:4px;">
+              <div class="gc gc-a" style="font-size:9px; text-align:center;">sidebar<br>240px</div>
+              <div class="gc gc-b" style="font-size:9px;">main 1fr</div>
+              <div class="gc gc-c" style="font-size:9px; text-align:center;">aside<br>200px</div>
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* 列の幅の指定方法 */</span>
+
+<span class="comment">/* 固定幅 */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>: <span class="val">200px 200px 200px</span>;
+}
+
+<span class="comment">/* サイドバー固定 + メイン可変 */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>: <span class="val">240px 1fr</span>;
+}
+
+<span class="comment">/* 3列：左右サイドバー + メイン */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>: <span class="val">240px 1fr 200px</span>;
+}
+
+<span class="comment">/* 比率で分割（2:1:1）*/</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>: <span class="val">2fr 1fr 1fr</span>;
+}
+
+<span class="comment">/* %, minmax, autoも使える */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>:
+    <span class="fn">minmax</span>(<span class="num">200px</span>, <span class="num">1fr</span>) <span class="num">1fr</span>;
+  <span class="comment">/* 最小200px・最大1frの列 */</span>
+}
+
+<span class="comment">/* ↑ 値の数 = 列の数
+   スペースで区切るだけ！ */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 04 fr 単位 ─── -->
+  <section id="fr">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>fr単位 — 余白を分け合う比率</h2>
+      <span class="en">FR UNIT</span>
+    </div>
+    <p class="pattern-desc">
+      <code>fr</code>（fraction＝分数）は<b>コンテナの余白を比率で分配するGrid専用の単位</b>です。
+      Flexboxの<code>flex-grow</code>に似た発想ですが、Gridではより直感的に列の比率を指定できます。
+      固定幅（pxや%）と組み合わせると「固定＋可変」レイアウトが簡単に作れます。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">fr unit</span>
+        <span class="tag-desc">Grid専用の「余白分配」単位 / px・%と混在可</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// fr の分配の仕組み（視覚化）</div>
+
+          <div class="fr-demo-row">
+            <div class="glbl">1fr 1fr 1fr → 残り幅を3等分</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px;">
+              <div class="gc gc-a" style="font-size:9px;">1fr<br>33%</div>
+              <div class="gc gc-b" style="font-size:9px;">1fr<br>33%</div>
+              <div class="gc gc-c" style="font-size:9px;">1fr<br>33%</div>
+            </div>
+          </div>
+
+          <div class="fr-demo-row">
+            <div class="glbl">1fr 2fr → 1:2の比率に分割</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:1fr 2fr; gap:4px;">
+              <div class="gc gc-a" style="font-size:9px;">1fr（33%）</div>
+              <div class="gc gc-b" style="font-size:9px;">2fr（67%）</div>
+            </div>
+          </div>
+
+          <div class="fr-demo-row">
+            <div class="glbl glbl-ok">60px 1fr → px固定後の残りをfrで取る</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:60px 1fr; gap:4px;">
+              <div class="gc gc-a" style="font-size:9px; text-align:center;">60px<br>固定</div>
+              <div class="gc gc-b" style="font-size:9px;">残り全部を1fr</div>
+            </div>
+          </div>
+
+          <div class="fr-demo-row">
+            <div class="glbl glbl-ok">80px 1fr 1fr 80px → 外側固定・内側均等</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:42px 1fr 1fr 42px; gap:4px;">
+              <div class="gc gc-a" style="font-size:9px; text-align:center;">80px</div>
+              <div class="gc gc-b" style="font-size:9px; text-align:center;">1fr</div>
+              <div class="gc gc-c" style="font-size:9px; text-align:center;">1fr</div>
+              <div class="gc gc-d" style="font-size:9px; text-align:center;">80px</div>
+            </div>
+          </div>
+
+          <div style="margin-top:8px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // px分を引いた残りをfrで按分する
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* fr = fraction（残余領域の分数）*/</span>
+
+<span class="comment">/* 全体を3等分 */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>: <span class="val">1fr 1fr 1fr</span>;
+}
+
+<span class="comment">/* 左1/3、右2/3 */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>: <span class="val">1fr 2fr</span>;
+}
+
+<span class="comment">/* サイドバー固定 + メイン可変 ★ */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>: <span class="val">240px 1fr</span>;
+  <span class="comment">/* 240px を除いた残りを1frが取る */</span>
+}
+
+<span class="comment">/* % との違い */</span>
+<span class="comment">/* % → コンテナ全体に対する割合   */</span>
+<span class="comment">/* fr → gap除いた残余領域の割合   */</span>
+
+<span class="comment">/* gapがある時 frが自然に正確 ★ */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="val">1fr 1fr 1fr</span>;
+  <span class="prop">gap</span>: <span class="val">16px</span>;
+  <span class="comment">/* % だと gap 分ずれる…
+     fr なら gap を自動的に除外 */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip">
+      <strong>POINT —</strong>
+      <code>fr</code>の最大の利点は<b>gapを自動的に除外して按分する</b>ことです。
+      <code>%</code>でカラムを作ると<code>gap</code>の分だけ計算が狂いますが、<code>fr</code>はgapを引いた後の残余を分配するので常に正確です。Gridで列幅を指定するなら基本は<code>fr</code>を使います。
+    </div>
+  </section>
+
+  <!-- ─── 05 repeat() ─── -->
+  <section id="repeat">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>repeat() — 繰り返しを簡潔に書く</h2>
+      <span class="en">REPEAT FUNCTION</span>
+    </div>
+    <p class="pattern-desc">
+      同じ列定義を何度も書くのは冗長です。<code>repeat(回数, 幅)</code>を使うと<b>繰り返しをコンパクトに書けます</b>。
+      さらに<code>auto-fill</code>や<code>auto-fit</code>と組み合わせると、
+      <b>列数をブラウザが自動計算するレスポンシブグリッド</b>が1行で完成します（Vol.5で詳しく扱います）。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">repeat()</span>
+        <span class="tag-desc">繰り返し列を1行で / auto-fill でレスポンシブも</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// repeat() の効果（実際のGrid）</div>
+
+          <div class="repeat-row">
+            <div class="glbl">repeat(3, 1fr) → 3列均等</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:4px;">
+              <div class="gc gc-a" style="font-size:9px;">A</div>
+              <div class="gc gc-b" style="font-size:9px;">B</div>
+              <div class="gc gc-c" style="font-size:9px;">C</div>
+              <div class="gc gc-d" style="font-size:9px;">D</div>
+              <div class="gc gc-a" style="font-size:9px;">E</div>
+              <div class="gc gc-b" style="font-size:9px;">F</div>
+            </div>
+          </div>
+
+          <div class="repeat-row">
+            <div class="glbl">repeat(4, 1fr) → 4列均等</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:4px;">
+              <div class="gc gc-a" style="font-size:9px;">1</div>
+              <div class="gc gc-b" style="font-size:9px;">2</div>
+              <div class="gc gc-c" style="font-size:9px;">3</div>
+              <div class="gc gc-d" style="font-size:9px;">4</div>
+              <div class="gc gc-a" style="font-size:9px;">5</div>
+              <div class="gc gc-b" style="font-size:9px;">6</div>
+              <div class="gc gc-c" style="font-size:9px;">7</div>
+              <div class="gc gc-d" style="font-size:9px;">8</div>
+            </div>
+          </div>
+
+          <div class="repeat-row">
+            <div class="glbl glbl-ok">auto-fill + minmax → 幅に応じて列数が変わる ★★★</div>
+            <div class="autofill-wrap" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(70px, 1fr)); gap:4px;">
+              <div class="gc gc-a" style="font-size:9px;">A</div>
+              <div class="gc gc-b" style="font-size:9px;">B</div>
+              <div class="gc gc-c" style="font-size:9px;">C</div>
+              <div class="gc gc-d" style="font-size:9px;">D</div>
+              <div class="gc gc-a" style="font-size:9px;">E</div>
+            </div>
+            <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--accent); margin-top:4px;">← 最小70px確保しつつ列数を自動調整</div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* repeat(回数, 幅) */</span>
+
+<span class="comment">/* これが同じ意味 */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>: <span class="val">1fr 1fr 1fr</span>;
+}
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="num">3</span>, <span class="val">1fr</span>);
+}
+
+<span class="comment">/* 12列グリッドも簡潔に */</span>
+<span class="sel">.grid-12</span> {
+  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="num">12</span>, <span class="val">1fr</span>);
+}
+
+<span class="comment">/* 混在もOK */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>:
+    <span class="val">240px</span> <span class="fn">repeat</span>(<span class="num">3</span>, <span class="val">1fr</span>);
+  <span class="comment">/* 240px + 均等3列 */</span>
+}
+
+<span class="comment">/* ★★★ レスポンシブの鉄板 */</span>
+<span class="sel">.cards</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>:
+    <span class="fn">repeat</span>(<span class="val">auto-fill</span>, <span class="fn">minmax</span>(<span class="num">280px</span>, <span class="val">1fr</span>));
+  <span class="prop">gap</span>: <span class="val">20px</span>;
+}
+<span class="comment">/* ↑ 280px以上あれば並べ、
+      なければ折り返す
+      → メディアクエリ不要！  */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 06 grid-template-rows ─── -->
+  <section id="rows">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>grid-template-rows — 行の定義</h2>
+      <span class="en">GRID TEMPLATE ROWS</span>
+    </div>
+    <p class="pattern-desc">
+      行の高さは<code>grid-template-rows</code>で定義します。
+      省略するとコンテンツの高さに合わせた<b>暗黙的な行</b>が自動生成されます。
+      ページレイアウトではヘッダー・フッターを固定高さにし、メインを<code>1fr</code>で可変にするのが定番です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">grid-template-rows</span>
+        <span class="tag-desc">省略可（自動）/ ページ構造には明示が便利</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 行の定義あり vs なし</div>
+
+          <div class="fr-demo-row">
+            <div class="glbl">rows 省略 → コンテンツ高さで自動決定</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+              <div class="gc gc-a" style="font-size:9px; height:50px;">tall A</div>
+              <div class="gc gc-b" style="font-size:9px;">B</div>
+              <div class="gc gc-c" style="font-size:9px; height:30px;">C</div>
+              <div class="gc gc-d" style="font-size:9px;">D</div>
+            </div>
+          </div>
+
+          <div class="fr-demo-row">
+            <div class="glbl glbl-ok">rows: 60px 1fr 44px → ヘッダー/メイン/フッター</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:1fr; grid-template-rows:40px 70px 28px; gap:4px;">
+              <div class="gc gc-a" style="font-size:9px; min-height:unset;">header（60px固定）</div>
+              <div class="gc gc-b" style="font-size:9px; min-height:unset;">main（1fr = 残り全部）</div>
+              <div class="gc gc-c" style="font-size:9px; min-height:unset;">footer（44px固定）</div>
+            </div>
+          </div>
+
+          <div style="margin-top:8px;">
+            <div class="glbl">track の単位比較早見表</div>
+            <table class="track-table">
+              <tr><th>単位</th><th>意味</th></tr>
+              <tr><td><span class="mono">60px</span></td><td>固定高さ</td></tr>
+              <tr><td><span class="mono">1fr</span></td><td>残りを比率で</td></tr>
+              <tr><td><span class="mono">auto</span></td><td>コンテンツに合わせる</td></tr>
+              <tr><td><span class="mono">minmax(100px,1fr)</span></td><td>最小100px、最大1fr</td></tr>
+              <tr><td><span class="mono">min-content</span></td><td>コンテンツの最小幅</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* grid-template-rows */</span>
+
+<span class="comment">/* 省略可：コンテンツ高さに自動調整 */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="val">1fr 1fr</span>;
+  <span class="comment">/* rows 省略 → 行は自動生成 */</span>
+}
+
+<span class="comment">/* ページ構造には明示する */</span>
+<span class="sel">.page</span> {
+  <span class="prop">display</span>:             <span class="val">grid</span>;
+  <span class="prop">grid-template-rows</span>:  <span class="val">60px 1fr 60px</span>;
+  <span class="prop">min-height</span>:          <span class="val">100vh</span>;
+  <span class="comment">/* ↑ ヘッダー60px / メイン可変 / フッター60px
+        min-height:100vh でフッターが必ず下へ */</span>
+}
+
+<span class="comment">/* shorthand: grid */</span>
+<span class="sel">.page</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid</span>: <span class="val">60px 1fr 60px / 240px 1fr</span>;
+  <span class="comment">/* rows / columns をまとめて */</span>
+}
+
+<span class="comment">/* 暗黙的な行の高さを制御 */</span>
+<span class="sel">.grid</span> {
+  <span class="prop">grid-auto-rows</span>: <span class="val">200px</span>;
+  <span class="comment">/* 自動生成される行を全て200px */</span>
+}
+<span class="sel">.grid</span> {
+  <span class="prop">grid-auto-rows</span>: <span class="fn">minmax</span>(<span class="num">100px</span>, <span class="val">auto</span>);
+  <span class="comment">/* 最低100px、コンテンツで伸びる */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 07 gap ─── -->
+  <section id="gap">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2>gap — グリッドの溝</h2>
+      <span class="en">GAP</span>
+    </div>
+    <p class="pattern-desc">
+      Gridの<code>gap</code>はFlexと同じプロパティです。
+      グリッドの場合、<b>行間（row-gap）と列間（column-gap）を別々に設定できる</b>ため、
+      カードのような縦横異なる余白にも簡単に対応できます。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">gap / row-gap / column-gap</span>
+        <span class="tag-desc">行間と列間を個別設定できる / frの計算にgapは含まれない</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// gapの種類と視覚的な違い</div>
+
+          <div class="gap-row">
+            <div class="glbl">gap: 4px（縦横同じ）</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:repeat(3,1fr); gap:4px;">
+              <div class="gc gc-a" style="font-size:9px;">A</div>
+              <div class="gc gc-b" style="font-size:9px;">B</div>
+              <div class="gc gc-c" style="font-size:9px;">C</div>
+              <div class="gc gc-d" style="font-size:9px;">D</div>
+              <div class="gc gc-a" style="font-size:9px;">E</div>
+              <div class="gc gc-b" style="font-size:9px;">F</div>
+            </div>
+          </div>
+
+          <div class="gap-row">
+            <div class="glbl glbl-ok">row-gap:14px / column-gap:4px（行広め）</div>
+            <div class="grid-wrap" style="display:grid; grid-template-columns:repeat(3,1fr); row-gap:14px; column-gap:4px;">
+              <div class="gc gc-a" style="font-size:9px;">A</div>
+              <div class="gc gc-b" style="font-size:9px;">B</div>
+              <div class="gc gc-c" style="font-size:9px;">C</div>
+              <div class="gc gc-d" style="font-size:9px;">D</div>
+              <div class="gc gc-a" style="font-size:9px;">E</div>
+              <div class="gc gc-b" style="font-size:9px;">F</div>
+            </div>
+          </div>
+
+          <div style="margin-top:10px; background:rgba(67,88,196,0.07); border:1px solid var(--accent-3); padding:8px 12px; border-radius:2px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--accent);">
+            gap は fr 計算の「後」に引かれる<br>
+            → 1fr 1fr 1fr + gap:16px でも<br>
+            &nbsp;&nbsp; 各列の幅が正確に3等分される
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="sel">.grid</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="num">3</span>, <span class="val">1fr</span>);
+
+  <span class="comment">/* 縦横同じ */</span>
+  <span class="prop">gap</span>: <span class="val">20px</span>;
+
+  <span class="comment">/* 縦 / 横 を別々に */</span>
+  <span class="prop">gap</span>: <span class="val">32px 16px</span>; <span class="comment">/* row col */</span>
+
+  <span class="comment">/* 個別指定 */</span>
+  <span class="prop">row-gap</span>:    <span class="val">32px</span>;
+  <span class="prop">column-gap</span>: <span class="val">16px</span>;
+}
+
+<span class="comment">/* カードグリッドの定番 */</span>
+<span class="sel">.card-grid</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>:
+    <span class="fn">repeat</span>(<span class="num">3</span>, <span class="val">1fr</span>);
+  <span class="prop">row-gap</span>:    <span class="val">32px</span>; <span class="comment">/* 行間は広め */</span>
+  <span class="prop">column-gap</span>: <span class="val">20px</span>; <span class="comment">/* 列間は狭め */</span>
+}
+
+<span class="comment">/* ━━ frとgapの計算 ━━━━━━━━━━━━━
+  コンテナ幅900px、gap:20px、3列の場合
+  
+  使えるfr幅 = 900 - (20 × 2) = 860px
+  1fr = 860 ÷ 3 ≒ 286.7px
+  
+  % で指定すると gap 分だけずれる
+  → fr を使う理由がここにある
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 08 実践：ページレイアウト ─── -->
+  <section id="page-layout">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2>実践：ページレイアウトを組む</h2>
+      <span class="en">PAGE LAYOUT PATTERN</span>
+    </div>
+    <p class="pattern-desc">
+      「ヘッダー・サイドバー・メインコンテンツ・フッター」という<b>Webサイトの定番骨格</b>を
+      Gridで組み立てます。コードはわずか10行。
+      <b>これがGridが「ページレイアウト向き」と言われる理由</b>です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">holy-grail-layout</span>
+        <span class="tag-desc">header / sidebar / main / footer を10行で</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 実際に動くページレイアウト</div>
+          <div class="page-layout-demo">
+            <div class="pl-header">⊞ HEADER — 全幅（grid-column: 1 / -1）</div>
+            <div class="pl-sidebar">
+              <div style="font-size:10px; font-weight:700; margin-bottom:6px; font-family:'JetBrains Mono',monospace;">SIDEBAR</div>
+              <div class="pl-sidebar-item">ナビ 01</div>
+              <div class="pl-sidebar-item">ナビ 02</div>
+              <div class="pl-sidebar-item">ナビ 03</div>
+            </div>
+            <div class="pl-main">
+              <div class="pl-main-title">MAIN CONTENT</div>
+              <div class="pl-main-line" style="width:90%;"></div>
+              <div class="pl-main-line" style="width:75%;"></div>
+              <div class="pl-main-line" style="width:85%;"></div>
+              <div class="pl-main-line" style="width:60%;"></div>
+            </div>
+            <div class="pl-footer">FOOTER — 全幅（grid-column: 1 / -1）</div>
+          </div>
+
+          <div style="margin-top:12px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // header と footer が2列を横断している
+          </div>
+
+          <div style="margin-top:10px; background:rgba(67,88,196,0.07); border:1px solid var(--accent-3); padding:8px 10px; border-radius:2px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); margin-bottom:5px; font-weight:600;">構造のポイント</div>
+            <div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); line-height:1.8;">
+              columns: 160px 1fr<br>
+              rows:&nbsp;&nbsp;&nbsp; 44px 1fr 36px<br>
+              header: grid-column 1 / -1 → 全幅<br>
+              footer: grid-column 1 / -1 → 全幅
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* ── 定番ページレイアウト ── */</span>
+<span class="sel">.page</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="val">240px 1fr</span>;
+  <span class="prop">grid-template-rows</span>:    <span class="val">60px 1fr 60px</span>;
+  <span class="prop">min-height</span>: <span class="val">100vh</span>;
+  <span class="prop">gap</span>: <span class="val">0</span>;
+}
+
+<span class="comment">/* ヘッダー：全幅（1列目〜最後の列）*/</span>
+<span class="sel">.header</span> {
+  <span class="prop">grid-column</span>: <span class="val">1 / -1</span>;
+  <span class="comment">/* -1 = 最後のライン */</span>
+}
+
+<span class="comment">/* サイドバー：自動配置でOK */</span>
+<span class="sel">.sidebar</span> { }
+
+<span class="comment">/* メイン：自動配置でOK */</span>
+<span class="sel">.main</span> { }
+
+<span class="comment">/* フッター：全幅 */</span>
+<span class="sel">.footer</span> {
+  <span class="prop">grid-column</span>: <span class="val">1 / -1</span>;
+}
+
+<span class="comment">/* HTML構造 */</span>
+<span class="comment">/* &lt;div class="page"&gt;          */</span>
+<span class="comment">/*   &lt;header&gt;...&lt;/header&gt;     */</span>
+<span class="comment">/*   &lt;nav&gt;サイドバー&lt;/nav&gt;    */</span>
+<span class="comment">/*   &lt;main&gt;メイン&lt;/main&gt;      */</span>
+<span class="comment">/*   &lt;footer&gt;...&lt;/footer&gt;    */</span>
+<span class="comment">/* &lt;/div&gt;                     */</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip">
+      <strong>POINT —</strong>
+      <code>grid-column: 1 / -1</code>の<code>-1</code>は「<b>最後の列ライン</b>」を意味します。列の数に関係なく「全幅にまたがる」という指定ができるので、列数を変えてもヘッダーとフッターのコードを変える必要がありません。<b>Grid特有の超便利な書き方</b>です。列ラインの指定については Vol.5 で詳しく扱います。
+    </div>
+  </section>
+
+  <!-- ─── NEXT STEP ─── -->
+  <div class="tip" style="margin-top: 48px;">
+    <strong>NEXT STEP — Vol.5 へ</strong>
+    Gridの基礎——<code>grid-template-columns</code>・<code>fr</code>・<code>repeat()</code>・ページレイアウトが身につきました。
+    次のVol.5では<b>Grid応用編</b>に進みます。
+    <code>grid-template-areas</code>で「名前付きの部屋」を作る直感的なレイアウト、
+    <code>grid-column / grid-row</code>でセルをまたぐ<b>span配置</b>、
+    そして<code>auto-fit + minmax</code>によるレスポンシブグリッドの完全版を扱います。
+    <b>「なぜそこに配置されるのか」を完全に制御できるようになります。</b>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════
+     FOOTER
+════════════════════════════════════ -->
+<footer class="page-footer">
+  <span>CSS LAYOUT REFERENCE — Vol.4 Grid基礎編</span>
+  <span>BLUEPRINT SERIES / 全6巻</span>
+</footer>
+
+</body>
+</html>

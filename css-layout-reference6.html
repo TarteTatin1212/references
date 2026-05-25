@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSSレイアウト positionと重ね・配置編 Vol.6</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:       #0b1220;
+      --paper:     #e0e6f1;
+      --paper-2:   #ced6e6;
+      --accent:    #556ac8;
+      --accent-2:  #7086e0;
+      --accent-3:  #92a2ee;
+      --muted:     #4a5a82;
+      --line:      #9cacd2;
+      --code-bg:   #080c18;
+      --code-text: #bec8fc;
+      --panel-bg:  #bdc6e2;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 15px; line-height: 1.8;
+      color: var(--ink); background: var(--paper);
+    }
+
+    /* ─── PAGE HEADER ─── */
+    .page-header {
+      position: relative; overflow: hidden;
+      padding: 48px 56px 40px; border-bottom: 2px solid var(--ink);
+    }
+    .page-header::before {
+      content: '◈';
+      position: absolute; right: 36px; top: -10px;
+      font-size: 220px; color: var(--ink);
+      opacity: 0.07; line-height: 1; pointer-events: none; z-index: 0;
+    }
+    .page-header > * { position: relative; z-index: 1; }
+    .header-tags { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+    .series-tag {
+      background: var(--ink); color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600; padding: 3px 10px; letter-spacing: 0.08em;
+    }
+    .vol-tag {
+      background: var(--accent); color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600; padding: 3px 10px; letter-spacing: 0.06em;
+    }
+    .final-tag {
+      background: transparent; color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border: 1.5px solid var(--accent); letter-spacing: 0.06em;
+    }
+    .page-header h1 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 42px; font-weight: 700;
+      line-height: 1.25; letter-spacing: 0.02em; margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 13px; color: var(--muted);
+      letter-spacing: 0.05em; margin-bottom: 16px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .lead { max-width: 640px; font-size: 15px; line-height: 1.9; }
+
+    /* ─── TOC ─── */
+    .toc { background: var(--paper-2); padding: 18px 56px; border-bottom: 1px solid var(--line); }
+    .toc ul { display: flex; flex-wrap: wrap; gap: 4px 0; list-style: none; }
+    .toc li a {
+      display: inline-block; padding: 4px 16px 4px 0;
+      font-size: 13px; color: var(--accent); text-decoration: none;
+    }
+    .toc li a::before { content: '— '; color: var(--muted); }
+    .toc li a:hover { color: var(--accent-2); text-decoration: underline; }
+
+    /* ─── MAIN ─── */
+    main { max-width: 1100px; margin: 0 auto; padding: 56px 40px 80px; }
+
+    /* ─── SECTION ─── */
+    section { margin-bottom: 64px; }
+    .section-header {
+      display: flex; align-items: baseline; gap: 16px;
+      padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 16px;
+    }
+    .section-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; font-weight: 600; color: var(--accent-2); letter-spacing: 0.05em;
+    }
+    .section-header h2 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 26px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .en {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--muted);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-left: auto;
+    }
+    .pattern-desc { font-size: 14.5px; line-height: 1.9; max-width: 680px; margin-bottom: 20px; }
+
+    /* ─── DEMO CARD ─── */
+    .demo-card { border: 1px solid var(--line); background: #fff; border-radius: 2px; overflow: hidden; }
+    .demo-head {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--paper-2); padding: 10px 20px; border-bottom: 1px solid var(--line);
+    }
+    .tag-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight: 600; color: var(--accent);
+      background: rgba(85,106,200,0.1); padding: 2px 8px; border-radius: 2px;
+    }
+    .tag-desc { font-size: 12px; color: var(--muted); }
+    .demo-body { display: grid; grid-template-columns: 1fr 1fr; }
+
+    /* ─── PANEL ─── */
+    .panel { background: var(--panel-bg); padding: 24px; border-right: 1px solid var(--line); }
+    .panel-head {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--muted); margin-bottom: 14px; letter-spacing: 0.06em;
+    }
+
+    /* ─── CODE ─── */
+    .code {
+      background: var(--code-bg); padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; line-height: 1.75; color: var(--code-text); overflow-x: auto;
+    }
+    .code pre { white-space: pre; }
+    .kw      { color: #ffc88a; }
+    .type    { color: #c2a3ff; }
+    .fn      { color: #a3c9ff; }
+    .str     { color: #b5e8b0; }
+    .num     { color: #f7a8d8; }
+    .comment { color: #425090; }
+    .prop    { color: #a3c9ff; }
+    .val     { color: #b5e8b0; }
+    .sel     { color: #f7c08a; }
+
+    /* ─── TIP ─── */
+    .tip {
+      border-left: 3px solid var(--accent);
+      background: rgba(85,106,200,0.06);
+      padding: 16px 20px; margin: 20px 0;
+      font-size: 14px; line-height: 1.9;
+    }
+    .tip strong {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600;
+      color: var(--accent-2); letter-spacing: 0.1em; margin-bottom: 6px;
+    }
+    .tip.warn { border-left-color: #c44f4f; background: rgba(196,79,79,0.05); }
+    .tip.warn strong { color: #c44f4f; }
+
+    /* ════════════════════════════
+       POSITION DEMOS
+    ════════════════════════════ */
+
+    .lbl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--muted); margin-bottom: 5px;
+    }
+    .lbl-ok { color: var(--accent); }
+    .lbl-ng { color: #c44f4f; }
+
+    /* 通常フローの箱 */
+    .flow-box {
+      background: rgba(85,106,200,0.12);
+      border: 1.5px solid var(--accent-3);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--accent-2);
+      padding: 6px 10px; border-radius: 2px; margin-bottom: 4px;
+    }
+
+    /* relative デモ */
+    .rel-demo-wrap {
+      background: rgba(255,255,255,0.45);
+      border: 1.5px dashed var(--accent-3);
+      padding: 8px; border-radius: 2px; position: relative;
+    }
+
+    /* absolute デモ */
+    .abs-demo-parent {
+      position: relative;
+      background: rgba(85,106,200,0.06);
+      border: 2px solid var(--accent-2);
+      height: 100px; border-radius: 2px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .abs-demo-child {
+      position: absolute;
+      background: var(--accent);
+      color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; font-weight: 600;
+      padding: 4px 8px; border-radius: 2px;
+    }
+
+    /* position 5種 比較表 */
+    .pos-table {
+      width: 100%; border-collapse: collapse; font-size: 12px;
+    }
+    .pos-table th {
+      background: rgba(85,106,200,0.12);
+      padding: 6px 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 600;
+      color: var(--accent); text-align: left; border: 1px solid var(--line);
+    }
+    .pos-table td {
+      padding: 6px 10px; border: 1px solid var(--line);
+      font-size: 11px; vertical-align: top; line-height: 1.6;
+    }
+    .pos-table tr:nth-child(even) td { background: rgba(85,106,200,0.03); }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+    .badge-pos {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; font-weight: 700;
+      padding: 1px 5px; border-radius: 2px;
+    }
+    .bp-flow  { background: rgba(85,106,200,0.12); color: var(--accent); }
+    .bp-out   { background: rgba(196,79,79,0.12); color: #b04040; }
+
+    /* sticky デモ */
+    .sticky-demo-wrap {
+      height: 130px; overflow-y: scroll;
+      border: 1.5px solid var(--line); border-radius: 2px;
+      background: rgba(255,255,255,0.5);
+    }
+    .sticky-nav {
+      position: sticky; top: 0;
+      background: var(--accent); color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 600;
+      padding: 7px 12px; z-index: 10;
+    }
+    .sticky-content {
+      padding: 8px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--muted); line-height: 2;
+    }
+
+    /* z-index デモ */
+    .z-demo-wrap {
+      position: relative; height: 100px; border-radius: 2px;
+      background: rgba(255,255,255,0.4);
+      border: 1.5px dashed var(--accent-3);
+    }
+    .z-box {
+      position: absolute;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 700;
+      border-radius: 2px; padding: 8px 14px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .z1 { background: rgba(85,106,200,0.55); border: 2px solid var(--accent); color: var(--paper); top:20px; left:16px; width:100px; height:60px; z-index:1; }
+    .z2 { background: rgba(85,106,200,0.75); border: 2px solid var(--ink); color: var(--paper); top:30px; left:60px; width:100px; height:60px; z-index:2; }
+    .z3 { background: rgba(85,106,200,0.35); border: 2px dashed var(--accent-3); color: var(--accent); top:40px; left:110px; width:100px; height:50px; z-index:0; }
+
+    /* badge デモ */
+    .badge-demo-wrap {
+      display: flex; gap: 20px; flex-wrap: wrap;
+    }
+    .badge-item {
+      position: relative; display: inline-block;
+    }
+    .badge-icon {
+      background: rgba(85,106,200,0.14);
+      border: 1.5px solid var(--accent-2);
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; border-radius: 4px;
+    }
+    .badge-count {
+      position: absolute;
+      top: -6px; right: -6px;
+      background: #c44f4f; color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 700;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--panel-bg);
+    }
+
+    /* modal デモ */
+    .modal-demo {
+      position: relative; height: 130px; overflow: hidden;
+      border-radius: 2px; background: rgba(85,106,200,0.04);
+      border: 1.5px solid var(--line);
+    }
+    .modal-overlay {
+      position: absolute; inset: 0;
+      background: rgba(11,18,32,0.55);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10;
+    }
+    .modal-box {
+      background: #fff;
+      border: 1.5px solid var(--line);
+      border-radius: 4px; padding: 14px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--ink);
+      width: 200px; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      z-index: 20; position: relative;
+    }
+    .modal-title {
+      font-weight: 700; color: var(--accent);
+      margin-bottom: 6px; font-size: 11px;
+    }
+    .modal-btn {
+      display: inline-block; margin-top: 8px;
+      background: var(--accent); color: var(--paper);
+      padding: 4px 12px; border-radius: 2px; font-size: 9px;
+    }
+    .modal-page-content {
+      padding: 8px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--muted); line-height: 1.7;
+    }
+
+    /* fixed header demo */
+    .fixed-demo-wrap {
+      position: relative; height: 110px;
+      overflow: hidden; border-radius: 2px;
+      border: 1.5px solid var(--line);
+      background: rgba(255,255,255,0.5);
+    }
+    .fixed-header-sim {
+      position: absolute; top: 0; left: 0; right: 0;
+      background: var(--ink); color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 600;
+      padding: 8px 14px; z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .fixed-scroll-content {
+      padding: 48px 12px 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--muted); line-height: 2;
+    }
+
+    /* ─── ENDING ─── */
+    .ending {
+      margin-top: 80px;
+      border: 2px solid var(--ink);
+      background: var(--ink);
+      color: var(--paper);
+      padding: 56px 56px 52px;
+      border-radius: 2px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .ending::before {
+      content: '⊞';
+      position: absolute;
+      right: -20px; top: -20px;
+      font-size: 200px; color: #fff;
+      opacity: 0.04; line-height: 1; pointer-events: none;
+    }
+    .ending > * { position: relative; z-index: 1; }
+    .ending h2 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 34px; font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 16px;
+      line-height: 1.3;
+    }
+    .subtitle-end {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 0.2em;
+      color: var(--accent-3);
+      margin-bottom: 32px;
+    }
+    .ending-divider {
+      width: 60px; height: 2px;
+      background: var(--accent-2);
+      margin: 0 auto 32px;
+    }
+    .message {
+      max-width: 560px; margin: 0 auto 40px;
+      font-size: 15px; line-height: 2;
+      color: rgba(224,230,241,0.85);
+    }
+    .series-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-width: 700px;
+      margin: 0 auto 40px;
+    }
+    .series-item {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 2px; padding: 10px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--accent-3);
+      text-align: left; line-height: 1.6;
+    }
+    .series-item .si-vol {
+      font-size: 9px; opacity: 0.6; margin-bottom: 3px;
+    }
+    .series-item .si-title {
+      font-weight: 600; color: var(--paper); font-size: 11px;
+    }
+    .ending-foot {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: rgba(224,230,241,0.4);
+      letter-spacing: 0.1em;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 720px) {
+      .page-header { padding: 32px 24px 28px; }
+      .page-header h1 { font-size: 28px; }
+      .toc { padding: 14px 24px; }
+      main { padding: 32px 20px 60px; }
+      .demo-body { grid-template-columns: 1fr; }
+      .panel { border-right: none; border-bottom: 1px solid var(--line); }
+      .ending { padding: 40px 24px 36px; }
+      .series-list { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ─── FOOTER ─── */
+    .page-footer {
+      border-top: 2px solid var(--ink);
+      padding: 20px 56px; background: var(--paper-2);
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════
+     PAGE HEADER
+════════════════════════════════════ -->
+<header class="page-header">
+  <div class="header-tags">
+    <span class="series-tag">CSS LAYOUT REFERENCE</span>
+    <span class="vol-tag">Vol.6</span>
+    <span class="final-tag">FINAL</span>
+  </div>
+  <h1>position と<br>重ね・配置編</h1>
+  <div class="subtitle">POSITION &amp; STACKING — BLUEPRINT SERIES FINAL VOLUME</div>
+  <p class="lead">
+    FlexとGridは「通常フローを賢く制御する」仕組みでした。
+    <code>position</code>はそれとは異なり、<b>要素を通常フローから切り離して自由な座標に置く</b>機能です。
+    固定ヘッダー・バッジ・モーダル・追従サイドバー——
+    これらは<code>position</code>なしには作れません。
+    <b>このVol.6でCSSレイアウトの全手法が揃います。</b>
+  </p>
+</header>
+
+<!-- ═══════════════════════════════════
+     TOC
+════════════════════════════════════ -->
+<nav class="toc">
+  <ul>
+    <li><a href="#overview">5種類の概観</a></li>
+    <li><a href="#relative">relative</a></li>
+    <li><a href="#absolute">absolute</a></li>
+    <li><a href="#fixed">fixed</a></li>
+    <li><a href="#sticky">sticky</a></li>
+    <li><a href="#z-index">z-index</a></li>
+    <li><a href="#patterns">実践パターン集</a></li>
+    <li><a href="#guide">使い分けガイド</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════════
+     MAIN
+════════════════════════════════════ -->
+<main>
+
+  <!-- ─── 01 5種類の概観 ─── -->
+  <section id="overview">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>position の5種類を一望する</h2>
+      <span class="en">POSITION OVERVIEW</span>
+    </div>
+    <p class="pattern-desc">
+      <code>position</code>プロパティには5つの値があります。
+      <b>「フローに残るか・フローから外れるか」</b>という軸で整理すると覚えやすくなります。
+      <code>static</code>以外の全てで<code>top / right / bottom / left</code>の座標指定が有効になります。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">position: static | relative | absolute | fixed | sticky</span>
+        <span class="tag-desc">フローに残る2種 / フローから外れる2種 / ハイブリッド1種</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// フローとの関係で分類する</div>
+          <table class="pos-table">
+            <tr>
+              <th>値</th>
+              <th>フロー</th>
+              <th>主な用途</th>
+            </tr>
+            <tr>
+              <td><span class="mono">static</span></td>
+              <td><span class="badge-pos bp-flow">残る</span></td>
+              <td>デフォルト。top/left効かない</td>
+            </tr>
+            <tr>
+              <td><span class="mono">relative</span></td>
+              <td><span class="badge-pos bp-flow">残る</span></td>
+              <td>元の位置からずらす / absoluteの基点作り ★★★</td>
+            </tr>
+            <tr>
+              <td><span class="mono">absolute</span></td>
+              <td><span class="badge-pos bp-out">外れる</span></td>
+              <td>最近傍のrelative祖先を基点に絶対配置 ★★★</td>
+            </tr>
+            <tr>
+              <td><span class="mono">fixed</span></td>
+              <td><span class="badge-pos bp-out">外れる</span></td>
+              <td>ビューポート基点で固定。スクロールで動かない ★★</td>
+            </tr>
+            <tr>
+              <td><span class="mono">sticky</span></td>
+              <td><span class="badge-pos bp-flow">両方</span></td>
+              <td>通常時はフロー内、スクロールで固定に切替 ★★</td>
+            </tr>
+          </table>
+          <div style="margin-top:12px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // static 以外は top/right/bottom/left が効く
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* position の5値 */</span>
+
+<span class="comment">/* デフォルト（何も変わらない）*/</span>
+<span class="sel">.item</span> { <span class="prop">position</span>: <span class="val">static</span>; }
+
+<span class="comment">/* 元の位置からずらす */</span>
+<span class="sel">.item</span> { <span class="prop">position</span>: <span class="val">relative</span>; }
+
+<span class="comment">/* 祖先のrelativeを基点に配置 */</span>
+<span class="sel">.item</span> { <span class="prop">position</span>: <span class="val">absolute</span>; }
+
+<span class="comment">/* ビューポートを基点に固定 */</span>
+<span class="sel">.item</span> { <span class="prop">position</span>: <span class="val">fixed</span>; }
+
+<span class="comment">/* スクロール中は流れ・端でstick */</span>
+<span class="sel">.item</span> { <span class="prop">position</span>: <span class="val">sticky</span>; }
+
+<span class="comment">/* ━━ static 以外で使える座標 ━━━━━
+  top: 20px;    / top: 50%;
+  right: 0;     / right: 10%;
+  bottom: 20px; / bottom: 0;
+  left: 50%;    / left: auto;
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 02 relative ─── -->
+  <section id="relative">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>position: relative</h2>
+      <span class="en">RELATIVE</span>
+    </div>
+    <p class="pattern-desc">
+      <code>relative</code>は<b>元の位置を基準にずらす</b>指定です。
+      フローの中の「場所取り」はそのままで、見た目だけ動きます。
+      単体でずらす用途より、<b><code>absolute</code>の基点を作るために使う</b>ことの方が圧倒的に多いです。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">position: relative</span>
+        <span class="tag-desc">フローに残ったまま見た目だけずれる / absoluteの親に必須</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// relative の動作（元の位置は空いたまま）</div>
+          <div class="rel-demo-wrap">
+            <div class="flow-box">通常のブロック A</div>
+            <div class="flow-box" style="position:relative; top:10px; left:20px; border-color:var(--accent); background:rgba(85,106,200,0.2); color:var(--accent); font-weight:700;">
+              B: position:relative top:10px left:20px（ずれた）
+            </div>
+            <div class="flow-box">通常のブロック C（Bが移動しても間は詰まらない）</div>
+          </div>
+          <div style="margin-top:10px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // Bが動いてもCの位置は変わらない
+          </div>
+          <div style="margin-top:12px; background:rgba(85,106,200,0.08); border:1px solid var(--accent-3); padding:8px 12px; border-radius:2px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--accent); line-height:1.8;">
+            relative の主な用途：<br>
+            ① absolute の基点を作る（★★★最重要）<br>
+            ② z-index の有効化<br>
+            ③ 微調整でほんの少しずらす
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* relative の基本 */</span>
+<span class="sel">.item</span> {
+  <span class="prop">position</span>: <span class="val">relative</span>;
+  <span class="prop">top</span>:  <span class="val">10px</span>;  <span class="comment">/* 元の位置から10px下へ */</span>
+  <span class="prop">left</span>: <span class="val">20px</span>;  <span class="comment">/* 元の位置から20px右へ */</span>
+}
+
+<span class="comment">/* 元の「スペース」は残る
+   → Cはずれない（Bの元の場所に空白）*/</span>
+
+<span class="comment">/* ★★★ 最もよく使う用途：
+   absoluteの基点（コンテナ）を作る */</span>
+<span class="sel">.card</span> {
+  <span class="prop">position</span>: <span class="val">relative</span>;
+  <span class="comment">/* ← これだけでOK（ずらさなくていい）
+     中のabsolute要素がcard基点になる */</span>
+}
+
+<span class="comment">/* z-index を有効にする */</span>
+<span class="sel">.above</span> {
+  <span class="prop">position</span>: <span class="val">relative</span>;
+  <span class="prop">z-index</span>: <span class="val">1</span>;
+  <span class="comment">/* position:staticにz-indexは効かない */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 03 absolute ─── -->
+  <section id="absolute">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>position: absolute</h2>
+      <span class="en">ABSOLUTE</span>
+    </div>
+    <p class="pattern-desc">
+      <code>absolute</code>はフローから完全に外れ、<b>最も近い<code>position: static</code>以外の祖先要素</b>を基点に座標配置されます。
+      親に<code>position: relative</code>を付けることで「この要素を基点にして絶対配置する」という親子ペアが完成します。
+      <b>バッジ・ツールチップ・装飾・ラベルなど用途が非常に広い</b>技法です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">position: absolute</span>
+        <span class="tag-desc">relative親の四隅を基点に配置 / フローから外れる</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// relative親 × absolute子 の組み合わせ</div>
+
+          <div class="lbl">親: relative / 子: absolute → 四隅への配置</div>
+          <div class="abs-demo-parent" style="margin-bottom:12px;">
+            親要素（position: relative）
+            <div class="abs-demo-child" style="top:0; left:0;">top:0<br>left:0</div>
+            <div class="abs-demo-child" style="top:0; right:0;">top:0<br>right:0</div>
+            <div class="abs-demo-child" style="bottom:0; left:0;">bottom:0<br>left:0</div>
+            <div class="abs-demo-child" style="bottom:0; right:0;">bottom:0<br>right:0</div>
+          </div>
+
+          <div class="lbl lbl-ok">中央配置（top:50% + transform）</div>
+          <div class="abs-demo-parent" style="margin-bottom:10px;">
+            親（relative）
+            <div class="abs-demo-child" style="top:50%; left:50%; transform:translate(-50%,-50%); font-size:10px;">
+              完全中央
+            </div>
+          </div>
+
+          <div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // inset: 0 で親全体を覆うオーバーレイも作れる
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* ★★★ relative + absolute の定番ペア */</span>
+<span class="sel">.parent</span> {
+  <span class="prop">position</span>: <span class="val">relative</span>; <span class="comment">/* 基点を作る */</span>
+}
+<span class="sel">.child</span> {
+  <span class="prop">position</span>: <span class="val">absolute</span>;
+  <span class="prop">top</span>:    <span class="val">0</span>;
+  <span class="prop">right</span>:  <span class="val">0</span>;
+  <span class="comment">/* 親の右上角に配置 */</span>
+}
+
+<span class="comment">/* 完全中央に置く */</span>
+<span class="sel">.centered</span> {
+  <span class="prop">position</span>: <span class="val">absolute</span>;
+  <span class="prop">top</span>:       <span class="val">50%</span>;
+  <span class="prop">left</span>:      <span class="val">50%</span>;
+  <span class="prop">transform</span>: <span class="fn">translate</span>(<span class="val">-50%, -50%</span>);
+}
+
+<span class="comment">/* 親全体を覆うオーバーレイ */</span>
+<span class="sel">.overlay</span> {
+  <span class="prop">position</span>: <span class="val">absolute</span>;
+  <span class="prop">inset</span>: <span class="val">0</span>;    <span class="comment">/* top:0 right:0 bottom:0 left:0 */</span>
+  <span class="prop">background</span>: <span class="val">rgba(0,0,0,0.5)</span>;
+}
+
+<span class="comment">/* 注意：absoluteは幅がコンテンツ分だけ */</span>
+<span class="sel">.abs-item</span> {
+  <span class="prop">position</span>: <span class="val">absolute</span>;
+  <span class="prop">width</span>: <span class="val">100%</span>; <span class="comment">/* 親幅いっぱいにしたい時 */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip warn">
+      <strong>ハマりどころ ★★★ —</strong>
+      「<b>absoluteが意図しない場所に飛んでしまう</b>」——これはpositionで最も多いトラブルです。<code>absolute</code>は<b>最も近い「static以外の」祖先</b>を基点にします。近くにrelativeがなければ<code>body</code>や<code>html</code>まで遡ります。必ず<b>直接の親にposition: relativeを付ける</b>ことを習慣にしてください。
+    </div>
+  </section>
+
+  <!-- ─── 04 fixed ─── -->
+  <section id="fixed">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>position: fixed</h2>
+      <span class="en">FIXED</span>
+    </div>
+    <p class="pattern-desc">
+      <code>fixed</code>は<b>ビューポート（ブラウザの表示領域）を基点</b>に配置されます。
+      ページをスクロールしても動きません。固定ヘッダー・固定フッター・チャットボタン・クッキー通知——
+      「スクロールしても常に見える要素」はこれで作ります。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">position: fixed</span>
+        <span class="tag-desc">ビューポート基点 / スクロールしても動かない</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 固定ヘッダーのシミュレーション</div>
+          <div class="fixed-demo-wrap">
+            <div class="fixed-header-sim">
+              <span>⊞ BRAND（固定ヘッダー）</span>
+              <span style="opacity:0.6;">スクロールしても動かない</span>
+            </div>
+            <div class="fixed-scroll-content">
+              コンテンツ行 01 — ページ本文<br>
+              コンテンツ行 02 — ヘッダーの下に潜り込む<br>
+              コンテンツ行 03 — padding-top で回避する<br>
+              コンテンツ行 04 — z-index: 100 で前面に
+            </div>
+          </div>
+          <div style="margin-top:10px; background:rgba(196,79,79,0.06); border:1px solid #c44f4f; padding:8px 12px; border-radius:2px; font-size:11px; font-family:'JetBrains Mono',monospace; color:#a03030; line-height:1.8;">
+            注意：fixed はフローから外れる<br>
+            → body に padding-top:60px（ヘッダー高さ分）<br>
+            &nbsp;&nbsp;を付けてコンテンツが隠れないようにする
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* 固定ヘッダーの定番 */</span>
+<span class="sel">.header</span> {
+  <span class="prop">position</span>: <span class="val">fixed</span>;
+  <span class="prop">top</span>:    <span class="val">0</span>;
+  <span class="prop">left</span>:   <span class="val">0</span>;
+  <span class="prop">right</span>:  <span class="val">0</span>;  <span class="comment">/* 全幅 */</span>
+  <span class="prop">height</span>: <span class="val">60px</span>;
+  <span class="prop">z-index</span>: <span class="val">1000</span>; <span class="comment">/* 最前面 */</span>
+  <span class="prop">background</span>: <span class="val">#fff</span>;
+}
+
+<span class="comment">/* ヘッダー分の高さを補う */</span>
+<span class="sel">body</span> {
+  <span class="prop">padding-top</span>: <span class="val">60px</span>;
+}
+
+<span class="comment">/* 右下固定のCTAボタン */</span>
+<span class="sel">.fab</span> {
+  <span class="prop">position</span>: <span class="val">fixed</span>;
+  <span class="prop">bottom</span>: <span class="val">24px</span>;
+  <span class="prop">right</span>:  <span class="val">24px</span>;
+  <span class="prop">z-index</span>: <span class="val">500</span>;
+}
+
+<span class="comment">/* クッキー通知バー（下部固定）*/</span>
+<span class="sel">.cookie-bar</span> {
+  <span class="prop">position</span>: <span class="val">fixed</span>;
+  <span class="prop">bottom</span>:   <span class="val">0</span>;
+  <span class="prop">left</span>:     <span class="val">0</span>;
+  <span class="prop">right</span>:    <span class="val">0</span>;
+  <span class="prop">z-index</span>:  <span class="val">9999</span>;
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 05 sticky ─── -->
+  <section id="sticky">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>position: sticky</h2>
+      <span class="en">STICKY</span>
+    </div>
+    <p class="pattern-desc">
+      <code>sticky</code>は<b>通常のフロー内に存在しながら、スクロールで閾値に達すると固定される</b>ハイブリッドです。
+      表のヘッダー行・セクション見出し・追従サイドナビなど、
+      「ページの一部だけ追従させたい」ときに<code>fixed</code>より自然に機能します。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">position: sticky</span>
+        <span class="tag-desc">スクロールするまではフロー内 / 閾値でstickする</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// ↓ スクロールしてみてください</div>
+          <div class="sticky-demo-wrap">
+            <div style="padding:8px 12px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted);">コンテンツ上部</div>
+            <div class="sticky-nav">★ sticky ナビ（top:0 で吸い付く）</div>
+            <div class="sticky-content">
+              セクション内容 01<br>
+              セクション内容 02<br>
+              セクション内容 03<br>
+              セクション内容 04<br>
+              セクション内容 05<br>
+              セクション内容 06<br>
+            </div>
+          </div>
+          <div style="margin-top:10px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // 親がオーバーフローしてると動かないことがある
+          </div>
+          <div style="margin-top:10px; background:rgba(85,106,200,0.08); border:1px solid var(--accent-3); padding:8px 12px; border-radius:2px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--accent); line-height:1.8;">
+            fixed との違い：<br>
+            fixed → ページ全体を基準<br>
+            sticky → 親要素の範囲内だけ追従
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* sticky の基本 */</span>
+<span class="sel">.sticky-header</span> {
+  <span class="prop">position</span>: <span class="val">sticky</span>;
+  <span class="prop">top</span>: <span class="val">0</span>;  <span class="comment">/* ← 必須！閾値の指定 */</span>
+  <span class="prop">z-index</span>: <span class="val">100</span>;
+  <span class="prop">background</span>: <span class="val">#fff</span>;
+}
+<span class="comment">/* top:0 がないと sticky が効かない */</span>
+
+<span class="comment">/* テーブルの列ヘッダーを固定 */</span>
+<span class="sel">table thead th</span> {
+  <span class="prop">position</span>: <span class="val">sticky</span>;
+  <span class="prop">top</span>: <span class="val">0</span>;
+  <span class="prop">background</span>: <span class="val">white</span>;
+}
+
+<span class="comment">/* セクション見出しを追従 */</span>
+<span class="sel">.section-title</span> {
+  <span class="prop">position</span>: <span class="val">sticky</span>;
+  <span class="prop">top</span>: <span class="val">60px</span>; <span class="comment">/* 固定ヘッダー分下げる */</span>
+  <span class="prop">z-index</span>: <span class="val">90</span>;
+}
+
+<span class="comment">/* ━━ sticky が効かない時の確認 ━━━━━
+  ① top（or left等）が未指定
+  ② 祖先に overflow:hidden/auto/scroll
+  ③ 親の高さが子と同じ（余白がない）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 06 z-index ─── -->
+  <section id="z-index">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>z-index — 重なり順の制御</h2>
+      <span class="en">Z-INDEX</span>
+    </div>
+    <p class="pattern-desc">
+      <code>z-index</code>は<b>要素の前後の重なり順</b>を指定します。数値が大きいほど前面に出ます。
+      ただし<code>position: static</code>の要素には効きません。また<b>スタッキングコンテキスト</b>という落とし穴があります。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">z-index</span>
+        <span class="tag-desc">数値が大きいほど前面 / position:static には効かない</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// z-index の重なり（実際のposition）</div>
+          <div class="z-demo-wrap" style="margin-bottom:14px;">
+            <div class="z-box z3" style="font-size:9px; text-align:center;">z-index:0<br>（後ろ）</div>
+            <div class="z-box z1" style="font-size:9px; text-align:center;">z-index:1</div>
+            <div class="z-box z2" style="font-size:9px; text-align:center;">z-index:2<br>（前面）</div>
+          </div>
+
+          <div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); margin-bottom:10px;">// よく使うz-index値の目安</div>
+          <div style="font-size:11px; line-height:1.8; background:rgba(255,255,255,0.55); border:1px solid var(--line); padding:8px 12px; border-radius:2px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px;">
+              通常コンテンツ　…… 0〜9<br>
+              ドロップダウン　…… 100〜199<br>
+              ヘッダー　　　　…… 200〜999<br>
+              モーダル背景　　…… 1000〜1099<br>
+              モーダル本体　　…… 1100〜1199<br>
+              トースト通知　　…… 9000〜
+            </span>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* z-index の基本 */</span>
+<span class="sel">.back</span>  { <span class="prop">position</span>: <span class="val">relative</span>; <span class="prop">z-index</span>: <span class="val">0</span>; }
+<span class="sel">.mid</span>   { <span class="prop">position</span>: <span class="val">relative</span>; <span class="prop">z-index</span>: <span class="val">1</span>; }
+<span class="sel">.front</span> { <span class="prop">position</span>: <span class="val">relative</span>; <span class="prop">z-index</span>: <span class="val">2</span>; }
+
+<span class="comment">/* position: static には z-index 効かない! */</span>
+<span class="sel">.no-effect</span> {
+  <span class="comment">/* position: static; ← デフォルト */</span>
+  <span class="prop">z-index</span>: <span class="val">9999</span>; <span class="comment">/* ← 無視される */</span>
+}
+
+<span class="comment">/* 現場でよく使う値の目安 */</span>
+<span class="comment">/* ヘッダー         */</span>
+<span class="sel">.header</span>  { <span class="prop">z-index</span>: <span class="val">1000</span>; }
+<span class="comment">/* モーダル背景     */</span>
+<span class="sel">.overlay</span> { <span class="prop">z-index</span>: <span class="val">2000</span>; }
+<span class="comment">/* モーダル本体     */</span>
+<span class="sel">.modal</span>   { <span class="prop">z-index</span>: <span class="val">2001</span>; }
+
+<span class="comment">/* ━━ スタッキングコンテキスト ━━━━━━
+  opacity < 1 / transform / filter を
+  付けると新しいスタッキングコンテキストが
+  作られ、その中だけでz-indexが有効になる
+
+  「z-index:9999 なのに前に出ない！」
+  → 親のopacity/transformを確認
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip warn">
+      <strong>ハマりどころ ★★★ —</strong>
+      「<b>z-index:9999 にしたのに他の要素の後ろに隠れる！</b>」——これはスタッキングコンテキストの罠です。親要素に<code>opacity: 0.99</code>・<code>transform: translateZ(0)</code>・<code>filter: none</code>などがあると、その中だけで新しいz-index空間が作られます。z-indexが効かない時は<b>祖先のCSSプロパティを全て確認</b>してください。
+    </div>
+  </section>
+
+  <!-- ─── 07 実践パターン集 ─── -->
+  <section id="patterns">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2>実践パターン集</h2>
+      <span class="en">PRACTICAL PATTERNS</span>
+    </div>
+    <p class="pattern-desc">
+      positionを使った<b>現場で毎日見るUIパターン</b>を3つ紹介します。
+      「バッジ」「モーダル」「固定ヘッダー」——全て<code>relative + absolute</code>または<code>fixed</code>の応用です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">badge / modal / fixed-header</span>
+        <span class="tag-desc">positionを使った3大パターン</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// パターン① バッジ（通知数字のオーバーレイ）</div>
+          <div class="badge-demo-wrap" style="margin-bottom:18px;">
+            <div class="badge-item">
+              <div class="badge-icon">🔔</div>
+              <div class="badge-count">3</div>
+            </div>
+            <div class="badge-item">
+              <div class="badge-icon">✉</div>
+              <div class="badge-count">12</div>
+            </div>
+            <div class="badge-item">
+              <div class="badge-icon">🛒</div>
+              <div class="badge-count">1</div>
+            </div>
+          </div>
+
+          <div class="panel-head">// パターン② モーダル（オーバーレイ+ダイアログ）</div>
+          <div class="modal-demo">
+            <div class="modal-page-content">
+              ページのコンテンツ<br>スクロールできる本文
+            </div>
+            <div class="modal-overlay">
+              <div class="modal-box">
+                <div class="modal-title">⊞ 確認ダイアログ</div>
+                <div style="font-size:10px; color:var(--muted); line-height:1.6;">この操作を実行しますか？<br>元に戻せません。</div>
+                <div style="display:flex; gap:6px; margin-top:8px;">
+                  <div class="modal-btn">実行する</div>
+                  <div style="display:inline-block; padding:4px 12px; border:1px solid var(--line); border-radius:2px; font-size:9px; color:var(--muted); cursor:pointer;">キャンセル</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* ① バッジ：relative親 + absolute子 */</span>
+<span class="sel">.icon-wrap</span> {
+  <span class="prop">position</span>: <span class="val">relative</span>;
+  <span class="prop">display</span>: <span class="val">inline-block</span>;
+}
+<span class="sel">.badge</span> {
+  <span class="prop">position</span>: <span class="val">absolute</span>;
+  <span class="prop">top</span>:    <span class="val">-6px</span>;
+  <span class="prop">right</span>:  <span class="val">-6px</span>;
+  <span class="prop">width</span>:  <span class="val">20px</span>;
+  <span class="prop">height</span>: <span class="val">20px</span>;
+  <span class="prop">background</span>:    <span class="val">red</span>;
+  <span class="prop">border-radius</span>: <span class="val">50%</span>;
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">align-items</span>: <span class="val">center</span>;
+  <span class="prop">justify-content</span>: <span class="val">center</span>;
+}
+
+<span class="comment">/* ② モーダル：fixed + z-index */</span>
+<span class="sel">.overlay</span> {
+  <span class="prop">position</span>: <span class="val">fixed</span>;
+  <span class="prop">inset</span>: <span class="val">0</span>;       <span class="comment">/* 画面全体を覆う */</span>
+  <span class="prop">background</span>: <span class="val">rgba(0,0,0,0.5)</span>;
+  <span class="prop">z-index</span>: <span class="val">1000</span>;
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">align-items</span>: <span class="val">center</span>;
+  <span class="prop">justify-content</span>: <span class="val">center</span>;
+}
+<span class="sel">.modal</span> {
+  <span class="prop">position</span>: <span class="val">relative</span>;
+  <span class="prop">z-index</span>: <span class="val">1001</span>;
+  <span class="prop">background</span>: <span class="val">white</span>;
+  <span class="prop">padding</span>: <span class="val">32px</span>;
+  <span class="prop">border-radius</span>: <span class="val">8px</span>;
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 08 使い分けガイド ─── -->
+  <section id="guide">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2>シリーズ総まとめ：配置手法の使い分け</h2>
+      <span class="en">COMPLETE GUIDE</span>
+    </div>
+    <p class="pattern-desc">
+      6巻かけて学んだ全手法を一枚の判断基準にまとめます。
+      <b>「何を作りたいか」から「どの手法を使うか」が即決できる</b>ようになれば、CSSレイアウトは完全に習得です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">layout-decision-final</span>
+        <span class="tag-desc">全手法の使い分け最終版</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 目的から手法を選ぶ</div>
+          <div style="font-size:12px; line-height:1.7;">
+            <div style="background:rgba(85,106,200,0.08); border-left:3px solid var(--accent); padding:8px 10px; margin-bottom:6px; border-radius:0 2px 2px 0;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; color:var(--accent); margin-bottom:3px;">通常フロー</div>
+              <div style="font-size:11px; color:var(--muted);">段落・見出しの流し込み / 縦積みのシンプル構成</div>
+            </div>
+            <div style="background:rgba(30,120,80,0.06); border-left:3px solid #2a8a58; padding:8px 10px; margin-bottom:6px; border-radius:0 2px 2px 0;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; color:#1a6a44; margin-bottom:3px;">Flexbox</div>
+              <div style="font-size:11px; color:var(--muted);">ナビ・ボタン群・1方向の並び / 中央寄せ / カード内部</div>
+            </div>
+            <div style="background:rgba(100,50,200,0.06); border-left:3px solid #7040c0; padding:8px 10px; margin-bottom:6px; border-radius:0 2px 2px 0;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; color:#6030a0; margin-bottom:3px;">Grid</div>
+              <div style="font-size:11px; color:var(--muted);">ページ骨格 / 格子状カード / 雑誌レイアウト / 2次元配置</div>
+            </div>
+            <div style="background:rgba(196,79,79,0.06); border-left:3px solid #c44f4f; padding:8px 10px; margin-bottom:6px; border-radius:0 2px 2px 0;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; color:#b03030; margin-bottom:3px;">absolute</div>
+              <div style="font-size:11px; color:var(--muted);">バッジ / ツールチップ / ラベル / オーバーレイ装飾</div>
+            </div>
+            <div style="background:rgba(196,140,20,0.06); border-left:3px solid #b07020; padding:8px 10px; margin-bottom:6px; border-radius:0 2px 2px 0;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; color:#906010; margin-bottom:3px;">fixed</div>
+              <div style="font-size:11px; color:var(--muted);">固定ヘッダー / フローティングボタン / モーダル / Cookie通知</div>
+            </div>
+            <div style="background:rgba(20,140,140,0.06); border-left:3px solid #108080; padding:8px 10px; border-radius:0 2px 2px 0;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; color:#0a6060; margin-bottom:3px;">sticky</div>
+              <div style="font-size:11px; color:var(--muted);">追従テーブルヘッダー / セクション見出し / サイドナビ</div>
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* ── 迷わず選ぶための3分岐 ── */</span>
+
+<span class="comment">/* Q1: フローから外したい？ */</span>
+<span class="comment">/*   YES → Q2へ          */</span>
+<span class="comment">/*   NO  → Flex or Grid  */</span>
+
+<span class="comment">/* Q2: 画面に固定したい？ */</span>
+<span class="comment">/*   YES → fixed         */</span>
+<span class="comment">/*   NO  → Q3へ          */</span>
+
+<span class="comment">/* Q3: スクロールで追従？ */</span>
+<span class="comment">/*   YES → sticky        */</span>
+<span class="comment">/*   NO  → absolute      */</span>
+
+<span class="comment">/* ──────────────────────────── */</span>
+<span class="comment">/* Flex か Grid かの選び方        */</span>
+<span class="comment">/* 1方向 → Flex                  */</span>
+<span class="comment">/* 2方向 → Grid                  */</span>
+<span class="comment">/* ページ骨格 → Grid              */</span>
+<span class="comment">/* コンポーネント内部 → Flex 多め */</span>
+
+<span class="comment">/* ── 組み合わせが最強 ── */</span>
+<span class="comment">/* Grid でページを組み、         */</span>
+<span class="comment">/* Flex でコンポーネントを作り、 */</span>
+<span class="comment">/* position でUIを仕上げる       */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       ENDING — シリーズ完結
+  ════════════════════════════════════ -->
+  <div class="ending">
+    <h2>CSSレイアウト・配置編<br>全6巻 完結</h2>
+    <div class="subtitle-end">★ BLUEPRINT SERIES — COMPLETE ★</div>
+    <div class="ending-divider"></div>
+    <div class="message">
+      通常フローからはじまり、Flexbox、Grid、そしてpositionまで——
+      CSSレイアウトの全手法を走破しました。<br>
+      「要素が思った場所に行かない」という悩みは、もう過去のものです。<br><br>
+      大切なのは<b>「手法を知っている」</b>ことより<b>「目的に合った手法を選べる」</b>こと。
+      Flexで横並びを作り、Gridでページを設計し、positionでUIを仕上げる——
+      この組み合わせが現代のCSSレイアウトの全てです。<br><br>
+      作るたびに迷わなくなる日は、すぐそこです。
+    </div>
+
+    <div class="series-list">
+      <div class="series-item">
+        <div class="si-vol">Vol.1</div>
+        <div class="si-title">配置の全体像・通常フロー</div>
+      </div>
+      <div class="series-item">
+        <div class="si-vol">Vol.2</div>
+        <div class="si-title">Flexbox 基礎</div>
+      </div>
+      <div class="series-item">
+        <div class="si-vol">Vol.3</div>
+        <div class="si-title">Flexbox 応用</div>
+      </div>
+      <div class="series-item">
+        <div class="si-vol">Vol.4</div>
+        <div class="si-title">Grid 基礎</div>
+      </div>
+      <div class="series-item">
+        <div class="si-vol">Vol.5</div>
+        <div class="si-title">Grid 応用</div>
+      </div>
+      <div class="series-item">
+        <div class="si-vol">Vol.6</div>
+        <div class="si-title">position と重ね・配置</div>
+      </div>
+    </div>
+
+    <div class="ending-foot">CSS LAYOUT REFERENCE — BLUEPRINT SERIES / 全6巻</div>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════
+     FOOTER
+════════════════════════════════════ -->
+<footer class="page-footer">
+  <span>CSS LAYOUT REFERENCE — Vol.6 positionと重ね・配置編［最終巻］</span>
+  <span>BLUEPRINT SERIES 全6巻 完結</span>
+</footer>
+
+</body>
+</html>

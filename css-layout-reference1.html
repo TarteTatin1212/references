@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSSレイアウト 配置の全体像・通常フロー編 Vol.1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:       #161b35;
+      --paper:     #eef0f8;
+      --paper-2:   #dde1f0;
+      --accent:    #2b3d8f;
+      --accent-2:  #4a62cc;
+      --accent-3:  #7a90e0;
+      --muted:     #5c6480;
+      --line:      #b4badb;
+      --code-bg:   #111627;
+      --code-text: #d8dff8;
+      --panel-bg:  #d6daf0;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--ink);
+      background: var(--paper);
+    }
+
+    /* ─── PAGE HEADER ─── */
+    .page-header {
+      position: relative;
+      overflow: hidden;
+      padding: 48px 56px 40px;
+      border-bottom: 2px solid var(--ink);
+      background: var(--paper);
+    }
+    .page-header::before {
+      content: '⊞';
+      position: absolute;
+      right: 40px;
+      top: -20px;
+      font-size: 220px;
+      color: var(--ink);
+      opacity: 0.07;
+      line-height: 1;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .page-header > * { position: relative; z-index: 1; }
+    .header-tags { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+    .series-tag {
+      background: var(--ink);
+      color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      letter-spacing: 0.08em;
+    }
+    .vol-tag {
+      background: var(--accent);
+      color: var(--paper);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      letter-spacing: 0.06em;
+    }
+    .page-header h1 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: 0.02em;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .lead {
+      max-width: 640px;
+      font-size: 15px;
+      line-height: 1.9;
+      color: var(--ink);
+    }
+
+    /* ─── TOC ─── */
+    .toc {
+      background: var(--paper-2);
+      padding: 18px 56px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 0;
+      list-style: none;
+    }
+    .toc li a {
+      display: inline-block;
+      padding: 4px 16px 4px 0;
+      font-size: 13px;
+      color: var(--accent);
+      text-decoration: none;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    .toc li a::before { content: '— '; color: var(--muted); }
+    .toc li a:hover { color: var(--accent-2); text-decoration: underline; }
+
+    /* ─── MAIN ─── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 56px 40px 80px;
+    }
+
+    /* ─── SECTION ─── */
+    section {
+      margin-bottom: 64px;
+    }
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 16px;
+    }
+    .section-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-2);
+      letter-spacing: 0.05em;
+    }
+    .section-header h2 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+    }
+    .en {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-left: auto;
+    }
+    .pattern-desc {
+      font-size: 14.5px;
+      line-height: 1.9;
+      max-width: 680px;
+      margin-bottom: 20px;
+      color: var(--ink);
+    }
+
+    /* ─── DEMO CARD ─── */
+    .demo-card {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .demo-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--paper-2);
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .tag-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(43,61,143,0.1);
+      padding: 2px 8px;
+      border-radius: 2px;
+    }
+    .tag-desc {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .demo-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ─── PANEL ─── */
+    .panel {
+      background: var(--panel-bg);
+      padding: 24px;
+      border-right: 1px solid var(--line);
+    }
+    .panel-head {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      letter-spacing: 0.06em;
+    }
+
+    /* ─── CODE PANEL ─── */
+    .code {
+      background: var(--code-bg);
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.75;
+      color: var(--code-text);
+      overflow-x: auto;
+    }
+    .code pre { white-space: pre; }
+    .kw   { color: #ffc88a; }
+    .type { color: #c2a3ff; }
+    .fn   { color: #a3c9ff; }
+    .str  { color: #b5e8b0; }
+    .num  { color: #f7a8d8; }
+    .comment { color: #6677aa; }
+    .prop { color: #a3c9ff; }
+    .val  { color: #b5e8b0; }
+    .sel  { color: #f7c08a; }
+
+    /* ─── TIP / POINT ─── */
+    .tip {
+      border-left: 3px solid var(--accent);
+      background: rgba(43,61,143,0.06);
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 14px;
+      line-height: 1.9;
+    }
+    .tip strong {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-2);
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+    .tip.warn {
+      border-left-color: #c44f4f;
+      background: rgba(196,79,79,0.05);
+    }
+    .tip.warn strong { color: #c44f4f; }
+
+    /* ─── LIVE DEMOS (left panel) ─── */
+    /* Block/Inline boxes */
+    .demo-box {
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      text-align: center;
+      border-radius: 2px;
+      padding: 6px 10px;
+    }
+    .demo-block {
+      background: rgba(43,61,143,0.18);
+      border: 1.5px solid var(--accent-2);
+      color: var(--accent);
+      margin-bottom: 4px;
+      display: block;
+      width: 100%;
+    }
+    .demo-inline {
+      background: rgba(74,98,204,0.12);
+      border: 1.5px solid var(--accent-3);
+      color: var(--accent-2);
+      display: inline;
+      padding: 2px 8px;
+    }
+    .demo-inline-block {
+      background: rgba(122,144,224,0.18);
+      border: 1.5px dashed var(--accent-3);
+      color: var(--accent);
+      display: inline-block;
+      width: 80px;
+      height: 50px;
+      text-align: center;
+      line-height: 50px;
+      font-size: 11px;
+      vertical-align: top;
+    }
+
+    /* Layout Map Diagram */
+    .map-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .map-item {
+      background: rgba(43,61,143,0.12);
+      border: 1.5px solid var(--accent-2);
+      border-radius: 2px;
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+    .map-item .map-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-2);
+      display: block;
+      margin-bottom: 4px;
+    }
+    .map-item .map-desc {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .map-item.highlight {
+      background: rgba(43,61,143,0.22);
+      border-color: var(--accent);
+    }
+    .map-item.highlight .map-label { color: var(--accent); }
+
+    /* Normal flow illustration */
+    .flow-demo { display: flex; flex-direction: column; gap: 4px; }
+    .flow-block {
+      background: rgba(43,61,143,0.15);
+      border: 1.5px solid var(--accent-2);
+      padding: 6px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      border-radius: 1px;
+    }
+    .flow-inline-wrap {
+      line-height: 2;
+      font-size: 12px;
+    }
+    .flow-inline-box {
+      display: inline;
+      background: rgba(74,98,204,0.15);
+      border: 1.5px solid var(--accent-3);
+      padding: 2px 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--accent-2);
+    }
+
+    /* margin collapse demo */
+    .collapse-demo {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    .collapse-col { flex: 1; }
+    .collapse-col .col-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .mc-box {
+      background: rgba(43,61,143,0.15);
+      border: 1.5px solid var(--accent-2);
+      padding: 6px 10px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      text-align: center;
+    }
+    .mc-gap-real {
+      background: rgba(196,79,79,0.15);
+      border: 1px dashed #c44f4f;
+      margin: 0 auto;
+      width: 60%;
+      text-align: center;
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #c44f4f;
+      padding: 2px;
+    }
+    .mc-gap-expect {
+      background: rgba(74,98,204,0.1);
+      border: 1px dashed var(--accent-3);
+      margin: 0 auto;
+      width: 60%;
+      text-align: center;
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-3);
+      padding: 2px;
+    }
+
+    /* display table */
+    .display-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .display-table th {
+      background: rgba(43,61,143,0.12);
+      padding: 8px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      text-align: left;
+      border: 1px solid var(--line);
+    }
+    .display-table td {
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      font-size: 12px;
+      vertical-align: top;
+      line-height: 1.6;
+    }
+    .display-table tr:nth-child(even) td { background: rgba(43,61,143,0.04); }
+    .badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 2px;
+      font-weight: 600;
+    }
+    .badge-block { background: rgba(43,61,143,0.15); color: var(--accent); }
+    .badge-inline { background: rgba(74,98,204,0.12); color: var(--accent-2); }
+    .badge-flex { background: rgba(30,120,80,0.12); color: #1e7850; }
+    .badge-grid { background: rgba(120,50,150,0.12); color: #783296; }
+
+    /* inline-block comparison */
+    .ib-before, .ib-after {
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .ib-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .ib-inline span {
+      display: inline;
+      background: rgba(196,79,79,0.15);
+      border: 1px solid #c44f4f;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #c44f4f;
+      /* width/height ignored */
+    }
+    .ib-iblock span {
+      display: inline-block;
+      background: rgba(43,61,143,0.15);
+      border: 1.5px solid var(--accent-2);
+      width: 60px;
+      height: 40px;
+      text-align: center;
+      line-height: 40px;
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      vertical-align: top;
+      margin-right: 2px;
+    }
+
+    /* ─── DECISION TREE ─── */
+    .decision-tree {
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .dt-q {
+      background: rgba(43,61,143,0.1);
+      border: 1.5px solid var(--accent-2);
+      border-radius: 20px;
+      padding: 6px 14px;
+      display: inline-block;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .dt-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: flex-start;
+    }
+    .dt-ans {
+      flex: 1;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.6);
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      font-size: 11px;
+    }
+    .dt-ans .dt-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); }
+    .dt-ans .dt-result { font-weight: 700; color: var(--accent); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 720px) {
+      .page-header { padding: 32px 24px 28px; }
+      .page-header h1 { font-size: 28px; }
+      .toc { padding: 14px 24px; }
+      main { padding: 32px 20px 60px; }
+      .demo-body { grid-template-columns: 1fr; }
+      .panel { border-right: none; border-bottom: 1px solid var(--line); }
+      .collapse-demo { flex-direction: column; }
+      .map-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ─── FOOTER ─── */
+    .page-footer {
+      border-top: 2px solid var(--ink);
+      padding: 20px 56px;
+      background: var(--paper-2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     PAGE HEADER
+════════════════════════════════════════════ -->
+<header class="page-header">
+  <div class="header-tags">
+    <span class="series-tag">CSS LAYOUT REFERENCE</span>
+    <span class="vol-tag">Vol.1</span>
+  </div>
+  <h1>配置の全体像<br>通常フロー編</h1>
+  <div class="subtitle">LAYOUT OVERVIEW &amp; NORMAL FLOW — BLUEPRINT SERIES</div>
+  <p class="lead">
+    「要素が思った場所に行かない」——それはCSSの配置を<b>ブラウザの視点</b>で理解していないから起きます。
+    このVol.1では、まず「何も指定しないとどう並ぶか」という通常フロー（Normal Flow）を徹底的に理解します。
+    <b>フローを知らずにflexやgridを使っても、なぜ動くか分からない</b>のです。
+    土台となる知識をここで固めましょう。
+  </p>
+</header>
+
+<!-- ═══════════════════════════════════════════
+     TOC
+════════════════════════════════════════════ -->
+<nav class="toc">
+  <ul>
+    <li><a href="#map">CSSレイアウト全体地図</a></li>
+    <li><a href="#normal-flow">通常フロー</a></li>
+    <li><a href="#block">ブロック要素</a></li>
+    <li><a href="#inline">インライン要素</a></li>
+    <li><a href="#inline-block">インラインブロック</a></li>
+    <li><a href="#display">displayプロパティ</a></li>
+    <li><a href="#margin-collapse">マージンの相殺</a></li>
+    <li><a href="#guide">配置手法の選び方</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════ -->
+<main>
+
+  <!-- ─── 01 CSSレイアウト全体地図 ─── -->
+  <section id="map">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>CSSレイアウト全体地図</h2>
+      <span class="en">LAYOUT MAP</span>
+    </div>
+    <p class="pattern-desc">
+      CSSには複数の「配置の仕組み」があります。どれを使うかを選ぶには、全体像を把握することが先決です。
+      <b>このシリーズで学ぶ4つの柱</b>を最初に頭に入れておきましょう。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">layout-methods</span>
+        <span class="tag-desc">CSSレイアウト手法の全体像</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// このシリーズで学ぶ配置の4本柱</div>
+          <div class="map-grid">
+            <div class="map-item highlight">
+              <span class="map-label">▶ 通常フロー (Vol.1)</span>
+              <span class="map-desc">何も指定しない時の動作。ブロック・インライン・インラインブロック</span>
+            </div>
+            <div class="map-item highlight">
+              <span class="map-label">▶ Flexbox (Vol.2–3)</span>
+              <span class="map-desc">1次元の並び。横一列・縦一列の配置を自在に制御</span>
+            </div>
+            <div class="map-item highlight">
+              <span class="map-label">▶ Grid (Vol.4–5)</span>
+              <span class="map-desc">2次元の格子。行と列を同時にコントロール</span>
+            </div>
+            <div class="map-item highlight">
+              <span class="map-label">▶ position (Vol.6)</span>
+              <span class="map-desc">フローから切り離す。絶対配置・固定・スティッキー</span>
+            </div>
+          </div>
+          <div style="margin-top:14px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // 全ての配置は「通常フローを土台にどう変えるか」という発想
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* CSS配置の選び方ざっくり指針 */</span>
+
+<span class="comment">/* ① 何もしない（通常フロー）*/</span>
+<span class="sel">p, div, span</span> {
+  <span class="comment">/* 特別な指定なし → 通常フローに従う */</span>
+}
+
+<span class="comment">/* ② 横並び・1方向の制御 */</span>
+<span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;    <span class="comment">/* Flexbox */</span>
+}
+
+<span class="comment">/* ③ 行と列の2次元制御 */</span>
+<span class="sel">.layout</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;    <span class="comment">/* Grid */</span>
+}
+
+<span class="comment">/* ④ フローから切り離す */</span>
+<span class="sel">.fixed-header</span> {
+  <span class="prop">position</span>: <span class="val">fixed</span>;  <span class="comment">/* position */</span>
+}
+
+<span class="comment">/* ↑ どれを使うか迷ったら
+   まずこの4択から選ぶ */</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip">
+      <strong>POINT —</strong>
+      flexとgridはどちらも「通常フローを上書きする」仕組みです。だからこそ<b>通常フローを知っているかどうかで</b>、なぜ上書きする必要があるのかが分かるようになります。Vol.1はシリーズ全体の土台です。
+    </div>
+  </section>
+
+  <!-- ─── 02 通常フロー ─── -->
+  <section id="normal-flow">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>通常フロー（Normal Flow）</h2>
+      <span class="en">NORMAL FLOW</span>
+    </div>
+    <p class="pattern-desc">
+      CSSを何も指定しないとき、ブラウザは<b>通常フロー</b>というルールで要素を並べます。
+      「ブロック要素は縦に積まれる」「インライン要素は横に流れる」——この2つが通常フローの全てです。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">normal-flow</span>
+        <span class="tag-desc">特別な指定なし → ブラウザが自動で並べる</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 通常フローの動作（実際のレンダリング）</div>
+          <div class="flow-demo">
+            <div class="flow-block">&lt;div&gt; ブロック要素 — 行全体を占める</div>
+            <div class="flow-block">&lt;p&gt; ブロック要素 — 新しい行から始まる</div>
+            <div style="margin-top:8px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); margin-bottom:4px;">↓ インライン要素は横に流れる</div>
+            <div class="flow-inline-wrap" style="background:rgba(255,255,255,0.5); padding:8px; border:1px solid var(--line);">
+              <span class="flow-inline-box">&lt;span&gt;</span>
+              テキスト
+              <span class="flow-inline-box">&lt;a&gt;</span>
+              もっとテキスト
+              <span class="flow-inline-box">&lt;strong&gt;</span>
+              が横に流れる
+            </div>
+          </div>
+          <div style="margin-top:12px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // ブロックは縦 / インラインは横 — これが大原則
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* 通常フロー = 何もしない状態 */</span>
+
+<span class="comment">/* ブロック要素（縦に積まれる） */</span>
+<span class="sel">div</span>, <span class="sel">p</span>, <span class="sel">h1</span>, <span class="sel">ul</span>,
+<span class="sel">header</span>, <span class="sel">section</span> {
+  <span class="comment">/* display: block; が初期値 */</span>
+  <span class="comment">/* → 幅は親いっぱい */</span>
+  <span class="comment">/* → 前後に改行が入る */</span>
+}
+
+<span class="comment">/* インライン要素（横に流れる） */</span>
+<span class="sel">span</span>, <span class="sel">a</span>, <span class="sel">strong</span>, <span class="sel">em</span> {
+  <span class="comment">/* display: inline; が初期値 */</span>
+  <span class="comment">/* → 文章の流れに沿って並ぶ */</span>
+  <span class="comment">/* → width/height は効かない */</span>
+}
+
+<span class="comment">/* ↑ この挙動は
+   CSSを書かなくても起きる
+   = 「通常フロー」 */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 03 ブロック要素 ─── -->
+  <section id="block">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>ブロック要素の特性</h2>
+      <span class="en">BLOCK ELEMENT</span>
+    </div>
+    <p class="pattern-desc">
+      <b>ブロック要素は「1つで1行を丸ごと使う」</b>要素です。横幅は親要素いっぱいに広がり、
+      次の要素は必ず下の行から始まります。div・p・h1〜h6・ul・li・sectionなどが該当します。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">display: block</span>
+        <span class="tag-desc">幅は親いっぱい / 前後に改行あり / width・height・margin全て効く</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// ブロック要素のレンダリング</div>
+          <div style="background:rgba(255,255,255,0.6); padding:10px; border:1px solid var(--line);">
+            <div style="background:rgba(43,61,143,0.18); border:1.5px solid var(--accent-2); padding:7px 10px; margin-bottom:5px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent);">
+              &lt;div&gt; width: 100%（自動）
+            </div>
+            <div style="background:rgba(43,61,143,0.18); border:1.5px solid var(--accent-2); padding:7px 10px; margin-bottom:5px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent);">
+              &lt;p&gt; 前後に改行が入る
+            </div>
+            <div style="background:rgba(43,61,143,0.18); border:1.5px solid var(--accent-2); padding:7px 10px; width:60%; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent);">
+              &lt;div style="width:60%"&gt; width指定が効く
+            </div>
+          </div>
+          <div style="margin-top:12px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // width: 60% も margin: auto も効く
+          </div>
+          <div style="background:rgba(255,255,255,0.6); padding:10px; border:1px solid var(--line); margin-top:8px;">
+            <div style="background:rgba(43,61,143,0.18); border:1.5px solid var(--accent-2); padding:7px; width:60%; margin:0 auto; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent); text-align:center;">
+              margin: 0 auto → 中央寄せ
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* ブロック要素の特性まとめ */</span>
+
+<span class="sel">div</span> {
+  <span class="prop">display</span>: <span class="val">block</span>;  <span class="comment">/* デフォルト */</span>
+
+  <span class="comment">/* ✅ 以下が全て効く */</span>
+  <span class="prop">width</span>:   <span class="val">60%</span>;
+  <span class="prop">height</span>:  <span class="val">200px</span>;
+  <span class="prop">margin</span>:  <span class="val">0 auto</span>;  <span class="comment">/* 中央寄せ */</span>
+  <span class="prop">padding</span>: <span class="val">20px</span>;
+}
+
+<span class="comment">/* 主なブロック要素 */</span>
+<span class="comment">/* div / p / h1〜h6    */</span>
+<span class="comment">/* ul / ol / li       */</span>
+<span class="comment">/* header / main      */</span>
+<span class="comment">/* section / article  */</span>
+<span class="comment">/* footer / nav       */</span>
+<span class="comment">/* form / table       */</span>
+
+<span class="comment">/* 幅をコンテンツに合わせたいなら */</span>
+<span class="sel">div</span> {
+  <span class="prop">width</span>: <span class="val">fit-content</span>;
+  <span class="comment">/* ← 幅がコンテンツ分だけに縮む */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip">
+      <strong>TIP —</strong>
+      <code>margin: 0 auto</code>でブロック要素を中央寄せできるのは、<b>widthが指定されている場合のみ</b>です。widthが100%（デフォルト）のままだと中央寄せしても見た目が変わりません。「中央寄せが効かない！」と詰まったら幅の指定を確認してください。
+    </div>
+  </section>
+
+  <!-- ─── 04 インライン要素 ─── -->
+  <section id="inline">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>インライン要素の特性</h2>
+      <span class="en">INLINE ELEMENT</span>
+    </div>
+    <p class="pattern-desc">
+      インライン要素は<b>テキストの流れに乗って横に並ぶ</b>要素です。
+      <code>width</code>と<code>height</code>は効かず、上下の<code>margin</code>も効きません。
+      span・a・strong・em・imgなどが代表例です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">display: inline</span>
+        <span class="tag-desc">横に流れる / width・height無効 / 上下marginも無効</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// インライン要素の制限</div>
+          <div style="background:rgba(255,255,255,0.6); padding:12px; border:1px solid var(--line); line-height:2.2;">
+            テキスト
+            <span style="display:inline; background:rgba(196,79,79,0.15); border:1.5px solid #c44f4f; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#c44f4f;">
+              &lt;span&gt; width:100px → 無視される
+            </span>
+            続きのテキスト
+            <span style="display:inline; background:rgba(196,79,79,0.15); border:1.5px solid #c44f4f; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#c44f4f;">
+              &lt;a&gt;
+            </span>
+            また続く。行が折り返すと
+            <span style="display:inline; background:rgba(196,79,79,0.15); border:1.5px solid #c44f4f; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#c44f4f;">
+              まるで文章の一部
+            </span>
+            のように振る舞う。
+          </div>
+          <div style="margin-top:12px; background:rgba(196,79,79,0.06); border:1px solid #c44f4f; padding:8px 12px; font-size:11px; font-family:'JetBrains Mono',monospace; color:#c44f4f;">
+            NG: width/height → 効かない<br>
+            NG: margin-top/bottom → 効かない<br>
+            OK: padding → 左右は効く（上下は見た目だけ）<br>
+            OK: margin-left/right → 効く
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* インライン要素の制限 */</span>
+
+<span class="sel">span</span> {
+  <span class="prop">display</span>: <span class="val">inline</span>;  <span class="comment">/* デフォルト */</span>
+
+  <span class="comment">/* ❌ 効かないもの */</span>
+  <span class="prop">width</span>:         <span class="val">100px</span>;  <span class="comment">/* 無視 */</span>
+  <span class="prop">height</span>:        <span class="val">50px</span>;   <span class="comment">/* 無視 */</span>
+  <span class="prop">margin-top</span>:    <span class="val">20px</span>;   <span class="comment">/* 無視 */</span>
+  <span class="prop">margin-bottom</span>: <span class="val">20px</span>;   <span class="comment">/* 無視 */</span>
+
+  <span class="comment">/* ✅ 効くもの */</span>
+  <span class="prop">color</span>:       <span class="val">red</span>;
+  <span class="prop">background</span>:  <span class="val">yellow</span>;
+  <span class="prop">padding</span>:     <span class="val">0 8px</span>;   <span class="comment">/* 左右OK */</span>
+  <span class="prop">margin-left</span>: <span class="val">8px</span>;    <span class="comment">/* 左右OK */</span>
+  <span class="prop">font-size</span>:   <span class="val">14px</span>;
+}
+
+<span class="comment">/* 主なインライン要素 */</span>
+<span class="comment">/* span / a / strong / em  */</span>
+<span class="comment">/* code / label / button   */</span>
+<span class="comment">/* img（特殊：サイズは効く）*/</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip warn">
+      <strong>ハマりどころ ★★★ —</strong>
+      「<b>spanにwidthを指定したのに反映されない！</b>」——これはCSSレイアウトで最も多いつまずきの一つです。インライン要素にwidthを効かせたいなら、<code>display: inline-block</code>か<code>display: block</code>に変える必要があります。次のセクションで詳しく解説します。
+    </div>
+  </section>
+
+  <!-- ─── 05 インラインブロック ─── -->
+  <section id="inline-block">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>インラインブロック</h2>
+      <span class="en">INLINE-BLOCK</span>
+    </div>
+    <p class="pattern-desc">
+      <code>display: inline-block</code>は<b>「横に並ぶ」インラインの特性</b>と
+      <b>「width/heightが効く」ブロックの特性</b>を合わせ持つハイブリッドです。
+      ナビゲーションのボタン並びや、横一列のカードによく使われます。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">display: inline-block</span>
+        <span class="tag-desc">横に並ぶ ＋ サイズが効く = ハイブリッド</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// inline vs inline-block 比較</div>
+          <div class="ib-label">❌ display: inline（width指定しても縮まない）</div>
+          <div class="ib-inline" style="margin-bottom:12px; background:rgba(255,255,255,0.5); padding:8px; border:1px solid var(--line);">
+            <span style="display:inline; background:rgba(196,79,79,0.15); border:1.5px solid #c44f4f; padding:2px 8px; font-size:11px; font-family:'JetBrains Mono',monospace; color:#c44f4f; width:60px; height:36px;">A</span>
+            <span style="display:inline; background:rgba(196,79,79,0.15); border:1.5px solid #c44f4f; padding:2px 8px; font-size:11px; font-family:'JetBrains Mono',monospace; color:#c44f4f; width:60px; height:36px;">B</span>
+            <span style="display:inline; background:rgba(196,79,79,0.15); border:1.5px solid #c44f4f; padding:2px 8px; font-size:11px; font-family:'JetBrains Mono',monospace; color:#c44f4f; width:60px; height:36px;">C</span>
+            <span style="font-size:10px; font-family:'JetBrains Mono',monospace; color:#c44f4f;"> ← width:60px 無視</span>
+          </div>
+          <div class="ib-label">✅ display: inline-block（width・heightが効く）</div>
+          <div style="background:rgba(255,255,255,0.5); padding:8px; border:1px solid var(--line);">
+            <span style="display:inline-block; background:rgba(43,61,143,0.15); border:1.5px solid var(--accent-2); width:55px; height:38px; text-align:center; line-height:38px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--accent); vertical-align:top; margin-right:3px;">A</span>
+            <span style="display:inline-block; background:rgba(43,61,143,0.15); border:1.5px solid var(--accent-2); width:55px; height:38px; text-align:center; line-height:38px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--accent); vertical-align:top; margin-right:3px;">B</span>
+            <span style="display:inline-block; background:rgba(43,61,143,0.15); border:1.5px solid var(--accent-2); width:55px; height:38px; text-align:center; line-height:38px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--accent); vertical-align:top;">C</span>
+            <span style="font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--accent); margin-left:6px;">← width/height有効</span>
+          </div>
+          <div style="margin-top:10px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+            // ただしHTMLの空白文字が隙間になる罠あり（後述）
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* inline-block の使い方 */</span>
+
+<span class="sel">.nav-item</span> {
+  <span class="prop">display</span>:        <span class="val">inline-block</span>;
+  <span class="prop">width</span>:          <span class="val">120px</span>;  <span class="comment">/* 効く ✅ */</span>
+  <span class="prop">height</span>:         <span class="val">40px</span>;   <span class="comment">/* 効く ✅ */</span>
+  <span class="prop">line-height</span>:    <span class="val">40px</span>;
+  <span class="prop">text-align</span>:     <span class="val">center</span>;
+  <span class="prop">vertical-align</span>: <span class="val">top</span>;
+  <span class="comment">/* ↑ ずれ防止の定番セット */</span>
+}
+
+<span class="comment">/* HTMLの空白で隙間ができる罠 */</span>
+<span class="comment">/* &lt;li&gt;A&lt;/li&gt;</span>
+<span class="comment">   &lt;li&gt;B&lt;/li&gt;  ← 改行=空白=隙間 */</span>
+
+<span class="comment">/* 対処法① 親のfont-sizeを0に */</span>
+<span class="sel">ul</span> {
+  <span class="prop">font-size</span>: <span class="val">0</span>;
+}
+<span class="sel">ul li</span> {
+  <span class="prop">display</span>:   <span class="val">inline-block</span>;
+  <span class="prop">font-size</span>: <span class="val">16px</span>; <span class="comment">/* 子で戻す */</span>
+}
+
+<span class="comment">/* 対処法② 今ならflexが楽 */</span>
+<span class="sel">ul</span> { <span class="prop">display</span>: <span class="val">flex</span>; } <span class="comment">/* Vol.2へ */</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip warn">
+      <strong>ハマりどころ ★★ —</strong>
+      <code>inline-block</code>の要素間に<b>謎の隙間</b>が生まれるのは有名な罠です。HTMLの改行・スペースが「空白文字」として扱われるためです。今では同じ目的でflexを使う方が隙間問題もなくシンプルです。ただし<code>inline-block</code>は知識として必ず覚えておきましょう。
+    </div>
+  </section>
+
+  <!-- ─── 06 displayプロパティ ─── -->
+  <section id="display">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>displayプロパティ早見表</h2>
+      <span class="en">DISPLAY PROPERTY</span>
+    </div>
+    <p class="pattern-desc">
+      <code>display</code>は<b>要素の「見せ方の型」を切り替える最重要プロパティ</b>です。
+      全種類を覚える必要はありません。まずこの8つを押さえれば実務で困りません。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">display: ...</span>
+        <span class="tag-desc">よく使う値 8種の早見表</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel" style="padding:16px;">
+          <div class="panel-head">// 使用頻度と用途</div>
+          <table class="display-table">
+            <tr>
+              <th>値</th>
+              <th>型</th>
+              <th>主な用途</th>
+            </tr>
+            <tr>
+              <td><code>block</code></td>
+              <td><span class="badge badge-block">ブロック</span></td>
+              <td>divをブロックに戻す・spanをブロック化</td>
+            </tr>
+            <tr>
+              <td><code>inline</code></td>
+              <td><span class="badge badge-inline">インライン</span></td>
+              <td>divをテキスト扱いにする（稀）</td>
+            </tr>
+            <tr>
+              <td><code>inline-block</code></td>
+              <td><span class="badge badge-inline">インライン</span></td>
+              <td>横並び＋サイズ指定。ボタン・タグ等</td>
+            </tr>
+            <tr>
+              <td><code>flex</code></td>
+              <td><span class="badge badge-flex">フレックス</span></td>
+              <td>★★★ 横並び・縦並び。現代の定番</td>
+            </tr>
+            <tr>
+              <td><code>inline-flex</code></td>
+              <td><span class="badge badge-flex">フレックス</span></td>
+              <td>flexだが外側はinline扱い</td>
+            </tr>
+            <tr>
+              <td><code>grid</code></td>
+              <td><span class="badge badge-grid">グリッド</span></td>
+              <td>★★★ 格子状レイアウト。ページ構造に</td>
+            </tr>
+            <tr>
+              <td><code>none</code></td>
+              <td>—</td>
+              <td>要素を非表示（スペースも消える）</td>
+            </tr>
+            <tr>
+              <td><code>contents</code></td>
+              <td>—</td>
+              <td>自身のボックスを消して子を直接出す</td>
+            </tr>
+          </table>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* display 切り替えの実例 */</span>
+
+<span class="comment">/* aタグをボタン風にする */</span>
+<span class="sel">a.btn</span> {
+  <span class="prop">display</span>:     <span class="val">inline-block</span>;
+  <span class="prop">padding</span>:     <span class="val">8px 20px</span>;
+  <span class="prop">background</span>:  <span class="val">#2b3d8f</span>;
+  <span class="prop">color</span>:       <span class="val">white</span>;
+}
+
+<span class="comment">/* liを横並びナビに */</span>
+<span class="sel">nav ul</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;  <span class="comment">/* Vol.2 */</span>
+}
+
+<span class="comment">/* spanにwidthを効かせる */</span>
+<span class="sel">span.tag</span> {
+  <span class="prop">display</span>: <span class="val">inline-block</span>;
+  <span class="prop">width</span>:   <span class="val">80px</span>;
+}
+
+<span class="comment">/* 要素を一時的に消す */</span>
+<span class="sel">.hidden</span> {
+  <span class="prop">display</span>: <span class="val">none</span>;
+  <span class="comment">/* ↑ visibility:hidden と違い
+     スペースごと消える */</span>
+}
+
+<span class="comment">/* ページ全体のグリッド */</span>
+<span class="sel">body</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;  <span class="comment">/* Vol.4 */</span>
+  <span class="prop">grid-template-rows</span>:
+    <span class="val">auto 1fr auto</span>;
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 07 マージンの相殺 ─── -->
+  <section id="margin-collapse">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2>マージンの相殺（ハマりどころ）</h2>
+      <span class="en">MARGIN COLLAPSE</span>
+    </div>
+    <p class="pattern-desc">
+      <b>マージンの相殺（Margin Collapse）</b>は通常フロー特有の動作です。
+      縦方向に隣接する2つのブロック要素のmarginは、大きい方の値だけが適用されます。
+      「margin-bottomを20px指定したのに間が詰まってる！」と感じたらこれが原因です。
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">margin-collapse</span>
+        <span class="tag-desc">縦marginは「合計」でなく「大きい方」になる</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 相殺の比較</div>
+          <div class="collapse-demo">
+            <div class="collapse-col">
+              <div class="col-label">❌ 想像（40px）</div>
+              <div class="mc-box">A（margin-bottom: 20px）</div>
+              <div class="mc-gap-expect" style="height:20px; line-height:20px;">↑20px</div>
+              <div class="mc-gap-expect" style="height:20px; line-height:20px;">↓20px</div>
+              <div class="mc-box">B（margin-top: 20px）</div>
+              <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--accent-3); margin-top:4px; text-align:center;">合計40px になると思いきや…</div>
+            </div>
+            <div class="collapse-col">
+              <div class="col-label">✅ 現実（20px）</div>
+              <div class="mc-box">A（margin-bottom: 20px）</div>
+              <div class="mc-gap-real" style="height:20px; line-height:20px;">20px（相殺）</div>
+              <div class="mc-box">B（margin-top: 20px）</div>
+              <div style="font-size:10px; font-family:'JetBrains Mono',monospace; color:#c44f4f; margin-top:4px; text-align:center;">大きい方（20px）だけ適用</div>
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* マージン相殺の発生条件 */</span>
+<span class="comment">/* ・通常フロー上の縦方向のみ発生  */</span>
+<span class="comment">/* ・flexやgridでは相殺しない ✅   */</span>
+
+<span class="sel">.box-a</span> { <span class="prop">margin-bottom</span>: <span class="val">20px</span>; }
+<span class="sel">.box-b</span> { <span class="prop">margin-top</span>:    <span class="val">20px</span>; }
+<span class="comment">/* → 実際の隙間 = 20px（相殺） */</span>
+<span class="comment">/* 40pxにはならない           */</span>
+
+<span class="comment">/* ─ 回避方法 ─ */</span>
+
+<span class="comment">/* 方法① 親にpadding/borderを付ける */</span>
+<span class="sel">.parent</span> {
+  <span class="prop">padding-top</span>: <span class="val">1px</span>;
+}
+
+<span class="comment">/* 方法② 親にoverflowを指定 */</span>
+<span class="sel">.parent</span> {
+  <span class="prop">overflow</span>: <span class="val">hidden</span>;
+}
+
+<span class="comment">/* 方法③ そもそもflexにする */</span>
+<span class="sel">.parent</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">flex-direction</span>: <span class="val">column</span>;
+  <span class="prop">gap</span>: <span class="val">20px</span>; <span class="comment">/* 相殺なし */</span>
+}
+
+<span class="comment">/* 方法④ 片方のmarginだけ使う */</span>
+<span class="sel">.box-a</span> { <span class="prop">margin-bottom</span>: <span class="val">40px</span>; }
+<span class="sel">.box-b</span> { <span class="prop">margin-top</span>: <span class="val">0</span>; }</pre>
+        </div>
+      </div>
+    </div>
+    <div class="tip warn">
+      <strong>ハマりどころ ★★★ —</strong>
+      マージン相殺は<b>親子間でも発生</b>します。子要素の<code>margin-top</code>が親要素に「漏れ出す」現象です。親に<code>padding-top: 1px</code>や<code>overflow: hidden</code>を付けると解消します。flexを使うとこの問題が根本から消えるのも、flex人気の理由の一つです。
+    </div>
+  </section>
+
+  <!-- ─── 08 配置手法の選び方 ─── -->
+  <section id="guide">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2>配置手法の選び方チートシート</h2>
+      <span class="en">HOW TO CHOOSE</span>
+    </div>
+    <p class="pattern-desc">
+      「flexとgrid、どちらを使えばいい？」「positionはいつ使う？」——
+      このシリーズ全体の判断軸を先に示します。<b>迷ったらこの図を思い出してください。</b>
+    </p>
+    <div class="demo-card">
+      <div class="demo-head">
+        <span class="tag-name">layout-decision</span>
+        <span class="tag-desc">配置手法の選択フロー</span>
+      </div>
+      <div class="demo-body">
+        <div class="panel">
+          <div class="panel-head">// 配置手法 決定木</div>
+          <div class="decision-tree">
+            <div style="text-align:center; margin-bottom:12px;">
+              <span class="dt-q">要素を並べたい</span>
+            </div>
+            <div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); margin-bottom:8px; text-align:center;">↓ どんな並べ方？</div>
+            <div class="dt-row">
+              <div class="dt-ans">
+                <div class="dt-label">横一列 or 縦一列</div>
+                <div class="dt-result">→ Flexbox (Vol.2–3)</div>
+              </div>
+              <div class="dt-ans">
+                <div class="dt-label">行と列の格子</div>
+                <div class="dt-result">→ Grid (Vol.4–5)</div>
+              </div>
+            </div>
+            <div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); margin-bottom:8px; margin-top:4px;">↓ 特殊な配置？</div>
+            <div class="dt-row">
+              <div class="dt-ans">
+                <div class="dt-label">スクロールしても固定</div>
+                <div class="dt-result">→ position: fixed</div>
+              </div>
+              <div class="dt-ans">
+                <div class="dt-label">親の中で絶対座標</div>
+                <div class="dt-result">→ position: absolute</div>
+              </div>
+            </div>
+            <div style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); margin-bottom:8px; margin-top:4px;">↓ 通常の文書の流れでOK</div>
+            <div class="dt-row">
+              <div class="dt-ans" style="flex:1;">
+                <div class="dt-label">何も指定しない</div>
+                <div class="dt-result">→ 通常フロー（このVol）</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="code">
+<pre><span class="comment">/* 配置手法の使い分け早見表 */</span>
+
+<span class="comment">/* ── 通常フロー（何もしない） ──</span>
+<span class="comment">   文章・段落・見出しの流し込み  </span>
+<span class="comment">   テキストと画像が混在する記事  </span>
+<span class="comment">   シンプルな縦積みレイアウト    */</span>
+
+<span class="comment">/* ── Flexbox ──────────────────</span>
+<span class="comment">   ナビゲーションバー            </span>
+<span class="comment">   ボタン群・タグ並び            </span>
+<span class="comment">   カードの横一列                </span>
+<span class="comment">   垂直中央揃え（超定番）        */</span>
+
+<span class="comment">/* ── Grid ────────────────────</span>
+<span class="comment">   ページ全体の骨格              </span>
+<span class="comment">   カードの格子状並び            </span>
+<span class="comment">   複雑な複数列レイアウト        </span>
+<span class="comment">   header / sidebar / main       */</span>
+
+<span class="comment">/* ── position ────────────────</span>
+<span class="comment">   固定ヘッダー・フッター        </span>
+<span class="comment">   モーダル・ポップアップ        </span>
+<span class="comment">   バッジ・通知数字のオーバーレイ </span>
+<span class="comment">   スクロールで追従するサイドバー */</span>
+
+<span class="comment">/* 迷ったら → まずFlexbox     */</span>
+<span class="comment">/* 2次元必要 → Grid           */</span>
+<span class="comment">/* フローから外れる → position */</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── NEXT STEP ─── -->
+  <div class="tip" style="margin-top: 48px;">
+    <strong>NEXT STEP — Vol.2 へ</strong>
+    通常フローとdisplayプロパティの基礎が身につきました。次のVol.2では<b>Flexboxの基礎</b>に入ります。
+    <code>display: flex</code>を親要素に指定するだけで、子要素の並び方を自在にコントロールできるようになります。
+    <code>justify-content</code>と<code>align-items</code>の2つを覚えるだけで、
+    「横並び」「中央寄せ」「均等配置」が全て解決します。<b>これを知れば配置の悩みが激減します。</b>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════ -->
+<footer class="page-footer">
+  <span>CSS LAYOUT REFERENCE — Vol.1 配置の全体像・通常フロー編</span>
+  <span>BLUEPRINT SERIES / 全6巻</span>
+</footer>
+
+</body>
+</html>
