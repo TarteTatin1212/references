@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ テスト Vol.4 Controllerテスト編</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#15301c;
+  --paper:#e4ecd9;
+  --paper-2:#cfddb9;
+  --accent:#3d8a3a;       /* 若竹（Vol.4・緑強め） */
+  --accent-2:#6dad58;
+  --accent-3:#235021;
+  --muted:#647560;
+  --line:#b8c9a4;
+  --code-bg:#13200f;
+  --code-text:#e4ecd9;
+  --panel-bg:#f1f6ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px;
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(61,138,58,.05), transparent 42%),
+    radial-gradient(circle at 86% 82%, rgba(61,138,58,.04), transparent 42%);
+  background-attachment:fixed}
+
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✓';position:absolute;right:6px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8ba87e;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}.num{color:#f7a8d8}.comment{color:#869480;font-style:italic}.ann{color:#f7c08a}.url{color:#7fd4c5}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(61,138,58,0.10);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'✓';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:700}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+/* テストランナー風 */
+.runner{background:#13201a;border:1px solid #2a3a2f;border-radius:9px;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:11.5px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.runner-bar{background:#1d2c24;padding:6px 12px;color:#7fb08a;font-size:10.5px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #2a3a2f}
+.runner-bar .dot{width:8px;height:8px;border-radius:50%;background:#86b86a;display:block}
+.runner-in{padding:12px 14px;line-height:1.95;color:#cdd8c8}
+.runner-in .ok{color:#7fd49a}
+.runner-in .cls{color:#a9d68e}
+.runner-in .sum{color:#7fd49a;margin-top:8px;display:block;border-top:1px solid #2a3a2f;padding-top:8px}
+.runner-in .gray{color:#6a7d66}
+
+/* HTTPフロー図 */
+.http{font-family:'JetBrains Mono';font-size:11px;line-height:1.8}
+.http .b{border:1.3px solid var(--line);border-radius:7px;padding:8px 11px;margin:5px 0;background:#fff}
+.http .b.req{border-color:#3f7d8c;background:rgba(63,125,140,.06)}
+.http .b.ctrl{border-color:var(--accent);background:rgba(61,138,58,.07)}
+.http .b.mock{border-color:#b06a2e;background:rgba(176,106,46,.07);border-style:dashed}
+.http .b .nm{font-weight:600;color:var(--accent-3)}
+.http .b.req .nm{color:#2f6573}
+.http .b.mock .nm{color:#9a5a26}
+.http .ar{text-align:center;color:var(--muted);font-size:13px}
+
+/* 200警告ボックス */
+.warn{border:1.5px solid #c98a3a;border-radius:9px;padding:12px 14px;background:rgba(201,138,58,.08);margin:6px 0}
+.warn .h{font-family:'JetBrains Mono';font-size:11px;font-weight:600;color:#9a6a26;margin-bottom:5px;letter-spacing:.05em}
+.warn p{font-size:12.5px;margin:0;color:var(--ink)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">NOTEPAD APP ── TEST SERIES</span>
+    <span class="vol-tag">VOL.4 / 6</span>
+    <span class="kind-tag">Controllerテスト編</span>
+  </div>
+  <h1>Controllerテスト編<br><span style="font-size:24px;color:var(--accent-3)">── MockMvc ──</span></h1>
+  <div class="subtitle">WEB LAYER ── @WebMvcTest & MockMvc</div>
+  <p class="lead">
+    3層テストの仕上げ、Web層です。<code>NoteController</code> が<b>正しいURLで正しい画面（ビュー）を返すか</b>を確かめます。<br>
+    使うのは <b><code>@WebMvcTest</code></b>（Controller層だけ起動）と <b><code>MockMvc</code></b>（擬似的なHTTPリクエストを送る道具）。ブラウザもDBも使わず、<b>「GET /memos を叩いたら memos/memos が返るか」</b>のような検証ができます。Serviceは <b><code>@MockitoBean</code></b> で偽物に差し替えます。<br>
+    一覧・詳細・新規・編集・削除の各URLを検証し、<b>リダイレクト</b>や<b>Model属性</b>も確認。さらに、このアプリの<b>例外ハンドラがステータス200のまま404画面を返す</b>という事実も、テストで正直に記録します。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#what">01 Controllerテストとは</a></li>
+    <li><a href="#skeleton">02 骨格と@MockitoBean</a></li>
+    <li><a href="#list">03 一覧（GET /memos）</a></li>
+    <li><a href="#view">04 詳細（GET /memos/view）</a></li>
+    <li><a href="#create">05 登録とリダイレクト</a></li>
+    <li><a href="#delete">06 削除（POST）</a></li>
+    <li><a href="#exception">07 例外時の挙動を記録</a></li>
+    <li><a href="#pitfall">08 ハマりどころ</a></li>
+    <li><a href="#next">09 次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="what">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>Controllerテストとは</h2>
+    <span class="en">WHAT IS CONTROLLER TEST</span>
+  </div>
+  <p class="pattern-desc">Controllerの仕事は<b>「URLを受けて、正しい画面とデータを返す」</b>こと。それを確かめるには、実際に<b>擬似HTTPリクエストを送って</b>、返ってきたビュー名やステータスを検証します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">@WebMvcTest + MockMvc</span>
+      <span class="tag-desc">Web層だけを試す</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// リクエストの流れ</div>
+        <div class="http">
+          <div class="b req"><span class="nm">MockMvc</span>　擬似HTTPで GET /memos を送る</div>
+          <div class="ar">↓</div>
+          <div class="b ctrl"><span class="nm">NoteController</span>　テスト対象（本物）</div>
+          <div class="ar">↓ 呼ぶ</div>
+          <div class="b mock"><span class="nm">NoteService</span>　@MockitoBeanで偽物に</div>
+        </div>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── Serviceは偽物でいい</div>
+          <p>Controllerテストで確かめたいのは<b>「URLとビューの対応」「Serviceを正しく呼ぶか」</b>。Serviceの中身が正しいかは<b>Vol.2で済んでいる</b>。だからここではServiceを偽物にして、<b>Controllerの責務だけ</b>に集中します。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// テスト対象：NoteController（おさらい）</span>
+
+<span class="ann">@GetMapping</span>(<span class="str">"/memos"</span>)
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">list</span>(<span class="type">Model</span> model) {
+  model.<span class="fn">addAttribute</span>(<span class="str">"notes"</span>,
+      noteService.<span class="fn">findAll</span>());
+  <span class="kw">return</span> <span class="str">"memos/memos"</span>;
+}
+
+
+<span class="comment">// ─── ここで確かめたいこと ───</span>
+<span class="comment">// ① GET /memos が成功するか（status）</span>
+<span class="comment">// ② ビュー名が "memos/memos" か</span>
+<span class="comment">// ③ Modelに "notes" が入っているか</span>
+<span class="comment">// ④ Serviceの findAll を呼んだか</span>
+
+<span class="comment">// ※ findAll が本当にDBから取れるかは</span>
+<span class="comment">//   Vol.2/3で確認済み。ここでは見ない。</span>
+
+
+<span class="comment">// ─── @WebMvcTest の範囲 ───</span>
+<span class="comment">// Controller・フィルタ等のWeb層だけ起動。</span>
+<span class="comment">// Service/Mapper/DBは読み込まない。</span>
+<span class="comment">// → @SpringBootTest より軽い。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section id="skeleton">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>骨格と@MockitoBean</h2>
+    <span class="en">SKELETON</span>
+  </div>
+  <p class="pattern-desc">Controllerテストの基本形です。<code>@WebMvcTest</code> で対象Controllerを指定し、<code>MockMvc</code> を注入。依存するServiceは <code>@MockitoBean</code> で偽物にします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">NoteControllerTest.java</span>
+      <span class="tag-desc">骨格</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// @MockitoBean とは</div>
+        <p>Vol.2の <code>@Mock</code> はMockitoだけのMock。一方 <code>@MockitoBean</code> は<b>Springの管理する偽物</b>です。</p>
+        <p style="margin-top:8px"><code>@WebMvcTest</code> はSpringの世界で動くので、Controllerが <code>@Autowired</code> するServiceも<b>Spring管理の偽物</b>でないと差し込めません。それが <code>@MockitoBean</code> です。</p>
+        <div class="warn" style="margin-top:12px">
+          <div class="h">⚠ @MockBean は非推奨</div>
+          <p>以前は <code>@MockBean</code> でしたが、<b>Spring Boot 3.4以降は非推奨</b>。このアプリは3.5系なので、新しい <code>@MockitoBean</code> を使います。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// src/test/java/jp/example/controller/</span>
+<span class="code-head">//   NoteControllerTest.java</span>
+
+<span class="kw">package</span> jp.example.controller;
+
+<span class="kw">import static</span> org.mockito.Mockito.*;
+<span class="kw">import static</span> org.springframework.test.web
+  .servlet.request.MockMvcRequestBuilders.*;
+<span class="kw">import static</span> org.springframework.test.web
+  .servlet.result.MockMvcResultMatchers.*;
+
+<span class="kw">import</span> org.junit.jupiter.api.Test;
+<span class="kw">import</span> org.springframework.beans.factory
+  .annotation.Autowired;
+<span class="kw">import</span> org.springframework.boot.test
+  .autoconfigure.web.servlet.WebMvcTest;
+<span class="kw">import</span> org.springframework.test.context
+  .bean.override.mockito.MockitoBean;
+<span class="kw">import</span> org.springframework.test.web
+  .servlet.MockMvc;
+
+<span class="kw">import</span> jp.example.service.NoteService;
+
+<span class="ann">@WebMvcTest</span>(<span class="type">NoteController</span>.<span class="kw">class</span>)
+<span class="kw">class</span> <span class="type">NoteControllerTest</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="type">MockMvc</span> mockMvc;        <span class="comment">// 擬似HTTP</span>
+
+  <span class="ann">@MockitoBean</span>
+  <span class="type">NoteService</span> noteService; <span class="comment">// Spring管理の偽物</span>
+
+  <span class="comment">// ↓ ここに各テストを書く</span>
+}</div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section id="list">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>一覧（GET /memos）</h2>
+    <span class="en">LIST</span>
+  </div>
+  <p class="pattern-desc">最初のテスト。<code>GET /memos</code> を擬似的に送り、<b>成功するか・正しいビュー名か・Modelにデータが入るか</b>を確かめます。ビュー名は実コードどおり <code>memos/memos</code>。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">GET /memos</span>
+      <span class="tag-desc">一覧の検証</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの検証ポイント</div>
+        <ul class="check-list">
+          <li><b>status().isOk()</b>：200 が返るか</li>
+          <li><b>view().name("memos/memos")</b>：ビュー名が正しいか</li>
+          <li><b>model().attributeExists("notes")</b>：Modelに notes があるか</li>
+        </ul>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── andExpect を重ねる</div>
+          <p><code>mockMvc.perform(...)</code> でリクエストを送り、<code>.andExpect(...)</code> を<b>いくつも重ねて</b>検証します。「成功して、このビューで、このデータがある」を一気に確かめられる。<b>ビュー名は実ファイルと完全一致</b>させること（<code>memos/memos</code>）。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 一覧テスト</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">一覧_memos画面を返す</span>() <span class="kw">throws</span> <span class="type">Exception</span> {
+
+  <span class="comment">// given：Serviceが空リストを返すと仕込む</span>
+  <span class="fn">when</span>(noteService.<span class="fn">findAll</span>())
+      .<span class="fn">thenReturn</span>(<span class="type">List</span>.<span class="fn">of</span>());
+
+  <span class="comment">// when & then：GET /memos を送って検証</span>
+  mockMvc.<span class="fn">perform</span>(<span class="fn">get</span>(<span class="str">"/memos"</span>))
+      .<span class="fn">andExpect</span>(<span class="fn">status</span>().<span class="fn">isOk</span>())
+      .<span class="fn">andExpect</span>(
+          <span class="fn">view</span>().<span class="fn">name</span>(<span class="str">"memos/memos"</span>))
+      .<span class="fn">andExpect</span>(
+          <span class="fn">model</span>().<span class="fn">attributeExists</span>(<span class="str">"notes"</span>));
+
+  <span class="comment">// Serviceが呼ばれたかも確認</span>
+  <span class="fn">verify</span>(noteService).<span class="fn">findAll</span>();
+}
+
+
+<span class="comment">// perform(get("/memos"))</span>
+<span class="comment">//   = GET /memos を擬似的に送る</span>
+<span class="comment">// andExpect(...)</span>
+<span class="comment">//   = 返り値が期待通りか検証（重ねられる）</span>
+
+<span class="comment">// throws Exception は MockMvc のお約束。</span>
+<span class="comment">// perform がチェック例外を投げるため。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section id="view">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>詳細（GET /memos/view）</h2>
+    <span class="en">DETAIL</span>
+  </div>
+  <p class="pattern-desc">パス変数つきのURL <code>/memos/view/{id}</code> を検証します。<b>idが正しくServiceに渡るか</b>、ビュー名が <code>memos/view</code> か、Modelに <code>note</code> が入るかを確かめます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">GET /memos/view/1</span>
+      <span class="tag-desc">パス変数の検証</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果（イメージ）</div>
+        <div class="runner">
+          <div class="runner-bar"><span class="dot"></span>JUnit</div>
+          <div class="runner-in">
+            <span class="gray">NoteControllerTest</span><br>
+            <span class="ok">✓</span> <span class="cls">一覧_memos画面を返す</span><br>
+            <span class="ok">✓</span> <span class="cls">詳細_view画面を返す</span><br>
+            <span class="sum">Tests: 2 passed ✓</span>
+          </div>
+        </div>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">POINT ── model().attribute で中身も検証</div>
+          <p><code>attributeExists("note")</code> は「あるか」だけ。<code>attribute("note", 期待値)</code> なら<b>中身まで</b>検証できます。Serviceが返すNoteを仕込んでおき、それがModelに乗るかを確かめます。ビュー名は <code>memos/view</code>（実ファイルと一致）。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 詳細テスト</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">詳細_view画面を返す</span>() <span class="kw">throws</span> <span class="type">Exception</span> {
+
+  <span class="comment">// given：id=1 のNoteを返すと仕込む</span>
+  <span class="type">Note</span> note = <span class="kw">new</span> <span class="type">Note</span>();
+  note.<span class="fn">setId</span>(<span class="num">1L</span>);
+  note.<span class="fn">setTitle</span>(<span class="str">"買い物"</span>);
+  <span class="fn">when</span>(noteService.<span class="fn">findById</span>(<span class="num">1L</span>))
+      .<span class="fn">thenReturn</span>(note);
+
+  <span class="comment">// when & then</span>
+  mockMvc.<span class="fn">perform</span>(<span class="fn">get</span>(<span class="str">"/memos/view/1"</span>))
+      .<span class="fn">andExpect</span>(<span class="fn">status</span>().<span class="fn">isOk</span>())
+      .<span class="fn">andExpect</span>(
+          <span class="fn">view</span>().<span class="fn">name</span>(<span class="str">"memos/view"</span>))
+      .<span class="fn">andExpect</span>(
+          <span class="fn">model</span>().<span class="fn">attribute</span>(<span class="str">"note"</span>, note));
+
+  <span class="comment">// idが正しく渡ったか</span>
+  <span class="fn">verify</span>(noteService).<span class="fn">findById</span>(<span class="num">1L</span>);
+}
+
+
+<span class="comment">// get("/memos/view/1") の "1" が</span>
+<span class="comment">// @PathVariable で id=1L として渡る。</span>
+<span class="comment">// verify(...).findById(1L) でそれを確認。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>登録とリダイレクト</h2>
+    <span class="en">CREATE & REDIRECT</span>
+  </div>
+  <p class="pattern-desc">POSTでの登録は<b>リダイレクト</b>が絡みます。<code>POST /memos</code> で登録後、<code>redirect:/memos</code> へ飛ぶ。この<b>リダイレクト先</b>を検証する書き方を学びます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">POST /memos</span>
+      <span class="tag-desc">登録とリダイレクト検証</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// リダイレクトの検証</div>
+        <p>登録が成功すると、Controllerは <code>"redirect:/memos"</code> を返します。これは<b>ビュー名ではなくリダイレクト指示</b>。</p>
+        <p style="margin-top:8px">なので検証は <code>view().name(...)</code> ではなく、<b><code>status().is3xxRedirection()</code></b>（リダイレクトのステータス）と <b><code>redirectedUrl("/memos")</code></b>（飛び先）を使います。</p>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── POSTにはパラメータを付ける</div>
+          <p>登録にはフォームの入力が要ります。<code>.param("title", "買い物")</code> でPOSTパラメータを付けます。タイトルは必須（<code>@NotBlank</code>）なので、正常系では必ず入れること。<b>入れ忘れるとバリデーションで弾かれ</b>、新規画面に戻ってしまいます（その検証はVol.5で）。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 登録テスト（正常系）</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">登録_成功で一覧へリダイレクト</span>()
+    <span class="kw">throws</span> <span class="type">Exception</span> {
+
+  <span class="comment">// when & then：POST /memos</span>
+  mockMvc.<span class="fn">perform</span>(<span class="fn">post</span>(<span class="str">"/memos"</span>)
+          .<span class="fn">param</span>(<span class="str">"title"</span>, <span class="str">"買い物"</span>)
+          .<span class="fn">param</span>(<span class="str">"content"</span>, <span class="str">"牛乳"</span>))
+      .<span class="fn">andExpect</span>(
+          <span class="fn">status</span>().<span class="fn">is3xxRedirection</span>())
+      .<span class="fn">andExpect</span>(
+          <span class="fn">redirectedUrl</span>(<span class="str">"/memos"</span>));
+
+  <span class="comment">// Serviceのregisterが呼ばれたか</span>
+  <span class="fn">verify</span>(noteService)
+      .<span class="fn">register</span>(<span class="fn">any</span>());
+}
+
+
+<span class="comment">// is3xxRedirection() … リダイレクトのstatus</span>
+<span class="comment">// redirectedUrl("/memos") … 飛び先の検証</span>
+
+<span class="comment">// register(any()) … 「何らかのNoteForm」で</span>
+<span class="comment">// registerが呼ばれたか。引数の中身は</span>
+<span class="comment">// Vol.2のServiceテストで検証済みなので</span>
+<span class="comment">// ここでは any() で十分。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section id="delete">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>削除（POST）</h2>
+    <span class="en">DELETE</span>
+  </div>
+  <p class="pattern-desc">削除も<b>POST</b>で、<b>リダイレクト</b>します（Vol.4のフロントで学んだ通り、削除はGETでなくPOST）。<code>POST /memos/delete/{id}</code> を検証します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">POST /memos/delete/1</span>
+      <span class="tag-desc">削除の検証</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 削除テストのポイント</div>
+        <p>削除は<b>「正しいidでServiceのdeleteを呼び、一覧へリダイレクトする」</b>が確かめたいこと。</p>
+        <p style="margin-top:8px"><code>verify(noteService).delete(1L)</code> で、URLのidが正しくServiceに渡ったかを確認します。</p>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">TIP ── GETでは弾かれるはず</div>
+          <p>このControllerの delete は <code>@PostMapping</code> です。試しに <code>get("/memos/delete/1")</code> を送ると、<b>405 Method Not Allowed</b> になるはず。「削除はPOSTのみ」という設計を、テストで保証することもできます（余裕があれば）。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 削除テスト</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">削除_一覧へリダイレクト</span>()
+    <span class="kw">throws</span> <span class="type">Exception</span> {
+
+  <span class="comment">// when & then：POST /memos/delete/1</span>
+  mockMvc.<span class="fn">perform</span>(
+          <span class="fn">post</span>(<span class="str">"/memos/delete/1"</span>))
+      .<span class="fn">andExpect</span>(
+          <span class="fn">status</span>().<span class="fn">is3xxRedirection</span>())
+      .<span class="fn">andExpect</span>(
+          <span class="fn">redirectedUrl</span>(<span class="str">"/memos"</span>));
+
+  <span class="comment">// 正しいidでdeleteが呼ばれたか</span>
+  <span class="fn">verify</span>(noteService).<span class="fn">delete</span>(<span class="num">1L</span>);
+}
+
+
+<span class="comment">// ─── 編集（update）も同様の形 ───</span>
+<span class="comment">// post("/memos/edit/1")</span>
+<span class="comment">//   .param("id", "1")</span>
+<span class="comment">//   .param("title", "新タイトル")</span>
+<span class="comment">// → is3xxRedirection</span>
+<span class="comment">// → redirectedUrl("/memos")</span>
+<span class="comment">// → verify(noteService).update(any())</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section id="exception">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>例外時の挙動を記録</h2>
+    <span class="en">EXCEPTION BEHAVIOR</span>
+  </div>
+  <p class="pattern-desc">存在しないメモを開くと <code>NoteNotFoundException</code> が飛び、<code>GlobalExceptionHandler</code> が <code>error/404</code> を返します。ここで<b>このアプリの「クセ」</b>をテストで正直に記録します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">404画面だがステータス200</span>
+      <span class="tag-desc">現状の挙動を固定</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 重要な事実</div>
+        <div class="warn">
+          <div class="h">⚠ ステータスは 200 のまま</div>
+          <p><code>GlobalExceptionHandler</code> の <code>handleTaskNotFound</code> は <code>error/404</code> を返しますが、<code>@ResponseStatus</code> が無いため<b>HTTPステータスは200（OK）</b>です。「404画面なのにステータスは200」という状態。</p>
+        </div>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── 現状をテストで固定する意味</div>
+          <p>これは<b>直すべき点</b>（本来404を返すべき）ですが、今は<b>「現状の挙動」をテストで記録</b>します。リファクタリングで <code>@ResponseStatus(NOT_FOUND)</code> を足したら、このテストを<b>200→404に書き換える</b>。テストが「いつ挙動を変えたか」の記録になります。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 例外時の挙動を記録するテスト</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">詳細_存在しないと404画面_ただし200</span>()
+    <span class="kw">throws</span> <span class="type">Exception</span> {
+
+  <span class="comment">// given：Serviceが例外を投げると仕込む</span>
+  <span class="fn">when</span>(noteService.<span class="fn">findById</span>(<span class="num">99L</span>))
+      .<span class="fn">thenThrow</span>(
+          <span class="kw">new</span> <span class="type">NoteNotFoundException</span>(<span class="num">99L</span>));
+
+  <span class="comment">// when & then</span>
+  mockMvc.<span class="fn">perform</span>(<span class="fn">get</span>(<span class="str">"/memos/view/99"</span>))
+      <span class="comment">// 現状：ステータスは200のまま</span>
+      .<span class="fn">andExpect</span>(<span class="fn">status</span>().<span class="fn">isOk</span>())
+      <span class="comment">// 404用のビューが返る</span>
+      .<span class="fn">andExpect</span>(
+          <span class="fn">view</span>().<span class="fn">name</span>(<span class="str">"error/404"</span>))
+      <span class="comment">// message属性にエラー文が入る</span>
+      .<span class="fn">andExpect</span>(
+          <span class="fn">model</span>().<span class="fn">attributeExists</span>(<span class="str">"message"</span>));
+}
+
+
+<span class="comment">// ─── リファクタ後の姿（伏線）───</span>
+<span class="comment">// @ResponseStatus(HttpStatus.NOT_FOUND)</span>
+<span class="comment">// を例外 or ハンドラに付けたら…</span>
+<span class="comment">// status().isOk() → status().isNotFound()</span>
+<span class="comment">// にこのテストを書き換えることになる。</span>
+
+<span class="comment">// thenThrow(...) … モックに「呼ばれたら</span>
+<span class="comment">// 例外を投げろ」と指示する書き方。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 08 -->
+<section id="pitfall">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころ</h2>
+    <span class="en">PITFALLS</span>
+  </div>
+  <p class="pattern-desc">Controllerテスト特有の<b>詰まりポイント</b>を3つ。Web層ならではの罠です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">よくある詰まり</span>
+      <span class="tag-desc">3つの罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 詰まりポイント</div>
+        <ul class="step-list">
+          <li><b>@MockitoBean を忘れる</b>：Serviceが用意されず「Bean が無い」エラー。@WebMvcTestはService実体を読まない</li>
+          <li><b>ビュー名のタイプミス</b>：<code>memos/memo</code> など微妙な違いで赤に。実ファイル名と完全一致させる</li>
+          <li><b>throws Exception 忘れ</b>：perform はチェック例外を投げる。メソッドに付け忘れるとコンパイルエラー</li>
+        </ul>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── @WebMvcTest はWeb層だけ</div>
+          <p><code>@WebMvcTest</code> は<b>ServiceもMapperも読み込みません</b>。だから依存するServiceは必ず <code>@MockitoBean</code> で用意する。これを忘れると「依存Beanが見つからない」で起動に失敗します。<b>Web層だけを切り出す</b>のが@WebMvcTestの本質です。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 罠①：@MockitoBean 忘れ</span>
+
+<span class="comment">// NG：NoteService の偽物が無い</span>
+<span class="ann">@WebMvcTest</span>(<span class="type">NoteController</span>.<span class="kw">class</span>)
+<span class="kw">class</span> <span class="type">NoteControllerTest</span> {
+  <span class="ann">@Autowired</span> <span class="type">MockMvc</span> mockMvc;
+  <span class="comment">// → 起動時「NoteService が無い」エラー</span>
+}
+
+<span class="comment">// OK：@MockitoBean で用意</span>
+<span class="ann">@MockitoBean</span>
+<span class="type">NoteService</span> noteService;
+
+
+<span class="code-head" style="margin-top:12px">// 罠②：ビュー名のタイプミス</span>
+
+<span class="comment">// 実ファイル：templates/memos/memos.html</span>
+<span class="comment">// 実コード  ：return "memos/memos"</span>
+
+<span class="fn">view</span>().<span class="fn">name</span>(<span class="str">"memos/memo"</span>)   <span class="comment">// ✗ 末尾s抜け</span>
+<span class="fn">view</span>().<span class="fn">name</span>(<span class="str">"memos/memos"</span>)  <span class="comment">// ✓ 完全一致</span>
+
+
+<span class="code-head" style="margin-top:12px">// 罠③：throws Exception 忘れ</span>
+
+<span class="comment">// perform はチェック例外を投げるので</span>
+<span class="kw">void</span> <span class="fn">test</span>() <span class="kw">throws</span> <span class="type">Exception</span> {  <span class="comment">// ← 必須</span>
+  mockMvc.<span class="fn">perform</span>(...);
+}</div>
+    </div>
+  </div>
+</section>
+
+<!-- 09 -->
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次巻へ</h2>
+    <span class="en">TO VOL.5</span>
+  </div>
+  <p class="pattern-desc">3層すべて（Service・Mapper・Controller）のテストが揃いました。次は<b>横断的なテーマ</b>——フォームの<b>バリデーション</b>と<b>例外ハンドラ</b>を、もう一歩踏み込んで固めます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">recap</span>
+      <span class="tag-desc">この巻のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 第4巻の収穫</div>
+        <ul class="check-list">
+          <li>@WebMvcTest でWeb層だけ起動</li>
+          <li>MockMvc で擬似HTTPリクエスト</li>
+          <li>@MockitoBean でServiceを偽物に</li>
+          <li>status / view名 / model属性を検証</li>
+          <li>リダイレクト（is3xxRedirection）</li>
+          <li>POSTにparamを付ける</li>
+          <li>例外時の挙動（404画面・ただし200）を記録</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.5 でやること</span>
+
+<span class="comment">// タイトル：バリデーション・例外編</span>
+
+<span class="comment">// ・NoteForm の境界値テスト</span>
+<span class="comment">//   title 必須（@NotBlank）</span>
+<span class="comment">//   title 30文字以内（@Size）</span>
+<span class="comment">//   ※ content は制約なし（確認済み）</span>
+<span class="comment">// ・Validatorを直接使うテスト</span>
+<span class="comment">// ・不正入力で新規画面に戻る（MockMvc）</span>
+<span class="comment">// ・@ControllerAdvice の例外振り分け</span>
+<span class="comment">//   404 と 500 の出し分け</span>
+
+<span class="comment">// 入力チェックと例外を、専用に深掘りします。</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(35,80,33,0.10)">
+    <div class="tip-label">NEXT STEP ── Vol.5 バリデーション・例外編</div>
+    <p>第4巻お疲れさまでした。これで<b>3層すべてのテスト</b>が揃いました。<code>@WebMvcTest</code>・<code>MockMvc</code>・<code>@MockitoBean</code>、そしてリダイレクトや例外時の挙動の記録まで。次の<b>Vol.5「バリデーション・例外編」</b>では、<code>NoteForm</code> の<b>境界値テスト</b>（必須・30文字）と、<code>@ControllerAdvice</code> による<b>例外の振り分け</b>を深掘りします。「正しくない入力」「想定外の事態」にアプリが正しく反応するか——守りの最後の砦です。Vol.5へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>NOTEPAD APP ── TEST SERIES / VOL.4</span>
+  <span>CONTROLLER TEST ── MockMvc編</span>
+</footer>
+
+</body>
+</html>

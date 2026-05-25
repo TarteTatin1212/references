@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ テスト Vol.3 Mapperテスト編</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#173017;          /* 深緑インク */
+  --paper:#e7eedc;        /* 若草紙（Vol.3） */
+  --paper-2:#d3e0bf;      /* 中間色 */
+  --accent:#458a30;       /* 若竹（Vol.3・さらに深緑寄り） */
+  --accent-2:#74ad55;     /* サブ */
+  --accent-3:#285020;     /* 深緑 */
+  --muted:#67775e;        /* 補足 */
+  --line:#bccba8;         /* 罫線 */
+  --code-bg:#152111;      /* コード背景 */
+  --code-text:#e7eedc;    /* コード文字 */
+  --panel-bg:#f3f7ec;     /* 左パネル背景 */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px;
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(69,138,48,.05), transparent 42%),
+    radial-gradient(circle at 86% 82%, rgba(69,138,48,.04), transparent 42%);
+  background-attachment:fixed}
+
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✓';position:absolute;right:6px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8ba87e;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}.num{color:#f7a8d8}.comment{color:#869480;font-style:italic}.ann{color:#f7c08a}.sql{color:#7fd4c5}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(69,138,48,0.10);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'✓';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:700}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+/* テストランナー風 */
+.runner{background:#13201a;border:1px solid #2a3a2f;border-radius:9px;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:11.5px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.runner-bar{background:#1d2c24;padding:6px 12px;color:#7fb08a;font-size:10.5px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #2a3a2f}
+.runner-bar .dot{width:8px;height:8px;border-radius:50%;background:#86b86a;display:block}
+.runner-in{padding:12px 14px;line-height:1.95;color:#cdd8c8}
+.runner-in .ok{color:#7fd49a}
+.runner-in .cls{color:#a9d68e}
+.runner-in .sum{color:#7fd49a;margin-top:8px;display:block;border-top:1px solid #2a3a2f;padding-top:8px}
+.runner-in .gray{color:#6a7d66}
+
+/* ロールバック図 */
+.rb{display:flex;flex-direction:column;gap:7px;margin:6px 0;font-family:'JetBrains Mono';font-size:11px}
+.rb .s{border:1.3px solid var(--line);border-radius:7px;padding:8px 11px;background:#fff;position:relative}
+.rb .s .n{color:var(--accent-3);font-weight:600}
+.rb .undo{border-color:var(--accent);background:rgba(69,138,48,.07);color:var(--accent-3)}
+.rb .ar{text-align:center;color:var(--muted);font-size:13px}
+
+/* 2案比較 */
+.opt2{display:flex;flex-direction:column;gap:10px;margin:6px 0}
+.opt2 .o{border:1px solid var(--line);border-radius:8px;padding:11px 13px;background:#fff}
+.opt2 .o .h{font-family:'JetBrains Mono';font-size:11px;font-weight:600;color:var(--accent-3);margin-bottom:5px}
+.opt2 .o.reco{border-color:var(--accent);border-width:1.5px}
+.opt2 .o .badge{font-size:9px;font-family:'JetBrains Mono';background:var(--accent);color:#fff;padding:1px 7px;border-radius:9px;margin-left:6px}
+.opt2 .o p{font-size:12px;margin:0;color:var(--ink)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">NOTEPAD APP ── TEST SERIES</span>
+    <span class="vol-tag">VOL.3 / 6</span>
+    <span class="kind-tag">Mapperテスト編</span>
+  </div>
+  <h1>Mapperテスト編<br><span style="font-size:24px;color:var(--accent-3)">── @MybatisTest ──</span></h1>
+  <div class="subtitle">INTEGRATION TEST ── REAL DATABASE</div>
+  <p class="lead">
+    前巻はモックで「DBなし」のテストでした。今度は逆に、<b>本物のDBを使って</b><code>NoteMapper</code> の<b>SQLが意図通り動くか</b>を確かめます。<br>
+    使うのは <b><code>@MybatisTest</code></b>。Mapperと最小限のDB機能だけを起動する軽量な結合テストです。<b>テスト後は自動でロールバック</b>されるので、何度実行してもDBは汚れません。<br>
+    ただしこのアプリには<b>テスト用DB（H2）の依存がありません</b>。なのでまず<b>「テスト用DBをどうするか」</b>を決めます。さらに <code>insert</code> は<b>採番キーを取得しない</b>実装なので、その制約に合わせた検証の書き方も学びます。実コードの「クセ」に正直に向き合う巻です。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#what">01 Mapperテストとは</a></li>
+    <li><a href="#db-choice">02 テスト用DBを決める</a></li>
+    <li><a href="#h2-setup">03 H2の準備（推奨案）</a></li>
+    <li><a href="#skeleton">04 テストクラスの骨格</a></li>
+    <li><a href="#insert">05 insert と件数検証</a></li>
+    <li><a href="#crud">06 update・delete・findById</a></li>
+    <li><a href="#rollback">07 自動ロールバックの仕組み</a></li>
+    <li><a href="#pitfall">08 ハマりどころ</a></li>
+    <li><a href="#next">09 次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="what">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>Mapperテストとは</h2>
+    <span class="en">WHAT IS MAPPER TEST</span>
+  </div>
+  <p class="pattern-desc">Mapperは<b>SQLそのもの</b>。モックで偽物にしたら「SQLが正しいか」は永遠に確かめられません。だからMapperだけは<b>本物のDBに繋いで</b>、実際にSQLを走らせて検証します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">@MybatisTest</span>
+      <span class="tag-desc">Mapper＋DBだけ起動</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Service と Mapper の違い</div>
+        <table class="compare-tbl">
+          <tr><th></th><th>Service(Vol.2)</th><th>Mapper(今回)</th></tr>
+          <tr><td>確かめる</td><td>ロジック</td><td>SQL</td></tr>
+          <tr><td>DB</td><td>使わない<br>(モック)</td><td>本物を使う</td></tr>
+          <tr><td>手法</td><td>Mockito</td><td>@MybatisTest</td></tr>
+          <tr><td>速さ</td><td>一瞬</td><td>やや遅い</td></tr>
+        </table>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── @MybatisTest は軽い結合テスト</div>
+          <p><code>@SpringBootTest</code> はアプリ全体を起動しますが、<code>@MybatisTest</code> は<b>MapperとDB機能だけ</b>を起動します。Controllerなどは読み込まないので、フル起動より速い。「DBに関わる部分だけ」をピンポイントで試す道具です。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// テスト対象：NoteMapper（おさらい）</span>
+
+<span class="ann">@Mapper</span>
+<span class="kw">public interface</span> <span class="type">NoteMapper</span> {
+
+  <span class="ann">@Select</span>(<span class="str">"SELECT * FROM memos ORDER BY id"</span>)
+  <span class="type">List</span>&lt;<span class="type">Note</span>&gt; <span class="fn">findAll</span>();
+
+  <span class="ann">@Insert</span>(<span class="str">"INSERT INTO memos (title, content)
+           VALUES (#{title}, #{content})"</span>)
+  <span class="kw">void</span> <span class="fn">insert</span>(<span class="type">Note</span> note);
+
+  <span class="ann">@Select</span>(<span class="str">"SELECT id, title, content
+           FROM memos WHERE id = #{id}"</span>)
+  <span class="type">Note</span> <span class="fn">findById</span>(<span class="kw">long</span> id);
+
+  <span class="ann">@Update</span>(<span class="str">"UPDATE memos SET title=#{title},
+           content=#{content} WHERE id=#{id}"</span>)
+  <span class="kw">void</span> <span class="fn">update</span>(<span class="type">Note</span> note);
+
+  <span class="ann">@Delete</span>(<span class="str">"DELETE FROM memos WHERE id=#{id}"</span>)
+  <span class="kw">void</span> <span class="fn">delete</span>(<span class="type">Long</span> id);
+}
+
+
+<span class="comment">// これらのSQLが「本当に動くか」を</span>
+<span class="comment">// 実際にDBで走らせて確かめる。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section id="db-choice">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>テスト用DBを決める</h2>
+    <span class="en">CHOOSE TEST DB</span>
+  </div>
+  <p class="pattern-desc">ここで判断が必要です。<code>@MybatisTest</code> は<b>デフォルトで組み込みDB（H2）を探します</b>。でもこのアプリには<b>H2の依存がありません</b>。2つの道があります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">H2 or MySQL</span>
+      <span class="tag-desc">2つの選択肢</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの道</div>
+        <div class="opt2">
+          <div class="o reco">
+            <div class="h">案A：H2を追加<span class="badge">推奨</span></div>
+            <p>軽量な組み込みDBを依存に足す。テストのたびにメモリ上にDBを作る。<b>速い・他人の環境でも動く・本番DBを汚さない</b>。ただしMySQLと文法が少し違う点に注意。</p>
+          </div>
+          <div class="o">
+            <div class="h">案B：実MySQLに繋ぐ</div>
+            <p><code>@AutoConfigureTestDatabase(replace=NONE)</code> で本番と同じMySQLを使う。<b>本番に忠実</b>だが、テスト用DBの用意・起動が必要で、データを汚すリスクも。</p>
+          </div>
+        </div>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── 学習・小規模ならH2が定番</div>
+          <p>H2はテストのたびに<b>真っさらなDBをメモリに作って捨てる</b>ので、再現性が高く速い。本シリーズは<b>案A（H2）</b>で進めます。本番MySQL特有のSQLを使う場合だけ案Bを検討、という住み分けです。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// なぜ判断が要るのか</span>
+
+<span class="comment">// @MybatisTest のデフォルト動作：</span>
+<span class="comment">//   「組み込みDB(H2など)に自動で繋ぐ」</span>
+
+<span class="comment">// でも pom.xml に H2 が無い → エラー：</span>
+<span class="comment">//   Failed to replace DataSource with an</span>
+<span class="comment">//   embedded database ...</span>
+
+
+<span class="comment">// ─── 解決の2案 ───</span>
+
+<span class="comment">// 案A：H2を足す（推奨）</span>
+<span class="comment">//   → デフォルト動作がそのまま使える</span>
+
+<span class="comment">// 案B：実MySQLを使う</span>
+<span class="ann">@MybatisTest</span>
+<span class="ann">@AutoConfigureTestDatabase</span>(
+    replace = <span class="type">Replace</span>.NONE)  <span class="comment">// 置換しない</span>
+<span class="comment">//   → application.properties のMySQLに繋ぐ</span>
+<span class="comment">//   → テスト用DBの準備が別途必要</span>
+
+
+<span class="comment">// このシリーズは案A（H2）で進める。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section id="h2-setup">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>H2の準備（推奨案）</h2>
+    <span class="en">SETUP H2</span>
+  </div>
+  <p class="pattern-desc">案AのH2を準備します。<b>依存を1つ足し、テスト用のテーブル定義を置く</b>だけ。これでテスト実行時に、メモリ上に <code>memos</code> テーブルが自動で用意されます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pom.xml + schema.sql</span>
+      <span class="tag-desc">2ステップで準備完了</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 準備の2ステップ</div>
+        <ul class="step-list">
+          <li><b>pom.xml に H2 を追加</b>（test スコープ）</li>
+          <li><b>src/test/resources に schema.sql</b> を置き、memos テーブルの CREATE 文を書く</li>
+        </ul>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── schema.sql は自動で実行される</div>
+          <p>Spring Bootは、テスト起動時に <code>src/test/resources/schema.sql</code> を<b>自動で読み込んでテーブルを作成</b>します。だからテストコードでテーブルを作る必要はありません。H2はメモリ上なので、テストが終われば<b>跡形もなく消えます</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// ① pom.xml に追加</span>
+
+<span class="kw">&lt;dependency&gt;</span>
+  <span class="kw">&lt;groupId&gt;</span>com.h2database<span class="kw">&lt;/groupId&gt;</span>
+  <span class="kw">&lt;artifactId&gt;</span>h2<span class="kw">&lt;/artifactId&gt;</span>
+  <span class="kw">&lt;scope&gt;</span>test<span class="kw">&lt;/scope&gt;</span>
+<span class="kw">&lt;/dependency&gt;</span>
+
+
+<span class="code-head" style="margin-top:14px">// ② src/test/resources/schema.sql</span>
+
+<span class="sql">CREATE TABLE</span> memos (
+  id      <span class="sql">BIGINT</span> <span class="sql">AUTO_INCREMENT</span> <span class="sql">PRIMARY KEY</span>,
+  title   <span class="sql">VARCHAR</span>(<span class="num">30</span>),
+  content <span class="sql">TEXT</span>
+);
+
+
+<span class="comment">// ③（任意）初期データ data.sql</span>
+<span class="comment">// src/test/resources/data.sql に</span>
+<span class="comment">// INSERT文を置けば、毎テスト前に投入される</span>
+
+<span class="sql">INSERT INTO</span> memos (title, content)
+<span class="sql">VALUES</span> (<span class="str">'サンプル'</span>, <span class="str">'本文'</span>);
+
+
+<span class="comment">// 本番のテーブル定義(MySQL)に合わせる。</span>
+<span class="comment">// H2はMySQL構文の多くをそのまま解釈する。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section id="skeleton">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>テストクラスの骨格</h2>
+    <span class="en">SKELETON</span>
+  </div>
+  <p class="pattern-desc">Mapperテストの基本形です。<code>@MybatisTest</code> を付け、テスト対象の <code>NoteMapper</code> を <code>@Autowired</code> で注入します。モックではなく<b>本物のMapper</b>です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">NoteMapperTest.java</span>
+      <span class="tag-desc">骨格</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Vol.2との違い</div>
+        <p>Vol.2は <code>@Mock</code> で<b>偽物</b>のMapperでした。今回は <code>@Autowired</code> で<b>本物</b>のMapperを注入します。</p>
+        <p style="margin-top:8px">本物なので、呼べば<b>実際にSQLが走り、H2のDBが読み書きされます</b>。だから戻り値だけでなく「DBが実際にどう変わったか」まで確かめられます。</p>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">TIP ── @MybatisTest が全部用意する</div>
+          <p><code>@MybatisTest</code> を付けるだけで、H2の起動・schema.sqlの実行・Mapperの登録・トランザクション管理まで<b>自動でお膳立て</b>されます。あとは <code>@Autowired</code> でMapperを受け取って呼ぶだけ。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// src/test/java/jp/example/mapper/</span>
+<span class="code-head">//   NoteMapperTest.java</span>
+
+<span class="kw">package</span> jp.example.mapper;
+
+<span class="kw">import static</span> org.assertj.core.api.Assertions.*;
+
+<span class="kw">import</span> org.junit.jupiter.api.Test;
+<span class="kw">import</span> org.mybatis.spring.boot.test.autoconfigure
+       .MybatisTest;
+<span class="kw">import</span> org.springframework.beans.factory
+       .annotation.Autowired;
+
+<span class="kw">import</span> jp.example.entity.Note;
+
+<span class="ann">@MybatisTest</span>
+<span class="kw">class</span> <span class="type">NoteMapperTest</span> {
+
+  <span class="ann">@Autowired</span>
+  <span class="type">NoteMapper</span> noteMapper;    <span class="comment">// 本物のMapper</span>
+
+  <span class="comment">// ↓ ここに各テストを書く</span>
+
+}
+
+
+<span class="comment">// 案B（実MySQL）の場合はクラスに追加：</span>
+<span class="comment">// @AutoConfigureTestDatabase(</span>
+<span class="comment">//     replace = Replace.NONE)</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section id="insert">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>insert と件数検証</h2>
+    <span class="en">INSERT</span>
+  </div>
+  <p class="pattern-desc">最初のテスト。<code>insert</code> でメモを追加し、<b>本当に1件増えたか</b>を確かめます。ここで実コードの<b>「採番キーを取得しない」制約</b>に正直に向き合います。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">insert_1件増える</span>
+      <span class="tag-desc">採番キー無しに対応</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 採番キーが取れない問題</div>
+        <p>このアプリの <code>insert</code> には <code>@Options(useGeneratedKeys...)</code> が<b>付いていません</b>。だから <code>insert</code> 後に <code>note.getId()</code> しても<b>採番されたidは取れません</b>（0のまま）。</p>
+        <p style="margin-top:8px">なので「insert→そのidでfindById」という検証はできない。代わりに<b>「findAllで件数が1増えたか」</b>で確かめます。</p>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── これはリファクタの伏線</div>
+          <p>本来、登録直後にidを使いたい場面は多い（登録後に詳細へ遷移など）。「<b>insertに採番キー取得を足す</b>」のはリファクタリング編の改善候補です。今は<b>現状の制約に合わせて</b>件数で検証します。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// insert：件数で確かめる</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">insert_メモが1件増える</span>() {
+
+  <span class="comment">// given：登録前の件数を数える</span>
+  <span class="kw">int</span> before = noteMapper.<span class="fn">findAll</span>().<span class="fn">size</span>();
+
+  <span class="type">Note</span> note = <span class="kw">new</span> <span class="type">Note</span>();
+  note.<span class="fn">setTitle</span>(<span class="str">"新しいメモ"</span>);
+  note.<span class="fn">setContent</span>(<span class="str">"本文です"</span>);
+
+  <span class="comment">// when：insert実行</span>
+  noteMapper.<span class="fn">insert</span>(note);
+
+  <span class="comment">// then：1件増えたか</span>
+  <span class="type">List</span>&lt;<span class="type">Note</span>&gt; after = noteMapper.<span class="fn">findAll</span>();
+  <span class="fn">assertThat</span>(after).<span class="fn">hasSize</span>(before + <span class="num">1</span>);
+
+  <span class="comment">// 中身も確認：最後の1件が登録したもの</span>
+  <span class="type">Note</span> last = after.<span class="fn">get</span>(after.<span class="fn">size</span>() - <span class="num">1</span>);
+  <span class="fn">assertThat</span>(last.<span class="fn">getTitle</span>())
+      .<span class="fn">isEqualTo</span>(<span class="str">"新しいメモ"</span>);
+}
+
+
+<span class="comment">// ※ note.getId() は使えない（0のまま）。</span>
+<span class="comment">//   採番キー取得が未設定のため。</span>
+<span class="comment">//   だから findAll の件数＋中身で検証する。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section id="crud">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>update・delete・findById</h2>
+    <span class="en">UPDATE / DELETE / findById</span>
+  </div>
+  <p class="pattern-desc">残りのSQLも確かめます。<b>初期データを前提に</b>、findByIdで取得・updateで変更・deleteで削除し、それぞれDBが意図通り変わったか検証します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">CRUD verification</span>
+      <span class="tag-desc">取得・更新・削除</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果（イメージ）</div>
+        <div class="runner">
+          <div class="runner-bar"><span class="dot"></span>JUnit</div>
+          <div class="runner-in">
+            <span class="gray">NoteMapperTest</span><br>
+            <span class="ok">✓</span> <span class="cls">insert_メモが1件増える</span><br>
+            <span class="ok">✓</span> <span class="cls">findById_該当を取得</span><br>
+            <span class="ok">✓</span> <span class="cls">update_内容が変わる</span><br>
+            <span class="ok">✓</span> <span class="cls">delete_1件減る</span><br>
+            <span class="sum">Tests: 4 passed ✓</span>
+          </div>
+        </div>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">TIP ── 「変更→読み直して確認」</div>
+          <p>updateやdeleteは戻り値がありません。だから<b>「変更した後、findAllやfindByIdで読み直して、DBが実際に変わったか」</b>を確かめます。書いて終わりではなく、<b>読み直して結果を見る</b>のがDBテストの基本です。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// update：内容が変わるか</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">update_内容が変わる</span>() {
+  <span class="comment">// given：まず1件入れる</span>
+  <span class="type">Note</span> n = <span class="kw">new</span> <span class="type">Note</span>();
+  n.<span class="fn">setTitle</span>(<span class="str">"元タイトル"</span>);
+  noteMapper.<span class="fn">insert</span>(n);
+  <span class="comment">// 入れた1件のidを取得（findAllの末尾）</span>
+  <span class="type">List</span>&lt;<span class="type">Note</span>&gt; list = noteMapper.<span class="fn">findAll</span>();
+  <span class="kw">long</span> id = list.<span class="fn">get</span>(list.<span class="fn">size</span>()-<span class="num">1</span>).<span class="fn">getId</span>();
+
+  <span class="comment">// when：更新</span>
+  <span class="type">Note</span> upd = <span class="kw">new</span> <span class="type">Note</span>();
+  upd.<span class="fn">setId</span>(id);
+  upd.<span class="fn">setTitle</span>(<span class="str">"新タイトル"</span>);
+  upd.<span class="fn">setContent</span>(<span class="str">"新本文"</span>);
+  noteMapper.<span class="fn">update</span>(upd);
+
+  <span class="comment">// then：読み直して確認</span>
+  <span class="type">Note</span> after = noteMapper.<span class="fn">findById</span>(id);
+  <span class="fn">assertThat</span>(after.<span class="fn">getTitle</span>())
+      .<span class="fn">isEqualTo</span>(<span class="str">"新タイトル"</span>);
+}
+
+
+<span class="code-head" style="margin-top:14px">// delete：1件減るか</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">delete_1件減る</span>() {
+  <span class="type">Note</span> n = <span class="kw">new</span> <span class="type">Note</span>();
+  n.<span class="fn">setTitle</span>(<span class="str">"消す"</span>);
+  noteMapper.<span class="fn">insert</span>(n);
+  <span class="type">List</span>&lt;<span class="type">Note</span>&gt; list = noteMapper.<span class="fn">findAll</span>();
+  <span class="kw">long</span> id = list.<span class="fn">get</span>(list.<span class="fn">size</span>()-<span class="num">1</span>).<span class="fn">getId</span>();
+  <span class="kw">int</span> before = list.<span class="fn">size</span>();
+
+  <span class="comment">// when</span>
+  noteMapper.<span class="fn">delete</span>(id);
+
+  <span class="comment">// then</span>
+  <span class="fn">assertThat</span>(noteMapper.<span class="fn">findAll</span>())
+      .<span class="fn">hasSize</span>(before - <span class="num">1</span>);
+}
+
+
+<span class="comment">// findById(id) は H2 では採番済みidが</span>
+<span class="comment">// 取れる（findAll経由で取得すればOK）。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section id="rollback">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>自動ロールバックの仕組み</h2>
+    <span class="en">AUTO ROLLBACK</span>
+  </div>
+  <p class="pattern-desc">気になりませんか?「insertやdeleteを何度も実行したら、DBがどんどん汚れるのでは?」——大丈夫です。<code>@MybatisTest</code> は<b>テストごとに自動でロールバック</b>します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">rollback</span>
+      <span class="tag-desc">テスト後に巻き戻る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 各テストの流れ</div>
+        <div class="rb">
+          <div class="s"><span class="n">① テスト開始</span> トランザクション開始</div>
+          <div class="ar">↓</div>
+          <div class="s"><span class="n">② テスト本体</span> insert / update / delete 実行</div>
+          <div class="ar">↓</div>
+          <div class="s undo"><span class="n">③ テスト終了</span> 自動でロールバック（全部巻き戻す）</div>
+        </div>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── だから何度でも安全</div>
+          <p>各テストは<b>独立したトランザクション</b>で動き、終了時に<b>必ず巻き戻されます</b>。だから「テストAでinsertした1件」が「テストB」に影響しない。毎回まっさらな状態から始まる。<b>テストの順序に依存しない</b>のが鉄則です。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// なぜ汚れないのか</span>
+
+<span class="comment">// @MybatisTest は内部で</span>
+<span class="comment">// @Transactional を効かせている。</span>
+
+<span class="comment">// → 各テストメソッドが1つの</span>
+<span class="comment">//   トランザクションで包まれる</span>
+<span class="comment">// → テスト終了時、commitせず rollback</span>
+<span class="comment">// → DBへの変更が全部取り消される</span>
+
+
+<span class="comment">// ─── 具体例 ───</span>
+<span class="comment">// テストAで insert（3件→4件）</span>
+<span class="comment">//   テストA終了 → rollback → 3件に戻る</span>
+<span class="comment">// テストBで delete（3件→2件）</span>
+<span class="comment">//   テストB終了 → rollback → 3件に戻る</span>
+
+<span class="comment">// → テストAとBは互いに影響しない</span>
+<span class="comment">// → 何度実行しても同じ結果（再現性）</span>
+
+
+<span class="comment">// ─── 鉄則 ───</span>
+<span class="comment">// テストは「前のテストの結果」に</span>
+<span class="comment">// 依存して書いてはいけない。</span>
+<span class="comment">// 各テストが自己完結すること。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 08 -->
+<section id="pitfall">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころ</h2>
+    <span class="en">PITFALLS</span>
+  </div>
+  <p class="pattern-desc">Mapperテスト特有の<b>詰まりポイント</b>を3つ。DBが絡むぶん、単体テストとは違う罠があります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">よくある詰まり</span>
+      <span class="tag-desc">3つの罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 詰まりポイント</div>
+        <ul class="step-list">
+          <li><b>H2が無くてDataSourceエラー</b>：依存追加を忘れると「embedded database」エラー。Sec.02-03で対応済み</li>
+          <li><b>schema.sql の構文差</b>：MySQL専用構文はH2で動かないことがある。標準的なSQLで書く</li>
+          <li><b>採番idを当てにする</b>：このアプリはinsert後にidが取れない。findAll経由で取得する</li>
+        </ul>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── H2とMySQLの方言差</div>
+          <p>H2はMySQL互換モードもありますが、完全一致ではありません。<code>AUTO_INCREMENT</code> など基本構文は通りますが、MySQL固有の関数等は注意。<b>テストDBと本番DBが違う</b>ことのリスクは、案B（実MySQL）を選ぶ理由にもなります。学習段階ではH2で十分です。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 罠①：DataSource エラー</span>
+
+<span class="comment">// Failed to replace DataSource with an</span>
+<span class="comment">// embedded database. ...add h2...</span>
+<span class="comment">// → pom.xml に H2 を追加（Sec.03）</span>
+
+
+<span class="code-head" style="margin-top:12px">// 罠②：schema.sql が見つからない</span>
+
+<span class="comment">// テーブルが無くて Table "MEMOS" not found</span>
+<span class="comment">// → src/test/resources/ に置いたか確認</span>
+<span class="comment">//   （src/main ではなく src/test）</span>
+
+
+<span class="code-head" style="margin-top:12px">// 罠③：採番idを当てにする</span>
+
+<span class="comment">// NG：insert後にidを使う</span>
+noteMapper.<span class="fn">insert</span>(note);
+<span class="kw">long</span> id = note.<span class="fn">getId</span>();   <span class="comment">// 0のまま！</span>
+
+<span class="comment">// OK：findAllの末尾から取る</span>
+<span class="type">List</span>&lt;<span class="type">Note</span>&gt; list = noteMapper.<span class="fn">findAll</span>();
+<span class="kw">long</span> id = list.<span class="fn">get</span>(list.<span class="fn">size</span>()-<span class="num">1</span>)
+              .<span class="fn">getId</span>();</div>
+    </div>
+  </div>
+</section>
+
+<!-- 09 -->
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次巻へ</h2>
+    <span class="en">TO VOL.4</span>
+  </div>
+  <p class="pattern-desc">Mapperの<b>SQLが本物のDBで動く</b>ことを確かめました。Service（ロジック）とMapper（SQL）が固まった。次は一番上、<b>Controller（Web層）</b>を擬似HTTPでテストします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">recap</span>
+      <span class="tag-desc">この巻のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 第3巻の収穫</div>
+        <ul class="check-list">
+          <li>@MybatisTest で本物DBに繋ぐ結合テスト</li>
+          <li>H2を追加し schema.sql を用意</li>
+          <li>insert は件数＋中身で検証（採番キー無し対応）</li>
+          <li>update/deleteは「読み直して確認」</li>
+          <li>テスト後に自動ロールバック</li>
+          <li>テストは順序に依存しない</li>
+          <li>H2とMySQLの方言差に注意</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.4 でやること</span>
+
+<span class="comment">// タイトル：Controllerテスト編（MockMvc）</span>
+
+<span class="comment">// ・@WebMvcTest で Controller だけ起動</span>
+<span class="comment">// ・@MockitoBean で Service を偽物に</span>
+<span class="comment">// ・MockMvc で擬似HTTPリクエスト</span>
+<span class="comment">// ・URL → 正しいビュー名が返るか</span>
+<span class="comment">//   （memos/memos, memos/view など）</span>
+<span class="comment">// ・リダイレクト（redirect:/memos）の検証</span>
+<span class="comment">// ・Model属性の確認</span>
+
+<span class="comment">// 3層の最後、Web層のテストです。</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(40,80,32,0.10)">
+    <div class="tip-label">NEXT STEP ── Vol.4 Controllerテスト編</div>
+    <p>第3巻お疲れさまでした。<b>本物のDBを使ったMapperテスト</b>と、<b>自動ロールバック</b>の仕組みを理解しました。これでService・Mapperの両方が固まりました。次の<b>Vol.4「Controllerテスト編」</b>では、<code>@WebMvcTest</code> と <code>MockMvc</code> で<b>擬似的なHTTPリクエスト</b>を送り、「正しいURLで正しい画面が返るか」を確かめます。Serviceは <code>@MockitoBean</code> で偽物に。3層テストの仕上げです。Vol.4へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>NOTEPAD APP ── TEST SERIES / VOL.3</span>
+  <span>MAPPER TEST ── @MybatisTest編</span>
+</footer>
+
+</body>
+</html>

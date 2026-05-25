@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ テスト Vol.6 全体実行・まとめ編</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#102a16;
+  --paper:#dfe8d2;
+  --paper-2:#c8d8ad;
+  --accent:#2f7d34;       /* 深緑（Vol.6・締めの深緑） */
+  --accent-2:#5e9e4c;
+  --accent-3:#184619;
+  --muted:#5d7058;
+  --line:#aec19a;
+  --code-bg:#0f1c0c;
+  --code-text:#dfe8d2;
+  --panel-bg:#edf3e4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px;
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(47,125,52,.05), transparent 42%),
+    radial-gradient(circle at 86% 82%, rgba(47,125,52,.04), transparent 42%);
+  background-attachment:fixed}
+
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✓';position:absolute;right:6px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;font-weight:600}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8ba87e;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}.num{color:#f7a8d8}.comment{color:#869480;font-style:italic}.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(47,125,52,0.10);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'✓';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:700}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+/* テストランナー風（全体実行） */
+.runner{background:#13201a;border:1px solid #2a3a2f;border-radius:9px;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:11.5px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.runner-bar{background:#1d2c24;padding:6px 12px;color:#7fb08a;font-size:10.5px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #2a3a2f}
+.runner-bar .dot{width:8px;height:8px;border-radius:50%;background:#86b86a;display:block}
+.runner-in{padding:12px 14px;line-height:1.95;color:#cdd8c8}
+.runner-in .ok{color:#7fd49a}
+.runner-in .cls{color:#a9d68e}
+.runner-in .sum{color:#7fd49a;margin-top:8px;display:block;border-top:1px solid #2a3a2f;padding-top:8px}
+.runner-in .gray{color:#6a7d66}
+
+/* テスト一覧マップ */
+.tmap{display:flex;flex-direction:column;gap:7px;margin:6px 0;font-size:11.5px}
+.tmap .grp{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.tmap .grp .h{background:var(--paper-2);padding:6px 11px;font-family:'JetBrains Mono';font-size:10.5px;font-weight:600;color:var(--accent-3)}
+.tmap .grp ul{list-style:none;padding:7px 11px;margin:0}
+.tmap .grp li{padding:2px 0 2px 18px;position:relative;font-size:11.5px;color:var(--ink)}
+.tmap .grp li::before{content:'✓';position:absolute;left:0;color:var(--accent);font-weight:700}
+
+/* リファクタ橋渡し図 */
+.bridge{display:flex;flex-direction:column;gap:8px;margin:6px 0;font-family:'JetBrains Mono';font-size:11px}
+.bridge .b{border:1.3px solid var(--line);border-radius:7px;padding:9px 12px;background:#fff}
+.bridge .b.now{border-color:var(--accent);background:rgba(47,125,52,.07);color:var(--accent-3);font-weight:600}
+.bridge .b.next{border-color:#7a5cc0;background:rgba(122,92,192,.07);color:#5a3d9c}
+.bridge .ar{text-align:center;color:var(--muted);font-size:13px}
+
+/* エンディング */
+.ending{margin:80px 0 0;padding:60px 44px;background:linear-gradient(135deg,var(--accent-3),#0d2e12);color:var(--paper);text-align:center;border-radius:10px;position:relative;overflow:hidden}
+.ending::before{content:'✓';position:absolute;left:-30px;top:-40px;font-size:240px;font-family:'Shippori Mincho',serif;opacity:0.08;line-height:1}
+.ending::after{content:'✓';position:absolute;right:-30px;bottom:-60px;font-size:240px;font-family:'Shippori Mincho',serif;opacity:0.08;line-height:1}
+.ending > *{position:relative;z-index:1}
+.ending h2{font-family:'Shippori Mincho',serif;font-size:30px;font-weight:700;margin-bottom:12px;border:none;color:#fff}
+.subtitle-end{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.3em;color:var(--accent-2);margin-bottom:30px}
+.ending .message{max-width:600px;margin:0 auto 28px;font-size:15px;line-height:2;text-align:left}
+.ending .message b{color:#fff;font-weight:700}
+.series-list-end{background:rgba(255,255,255,0.08);border-radius:8px;padding:22px 26px;margin:0 auto;max-width:560px;text-align:left}
+.series-list-end .sl-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--accent-2);margin-bottom:14px;text-align:center}
+.series-list-end .sl-item{display:flex;gap:12px;padding:6px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.1)}
+.series-list-end .sl-item:last-child{border-bottom:none}
+.series-list-end .sl-no{font-family:'JetBrains Mono';color:var(--accent-2);min-width:46px}
+.series-list-end .sl-name{color:var(--paper)}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+  .ending{padding:40px 24px}
+  .ending h2{font-size:24px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">NOTEPAD APP ── TEST SERIES</span>
+    <span class="vol-tag">VOL.6 / 6 ── FINAL</span>
+    <span class="kind-tag">全体実行・まとめ編</span>
+  </div>
+  <h1>全体実行・<br>まとめ編</h1>
+  <div class="subtitle">RUN ALL ── RECAP ── TO REFACTORING</div>
+  <p class="lead">
+    全6巻、ついに最終巻です。これまで Service・Mapper・Controller・バリデーション・例外、すべてのテストを書いてきました。<br>
+    この巻では<b>全テストを一括実行</b>し（<code>mvn test</code>）、結果の読み方を学びます。そして<b>「テストが仕様書になる」</b>という大切な考え方、<b>どこまでテストすべきか</b>という費用対効果の判断。最後に、このシリーズで固めたテストを束ね、<b>リファクタリング編への橋渡し</b>をします。<br>
+    テストは書いて終わりではありません。<b>これから内部を改善する自分を守る、命綱</b>になります。その準備が、ここで完成します。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#runall">01 全テストを一括実行</a></li>
+    <li><a href="#read">02 結果の読み方</a></li>
+    <li><a href="#spec">03 テストは仕様書になる</a></li>
+    <li><a href="#howmuch">04 どこまでテストするか</a></li>
+    <li><a href="#inventory">05 固めたテスト一覧</a></li>
+    <li><a href="#bridge">06 リファクタへの橋渡し</a></li>
+    <li><a href="#habit">07 これからの習慣</a></li>
+    <li><a href="#finale">08 シリーズ完結</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="runall">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>全テストを一括実行</h2>
+    <span class="en">RUN ALL</span>
+  </div>
+  <p class="pattern-desc">これまで書いたテストを<b>一度に全部</b>走らせます。コマンド1つ、あるいはEclipseのワンクリック。<b>全部が緑になれば、アプリ全体が健全</b>という証明です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">mvn test</span>
+      <span class="tag-desc">全テスト一括実行</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果（イメージ）</div>
+        <div class="runner">
+          <div class="runner-bar"><span class="dot"></span>mvn test</div>
+          <div class="runner-in">
+            <span class="gray">NoteServiceTest</span> <span class="ok">✓ 5</span><br>
+            <span class="gray">NoteMapperTest</span> <span class="ok">✓ 4</span><br>
+            <span class="gray">NoteControllerTest</span> <span class="ok">✓ 7</span><br>
+            <span class="gray">NoteFormTest</span> <span class="ok">✓ 6</span><br>
+            <span class="sum">BUILD SUCCESS<br>Tests run: 22, Failures: 0 ✓</span>
+          </div>
+        </div>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">POINT ── 2つの実行方法</div>
+          <p>コマンドなら <code>mvn test</code>。Eclipseなら<b>プロジェクトを右クリック → Run As → JUnit Test</b>、または <code>src/test</code> を右クリックで一括実行。どちらでも<b>全テストが一度に走り</b>、結果がまとめて出ます。日常的には頻繁に回します。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 実行コマンド</span>
+
+<span class="comment"># 全テストを実行</span>
+mvn test
+
+<span class="comment"># 特定のクラスだけ</span>
+mvn test -Dtest=NoteServiceTest
+
+<span class="comment"># 特定のメソッドだけ</span>
+mvn test -Dtest=NoteServiceTest#findById_無ければ例外を投げる
+
+
+<span class="comment">// ─── Eclipse の場合 ───</span>
+<span class="comment">// ・プロジェクト右クリック</span>
+<span class="comment">//   → Run As → JUnit Test</span>
+<span class="comment">// ・src/test/java を右クリックでも可</span>
+<span class="comment">// ・緑のバー＝全部成功</span>
+<span class="comment">// ・赤のバー＝どれか失敗</span>
+
+
+<span class="comment">// ─── ビルドとの関係 ───</span>
+<span class="comment">// mvn package や mvn install は</span>
+<span class="comment">// 内部で test を実行する。</span>
+<span class="comment">// → テストが赤いとビルドも失敗する</span>
+<span class="comment">// → 「壊れたままリリース」を防げる</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section id="read">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>結果の読み方</h2>
+    <span class="en">READ RESULTS</span>
+  </div>
+  <p class="pattern-desc">テストが<b>赤くなったとき</b>こそ本番。慌てず、<b>どのテストが・何を期待して・実際は何だったか</b>を読みます。エラーメッセージは原因を教えてくれます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">失敗の読み方</span>
+      <span class="tag-desc">expected vs actual</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 失敗メッセージの構造</div>
+        <p>AssertJの失敗は<b>「期待（expected）」と「実際（actual）」</b>を並べて教えてくれます。</p>
+        <p style="margin-top:8px">「期待は "買い物" なのに、実際は null だった」のように。<b>この2つの差</b>が、バグの正体への最短ルートです。</p>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── まず「どこで」「何が違うか」</div>
+          <p>赤いテストを見たら、<b>①どのテストメソッドが ②expectedとactualは何か</b>を読む。前にフロントで学んだログの読み方と同じで、<b>長い出力に圧倒されず核心の数行</b>を見ます。テストが失敗を<b>具体的に指し示してくれる</b>のが、手動確認との決定的な違いです。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 失敗例の読み方</span>
+
+<span class="comment">// 赤くなったテスト：</span>
+[ERROR] NoteServiceTest.findById_存在すれば返す
+
+<span class="comment">// AssertJ のメッセージ：</span>
+org.opentest4j.AssertionFailedError:
+expected: <span class="str">"買い物"</span>
+ but was: <span class="kw">null</span>
+
+<span class="comment">// 読み解き：</span>
+<span class="comment">// 「買い物」が返るはずが、nullだった</span>
+<span class="comment">// → モックの仕込み忘れ？</span>
+<span class="comment">// → getTitleの実装ミス？</span>
+<span class="comment">// 原因を絞り込める</span>
+
+
+<span class="comment">// ─── 失敗の3パターン ───</span>
+<span class="comment">// ① 値が違う（expected ≠ actual）</span>
+<span class="comment">//    → ロジックかテストの期待値を見直す</span>
+<span class="comment">// ② 例外が出た（想定外のException）</span>
+<span class="comment">//    → スタックトレースの一番上を読む</span>
+<span class="comment">// ③ 起動失敗（Bean不足など）</span>
+<span class="comment">//    → @MockitoBean忘れ等の設定ミス</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section id="spec">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>テストは仕様書になる</h2>
+    <span class="en">TEST AS SPEC</span>
+  </div>
+  <p class="pattern-desc">テストには<b>もう一つの顔</b>があります。<b>「このアプリは何ができるのか」を語る仕様書</b>です。テスト名を読むだけで、アプリの振る舞いが分かる——そんな書き方を心がけます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">テスト名＝仕様</span>
+      <span class="tag-desc">読めば仕様が分かる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テスト名を並べると…</div>
+        <p style="font-family:'JetBrains Mono';font-size:11px;line-height:1.9;color:var(--ink)">
+          findById_存在すればNoteを返す<br>
+          findById_無ければ例外を投げる<br>
+          title_空はNG<br>
+          title_30文字はOK<br>
+          title_31文字はNG<br>
+          登録_成功で一覧へリダイレクト
+        </p>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── 名前がドキュメントになる</div>
+          <p>テスト名を<b>日本語で「何を保証するか」</b>に書くと、一覧がそのまま<b>仕様書</b>になります。「このアプリはtitleが空だと登録できない」——コードを読まなくても、テスト名から分かる。<b>コメントは古くなるが、テストは古くなれば赤くなる</b>。だから常に正しい仕様書です。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 良いテスト名 vs 悪いテスト名</span>
+
+<span class="comment">// ✗ 悪い：何を確かめるか不明</span>
+<span class="ann">@Test</span> <span class="kw">void</span> <span class="fn">test1</span>() { ... }
+<span class="ann">@Test</span> <span class="kw">void</span> <span class="fn">testFindById</span>() { ... }
+
+<span class="comment">// ✓ 良い：仕様が読み取れる</span>
+<span class="ann">@Test</span> <span class="kw">void</span> <span class="fn">findById_存在すればNoteを返す</span>()
+<span class="ann">@Test</span> <span class="kw">void</span> <span class="fn">findById_無ければ例外を投げる</span>()
+
+
+<span class="comment">// ─── @DisplayName も使える ───</span>
+<span class="ann">@Test</span>
+<span class="ann">@DisplayName</span>(<span class="str">"タイトルが31文字なら登録できない"</span>)
+<span class="kw">void</span> <span class="fn">title_31文字はNG</span>() { ... }
+
+<span class="comment">// → テスト結果に日本語の説明が出る</span>
+<span class="comment">// → 非エンジニアにも伝わる仕様書に</span>
+
+
+<span class="comment">// テストは「動く仕様書」。</span>
+<span class="comment">// 仕様が変わればテストが赤くなるので、</span>
+<span class="comment">// 仕様書とコードが食い違わない。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section id="howmuch">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>どこまでテストするか</h2>
+    <span class="en">HOW MUCH</span>
+  </div>
+  <p class="pattern-desc">テストは多いほど良い——わけではありません。<b>費用対効果</b>を考えます。<b>「壊れたら困るところ」「間違えやすいところ」</b>を厚く、当たり前すぎる部分は薄く。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">cost vs value</span>
+      <span class="tag-desc">テストの優先順位</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 優先度の考え方</div>
+        <table class="compare-tbl">
+          <tr><th>対象</th><th>優先</th></tr>
+          <tr><td>分岐・条件（例外/バリデーション）</td><td>高</td></tr>
+          <tr><td>変換ロジック（Form→Entity）</td><td>高</td></tr>
+          <tr><td>単純な委譲（findAll等）</td><td>中</td></tr>
+          <tr><td>getter/setter（Lombok生成）</td><td>低（不要）</td></tr>
+        </table>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── 「間違えやすい所」を狙う</div>
+          <p><code>@Data</code> が生成する getter/setter をテストしても意味は薄い（ライブラリが保証済み）。逆に<b>条件分岐・境界値・変換・例外</b>は人が間違えやすく、壊れたら影響が大きい。<b>限られた時間を、価値の高いテストに使う</b>のが賢いやり方です。100%を目指す必要はありません。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// テストすべき / しなくていい</span>
+
+<span class="comment">// ─── 厚くテストすべき ───</span>
+<span class="comment">// ・if分岐（findById の null判定）</span>
+<span class="comment">// ・境界値（@Size(max=30) の30/31）</span>
+<span class="comment">// ・変換（NoteForm → Note のコピー）</span>
+<span class="comment">// ・例外（NoteNotFoundException）</span>
+<span class="comment">//   → 人が間違えやすく、影響大</span>
+
+<span class="comment">// ─── 薄くてよい / 不要 ───</span>
+<span class="comment">// ・getId() / setId()（Lombok生成）</span>
+<span class="comment">// ・フレームワークの機能そのもの</span>
+<span class="comment">//   （Springが@GetMappingを正しく</span>
+<span class="comment">//    処理するか、等はテスト不要）</span>
+
+
+<span class="comment">// ─── カバレッジの罠 ───</span>
+<span class="comment">// 「カバレッジ100%」が目的化すると、</span>
+<span class="comment">// 無意味なテストが増える。</span>
+<span class="comment">// 数字より「重要な所を守れているか」。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section id="inventory">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>固めたテスト一覧</h2>
+    <span class="en">INVENTORY</span>
+  </div>
+  <p class="pattern-desc">このシリーズで書いた<b>全テストの棚卸し</b>です。メモ帳アプリのどこを守れているか、一望します。これが<b>リファクタリングの安全網</b>になります。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">test inventory</span>
+      <span class="tag-desc">守りの全体像</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 書いたテスト</div>
+        <div class="tmap">
+          <div class="grp">
+            <div class="h">NoteServiceTest（Vol.2）</div>
+            <ul>
+              <li>findById 正常・異常</li>
+              <li>register の変換（Captor）</li>
+              <li>findAll・delete の委譲</li>
+            </ul>
+          </div>
+          <div class="grp">
+            <div class="h">NoteMapperTest（Vol.3）</div>
+            <ul>
+              <li>insert / findById</li>
+              <li>update / delete</li>
+            </ul>
+          </div>
+          <div class="grp">
+            <div class="h">NoteControllerTest（Vol.4・5）</div>
+            <ul>
+              <li>一覧・詳細・登録・削除・編集</li>
+              <li>不正入力で画面に戻る</li>
+              <li>例外の振り分け（404/500）</li>
+            </ul>
+          </div>
+          <div class="grp">
+            <div class="h">NoteFormTest（Vol.5）</div>
+            <ul>
+              <li>title 境界値（空/30/31）</li>
+              <li>content 制約なし</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 守れている範囲</span>
+
+src/test/java/jp/example/
+├ service/
+│  └ NoteServiceTest      <span class="comment">// ロジック</span>
+├ mapper/
+│  └ NoteMapperTest       <span class="comment">// SQL</span>
+├ controller/
+│  └ NoteControllerTest   <span class="comment">// Web+例外</span>
+└ form/
+   └ NoteFormTest         <span class="comment">// 入力チェック</span>
+
+
+<span class="comment">// ─── この網羅で守れること ───</span>
+<span class="comment">// ✓ 3層それぞれの正しい動作</span>
+<span class="comment">// ✓ 正常系と異常系の両方</span>
+<span class="comment">// ✓ 境界値（壊れやすい所）</span>
+<span class="comment">// ✓ 例外時の振り分け</span>
+
+<span class="comment">// これだけあれば、内部を変えても</span>
+<span class="comment">// 「動きが変わっていないか」を</span>
+<span class="comment">// 一瞬で確認できる。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section id="bridge">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>リファクタへの橋渡し</h2>
+    <span class="en">TO REFACTORING</span>
+  </div>
+  <p class="pattern-desc">テストが揃った今、ついに<b>安全にリファクタリング</b>ができます。第1巻から伏線として置いてきた<b>「直したい点」</b>に、テストという守りを背負って挑めます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">test → refactor</span>
+      <span class="tag-desc">次フェーズへ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// これからの流れ</div>
+        <div class="bridge">
+          <div class="b now">今ここ：テストで現状を固定（完了）</div>
+          <div class="ar">↓</div>
+          <div class="b next">次：テストに守られながらリファクタ</div>
+          <div class="ar">↓</div>
+          <div class="b next">テスト緑のまま＝動きは不変と証明</div>
+        </div>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── 赤くなったら立ち止まる</div>
+          <p>リファクタ中にテストが赤くなったら、それは<b>「動きを変えてしまった」サイン</b>。意図通りなら<b>テストを書き換え</b>（例：ステータス200→404）、意図しないなら<b>コードを戻す</b>。テストが<b>「やりすぎ」を検知</b>してくれます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 第1巻で置いた伏線＝リファクタ候補</span>
+
+<span class="comment">// ① フィールドインジェクション</span>
+<span class="ann">@Autowired</span> <span class="kw">private</span> <span class="type">NoteMapper</span> ...;
+<span class="comment">//  → @RequiredArgsConstructor + final</span>
+<span class="comment">//  （コンストラクタ注入）に変える</span>
+<span class="comment">//  テストはそのまま緑のはず</span>
+
+<span class="comment">// ② 例外ハンドラがステータス200</span>
+<span class="comment">//  → @ResponseStatus(NOT_FOUND) を足す</span>
+<span class="comment">//  Vol.4/5のテストを 200→404 に書き換え</span>
+
+<span class="comment">// ③ insert に採番キー取得が無い</span>
+<span class="comment">//  → @Options(useGeneratedKeys...) を足す</span>
+<span class="comment">//  Vol.3のテストを id 取得方式に改善できる</span>
+
+<span class="comment">// ④ NoteForm / NoteEditForm の重複</span>
+<span class="comment">//  → 共通化を検討（継承 or 統合）</span>
+
+
+<span class="comment">// どれも「テストが緑か」で</span>
+<span class="comment">// 安全性を確認しながら進められる。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section id="habit">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>これからの習慣</h2>
+    <span class="en">HABITS</span>
+  </div>
+  <p class="pattern-desc">テストは<b>一度書いて終わり</b>ではなく、<b>開発に組み込む習慣</b>です。最後に、これから先ずっと役立つ3つの習慣を渡します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">good habits</span>
+      <span class="tag-desc">続けるコツ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの習慣</div>
+        <ul class="step-list">
+          <li><b>こまめに実行</b>：コードを変えたら mvn test。赤くなったらすぐ気づける</li>
+          <li><b>バグを直す前にテスト</b>：バグを再現するテストを先に書く。直ったら緑になる＝再発防止</li>
+          <li><b>機能追加にはテストも</b>：新機能を足すとき、そのテストも一緒に。守りを増やしながら進む</li>
+        </ul>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── 「バグ修正はテストから」</div>
+          <p>バグを見つけたら、<b>まずそのバグを再現する（＝失敗する）テストを書く</b>。それからコードを直し、テストが緑になれば修正完了。さらに<b>そのテストが残るので、同じバグの再発を永久に防げます</b>。これはプロが必ずやる習慣です。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// バグ修正の正しい順序</span>
+
+<span class="comment">// ① バグを発見</span>
+<span class="comment">//   「title=null のメモで一覧が落ちる」</span>
+
+<span class="comment">// ② 先に「落ちることを示すテスト」を書く</span>
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">title_nullでも一覧は落ちない</span>() {
+  <span class="comment">// この時点では赤（バグがあるから）</span>
+}
+
+<span class="comment">// ③ コードを直す</span>
+
+<span class="comment">// ④ テストが緑になる＝修正完了</span>
+
+<span class="comment">// ⑤ テストが残る＝再発防止</span>
+<span class="comment">//   将来また同じバグを入れたら</span>
+<span class="comment">//   このテストが赤くなって教えてくれる</span>
+
+
+<span class="comment">// テストは「書いて終わり」ではなく</span>
+<span class="comment">// 開発のリズムに組み込むもの。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 08 -->
+<section id="finale">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>シリーズ完結</h2>
+    <span class="en">SERIES COMPLETE</span>
+  </div>
+  <p class="pattern-desc">全6巻、お疲れさまでした。テストの地図から始まり、3層・バリデーション・例外、そして全体実行まで。<b>メモ帳アプリは、守りを手に入れました</b>。</p>
+
+  <div class="ending">
+    <h2>テスト 全6巻 完結</h2>
+    <div class="subtitle-end">★ TEST SERIES — COMPLETE ★</div>
+    <div class="message">
+      <p>Vol.1で<b>「なぜテストを書くのか」</b>という地図を広げたところから、長い道のりでした。</p>
+      <p style="margin-top:14px">あなたは<b>Mockitoでロジックを試し</b>、<b>本物のDBでSQLを確かめ</b>、<b>MockMvcで擬似HTTPを送り</b>、<b>境界値と例外で守りを固めました</b>。テストの無かったメモ帳アプリは、<b>3層すべてに自動の安全網</b>を備えた、堅牢なアプリへと変わりました。</p>
+      <p style="margin-top:14px">途中で学んだのは、テストの書き方だけではありません。<b>「現状を固定してから改善する」順序</b>、<b>「境界こそ狙う」という勘所</b>、<b>「テストは仕様書になる」という発見</b>、そして<b>実コードのクセ（採番キー無し・ステータス200）に正直に向き合う姿勢</b>。どれも、どんなプロジェクトでも通用する<b>本物の技術</b>です。</p>
+      <p style="margin-top:14px">そして何より——あなたは<b>実際のコードを1つずつ確認し、その事実に基づいてテストを設計しました</b>。「たぶんこうだろう」で書かず、<b>確かめてから書く</b>。これはエンジニアの最も大切な姿勢です。</p>
+      <p style="margin-top:14px"><b>テストは、これで完成です。</b><br>次はいよいよリファクタリング。今あなたが張った安全網が、内部を安心して磨くための土台になります。</p>
+      <p style="margin-top:20px;text-align:center;font-size:17px"><b>お疲れさまでした。</b></p>
+    </div>
+    <div class="series-list-end">
+      <div class="sl-title">TEST SERIES ── 6 VOLUMES</div>
+      <div class="sl-item"><span class="sl-no">Vol.1</span><span class="sl-name">テスト全体像・準備編</span></div>
+      <div class="sl-item"><span class="sl-no">Vol.2</span><span class="sl-name">Serviceテスト編 — Mockito</span></div>
+      <div class="sl-item"><span class="sl-no">Vol.3</span><span class="sl-name">Mapperテスト編 — @MybatisTest</span></div>
+      <div class="sl-item"><span class="sl-no">Vol.4</span><span class="sl-name">Controllerテスト編 — MockMvc</span></div>
+      <div class="sl-item"><span class="sl-no">Vol.5</span><span class="sl-name">バリデーション・例外編</span></div>
+      <div class="sl-item"><span class="sl-no">Vol.6</span><span class="sl-name">全体実行・まとめ編 — 完結</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:40px;border-left-color:#7a5cc0;background:rgba(122,92,192,0.10)">
+    <div class="tip-label" style="color:#5a3d9c">NEXT ── リファクタリング編へ</div>
+    <p>テストが完成しました。プロジェクト全体の流れでは、これが最終フェーズ<b>「リファクタリング」</b>の直前です。フロントエンドで画面を作り、テストで安全網を張った。次は<b>その網に守られながら、内部の設計を磨き上げる</b>番です。フィールドインジェクション→コンストラクタ注入、例外ハンドラのステータス修正、採番キーの取得、Formの共通化——<b>このシリーズで書いたテストが緑であり続ける限り、安心して改善できます</b>。あなたの張った安全網が、その土台です。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>NOTEPAD APP ── TEST SERIES / VOL.6</span>
+  <span>RUN ALL & RECAP ── 全体実行・まとめ編（完結）</span>
+</footer>
+
+</body>
+</html>

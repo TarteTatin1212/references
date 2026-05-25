@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳アプリ テスト Vol.5 バリデーション・例外編</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#123018;
+  --paper:#e1ead5;
+  --paper-2:#ccdbb3;
+  --accent:#358736;       /* 若竹（Vol.5・最も緑） */
+  --accent-2:#66a851;
+  --accent-3:#1f4d1e;
+  --muted:#61735c;
+  --line:#b3c69f;
+  --code-bg:#111e0d;
+  --code-text:#e1ead5;
+  --panel-bg:#eff5e7;
+  --ng:#c0573f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.8;font-size:15px}
+body{max-width:1200px;margin:0 auto;padding:0 40px 80px;
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(53,135,54,.05), transparent 42%),
+    radial-gradient(circle at 86% 82%, rgba(53,135,54,.04), transparent 42%);
+  background-attachment:fixed}
+
+.page-header{position:relative;padding:60px 0 40px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'✓';position:absolute;right:6px;top:-30px;font-size:300px;font-family:'Shippori Mincho',serif;color:var(--accent);opacity:0.16;z-index:0;font-weight:700;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.tag-row{margin-bottom:8px}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+.kind-tag{display:inline-block;background:transparent;color:var(--accent-3);border:1px solid var(--accent-3);padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;margin-left:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:24px 0 8px;letter-spacing:0.04em;line-height:1.3}
+.subtitle{color:var(--muted);font-size:13px;letter-spacing:0.15em;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.lead{max-width:680px;font-size:15px;color:var(--ink)}
+.lead b{color:var(--accent-3)}
+
+.toc{background:var(--paper-2);padding:24px 32px;margin:40px 0 60px;border:1px solid var(--line)}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:14px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc li{font-family:'Shippori Mincho',serif;font-size:14px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a::before{content:'— ';color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+
+section{margin:64px 0}
+.section-header{display:flex;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.section-header .en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:780px;margin-bottom:24px;font-size:15px}
+.pattern-desc b{color:var(--accent-3)}
+
+.demo-card{border:1px solid var(--line);background:#fff;margin:24px 0}
+.demo-head{background:var(--paper-2);padding:10px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-3);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{padding:18px 22px;background:var(--panel-bg);border-right:1px solid var(--line);min-height:120px}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.05em}
+.panel p{font-size:13.5px;margin-bottom:8px}
+.panel b{color:var(--accent-3)}
+.code{padding:18px 20px;background:var(--code-bg);color:var(--code-text);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;word-break:break-all;overflow-x:auto}
+.code-head{color:#8ba87e;font-size:11px;display:block;margin-bottom:10px;letter-spacing:0.05em}
+.kw{color:#ffc88a}.type{color:#c2a3ff}.fn{color:#a3c9ff}.str{color:#b5e8b0}.num{color:#f7a8d8}.comment{color:#869480;font-style:italic}.ann{color:#f7c08a}
+
+.tip{margin:24px 0;padding:14px 20px;background:rgba(53,135,54,0.10);border-left:3px solid var(--accent);font-size:13.5px}
+.tip-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:600;margin-bottom:6px}
+.tip p{font-size:13.5px;line-height:1.75}
+.tip b{color:var(--accent-3)}
+
+.step-list{list-style:none;margin:14px 0;counter-reset:step}
+.step-list li{padding:8px 0 8px 36px;position:relative;font-size:13.5px;counter-increment:step}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:6px;background:var(--accent);color:var(--paper);width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+
+.check-list{list-style:none;margin:14px 0}
+.check-list li{padding:6px 0 6px 28px;position:relative;font-size:13.5px}
+.check-list li::before{content:'✓';position:absolute;left:4px;color:var(--accent);font-size:14px;top:6px;font-weight:700}
+
+.compare-tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.compare-tbl th,.compare-tbl td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+.compare-tbl th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--accent-3)}
+
+/* テストランナー風 */
+.runner{background:#13201a;border:1px solid #2a3a2f;border-radius:9px;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:11.5px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.runner-bar{background:#1d2c24;padding:6px 12px;color:#7fb08a;font-size:10.5px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #2a3a2f}
+.runner-bar .dot{width:8px;height:8px;border-radius:50%;background:#86b86a;display:block}
+.runner-in{padding:12px 14px;line-height:1.95;color:#cdd8c8}
+.runner-in .ok{color:#7fd49a}
+.runner-in .cls{color:#a9d68e}
+.runner-in .sum{color:#7fd49a;margin-top:8px;display:block;border-top:1px solid #2a3a2f;padding-top:8px}
+.runner-in .gray{color:#6a7d66}
+
+/* 境界値テーブル */
+.bv-tbl{width:100%;border-collapse:collapse;margin:8px 0;font-size:12px}
+.bv-tbl th,.bv-tbl td{border:1px solid var(--line);padding:7px 9px;text-align:center}
+.bv-tbl th{background:var(--paper-2);font-family:'JetBrains Mono';font-size:10px;color:var(--accent-3)}
+.bv-tbl .ok{color:var(--accent);font-weight:600}
+.bv-tbl .ng{color:var(--ng);font-weight:600}
+.bv-tbl .edge{background:rgba(53,135,54,.06)}
+
+/* NG/OK ボックス */
+.ngok{display:flex;flex-direction:column;gap:8px;margin:6px 0}
+.ngok .box{border-radius:7px;padding:9px 12px;font-size:12px;font-family:'JetBrains Mono'}
+.ngok .ng{background:rgba(192,87,63,.08);border:1px solid #d9a89c;color:#9a4030}
+.ngok .ok{background:rgba(53,135,54,.08);border:1px solid #a8cb98;color:var(--accent-3)}
+.ngok .lb{font-weight:600;font-size:10px;display:block;margin-bottom:3px;letter-spacing:.08em}
+
+/* 例外振り分け図 */
+.route{font-family:'JetBrains Mono';font-size:11px;line-height:1.8}
+.route .start{border:1.3px solid var(--line);border-radius:7px;padding:8px 11px;background:#fff;text-align:center;margin:5px 0}
+.route .ar{text-align:center;color:var(--muted);font-size:13px}
+.route .branch{display:flex;gap:10px}
+.route .branch .b{flex:1;border-radius:7px;padding:8px 10px;font-size:10.5px}
+.route .branch .b1{border:1.3px solid var(--accent);background:rgba(53,135,54,.07);color:var(--accent-3)}
+.route .branch .b2{border:1.3px solid #c98a3a;background:rgba(201,138,58,.08);color:#9a6a26}
+
+.page-footer{margin-top:80px;padding-top:30px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em}
+@media(max-width:720px){
+  body{padding:0 20px 60px}
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  .page-header::before{font-size:200px;right:-20px}
+  h1{font-size:30px}
+  .toc ul{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="tag-row">
+    <span class="series-tag">NOTEPAD APP ── TEST SERIES</span>
+    <span class="vol-tag">VOL.5 / 6</span>
+    <span class="kind-tag">バリデーション・例外編</span>
+  </div>
+  <h1>バリデーション・<br>例外編</h1>
+  <div class="subtitle">VALIDATION ── EXCEPTION HANDLING</div>
+  <p class="lead">
+    3層のテストは揃いました。最後は<b>横断的な守り</b>——<b>入力チェック（バリデーション）</b>と<b>例外処理</b>です。<br>
+    <code>NoteForm</code> のルールは <b>title が必須（<code>@NotBlank</code>）・30文字以内（<code>@Size</code>）</b>。<b>content には制約がありません</b>（確認済み）。この境界を<b>「空・30字・31字」</b>でテストします。さらに、不正入力時に<b>新規画面へ戻るか</b>をMockMvcで確認。<br>
+    後半は <code>@ControllerAdvice</code> の <code>GlobalExceptionHandler</code>。<b>NoteNotFoundException は404画面、その他は500画面</b>という<b>例外の振り分け</b>を検証します。「正しくない入力」「想定外の事態」にアプリが正しく反応するか——守りの最後の砦です。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ul>
+    <li><a href="#rule">01 バリデーションの仕様確認</a></li>
+    <li><a href="#validator">02 Validatorで直接テスト</a></li>
+    <li><a href="#boundary">03 境界値テスト（30文字）</a></li>
+    <li><a href="#content">04 content は制約なし</a></li>
+    <li><a href="#mvc-invalid">05 不正入力で画面に戻る</a></li>
+    <li><a href="#advice">06 例外ハンドラの振り分け</a></li>
+    <li><a href="#status">07 ステータス200問題の記録</a></li>
+    <li><a href="#pitfall">08 ハマりどころ</a></li>
+    <li><a href="#next">09 次巻へ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="rule">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>バリデーションの仕様確認</h2>
+    <span class="en">VALIDATION RULES</span>
+  </div>
+  <p class="pattern-desc">テストの前に<b>「何が正しい仕様か」</b>を確定させます。実際の <code>NoteForm</code> を見ると、制約が付くのは<b>title だけ</b>。content には何もありません。ここを正確に押さえます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">NoteForm の制約</span>
+      <span class="tag-desc">title のみ・content無し</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// フィールドごとの制約</div>
+        <table class="compare-tbl">
+          <tr><th>フィールド</th><th>制約</th></tr>
+          <tr><td>title</td><td>@NotBlank（必須）<br>@Size(max=30)</td></tr>
+          <tr><td>content</td><td>制約なし（空でもOK）</td></tr>
+        </table>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── 仕様を先に確定する</div>
+          <p>テストは<b>「仕様が正しく実装されているか」</b>を確かめるもの。だから<b>まず仕様を明文化</b>します。「titleは必須・30字以内、contentは自由」。これがテストの<b>合格基準</b>になります。実コードを確認した事実そのままです。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// テスト対象：NoteForm（おさらい）</span>
+
+<span class="ann">@Data</span>
+<span class="kw">public class</span> <span class="type">NoteForm</span> {
+
+  <span class="ann">@NotBlank</span>          <span class="comment">// 空・空白だけはNG</span>
+  <span class="ann">@Size</span>(max = <span class="num">30</span>)    <span class="comment">// 30文字まで</span>
+  <span class="kw">private</span> <span class="type">String</span> title;
+
+  <span class="kw">private</span> <span class="type">String</span> content;  <span class="comment">// 制約なし</span>
+}
+
+
+<span class="comment">// ─── 確かめたいこと ───</span>
+<span class="comment">// ① title 空 → NG（@NotBlank違反）</span>
+<span class="comment">// ② title 31文字 → NG（@Size違反）</span>
+<span class="comment">// ③ title 30文字 → OK（ちょうど境界）</span>
+<span class="comment">// ④ title 普通の文字列 → OK</span>
+<span class="comment">// ⑤ content 空 → OK（制約なし）</span>
+
+<span class="comment">// @NotBlank は「null・空文字・空白のみ」を</span>
+<span class="comment">// すべてNGにする（@NotNullより厳しい）。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section id="validator">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>Validatorで直接テスト</h2>
+    <span class="en">VALIDATOR</span>
+  </div>
+  <p class="pattern-desc">バリデーションは<b>Controllerを通さず、単体で</b>テストできます。<code>Validator</code> を直接使い、<b>フォームに違反がいくつあるか</b>を調べる方法です。速くて確実です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">Validator#validate</span>
+      <span class="tag-desc">制約違反を直接調べる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 仕組み</div>
+        <p><code>Validator</code> にフォームを渡すと、<b>違反の集合（Set）</b>が返ります。違反が無ければ空、あれば中身が入る。</p>
+        <p style="margin-top:8px">「空のはず（違反なし）」「1件あるはず」を <code>assertThat(violations)</code> で確かめます。Spring起動もControllerも不要。</p>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">TIP ── ValidatorFactory で生成</div>
+          <p><code>Validation.buildDefaultValidatorFactory()</code> から <code>Validator</code> を取り出します。<code>@BeforeEach</code> で各テスト前に用意しておくと使い回せます。これは<b>純粋なJavaのテスト</b>——Springの世界に入らないので一瞬で終わります。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// NoteFormTest.java の骨格</span>
+
+<span class="kw">package</span> jp.example.form;
+
+<span class="kw">import static</span> org.assertj.core.api.Assertions.*;
+
+<span class="kw">import</span> jakarta.validation.*;
+<span class="kw">import</span> org.junit.jupiter.api.*;
+<span class="kw">import</span> java.util.Set;
+
+<span class="kw">class</span> <span class="type">NoteFormTest</span> {
+
+  <span class="kw">private</span> <span class="type">Validator</span> validator;
+
+  <span class="ann">@BeforeEach</span>
+  <span class="kw">void</span> <span class="fn">setup</span>() {
+    <span class="type">ValidatorFactory</span> f =
+        <span class="type">Validation</span>
+          .<span class="fn">buildDefaultValidatorFactory</span>();
+    validator = f.<span class="fn">getValidator</span>();
+  }
+
+  <span class="comment">// ↓ ここに各テストを書く</span>
+}
+
+
+<span class="comment">// validate(form) が返す Set の中身を見る:</span>
+<span class="comment">//   空     → 違反なし（合格データ）</span>
+<span class="comment">//   要素あり → 違反あり（不合格データ）</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section id="boundary">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>境界値テスト（30文字）</h2>
+    <span class="en">BOUNDARY TEST</span>
+  </div>
+  <p class="pattern-desc">バリデーションテストの<b>核心は境界値</b>。「30文字はOK、31文字はNG」という<b>境目</b>を狙い撃ちします。真ん中の値より、境界こそがバグの出る場所です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">@Size(max=30) の境界</span>
+      <span class="tag-desc">29/30/31を試す</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 境界値の考え方</div>
+        <table class="bv-tbl">
+          <tr><th>title</th><th>結果</th></tr>
+          <tr><td>空 ""</td><td class="ng">NG</td></tr>
+          <tr><td>空白 " "</td><td class="ng">NG</td></tr>
+          <tr><td>1文字</td><td class="ok">OK</td></tr>
+          <tr class="edge"><td>30文字</td><td class="ok">OK</td></tr>
+          <tr class="edge"><td>31文字</td><td class="ng">NG</td></tr>
+        </table>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── 境界の「両側」を試す</div>
+          <p>「30はOK・31はNG」のように<b>境界のすぐ両側</b>をテストします。もし実装が <code>&lt;30</code>（29まで）のように1ずれていたら、この2つのテストが捕まえます。<b>真ん中の15文字を試しても境界バグは見つからない</b>。境界こそ狙う価値があります。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 境界値テスト</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">title_空はNG</span>() {
+  <span class="type">NoteForm</span> f = <span class="kw">new</span> <span class="type">NoteForm</span>();
+  f.<span class="fn">setTitle</span>(<span class="str">""</span>);
+
+  <span class="type">Set</span>&lt;<span class="type">ConstraintViolation</span>&lt;<span class="type">NoteForm</span>&gt;&gt;
+      v = validator.<span class="fn">validate</span>(f);
+
+  <span class="comment">// 違反が1件以上あるはず</span>
+  <span class="fn">assertThat</span>(v).<span class="fn">isNotEmpty</span>();
+}
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">title_30文字はOK</span>() {
+  <span class="type">NoteForm</span> f = <span class="kw">new</span> <span class="type">NoteForm</span>();
+  f.<span class="fn">setTitle</span>(<span class="str">"あ"</span>.<span class="fn">repeat</span>(<span class="num">30</span>));  <span class="comment">// 30文字</span>
+
+  <span class="type">Set</span>&lt;<span class="type">ConstraintViolation</span>&lt;<span class="type">NoteForm</span>&gt;&gt;
+      v = validator.<span class="fn">validate</span>(f);
+
+  <span class="comment">// 違反なし（空）のはず</span>
+  <span class="fn">assertThat</span>(v).<span class="fn">isEmpty</span>();
+}
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">title_31文字はNG</span>() {
+  <span class="type">NoteForm</span> f = <span class="kw">new</span> <span class="type">NoteForm</span>();
+  f.<span class="fn">setTitle</span>(<span class="str">"あ"</span>.<span class="fn">repeat</span>(<span class="num">31</span>));  <span class="comment">// 31文字</span>
+
+  <span class="fn">assertThat</span>(validator.<span class="fn">validate</span>(f))
+      .<span class="fn">isNotEmpty</span>();
+}
+
+
+<span class="comment">// "あ".repeat(30) で30文字の文字列を生成。</span>
+<span class="comment">// 境界ちょうど＝30 と 越えた＝31 を試す。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section id="content">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>content は制約なし</h2>
+    <span class="en">content ── NO CONSTRAINT</span>
+  </div>
+  <p class="pattern-desc">忘れてはいけないのが<b>「制約が無いこと」も仕様</b>だという点。content は空でも長くてもOK。これを<b>明示的にテスト</b>しておくと、誤って制約を足したときに気づけます。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">content 自由</span>
+      <span class="tag-desc">制約なしを保証する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ「制約なし」もテストするか</div>
+        <p>「title だけ入れて content は空」のフォームが<b>合格する</b>ことを確かめます。これは<b>「content に制約が無い」という仕様の証明</b>です。</p>
+        <div class="ngok" style="margin-top:10px">
+          <div class="box ok"><span class="lb">OK</span>title="買い物" / content="" → 違反0</div>
+          <div class="box ok"><span class="lb">OK</span>title="買い物" / content=長文 → 違反0</div>
+        </div>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── 仕様の「保険」になる</div>
+          <p>もし将来うっかり content に <code>@NotBlank</code> を足してしまったら、このテストが<b>赤くなって教えてくれます</b>。「contentは自由」という決定を、テストが見張る。<b>「制約が無いこと」も立派な仕様</b>です。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// content は制約なしを保証</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">content_空でもOK</span>() {
+  <span class="type">NoteForm</span> f = <span class="kw">new</span> <span class="type">NoteForm</span>();
+  f.<span class="fn">setTitle</span>(<span class="str">"買い物"</span>);  <span class="comment">// titleは入れる</span>
+  f.<span class="fn">setContent</span>(<span class="str">""</span>);     <span class="comment">// contentは空</span>
+
+  <span class="type">Set</span>&lt;<span class="type">ConstraintViolation</span>&lt;<span class="type">NoteForm</span>&gt;&gt;
+      v = validator.<span class="fn">validate</span>(f);
+
+  <span class="comment">// titleが正しければ違反なし</span>
+  <span class="fn">assertThat</span>(v).<span class="fn">isEmpty</span>();
+}
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">content_長文でもOK</span>() {
+  <span class="type">NoteForm</span> f = <span class="kw">new</span> <span class="type">NoteForm</span>();
+  f.<span class="fn">setTitle</span>(<span class="str">"買い物"</span>);
+  f.<span class="fn">setContent</span>(<span class="str">"あ"</span>.<span class="fn">repeat</span>(<span class="num">1000</span>));
+
+  <span class="fn">assertThat</span>(validator.<span class="fn">validate</span>(f))
+      .<span class="fn">isEmpty</span>();
+}
+
+
+<span class="comment">// content に @Size 等が無いので、</span>
+<span class="comment">// どんなに長くても違反にならない。</span>
+<span class="comment">// これが「現状の仕様」。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section id="mvc-invalid">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>不正入力で画面に戻る</h2>
+    <span class="en">INVALID → BACK TO FORM</span>
+  </div>
+  <p class="pattern-desc">Validator単体だけでなく、<b>Controllerを通したときの挙動</b>も確かめます。不正な入力でPOSTすると、<b>リダイレクトせず新規画面に戻る</b>。これをMockMvcで検証します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">POST /memos（不正）</span>
+      <span class="tag-desc">画面に戻る検証</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 正常 vs 不正の分岐</div>
+        <div class="ngok">
+          <div class="box ok"><span class="lb">正常（titleあり）</span>register実行 → redirect:/memos</div>
+          <div class="box ng"><span class="lb">不正（title空）</span>registerせず → memos/new に戻る</div>
+        </div>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── 不正系こそ verify(never())</div>
+          <p>不正入力では <code>register</code> が<b>呼ばれてはいけない</b>。これを <code>verify(noteService, never()).register(any())</code> で確かめます。「呼ばれないことの検証」も立派なテスト。Controllerの <code>if (bindingResult.hasErrors())</code> が効いている証拠になります。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 不正入力テスト（Controller経由）</span>
+<span class="comment">// ※ NoteControllerTest に追記（@WebMvcTest）</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">登録_title空ならnewに戻る</span>()
+    <span class="kw">throws</span> <span class="type">Exception</span> {
+
+  <span class="comment">// when & then：titleを空でPOST</span>
+  mockMvc.<span class="fn">perform</span>(<span class="fn">post</span>(<span class="str">"/memos"</span>)
+          .<span class="fn">param</span>(<span class="str">"title"</span>, <span class="str">""</span>)
+          .<span class="fn">param</span>(<span class="str">"content"</span>, <span class="str">"本文"</span>))
+      <span class="comment">// リダイレクトせず画面表示（200）</span>
+      .<span class="fn">andExpect</span>(<span class="fn">status</span>().<span class="fn">isOk</span>())
+      .<span class="fn">andExpect</span>(
+          <span class="fn">view</span>().<span class="fn">name</span>(<span class="str">"memos/new"</span>))
+      <span class="comment">// titleにエラーが付いている</span>
+      .<span class="fn">andExpect</span>(<span class="fn">model</span>()
+          .<span class="fn">attributeHasFieldErrors</span>(
+              <span class="str">"noteForm"</span>, <span class="str">"title"</span>));
+
+  <span class="comment">// registerは呼ばれていないはず</span>
+  <span class="fn">verify</span>(noteService, <span class="fn">never</span>())
+      .<span class="fn">register</span>(<span class="fn">any</span>());
+}
+
+
+<span class="comment">// attributeHasFieldErrors(オブジェクト名,</span>
+<span class="comment">//   フィールド名) で「そのフィールドに</span>
+<span class="comment">//   エラーがある」ことを検証。</span>
+<span class="comment">// never() で「一度も呼ばれていない」を検証。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section id="advice">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>例外ハンドラの振り分け</h2>
+    <span class="en">@ControllerAdvice</span>
+  </div>
+  <p class="pattern-desc">後半は例外。<code>GlobalExceptionHandler</code> は<b>2種類の例外を振り分け</b>ます。<code>NoteNotFoundException</code> → 404画面、<b>その他すべて</b> → 500画面。この振り分けを検証します。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">例外の振り分け</span>
+      <span class="tag-desc">404 と 500</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 振り分けの構造</div>
+        <div class="route">
+          <div class="start">例外が発生</div>
+          <div class="ar">↓ @ControllerAdvice が捕まえる</div>
+          <div class="branch">
+            <div class="b b1">NoteNotFound<br>Exception<br>→ error/404</div>
+            <div class="b b2">その他の<br>Exception<br>→ error/500</div>
+          </div>
+        </div>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── 専用が優先、その他は受け皿</div>
+          <p>Springは<b>「より具体的な例外ハンドラ」を優先</b>します。<code>NoteNotFoundException</code> 専用のハンドラがあればそちらが、無ければ <code>Exception</code> の受け皿が捕まえる。だから<b>特定の例外は404、想定外は全部500</b>に振り分けられます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// テスト対象（おさらい）</span>
+
+<span class="ann">@ControllerAdvice</span>
+<span class="kw">public class</span> <span class="type">GlobalExceptionHandler</span> {
+
+  <span class="ann">@ExceptionHandler</span>(
+      <span class="type">NoteNotFoundException</span>.<span class="kw">class</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">handleTaskNotFound</span>(...) {
+    model.<span class="fn">addAttribute</span>(<span class="str">"message"</span>, ...);
+    <span class="kw">return</span> <span class="str">"error/404"</span>;
+  }
+
+  <span class="ann">@ExceptionHandler</span>(<span class="type">Exception</span>.<span class="kw">class</span>)
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">handleException</span>(...) {
+    model.<span class="fn">addAttribute</span>(<span class="str">"message"</span>, ...);
+    <span class="kw">return</span> <span class="str">"error/500"</span>;
+  }
+}
+
+
+<span class="comment">// ─── テストでの検証方針 ───</span>
+<span class="comment">// ① Serviceが NoteNotFoundException</span>
+<span class="comment">//    → error/404 に飛ぶ</span>
+<span class="comment">// ② Serviceが その他の例外</span>
+<span class="comment">//    → error/500 に飛ぶ</span>
+
+<span class="comment">// どちらも MockMvc + @WebMvcTest で</span>
+<span class="comment">// Serviceに thenThrow を仕込んで検証する。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section id="status">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ステータス200問題の記録</h2>
+    <span class="en">STATUS 200 ISSUE</span>
+  </div>
+  <p class="pattern-desc">Vol.4でも触れた<b>「404画面なのにHTTPステータスは200」</b>問題。500画面も同じです。これを<b>現状の事実として両方テスト</b>し、リファクタリングの的を明確にします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">404も500もステータス200</span>
+      <span class="tag-desc">現状を正直に記録</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果（イメージ）</div>
+        <div class="runner">
+          <div class="runner-bar"><span class="dot"></span>JUnit</div>
+          <div class="runner-in">
+            <span class="gray">例外振り分けテスト</span><br>
+            <span class="ok">✓</span> <span class="cls">NotFound_error404_status200</span><br>
+            <span class="ok">✓</span> <span class="cls">その他例外_error500_status200</span><br>
+            <span class="sum">Tests: 2 passed ✓</span>
+          </div>
+        </div>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-label">POINT ── 「直すべき点」を明確に残す</div>
+          <p>本来 404画面は <b>HTTPステータスも404</b>、500画面は<b>500</b>を返すべき。でも現状は両方200。これを<b>テストで記録</b>しておけば、リファクタリングで <code>@ResponseStatus</code> を足すとき、「どのテストを200→404/500に書き換えるか」が一目瞭然。<b>テストが改善の的になります</b>。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 404の振り分けテスト</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">NotFound例外_error404画面_status200</span>()
+    <span class="kw">throws</span> <span class="type">Exception</span> {
+
+  <span class="fn">when</span>(noteService.<span class="fn">findById</span>(<span class="num">99L</span>))
+      .<span class="fn">thenThrow</span>(
+          <span class="kw">new</span> <span class="type">NoteNotFoundException</span>(<span class="num">99L</span>));
+
+  mockMvc.<span class="fn">perform</span>(<span class="fn">get</span>(<span class="str">"/memos/view/99"</span>))
+      .<span class="fn">andExpect</span>(<span class="fn">status</span>().<span class="fn">isOk</span>())  <span class="comment">// 現状200</span>
+      .<span class="fn">andExpect</span>(<span class="fn">view</span>().<span class="fn">name</span>(<span class="str">"error/404"</span>));
+}
+
+
+<span class="code-head" style="margin-top:14px">// その他例外の振り分けテスト</span>
+
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">その他例外_error500画面_status200</span>()
+    <span class="kw">throws</span> <span class="type">Exception</span> {
+
+  <span class="fn">when</span>(noteService.<span class="fn">findAll</span>())
+      .<span class="fn">thenThrow</span>(
+          <span class="kw">new</span> <span class="type">RuntimeException</span>(<span class="str">"想定外"</span>));
+
+  mockMvc.<span class="fn">perform</span>(<span class="fn">get</span>(<span class="str">"/memos"</span>))
+      .<span class="fn">andExpect</span>(<span class="fn">status</span>().<span class="fn">isOk</span>())  <span class="comment">// 現状200</span>
+      .<span class="fn">andExpect</span>(<span class="fn">view</span>().<span class="fn">name</span>(<span class="str">"error/500"</span>));
+}
+
+
+<span class="comment">// ─── リファクタ後（伏線）───</span>
+<span class="comment">// @ResponseStatus を足したら:</span>
+<span class="comment">//   isOk() → isNotFound() / is5xxServerError()</span>
+<span class="comment">// にこれらを書き換える。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 08 -->
+<section id="pitfall">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ハマりどころ</h2>
+    <span class="en">PITFALLS</span>
+  </div>
+  <p class="pattern-desc">バリデーション・例外テストの<b>詰まりポイント</b>を3つ。検証の対象を間違えやすい領域です。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">よくある詰まり</span>
+      <span class="tag-desc">3つの罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 詰まりポイント</div>
+        <ul class="step-list">
+          <li><b>@NotBlank と @NotNull の混同</b>：@NotBlankは空白だけもNG。@NotNullはnullだけNG（空文字は通る）</li>
+          <li><b>@Valid の付け忘れ</b>：Controllerの引数に @Valid が無いとバリデーションが動かない。実コードは付いている</li>
+          <li><b>例外テストで実DBを期待</b>：例外振り分けは@WebMvcTest（モック）で。本物のServiceは不要</li>
+        </ul>
+        <div class="tip" style="margin-top:12px">
+          <div class="tip-label">POINT ── @NotBlank の意味を正確に</div>
+          <p><code>@NotBlank</code> は<b>null・空文字・空白のみ</b>を全部NGにします（文字列専用・最も厳しい）。<code>@NotEmpty</code> は空白を通す、<code>@NotNull</code> はnullだけ見る。実コードは <code>@NotBlank</code> なので、テストでは<b>「空白だけの文字列」もNG</b>になることを確認できます。</p>
+        </div>
+      </div>
+      <div class="code"><span class="code-head">// 罠①：3つの違いを正確に</span>
+
+<span class="comment">// @NotNull  … null だけNG（""は通る）</span>
+<span class="comment">// @NotEmpty … null・"" がNG（" "は通る）</span>
+<span class="comment">// @NotBlank … null・""・" " 全部NG ★最厳</span>
+
+<span class="comment">// NoteForm は @NotBlank</span>
+<span class="comment">// → 空白だけの "   " もNGになる</span>
+<span class="ann">@Test</span>
+<span class="kw">void</span> <span class="fn">title_空白だけでもNG</span>() {
+  <span class="type">NoteForm</span> f = <span class="kw">new</span> <span class="type">NoteForm</span>();
+  f.<span class="fn">setTitle</span>(<span class="str">"   "</span>);   <span class="comment">// 空白のみ</span>
+  <span class="fn">assertThat</span>(validator.<span class="fn">validate</span>(f))
+      .<span class="fn">isNotEmpty</span>();   <span class="comment">// NGのはず</span>
+}
+
+
+<span class="code-head" style="margin-top:12px">// 罠②：@Valid 必須（実コードは付いてる）</span>
+
+<span class="comment">// Controller側にこれが無いと動かない:</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">create</span>(
+    <span class="ann">@Valid</span> <span class="type">NoteForm</span> noteForm,  <span class="comment">// ← これ</span>
+    <span class="type">BindingResult</span> bindingResult) {</div>
+    </div>
+  </div>
+</section>
+
+<!-- 09 -->
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>次巻へ</h2>
+    <span class="en">TO VOL.6</span>
+  </div>
+  <p class="pattern-desc">入力チェックと例外という<b>横断的な守り</b>を固めました。これでテスト対象はほぼ網羅。最終巻では<b>全テストを一括実行</b>し、シリーズを締めくくり、リファクタリングへ橋渡しします。</p>
+
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">recap</span>
+      <span class="tag-desc">この巻のまとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 第5巻の収穫</div>
+        <ul class="check-list">
+          <li>バリデーション仕様の確定（titleのみ）</li>
+          <li>Validatorで直接テスト</li>
+          <li>境界値（空・30字・31字）</li>
+          <li>contentは制約なしも明示的に保証</li>
+          <li>不正入力で画面に戻る（never検証）</li>
+          <li>@ControllerAdviceの404/500振り分け</li>
+          <li>ステータス200問題を両方記録</li>
+          <li>@NotBlank/@NotEmpty/@NotNullの違い</li>
+        </ul>
+      </div>
+      <div class="code"><span class="code-head">// Vol.6 でやること</span>
+
+<span class="comment">// タイトル：全体実行・まとめ編</span>
+
+<span class="comment">// ・mvn test で全テスト一括実行</span>
+<span class="comment">// ・テスト結果の読み方</span>
+<span class="comment">// ・テストが「仕様書」になる話</span>
+<span class="comment">// ・どこまでテストすべきか（費用対効果）</span>
+<span class="comment">// ・このシリーズで固めたテスト一覧</span>
+<span class="comment">// ・リファクタリング編への橋渡し</span>
+<span class="comment">//   （テストが守りになって安全に直せる）</span>
+
+<span class="comment">// シリーズ完結。全テストを束ね、</span>
+<span class="comment">// 次のフェーズへ繋ぎます。</span></div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;border-left-color:var(--accent-3);background:rgba(31,77,30,0.10)">
+    <div class="tip-label">NEXT STEP ── Vol.6 全体実行・まとめ編（最終巻）</div>
+    <p>第5巻お疲れさまでした。<b>バリデーションの境界値</b>と<b>例外の振り分け</b>まで固め、テスト対象をほぼ網羅しました。次はシリーズ最終巻、<b>Vol.6「全体実行・まとめ編」</b>。<code>mvn test</code> で<b>全テストを一括実行</b>し、結果の読み方、テストが仕様書になること、テストの費用対効果を扱います。そして<b>リファクタリング編への橋渡し</b>——このシリーズで作ったテストが、内部を安全に改善するための命綱になります。最終巻Vol.6へ進みましょう。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>NOTEPAD APP ── TEST SERIES / VOL.5</span>
+  <span>VALIDATION & EXCEPTION ── バリデーション・例外編</span>
+</footer>
+
+</body>
+</html>
