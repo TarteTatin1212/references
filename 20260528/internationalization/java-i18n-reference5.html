@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新・Java入門編40 数値のフォーマット編 Vol.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1f2b2e;
+  --paper:#eceff0;
+  --paper-2:#dae2e3;
+  --accent:#2a7a92;
+  --accent-2:#b07a44;
+  --accent-3:#6fa0ac;
+  --muted:#5f7a7f;
+  --line:#bccacc;
+  --code-bg:#162630;
+  --code-text:#dfe9ea;
+  --panel-bg:#f2f7f8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;font-size:15px;-webkit-font-smoothing:antialiased;}
+b{color:var(--accent-2);font-weight:700;}
+code{font-family:"JetBrains Mono",monospace;}
+.inline-code{background:var(--paper-2);padding:1px 5px;border-radius:3px;font-size:.92em;}
+
+.page-header{position:relative;padding:54px 40px 38px;border-bottom:2px solid var(--ink);overflow:hidden;}
+.page-header::before{content:"⊕";position:absolute;right:-20px;top:50%;transform:translateY(-50%);font-size:300px;line-height:1;color:var(--accent);opacity:0.13;z-index:0;font-family:"Shippori Mincho",serif;}
+.page-header>*{position:relative;z-index:1;}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1.5px;padding:4px 12px;margin-bottom:14px;}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1px;padding:4px 12px;margin-left:6px;}
+.page-header h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;letter-spacing:1px;margin:6px 0 10px;}
+.subtitle{color:var(--muted);font-size:14px;font-family:"JetBrains Mono",monospace;letter-spacing:1px;}
+.lead{max-width:640px;margin-top:18px;font-size:15px;}
+
+.toc{background:var(--paper-2);padding:22px 40px;border-bottom:1px solid var(--line);}
+.toc-label{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:10px;}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 26px;}
+.toc a{color:var(--ink);text-decoration:none;font-size:14px;}
+.toc a::before{content:"— ";color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+
+main{max-width:1080px;margin:0 auto;padding:48px 40px;}
+section{margin-bottom:60px;}
+.section-header{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:16px;}
+.section-num{font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:600;color:var(--paper);background:var(--accent);padding:2px 9px;}
+.section-header h2{font-family:"Shippori Mincho",serif;font-size:24px;font-weight:700;}
+.section-header .en{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1.5px;color:var(--muted);}
+.pattern-desc{max-width:660px;margin-bottom:20px;}
+
+.demo-card{border:1px solid var(--line);background:#fff;border-radius:3px;overflow:hidden;box-shadow:0 1px 3px rgba(31,43,46,.06);}
+.demo-head{background:var(--paper-2);padding:11px 18px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.tag-name{font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:600;color:var(--accent);}
+.tag-desc{font-size:12px;color:var(--muted);}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.panel{background:var(--panel-bg);padding:20px;border-right:1px solid var(--line);}
+.panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:.5px;}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px;font-family:"JetBrains Mono",monospace;font-size:12.5px;line-height:1.75;overflow-x:auto;}
+.code-head{font-size:11px;color:#8aa0a8;margin-bottom:10px;letter-spacing:.5px;}
+.code pre{white-space:pre-wrap;word-break:break-word;}
+
+.kw{color:#ffc88a;}.type{color:#c2a3ff;}.fn{color:#a3c9ff;}.str{color:#b5e8b0;}.num{color:#f7a8d8;}.comment{color:#8293a0;font-style:italic;}.ann{color:#f7c08a;}
+
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.compare-box{background:#fff;border:1px solid var(--line);border-radius:3px;padding:14px;}
+.compare-box .ttl{font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:600;margin-bottom:8px;}
+.compare-box.bad .ttl{color:#b3753f;}
+.compare-box.good .ttl{color:var(--accent);}
+.compare-box ul{list-style:none;font-size:12.5px;}
+.compare-box li{padding:3px 0;padding-left:16px;position:relative;}
+.compare-box.bad li::before{content:"×";position:absolute;left:0;color:#c0563f;}
+.compare-box.good li::before{content:"○";position:absolute;left:0;color:var(--accent);}
+
+.flow-box{display:flex;flex-direction:column;gap:8px;}
+.flow-step{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:10px 14px;border-radius:3px;font-size:13px;}
+
+.map-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.map-table th{background:var(--accent);color:#fff;font-family:"JetBrains Mono",monospace;font-weight:600;padding:7px 10px;text-align:left;font-size:11px;}
+.map-table td{padding:7px 10px;border-bottom:1px solid var(--line);background:#fff;}
+.map-table .v{font-family:"JetBrains Mono",monospace;color:var(--accent);font-weight:600;}
+
+.result-row{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);padding:8px 12px;border-radius:3px;font-size:13px;margin-bottom:6px;}
+.result-row .loc{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);min-width:64px;}
+.result-row .out{color:var(--accent);font-weight:700;font-family:"JetBrains Mono",monospace;}
+
+.key{display:inline-block;background:var(--accent);color:var(--paper);font-family:"JetBrains Mono",monospace;font-size:11px;padding:1px 6px;border-radius:3px;}
+
+.tip{border-left:3px solid var(--accent);background:rgba(42,122,146,.08);padding:14px 18px;border-radius:0 3px 3px 0;margin:18px 0;}
+.tip .tip-label{font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:var(--accent);margin-bottom:6px;}
+.tip.point{border-color:var(--accent-2);background:rgba(176,122,68,.08);}
+.tip.point .tip-label{color:var(--accent-2);}
+
+.page-footer{border-top:2px solid var(--ink);padding:30px 40px;text-align:center;color:var(--muted);font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:1px;}
+
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr;}
+  .panel{border-right:none;border-bottom:1px solid var(--line);}
+  .page-header h1{font-size:30px;}
+  .page-header::before{font-size:180px;}
+  .compare-grid{grid-template-columns:1fr;}
+  main{padding:30px 20px;}
+  .page-header,.toc,.page-footer{padding-left:20px;padding-right:20px;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・Java入門編40 — 国際化</span>
+  <span class="vol-tag">Vol.5 / 全6巻</span>
+  <h1>数値のフォーマット編</h1>
+  <div class="subtitle">NUMBER &amp; CURRENCY — LOCALIZED FORMATTING</div>
+  <p class="lead">「1,234,568」「$1,234.57」「1.234,57 €」。同じ数でも桁区切りも小数点も通貨記号も国でバラバラ。日付に続いて<b>数値の国際化</b>を学びます。主役は<code class="inline-code">NumberFormat</code>。<b>Localeを渡すだけで、その国の流儀で数を整えてくれます</b>。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS — Vol.5</div>
+  <ul>
+    <li><a href="#why">数値の国差を知る</a></li>
+    <li><a href="#numberformat">NumberFormatの基本</a></li>
+    <li><a href="#currency">通貨フォーマット</a></li>
+    <li><a href="#percent">パーセント表示</a></li>
+    <li><a href="#parse">文字列を数値に戻す</a></li>
+    <li><a href="#pitfall">ハマりどころ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="why">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>数値の国差を知る</h2>
+    <span class="en">NUMBER DIFFERENCES</span>
+  </div>
+  <p class="pattern-desc">まず<b>何が国によって違うのか</b>を押さえます。桁区切り、小数点、通貨記号の位置——この3点が主にズレます。<b>日本とドイツでは小数点と桁区切りが真逆</b>。これを手作業で合わせるのは無謀です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">同じ 1234567.89 の見え方</span>
+      <span class="tag-desc">区切り・小数点・通貨位置が国で変わる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 国ごとの表記</div>
+        <table class="map-table">
+          <tr><th>国</th><th>数値</th><th>金額</th></tr>
+          <tr><td>日本</td><td class="v">1,234,567.89</td><td class="v">￥1,234,568</td></tr>
+          <tr><td>米国</td><td class="v">1,234,567.89</td><td class="v">$1,234,567.89</td></tr>
+          <tr><td>独国</td><td class="v">1.234.567,89</td><td class="v">1.234.567,89 €</td></tr>
+          <tr><td>仏国</td><td class="v">1 234 567,89</td><td class="v">1 234 567,89 €</td></tr>
+        </table>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted);">独：小数点が「,」桁区切りが「.」。仏：桁区切りが空白。通貨記号は前にも後ろにも来ます。</div>
+      </div>
+      <div class="code">
+        <div class="code-head">手作業は破綻する</div>
+<pre><span class="comment">// 自前でやろうとすると…</span>
+<span class="comment">// 「3桁ごとにカンマ」を書いたつもりが</span>
+<span class="comment">// ドイツでは「.」、フランスでは空白…</span>
+<span class="comment">// 小数点も国で入れ替わる。地獄。</span>
+
+<span class="comment">// しかも通貨記号は</span>
+<span class="comment">//   ￥1,234（前）</span>
+<span class="comment">//   1.234 €（後ろ）</span>
+<span class="comment">// と位置まで変わる。</span>
+
+<span class="comment">// → 自分でやらない。NumberFormatに任せる。</span>
+<span class="comment">//   これがこの巻の結論です。</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip point">
+    <div class="tip-label">POINT —</div>
+    数値の国際化で<b>絶対にやってはいけないのが「カンマを自分で入れる」</b>こと。<code class="inline-code">String.replace</code> で区切りを足すようなコードは、別の国で必ず破綻します。<b>整形はNumberFormatに丸投げ</b>が鉄則です。
+  </div>
+</section>
+
+<!-- 02 -->
+<section id="numberformat">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>NumberFormatの基本</h2>
+    <span class="en">NumberFormat BASICS</span>
+  </div>
+  <p class="pattern-desc">数値整形の主役<code class="inline-code">NumberFormat</code>です。使い方は日付と同じ発想。<b>「Localeを指定して整形係を取得 → format で文字列化」</b>。<code class="inline-code">getNumberInstance(Locale)</code>で桁区切り付きの数値整形係が手に入ります。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">NumberFormat.getNumberInstance(locale)</span>
+      <span class="tag-desc">桁区切りや小数点をLocaleで自動調整</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 1234567.89 を各国で整形</div>
+        <div class="result-row"><span class="loc">JAPAN</span>→<span class="out">1,234,567.89</span></div>
+        <div class="result-row"><span class="loc">US</span>→<span class="out">1,234,567.89</span></div>
+        <div class="result-row"><span class="loc">GERMANY</span>→<span class="out">1.234.567,89</span></div>
+        <div class="result-row"><span class="loc">FRANCE</span>→<span class="out">1 234 567,89</span></div>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted);">同じ数。Localeを変えるだけで区切りと小数点が国仕様に。</div>
+      </div>
+      <div class="code">
+        <div class="code-head">NumberExample.java</div>
+<pre><span class="kw">import</span> java.text.<span class="type">NumberFormat</span>;
+<span class="kw">import</span> java.util.<span class="type">Locale</span>;
+
+<span class="kw">double</span> n = <span class="num">1234567.89</span>;
+
+<span class="comment">// Localeを指定して整形係を取得</span>
+<span class="type">NumberFormat</span> jp =
+    <span class="type">NumberFormat</span>.<span class="fn">getNumberInstance</span>(<span class="type">Locale</span>.JAPAN);
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(jp.<span class="fn">format</span>(n));
+<span class="comment">// → 1,234,567.89</span>
+
+<span class="type">NumberFormat</span> de =
+    <span class="type">NumberFormat</span>.<span class="fn">getNumberInstance</span>(<span class="type">Locale</span>.GERMANY);
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(de.<span class="fn">format</span>(n));
+<span class="comment">// → 1.234.567,89</span>
+
+<span class="comment">// 小数桁数も調整できる</span>
+jp.<span class="fn">setMaximumFractionDigits</span>(<span class="num">1</span>);
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(jp.<span class="fn">format</span>(n)); <span class="comment">// 1,234,567.9</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-label">TIP —</div>
+    <code class="inline-code">setMaximumFractionDigits</code>（最大小数桁）や<code class="inline-code">setMinimumFractionDigits</code>（最小小数桁）で<b>小数の見せ方を細かく調整</b>できます。「常に小数2桁で揃えたい」なら最小・最大とも2に設定。地味ですが現場で頻出のテクです。
+  </div>
+</section>
+
+<!-- 03 -->
+<section id="currency">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>通貨フォーマット</h2>
+    <span class="en">CURRENCY FORMAT</span>
+  </div>
+  <p class="pattern-desc">お金の表示は<code class="inline-code">getCurrencyInstance(Locale)</code>。<b>通貨記号・記号の位置・小数桁を、その国のお金の習慣に合わせて全部やってくれます</b>。円なら小数なし、ドルなら小数2桁、と通貨ごとの違いも自動です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">NumberFormat.getCurrencyInstance(locale)</span>
+      <span class="tag-desc">記号も桁数も位置も、その国の通貨仕様で</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 1234567.89 を通貨表示</div>
+        <div class="result-row"><span class="loc">JAPAN</span>→<span class="out">￥1,234,568</span></div>
+        <div class="result-row"><span class="loc">US</span>→<span class="out">$1,234,567.89</span></div>
+        <div class="result-row"><span class="loc">GERMANY</span>→<span class="out">1.234.567,89 €</span></div>
+        <div style="margin-top:10px;font-size:12.5px;">円は<b>小数なしで四捨五入</b>、ドルは小数2桁、ユーロは記号が後ろ。<b>通貨ごとの常識</b>をJavaが知っています。</div>
+      </div>
+      <div class="code">
+        <div class="code-head">CurrencyExample.java</div>
+<pre><span class="kw">import</span> java.text.<span class="type">NumberFormat</span>;
+<span class="kw">import</span> java.util.<span class="type">Locale</span>;
+
+<span class="kw">double</span> price = <span class="num">1234567.89</span>;
+
+<span class="type">NumberFormat</span> jp =
+    <span class="type">NumberFormat</span>.<span class="fn">getCurrencyInstance</span>(<span class="type">Locale</span>.JAPAN);
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(jp.<span class="fn">format</span>(price));
+<span class="comment">// → ￥1,234,568（円は小数なし）</span>
+
+<span class="type">NumberFormat</span> us =
+    <span class="type">NumberFormat</span>.<span class="fn">getCurrencyInstance</span>(<span class="type">Locale</span>.US);
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(us.<span class="fn">format</span>(price));
+<span class="comment">// → $1,234,567.89</span>
+
+<span class="comment">// 注意：Localeが決めるのは「表示の習慣」。</span>
+<span class="comment">// 数値を実際に円→ドル換算するわけではない！</span>
+<span class="comment">// 為替変換は別途自分で行う。</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip point">
+    <div class="tip-label">POINT —</div>
+    超重要な勘違いポイント。<code class="inline-code">getCurrencyInstance</code> は<b>「表示の仕方」を変えるだけで、為替の換算はしません</b>。<code class="inline-code">1234567.89</code> がドル表示で <code>$1,234,567.89</code> になっても、それは「同じ数字にドル記号を付けた」だけ。<b>円→ドルの換算は自分で計算</b>が必要です。
+  </div>
+</section>
+
+<!-- 04 -->
+<section id="percent">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>パーセント表示</h2>
+    <span class="en">PERCENT FORMAT</span>
+  </div>
+  <p class="pattern-desc">割合の表示は<code class="inline-code">getPercentInstance(Locale)</code>。<b>ここにも初学者が必ず引っかかる罠</b>があります。<b>「0.25 を渡すと 25% になる」</b>——つまり<b>100倍してから%を付ける</b>動きをします。最初は必ず驚きます。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">NumberFormat.getPercentInstance(locale)</span>
+      <span class="tag-desc">0.25 → 25%。渡す数は「割合（1.0=100%）」</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 入力 → 出力の対応</div>
+        <table class="map-table">
+          <tr><th>渡す値</th><th>出力</th></tr>
+          <tr><td class="v">0.25</td><td class="v">25%</td></tr>
+          <tr><td class="v">0.5</td><td class="v">50%</td></tr>
+          <tr><td class="v">1.0</td><td class="v">100%</td></tr>
+          <tr><td class="v">0.075</td><td class="v">8%（四捨五入）</td></tr>
+        </table>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted);">「25%にしたいなら 25 ではなく 0.25 を渡す」。ここを取り違えると 2500% になります。</div>
+      </div>
+      <div class="code">
+        <div class="code-head">PercentExample.java</div>
+<pre><span class="type">NumberFormat</span> p =
+    <span class="type">NumberFormat</span>.<span class="fn">getPercentInstance</span>(<span class="type">Locale</span>.JAPAN);
+
+<span class="comment">// 0.25 を渡すと 25% になる（100倍される）</span>
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(p.<span class="fn">format</span>(<span class="num">0.25</span>)); <span class="comment">// 25%</span>
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(p.<span class="fn">format</span>(<span class="num">1.0</span>));  <span class="comment">// 100%</span>
+
+<span class="comment">// 小数の%も出したい場合</span>
+p.<span class="fn">setMaximumFractionDigits</span>(<span class="num">1</span>);
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(p.<span class="fn">format</span>(<span class="num">0.075</span>)); <span class="comment">// 7.5%</span>
+
+<span class="comment">// よくある事故：</span>
+<span class="comment">// p.format(25) → 2500% になってしまう</span>
+<span class="comment">// 「割合は 0〜1 で渡す」と覚える</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-label">TIP —</div>
+    覚え方は<b>「割合は 1.0 が100%」</b>。テストの点数80点なら <code class="inline-code">80</code> ではなく <code class="inline-code">0.8</code> を渡す。<b>"率"は0〜1の世界</b>と頭を切り替えれば、定番事故「桁が100倍ズレる」を回避できます。
+  </div>
+</section>
+
+<!-- 05 -->
+<section id="parse">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>文字列を数値に戻す</h2>
+    <span class="en">PARSING NUMBERS</span>
+  </div>
+  <p class="pattern-desc">フォームに入力された「1,234,567」のような<b>区切り付き文字列を数値に戻す</b>のも<code class="inline-code">NumberFormat</code>の仕事。<code class="inline-code">parse</code>を使います。<code class="inline-code">Integer.parseInt</code>はカンマ付き文字列で失敗するので、ここでも<code class="inline-code">NumberFormat</code>が頼りになります。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">numberFormat.parse(text)</span>
+      <span class="tag-desc">区切り付き文字列 → 数値。Localeの区切りを理解</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ parseInt ではダメか</div>
+        <div class="compare-grid">
+          <div class="compare-box bad">
+            <div class="ttl">Integer.parseInt</div>
+            <ul>
+              <li>"1,234" で失敗</li>
+              <li>カンマを理解しない</li>
+              <li>例外で落ちる</li>
+            </ul>
+          </div>
+          <div class="compare-box good">
+            <div class="ttl">NumberFormat.parse</div>
+            <ul>
+              <li>"1,234" → 1234</li>
+              <li>国の区切りを理解</li>
+              <li>独語の "1.234" も処理</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">ParseNumberExample.java</div>
+<pre><span class="kw">import</span> java.text.<span class="type">NumberFormat</span>;
+<span class="kw">import</span> java.util.<span class="type">Locale</span>;
+
+<span class="type">NumberFormat</span> jp =
+    <span class="type">NumberFormat</span>.<span class="fn">getNumberInstance</span>(<span class="type">Locale</span>.JAPAN);
+
+<span class="comment">// 区切り付き文字列を数値に</span>
+<span class="type">Number</span> n = jp.<span class="fn">parse</span>(<span class="str">"1,234,567"</span>);
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(n); <span class="comment">// 1234567</span>
+
+<span class="comment">// ドイツ語の "1.234,5" もLocaleが合えばOK</span>
+<span class="type">NumberFormat</span> de =
+    <span class="type">NumberFormat</span>.<span class="fn">getNumberInstance</span>(<span class="type">Locale</span>.GERMANY);
+<span class="type">Number</span> g = de.<span class="fn">parse</span>(<span class="str">"1.234,5"</span>);
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(g); <span class="comment">// 1234.5</span>
+
+<span class="comment">// parse は ParseException を投げ得るので</span>
+<span class="comment">// try-catch（または throws）が必要</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip point">
+    <div class="tip-label">POINT —</div>
+    <b>区切り付きの数字をそのまま <code>parseInt</code> に渡してはいけません</b>。<code class="inline-code">"1,234"</code> は <code>NumberFormatException</code> で落ちます。<b>表示はNumberFormatでformat、入力はNumberFormatでparse</b>。入口と出口を同じ道具で揃えるのが安全です。
+  </div>
+</section>
+
+<!-- 06 -->
+<section id="pitfall">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ハマりどころ</h2>
+    <span class="en">COMMON PITFALLS</span>
+  </div>
+  <p class="pattern-desc">数値フォーマットの定番事故をまとめます。<b>「%の100倍」「通貨=為替の誤解」「自前カンマ」</b>が御三家。日付編と同じく、<b>「自分で整形しない・Localeに任せる」</b>が一貫した解決策です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">あるある事故と対策</span>
+      <span class="tag-desc">困ったら「整形係に任せたか？」を疑う</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 詰まりポイント</div>
+        <div class="compare-grid">
+          <div class="compare-box bad">
+            <div class="ttl">やりがちな失敗</div>
+            <ul>
+              <li>%で桁が100倍ズレる</li>
+              <li>通貨表示で換算した気に</li>
+              <li>カンマを自分で挿入</li>
+              <li>区切り付きをparseInt</li>
+            </ul>
+          </div>
+          <div class="compare-box good">
+            <div class="ttl">対策</div>
+            <ul>
+              <li>率は0〜1で渡す</li>
+              <li>換算は別途自前で</li>
+              <li>整形はNumberFormat</li>
+              <li>入力もNumberFormat.parse</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">3つの整形係まとめ</div>
+<pre><span class="comment">// この巻の3兄弟を整理：</span>
+
+<span class="comment">// ① ただの数値（桁区切り）</span>
+<span class="type">NumberFormat</span>.<span class="fn">getNumberInstance</span>(loc);
+
+<span class="comment">// ② 通貨（記号・桁数つき）</span>
+<span class="type">NumberFormat</span>.<span class="fn">getCurrencyInstance</span>(loc);
+
+<span class="comment">// ③ パーセント（100倍して%）</span>
+<span class="type">NumberFormat</span>.<span class="fn">getPercentInstance</span>(loc);
+
+<span class="comment">// どれも使い方は同じ：</span>
+<span class="comment">//   Localeを渡す → format で表示</span>
+<span class="comment">//   → parse で文字列を数値に戻す</span>
+<span class="comment">// 「get○○Instance(Locale)」の形を覚える</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-label">NEXT STEP —</div>
+    日付・数値と、データの国際化を2巻にわたって見てきました。最後の<b>Vol.6「テキストのフォーマット＆困った時編」</b>では、これらを組み合わせて<b>「〇〇さん、商品が3件、合計￥1,234あります」</b>のような<b>穴埋め文章（MessageFormat）</b>を作ります。さらにシリーズ全体の<b>よくある詰まりをQ&A形式</b>で総ざらいして、国際化編を締めくくります。いよいよ完結巻です。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  新・Java入門編40 — 国際化 ／ Vol.5 数値のフォーマット編 ／ ⊕ INTERNATIONALIZATION
+</footer>
+
+</body>
+</html>

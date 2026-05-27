@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新・Java入門編40 国際化とは・全体像編 Vol.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1f2b33;
+  --paper:#eef1ef;
+  --paper-2:#e0e5e3;
+  --accent:#2f6d78;
+  --accent-2:#b3753f;
+  --accent-3:#7a99a0;
+  --muted:#677b80;
+  --line:#c2ccc9;
+  --code-bg:#1b2730;
+  --code-text:#dfe8ea;
+  --panel-bg:#f6f8f7;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:"Noto Sans JP",sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.85;
+  font-size:15px;
+  -webkit-font-smoothing:antialiased;
+}
+b{color:var(--accent-2);font-weight:700;}
+
+/* ===== HEADER ===== */
+.page-header{
+  position:relative;
+  padding:54px 40px 38px;
+  border-bottom:2px solid var(--ink);
+  overflow:hidden;
+}
+.page-header::before{
+  content:"⊕";
+  position:absolute;
+  right:-20px;top:50%;
+  transform:translateY(-50%);
+  font-size:300px;
+  line-height:1;
+  color:var(--accent);
+  opacity:0.13;
+  z-index:0;
+  font-family:"Shippori Mincho",serif;
+}
+.page-header>*{position:relative;z-index:1;}
+.series-tag{
+  display:inline-block;
+  background:var(--ink);color:var(--paper);
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;letter-spacing:1.5px;
+  padding:4px 12px;margin-bottom:14px;
+}
+.vol-tag{
+  display:inline-block;
+  background:var(--accent);color:var(--paper);
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;letter-spacing:1px;
+  padding:4px 12px;margin-left:6px;
+}
+.page-header h1{
+  font-family:"Shippori Mincho",serif;
+  font-size:42px;font-weight:700;
+  letter-spacing:1px;margin:6px 0 10px;
+}
+.subtitle{color:var(--muted);font-size:14px;font-family:"JetBrains Mono",monospace;letter-spacing:1px;}
+.lead{max-width:640px;margin-top:18px;font-size:15px;}
+
+/* ===== TOC ===== */
+.toc{
+  background:var(--paper-2);
+  padding:22px 40px;
+  border-bottom:1px solid var(--line);
+}
+.toc-label{
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;letter-spacing:2px;
+  color:var(--muted);margin-bottom:10px;
+}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 26px;}
+.toc a{
+  color:var(--ink);text-decoration:none;
+  font-size:14px;position:relative;
+}
+.toc a::before{content:"— ";color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+
+/* ===== MAIN ===== */
+main{max-width:1080px;margin:0 auto;padding:48px 40px;}
+section{margin-bottom:60px;}
+.section-header{
+  display:flex;align-items:baseline;gap:14px;
+  border-bottom:1px solid var(--line);
+  padding-bottom:10px;margin-bottom:16px;
+}
+.section-num{
+  font-family:"JetBrains Mono",monospace;
+  font-size:13px;font-weight:600;
+  color:var(--paper);background:var(--accent);
+  padding:2px 9px;
+}
+.section-header h2{
+  font-family:"Shippori Mincho",serif;
+  font-size:24px;font-weight:700;
+}
+.section-header .en{
+  margin-left:auto;
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;letter-spacing:1.5px;
+  color:var(--muted);
+}
+.pattern-desc{max-width:660px;margin-bottom:20px;}
+
+/* ===== DEMO CARD ===== */
+.demo-card{
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:3px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(31,43,51,.06);
+}
+.demo-head{
+  background:var(--paper-2);
+  padding:11px 18px;
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+}
+.tag-name{
+  font-family:"JetBrains Mono",monospace;
+  font-size:13px;font-weight:600;color:var(--accent);
+}
+.tag-desc{font-size:12px;color:var(--muted);}
+.demo-body{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+}
+.panel{
+  background:var(--panel-bg);
+  padding:20px;
+  border-right:1px solid var(--line);
+}
+.panel-head{
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;color:var(--muted);
+  margin-bottom:12px;letter-spacing:.5px;
+}
+.code{
+  background:var(--code-bg);
+  color:var(--code-text);
+  padding:20px;
+  font-family:"JetBrains Mono",monospace;
+  font-size:12.5px;line-height:1.75;
+  overflow-x:auto;
+}
+.code-head{
+  font-size:11px;color:#8aa0a8;
+  margin-bottom:10px;letter-spacing:.5px;
+}
+.code pre{white-space:pre-wrap;word-break:break-word;}
+
+/* syntax */
+.kw{color:#ffc88a;}
+.type{color:#c2a3ff;}
+.fn{color:#a3c9ff;}
+.str{color:#b5e8b0;}
+.num{color:#f7a8d8;}
+.comment{color:#8293a0;font-style:italic;}
+.ann{color:#f7c08a;}
+
+/* panel inner bits */
+.world-map{
+  display:flex;flex-direction:column;gap:10px;
+}
+.locale-row{
+  display:flex;align-items:center;gap:12px;
+  background:#fff;border:1px solid var(--line);
+  padding:10px 14px;border-radius:3px;
+}
+.locale-flag{font-size:22px;}
+.locale-info{flex:1;}
+.locale-info .lang{font-weight:700;font-size:14px;}
+.locale-info .code-name{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);}
+.locale-info .sample{font-size:13px;color:var(--accent);margin-top:2px;}
+
+.flow-box{
+  display:flex;flex-direction:column;gap:8px;
+}
+.flow-step{
+  background:#fff;border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  padding:10px 14px;border-radius:3px;font-size:13px;
+}
+.flow-arrow{text-align:center;color:var(--accent-2);font-size:16px;}
+
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.compare-box{background:#fff;border:1px solid var(--line);border-radius:3px;padding:14px;}
+.compare-box .ttl{font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:600;margin-bottom:8px;}
+.compare-box.bad .ttl{color:#b3753f;}
+.compare-box.good .ttl{color:var(--accent);}
+.compare-box ul{list-style:none;font-size:12.5px;}
+.compare-box li{padding:3px 0;padding-left:16px;position:relative;}
+.compare-box.bad li::before{content:"×";position:absolute;left:0;color:#c0563f;}
+.compare-box.good li::before{content:"○";position:absolute;left:0;color:var(--accent);}
+
+.map-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.map-table th{
+  background:var(--accent);color:#fff;
+  font-family:"JetBrains Mono",monospace;font-weight:600;
+  padding:7px 10px;text-align:left;font-size:11px;
+}
+.map-table td{padding:7px 10px;border-bottom:1px solid var(--line);background:#fff;}
+.map-table .v{font-family:"JetBrains Mono",monospace;color:var(--accent);font-weight:600;}
+
+.key{
+  display:inline-block;
+  background:var(--accent);color:var(--paper);
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;padding:1px 6px;border-radius:3px;
+}
+
+/* ===== TIP ===== */
+.tip{
+  border-left:3px solid var(--accent);
+  background:rgba(47,109,120,.08);
+  padding:14px 18px;border-radius:0 3px 3px 0;
+  margin:18px 0;
+}
+.tip .tip-label{
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;font-weight:600;letter-spacing:1px;
+  color:var(--accent);margin-bottom:6px;
+}
+.tip.point{border-color:var(--accent-2);background:rgba(179,117,63,.08);}
+.tip.point .tip-label{color:var(--accent-2);}
+
+/* ===== FOOTER ===== */
+.page-footer{
+  border-top:2px solid var(--ink);
+  padding:30px 40px;
+  text-align:center;
+  color:var(--muted);
+  font-family:"JetBrains Mono",monospace;
+  font-size:12px;letter-spacing:1px;
+}
+
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr;}
+  .panel{border-right:none;border-bottom:1px solid var(--line);}
+  .page-header h1{font-size:30px;}
+  .page-header::before{font-size:180px;}
+  .compare-grid{grid-template-columns:1fr;}
+  main{padding:30px 20px;}
+  .page-header,.toc,.page-footer{padding-left:20px;padding-right:20px;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・Java入門編40 — 国際化</span>
+  <span class="vol-tag">Vol.1 / 全6巻</span>
+  <h1>国際化とは・全体像編</h1>
+  <div class="subtitle">INTERNATIONALIZATION — THE BIG PICTURE</div>
+  <p class="lead">あなたの作ったアプリを、日本語の人にも英語の人にもフランス語の人にも「その人の言葉・その人の習慣」で見せる技術。それが<b>国際化（i18n）</b>です。この巻ではシリーズ全体の地図を広げ、「何を・どの順で学ぶか」をつかみます。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS — Vol.1</div>
+  <ul>
+    <li><a href="#what">国際化とは何か</a></li>
+    <li><a href="#why">なぜ国際化するのか</a></li>
+    <li><a href="#i18n-l10n">i18nとl10n</a></li>
+    <li><a href="#locale">Localeという主役</a></li>
+    <li><a href="#hello">最初の一歩</a></li>
+    <li><a href="#map">シリーズ全体の地図</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="what">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>国際化とは何か</h2>
+    <span class="en">WHAT IS i18n</span>
+  </div>
+  <p class="pattern-desc">国際化とは、<b>1つのプログラムを、複数の言語・地域にそのまま対応できる形にしておくこと</b>です。「日本語版」「英語版」と別々に作るのではなく、<b>中身は1つ、表示だけ切り替える</b>。これが基本の考え方です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">i18n</span>
+      <span class="tag-desc">「internationalization」は i と n の間に18文字あるので i18n と略します</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 同じアプリ、相手によって表示が変わる</div>
+        <div class="world-map">
+          <div class="locale-row">
+            <span class="locale-flag">🇯🇵</span>
+            <div class="locale-info">
+              <div class="lang">日本語</div>
+              <div class="code-name">ja_JP</div>
+              <div class="sample">ようこそ、田中さん</div>
+            </div>
+          </div>
+          <div class="locale-row">
+            <span class="locale-flag">🇺🇸</span>
+            <div class="locale-info">
+              <div class="lang">英語（米国）</div>
+              <div class="code-name">en_US</div>
+              <div class="sample">Welcome, Tanaka</div>
+            </div>
+          </div>
+          <div class="locale-row">
+            <span class="locale-flag">🇫🇷</span>
+            <div class="locale-info">
+              <div class="lang">フランス語</div>
+              <div class="code-name">fr_FR</div>
+              <div class="sample">Bienvenue, Tanaka</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">プログラム本体は1つだけ</div>
+<pre><span class="comment">// 言葉を直接書かない（これがコツ）</span>
+<span class="comment">// ↓ こうはしない</span>
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(<span class="str">"ようこそ"</span>);
+
+<span class="comment">// ↓ こうする：「welcome というキー」を</span>
+<span class="comment">//   その人の言語で取り出す</span>
+<span class="type">String</span> msg = messages.<span class="fn">getString</span>(<span class="str">"welcome"</span>);
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(msg);
+
+<span class="comment">// → 日本語の人には「ようこそ」</span>
+<span class="comment">// → 英語の人には  「Welcome」</span>
+<span class="comment">//   同じコードのまま、表示だけ変わる</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip point">
+    <div class="tip-label">POINT —</div>
+    国際化のいちばんの肝は<b>「言葉をコードに直接書かない」</b>こと。文章は外部のファイルに追い出し、コードからはキー（合言葉）で呼び出します。この発想さえつかめば、あとは応用です。
+  </div>
+</section>
+
+<!-- 02 -->
+<section id="why">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>なぜ国際化するのか</h2>
+    <span class="en">WHY i18n</span>
+  </div>
+  <p class="pattern-desc">「日本語だけで充分」と思うかもしれません。でも国際化は<b>外国語対応だけの話ではありません</b>。日付・数値・通貨の「書き方」も国によって違う。これを手作業で揃えると地獄を見ます。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">国ごとの「当たり前」の違い</span>
+      <span class="tag-desc">同じ「2024年3月5日」「1234567.89」でもこんなに違う</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 同じ意味なのに表記がバラバラ</div>
+        <table class="map-table">
+          <tr><th>国</th><th>日付</th><th>金額</th></tr>
+          <tr><td>日本</td><td class="v">2024/03/05</td><td class="v">¥1,234,568</td></tr>
+          <tr><td>米国</td><td class="v">3/5/2024</td><td class="v">$1,234,567.89</td></tr>
+          <tr><td>独国</td><td class="v">05.03.2024</td><td class="v">1.234.567,89 €</td></tr>
+          <tr><td>仏国</td><td class="v">05/03/2024</td><td class="v">1 234 567,89 €</td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted);">ドイツでは小数点が「,」、桁区切りが「.」。日本と真逆です。</div>
+      </div>
+      <div class="code">
+        <div class="code-head">手作業でやろうとすると…</div>
+<pre><span class="comment">// こんなif文の山を書くハメに…（やりたくない）</span>
+<span class="kw">if</span> (country.<span class="fn">equals</span>(<span class="str">"JP"</span>)) {
+    format = <span class="str">"yyyy/MM/dd"</span>;
+} <span class="kw">else if</span> (country.<span class="fn">equals</span>(<span class="str">"US"</span>)) {
+    format = <span class="str">"MM/dd/yyyy"</span>;
+} <span class="kw">else if</span> (country.<span class="fn">equals</span>(<span class="str">"DE"</span>)) {
+    format = <span class="str">"dd.MM.yyyy"</span>;
+}
+<span class="comment">// …国の数だけ増え続ける。破綻します</span>
+
+<span class="comment">// Javaの国際化なら、これで済む ↓</span>
+<span class="comment">// Localeを渡すだけ。あとはJavaがやってくれる</span></pre>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:16px;">Javaには<b>「その国の流儀を全部知っているライブラリ」</b>が標準で入っています。国際化を学ぶとは、この賢いライブラリの呼び出し方を覚えることでもあります。<b>自分でif文を書かない</b>。それが現場の鉄則です。</p>
+</section>
+
+<!-- 03 -->
+<section id="i18n-l10n">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>i18nとl10n</h2>
+    <span class="en">i18n vs l10n</span>
+  </div>
+  <p class="pattern-desc">よく似た2つの言葉を整理します。<b>国際化（i18n）は「箱を作る」、地域化（l10n）は「箱に中身を入れる」</b>とイメージすると分かりやすいです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">i18n / l10n</span>
+      <span class="tag-desc">internationalization と localization</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの役割分担</div>
+        <div class="compare-grid">
+          <div class="compare-box good">
+            <div class="ttl">i18n（国際化）</div>
+            <ul>
+              <li>仕組み・土台づくり</li>
+              <li>言葉を外に追い出す設計</li>
+              <li>プログラマの仕事</li>
+              <li>一度やればOK</li>
+            </ul>
+          </div>
+          <div class="compare-box good">
+            <div class="ttl">l10n（地域化）</div>
+            <ul>
+              <li>各言語の中身づくり</li>
+              <li>実際の翻訳・調整</li>
+              <li>翻訳者と協力</li>
+              <li>言語を足すたび行う</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">順番のイメージ</div>
+        <div class="flow-box">
+          <div class="flow-step"><b>① i18n</b>：言葉を外部ファイルに追い出す土台を作る</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step"><b>② l10n（日本語）</b>：日本語の中身を用意する</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step"><b>③ l10n（英語）</b>：英語の中身を用意する</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step">必要なら④フランス語、⑤中国語…と足していく</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tip point">
+    <div class="tip-label">POINT —</div>
+    覚え方は簡単。<b>i18n が先、l10n が後</b>。土台（i18n）がしっかりしていれば、後から言語を足す（l10n）のは楽になります。このシリーズは主に<b>i18nの作り方</b>を扱います。
+  </div>
+</section>
+
+<!-- 04 -->
+<section id="locale">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>Localeという主役</h2>
+    <span class="en">THE Locale CLASS</span>
+  </div>
+  <p class="pattern-desc">国際化の世界で<b>すべての中心にいるのが<code style="font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 5px;border-radius:3px;">Locale</code>クラス</b>です。これは「言語＋国」をひとまとめにした“宛先ラベル”のようなもの。「この人は日本語の日本の人」という情報を1つにまとめています。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">java.util.Locale</span>
+      <span class="tag-desc">言語コード（小文字）＋ 国コード（大文字）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Localeの作り方いろいろ</div>
+        <table class="map-table">
+          <tr><th>Locale</th><th>意味</th></tr>
+          <tr><td class="v">Locale.JAPAN</td><td>日本語・日本</td></tr>
+          <tr><td class="v">Locale.US</td><td>英語・米国</td></tr>
+          <tr><td class="v">Locale.FRANCE</td><td>フランス語・仏</td></tr>
+          <tr><td class="v">Locale.JAPANESE</td><td>日本語（国は不問）</td></tr>
+          <tr><td class="v">Locale.ENGLISH</td><td>英語（国は不問）</td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted);">よく使う組み合わせは定数で用意されています。覚えなくても <span class="key">Locale.</span> と打てば候補が出ます。</div>
+      </div>
+      <div class="code">
+        <div class="code-head">Locale.java</div>
+<pre><span class="kw">import</span> java.util.<span class="type">Locale</span>;
+
+<span class="comment">// ① 用意された定数を使う（いちばん簡単）</span>
+<span class="type">Locale</span> jp = <span class="type">Locale</span>.JAPAN;
+<span class="type">Locale</span> us = <span class="type">Locale</span>.US;
+
+<span class="comment">// ② 自分で組み立てる（言語, 国）</span>
+<span class="type">Locale</span> fr = <span class="type">Locale</span>.<span class="fn">of</span>(<span class="str">"fr"</span>, <span class="str">"FR"</span>);
+
+<span class="comment">// ③ 今このPCの設定を取得する</span>
+<span class="type">Locale</span> now = <span class="type">Locale</span>.<span class="fn">getDefault</span>();
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(now);
+<span class="comment">// → ja_JP （日本のPCならこう出る）</span>
+
+<span class="comment">// 中身を確認</span>
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(jp.<span class="fn">getLanguage</span>()); <span class="comment">// ja</span>
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(jp.<span class="fn">getCountry</span>());  <span class="comment">// JP</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-label">TIP —</div>
+    <code style="font-family:'JetBrains Mono',monospace;">Locale.of("fr", "FR")</code> は新しめの書き方です。古いコードでは <code style="font-family:'JetBrains Mono',monospace;">new Locale("fr", "FR")</code> も見かけますが、<b>これから書くなら <code style="font-family:'JetBrains Mono',monospace;">Locale.of(...)</code> がおすすめ</b>。意味は同じです。
+  </div>
+</section>
+
+<!-- 05 -->
+<section id="hello">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>最初の一歩</h2>
+    <span class="en">HELLO, i18n</span>
+  </div>
+  <p class="pattern-desc">理屈はここまで。実際に「Localeを変えると表示が変わる」のを体験しましょう。日付フォーマットを例にすると、<b>たった数行で国ごとの違いが出せる</b>のが分かります。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">First Step</span>
+      <span class="tag-desc">Localeを差し替えるだけで結果が変わる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <table class="map-table">
+          <tr><th>渡したLocale</th><th>出力</th></tr>
+          <tr><td>Locale.JAPAN</td><td class="v">2024年3月5日</td></tr>
+          <tr><td>Locale.US</td><td class="v">Mar 5, 2024</td></tr>
+          <tr><td>Locale.FRANCE</td><td class="v">5 mars 2024</td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:12.5px;">同じ日付データ。<b>Localeを変えただけ</b>でこの違い。自分でif文は1つも書いていません。これが国際化の威力です。</div>
+      </div>
+      <div class="code">
+        <div class="code-head">HelloI18n.java</div>
+<pre><span class="kw">import</span> java.time.<span class="type">LocalDate</span>;
+<span class="kw">import</span> java.time.format.<span class="type">DateTimeFormatter</span>;
+<span class="kw">import</span> java.time.format.<span class="type">FormatStyle</span>;
+<span class="kw">import</span> java.util.<span class="type">Locale</span>;
+
+<span class="kw">public class</span> <span class="type">HelloI18n</span> {
+  <span class="kw">public static void</span> <span class="fn">main</span>(<span class="type">String</span>[] args) {
+    <span class="type">LocalDate</span> day = <span class="type">LocalDate</span>.<span class="fn">of</span>(<span class="num">2024</span>,<span class="num">3</span>,<span class="num">5</span>);
+
+    <span class="fn">show</span>(day, <span class="type">Locale</span>.JAPAN);
+    <span class="fn">show</span>(day, <span class="type">Locale</span>.US);
+    <span class="fn">show</span>(day, <span class="type">Locale</span>.FRANCE);
+  }
+
+  <span class="kw">static void</span> <span class="fn">show</span>(<span class="type">LocalDate</span> d, <span class="type">Locale</span> loc) {
+    <span class="type">DateTimeFormatter</span> f =
+      <span class="type">DateTimeFormatter</span>
+        .<span class="fn">ofLocalizedDate</span>(<span class="type">FormatStyle</span>.MEDIUM)
+        .<span class="fn">withLocale</span>(loc);
+    <span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(d.<span class="fn">format</span>(f));
+  }
+}</pre>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:16px;">細かい文法はまだ分からなくて大丈夫です。<b>「Localeを渡す → Javaが国の流儀で整えてくれる」</b>という流れだけ感じ取れれば、この巻の目的は達成です。詳しい使い方はVol.4以降でじっくり扱います。</p>
+</section>
+
+<!-- 06 -->
+<section id="map">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>シリーズ全体の地図</h2>
+    <span class="en">SERIES ROADMAP</span>
+  </div>
+  <p class="pattern-desc">この巻はシリーズの<b>玄関</b>です。ここから先、何をどの順で学ぶのか。全6巻の地図を広げておきます。迷ったらこのページに戻ってきてください。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">全6巻ロードマップ</span>
+      <span class="tag-desc">「言葉の切り替え」→「データの整形」の二部構成</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 大きく2つのテーマ</div>
+        <div class="compare-grid">
+          <div class="compare-box good">
+            <div class="ttl">前半：言葉を切り替える</div>
+            <ul>
+              <li>Vol.2 Properties</li>
+              <li>Vol.3 ResourceBundle</li>
+            </ul>
+          </div>
+          <div class="compare-box good">
+            <div class="ttl">後半：データを整える</div>
+            <ul>
+              <li>Vol.4 日付</li>
+              <li>Vol.5 数値・通貨</li>
+              <li>Vol.6 文章の組み立て</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">各巻でできるようになること</div>
+        <div class="flow-box">
+          <div class="flow-step"><b>Vol.2</b>：設定や文言を外部ファイルに置く（Properties）</div>
+          <div class="flow-step"><b>Vol.3</b>：言語ごとにファイルを分けて自動で切替（ResourceBundle）</div>
+          <div class="flow-step"><b>Vol.4</b>：日付を国ごとの形式で表示する</div>
+          <div class="flow-step"><b>Vol.5</b>：金額・パーセントを国ごとに整える</div>
+          <div class="flow-step"><b>Vol.6</b>：「〇〇さんに3件」のような穴埋め文章＋困った時のQ&A</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-label">NEXT STEP —</div>
+    地図は頭に入りましたか。次の<b>Vol.2「Properties編」</b>では、いよいよ手を動かします。<b>「言葉をコードの外に出す」</b>第一歩、プロパティファイルの読み書きから始めましょう。ここが国際化の本当のスタート地点です。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  新・Java入門編40 — 国際化 ／ Vol.1 国際化とは・全体像編 ／ ⊕ INTERNATIONALIZATION
+</footer>
+
+</body>
+</html>

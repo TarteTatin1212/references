@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新・Java入門編40 日付の操作とフォーマット編 Vol.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#212d2c;
+  --paper:#eceff0;
+  --paper-2:#dbe3e4;
+  --accent:#2b7c8a;
+  --accent-2:#b07a44;
+  --accent-3:#72a1a8;
+  --muted:#617b7e;
+  --line:#bdcacb;
+  --code-bg:#18272e;
+  --code-text:#dfe9ea;
+  --panel-bg:#f3f8f8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;font-size:15px;-webkit-font-smoothing:antialiased;}
+b{color:var(--accent-2);font-weight:700;}
+code{font-family:"JetBrains Mono",monospace;}
+.inline-code{background:var(--paper-2);padding:1px 5px;border-radius:3px;font-size:.92em;}
+
+.page-header{position:relative;padding:54px 40px 38px;border-bottom:2px solid var(--ink);overflow:hidden;}
+.page-header::before{content:"⊕";position:absolute;right:-20px;top:50%;transform:translateY(-50%);font-size:300px;line-height:1;color:var(--accent);opacity:0.13;z-index:0;font-family:"Shippori Mincho",serif;}
+.page-header>*{position:relative;z-index:1;}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1.5px;padding:4px 12px;margin-bottom:14px;}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1px;padding:4px 12px;margin-left:6px;}
+.page-header h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;letter-spacing:1px;margin:6px 0 10px;}
+.subtitle{color:var(--muted);font-size:14px;font-family:"JetBrains Mono",monospace;letter-spacing:1px;}
+.lead{max-width:640px;margin-top:18px;font-size:15px;}
+
+.toc{background:var(--paper-2);padding:22px 40px;border-bottom:1px solid var(--line);}
+.toc-label{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:10px;}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 26px;}
+.toc a{color:var(--ink);text-decoration:none;font-size:14px;}
+.toc a::before{content:"— ";color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+
+main{max-width:1080px;margin:0 auto;padding:48px 40px;}
+section{margin-bottom:60px;}
+.section-header{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:16px;}
+.section-num{font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:600;color:var(--paper);background:var(--accent);padding:2px 9px;}
+.section-header h2{font-family:"Shippori Mincho",serif;font-size:24px;font-weight:700;}
+.section-header .en{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1.5px;color:var(--muted);}
+.pattern-desc{max-width:660px;margin-bottom:20px;}
+
+.demo-card{border:1px solid var(--line);background:#fff;border-radius:3px;overflow:hidden;box-shadow:0 1px 3px rgba(33,45,44,.06);}
+.demo-head{background:var(--paper-2);padding:11px 18px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.tag-name{font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:600;color:var(--accent);}
+.tag-desc{font-size:12px;color:var(--muted);}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.panel{background:var(--panel-bg);padding:20px;border-right:1px solid var(--line);}
+.panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:.5px;}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px;font-family:"JetBrains Mono",monospace;font-size:12.5px;line-height:1.75;overflow-x:auto;}
+.code-head{font-size:11px;color:#8aa0a8;margin-bottom:10px;letter-spacing:.5px;}
+.code pre{white-space:pre-wrap;word-break:break-word;}
+
+.kw{color:#ffc88a;}.type{color:#c2a3ff;}.fn{color:#a3c9ff;}.str{color:#b5e8b0;}.num{color:#f7a8d8;}.comment{color:#8293a0;font-style:italic;}.ann{color:#f7c08a;}
+
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.compare-box{background:#fff;border:1px solid var(--line);border-radius:3px;padding:14px;}
+.compare-box .ttl{font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:600;margin-bottom:8px;}
+.compare-box.bad .ttl{color:#b3753f;}
+.compare-box.good .ttl{color:var(--accent);}
+.compare-box ul{list-style:none;font-size:12.5px;}
+.compare-box li{padding:3px 0;padding-left:16px;position:relative;}
+.compare-box.bad li::before{content:"×";position:absolute;left:0;color:#c0563f;}
+.compare-box.good li::before{content:"○";position:absolute;left:0;color:var(--accent);}
+
+.flow-box{display:flex;flex-direction:column;gap:8px;}
+.flow-step{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:10px 14px;border-radius:3px;font-size:13px;}
+
+.map-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.map-table th{background:var(--accent);color:#fff;font-family:"JetBrains Mono",monospace;font-weight:600;padding:7px 10px;text-align:left;font-size:11px;}
+.map-table td{padding:7px 10px;border-bottom:1px solid var(--line);background:#fff;}
+.map-table .v{font-family:"JetBrains Mono",monospace;color:var(--accent);font-weight:600;}
+
+.result-row{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);padding:8px 12px;border-radius:3px;font-size:13px;margin-bottom:6px;}
+.result-row .loc{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);min-width:64px;}
+.result-row .out{color:var(--accent);font-weight:700;}
+
+.key{display:inline-block;background:var(--accent);color:var(--paper);font-family:"JetBrains Mono",monospace;font-size:11px;padding:1px 6px;border-radius:3px;}
+
+.tip{border-left:3px solid var(--accent);background:rgba(43,124,138,.08);padding:14px 18px;border-radius:0 3px 3px 0;margin:18px 0;}
+.tip .tip-label{font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:var(--accent);margin-bottom:6px;}
+.tip.point{border-color:var(--accent-2);background:rgba(176,122,68,.08);}
+.tip.point .tip-label{color:var(--accent-2);}
+
+.page-footer{border-top:2px solid var(--ink);padding:30px 40px;text-align:center;color:var(--muted);font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:1px;}
+
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr;}
+  .panel{border-right:none;border-bottom:1px solid var(--line);}
+  .page-header h1{font-size:30px;}
+  .page-header::before{font-size:180px;}
+  .compare-grid{grid-template-columns:1fr;}
+  main{padding:30px 20px;}
+  .page-header,.toc,.page-footer{padding-left:20px;padding-right:20px;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・Java入門編40 — 国際化</span>
+  <span class="vol-tag">Vol.4 / 全6巻</span>
+  <h1>日付の操作とフォーマット編</h1>
+  <div class="subtitle">DATE &amp; TIME — LOCALIZED FORMATTING</div>
+  <p class="lead">「2024年3月5日」「Mar 5, 2024」「05.03.2024」——同じ日でも国で書き方が全然違う。後半パートの最初は<b>日付の国際化</b>です。<code class="inline-code">LocalDate</code>と<code class="inline-code">DateTimeFormatter</code>を使い、<b>Localeを渡すだけで国ごとの形に整える</b>方法を学びます。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS — Vol.4</div>
+  <ul>
+    <li><a href="#localdate">日付を表すLocalDate</a></li>
+    <li><a href="#formatter">DateTimeFormatter</a></li>
+    <li><a href="#style">FormatStyleで簡単整形</a></li>
+    <li><a href="#pattern">自分でパターン指定</a></li>
+    <li><a href="#parse">文字列を日付に戻す</a></li>
+    <li><a href="#pitfall">ハマりどころ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="localdate">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>日付を表すLocalDate</h2>
+    <span class="en">LocalDate BASICS</span>
+  </div>
+  <p class="pattern-desc">まず<b>日付そのもの</b>を表す<code class="inline-code">LocalDate</code>と仲良くなりましょう。「2024年3月5日」という<b>事実</b>を持つ箱です。この時点では表示形式はまだ気にしません。<b>「データ」と「見た目」を分けて考える</b>のがコツです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">java.time.LocalDate</span>
+      <span class="tag-desc">年月日を持つ、シンプルな日付の箱</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3兄弟を押さえる</div>
+        <table class="map-table">
+          <tr><th>クラス</th><th>持つもの</th></tr>
+          <tr><td class="v">LocalDate</td><td>日付だけ（年月日）</td></tr>
+          <tr><td class="v">LocalTime</td><td>時刻だけ（時分秒）</td></tr>
+          <tr><td class="v">LocalDateTime</td><td>日付＋時刻</td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted);">この巻は主に <code>LocalDate</code> を使います。仲間がいることだけ覚えておけば十分です。</div>
+      </div>
+      <div class="code">
+        <div class="code-head">LocalDate の作り方</div>
+<pre><span class="kw">import</span> java.time.<span class="type">LocalDate</span>;
+
+<span class="comment">// ① 今日</span>
+<span class="type">LocalDate</span> today = <span class="type">LocalDate</span>.<span class="fn">now</span>();
+
+<span class="comment">// ② 指定して作る（年, 月, 日）</span>
+<span class="type">LocalDate</span> day = <span class="type">LocalDate</span>.<span class="fn">of</span>(<span class="num">2024</span>, <span class="num">3</span>, <span class="num">5</span>);
+
+<span class="comment">// ③ 中身を取り出す</span>
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(day.<span class="fn">getYear</span>());        <span class="comment">// 2024</span>
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(day.<span class="fn">getMonthValue</span>());  <span class="comment">// 3</span>
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(day.<span class="fn">getDayOfMonth</span>()); <span class="comment">// 5</span>
+
+<span class="comment">// ④ 計算もできる（元は変わらない）</span>
+<span class="type">LocalDate</span> next = day.<span class="fn">plusDays</span>(<span class="num">10</span>); <span class="comment">// 3/15</span>
+<span class="comment">// day自身は3/5のまま。新しい日付が返る</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip point">
+    <div class="tip-label">POINT —</div>
+    <code class="inline-code">plusDays</code> などの計算は<b>元のLocalDateを変えず、新しい日付を返します</b>（これを「不変＝イミュータブル」と呼びます）。<code class="inline-code">day.plusDays(10)</code> しても <code>day</code> 自身は3/5のまま。<b>戻り値を受け取り忘れる</b>のが定番ミスです。
+  </div>
+</section>
+
+<!-- 02 -->
+<section id="formatter">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>DateTimeFormatter</h2>
+    <span class="en">THE FORMATTER</span>
+  </div>
+  <p class="pattern-desc">日付を<b>「見た目の文字列」に変える係</b>が<code class="inline-code">DateTimeFormatter</code>です。<b>「データ（LocalDate）に整形係（Formatter）を渡して、文字列をもらう」</b>。この役割分担が日付フォーマットの基本構造です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">java.time.format.DateTimeFormatter</span>
+      <span class="tag-desc">日付 × 整形係 = 表示用の文字列</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 役割分担のイメージ</div>
+        <div class="flow-box">
+          <div class="flow-step"><b>①</b> LocalDate＝日付の「事実」を持つ</div>
+          <div class="flow-step"><b>②</b> DateTimeFormatter＝「どう見せるか」を決める</div>
+          <div class="flow-step"><b>③</b> <code>date.format(formatter)</code> で文字列化</div>
+          <div class="flow-step"><b>④</b> Formatterに<b>Locale</b>を仕込むと国際化される</div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">基本の組み立て</div>
+<pre><span class="kw">import</span> java.time.<span class="type">LocalDate</span>;
+<span class="kw">import</span> java.time.format.<span class="type">DateTimeFormatter</span>;
+
+<span class="type">LocalDate</span> day = <span class="type">LocalDate</span>.<span class="fn">of</span>(<span class="num">2024</span>, <span class="num">3</span>, <span class="num">5</span>);
+
+<span class="comment">// 整形係を用意</span>
+<span class="type">DateTimeFormatter</span> f =
+    <span class="type">DateTimeFormatter</span>.<span class="fn">ofPattern</span>(<span class="str">"yyyy/MM/dd"</span>);
+
+<span class="comment">// 日付に整形係を渡す → 文字列が返る</span>
+<span class="type">String</span> text = day.<span class="fn">format</span>(f);
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(text); <span class="comment">// 2024/03/05</span>
+
+<span class="comment">// 「日付が整形係を使って自分を文字にする」</span>
+<span class="comment">// という向きで読むと覚えやすい</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-label">TIP —</div>
+    呼ぶ向きは<b><code>日付.format(整形係)</code></b>。「整形係.format(日付)」ではありません。<b>主役は日付</b>、整形係は道具。<b>「日付が自分を文字に変える」</b>とイメージすると順番を忘れません。
+  </div>
+</section>
+
+<!-- 03 -->
+<section id="style">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>FormatStyleで簡単整形</h2>
+    <span class="en">LOCALIZED STYLES</span>
+  </div>
+  <p class="pattern-desc">国際化でいちばん楽なのが<code class="inline-code">FormatStyle</code>です。<b>「短め・普通・長め」のスタイルとLocaleを指定するだけ</b>。自分で「yyyy年MM月」などと書かなくても、<b>その国の人が自然に読める形にJavaが整えてくれます</b>。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">ofLocalizedDate(FormatStyle).withLocale(...)</span>
+      <span class="tag-desc">国ごとの「ちょうどいい書き方」を自動選択</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// MEDIUM スタイルでの各国表示</div>
+        <div class="result-row"><span class="loc">JAPAN</span>→<span class="out">2024年3月5日</span></div>
+        <div class="result-row"><span class="loc">US</span>→<span class="out">Mar 5, 2024</span></div>
+        <div class="result-row"><span class="loc">FRANCE</span>→<span class="out">5 mars 2024</span></div>
+        <div class="result-row"><span class="loc">GERMANY</span>→<span class="out">05.03.2024</span></div>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted);">スタイルは SHORT / MEDIUM / LONG / FULL の4段階。長いほど丁寧な表記になります。</div>
+      </div>
+      <div class="code">
+        <div class="code-head">StyleExample.java</div>
+<pre><span class="kw">import</span> java.time.*;
+<span class="kw">import</span> java.time.format.*;
+<span class="kw">import</span> java.util.<span class="type">Locale</span>;
+
+<span class="type">LocalDate</span> d = <span class="type">LocalDate</span>.<span class="fn">of</span>(<span class="num">2024</span>,<span class="num">3</span>,<span class="num">5</span>);
+
+<span class="comment">// スタイル + Locale で整形係を作る</span>
+<span class="type">DateTimeFormatter</span> f =
+    <span class="type">DateTimeFormatter</span>
+      .<span class="fn">ofLocalizedDate</span>(<span class="type">FormatStyle</span>.MEDIUM)
+      .<span class="fn">withLocale</span>(<span class="type">Locale</span>.JAPAN);
+
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(d.<span class="fn">format</span>(f));
+<span class="comment">// → 2024年3月5日</span>
+
+<span class="comment">// withLocale を US に変えれば Mar 5, 2024</span>
+<span class="comment">// FRANCE なら 5 mars 2024</span>
+<span class="comment">// → 自分で書式を書かなくていい！</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip point">
+    <div class="tip-label">POINT —</div>
+    <b>国際化したい日付表示は、まず <code>FormatStyle</code> を第一候補にしましょう</b>。「その国の人が読み慣れた形」をJavaが知っているので、自分で <code>yyyy/MM/dd</code> と決め打ちするより安全で自然。<b>決め打ちは国際化の敵</b>です。
+  </div>
+</section>
+
+<!-- 04 -->
+<section id="pattern">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>自分でパターン指定</h2>
+    <span class="en">CUSTOM PATTERN</span>
+  </div>
+  <p class="pattern-desc">「どうしてもこの形にしたい」時は<code class="inline-code">ofPattern</code>で書式を自分で指定します。<b>記号の意味さえ分かれば自由自在</b>。ただし国際化の観点では、固定書式は「全世界で同じ見た目になる」点に注意が必要です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">ofPattern("...")</span>
+      <span class="tag-desc">y=年 M=月 d=日、大文字小文字に意味がある</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よく使うパターン記号</div>
+        <table class="map-table">
+          <tr><th>記号</th><th>意味</th><th>例</th></tr>
+          <tr><td class="v">yyyy</td><td>年（4桁）</td><td>2024</td></tr>
+          <tr><td class="v">MM</td><td>月（2桁）</td><td>03</td></tr>
+          <tr><td class="v">dd</td><td>日（2桁）</td><td>05</td></tr>
+          <tr><td class="v">HH</td><td>時（24h）</td><td>14</td></tr>
+          <tr><td class="v">mm</td><td>分</td><td>30</td></tr>
+          <tr><td class="v">E</td><td>曜日</td><td>火</td></tr>
+        </table>
+      </div>
+      <div class="code">
+        <div class="code-head">PatternExample.java</div>
+<pre><span class="type">LocalDate</span> d = <span class="type">LocalDate</span>.<span class="fn">of</span>(<span class="num">2024</span>,<span class="num">3</span>,<span class="num">5</span>);
+
+<span class="comment">// 固定の書式を指定</span>
+<span class="type">DateTimeFormatter</span> f =
+    <span class="type">DateTimeFormatter</span>.<span class="fn">ofPattern</span>(<span class="str">"yyyy/MM/dd"</span>);
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(d.<span class="fn">format</span>(f)); <span class="comment">// 2024/03/05</span>
+
+<span class="comment">// 曜日を含めて、Localeで曜日名を訳す</span>
+<span class="type">DateTimeFormatter</span> jp =
+    <span class="type">DateTimeFormatter</span>
+      .<span class="fn">ofPattern</span>(<span class="str">"yyyy年M月d日(E)"</span>, <span class="type">Locale</span>.JAPAN);
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(d.<span class="fn">format</span>(jp));
+<span class="comment">// → 2024年3月5日(火)</span>
+
+<span class="comment">// ofPattern にも Locale を渡せる。</span>
+<span class="comment">// すると「火」「Tue」「mar.」と曜日が訳される</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-label">TIP —</div>
+    記号は<b>大文字小文字で意味が変わります</b>。<code class="inline-code">MM</code>は月ですが<code class="inline-code">mm</code>は分。<code class="inline-code">DD</code>は「年内の通算日」で<code class="inline-code">dd</code>とは別物。<b>「月＝大M、分＝小m」</b>だけでも覚えておくと、定番のバグ「3月のはずが0時0分になる」を防げます。
+  </div>
+</section>
+
+<!-- 05 -->
+<section id="parse">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>文字列を日付に戻す</h2>
+    <span class="en">PARSING</span>
+  </div>
+  <p class="pattern-desc">フォーマットの逆、<b>文字列を日付に変換する</b>のが<code class="inline-code">parse</code>です。フォームに入力された「2024/03/05」のような文字列を<code class="inline-code">LocalDate</code>に戻す時に使います。<b>format と parse は表と裏</b>の関係です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">LocalDate.parse(text, formatter)</span>
+      <span class="tag-desc">文字列 → 日付。書式が合わないと例外</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// format と parse は逆向き</div>
+        <div class="compare-grid">
+          <div class="compare-box good">
+            <div class="ttl">format</div>
+            <ul>
+              <li>日付 → 文字列</li>
+              <li>表示するとき</li>
+              <li>date.format(f)</li>
+            </ul>
+          </div>
+          <div class="compare-box good">
+            <div class="ttl">parse</div>
+            <ul>
+              <li>文字列 → 日付</li>
+              <li>入力を受け取るとき</li>
+              <li>LocalDate.parse(s, f)</li>
+            </ul>
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted);">入力文字列と整形係の書式が食い違うと <code>DateTimeParseException</code> が出ます。</div>
+      </div>
+      <div class="code">
+        <div class="code-head">ParseExample.java</div>
+<pre><span class="type">DateTimeFormatter</span> f =
+    <span class="type">DateTimeFormatter</span>.<span class="fn">ofPattern</span>(<span class="str">"yyyy/MM/dd"</span>);
+
+<span class="comment">// 文字列を日付に変換</span>
+<span class="type">LocalDate</span> d =
+    <span class="type">LocalDate</span>.<span class="fn">parse</span>(<span class="str">"2024/03/05"</span>, f);
+
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(d.<span class="fn">getMonthValue</span>()); <span class="comment">// 3</span>
+
+<span class="comment">// 書式が違うと例外になる</span>
+<span class="kw">try</span> {
+    <span class="type">LocalDate</span>.<span class="fn">parse</span>(<span class="str">"2024-03-05"</span>, f); <span class="comment">// "-"区切り</span>
+} <span class="kw">catch</span> (<span class="type">DateTimeParseException</span> e) {
+    <span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(<span class="str">"書式が合いません"</span>);
+}
+<span class="comment">// 入力の形と整形係をピタリ揃えるのが鉄則</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip point">
+    <div class="tip-label">POINT —</div>
+    ユーザー入力を <code class="inline-code">parse</code> する時は<b>必ず例外対策をセット</b>で考えましょう。人は予想外の形で入力します。<code class="inline-code">try-catch</code> で受け止め、ダメなら「日付の形式が違います」と<b>その人の言語で</b>返す——これが国際化アプリの作法です。
+  </div>
+</section>
+
+<!-- 06 -->
+<section id="pitfall">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>ハマりどころ</h2>
+    <span class="en">COMMON PITFALLS</span>
+  </div>
+  <p class="pattern-desc">日付まわりの定番事故をまとめます。<b>「記号ミス」「決め打ち書式」「古いDateとの混同」</b>が御三家。ここを避ければ日付の国際化はほぼ安全です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">あるある事故と対策</span>
+      <span class="tag-desc">新しい java.time を使うのが大前提</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 詰まりポイント</div>
+        <div class="compare-grid">
+          <div class="compare-box bad">
+            <div class="ttl">やりがちな失敗</div>
+            <ul>
+              <li>mm と MM を取り違え</li>
+              <li>全環境で同じ書式に固定</li>
+              <li>古い Date / SimpleDateFormat</li>
+              <li>戻り値を受け取らない</li>
+            </ul>
+          </div>
+          <div class="compare-box good">
+            <div class="ttl">対策</div>
+            <ul>
+              <li>月=大M、分=小m</li>
+              <li>FormatStyle + Locale</li>
+              <li>java.time を使う</li>
+              <li>計算結果を変数に受ける</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">新旧の使い分け</div>
+<pre><span class="comment">// ✕ 古い書き方（今は避ける）</span>
+<span class="comment">// java.util.Date + SimpleDateFormat</span>
+<span class="comment">// → スレッドで不具合・扱いづらい</span>
+
+<span class="comment">// ○ 新しい書き方（Java 8以降の定番）</span>
+<span class="comment">// java.time.* を使う</span>
+<span class="type">LocalDate</span> d = <span class="type">LocalDate</span>.<span class="fn">now</span>();
+<span class="type">DateTimeFormatter</span> f =
+    <span class="type">DateTimeFormatter</span>
+      .<span class="fn">ofLocalizedDate</span>(<span class="type">FormatStyle</span>.LONG)
+      .<span class="fn">withLocale</span>(<span class="type">Locale</span>.<span class="fn">getDefault</span>());
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(d.<span class="fn">format</span>(f));
+
+<span class="comment">// 結論：日付は java.time、表示は</span>
+<span class="comment">// FormatStyle+Locale。これが現在の定番</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-label">NEXT STEP —</div>
+    日付を国ごとの形に整える感覚はつかめましたか。次の<b>Vol.5「数値のフォーマット編」</b>では、同じ発想を<b>数値・通貨・パーセント</b>に広げます。「1,234,568」「$1,234.57」「1.234,57 €」——桁区切りや小数点の国差を、<code class="inline-code">NumberFormat</code>でスマートに片付けましょう。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  新・Java入門編40 — 国際化 ／ Vol.4 日付の操作とフォーマット編 ／ ⊕ INTERNATIONALIZATION
+</footer>
+
+</body>
+</html>

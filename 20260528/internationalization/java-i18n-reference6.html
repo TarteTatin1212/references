@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新・Java入門編40 テキストのフォーマット＆困った時編 Vol.6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1d2a2d;
+  --paper:#ebeff0;
+  --paper-2:#d9e1e3;
+  --accent:#287588;
+  --accent-2:#b07a44;
+  --accent-3:#6a9eaa;
+  --muted:#5d787d;
+  --line:#bac9cb;
+  --code-bg:#152530;
+  --code-text:#dfe9ea;
+  --panel-bg:#f1f7f8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;font-size:15px;-webkit-font-smoothing:antialiased;}
+b{color:var(--accent-2);font-weight:700;}
+code{font-family:"JetBrains Mono",monospace;}
+.inline-code{background:var(--paper-2);padding:1px 5px;border-radius:3px;font-size:.92em;}
+
+.page-header{position:relative;padding:54px 40px 38px;border-bottom:2px solid var(--ink);overflow:hidden;}
+.page-header::before{content:"⊕";position:absolute;right:-20px;top:50%;transform:translateY(-50%);font-size:300px;line-height:1;color:var(--accent);opacity:0.13;z-index:0;font-family:"Shippori Mincho",serif;}
+.page-header>*{position:relative;z-index:1;}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1.5px;padding:4px 12px;margin-bottom:14px;}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1px;padding:4px 12px;margin-left:6px;}
+.page-header h1{font-family:"Shippori Mincho",serif;font-size:42px;font-weight:700;letter-spacing:1px;margin:6px 0 10px;}
+.subtitle{color:var(--muted);font-size:14px;font-family:"JetBrains Mono",monospace;letter-spacing:1px;}
+.lead{max-width:640px;margin-top:18px;font-size:15px;}
+
+.toc{background:var(--paper-2);padding:22px 40px;border-bottom:1px solid var(--line);}
+.toc-label{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:10px;}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px 26px;}
+.toc a{color:var(--ink);text-decoration:none;font-size:14px;}
+.toc a::before{content:"— ";color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+
+main{max-width:1080px;margin:0 auto;padding:48px 40px;}
+section{margin-bottom:60px;}
+.section-header{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:16px;}
+.section-num{font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:600;color:var(--paper);background:var(--accent);padding:2px 9px;}
+.section-header h2{font-family:"Shippori Mincho",serif;font-size:24px;font-weight:700;}
+.section-header .en{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1.5px;color:var(--muted);}
+.pattern-desc{max-width:660px;margin-bottom:20px;}
+
+.demo-card{border:1px solid var(--line);background:#fff;border-radius:3px;overflow:hidden;box-shadow:0 1px 3px rgba(29,42,45,.06);}
+.demo-head{background:var(--paper-2);padding:11px 18px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.tag-name{font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:600;color:var(--accent);}
+.tag-desc{font-size:12px;color:var(--muted);}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.panel{background:var(--panel-bg);padding:20px;border-right:1px solid var(--line);}
+.panel-head{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:.5px;}
+.code{background:var(--code-bg);color:var(--code-text);padding:20px;font-family:"JetBrains Mono",monospace;font-size:12.5px;line-height:1.75;overflow-x:auto;}
+.code-head{font-size:11px;color:#8aa0a8;margin-bottom:10px;letter-spacing:.5px;}
+.code pre{white-space:pre-wrap;word-break:break-word;}
+
+.kw{color:#ffc88a;}.type{color:#c2a3ff;}.fn{color:#a3c9ff;}.str{color:#b5e8b0;}.num{color:#f7a8d8;}.comment{color:#8293a0;font-style:italic;}.ann{color:#f7c08a;}
+.ph{color:#f7a8d8;font-weight:600;}
+
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.compare-box{background:#fff;border:1px solid var(--line);border-radius:3px;padding:14px;}
+.compare-box .ttl{font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:600;margin-bottom:8px;}
+.compare-box.bad .ttl{color:#b3753f;}
+.compare-box.good .ttl{color:var(--accent);}
+.compare-box ul{list-style:none;font-size:12.5px;}
+.compare-box li{padding:3px 0;padding-left:16px;position:relative;}
+.compare-box.bad li::before{content:"×";position:absolute;left:0;color:#c0563f;}
+.compare-box.good li::before{content:"○";position:absolute;left:0;color:var(--accent);}
+
+.flow-box{display:flex;flex-direction:column;gap:8px;}
+.flow-step{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);padding:10px 14px;border-radius:3px;font-size:13px;}
+
+.result-row{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);padding:8px 12px;border-radius:3px;font-size:13px;margin-bottom:6px;}
+.result-row .loc{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);min-width:64px;}
+.result-row .out{color:var(--accent);font-weight:700;}
+
+.key{display:inline-block;background:var(--accent);color:var(--paper);font-family:"JetBrains Mono",monospace;font-size:11px;padding:1px 6px;border-radius:3px;}
+
+.tip{border-left:3px solid var(--accent);background:rgba(40,117,136,.08);padding:14px 18px;border-radius:0 3px 3px 0;margin:18px 0;}
+.tip .tip-label{font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:var(--accent);margin-bottom:6px;}
+.tip.point{border-color:var(--accent-2);background:rgba(176,122,68,.08);}
+.tip.point .tip-label{color:var(--accent-2);}
+
+/* ===== Q&A セクション ===== */
+.qa-divider{
+  margin:70px 0 40px;text-align:center;
+}
+.qa-divider .qa-big{
+  font-family:"Shippori Mincho",serif;
+  font-size:30px;font-weight:700;
+  border-top:2px solid var(--ink);
+  border-bottom:2px solid var(--ink);
+  padding:18px 0;letter-spacing:2px;
+}
+.qa-divider .qa-sub{
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;letter-spacing:3px;color:var(--muted);margin-top:10px;
+}
+.qa-card{
+  border:1px solid var(--line);background:#fff;border-radius:3px;
+  margin-bottom:22px;overflow:hidden;box-shadow:0 1px 3px rgba(29,42,45,.06);
+}
+.qa-q{
+  display:flex;gap:14px;align-items:flex-start;
+  background:var(--paper-2);padding:14px 18px;border-bottom:1px solid var(--line);
+}
+.qa-q .qnum{
+  font-family:"JetBrains Mono",monospace;font-weight:600;font-size:13px;
+  color:var(--paper);background:var(--accent-2);padding:3px 9px;flex-shrink:0;
+}
+.qa-q .qtext{font-family:"Shippori Mincho",serif;font-size:17px;font-weight:700;padding-top:1px;}
+.qa-a{padding:16px 18px;}
+.qa-a .alabel{
+  font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:600;
+  letter-spacing:1px;color:var(--accent);margin-bottom:8px;
+}
+.ngok-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
+.ngok-box{border-radius:3px;padding:12px;font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.65;}
+.ngok-box.ng{background:#2a1a16;color:#f0c9bd;border:1px solid #7a3b2c;}
+.ngok-box.ok{background:#152a24;color:#bce8cf;border:1px solid #2f7a52;}
+.ngok-box .lbl{font-weight:600;font-size:11px;letter-spacing:1px;display:block;margin-bottom:6px;}
+.ngok-box.ng .lbl{color:#f0a08a;}
+.ngok-box.ok .lbl{color:#7fd6a0;}
+
+/* ===== Ending ===== */
+.ending{
+  margin-top:80px;
+  border:2px solid var(--ink);
+  background:linear-gradient(160deg,#1d2a2d 0%,#284c54 60%,#2a6072 100%);
+  color:#eef4f5;
+  padding:54px 40px;text-align:center;border-radius:4px;position:relative;overflow:hidden;
+}
+.ending::before{
+  content:"⊕";position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);font-size:340px;opacity:0.07;
+  font-family:"Shippori Mincho",serif;line-height:1;
+}
+.ending>*{position:relative;z-index:1;}
+.ending h2{font-family:"Shippori Mincho",serif;font-size:34px;font-weight:700;letter-spacing:2px;margin-bottom:14px;}
+.ending .subtitle-end{font-family:"JetBrains Mono",monospace;font-size:13px;letter-spacing:4px;color:#9fd0d8;margin-bottom:30px;}
+.ending .message{max-width:600px;margin:0 auto 34px;font-size:15px;line-height:2;color:#dde9ea;}
+.ending .message b{color:#f0c89a;}
+.series-list{
+  max-width:640px;margin:0 auto;text-align:left;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);
+  border-radius:4px;padding:22px 26px;
+}
+.series-list .sl-title{
+  font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:2px;
+  color:#9fd0d8;margin-bottom:14px;text-align:center;
+}
+.series-list .sl-row{
+  display:flex;gap:12px;padding:7px 0;border-bottom:1px dashed rgba(255,255,255,.14);font-size:13.5px;
+}
+.series-list .sl-row:last-child{border-bottom:none;}
+.series-list .sl-vol{font-family:"JetBrains Mono",monospace;color:#f0c89a;font-weight:600;flex-shrink:0;min-width:52px;}
+
+.page-footer{border-top:2px solid var(--ink);padding:30px 40px;text-align:center;color:var(--muted);font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:1px;margin-top:60px;}
+
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr;}
+  .panel{border-right:none;border-bottom:1px solid var(--line);}
+  .page-header h1{font-size:30px;}
+  .page-header::before{font-size:180px;}
+  .compare-grid{grid-template-columns:1fr;}
+  .ngok-grid{grid-template-columns:1fr;}
+  main{padding:30px 20px;}
+  .page-header,.toc,.page-footer{padding-left:20px;padding-right:20px;}
+  .ending{padding:40px 22px;}
+  .ending h2{font-size:26px;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・Java入門編40 — 国際化</span>
+  <span class="vol-tag">Vol.6 / 全6巻 — 完結</span>
+  <h1>テキストのフォーマット＆困った時編</h1>
+  <div class="subtitle">MESSAGEFORMAT &amp; TROUBLESHOOTING — FINALE</div>
+  <p class="lead">最終巻です。前半は<b>「〇〇さんに3件あります」のような穴埋め文章</b>を作る<code class="inline-code">MessageFormat</code>。後半は全6巻の<b>よくある詰まりをQ&A</b>で総ざらい。日付・数値・言語を組み合わせ、<b>国際化の集大成</b>として締めくくります。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS — Vol.6</div>
+  <ul>
+    <li><a href="#why">なぜ文章を組み立てるのか</a></li>
+    <li><a href="#basic">MessageFormatの基本</a></li>
+    <li><a href="#typed">型つきプレースホルダ</a></li>
+    <li><a href="#bundle">ResourceBundleと合体</a></li>
+    <li><a href="#qa">困った時のQ&A</a></li>
+    <li><a href="#ending">シリーズ完結</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="why">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>なぜ文章を組み立てるのか</h2>
+    <span class="en">WHY MESSAGEFORMAT</span>
+  </div>
+  <p class="pattern-desc">「ようこそ、田中さん」のような文章。<code class="inline-code">"ようこそ、" + name + "さん"</code> と<b>文字列を + でつなぐ</b>と、国際化で破綻します。<b>言語によって語順が変わる</b>からです。これを解決するのが<code class="inline-code">MessageFormat</code>です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">文字列連結の限界</span>
+      <span class="tag-desc">言語で語順が違う＝+ でつなぐと詰む</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 言語で語順が変わる例</div>
+        <div class="result-row"><span class="loc">日本語</span>→<span class="out">田中さん、3件あります</span></div>
+        <div class="result-row"><span class="loc">英語</span>→<span class="out">Tanaka has 3 items</span></div>
+        <div style="margin-top:12px;font-size:12.5px;">名前と数の<b>位置が言語で逆転</b>します。<code>"名前"+"has"+数</code> のように決め打ちで連結すると、語順の違う言語に対応できません。</div>
+      </div>
+      <div class="code">
+        <div class="code-head">なぜ + 連結ではダメか</div>
+<pre><span class="comment">// ✕ 連結方式</span>
+<span class="type">String</span> msg = name + <span class="str">"さん、"</span>
+             + count + <span class="str">"件あります"</span>;
+<span class="comment">// 日本語専用。英語版を作ろうとすると</span>
+<span class="comment">// 語順が違ってコードを書き換えるハメに</span>
+
+<span class="comment">// ○ MessageFormat方式</span>
+<span class="comment">// 文章のひな型を「外」に置き、</span>
+<span class="comment">// {0} {1} という穴に値を差し込む</span>
+<span class="comment">//   日本語: {0}さん、{1}件あります</span>
+<span class="comment">//   英語  : {0} has {1} items</span>
+<span class="comment">// → ひな型を差し替えるだけで多言語化</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip point">
+    <div class="tip-label">POINT —</div>
+    国際化では<b>「文章を + でつながない」</b>が鉄則。<b>文章はひとつのまとまり（ひな型）として外部ファイルに置き、穴に値を差し込む</b>。語順の違いはひな型側で吸収できます。Vol.3のResourceBundleと相性抜群です。
+  </div>
+</section>
+
+<!-- 02 -->
+<section id="basic">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>MessageFormatの基本</h2>
+    <span class="en">MessageFormat BASICS</span>
+  </div>
+  <p class="pattern-desc"><code class="inline-code">{0}</code> <code class="inline-code">{1}</code> という<b>番号付きの穴（プレースホルダ）</b>を文章に空けておき、そこへ値を順番に差し込みます。使うのは<code class="inline-code">MessageFormat.format(ひな型, 値...)</code>の一発。とてもシンプルです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">MessageFormat.format(pattern, args...)</span>
+      <span class="tag-desc">{0} に1個目、{1} に2個目…が入る</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 穴に値が入るイメージ</div>
+        <div class="flow-box">
+          <div class="flow-step">ひな型：<code>{0}さん、{1}件あります</code></div>
+          <div class="flow-step">値：<code>"田中"</code>（→{0}）、<code>3</code>（→{1}）</div>
+          <div class="flow-step">結果：<b style="color:var(--accent);">田中さん、3件あります</b></div>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted);">{0} は1番目の値、{1} は2番目の値。番号で対応づけられます。</div>
+      </div>
+      <div class="code">
+        <div class="code-head">MsgExample.java</div>
+<pre><span class="kw">import</span> java.text.<span class="type">MessageFormat</span>;
+
+<span class="type">String</span> pattern = <span class="str">"</span><span class="ph">{0}</span><span class="str">さん、</span><span class="ph">{1}</span><span class="str">件あります"</span>;
+
+<span class="type">String</span> msg = <span class="type">MessageFormat</span>.<span class="fn">format</span>(
+    pattern,
+    <span class="str">"田中"</span>,  <span class="comment">// {0} に入る</span>
+    <span class="num">3</span>        <span class="comment">// {1} に入る</span>
+);
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(msg);
+<span class="comment">// → 田中さん、3件あります</span>
+
+<span class="comment">// 同じ番号は何度でも使える</span>
+<span class="type">MessageFormat</span>.<span class="fn">format</span>(
+    <span class="str">"</span><span class="ph">{0}</span><span class="str">、こんにちは </span><span class="ph">{0}</span><span class="str">！"</span>, <span class="str">"佐藤"</span>);
+<span class="comment">// → 佐藤、こんにちは 佐藤！</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-label">TIP —</div>
+    穴は<b>0から始まる番号</b>です。1番目の値が <code class="inline-code">{0}</code>、2番目が <code class="inline-code">{1}</code>。プログラミングではおなじみの「0始まり」。<b>同じ番号を文中で何度でも使える</b>のも便利なポイントです。
+  </div>
+</section>
+
+<!-- 03 -->
+<section id="typed">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>型つきプレースホルダ</h2>
+    <span class="en">TYPED PLACEHOLDERS</span>
+  </div>
+  <p class="pattern-desc">MessageFormatの真価はここから。穴に<b>「数値」「通貨」「日付」の型を指定</b>すると、<b>差し込みと同時に国ごとのフォーマットまでやってくれます</b>。Vol.4・Vol.5の内容が、文章の中に自動で組み込まれるイメージです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">{0,number}, {1,date}, {2,number,currency}</span>
+      <span class="tag-desc">穴の中で型と書式を指定できる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 同じひな型、Localeで自動整形</div>
+        <div class="result-row"><span class="loc">JAPAN</span>→<span class="out">在庫1,234件・￥5,678</span></div>
+        <div class="result-row"><span class="loc">US</span>→<span class="out">在庫1,234件・$5,678.00</span></div>
+        <div style="margin-top:10px;font-size:12.5px;">穴に <code>{n,number}</code> や <code>{n,number,currency}</code> と書くと、<b>桁区切り・通貨記号がLocale任せ</b>に。文章の中で国際化が完結します。</div>
+      </div>
+      <div class="code">
+        <div class="code-head">TypedExample.java</div>
+<pre><span class="kw">import</span> java.text.<span class="type">MessageFormat</span>;
+<span class="kw">import</span> java.util.<span class="type">Locale</span>;
+
+<span class="type">String</span> p = <span class="str">"在庫</span><span class="ph">{0,number}</span><span class="str">件・</span><span class="ph">{1,number,currency}</span><span class="str">"</span>;
+
+<span class="comment">// Locale付きの MessageFormat を作る</span>
+<span class="type">MessageFormat</span> mf =
+    <span class="kw">new</span> <span class="type">MessageFormat</span>(p, <span class="type">Locale</span>.JAPAN);
+
+<span class="type">String</span> msg = mf.<span class="fn">format</span>(
+    <span class="kw">new</span> <span class="type">Object</span>[]{ <span class="num">1234</span>, <span class="num">5678</span> });
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(msg);
+<span class="comment">// → 在庫1,234件・￥5,678</span>
+
+<span class="comment">// 日付の型もある</span>
+<span class="comment">// "{0,date,long}" → 2024年3月5日 のように</span>
+<span class="comment">// 日付をLocaleの形式で差し込める</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip point">
+    <div class="tip-label">POINT —</div>
+    型つき穴を使うときは<b>Locale付きの <code>new MessageFormat(pattern, locale)</code></b> で作るのがコツ。これで <code class="inline-code">{0,number,currency}</code> がそのLocaleの通貨記号で整形されます。<b>「文章の組み立て」と「数値・日付の国際化」が一度に片付く</b>のが最大の魅力です。
+  </div>
+</section>
+
+<!-- 04 -->
+<section id="bundle">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>ResourceBundleと合体</h2>
+    <span class="en">COMBINING WITH BUNDLE</span>
+  </div>
+  <p class="pattern-desc">いよいよ集大成。<b>文章のひな型をResourceBundle（言語別ファイル）に置き、MessageFormatで穴を埋める</b>。これが国際化アプリの<b>王道パターン</b>です。Vol.3とVol.6が合体して、真の多言語メッセージが完成します。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">Bundle × MessageFormat</span>
+      <span class="tag-desc">ひな型は言語別ファイル、穴埋めはMessageFormat</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 言語別のひな型ファイル</div>
+        <div class="flow-box">
+          <div class="flow-step"><b>msg_ja:</b> <code>info={0}さん、{1}件あります</code></div>
+          <div class="flow-step"><b>msg_en:</b> <code>info={0} has {1} items</code></div>
+          <div class="flow-step">↓ 同じコードで…</div>
+          <div class="flow-step">日本語環境 → <b style="color:var(--accent);">田中さん、3件あります</b></div>
+          <div class="flow-step">英語環境 → <b style="color:var(--accent);">Tanaka has 3 items</b></div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">王道パターン</div>
+<pre><span class="kw">import</span> java.text.<span class="type">MessageFormat</span>;
+<span class="kw">import</span> java.util.*;
+
+<span class="comment">// ① ユーザーのLocaleでBundleを取得</span>
+<span class="type">ResourceBundle</span> b =
+    <span class="type">ResourceBundle</span>.<span class="fn">getBundle</span>(<span class="str">"msg"</span>, loc);
+
+<span class="comment">// ② ひな型をキーで取り出す</span>
+<span class="type">String</span> pattern = b.<span class="fn">getString</span>(<span class="str">"info"</span>);
+
+<span class="comment">// ③ MessageFormatで穴を埋める</span>
+<span class="type">MessageFormat</span> mf =
+    <span class="kw">new</span> <span class="type">MessageFormat</span>(pattern, loc);
+<span class="type">String</span> msg = mf.<span class="fn">format</span>(
+    <span class="kw">new</span> <span class="type">Object</span>[]{ <span class="str">"田中"</span>, <span class="num">3</span> });
+
+<span class="type">System</span>.<span class="fn">out</span>.<span class="fn">println</span>(msg);
+<span class="comment">// Localeに応じて言語も語順も自動で変わる</span>
+<span class="comment">// → これが国際化の完成形！</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-label">TIP —</div>
+    この<b>「Bundleでひな型を選び、MessageFormatで埋める」</b>三段構えが、実務での国際化メッセージの定番です。<b>これまで学んだ全部（Locale・Properties・Bundle・数値/日付フォーマット）が一本につながる</b>瞬間。ここが本シリーズのゴール地点です。
+  </div>
+</section>
+
+<!-- ===== Q&A PART ===== -->
+<div class="qa-divider">
+  <div class="qa-big">困った時の国際化Q&amp;A</div>
+  <div class="qa-sub">TROUBLESHOOTING — Q.01 〜 Q.08</div>
+</div>
+
+<section id="qa" style="margin-bottom:40px;">
+  <p class="pattern-desc">全6巻を通して<b>初学者が必ずぶつかる詰まりどころ</b>を、Q&A形式で総ざらいします。エラーメッセージや症状から逆引きできるよう、<b>「こうなったらここを見る」</b>視点でまとめました。</p>
+
+  <!-- Q1 -->
+  <div class="qa-card">
+    <div class="qa-q"><span class="qnum">Q.01</span><span class="qtext">MissingResourceException が出ます</span></div>
+    <div class="qa-a">
+      <div class="alabel">A. ANSWER —</div>
+      <p>ResourceBundleで<b>最頻出のエラー</b>です。9割は「ファイルが見つからない」か「基本名の間違い」。次の順で確認します。</p>
+      <div class="ngok-grid">
+        <div class="ngok-box ng"><span class="lbl">✕ よくある原因</span>getBundle("messages_ja", loc)<br>// 基本名に _ja を付けてしまった</div>
+        <div class="ngok-box ok"><span class="lbl">○ 正しい形</span>getBundle("messages", loc)<br>// 基本名は共通部分だけ</div>
+      </div>
+      <p style="font-size:13.5px;">それでも出る場合は、<b>ファイルがクラスパス上にあるか</b>（src/main/resources など）、<b>拡張子が .properties か</b>、<b>保険の messages.properties が1つあるか</b>を順に確認しましょう。</p>
+      <div class="tip" style="margin-bottom:0;"><div class="tip-label">TIP —</div>まず「_なしの基本名ファイル」を英語で1つ用意。これだけで多くの環境で落ちなくなります。</div>
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="qa-card">
+    <div class="qa-q"><span class="qnum">Q.02</span><span class="qtext">日本語が文字化けします</span></div>
+    <div class="qa-a">
+      <div class="alabel">A. ANSWER —</div>
+      <p>原因は<b>ファイルの保存文字コード</b>か<b>読み込み時の指定</b>のどちらか。現在のJavaはプロパティを基本UTF-8で読むので、まず<b>ファイル自体をUTF-8で保存</b>し直すのが第一手です。</p>
+      <div class="ngok-grid">
+        <div class="ngok-box ng"><span class="lbl">✕ 化ける状況</span>ファイルがShift_JIS保存<br>// 読み手はUTF-8前提 → ズレる</div>
+        <div class="ngok-box ok"><span class="lbl">○ 対策</span>// エディタでUTF-8保存<br>// Reader版loadで明示も可</div>
+      </div>
+      <p style="font-size:13.5px;">古い環境で直接読むときは <code class="inline-code">InputStreamReader</code> に <code class="inline-code">StandardCharsets.UTF_8</code> を指定して <code class="inline-code">load(reader)</code> すると確実です。</p>
+    </div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="qa-card">
+    <div class="qa-q"><span class="qnum">Q.03</span><span class="qtext">パーセントが100倍ズレます</span></div>
+    <div class="qa-a">
+      <div class="alabel">A. ANSWER —</div>
+      <p><code class="inline-code">getPercentInstance</code> は<b>渡した数を100倍して % を付ける</b>仕様です。25%を出したいなら <code class="inline-code">25</code> ではなく <code class="inline-code">0.25</code> を渡します。</p>
+      <div class="ngok-grid">
+        <div class="ngok-box ng"><span class="lbl">✕ 2500%になる</span>p.format(25)<br>// → 2,500%</div>
+        <div class="ngok-box ok"><span class="lbl">○ 25%になる</span>p.format(0.25)<br>// → 25%</div>
+      </div>
+      <p style="font-size:13.5px;"><b>「割合は 1.0 が100%」</b>と覚えるのが事故防止のコツ。率は0〜1の世界、と頭を切り替えましょう。</p>
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="qa-card">
+    <div class="qa-q"><span class="qnum">Q.04</span><span class="qtext">通貨表示にしたら金額が変わった気がします</span></div>
+    <div class="qa-a">
+      <div class="alabel">A. ANSWER —</div>
+      <p>これは誤解です。<code class="inline-code">getCurrencyInstance</code> は<b>表示の見た目を変えるだけ</b>で、<b>為替の換算はしません</b>。同じ数字に通貨記号を付けているだけです。</p>
+      <div class="ngok-grid">
+        <div class="ngok-box ng"><span class="lbl">✕ 誤解</span>US通貨で表示=ドル換算された<br>// 数値は変わっていない</div>
+        <div class="ngok-box ok"><span class="lbl">○ 正しい理解</span>表示の習慣だけ変わる<br>// 換算は自分で計算が必要</div>
+      </div>
+      <p style="font-size:13.5px;">円1000を「$1,000.00」と表示しても、それは1000という数にドル記号を付けただけ。<b>実際の換算は為替レートを使って別途計算</b>します。</p>
+    </div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="qa-card">
+    <div class="qa-q"><span class="qnum">Q.05</span><span class="qtext">日付が変な値になります（月のはずが分に）</span></div>
+    <div class="qa-a">
+      <div class="alabel">A. ANSWER —</div>
+      <p>パターン記号の<b>大文字小文字の取り違え</b>が原因です。<b>月は大文字M、分は小文字m</b>。ここが入れ替わると意図しない値になります。</p>
+      <div class="ngok-grid">
+        <div class="ngok-box ng"><span class="lbl">✕ 月のつもりが分</span>ofPattern("yyyy/mm/dd")<br>// mm は「分」</div>
+        <div class="ngok-box ok"><span class="lbl">○ 正しい月指定</span>ofPattern("yyyy/MM/dd")<br>// MM が「月」</div>
+      </div>
+      <p style="font-size:13.5px;"><b>「月＝大M、分＝小m」</b>。さらに <code class="inline-code">dd</code>（日）と <code class="inline-code">DD</code>（年内通算日）も別物です。迷ったらFormatStyleに任せるのが安全。</p>
+    </div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="qa-card">
+    <div class="qa-q"><span class="qnum">Q.06</span><span class="qtext">区切り付きの "1,234" を数値にできません</span></div>
+    <div class="qa-a">
+      <div class="alabel">A. ANSWER —</div>
+      <p><code class="inline-code">Integer.parseInt("1,234")</code> はカンマを理解できず例外になります。<b>区切り付き文字列は NumberFormat.parse で戻します</b>。</p>
+      <div class="ngok-grid">
+        <div class="ngok-box ng"><span class="lbl">✕ 落ちる</span>Integer.parseInt("1,234")<br>// NumberFormatException</div>
+        <div class="ngok-box ok"><span class="lbl">○ 成功</span>nf.parse("1,234")<br>// → 1234</div>
+      </div>
+      <p style="font-size:13.5px;"><b>表示も入力も同じ NumberFormat で揃える</b>のが安全。formatで出した形式は、同じLocaleのparseで素直に戻せます。</p>
+    </div>
+  </div>
+
+  <!-- Q7 -->
+  <div class="qa-card">
+    <div class="qa-q"><span class="qnum">Q.07</span><span class="qtext">英語版を足したらコードまで直すことに…</span></div>
+    <div class="qa-a">
+      <div class="alabel">A. ANSWER —</div>
+      <p>それは<b>文章を + で連結している</b>サインです。文字列連結は語順の違う言語に対応できません。<b>MessageFormat ＋ ひな型の外出し</b>に切り替えましょう。</p>
+      <div class="ngok-grid">
+        <div class="ngok-box ng"><span class="lbl">✕ 連結方式</span>name + "さんは" + n + "件"<br>// 言語ごとにコード修正</div>
+        <div class="ngok-box ok"><span class="lbl">○ ひな型方式</span>"{0}さんは{1}件"<br>// 翻訳はファイル側だけ</div>
+      </div>
+      <p style="font-size:13.5px;">正しく設計すれば<b>言語追加でコードは一切変わりません</b>。ファイル（ひな型）を足すだけ。これが国際化の本来の姿です。</p>
+    </div>
+  </div>
+
+  <!-- Q8 -->
+  <div class="qa-card">
+    <div class="qa-q"><span class="qnum">Q.08</span><span class="qtext">結局、何から手をつければいい？</span></div>
+    <div class="qa-a">
+      <div class="alabel">A. ANSWER —</div>
+      <p>迷ったら次の順番です。<b>この流れがそのまま国際化対応の手順書</b>になります。</p>
+      <div class="flow-box" style="margin-top:6px;">
+        <div class="flow-step"><b>①</b> コード内の日本語を全部キーに置き換える（Vol.2）</div>
+        <div class="flow-step"><b>②</b> 言語別ファイルを命名規則で用意する（Vol.3）</div>
+        <div class="flow-step"><b>③</b> 日付・数値は決め打ちせずLocaleで整形（Vol.4・5）</div>
+        <div class="flow-step"><b>④</b> 文章は連結せずMessageFormatのひな型に（Vol.6）</div>
+      </div>
+      <div class="tip" style="margin-bottom:0;margin-top:14px;"><div class="tip-label">POINT —</div>一言でまとめると<b>「言葉とデータをコードの外に出し、整形はJavaに任せる」</b>。これさえ守れば、国際化はもう怖くありません。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ENDING ===== -->
+<div class="ending" id="ending">
+  <h2>国際化編 全6巻 完結</h2>
+  <div class="subtitle-end">★ SERIES — COMPLETE ★</div>
+  <div class="message">
+    ここまで完走、本当におつかれさまでした。<br>
+    「言葉をコードの外に出す」という小さな発想から始まり、<br>
+    <b>Locale・Properties・ResourceBundle・日付・数値・MessageFormat</b><br>
+    と進んで、いまや<b>世界中の人に向けたアプリ</b>の土台が作れます。<br><br>
+    完璧に暗記する必要はありません。<b>「自分で整形しない、Localeに任せる」</b><br>
+    この一本の芯さえ覚えていれば、必要なときにこの6巻へ戻ってこられます。<br>
+    辞書のように、いつでも開きに来てください。
+  </div>
+  <div class="series-list">
+    <div class="sl-title">— 新・Java入門編40 国際化 全6巻 —</div>
+    <div class="sl-row"><span class="sl-vol">Vol.1</span><span>国際化とは・全体像編 — i18n/l10nとLocaleの地図</span></div>
+    <div class="sl-row"><span class="sl-vol">Vol.2</span><span>Properties編 — 言葉をコードの外に出す</span></div>
+    <div class="sl-row"><span class="sl-vol">Vol.3</span><span>ResourceBundle編 — 言語の自動切り替え</span></div>
+    <div class="sl-row"><span class="sl-vol">Vol.4</span><span>日付の操作とフォーマット編 — 国ごとの日付表記</span></div>
+    <div class="sl-row"><span class="sl-vol">Vol.5</span><span>数値のフォーマット編 — 通貨・パーセント・桁区切り</span></div>
+    <div class="sl-row"><span class="sl-vol">Vol.6</span><span>テキストのフォーマット＆困った時編 — MessageFormat＋Q&amp;A</span></div>
+  </div>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  新・Java入門編40 — 国際化 ／ Vol.6 テキストのフォーマット＆困った時編 ／ ⊕ SERIES COMPLETE
+</footer>
+
+</body>
+</html>
