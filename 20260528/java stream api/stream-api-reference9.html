@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ストリームAPI 終端操作編 Vol.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a392c; --paper:#e7f1e9; --paper-2:#cee3d3;
+  --accent:#287849; --accent-2:#4f9d6c; --accent-3:#83ba91;
+  --muted:#5f7b6b; --line:#b3ccba; --code-bg:#142720; --code-text:#d5e8dc;
+  --panel-bg:#dbece0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans JP",sans-serif; color:var(--ink); background:var(--paper); line-height:1.85; font-size:15px; -webkit-font-smoothing:antialiased;}
+h1,h2,h3,.section-num,.en{font-family:"Shippori Mincho",serif;}
+code,.code,.key,.tag-name,.menu-code{font-family:"JetBrains Mono",monospace;}
+.page-header{position:relative; overflow:hidden; padding:54px 40px 40px; border-bottom:2px solid var(--ink); background:linear-gradient(180deg,#ebf5ee 0%,var(--paper) 100%);}
+.page-header::before{content:"≫"; position:absolute; right:-10px; top:-30px; font-size:300px; font-family:"JetBrains Mono",monospace; font-weight:600; color:var(--accent); opacity:.13; line-height:1; z-index:0; letter-spacing:-30px;}
+.page-header>*{position:relative; z-index:1;}
+.series-tag{display:inline-block; background:var(--ink); color:var(--paper); font-size:11px; letter-spacing:2px; padding:4px 12px; border-radius:2px; font-weight:700;}
+.vol-tag{display:inline-block; background:var(--accent); color:var(--paper); font-size:11px; letter-spacing:1px; padding:4px 12px; border-radius:2px; margin-left:6px; font-weight:700;}
+.page-header h1{font-size:42px; font-weight:700; margin:22px 0 6px; letter-spacing:1px;}
+.subtitle{color:var(--muted); font-size:14px; letter-spacing:.5px;}
+.lead{max-width:640px; margin-top:18px; font-size:15px;}
+.toc{background:var(--paper-2); padding:20px 40px; border-bottom:1px solid var(--line);}
+.toc-label{font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:700; margin-bottom:8px;}
+.toc ul{list-style:none; display:flex; flex-wrap:wrap; gap:4px 22px;}
+.toc a{color:var(--ink); text-decoration:none; font-size:13.5px; position:relative; padding-left:16px;}
+.toc a::before{content:"—"; position:absolute; left:0; color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{max-width:1080px; margin:0 auto; padding:48px 40px 20px;}
+section{margin-bottom:54px;}
+.section-header{display:flex; align-items:baseline; gap:14px; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px;}
+.section-num{font-size:26px; color:var(--accent); font-weight:700; line-height:1;}
+.section-header h2{font-size:23px; font-weight:700; letter-spacing:.5px;}
+.section-header .en{margin-left:auto; font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:500;}
+.pattern-desc{max-width:700px; margin-bottom:20px; color:#2d4638;}
+.demo-card{border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#fff; box-shadow:0 1px 3px rgba(26,57,44,.05);}
+.demo-head{background:var(--paper-2); padding:11px 18px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+.tag-name{font-size:13px; font-weight:600; color:var(--accent);}
+.tag-desc{font-size:12.5px; color:var(--muted);}
+.demo-body{display:grid; grid-template-columns:1fr 1fr; gap:0;}
+.panel{background:var(--panel-bg); padding:20px; border-right:1px solid var(--line);}
+.panel-head,.code-head{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--muted); letter-spacing:1px; margin-bottom:12px;}
+.code{background:var(--code-bg); color:var(--code-text); padding:20px; overflow-x:auto;}
+.code pre{font-size:13px; line-height:1.7; white-space:pre; font-family:"JetBrains Mono",monospace;}
+.code .code-head{color:#7f93a0;}
+.kw{color:#ffc88a;} .type{color:#c2a3ff;} .fn{color:#a3c9ff;} .str{color:#b5e8b0;} .num{color:#f7a8d8;} .comment{color:#8395a0;} .ann{color:#f7c08a;}
+.map-grid{display:flex; flex-direction:column; gap:8px;}
+.map-row{background:#fff; border:1px solid var(--line); border-left:3px solid var(--accent-2); border-radius:4px; padding:9px 12px; font-size:13px;}
+.map-row b{color:var(--accent);}
+.tip{border-left:3px solid var(--accent); background:rgba(40,120,73,.08); padding:14px 18px; border-radius:0 5px 5px 0; margin:18px 0; font-size:14px;}
+.tip .tip-label{font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600; color:var(--accent); letter-spacing:1.5px; display:block; margin-bottom:5px;}
+.tip b{color:var(--accent);}
+.key{background:var(--accent); color:var(--paper); padding:1px 6px; border-radius:3px; font-size:12px; font-weight:600;}
+.page-footer{border-top:2px solid var(--ink); margin-top:30px; padding:26px 40px; background:var(--paper-2); text-align:center; color:var(--muted); font-size:12.5px;}
+.page-footer .sym{font-family:"JetBrains Mono",monospace; color:var(--accent); font-size:18px;}
+.cheat{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;}
+.cheat th,.cheat td{border:1px solid var(--line);padding:7px 9px;text-align:left;}
+.cheat th{background:var(--paper-2);font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);}
+.cheat td code{font-size:11.5px;color:var(--accent);}
+@media(max-width:720px){.demo-body{grid-template-columns:1fr;}.panel{border-right:none; border-bottom:1px solid var(--line);}.page-header h1{font-size:32px;}.page-header::before{font-size:200px;}main{padding:32px 22px;}.section-header .en{display:none;}}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・JAVA入門編 33</span><span class="vol-tag">VOL.9 / 全11巻</span>
+  <h1>終端操作編</h1>
+  <div class="subtitle">TERMINAL OPERATIONS</div>
+  <p class="lead">ストリームの心臓部・後半です。<b>終端操作</b>とは、流れを実行して<b>結果を取り出す</b>操作のこと。これを呼んで初めてストリームは動きます（Vol.7の復習）。<b>1つずつ処理（forEach）・リストにまとめる（collect）・数える（count）・合計する（reduce）</b>——出口の代表選手を学びます。これでストリームが「使える道具」になります。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#foreach">01 forEach（1つずつ）</a></li>
+    <li><a href="#collect">02 collect / toList</a></li>
+    <li><a href="#count">03 count（数える）</a></li>
+    <li><a href="#match">04 anyMatch / allMatch</a></li>
+    <li><a href="#reduce">05 reduce（畳み込み）</a></li>
+    <li><a href="#cheat">06 終端操作 早見表</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="foreach">
+  <div class="section-header"><span class="section-num">01</span><h2>forEach（1つずつ処理）</h2><span class="en">FOREACH</span></div>
+  <p class="pattern-desc"><b>forEach は「流れてきた要素を1つずつ処理する」</b>終端操作です。渡すのはConsumer（消費）。いちばん馴染みのある終端操作で、これまでの巻でも表示によく使ってきました。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.forEach(Consumer)</span><span class="tag-desc">1個ずつ消費する</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">りんご<br>みかん</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">流れてきた要素を1つずつ表示。<br>戻り値はなし（voidの終端）。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 1つずつ表示</div>
+<pre><span class="type">List</span>.<span class="fn">of</span>(<span class="str">"りんご"</span>,<span class="str">"みかん"</span>)
+    .<span class="fn">stream</span>()
+    .<span class="fn">forEach</span>(<span class="type">System</span>.out::<span class="fn">println</span>);
+
+<span class="comment">// → りんご</span>
+<span class="comment">// → みかん</span>
+
+<span class="comment">// forEach は結果を返さない</span>
+<span class="comment">// 「処理して終わり」の終端</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>forEachは<b>「結果を返さず、副作用（表示・保存など）を起こす」</b>終端です。逆に「加工した結果をリストで欲しい」ときはforEachではなく、次のcollectを使います。<b>使い分けが大事</b>です。</div>
+</section>
+
+<!-- 02 -->
+<section id="collect">
+  <div class="section-header"><span class="section-num">02</span><h2>collect / toList</h2><span class="en">COLLECT</span></div>
+  <p class="pattern-desc">★★★ 最重要。<b>collect（や toList）は「流れた結果をリストにまとめる」</b>終端操作です。ストリームで加工した結果を、また使える形（List）に戻す。<b>実務でいちばん使う終端</b>と言っても過言ではありません。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.toList() / .collect(...)</span><span class="tag-desc">結果をリスト化</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">[2, 4, 6]</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">2倍した結果が、新しいListになって返ります。<br>変数に入れて、後で使えます。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 結果をListとして受け取る</div>
+<pre><span class="type">List</span>&lt;<span class="type">Integer</span>&gt; result =
+    <span class="type">List</span>.<span class="fn">of</span>(<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>).<span class="fn">stream</span>()
+        .<span class="fn">map</span>(n -&gt; n * <span class="num">2</span>)
+        .<span class="fn">toList</span>();
+
+<span class="type">System</span>.out.<span class="fn">println</span>(result);
+<span class="comment">// → [2, 4, 6]</span>
+
+<span class="comment">// 昔ながらの書き方なら</span>
+<span class="comment">// .collect(Collectors.toList())</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>新しいJavaなら<b><code>.toList()</code> が簡単</b>でおすすめ。古いコードでは <code>.collect(Collectors.toList())</code> という形も見ます（同じ意味）。<b>collectはもっと色々できる</b>強力な終端で、Vol.11のCollectorsで本領を発揮します。</div>
+</section>
+
+<!-- 03 -->
+<section id="count">
+  <div class="section-header"><span class="section-num">03</span><h2>count（数える）</h2><span class="en">COUNT</span></div>
+  <p class="pattern-desc"><b>count は「要素の個数を数える」</b>終端操作です。引数なしで、流れてきた要素の数を <code>long</code> で返します。filterと組み合わせると「条件に合うものが何個あるか」が一発で分かります。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.count()</span><span class="tag-desc">個数を返す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">2</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">[1,2,3,4] のうち偶数は 2個（2と4）。<br>その個数 2 が返ります。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 偶数が何個あるか数える</div>
+<pre><span class="kw">long</span> cnt = <span class="type">List</span>.<span class="fn">of</span>(<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>)
+    .<span class="fn">stream</span>()
+    .<span class="fn">filter</span>(n -&gt; n % <span class="num">2</span> == <span class="num">0</span>)
+    .<span class="fn">count</span>();
+
+<span class="type">System</span>.out.<span class="fn">println</span>(cnt);
+<span class="comment">// → 2</span>
+
+<span class="comment">// filter で絞って count で数える</span>
+<span class="comment">// は定番の組み合わせ</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span><code>filter(...).count()</code> は<b>「条件に合うものの数」</b>を数える鉄板パターン。「在庫が10個未満の商品は何件？」のような集計が1行で書けます。戻り値が <code>long</code> 型（intより大きい整数）なのも覚えておくと安心です。</div>
+</section>
+
+<!-- 04 -->
+<section id="match">
+  <div class="section-header"><span class="section-num">04</span><h2>anyMatch / allMatch（判定）</h2><span class="en">MATCHING</span></div>
+  <p class="pattern-desc"><b>anyMatch は「1つでも条件に合えばtrue」、allMatch は「全部合えばtrue」</b>を返す終端操作です。渡すのはPredicate。「1件でも該当する？」「全部クリアしてる？」のチェックに使います。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.anyMatch() / .allMatch()</span><span class="tag-desc">true/falseで答える</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 違いを整理</div>
+        <div class="map-grid">
+          <div class="map-row"><b>anyMatch</b> 1つでも合えば true</div>
+          <div class="map-row"><b>allMatch</b> 全部合えば true</div>
+          <div class="map-row"><b>noneMatch</b> 1つも合わなければ true</div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 偶数が含まれるか / 全部偶数か</div>
+<pre><span class="type">List</span>&lt;<span class="type">Integer</span>&gt; nums =
+    <span class="type">List</span>.<span class="fn">of</span>(<span class="num">2</span>, <span class="num">4</span>, <span class="num">5</span>);
+
+<span class="comment">// 1つでも偶数ある？</span>
+nums.<span class="fn">stream</span>()
+    .<span class="fn">anyMatch</span>(n -&gt; n % <span class="num">2</span> == <span class="num">0</span>);
+<span class="comment">// → true（2,4がある）</span>
+
+<span class="comment">// 全部偶数？</span>
+nums.<span class="fn">stream</span>()
+    .<span class="fn">allMatch</span>(n -&gt; n % <span class="num">2</span> == <span class="num">0</span>);
+<span class="comment">// → false（5が奇数）</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>3兄弟で覚えましょう。<b>any（どれか）・all（すべて）・none（どれも〜ない）</b>。「不良品が1つでもある？」は anyMatch、「全員合格？」は allMatch。<b>ループを書かずに判定できる</b>のがスマートです。</div>
+</section>
+
+<!-- 05 -->
+<section id="reduce">
+  <div class="section-header"><span class="section-num">05</span><h2>reduce（畳み込み）</h2><span class="en">REDUCE</span></div>
+  <p class="pattern-desc"><b>reduce は「全要素を1つの値にまとめる」</b>終端操作です。合計・最大・連結など。<b>少し難しい</b>ので、まずは「合計を出す」典型例だけ押さえれば十分です。「隣同士を順番にくっつけていく」イメージ。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.reduce(初期値, (a,b)-&gt;...)</span><span class="tag-desc">★ ここは無理しなくてOK</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 合計の流れ</div>
+        <div class="map-grid">
+          <div class="map-row">初期値 <b>0</b> から始める</div>
+          <div class="map-row">0+1=1 → 1+2=3 → 3+3=<b>6</b></div>
+          <div class="map-row">最後に残った <b>6</b> が答え</div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 合計を求める</div>
+<pre><span class="type">int</span> sum = <span class="type">List</span>.<span class="fn">of</span>(<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>)
+    .<span class="fn">stream</span>()
+    .<span class="fn">reduce</span>(<span class="num">0</span>, (a, b) -&gt; a + b);
+
+<span class="type">System</span>.out.<span class="fn">println</span>(sum);
+<span class="comment">// → 6</span>
+
+<span class="comment">// 0 が初期値（スタート地点）</span>
+<span class="comment">// (a,b)-&gt;a+b で順番に足す</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span>正直、<b>合計だけなら専用の簡単な方法があります</b>。数値なら <code>.mapToInt(n -&gt; n).sum()</code> の方が読みやすいことも。reduceは「合計以外の集約もできる万能選手」ですが、<b>入門段階では「こういうものがある」程度でOK</b>。無理は禁物です。</div>
+</section>
+
+<!-- 06 -->
+<section id="cheat">
+  <div class="section-header"><span class="section-num">06</span><h2>終端操作 早見表</h2><span class="en">CHEAT SHEET</span></div>
+  <p class="pattern-desc">終端操作を一覧で整理します。<b>「何が欲しいか」で選ぶ</b>と覚えやすい。リストが欲しいならtoList、数が欲しいならcount、Yes/NoならanyMatch…という具合です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">終端操作まとめ</span><span class="tag-desc">★★ 保存版</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 欲しいもので選ぶ</div>
+        <div class="map-grid">
+          <div class="map-row"><b>リストが欲しい</b> → toList</div>
+          <div class="map-row"><b>個数が欲しい</b> → count</div>
+          <div class="map-row"><b>Yes/Noが欲しい</b> → anyMatch等</div>
+          <div class="map-row"><b>1つずつ処理したい</b> → forEach</div>
+        </div>
+      </div>
+      <div class="code" style="background:#fff;padding:14px;">
+        <table class="cheat">
+          <tr><th>操作</th><th>戻り値</th><th>用途</th></tr>
+          <tr><td><code>forEach</code></td><td>なし</td><td>1つずつ処理</td></tr>
+          <tr><td><code>toList</code></td><td>List</td><td>リスト化</td></tr>
+          <tr><td><code>count</code></td><td>long</td><td>個数</td></tr>
+          <tr><td><code>anyMatch</code></td><td>boolean</td><td>判定</td></tr>
+          <tr><td><code>reduce</code></td><td>値</td><td>集約</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>もう一度、ストリームの鉄則。<b>終端操作を書いて初めて流れが動く</b>。中間操作（Vol.8）でいくら加工しても、終端（この巻）で締めないと何も起きません。<b>「中間で加工、終端で取り出す」</b>——この役割分担が腹落ちすれば、ストリームはもうあなたのものです。</div>
+
+  <div class="tip" style="margin-top:48px;">
+    <span class="tip-label">NEXT STEP —</span>
+    終端操作、お疲れさまでした。これで<b>ストリームの基本形（生成→中間→終端）が完全制覇</b>です。次の<b>Vol.10「Optionalクラス編」</b>では、ストリームと深く関わる<b>Optional</b>を扱います。「結果が無いかもしれない」場面で登場する、<code>null</code>地獄から救ってくれるクラスです。findFirstなど、結果が1個あるか無いか分からない終端操作とセットで効いてきます。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <div class="sym">≫</div>
+  新・Java入門編 33  — ストリームAPI &nbsp;|&nbsp; Vol.9 終端操作編 &nbsp;|&nbsp; 全11巻
+</footer>
+</body>
+</html>

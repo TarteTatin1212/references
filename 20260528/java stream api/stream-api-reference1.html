@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ストリームAPI 入門・全体像編 Vol.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#25323d; --paper:#eef1f0; --paper-2:#dde4e4;
+  --accent:#3f6b78; --accent-2:#6a9aa3; --accent-3:#9ab8ba;
+  --muted:#6b7a80; --line:#c3cdcd; --code-bg:#1c2730; --code-text:#dde7e9;
+  --panel-bg:#e6ecec;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:"Noto Sans JP",sans-serif; color:var(--ink);
+  background:var(--paper); line-height:1.85; font-size:15px;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.section-num,.en{font-family:"Shippori Mincho",serif;}
+code,.code,.key,.tag-name,.menu-code{font-family:"JetBrains Mono",monospace;}
+
+/* ===== header ===== */
+.page-header{
+  position:relative; overflow:hidden;
+  padding:54px 40px 40px; border-bottom:2px solid var(--ink);
+  background:linear-gradient(180deg,#f3f5f4 0%,var(--paper) 100%);
+}
+.page-header::before{
+  content:"≫"; position:absolute; right:-10px; top:-30px;
+  font-size:300px; font-family:"JetBrains Mono",monospace; font-weight:600;
+  color:var(--accent); opacity:.13; line-height:1; z-index:0; letter-spacing:-30px;
+}
+.page-header>*{position:relative; z-index:1;}
+.series-tag{
+  display:inline-block; background:var(--ink); color:var(--paper);
+  font-size:11px; letter-spacing:2px; padding:4px 12px; border-radius:2px;
+  font-weight:700;
+}
+.vol-tag{
+  display:inline-block; background:var(--accent); color:var(--paper);
+  font-size:11px; letter-spacing:1px; padding:4px 12px; border-radius:2px;
+  margin-left:6px; font-weight:700;
+}
+.page-header h1{
+  font-size:42px; font-weight:700; margin:22px 0 6px; letter-spacing:1px;
+}
+.subtitle{color:var(--muted); font-size:14px; letter-spacing:.5px;}
+.lead{max-width:640px; margin-top:18px; font-size:15px;}
+
+/* ===== toc ===== */
+.toc{
+  background:var(--paper-2); padding:20px 40px; border-bottom:1px solid var(--line);
+}
+.toc-label{
+  font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:700;
+  margin-bottom:8px;
+}
+.toc ul{list-style:none; display:flex; flex-wrap:wrap; gap:4px 22px;}
+.toc a{
+  color:var(--ink); text-decoration:none; font-size:13.5px; position:relative;
+  padding-left:16px;
+}
+.toc a::before{content:"—"; position:absolute; left:0; color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+
+/* ===== main ===== */
+main{max-width:1080px; margin:0 auto; padding:48px 40px 20px;}
+section{margin-bottom:54px;}
+.section-header{
+  display:flex; align-items:baseline; gap:14px;
+  border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px;
+}
+.section-num{
+  font-size:26px; color:var(--accent); font-weight:700; line-height:1;
+}
+.section-header h2{font-size:23px; font-weight:700; letter-spacing:.5px;}
+.section-header .en{
+  margin-left:auto; font-size:11px; letter-spacing:2px; color:var(--muted);
+  font-weight:500;
+}
+.pattern-desc{max-width:700px; margin-bottom:20px; color:#37454f;}
+
+/* ===== demo card ===== */
+.demo-card{
+  border:1px solid var(--line); border-radius:6px; overflow:hidden;
+  background:#fff; box-shadow:0 1px 3px rgba(37,50,61,.05);
+}
+.demo-head{
+  background:var(--paper-2); padding:11px 18px; border-bottom:1px solid var(--line);
+  display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
+}
+.tag-name{font-size:13px; font-weight:600; color:var(--accent);}
+.tag-desc{font-size:12.5px; color:var(--muted);}
+.demo-body{display:grid; grid-template-columns:1fr 1fr; gap:0;}
+.panel{background:var(--panel-bg); padding:20px; border-right:1px solid var(--line);}
+.panel-head,.code-head{
+  font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--muted);
+  letter-spacing:1px; margin-bottom:12px;
+}
+.code{background:var(--code-bg); color:var(--code-text); padding:20px; overflow-x:auto;}
+.code pre{font-size:13px; line-height:1.7; white-space:pre; font-family:"JetBrains Mono",monospace;}
+.code .code-head{color:#7f93a0;}
+
+/* syntax */
+.kw{color:#ffc88a;} .type{color:#c2a3ff;} .fn{color:#a3c9ff;}
+.str{color:#b5e8b0;} .num{color:#f7a8d8;} .comment{color:#8395a0;}
+.ann{color:#f7c08a;}
+
+/* panel inner pieces */
+.map-grid{display:flex; flex-direction:column; gap:8px;}
+.map-row{
+  background:#fff; border:1px solid var(--line); border-left:3px solid var(--accent-2);
+  border-radius:4px; padding:9px 12px; font-size:13px;
+}
+.map-row b{color:var(--accent);}
+.flow{display:flex; flex-direction:column; gap:0; align-items:center;}
+.flow-box{
+  background:#fff; border:1px solid var(--accent-2); border-radius:5px;
+  padding:10px 16px; font-size:13px; width:100%; text-align:center;
+}
+.flow-box .lbl{font-size:10.5px; color:var(--muted); display:block; letter-spacing:1px;}
+.flow-box b{color:var(--accent); font-size:14px;}
+.flow-arrow{color:var(--accent-2); font-size:18px; padding:3px 0;}
+.bignum{font-size:48px; font-family:"Shippori Mincho",serif; color:var(--accent); line-height:1;}
+
+/* tip box */
+.tip{
+  border-left:3px solid var(--accent); background:rgba(63,107,120,.08);
+  padding:14px 18px; border-radius:0 5px 5px 0; margin:18px 0; font-size:14px;
+}
+.tip .tip-label{
+  font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600;
+  color:var(--accent); letter-spacing:1.5px; display:block; margin-bottom:5px;
+}
+.tip b{color:var(--accent);}
+
+.key{
+  background:var(--accent); color:var(--paper); padding:1px 6px; border-radius:3px;
+  font-size:12px; font-weight:600;
+}
+
+/* footer */
+.page-footer{
+  border-top:2px solid var(--ink); margin-top:30px; padding:26px 40px;
+  background:var(--paper-2); text-align:center; color:var(--muted); font-size:12.5px;
+}
+.page-footer .sym{font-family:"JetBrains Mono",monospace; color:var(--accent); font-size:18px;}
+
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr;}
+  .panel{border-right:none; border-bottom:1px solid var(--line);}
+  .page-header h1{font-size:32px;}
+  .page-header::before{font-size:200px;}
+  main{padding:32px 22px;}
+  .section-header .en{display:none;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・JAVA入門編 33</span><span class="vol-tag">VOL.1 / 全11巻</span>
+  <h1>ストリームAPI<br>入門・全体像編</h1>
+  <div class="subtitle">STREAM API — THE BIG PICTURE</div>
+  <p class="lead">このシリーズは「ストリームAPI」を、<b>動かしながら学べる</b>全11巻の地図です。この第1巻では、ストリームAPIが何者なのか、なぜラムダ式から学ぶのか、そしてどんな順番で進めるのかを俯瞰します。コードはまだ覚えなくて大丈夫。<b>全体像をつかむこと</b>がこの巻のゴールです。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#what">01 ストリームAPIとは</a></li>
+    <li><a href="#before">02 ビフォーアフター</a></li>
+    <li><a href="#why-lambda">03 なぜラムダから学ぶ</a></li>
+    <li><a href="#three">04 3段階の流れ</a></li>
+    <li><a href="#map">05 シリーズの地図</a></li>
+    <li><a href="#firstrun">06 最初の1行を動かす</a></li>
+    <li><a href="#howto">07 学習の進め方</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="what">
+  <div class="section-header">
+    <span class="section-num">01</span><h2>ストリームAPIとは</h2><span class="en">WHAT IS STREAM API</span>
+  </div>
+  <p class="pattern-desc">ストリームAPIは、<b>リストや配列のデータを「流れ作業」で処理する仕組み</b>です。Java 8から登場しました。「集めて、選んで、加工して、まとめる」——この一連の作業を、短く読みやすく書けるようになります。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">stream = データの流れ</span>
+      <span class="tag-desc">川に例えると分かりやすい</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// イメージ図</div>
+        <div class="flow">
+          <div class="flow-box"><span class="lbl">SOURCE 源流</span><b>リスト・配列</b></div>
+          <div class="flow-arrow">▼</div>
+          <div class="flow-box"><span class="lbl">中間操作</span><b>選ぶ・変える</b></div>
+          <div class="flow-arrow">▼</div>
+          <div class="flow-box"><span class="lbl">終端操作</span><b>集める・数える</b></div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 言葉にするとこうです</div>
+<pre><span class="comment">// データを川に「流して」</span>
+<span class="comment">// 途中で 選別・加工 して</span>
+<span class="comment">// 最後に 結果を受け取る</span>
+
+list.<span class="fn">stream</span>()        <span class="comment">// 流し始め</span>
+    .<span class="fn">filter</span>(...)     <span class="comment">// 選ぶ</span>
+    .<span class="fn">map</span>(...)        <span class="comment">// 変える</span>
+    .<span class="fn">collect</span>(...);   <span class="comment">// まとめる</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <span class="tip-label">POINT —</span>
+    ストリームは<b>「データそのもの」ではなく「データの流れ」</b>です。元のリストは変更されません。流れの中でコピーを加工していくイメージです。
+  </div>
+</section>
+
+<!-- 02 -->
+<section id="before">
+  <div class="section-header">
+    <span class="section-num">02</span><h2>ビフォーアフター</h2><span class="en">BEFORE / AFTER</span>
+  </div>
+  <p class="pattern-desc">なぜストリームを学ぶのか。それは<b>同じ処理がぐっと短く・読みやすくなる</b>からです。「偶数だけ取り出して2倍にする」という処理を、従来の書き方とストリームで比べてみます。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">同じ結果・違う書き方</span>
+      <span class="tag-desc">forループ vs ストリーム</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// BEFORE（従来のforループ）</div>
+        <div class="map-grid">
+          <div class="map-row">入れ物（result）を<b>用意</b>する</div>
+          <div class="map-row">forで<b>1個ずつ</b>取り出す</div>
+          <div class="map-row">ifで偶数か<b>判定</b></div>
+          <div class="map-row">2倍して<b>addする</b></div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">手順が多く、何をしたいか読み取りにくい。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// AFTER（ストリーム）</div>
+<pre><span class="comment">// 従来の書き方</span>
+<span class="type">List</span>&lt;<span class="type">Integer</span>&gt; result =
+    <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+<span class="kw">for</span> (<span class="type">int</span> n : nums) {
+  <span class="kw">if</span> (n % <span class="num">2</span> == <span class="num">0</span>)
+    result.<span class="fn">add</span>(n * <span class="num">2</span>);
+}
+
+<span class="comment">// ストリームなら3行</span>
+<span class="type">List</span>&lt;<span class="type">Integer</span>&gt; r = nums.<span class="fn">stream</span>()
+    .<span class="fn">filter</span>(n -&gt; n % <span class="num">2</span> == <span class="num">0</span>)
+    .<span class="fn">map</span>(n -&gt; n * <span class="num">2</span>)
+    .<span class="fn">toList</span>();</pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <span class="tip-label">POINT —</span>
+    ストリームは<b>「やりたいこと」がそのまま並ぶ</b>のが魅力です。「選んで（filter）、変えて（map）、リストにする（toList）」と読めます。<b>これが読みやすさの正体</b>です。
+  </div>
+</section>
+
+<!-- 03 -->
+<section id="why-lambda">
+  <div class="section-header">
+    <span class="section-num">03</span><h2>なぜラムダから学ぶのか</h2><span class="en">WHY START WITH LAMBDA</span>
+  </div>
+  <p class="pattern-desc">「ストリームを学びたいのに、なぜラムダ式や関数型インターフェースから？」と思うかもしれません。理由はシンプル。<b>ストリームの中身は全部ラムダでできている</b>からです。filterの中の <code>n -&gt; n % 2 == 0</code>、これがラムダ式です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">土台 → 本体 の順で学ぶ</span>
+      <span class="tag-desc">急がば回れ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 学ぶ順番の理由</div>
+        <div class="map-grid">
+          <div class="map-row"><b>Vol.2-3</b> 関数型インターフェース<br><span style="font-size:12px;color:var(--muted);">ラムダが入る「箱」を知る</span></div>
+          <div class="map-row"><b>Vol.4</b> ラムダ式<br><span style="font-size:12px;color:var(--muted);">短く処理を書く文法</span></div>
+          <div class="map-row"><b>Vol.5-6</b> メソッド参照<br><span style="font-size:12px;color:var(--muted);">ラムダをさらに短く</span></div>
+          <div class="map-row"><b>Vol.7-</b> ストリーム本体<br><span style="font-size:12px;color:var(--muted);">土台の上に乗る</span></div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// ストリームの中身を分解すると</div>
+<pre>nums.<span class="fn">stream</span>()
+    .<span class="fn">filter</span>(<span class="ann">n -&gt; n % 2 == 0</span>)
+                <span class="comment">↑ これがラムダ式</span>
+    .<span class="fn">toList</span>();
+
+<span class="comment">// このラムダ式は、実は</span>
+<span class="comment">// Predicate という</span>
+<span class="comment">// 関数型インターフェースに</span>
+<span class="comment">// 渡されている</span>
+
+<span class="comment">// だから土台から学ぶ！</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <span class="tip-label">TIP —</span>
+    ラムダ式を知らずにストリームを使うと、<b>エラーメッセージの意味が分からず詰まります</b>。遠回りに見えて、ラムダから学ぶのが結局いちばん速い。<b>これが鉄則</b>です。
+  </div>
+</section>
+
+<!-- 04 -->
+<section id="three">
+  <div class="section-header">
+    <span class="section-num">04</span><h2>3段階の流れ</h2><span class="en">THREE STAGES</span>
+  </div>
+  <p class="pattern-desc">ストリーム処理は<b>必ず3段階</b>で組み立てます。「生成 → 中間操作 → 終端操作」。この型を覚えれば、どんなストリームも同じ形に見えてきます。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">生成 → 中間 → 終端</span>
+      <span class="tag-desc">ストリームの黄金パターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3段階の役割</div>
+        <div class="flow">
+          <div class="flow-box"><span class="lbl">① 生成 CREATE</span><b>.stream()</b></div>
+          <div class="flow-arrow">▼</div>
+          <div class="flow-box"><span class="lbl">② 中間 INTERMEDIATE</span><b>.filter() .map()</b></div>
+          <div class="flow-arrow">▼</div>
+          <div class="flow-box"><span class="lbl">③ 終端 TERMINAL</span><b>.toList() .count()</b></div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">②は何個でも繋げてOK。③は最後に1回だけ。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 色分けして見ると</div>
+<pre>names.<span class="fn">stream</span>()              <span class="comment">①生成</span>
+     .<span class="fn">filter</span>(s -&gt; ...)     <span class="comment">②中間</span>
+     .<span class="fn">map</span>(s -&gt; ...)        <span class="comment">②中間</span>
+     .<span class="fn">sorted</span>()           <span class="comment">②中間</span>
+     .<span class="fn">forEach</span>(...);       <span class="comment">③終端</span>
+
+<span class="comment">// ② は「途中の加工」</span>
+<span class="comment">//    何回でも繋げられる</span>
+<span class="comment">// ③ は「最後の出口」</span>
+<span class="comment">//    ここで流れが終わる</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <span class="tip-label">POINT —</span>
+    <b>終端操作を書かないと、ストリームは1ミリも動きません</b>。これは初学者が必ずハマる詰まりポイント。中間操作は「予約」、終端操作で「実行」されると覚えてください。
+  </div>
+</section>
+
+<!-- 05 -->
+<section id="map">
+  <div class="section-header">
+    <span class="section-num">05</span><h2>シリーズの地図</h2><span class="en">SERIES MAP</span>
+  </div>
+  <p class="pattern-desc">この全11巻がどう繋がっているかの全体地図です。<b>前半（Vol.2-6）が土台、後半（Vol.7-11）がストリーム本体</b>。困った時は、このページに戻ってきてください。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">全11巻の構成</span>
+      <span class="tag-desc">2部構成で進む</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 第1部：土台（ラムダ系）</div>
+        <div class="map-grid">
+          <div class="map-row"><b>Vol.2</b> 関数型インターフェース</div>
+          <div class="map-row"><b>Vol.3</b> 標準関数型インターフェース</div>
+          <div class="map-row"><b>Vol.4</b> ラムダ式</div>
+          <div class="map-row"><b>Vol.5</b> メソッド参照・前編</div>
+          <div class="map-row"><b>Vol.6</b> メソッド参照・後編</div>
+        </div>
+      </div>
+      <div class="panel" style="border-right:none;">
+        <div class="panel-head">// 第2部：ストリーム本体</div>
+        <div class="map-grid">
+          <div class="map-row"><b>Vol.7</b> ストリーム入門</div>
+          <div class="map-row"><b>Vol.8</b> 中間操作</div>
+          <div class="map-row"><b>Vol.9</b> 終端操作</div>
+          <div class="map-row"><b>Vol.10</b> Optionalクラス</div>
+          <div class="map-row"><b>Vol.11</b> Collectors＋困った時</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <span class="tip-label">TIP —</span>
+    順番に読むのが王道ですが、<b>「ストリームだけ今すぐ知りたい」</b>ならVol.7から読んでもOK。分からない言葉が出たら土台の巻に戻る、辞書的な使い方もできます。
+  </div>
+</section>
+
+<!-- 06 -->
+<section id="firstrun">
+  <div class="section-header">
+    <span class="section-num">06</span><h2>最初の1行を動かす</h2><span class="en">YOUR FIRST STREAM</span>
+  </div>
+  <p class="pattern-desc">理屈はここまで。さっそく<b>動く最小のストリーム</b>を1つ書いてみましょう。リストの中身を1つずつ表示するだけの、いちばん簡単な例です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">Hello, Stream</span>
+      <span class="tag-desc">コピペで動く最小例</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果（コンソール）</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">
+          りんご<br>みかん<br>ぶどう
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">リストの中身が、上から順に1行ずつ表示されます。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// Main.java</div>
+<pre><span class="kw">import</span> java.util.<span class="type">List</span>;
+
+<span class="kw">public class</span> <span class="type">Main</span> {
+  <span class="kw">public static void</span> <span class="fn">main</span>(<span class="type">String</span>[] a) {
+    <span class="type">List</span>&lt;<span class="type">String</span>&gt; fruits =
+      <span class="type">List</span>.<span class="fn">of</span>(<span class="str">"りんご"</span>,
+              <span class="str">"みかん"</span>,
+              <span class="str">"ぶどう"</span>);
+
+    fruits.<span class="fn">stream</span>()
+          .<span class="fn">forEach</span>(<span class="type">System</span>.out::<span class="fn">println</span>);
+  }
+}</pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <span class="tip-label">POINT —</span>
+    <code>System.out::println</code> という見慣れない書き方が出てきました。これが<b>メソッド参照</b>（Vol.5-6で解説）。今は「これも動く魔法」くらいで大丈夫。<b>まず動かす体験</b>が大事です。
+  </div>
+</section>
+
+<!-- 07 -->
+<section id="howto">
+  <div class="section-header">
+    <span class="section-num">07</span><h2>学習の進め方</h2><span class="en">HOW TO LEARN</span>
+  </div>
+  <p class="pattern-desc">最後に、このシリーズを最大限に活かす3つのコツです。<b>「読むだけ」より「動かす」</b>が何倍も身につきます。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">3つの学習のコツ</span>
+      <span class="tag-desc">挫折しないために</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 重要度マーク</div>
+        <div class="map-grid">
+          <div class="map-row"><b>★★★</b> 絶対に押さえる最重要</div>
+          <div class="map-row"><b>★★</b> 現場でよく使う</div>
+          <div class="map-row"><b>★</b> 知っておくと便利</div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">各巻でこのマークが付きます。時間がない時は★★★だけでもOK。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 学習のコツ</div>
+<pre><span class="comment">① 必ず手を動かす</span>
+   コードはコピペでいい。
+   <span class="comment">「動いた」体験を積む。</span>
+
+<span class="comment">② エラーを怖がらない</span>
+   赤い文字はヒント。
+   <span class="comment">Vol.11に対処法あり。</span>
+
+<span class="comment">③ 分からなければ戻る</span>
+   土台の巻に戻ってOK。
+   <span class="comment">行ったり来たりが正解。</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;">
+    <span class="tip-label">NEXT STEP —</span>
+    全体像はつかめましたか？次の<b>Vol.2「関数型インターフェース編」</b>では、ストリームの土台となる「関数型インターフェース」を学びます。<b>「メソッド1個だけの約束」</b>という考え方さえ分かれば、ラムダ式がスッと理解できます。それでは、土台づくりを始めましょう。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <div class="sym">≫</div>
+  新・Java入門編 33  — ストリームAPI &nbsp;|&nbsp; Vol.1 入門・全体像編 &nbsp;|&nbsp; 全11巻
+</footer>
+</body>
+</html>

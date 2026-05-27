@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ストリームAPI メソッド参照・後編 Vol.6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1d383a; --paper:#eaf1ee; --paper-2:#d4e3de;
+  --accent:#2f7861; --accent-2:#559d83; --accent-3:#89baa4;
+  --muted:#637b74; --line:#b9ccc5; --code-bg:#172729; --code-text:#d8e8e4;
+  --panel-bg:#dfece7;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans JP",sans-serif; color:var(--ink); background:var(--paper); line-height:1.85; font-size:15px; -webkit-font-smoothing:antialiased;}
+h1,h2,h3,.section-num,.en{font-family:"Shippori Mincho",serif;}
+code,.code,.key,.tag-name,.menu-code{font-family:"JetBrains Mono",monospace;}
+.page-header{position:relative; overflow:hidden; padding:54px 40px 40px; border-bottom:2px solid var(--ink); background:linear-gradient(180deg,#eef5f0 0%,var(--paper) 100%);}
+.page-header::before{content:"≫"; position:absolute; right:-10px; top:-30px; font-size:300px; font-family:"JetBrains Mono",monospace; font-weight:600; color:var(--accent); opacity:.13; line-height:1; z-index:0; letter-spacing:-30px;}
+.page-header>*{position:relative; z-index:1;}
+.series-tag{display:inline-block; background:var(--ink); color:var(--paper); font-size:11px; letter-spacing:2px; padding:4px 12px; border-radius:2px; font-weight:700;}
+.vol-tag{display:inline-block; background:var(--accent); color:var(--paper); font-size:11px; letter-spacing:1px; padding:4px 12px; border-radius:2px; margin-left:6px; font-weight:700;}
+.page-header h1{font-size:42px; font-weight:700; margin:22px 0 6px; letter-spacing:1px;}
+.subtitle{color:var(--muted); font-size:14px; letter-spacing:.5px;}
+.lead{max-width:640px; margin-top:18px; font-size:15px;}
+.toc{background:var(--paper-2); padding:20px 40px; border-bottom:1px solid var(--line);}
+.toc-label{font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:700; margin-bottom:8px;}
+.toc ul{list-style:none; display:flex; flex-wrap:wrap; gap:4px 22px;}
+.toc a{color:var(--ink); text-decoration:none; font-size:13.5px; position:relative; padding-left:16px;}
+.toc a::before{content:"—"; position:absolute; left:0; color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{max-width:1080px; margin:0 auto; padding:48px 40px 20px;}
+section{margin-bottom:54px;}
+.section-header{display:flex; align-items:baseline; gap:14px; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px;}
+.section-num{font-size:26px; color:var(--accent); font-weight:700; line-height:1;}
+.section-header h2{font-size:23px; font-weight:700; letter-spacing:.5px;}
+.section-header .en{margin-left:auto; font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:500;}
+.pattern-desc{max-width:700px; margin-bottom:20px; color:#314548;}
+.demo-card{border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#fff; box-shadow:0 1px 3px rgba(29,56,58,.05);}
+.demo-head{background:var(--paper-2); padding:11px 18px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+.tag-name{font-size:13px; font-weight:600; color:var(--accent);}
+.tag-desc{font-size:12.5px; color:var(--muted);}
+.demo-body{display:grid; grid-template-columns:1fr 1fr; gap:0;}
+.panel{background:var(--panel-bg); padding:20px; border-right:1px solid var(--line);}
+.panel-head,.code-head{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--muted); letter-spacing:1px; margin-bottom:12px;}
+.code{background:var(--code-bg); color:var(--code-text); padding:20px; overflow-x:auto;}
+.code pre{font-size:13px; line-height:1.7; white-space:pre; font-family:"JetBrains Mono",monospace;}
+.code .code-head{color:#7f93a0;}
+.kw{color:#ffc88a;} .type{color:#c2a3ff;} .fn{color:#a3c9ff;} .str{color:#b5e8b0;} .num{color:#f7a8d8;} .comment{color:#8395a0;} .ann{color:#f7c08a;}
+.map-grid{display:flex; flex-direction:column; gap:8px;}
+.map-row{background:#fff; border:1px solid var(--line); border-left:3px solid var(--accent-2); border-radius:4px; padding:9px 12px; font-size:13px;}
+.map-row b{color:var(--accent);}
+.transform{display:flex;flex-direction:column;gap:8px;align-items:center;}
+.t-box{background:#fff;border:1px solid var(--line);border-radius:5px;padding:10px 14px;font-family:"JetBrains Mono",monospace;font-size:13px;width:100%;text-align:center;}
+.t-box.lambda{border-left:3px solid var(--accent-2);}
+.t-box.ref{border-left:3px solid var(--accent);background:rgba(47,120,97,.06);}
+.t-arrow{color:var(--accent);font-size:16px;}
+.tip{border-left:3px solid var(--accent); background:rgba(47,120,97,.08); padding:14px 18px; border-radius:0 5px 5px 0; margin:18px 0; font-size:14px;}
+.tip .tip-label{font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600; color:var(--accent); letter-spacing:1.5px; display:block; margin-bottom:5px;}
+.tip b{color:var(--accent);}
+.key{background:var(--accent); color:var(--paper); padding:1px 6px; border-radius:3px; font-size:12px; font-weight:600;}
+.page-footer{border-top:2px solid var(--ink); margin-top:30px; padding:26px 40px; background:var(--paper-2); text-align:center; color:var(--muted); font-size:12.5px;}
+.page-footer .sym{font-family:"JetBrains Mono",monospace; color:var(--accent); font-size:18px;}
+.cheat{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;}
+.cheat th,.cheat td{border:1px solid var(--line);padding:7px 8px;text-align:left;}
+.cheat th{background:var(--paper-2);font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);}
+.cheat td code{font-size:11.5px;color:var(--accent);}
+@media(max-width:720px){.demo-body{grid-template-columns:1fr;}.panel{border-right:none; border-bottom:1px solid var(--line);}.page-header h1{font-size:32px;}.page-header::before{font-size:200px;}main{padding:32px 22px;}.section-header .en{display:none;}}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・JAVA入門編 33</span><span class="vol-tag">VOL.6 / 全11巻</span>
+  <h1>メソッド参照<br>後編</h1>
+  <div class="subtitle">METHOD REFERENCE — PART 2</div>
+  <p class="lead">前編でstaticメソッド参照を学びました。後編では残り3種——<b>インスタンスメソッド参照（2タイプ）とコンストラクタ参照</b>を扱います。「型::メソッド」と「変数::メソッド」の違いがちょっとややこしい所。でも見分け方さえ分かれば大丈夫。<b>この巻で土台パートが完結</b>し、いよいよストリーム本編へ進めます。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#review">01 前編の振り返り</a></li>
+    <li><a href="#type">02 型のインスタンス参照</a></li>
+    <li><a href="#instance">03 特定インスタンス参照</a></li>
+    <li><a href="#diff">04 2つの違いを見分ける</a></li>
+    <li><a href="#new">05 コンストラクタ参照</a></li>
+    <li><a href="#summary">06 4種まとめ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="review">
+  <div class="section-header"><span class="section-num">01</span><h2>前編の振り返り</h2><span class="en">RECAP</span></div>
+  <p class="pattern-desc">まず前編のおさらい。メソッド参照は<b><code>○○::△△</code></b> の形で、ラムダの「メソッド1個呼ぶだけ」を短くする記法でした。4種類あり、前編では①staticを学びました。残り3つをこの巻で扱います。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">4種類のおさらい</span><span class="tag-desc">残り3つに進む</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 進捗マップ</div>
+        <div class="map-grid">
+          <div class="map-row"><b>①static</b> <span style="color:var(--muted);font-size:11px;">前編で完了 ✓</span></div>
+          <div class="map-row"><b>②型のインスタンス参照</b> <span style="color:var(--accent);font-size:11px;">←この巻</span></div>
+          <div class="map-row"><b>③特定インスタンス参照</b> <span style="color:var(--accent);font-size:11px;">←この巻</span></div>
+          <div class="map-row"><b>④コンストラクタ参照</b> <span style="color:var(--accent);font-size:11px;">←この巻</span></div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 共通の形は変わらない</div>
+<pre><span class="comment">// どれも :: を使う</span>
+
+<span class="comment">②</span> <span class="type">String</span>::<span class="fn">toUpperCase</span>
+<span class="comment">③</span> <span class="type">System</span>.out::<span class="fn">println</span>
+<span class="comment">④</span> <span class="type">ArrayList</span>::<span class="kw">new</span>
+
+<span class="comment">// ::の「左」に注目すると</span>
+<span class="comment">// 種類が見分けられる</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>覚えておくべき視点は1つだけ。<b>「:: の左に何が来ているか」</b>。型名なのか、特定の変数なのか、newなのか。ここを見れば種類が分かります。<b>左を見る</b>——これがこの巻の合言葉です。</div>
+</section>
+
+<!-- 02 -->
+<section id="type">
+  <div class="section-header"><span class="section-num">02</span><h2>型のインスタンスメソッド参照</h2><span class="en">TYPE INSTANCE REF</span></div>
+  <p class="pattern-desc">2つ目、<b>型のインスタンスメソッド参照</b>です。<code>型名::メソッド名</code>。前編のstaticと見た目は同じですが、参照するのが<b>インスタンスメソッド</b>（オブジェクトに対して呼ぶメソッド）という点が違います。「受け取った値そのものに対してメソッドを呼ぶ」型です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">String::toUpperCase</span><span class="tag-desc">受け取った値に対して呼ぶ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 仕組み</div>
+        <div class="transform">
+          <div class="t-box lambda">s -&gt; s.toUpperCase()</div>
+          <div class="t-arrow">▼</div>
+          <div class="t-box ref">String::toUpperCase</div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">「受け取ったsに対して、sのメソッドを呼ぶ」<br>→ 型名だけ書けばよい。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 受け取った値のメソッドを呼ぶ</div>
+<pre><span class="comment">// ラムダ式</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>,<span class="type">String</span>&gt; u1 =
+    s -&gt; s.<span class="fn">toUpperCase</span>();
+
+<span class="comment">// 型のインスタンスメソッド参照</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>,<span class="type">String</span>&gt; u2 =
+    <span class="type">String</span>::<span class="fn">toUpperCase</span>;
+
+<span class="type">System</span>.out.<span class="fn">println</span>(
+  u2.<span class="fn">apply</span>(<span class="str">"hello"</span>)); <span class="comment">// HELLO</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span>ポイントは<b>「受け取る引数（s）が、メソッドを呼ぶ側になる」</b>こと。<code>s.toUpperCase()</code> の <code>s</code> がそのまま主語です。だから <code>String::toUpperCase</code> で「受け取ったStringのtoUpperCaseを呼ぶ」と読めます。</div>
+</section>
+
+<!-- 03 -->
+<section id="instance">
+  <div class="section-header"><span class="section-num">03</span><h2>特定インスタンスのメソッド参照</h2><span class="en">SPECIFIC INSTANCE REF</span></div>
+  <p class="pattern-desc">3つ目、<b>特定インスタンスのメソッド参照</b>です。<code>変数名::メソッド名</code>。今度は <code>::</code> の左が<b>「特定のオブジェクト（変数）」</b>。Vol.1で出てきた <code>System.out::println</code> がまさにこれです。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">System.out::println</span><span class="tag-desc">あの謎の記法の正体</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">りんご<br>みかん</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">System.out という特定のオブジェクトの<br>printlnを参照しています。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 特定オブジェクトのメソッド参照</div>
+<pre><span class="comment">// ラムダ式</span>
+<span class="type">Consumer</span>&lt;<span class="type">String</span>&gt; c1 =
+    s -&gt; <span class="type">System</span>.out.<span class="fn">println</span>(s);
+
+<span class="comment">// 特定インスタンスのメソッド参照</span>
+<span class="type">Consumer</span>&lt;<span class="type">String</span>&gt; c2 =
+    <span class="type">System</span>.out::<span class="fn">println</span>;
+
+<span class="type">List</span>.<span class="fn">of</span>(<span class="str">"りんご"</span>,<span class="str">"みかん"</span>)
+    .<span class="fn">forEach</span>(<span class="type">System</span>.out::<span class="fn">println</span>);</pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span><code>System.out</code> は「標準出力」という<b>具体的なオブジェクト</b>。それの <code>println</code> を呼ぶので <code>System.out::println</code>。Vol.1で「魔法」と言ったこの記法、もう正体が分かりましたね。<b>伏線回収完了</b>です。</div>
+</section>
+
+<!-- 04 -->
+<section id="diff">
+  <div class="section-header"><span class="section-num">04</span><h2>2つの違いを見分ける</h2><span class="en">SPOT THE DIFFERENCE</span></div>
+  <p class="pattern-desc">②と③、どちらも見た目は <code>○○::メソッド</code>。違いは<b>「::の左が、型名か、変数か」</b>だけです。ここが最大の詰まりポイントなので、表でスッキリ整理します。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">型名 vs 変数</span><span class="tag-desc">★★ ここが混乱の元</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 左を見れば分かる</div>
+        <div class="map-grid">
+          <div class="map-row"><b>String</b>::toUpperCase<br><span style="font-size:12px;color:var(--muted);">左が「型名」→ 受け取った値が主語</span></div>
+          <div class="map-row"><b>System.out</b>::println<br><span style="font-size:12px;color:var(--muted);">左が「変数」→ その変数が主語</span></div>
+        </div>
+      </div>
+      <div class="code" style="background:#fff;padding:14px;">
+        <table class="cheat">
+          <tr><th>種類</th><th>::の左</th><th>主語は</th></tr>
+          <tr><td>②型</td><td><code>String</code></td><td>受け取った引数</td></tr>
+          <tr><td>③特定</td><td><code>System.out</code></td><td>その変数自身</td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:11.5px;color:#8395a0;">// 大文字始まりの型名か、<br>// 小文字の変数か、で見分ける</p>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span>ざっくりした見分け方：<b>「左が大文字始まりの型名 → ②」「左が具体的な変数 → ③」</b>。最初は混乱して当然です。書いているうちに体が覚えます。<b>分からなければラムダで書けばいい</b>、という逃げ道も忘れずに。</div>
+</section>
+
+<!-- 05 -->
+<section id="new">
+  <div class="section-header"><span class="section-num">05</span><h2>コンストラクタ参照</h2><span class="en">CONSTRUCTOR REF</span></div>
+  <p class="pattern-desc">最後、4つ目の<b>コンストラクタ参照</b>です。<code>クラス名::new</code>。<code>::</code> の右が <code>new</code> なのが特徴。「新しいインスタンスを作る」処理を参照します。<b><code>::new</code> を見たらコンストラクタ参照</b>、と覚えれば一発です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ArrayList::new</span><span class="tag-desc">:: の右が new</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 仕組み</div>
+        <div class="transform">
+          <div class="t-box lambda">() -&gt; new ArrayList&lt;&gt;()</div>
+          <div class="t-arrow">▼</div>
+          <div class="t-box ref">ArrayList::new</div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">「newするだけ」のラムダを短縮。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// インスタンス生成を参照</div>
+<pre><span class="comment">// ラムダ式</span>
+<span class="type">Supplier</span>&lt;<span class="type">List</span>&lt;<span class="type">String</span>&gt;&gt; s1 =
+    () -&gt; <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+
+<span class="comment">// コンストラクタ参照（同じ意味）</span>
+<span class="type">Supplier</span>&lt;<span class="type">List</span>&lt;<span class="type">String</span>&gt;&gt; s2 =
+    <span class="type">ArrayList</span>::<span class="kw">new</span>;
+
+<span class="type">List</span>&lt;<span class="type">String</span>&gt; list = s2.<span class="fn">get</span>();
+<span class="comment">// 新しい空のリストができる</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>引数なしで <code>new</code> するなら前巻の<b>Supplier</b>と相性抜群。<code>ArrayList::new</code> は「呼ばれたら新しいArrayListを供給する」。ストリームのcollectで器を用意するときなどに登場します（Vol.11で再会）。</div>
+</section>
+
+<!-- 06 -->
+<section id="summary">
+  <div class="section-header"><span class="section-num">06</span><h2>4種まとめ</h2><span class="en">ALL FOUR</span></div>
+  <p class="pattern-desc">土台パート最後の総まとめ。<b>メソッド参照4種を一覧</b>にします。完璧に暗記する必要はありません。「こういう4つがあって、見た目はどれも <code>::</code>」と分かっていれば十分です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">メソッド参照 全4種</span><span class="tag-desc">★★ 保存版</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 見分けの合言葉</div>
+        <div class="map-grid">
+          <div class="map-row"><b>右がnew?</b> → ④コンストラクタ</div>
+          <div class="map-row"><b>左がstaticメソッドを持つ型?</b> → ①static</div>
+          <div class="map-row"><b>左が型名?</b> → ②型のインスタンス</div>
+          <div class="map-row"><b>左が変数?</b> → ③特定インスタンス</div>
+        </div>
+      </div>
+      <div class="code" style="background:#fff;padding:14px;">
+        <table class="cheat">
+          <tr><th>種類</th><th>形</th><th>例</th></tr>
+          <tr><td>①static</td><td><code>型::static</code></td><td><code>Integer::parseInt</code></td></tr>
+          <tr><td>②型</td><td><code>型::メソッド</code></td><td><code>String::toUpperCase</code></td></tr>
+          <tr><td>③特定</td><td><code>変数::メソッド</code></td><td><code>out::println</code></td></tr>
+          <tr><td>④new</td><td><code>型::new</code></td><td><code>ArrayList::new</code></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>正直に言うと、<b>初学者のうちは①staticと③特定インスタンス（System.out::println）が書ければ十分</b>です。②と④は「見たことある」レベルでOK。使う場面に出会ったら、この表に戻ってくればいい。<b>辞書として使ってください</b>。</div>
+
+  <div class="tip" style="margin-top:48px;">
+    <span class="tip-label">NEXT STEP —</span>
+    お疲れさまでした。これで<b>第1部「土台」が完結</b>です。関数型インターフェース・ラムダ式・メソッド参照——ストリームを支える3本柱が揃いました。次の<b>Vol.7「ストリーム入門編」</b>から、いよいよ<b>第2部「ストリーム本体」</b>に突入します。ここまで学んだラムダとメソッド参照が、ストリームの中で大活躍します。土台があるあなたなら、もう怖くありません。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <div class="sym">≫</div>
+  新・Java入門編 33  — ストリームAPI &nbsp;|&nbsp; Vol.6 メソッド参照・後編 &nbsp;|&nbsp; 全11巻
+</footer>
+</body>
+</html>

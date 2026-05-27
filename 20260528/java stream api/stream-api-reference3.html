@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ストリームAPI 標準関数型インターフェース編 Vol.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#22363f; --paper:#edf1f0; --paper-2:#dae4e3;
+  --accent:#377279; --accent-2:#5e9a9b; --accent-3:#92b9b6;
+  --muted:#677b7e; --line:#bfcccb; --code-bg:#1a2830; --code-text:#dbe8e9;
+  --panel-bg:#e4eceb;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans JP",sans-serif; color:var(--ink); background:var(--paper); line-height:1.85; font-size:15px; -webkit-font-smoothing:antialiased;}
+h1,h2,h3,.section-num,.en{font-family:"Shippori Mincho",serif;}
+code,.code,.key,.tag-name,.menu-code{font-family:"JetBrains Mono",monospace;}
+.page-header{position:relative; overflow:hidden; padding:54px 40px 40px; border-bottom:2px solid var(--ink); background:linear-gradient(180deg,#f1f5f3 0%,var(--paper) 100%);}
+.page-header::before{content:"≫"; position:absolute; right:-10px; top:-30px; font-size:300px; font-family:"JetBrains Mono",monospace; font-weight:600; color:var(--accent); opacity:.13; line-height:1; z-index:0; letter-spacing:-30px;}
+.page-header>*{position:relative; z-index:1;}
+.series-tag{display:inline-block; background:var(--ink); color:var(--paper); font-size:11px; letter-spacing:2px; padding:4px 12px; border-radius:2px; font-weight:700;}
+.vol-tag{display:inline-block; background:var(--accent); color:var(--paper); font-size:11px; letter-spacing:1px; padding:4px 12px; border-radius:2px; margin-left:6px; font-weight:700;}
+.page-header h1{font-size:42px; font-weight:700; margin:22px 0 6px; letter-spacing:1px;}
+.subtitle{color:var(--muted); font-size:14px; letter-spacing:.5px;}
+.lead{max-width:640px; margin-top:18px; font-size:15px;}
+.toc{background:var(--paper-2); padding:20px 40px; border-bottom:1px solid var(--line);}
+.toc-label{font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:700; margin-bottom:8px;}
+.toc ul{list-style:none; display:flex; flex-wrap:wrap; gap:4px 22px;}
+.toc a{color:var(--ink); text-decoration:none; font-size:13.5px; position:relative; padding-left:16px;}
+.toc a::before{content:"—"; position:absolute; left:0; color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{max-width:1080px; margin:0 auto; padding:48px 40px 20px;}
+section{margin-bottom:54px;}
+.section-header{display:flex; align-items:baseline; gap:14px; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px;}
+.section-num{font-size:26px; color:var(--accent); font-weight:700; line-height:1;}
+.section-header h2{font-size:23px; font-weight:700; letter-spacing:.5px;}
+.section-header .en{margin-left:auto; font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:500;}
+.pattern-desc{max-width:700px; margin-bottom:20px; color:#34454d;}
+.demo-card{border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#fff; box-shadow:0 1px 3px rgba(34,54,63,.05);}
+.demo-head{background:var(--paper-2); padding:11px 18px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+.tag-name{font-size:13px; font-weight:600; color:var(--accent);}
+.tag-desc{font-size:12.5px; color:var(--muted);}
+.demo-body{display:grid; grid-template-columns:1fr 1fr; gap:0;}
+.panel{background:var(--panel-bg); padding:20px; border-right:1px solid var(--line);}
+.panel-head,.code-head{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--muted); letter-spacing:1px; margin-bottom:12px;}
+.code{background:var(--code-bg); color:var(--code-text); padding:20px; overflow-x:auto;}
+.code pre{font-size:13px; line-height:1.7; white-space:pre; font-family:"JetBrains Mono",monospace;}
+.code .code-head{color:#7f93a0;}
+.kw{color:#ffc88a;} .type{color:#c2a3ff;} .fn{color:#a3c9ff;} .str{color:#b5e8b0;} .num{color:#f7a8d8;} .comment{color:#8395a0;} .ann{color:#f7c08a;}
+.map-grid{display:flex; flex-direction:column; gap:8px;}
+.map-row{background:#fff; border:1px solid var(--line); border-left:3px solid var(--accent-2); border-radius:4px; padding:9px 12px; font-size:13px;}
+.map-row b{color:var(--accent);}
+.tip{border-left:3px solid var(--accent); background:rgba(55,114,121,.08); padding:14px 18px; border-radius:0 5px 5px 0; margin:18px 0; font-size:14px;}
+.tip .tip-label{font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600; color:var(--accent); letter-spacing:1.5px; display:block; margin-bottom:5px;}
+.tip b{color:var(--accent);}
+.key{background:var(--accent); color:var(--paper); padding:1px 6px; border-radius:3px; font-size:12px; font-weight:600;}
+.page-footer{border-top:2px solid var(--ink); margin-top:30px; padding:26px 40px; background:var(--paper-2); text-align:center; color:var(--muted); font-size:12.5px;}
+.page-footer .sym{font-family:"JetBrains Mono",monospace; color:var(--accent); font-size:18px;}
+.cheat{width:100%;border-collapse:collapse;font-size:13px;background:#fff;}
+.cheat th,.cheat td{border:1px solid var(--line);padding:8px 10px;text-align:left;}
+.cheat th{background:var(--paper-2);font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);}
+.cheat td code{font-size:12px;color:var(--accent);}
+@media(max-width:720px){.demo-body{grid-template-columns:1fr;}.panel{border-right:none; border-bottom:1px solid var(--line);}.page-header h1{font-size:32px;}.page-header::before{font-size:200px;}main{padding:32px 22px;}.section-header .en{display:none;}}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・JAVA入門編 33</span><span class="vol-tag">VOL.3 / 全11巻</span>
+  <h1>標準関数型<br>インターフェース編</h1>
+  <div class="subtitle">STANDARD FUNCTIONAL INTERFACES</div>
+  <p class="lead">前巻で「自作の関数型インターフェース」を学びました。でも実は、<b>よく使うものはJavaが最初から用意してくれています</b>。この巻では4大インターフェース——<b>Function・Consumer・Supplier・Predicate</b>を学びます。名前は難しそうですが、役割は「変換・消費・供給・判定」のたった4つです。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#why">01 なぜ標準が便利か</a></li>
+    <li><a href="#function">02 Function（変換）</a></li>
+    <li><a href="#consumer">03 Consumer（消費）</a></li>
+    <li><a href="#supplier">04 Supplier（供給）</a></li>
+    <li><a href="#predicate">05 Predicate（判定）</a></li>
+    <li><a href="#cheat">06 早見表で使い分け</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="why">
+  <div class="section-header"><span class="section-num">01</span><h2>なぜ標準が便利なのか</h2><span class="en">WHY STANDARD</span></div>
+  <p class="pattern-desc">毎回 <code>interface Calc {...}</code> と自作するのは面倒です。そこでJavaは<b>「よくあるパターンの関数型インターフェース」を最初から用意</b>してくれています。これを使えば<b>自分で定義しなくていい</b>。ストリームもこれらを前提に作られています。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">java.util.function</span><span class="tag-desc">標準で入っているパッケージ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4大インターフェースの役割</div>
+        <div class="map-grid">
+          <div class="map-row"><b>Function</b> 入れて → 変換して出す</div>
+          <div class="map-row"><b>Consumer</b> 受け取って → 消費する（戻り値なし）</div>
+          <div class="map-row"><b>Supplier</b> 何も受け取らず → 供給する</div>
+          <div class="map-row"><b>Predicate</b> 受け取って → true/falseで判定</div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// importするだけで使える</div>
+<pre><span class="kw">import</span> java.util.function.<span class="type">Function</span>;
+<span class="kw">import</span> java.util.function.<span class="type">Consumer</span>;
+<span class="kw">import</span> java.util.function.<span class="type">Supplier</span>;
+<span class="kw">import</span> java.util.function.<span class="type">Predicate</span>;
+
+<span class="comment">// 自作 interface は不要！</span>
+<span class="comment">// この4つを覚えれば</span>
+<span class="comment">// たいていの場面に対応できる</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>この4つは<b>ストリームのfilter・mapなどの中で実際に使われている主役</b>です。ここで顔と名前を覚えておくと、Vol.7以降がぐっと楽になります。</div>
+</section>
+
+<!-- 02 -->
+<section id="function">
+  <div class="section-header"><span class="section-num">02</span><h2>Function（変換）</h2><span class="en">FUNCTION — TRANSFORM</span></div>
+  <p class="pattern-desc"><b>Function は「入れたものを、別のものに変換して返す」</b>係です。★★★ 最重要。<code>apply</code> メソッドを持ち、「Tを受け取ってRを返す」という形。たとえば「文字列を受け取って、その長さ（数値）を返す」のがFunctionの典型です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Function&lt;T, R&gt;</span><span class="tag-desc">T入れて R返す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">5</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">"Hello"（文字列）を入れたら、長さの 5（数値）が返ってきます。<br>文字列 → 数値 へ「変換」しています。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 文字列 → その長さ に変換</div>
+<pre><span class="comment">// String を受け取り Integer を返す</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>,<span class="type">Integer</span>&gt; len =
+    s -&gt; s.<span class="fn">length</span>();
+
+<span class="type">System</span>.out.<span class="fn">println</span>(
+  len.<span class="fn">apply</span>(<span class="str">"Hello"</span>)  <span class="comment">// → 5</span>
+);</pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span>ストリームの <code>.map()</code> は、このFunctionを受け取ります。<b>「mapは変換」＝「Functionを渡す」</b>とセットで覚えてください。<code>&lt;T, R&gt;</code> は「T入れてR返す」の意味です。</div>
+</section>
+
+<!-- 03 -->
+<section id="consumer">
+  <div class="section-header"><span class="section-num">03</span><h2>Consumer（消費）</h2><span class="en">CONSUMER — USE IT</span></div>
+  <p class="pattern-desc"><b>Consumer は「受け取って、何かするけど、何も返さない」</b>係です。consume＝消費。典型は「受け取った値を画面に表示する」。表示したら終わり、返すものはない。<code>accept</code> メソッドを持ちます。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Consumer&lt;T&gt;</span><span class="tag-desc">T受け取る・戻り値なし</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">こんにちは、田中さん</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">名前を受け取って、挨拶を表示。<br>表示したら役目は終わり。戻り値はありません。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 受け取って表示するだけ</div>
+<pre><span class="comment">// String を受け取り 何も返さない</span>
+<span class="type">Consumer</span>&lt;<span class="type">String</span>&gt; greet =
+    name -&gt; <span class="type">System</span>.out.<span class="fn">println</span>(
+      <span class="str">"こんにちは、"</span> + name + <span class="str">"さん"</span>
+    );
+
+greet.<span class="fn">accept</span>(<span class="str">"田中"</span>);
+<span class="comment">// → こんにちは、田中さん</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span>ストリームの <code>.forEach()</code> は、このConsumerを受け取ります。<b>「forEachは1個ずつ消費」＝「Consumerを渡す」</b>。Vol.1で出た <code>System.out::println</code> も、実はConsumerでした。</div>
+</section>
+
+<!-- 04 -->
+<section id="supplier">
+  <div class="section-header"><span class="section-num">04</span><h2>Supplier（供給）</h2><span class="en">SUPPLIER — PROVIDE</span></div>
+  <p class="pattern-desc"><b>Supply は「何も受け取らないけど、何かを供給して返す」</b>係です。supply＝供給。引数なしで、値を1つ作って返す。典型は「現在時刻を返す」「ランダムな値を返す」など。<code>get</code> メソッドを持ちます。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Supplier&lt;T&gt;</span><span class="tag-desc">引数なし・T返す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果（例）</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">ようこそ！</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">何も渡していないのに、文字列が出てきます。<br>「値を供給してくれる箱」のイメージです。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 引数なしで値を供給</div>
+<pre><span class="comment">// 何も受け取らず String を返す</span>
+<span class="type">Supplier</span>&lt;<span class="type">String</span>&gt; msg =
+    () -&gt; <span class="str">"ようこそ！"</span>;
+
+<span class="type">System</span>.out.<span class="fn">println</span>(
+  msg.<span class="fn">get</span>()  <span class="comment">// → ようこそ！</span>
+);
+
+<span class="comment">// () は「引数なし」の印</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>引数がないので、ラムダは <code>() -&gt; ...</code> と<b>空のカッコから始まる</b>のが特徴です。「何ももらわず、何かをくれる」——それがSupplier。Vol.10のOptionalでまた登場します。</div>
+</section>
+
+<!-- 05 -->
+<section id="predicate">
+  <div class="section-header"><span class="section-num">05</span><h2>Predicate（判定）</h2><span class="en">PREDICATE — TEST</span></div>
+  <p class="pattern-desc"><b>Predicate は「受け取って、true か false を返す」</b>判定係です。★★★ 最重要。predicate＝断定・判定。「この数は偶数か？」「この文字列は空か？」のような<b>条件判定</b>に使います。<code>test</code> メソッドを持ちます。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Predicate&lt;T&gt;</span><span class="tag-desc">T受け取る・true/false返す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">true<br>false</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">4は偶数なので true、7は偶数でないので false。<br>「Yes/No」を返すのがPredicateです。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 偶数かどうかを判定</div>
+<pre><span class="comment">// Integer を受け取り boolean を返す</span>
+<span class="type">Predicate</span>&lt;<span class="type">Integer</span>&gt; isEven =
+    n -&gt; n % <span class="num">2</span> == <span class="num">0</span>;
+
+<span class="type">System</span>.out.<span class="fn">println</span>(
+  isEven.<span class="fn">test</span>(<span class="num">4</span>)   <span class="comment">// → true</span>
+);
+<span class="type">System</span>.out.<span class="fn">println</span>(
+  isEven.<span class="fn">test</span>(<span class="num">7</span>)   <span class="comment">// → false</span>
+);</pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span>ストリームの <code>.filter()</code> は、このPredicateを受け取ります。<b>「filterは条件で絞る」＝「Predicateを渡す」</b>。Vol.1で見た <code>n -&gt; n % 2 == 0</code> は、まさにPredicateだったわけです。</div>
+</section>
+
+<!-- 06 -->
+<section id="cheat">
+  <div class="section-header"><span class="section-num">06</span><h2>早見表で使い分け</h2><span class="en">CHEAT SHEET</span></div>
+  <p class="pattern-desc">4つを一覧で整理します。<b>迷ったらこの表に戻ってきてください</b>。「入力があるか」「出力があるか」で4つに分かれる、と捉えると覚えやすいです。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">4大インターフェース早見表</span><span class="tag-desc">★★★ 保存版</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 覚え方のコツ</div>
+        <div class="map-grid">
+          <div class="map-row"><b>入力も出力もある</b> → Function</div>
+          <div class="map-row"><b>入力だけ（出力なし）</b> → Consumer</div>
+          <div class="map-row"><b>出力だけ（入力なし）</b> → Supplier</div>
+          <div class="map-row"><b>出力がtrue/false</b> → Predicate</div>
+        </div>
+      </div>
+      <div class="code" style="background:#fff;padding:14px;">
+        <table class="cheat">
+          <tr><th>名前</th><th>メソッド</th><th>役割</th></tr>
+          <tr><td>Function</td><td><code>apply</code></td><td>変換</td></tr>
+          <tr><td>Consumer</td><td><code>accept</code></td><td>消費</td></tr>
+          <tr><td>Supplier</td><td><code>get</code></td><td>供給</td></tr>
+          <tr><td>Predicate</td><td><code>test</code></td><td>判定</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;">
+    <span class="tip-label">NEXT STEP —</span>
+    4大インターフェース、お疲れさまでした。役割（変換・消費・供給・判定）とメソッド名（apply・accept・get・test）が結びつけば合格です。次の<b>Vol.4「ラムダ式編」</b>では、これらの中身を書く<b>ラムダ式そのもの</b>を本格的に掘り下げます。省略ルールをマスターして、<code>s -&gt; s.length()</code> のような表現を自在に書けるようになりましょう。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <div class="sym">≫</div>
+  新・Java入門編 33  — ストリームAPI &nbsp;|&nbsp; Vol.3 標準関数型インターフェース編 &nbsp;|&nbsp; 全11巻
+</footer>
+</body>
+</html>

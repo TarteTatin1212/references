@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ストリームAPI ラムダ式編 Vol.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#21373d; --paper:#ecf1ef; --paper-2:#d8e4e1;
+  --accent:#34766f; --accent-2:#5b9c92; --accent-3:#8fbab0;
+  --muted:#657b78; --line:#bdccc9; --code-bg:#19282d; --code-text:#dae8e7;
+  --panel-bg:#e3ece9;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans JP",sans-serif; color:var(--ink); background:var(--paper); line-height:1.85; font-size:15px; -webkit-font-smoothing:antialiased;}
+h1,h2,h3,.section-num,.en{font-family:"Shippori Mincho",serif;}
+code,.code,.key,.tag-name,.menu-code{font-family:"JetBrains Mono",monospace;}
+.page-header{position:relative; overflow:hidden; padding:54px 40px 40px; border-bottom:2px solid var(--ink); background:linear-gradient(180deg,#f0f5f2 0%,var(--paper) 100%);}
+.page-header::before{content:"≫"; position:absolute; right:-10px; top:-30px; font-size:300px; font-family:"JetBrains Mono",monospace; font-weight:600; color:var(--accent); opacity:.13; line-height:1; z-index:0; letter-spacing:-30px;}
+.page-header>*{position:relative; z-index:1;}
+.series-tag{display:inline-block; background:var(--ink); color:var(--paper); font-size:11px; letter-spacing:2px; padding:4px 12px; border-radius:2px; font-weight:700;}
+.vol-tag{display:inline-block; background:var(--accent); color:var(--paper); font-size:11px; letter-spacing:1px; padding:4px 12px; border-radius:2px; margin-left:6px; font-weight:700;}
+.page-header h1{font-size:42px; font-weight:700; margin:22px 0 6px; letter-spacing:1px;}
+.subtitle{color:var(--muted); font-size:14px; letter-spacing:.5px;}
+.lead{max-width:640px; margin-top:18px; font-size:15px;}
+.toc{background:var(--paper-2); padding:20px 40px; border-bottom:1px solid var(--line);}
+.toc-label{font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:700; margin-bottom:8px;}
+.toc ul{list-style:none; display:flex; flex-wrap:wrap; gap:4px 22px;}
+.toc a{color:var(--ink); text-decoration:none; font-size:13.5px; position:relative; padding-left:16px;}
+.toc a::before{content:"—"; position:absolute; left:0; color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{max-width:1080px; margin:0 auto; padding:48px 40px 20px;}
+section{margin-bottom:54px;}
+.section-header{display:flex; align-items:baseline; gap:14px; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px;}
+.section-num{font-size:26px; color:var(--accent); font-weight:700; line-height:1;}
+.section-header h2{font-size:23px; font-weight:700; letter-spacing:.5px;}
+.section-header .en{margin-left:auto; font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:500;}
+.pattern-desc{max-width:700px; margin-bottom:20px; color:#33454a;}
+.demo-card{border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#fff; box-shadow:0 1px 3px rgba(33,55,61,.05);}
+.demo-head{background:var(--paper-2); padding:11px 18px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+.tag-name{font-size:13px; font-weight:600; color:var(--accent);}
+.tag-desc{font-size:12.5px; color:var(--muted);}
+.demo-body{display:grid; grid-template-columns:1fr 1fr; gap:0;}
+.panel{background:var(--panel-bg); padding:20px; border-right:1px solid var(--line);}
+.panel-head,.code-head{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--muted); letter-spacing:1px; margin-bottom:12px;}
+.code{background:var(--code-bg); color:var(--code-text); padding:20px; overflow-x:auto;}
+.code pre{font-size:13px; line-height:1.7; white-space:pre; font-family:"JetBrains Mono",monospace;}
+.code .code-head{color:#7f93a0;}
+.kw{color:#ffc88a;} .type{color:#c2a3ff;} .fn{color:#a3c9ff;} .str{color:#b5e8b0;} .num{color:#f7a8d8;} .comment{color:#8395a0;} .ann{color:#f7c08a;}
+.map-grid{display:flex; flex-direction:column; gap:8px;}
+.map-row{background:#fff; border:1px solid var(--line); border-left:3px solid var(--accent-2); border-radius:4px; padding:9px 12px; font-size:13px;}
+.map-row b{color:var(--accent);}
+.step-list{display:flex;flex-direction:column;gap:6px;}
+.step-item{background:#fff;border:1px solid var(--line);border-radius:4px;padding:8px 12px;font-size:13px;font-family:"JetBrains Mono",monospace;position:relative;}
+.step-item .n{display:inline-block;background:var(--accent);color:var(--paper);width:18px;height:18px;border-radius:50%;text-align:center;line-height:18px;font-size:11px;margin-right:8px;}
+.tip{border-left:3px solid var(--accent); background:rgba(52,118,111,.08); padding:14px 18px; border-radius:0 5px 5px 0; margin:18px 0; font-size:14px;}
+.tip .tip-label{font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600; color:var(--accent); letter-spacing:1.5px; display:block; margin-bottom:5px;}
+.tip b{color:var(--accent);}
+.key{background:var(--accent); color:var(--paper); padding:1px 6px; border-radius:3px; font-size:12px; font-weight:600;}
+.page-footer{border-top:2px solid var(--ink); margin-top:30px; padding:26px 40px; background:var(--paper-2); text-align:center; color:var(--muted); font-size:12.5px;}
+.page-footer .sym{font-family:"JetBrains Mono",monospace; color:var(--accent); font-size:18px;}
+.ng-ok{display:grid;grid-template-columns:1fr;gap:10px;}
+.box-ng,.box-ok{border-radius:5px;padding:10px 12px;font-size:13px;border:1px solid;}
+.box-ng{background:#fbeceb;border-color:#e7b6b3;} .box-ok{background:#e7f3ec;border-color:#a9d2ba;}
+.box-ng .bl,.box-ok .bl{font-weight:700;font-size:11px;letter-spacing:1px;display:block;margin-bottom:3px;}
+.box-ng .bl{color:#c0463f;} .box-ok .bl{color:#2f8050;}
+.box-ng code,.box-ok code{font-size:12px;}
+@media(max-width:720px){.demo-body{grid-template-columns:1fr;}.panel{border-right:none; border-bottom:1px solid var(--line);}.page-header h1{font-size:32px;}.page-header::before{font-size:200px;}main{padding:32px 22px;}.section-header .en{display:none;}}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・JAVA入門編 33</span><span class="vol-tag">VOL.4 / 全11巻</span>
+  <h1>ラムダ式編</h1>
+  <div class="subtitle">LAMBDA EXPRESSION</div>
+  <p class="lead">いよいよラムダ式の本丸です。<code>-&gt;</code>（アロー）を使った、あの短い書き方。前巻までで「関数型インターフェース」という土台ができたので、ラムダ式はスッと入るはずです。この巻のゴールは<b>「省略ルールを使いこなして、自在に短く書ける」</b>こと。基本形から1つずつ削っていきます。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#basic">01 ラムダ式の基本形</a></li>
+    <li><a href="#read">02 アローの読み方</a></li>
+    <li><a href="#omit">03 省略ルール</a></li>
+    <li><a href="#single">04 1行なら波カッコも省略</a></li>
+    <li><a href="#with-fi">05 関数型と組み合わせる</a></li>
+    <li><a href="#pitfall">06 ハマりどころ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="basic">
+  <div class="section-header"><span class="section-num">01</span><h2>ラムダ式の基本形</h2><span class="en">BASIC FORM</span></div>
+  <p class="pattern-desc">ラムダ式の形はたった1つ。<b>「引数 → 処理」</b>です。<code>(引数) -&gt; { 処理 }</code>。この <code>-&gt;</code> がラムダの目印。「左の引数を受け取って、右の処理をする」と読みます。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">(引数) -&gt; { 処理 }</span><span class="tag-desc">★★★ これが全ての基本</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 構造を分解</div>
+        <div class="map-grid">
+          <div class="map-row"><b>(a, b)</b> 受け取る引数</div>
+          <div class="map-row"><b>-&gt;</b> 「これを受けて、こうする」</div>
+          <div class="map-row"><b>{ return a + b; }</b> 実際の処理</div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">左が入口、右が中身。アローで繋ぐだけ。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// もっとも省略していない形</div>
+<pre><span class="comment">// 2つの数を足すラムダ式</span>
+(<span class="type">int</span> a, <span class="type">int</span> b) -&gt; {
+    <span class="kw">return</span> a + b;
+}
+
+<span class="comment">// 読み方：</span>
+<span class="comment">// 「a と b を受け取って</span>
+<span class="comment">//   a + b を返す」</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>まずは<b>この完全形を覚えてください</b>。ここから「省略できるものを削る」のがラムダ上達の道。いきなり短い形を覚えると、なぜ短くできるのか分からず混乱します。<b>遠回りが近道</b>です。</div>
+</section>
+
+<!-- 02 -->
+<section id="read">
+  <div class="section-header"><span class="section-num">02</span><h2>アローの読み方</h2><span class="en">READING THE ARROW</span></div>
+  <p class="pattern-desc">前巻の匿名クラスと並べると、ラムダ式が「何を省いたものか」が一目で分かります。<b>ラムダ式は匿名クラスから、決まりきった部分を全部消したもの</b>。それだけです。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">匿名クラス → ラムダ式</span><span class="tag-desc">同じ意味・違う見た目</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 何が消えたか</div>
+        <div class="map-grid">
+          <div class="map-row"><b>new 型名(){ }</b> → 消える</div>
+          <div class="map-row"><b>public 戻り値 メソッド名</b> → 消える</div>
+          <div class="map-row">残るのは<b>引数と処理だけ</b></div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 比べてみる</div>
+<pre><span class="comment">// 匿名クラス</span>
+<span class="kw">new</span> <span class="type">Calc</span>() {
+  <span class="kw">public</span> <span class="type">int</span> <span class="fn">apply</span>(<span class="type">int</span> a,<span class="type">int</span> b){
+    <span class="kw">return</span> a + b;
+  }
+}
+
+<span class="comment">// ラムダ式（同じ意味）</span>
+(a, b) -&gt; a + b
+
+<span class="comment">// 「飾り」を全部消すと</span>
+<span class="comment">// 引数と処理だけが残る</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span>ラムダ式が突然出てきて戸惑ったら、<b>「これは匿名クラスの省略形だ」</b>と思い出してください。難しい新概念ではなく、<b>「めんどくさい書き方を短くしただけ」</b>。気持ちがラクになります。</div>
+</section>
+
+<!-- 03 -->
+<section id="omit">
+  <div class="section-header"><span class="section-num">03</span><h2>省略ルール</h2><span class="en">OMISSION RULES</span></div>
+  <p class="pattern-desc">ここがこの巻の核心です。ラムダ式は<b>さらに3つの省略</b>ができます。①引数の型 ②引数1個ならカッコ ③1行なら波カッコとreturn。順番に削っていきます。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">3段階で削る</span><span class="tag-desc">★★★ 省略の手順</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 削れるもの3つ</div>
+        <div class="step-list">
+          <div class="step-item"><span class="n">1</span>引数の<b>型</b>（int等）</div>
+          <div class="step-item"><span class="n">2</span>引数1個なら<b>( )</b></div>
+          <div class="step-item"><span class="n">3</span>1行なら<b>{ } と return</b></div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">型は文脈から分かるので省略OK。Javaが自動で補ってくれます。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 段階的に削っていく</div>
+<pre><span class="comment">// 完全形</span>
+(<span class="type">int</span> a, <span class="type">int</span> b) -&gt; { <span class="kw">return</span> a+b; }
+
+<span class="comment">// ①型を削る</span>
+(a, b) -&gt; { <span class="kw">return</span> a + b; }
+
+<span class="comment">// ③1行なら{}とreturn削る</span>
+(a, b) -&gt; a + b
+
+<span class="comment">// 完成！すっきり</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>型を省略できるのは、<b>渡す先の関数型インターフェースから型が決まっている</b>から。前巻で学んだ <code>Function&lt;String,Integer&gt;</code> のような型指定が効いているわけです。<b>土台がここで活きてきます</b>。</div>
+</section>
+
+<!-- 04 -->
+<section id="single">
+  <div class="section-header"><span class="section-num">04</span><h2>引数1個なら、カッコも省略</h2><span class="en">SINGLE ARGUMENT</span></div>
+  <p class="pattern-desc">引数が<b>ちょうど1個</b>のときは、引数を囲む <code>( )</code> も省略できます。<code>(s) -&gt; ...</code> が <code>s -&gt; ...</code> に。ストリームでいちばんよく見る形です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">s -&gt; s.length()</span><span class="tag-desc">よく見るあの形の正体</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// カッコ省略の条件</div>
+        <div class="ng-ok">
+          <div class="box-ok"><span class="bl">引数1個：省略OK</span><code>s -&gt; s.length()</code></div>
+          <div class="box-ng"><span class="bl">引数0個や2個：カッコ必須</span><code>() -&gt; ...</code> / <code>(a, b) -&gt; ...</code></div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">「1個だけ」が省略の条件です。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 引数1個のラムダ</div>
+<pre><span class="comment">// カッコあり</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>,<span class="type">Integer</span>&gt; f1 =
+    (s) -&gt; s.<span class="fn">length</span>();
+
+<span class="comment">// カッコなし（1個なのでOK）</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>,<span class="type">Integer</span>&gt; f2 =
+    s -&gt; s.<span class="fn">length</span>();
+
+<span class="comment">// f1 も f2 も全く同じ意味</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span>引数が<b>0個のとき</b>は <code>() -&gt; ...</code> と、空カッコが必須です（前巻のSupplierがこれ）。「1個だけ省略OK、0個と複数はカッコ必要」と覚えてください。<b>1個は特別扱い</b>です。</div>
+</section>
+
+<!-- 05 -->
+<section id="with-fi">
+  <div class="section-header"><span class="section-num">05</span><h2>関数型と組み合わせる</h2><span class="en">WITH FUNCTIONAL INTERFACE</span></div>
+  <p class="pattern-desc">前巻の4大インターフェースに、実際にラムダ式を入れてみます。<b>「箱（インターフェース）」に「中身（ラムダ）」を入れる</b>。これでようやく1セットになります。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">箱にラムダを入れる</span><span class="tag-desc">土台パートの総まとめ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">true<br>HELLO</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">Predicateで判定、Functionで変換。<br>箱とラムダが噛み合っています。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 4大インターフェース × ラムダ</div>
+<pre><span class="comment">// 判定（Predicate）</span>
+<span class="type">Predicate</span>&lt;<span class="type">String</span>&gt; notEmpty =
+    s -&gt; !s.<span class="fn">isEmpty</span>();
+<span class="type">System</span>.out.<span class="fn">println</span>(
+  notEmpty.<span class="fn">test</span>(<span class="str">"hi"</span>));  <span class="comment">// true</span>
+
+<span class="comment">// 変換（Function）</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>,<span class="type">String</span>&gt; up =
+    s -&gt; s.<span class="fn">toUpperCase</span>();
+<span class="type">System</span>.out.<span class="fn">println</span>(
+  up.<span class="fn">apply</span>(<span class="str">"hello"</span>)); <span class="comment">// HELLO</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>これで土台が完成しました。<b>「関数型インターフェース（箱）＋ラムダ式（中身）」</b>——この組み合わせが、ストリームのfilterやmapの正体です。Vol.7からのストリーム本編で、この知識をフル活用します。</div>
+</section>
+
+<!-- 06 -->
+<section id="pitfall">
+  <div class="section-header"><span class="section-num">06</span><h2>ハマりどころ</h2><span class="en">COMMON PITFALLS</span></div>
+  <p class="pattern-desc">初学者がラムダ式でつまずく代表例を3つ。<b>先に知っておけば回避できます</b>。特に「複数行のとき」「returnの有無」は混乱の元です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">よくある間違い</span><span class="tag-desc">先回りして潰す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// つまずきポイント</div>
+        <div class="map-grid">
+          <div class="map-row"><b>複数行</b>なのに{ }を省いた</div>
+          <div class="map-row">{ }<b>あり</b>なのにreturnを忘れた</div>
+          <div class="map-row">{ }<b>なし</b>なのにreturnを書いた</div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// NG例とOK例</div>
+<pre><span class="comment">// NG：1行だけど return と {} が</span>
+<span class="comment">//      ちぐはぐ</span>
+s -&gt; <span class="kw">return</span> s.<span class="fn">length</span>();  <span class="comment">// エラー</span>
+
+<span class="comment">// OK：1行 → {} も return も無し</span>
+s -&gt; s.<span class="fn">length</span>();
+
+<span class="comment">// OK：複数行 → {} と return 必要</span>
+s -&gt; {
+  <span class="type">int</span> n = s.<span class="fn">length</span>();
+  <span class="kw">return</span> n * <span class="num">2</span>;
+}</pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>鉄則は<b>「{ } を書いたら return も書く。{ } を書かないなら return も書かない」</b>。この2つはセットです。波カッコの有無で「returnが要る／要らない」が決まる、と覚えれば9割のエラーは防げます。</div>
+
+  <div class="tip" style="margin-top:48px;">
+    <span class="tip-label">NEXT STEP —</span>
+    ラムダ式、自在に書けるようになりましたか？<b>「引数 → 処理」と3つの省略ルール</b>が身につけば完璧です。次の<b>Vol.5「メソッド参照・前編」</b>では、ラムダ式を<b>さらに短くする「メソッド参照」</b>に進みます。<code>s -&gt; s.length()</code> が <code>String::length</code> になる、あの省略記法。まずは仕組みとstaticメソッド参照からです。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <div class="sym">≫</div>
+  新・Java入門編 33  — ストリームAPI &nbsp;|&nbsp; Vol.4 ラムダ式編 &nbsp;|&nbsp; 全11巻
+</footer>
+</body>
+</html>

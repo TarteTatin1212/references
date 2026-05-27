@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ストリームAPI Collectorsと困った時編 Vol.11</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#19381f; --paper:#e5f0e3; --paper-2:#cae2cb;
+  --accent:#327835; --accent-2:#5a9d5c; --accent-3:#8cba8a;
+  --muted:#5f7b61; --line:#afccb0; --code-bg:#122614; --code-text:#d3e8d3;
+  --panel-bg:#d8ecd9;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans JP",sans-serif; color:var(--ink); background:var(--paper); line-height:1.85; font-size:15px; -webkit-font-smoothing:antialiased;}
+h1,h2,h3,.section-num,.en,.q-num,.ending h2{font-family:"Shippori Mincho",serif;}
+code,.code,.key,.tag-name,.menu-code{font-family:"JetBrains Mono",monospace;}
+.page-header{position:relative; overflow:hidden; padding:54px 40px 40px; border-bottom:2px solid var(--ink); background:linear-gradient(180deg,#e9f5e8 0%,var(--paper) 100%);}
+.page-header::before{content:"≫"; position:absolute; right:-10px; top:-30px; font-size:300px; font-family:"JetBrains Mono",monospace; font-weight:600; color:var(--accent); opacity:.13; line-height:1; z-index:0; letter-spacing:-30px;}
+.page-header>*{position:relative; z-index:1;}
+.series-tag{display:inline-block; background:var(--ink); color:var(--paper); font-size:11px; letter-spacing:2px; padding:4px 12px; border-radius:2px; font-weight:700;}
+.vol-tag{display:inline-block; background:var(--accent); color:var(--paper); font-size:11px; letter-spacing:1px; padding:4px 12px; border-radius:2px; margin-left:6px; font-weight:700;}
+.final-tag{display:inline-block;background:#c9a227;color:#fff;font-size:11px;letter-spacing:1px;padding:4px 12px;border-radius:2px;margin-left:6px;font-weight:700;}
+.page-header h1{font-size:40px; font-weight:700; margin:22px 0 6px; letter-spacing:1px;}
+.subtitle{color:var(--muted); font-size:14px; letter-spacing:.5px;}
+.lead{max-width:660px; margin-top:18px; font-size:15px;}
+.toc{background:var(--paper-2); padding:20px 40px; border-bottom:1px solid var(--line);}
+.toc-label{font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:700; margin-bottom:8px;}
+.toc ul{list-style:none; display:flex; flex-wrap:wrap; gap:4px 20px;}
+.toc a{color:var(--ink); text-decoration:none; font-size:13px; position:relative; padding-left:15px;}
+.toc a::before{content:"—"; position:absolute; left:0; color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{max-width:1080px; margin:0 auto; padding:48px 40px 20px;}
+section{margin-bottom:54px;}
+.section-header{display:flex; align-items:baseline; gap:14px; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px;}
+.section-num{font-size:26px; color:var(--accent); font-weight:700; line-height:1;}
+.section-header h2{font-size:23px; font-weight:700; letter-spacing:.5px;}
+.section-header .en{margin-left:auto; font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:500;}
+.pattern-desc{max-width:720px; margin-bottom:20px; color:#2b462f;}
+.demo-card{border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#fff; box-shadow:0 1px 3px rgba(25,56,31,.05);}
+.demo-head{background:var(--paper-2); padding:11px 18px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+.tag-name{font-size:13px; font-weight:600; color:var(--accent);}
+.tag-desc{font-size:12.5px; color:var(--muted);}
+.demo-body{display:grid; grid-template-columns:1fr 1fr; gap:0;}
+.panel{background:var(--panel-bg); padding:20px; border-right:1px solid var(--line);}
+.panel-head,.code-head{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--muted); letter-spacing:1px; margin-bottom:12px;}
+.code{background:var(--code-bg); color:var(--code-text); padding:20px; overflow-x:auto;}
+.code pre{font-size:13px; line-height:1.7; white-space:pre; font-family:"JetBrains Mono",monospace;}
+.code .code-head{color:#7f93a0;}
+.kw{color:#ffc88a;} .type{color:#c2a3ff;} .fn{color:#a3c9ff;} .str{color:#b5e8b0;} .num{color:#f7a8d8;} .comment{color:#8395a0;} .ann{color:#f7c08a;}
+.map-grid{display:flex; flex-direction:column; gap:8px;}
+.map-row{background:#fff; border:1px solid var(--line); border-left:3px solid var(--accent-2); border-radius:4px; padding:9px 12px; font-size:13px;}
+.map-row b{color:var(--accent);}
+.tip{border-left:3px solid var(--accent); background:rgba(50,120,53,.08); padding:14px 18px; border-radius:0 5px 5px 0; margin:18px 0; font-size:14px;}
+.tip .tip-label{font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600; color:var(--accent); letter-spacing:1.5px; display:block; margin-bottom:5px;}
+.tip b{color:var(--accent);}
+.key{background:var(--accent); color:var(--paper); padding:1px 6px; border-radius:3px; font-size:12px; font-weight:600;}
+/* QA */
+.qa-intro{background:var(--paper-2);border:1px solid var(--line);border-radius:6px;padding:18px 22px;margin-bottom:30px;font-size:14px;}
+.qa{border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fff;margin-bottom:22px;box-shadow:0 1px 3px rgba(25,56,31,.05);}
+.qa-q{background:var(--paper-2);padding:14px 20px;display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);}
+.q-num{background:var(--accent);color:var(--paper);font-size:13px;font-weight:700;padding:3px 10px;border-radius:3px;white-space:nowrap;}
+.qa-q h3{font-size:16px;font-weight:700;font-family:"Noto Sans JP",sans-serif;}
+.qa-a{padding:18px 20px;}
+.qa-a .answer-label{font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:600;color:var(--accent);letter-spacing:1px;margin-bottom:8px;}
+.qa-a p{margin-bottom:12px;}
+.qa-a p:last-child{margin-bottom:0;}
+.qa-a b{color:var(--accent);}
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;}
+.ng-ok{display:flex;flex-direction:column;gap:10px;margin:14px 0;}
+.box-ng,.box-ok{border-radius:5px;padding:11px 13px;font-size:13px;border:1px solid;}
+.box-ng{background:#fbeceb;border-color:#e7b6b3;} .box-ok{background:#e7f3ec;border-color:#a9d2ba;}
+.box-ng .bl,.box-ok .bl{font-weight:700;font-size:11px;letter-spacing:1px;display:block;margin-bottom:5px;}
+.box-ng .bl{color:#c0463f;} .box-ok .bl{color:#2f8050;}
+.box-ng code,.box-ok code{font-size:12px;background:rgba(0,0,0,.04);padding:1px 4px;border-radius:2px;}
+.qa-code{background:var(--code-bg);color:var(--code-text);padding:14px 16px;border-radius:5px;overflow-x:auto;margin:12px 0;}
+.qa-code pre{font-size:12.5px;line-height:1.65;white-space:pre;font-family:"JetBrains Mono",monospace;}
+.qa-tip{border-left:3px solid var(--accent);background:rgba(50,120,53,.07);padding:10px 14px;border-radius:0 4px 4px 0;font-size:13px;margin-top:12px;}
+.qa-tip .l{font-family:"JetBrains Mono",monospace;font-size:10.5px;font-weight:600;color:var(--accent);letter-spacing:1px;margin-right:6px;}
+.qa-tip b{color:var(--accent);}
+/* ending */
+.ending{background:linear-gradient(160deg,var(--ink),#0f2614);color:var(--paper);border-radius:8px;padding:48px 40px;text-align:center;margin-top:50px;position:relative;overflow:hidden;}
+.ending::before{content:"≫";position:absolute;right:-20px;bottom:-60px;font-size:280px;font-family:"JetBrains Mono",monospace;color:#fff;opacity:.05;line-height:1;}
+.ending>*{position:relative;z-index:1;}
+.ending h2{font-size:32px;font-weight:700;margin-bottom:10px;letter-spacing:1px;}
+.subtitle-end{font-family:"JetBrains Mono",monospace;font-size:13px;letter-spacing:3px;color:#c9a227;margin-bottom:28px;}
+.ending .message{max-width:600px;margin:0 auto 30px;font-size:14.5px;line-height:1.9;text-align:left;}
+.ending .message b{color:#e6c84f;}
+.series-list{background:rgba(255,255,255,.06);border-radius:6px;padding:22px;max-width:640px;margin:0 auto;text-align:left;}
+.series-list .sl-label{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:2px;color:var(--accent-3);margin-bottom:12px;text-align:center;}
+.sl-row{display:flex;gap:12px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:13px;}
+.sl-row:last-child{border-bottom:none;}
+.sl-vol{color:#c9a227;font-weight:700;font-family:"JetBrains Mono",monospace;white-space:nowrap;min-width:54px;}
+.page-footer{border-top:2px solid var(--ink); margin-top:30px; padding:26px 40px; background:var(--paper-2); text-align:center; color:var(--muted); font-size:12.5px;}
+.page-footer .sym{font-family:"JetBrains Mono",monospace; color:var(--accent); font-size:18px;}
+@media(max-width:720px){.demo-body{grid-template-columns:1fr;}.panel{border-right:none; border-bottom:1px solid var(--line);}.page-header h1{font-size:30px;}.page-header::before{font-size:200px;}main{padding:32px 22px;}.section-header .en{display:none;}.qa-grid{grid-template-columns:1fr;}.ending{padding:34px 22px;}.ending h2{font-size:24px;}}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・JAVA入門編 33</span><span class="vol-tag">VOL.11 / 全11巻</span><span class="final-tag">★ FINAL</span>
+  <h1>Collectorsと<br>困った時編</h1>
+  <div class="subtitle">COLLECTORS &amp; TROUBLESHOOTING — FINAL VOLUME</div>
+  <p class="lead">ついに最終巻です。前半は collect の真打ち<b>Collectors</b>——データを<b>グループ分け（groupingBy）・マップ化（toMap）・連結（joining）</b>する強力な道具を学びます。後半は<b>Q&amp;A形式</b>で、シリーズ全体の「詰まりポイント」を総ざらい。困った時に開く辞書として使ってください。そして最後に——<b>全11巻の旅を締めくくります</b>。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#collectors">01 Collectorsとは</a></li>
+    <li><a href="#grouping">02 groupingBy</a></li>
+    <li><a href="#tomap">03 toMap</a></li>
+    <li><a href="#joining">04 joining</a></li>
+    <li><a href="#qa">05 困った時のQ&amp;A</a></li>
+    <li><a href="#ending">06 シリーズ完結</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 Collectorsとは -->
+<section id="collectors">
+  <div class="section-header"><span class="section-num">01</span><h2>Collectorsとは</h2><span class="en">WHAT IS COLLECTORS</span></div>
+  <p class="pattern-desc">Vol.9で <code>collect</code> をちらっと見ました。その <code>collect</code> に渡す<b>「集め方のレシピ」</b>が <b>Collectors</b> です。<code>Collectors.toList()</code> でリスト化、<code>groupingBy</code> でグループ分け…と、<b>「集めた結果をどんな形にするか」</b>を指定します。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">collect(Collectors.○○)</span><span class="tag-desc">集め方のレシピ集</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Collectorsでできること</div>
+        <div class="map-grid">
+          <div class="map-row"><b>toList</b> リストにまとめる</div>
+          <div class="map-row"><b>groupingBy</b> 条件でグループ分け</div>
+          <div class="map-row"><b>toMap</b> キーと値のマップに</div>
+          <div class="map-row"><b>joining</b> 文字列を連結</div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// collectに「レシピ」を渡す</div>
+<pre><span class="kw">import</span> <span class="kw">static</span> java.util.stream.
+       <span class="type">Collectors</span>.*;
+
+list.<span class="fn">stream</span>()
+    .<span class="fn">collect</span>(<span class="fn">toList</span>());
+
+<span class="comment">// collect の中に</span>
+<span class="comment">// Collectorsのメソッドを入れる</span>
+<span class="comment">// = 「こう集めてね」の指示</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span><code>collect</code> は<b>「集める」終端操作</b>、<code>Collectors</code> は<b>「どう集めるかのレシピ」</b>。この2つはセット。<code>collect(Collectors.groupingBy(...))</code> のように組み合わせます。<b>ストリームの集大成</b>とも言える機能です。</div>
+</section>
+
+<!-- 02 groupingBy -->
+<section id="grouping">
+  <div class="section-header"><span class="section-num">02</span><h2>groupingBy（グループ分け）</h2><span class="en">GROUPING BY</span></div>
+  <p class="pattern-desc">★★★ 実務最頻出。<b>groupingBy は「ある基準でグループ分けする」</b>レシピです。「文字数ごとに分ける」「カテゴリごとに分ける」など。結果は<b>Map（キー→グループのリスト）</b>で返ります。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">groupingBy(分類の基準)</span><span class="tag-desc">仲間分けの神機能</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 文字数でグループ分け</div>
+        <div class="map-grid">
+          <div class="map-row"><b>3</b> → [fig]</div>
+          <div class="map-row"><b>5</b> → [apple, grape]</div>
+          <div class="map-row"><b>4</b> → [kiwi]</div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">「文字数」をキーに、同じ長さの単語が集まります。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 文字数ごとにグループ化</div>
+<pre><span class="type">Map</span>&lt;<span class="type">Integer</span>, <span class="type">List</span>&lt;<span class="type">String</span>&gt;&gt; g =
+  <span class="type">List</span>.<span class="fn">of</span>(<span class="str">"fig"</span>,<span class="str">"apple"</span>,
+          <span class="str">"grape"</span>,<span class="str">"kiwi"</span>)
+    .<span class="fn">stream</span>()
+    .<span class="fn">collect</span>(<span class="fn">groupingBy</span>(
+        <span class="type">String</span>::<span class="fn">length</span>));
+
+<span class="type">System</span>.out.<span class="fn">println</span>(g);
+<span class="comment">// {3=[fig], 4=[kiwi],</span>
+<span class="comment">//  5=[apple, grape]}</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>渡すのは「何を基準に分けるか」のFunction。<code>String::length</code> なら文字数、<code>商品::getカテゴリ</code> ならカテゴリ別。<b>「○○ごとに分類して集計」は現場で超頻出</b>。ループで書くと長い処理が、1行で書けてしまいます。</div>
+</section>
+
+<!-- 03 toMap -->
+<section id="tomap">
+  <div class="section-header"><span class="section-num">03</span><h2>toMap（マップ化）</h2><span class="en">TO MAP</span></div>
+  <p class="pattern-desc"><b>toMap は「キーと値のペアのMapを作る」</b>レシピです。「単語→その文字数」のような対応表を作れます。引数は2つ——<b>キーの作り方</b>と<b>値の作り方</b>を、それぞれFunctionで渡します。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">toMap(キー, 値)</span><span class="tag-desc">対応表を作る</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 単語 → 文字数の表</div>
+        <div class="map-grid">
+          <div class="map-row"><b>"fig"</b> → 3</div>
+          <div class="map-row"><b>"apple"</b> → 5</div>
+          <div class="map-row"><b>"kiwi"</b> → 4</div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">単語をキー、文字数を値にしたMapができます。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 単語と文字数の対応表</div>
+<pre><span class="type">Map</span>&lt;<span class="type">String</span>, <span class="type">Integer</span>&gt; m =
+  <span class="type">List</span>.<span class="fn">of</span>(<span class="str">"fig"</span>,<span class="str">"apple"</span>,<span class="str">"kiwi"</span>)
+    .<span class="fn">stream</span>()
+    .<span class="fn">collect</span>(<span class="fn">toMap</span>(
+        s -&gt; s,           <span class="comment">// キー：単語</span>
+        <span class="type">String</span>::<span class="fn">length</span>     <span class="comment">// 値：文字数</span>
+    ));
+
+<span class="type">System</span>.out.<span class="fn">println</span>(m);
+<span class="comment">// {fig=3, apple=5, kiwi=4}</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span><code>toMap</code> の<b>注意点：キーが重複するとエラー</b>になります。「同じキーが2回出る」データには使えません（その場合はgroupingByの出番）。<code>s -&gt; s</code> は「受け取った値をそのままキーにする」意味。よく使う書き方です。</div>
+</section>
+
+<!-- 04 joining -->
+<section id="joining">
+  <div class="section-header"><span class="section-num">04</span><h2>joining（文字列連結）</h2><span class="en">JOINING</span></div>
+  <p class="pattern-desc"><b>joining は「文字列を1本に繋げる」</b>レシピです。区切り文字も指定できます。「リストの要素をカンマ区切りで1つの文字列に」——CSVやメッセージ作成でよく使う、地味だけど便利な機能です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">joining(", ")</span><span class="tag-desc">区切り文字で連結</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">りんご, みかん, ぶどう</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">3つの単語が、カンマ区切りで1本の文字列に。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// カンマ区切りで連結</div>
+<pre><span class="type">String</span> joined =
+  <span class="type">List</span>.<span class="fn">of</span>(<span class="str">"りんご"</span>,<span class="str">"みかん"</span>,
+          <span class="str">"ぶどう"</span>)
+    .<span class="fn">stream</span>()
+    .<span class="fn">collect</span>(<span class="fn">joining</span>(<span class="str">", "</span>));
+
+<span class="type">System</span>.out.<span class="fn">println</span>(joined);
+<span class="comment">// → りんご, みかん, ぶどう</span>
+
+<span class="comment">// joining() だけなら区切りなし連結</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>これでCollectorsの主要4つ（toList・groupingBy・toMap・joining）が揃いました。<b>入門段階では groupingBy と joining が書ければ十分</b>。残りは「こういうのもある」程度で、必要になったらこの巻に戻ってくればOKです。次はいよいよQ&amp;Aです。</div>
+</section>
+
+<!-- 05 Q&A -->
+<section id="qa">
+  <div class="section-header"><span class="section-num">05</span><h2>困った時のQ&amp;A</h2><span class="en">TROUBLESHOOTING Q&amp;A</span></div>
+  <div class="qa-intro">
+    ここからは<b>Q&amp;A形式</b>。シリーズ全体でつまずきやすい「あるある」を10個集めました。エラーで詰まったとき、思い出せないとき、<b>ここを開けば解決の糸口が見つかる</b>はずです。辞書として活用してください。
+  </div>
+
+  <!-- Q1 -->
+  <div class="qa">
+    <div class="qa-q"><span class="q-num">Q.01</span><h3>ストリームを書いたのに、何も起きません</h3></div>
+    <div class="qa-a">
+      <div class="answer-label">A. ANSWER</div>
+      <p><b>終端操作の書き忘れ</b>が9割です。filterやmapなどの中間操作は「予約」にすぎず、終端操作（forEach・toList・count等）を書いて初めて実行されます。</p>
+      <div class="ng-ok">
+        <div class="box-ng"><span class="bl">NG：中間操作だけ</span><code>list.stream().map(n -&gt; n * 2);</code> ← 予約だけで動かない</div>
+        <div class="box-ok"><span class="bl">OK：終端操作で締める</span><code>list.stream().map(n -&gt; n * 2).forEach(...);</code></div>
+      </div>
+      <div class="qa-tip"><span class="l">TIP —</span>「動かない」と思ったら、まず<b>末尾に終端操作があるか</b>を確認。これが鉄則です。</div>
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="qa">
+    <div class="qa-q"><span class="q-num">Q.02</span><h3>「stream has already been operated upon or closed」と出ます</h3></div>
+    <div class="qa-a">
+      <div class="answer-label">A. ANSWER</div>
+      <p>ストリームを<b>使い回している</b>サインです。ストリームは1回限りの流れ。終端操作を呼ぶと閉じてしまい、二度は使えません。</p>
+      <div class="qa-code"><pre><span class="comment">// ✕ 変数に取って2回使う</span>
+<span class="type">Stream</span>&lt;<span class="type">Integer</span>&gt; s = list.<span class="fn">stream</span>();
+s.<span class="fn">forEach</span>(...);  <span class="comment">// 1回目</span>
+s.<span class="fn">count</span>();      <span class="comment">// ✕ 2回目で例外</span>
+
+<span class="comment">// ◯ その都度 stream() し直す</span>
+list.<span class="fn">stream</span>().<span class="fn">forEach</span>(...);
+list.<span class="fn">stream</span>().<span class="fn">count</span>();</pre></div>
+      <div class="qa-tip"><span class="l">POINT —</span>ストリームは<b>変数に保存せず、その場で書き切る</b>のが安全。元のリストは何度でも <code>stream()</code> できます。</div>
+    </div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="qa">
+    <div class="qa-q"><span class="q-num">Q.03</span><h3>ラムダ式で「returnが必要」と怒られます</h3></div>
+    <div class="qa-a">
+      <div class="answer-label">A. ANSWER</div>
+      <p><b>波カッコ <code>{ }</code> とreturnの関係</b>が原因です。鉄則は<b>「{ } を書いたらreturnも書く。{ } を書かないならreturnも書かない」</b>。この2つは必ずセットです。</p>
+      <div class="ng-ok">
+        <div class="box-ng"><span class="bl">NG：{ }なのにreturnなし</span><code>n -&gt; { n * 2; }</code> ← 値が返らずエラー</div>
+        <div class="box-ok"><span class="bl">OK：1行なら両方省略</span><code>n -&gt; n * 2</code></div>
+        <div class="box-ok"><span class="bl">OK：複数行なら両方書く</span><code>n -&gt; { int r = n*2; return r; }</code></div>
+      </div>
+      <div class="qa-tip"><span class="l">TIP —</span>1行で済むなら<b>波カッコもreturnも省く</b>のがいちばんスッキリします。</div>
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="qa">
+    <div class="qa-q"><span class="q-num">Q.04</span><h3>filterとmap、どっちを使えばいいか分かりません</h3></div>
+    <div class="qa-a">
+      <div class="answer-label">A. ANSWER</div>
+      <p>役割が違います。<b>filterは「数を減らす（中身はそのまま）」、mapは「中身を変える（数はそのまま）」</b>。やりたいことで選びます。</p>
+      <div class="qa-grid">
+        <div class="map-grid"><div class="map-row"><b>filter</b><br>条件で絞り込みたい<br><span style="font-size:12px;color:var(--muted);">例：偶数だけ残す</span></div></div>
+        <div class="map-grid"><div class="map-row"><b>map</b><br>各要素を変換したい<br><span style="font-size:12px;color:var(--muted);">例：全部2倍にする</span></div></div>
+      </div>
+      <div class="qa-tip"><span class="l">POINT —</span>「<b>選ぶ</b>ならfilter、<b>変える</b>ならmap」。両方使うなら <code>filter().map()</code> と繋げばOKです。</div>
+    </div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="qa">
+    <div class="qa-q"><span class="q-num">Q.05</span><h3>メソッド参照がうまく書けません</h3></div>
+    <div class="qa-a">
+      <div class="answer-label">A. ANSWER</div>
+      <p>無理に使う必要はありません。<b>メソッド参照はラムダの「短縮形」</b>。書けなければラムダのままで全く問題ないです。使えるのは「メソッドを1個呼ぶだけ」のときに限られます。</p>
+      <div class="ng-ok">
+        <div class="box-ok"><span class="bl">OK：メソッド1個だけ</span><code>s -&gt; s.toUpperCase()</code> → <code>String::toUpperCase</code></div>
+        <div class="box-ng"><span class="bl">参照にできない：計算が混じる</span><code>n -&gt; n * 2 + 1</code> ← ラムダのままが正解</div>
+      </div>
+      <div class="qa-tip"><span class="l">TIP —</span>IDEが「メソッド参照にできます」と提案してくれることも。<b>提案に乗る</b>のがラクで確実です。</div>
+    </div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="qa">
+    <div class="qa-q"><span class="q-num">Q.06</span><h3>NullPointerExceptionが出て落ちます</h3></div>
+    <div class="qa-a">
+      <div class="answer-label">A. ANSWER</div>
+      <p><b>null（何も無い値）に対してメソッドを呼んだ</b>サインです。特にストリームの <code>findFirst</code> などの結果は<b>Optional</b>で返るので、<code>orElse</code> や <code>ifPresent</code> で安全に開きましょう。</p>
+      <div class="ng-ok">
+        <div class="box-ng"><span class="bl">NG：いきなりget()</span><code>opt.get()</code> ← 空だと例外</div>
+        <div class="box-ok"><span class="bl">OK：代替値を用意</span><code>opt.orElse("デフォルト")</code></div>
+      </div>
+      <div class="qa-tip"><span class="l">POINT —</span>Optionalの <code>get()</code> は<b>基本使わない</b>。orElseかifPresentが安全策です（Vol.10参照）。</div>
+    </div>
+  </div>
+
+  <!-- Q7 -->
+  <div class="qa">
+    <div class="qa-q"><span class="q-num">Q.07</span><h3>toMapで「Duplicate key」エラーが出ます</h3></div>
+    <div class="qa-a">
+      <div class="answer-label">A. ANSWER</div>
+      <p>toMapは<b>キーが重複すると落ちます</b>。同じキーが2回以上出るデータには使えません。「グループ分けしたい」のが本来の目的なら、<b>groupingByを使う</b>のが正解です。</p>
+      <div class="ng-ok">
+        <div class="box-ng"><span class="bl">NG：キーが重複しうるのにtoMap</span>文字数をキーにすると、同じ長さの単語で衝突</div>
+        <div class="box-ok"><span class="bl">OK：同じキーをまとめたいならgroupingBy</span><code>groupingBy(String::length)</code></div>
+      </div>
+      <div class="qa-tip"><span class="l">TIP —</span><b>1対1の対応表ならtoMap、1対多のグループ分けならgroupingBy</b>。目的で選びましょう。</div>
+    </div>
+  </div>
+
+  <!-- Q8 -->
+  <div class="qa">
+    <div class="qa-q"><span class="q-num">Q.08</span><h3>合計を出したいのですが、reduceが難しいです</h3></div>
+    <div class="qa-a">
+      <div class="answer-label">A. ANSWER</div>
+      <p>単純な合計なら<b>reduceより簡単な方法</b>があります。数値に変換してから <code>sum()</code> を使うと読みやすいです。</p>
+      <div class="qa-code"><pre><span class="comment">// 難しめ：reduce</span>
+.<span class="fn">reduce</span>(<span class="num">0</span>, (a,b) -&gt; a + b);
+
+<span class="comment">// 簡単：mapToInt + sum</span>
+list.<span class="fn">stream</span>()
+    .<span class="fn">mapToInt</span>(n -&gt; n)
+    .<span class="fn">sum</span>();  <span class="comment">// → 合計</span></pre></div>
+      <div class="qa-tip"><span class="l">POINT —</span>合計・平均などは <code>mapToInt</code> で数値ストリームにして <code>sum()</code>・<code>average()</code> が<b>分かりやすい</b>です。</div>
+    </div>
+  </div>
+
+  <!-- Q9 -->
+  <div class="qa">
+    <div class="qa-q"><span class="q-num">Q.09</span><h3>「上位3件」を取りたいです</h3></div>
+    <div class="qa-a">
+      <div class="answer-label">A. ANSWER</div>
+      <p><b>sorted（並び替え）とlimit（個数制限）の合わせ技</b>が定番です。「大きい順に並べて、先頭3つ」という流れになります。</p>
+      <div class="qa-code"><pre>list.<span class="fn">stream</span>()
+    .<span class="fn">sorted</span>(<span class="type">Comparator</span>
+            .<span class="fn">reverseOrder</span>())  <span class="comment">// 大きい順</span>
+    .<span class="fn">limit</span>(<span class="num">3</span>)                 <span class="comment">// 先頭3つ</span>
+    .<span class="fn">toList</span>();</pre></div>
+      <div class="qa-tip"><span class="l">TIP —</span><b>sorted → limit</b>はランキング作成の鉄板。小さい順トップ3なら <code>sorted()</code> だけでOKです。</div>
+    </div>
+  </div>
+
+  <!-- Q10 -->
+  <div class="qa">
+    <div class="qa-q"><span class="q-num">Q.10</span><h3>結局、最低限どれを覚えればいいですか？</h3></div>
+    <div class="qa-a">
+      <div class="answer-label">A. ANSWER</div>
+      <p>これだけ覚えれば<b>初心者卒業</b>です。欲張らず、まずはこの5つを使いこなしましょう。</p>
+      <div class="map-grid">
+        <div class="map-row"><b>① filter</b> — 条件で絞る（Predicate）</div>
+        <div class="map-row"><b>② map</b> — 変換する（Function）</div>
+        <div class="map-row"><b>③ forEach</b> — 1つずつ処理（Consumer）</div>
+        <div class="map-row"><b>④ toList</b> — 結果をリスト化</div>
+        <div class="map-row"><b>⑤ orElse</b> — Optionalを安全に開く</div>
+      </div>
+      <div class="qa-tip"><span class="l">POINT —</span><b>この5つで実務の8割はカバーできます</b>。残りは必要になったとき、この11巻を辞書として開けばいい。それで十分です。</div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 ending -->
+<section id="ending">
+  <div class="section-header"><span class="section-num">06</span><h2>シリーズ完結</h2><span class="en">SERIES COMPLETE</span></div>
+  <div class="ending">
+    <h2>ストリームAPI編 全11巻 完結</h2>
+    <div class="subtitle-end">★ SERIES — COMPLETE ★</div>
+    <div class="message">
+      <p>全11巻、本当にお疲れさまでした。ここまで読み切ったあなたは、もう<b>「ストリームが書ける人」</b>です。</p>
+      <p>振り返れば長い旅でした。<b>関数型インターフェース</b>という土台から始まり、<b>ラムダ式</b>で短く書く文法を覚え、<b>メソッド参照</b>でさらに洗練させました。そして<b>ストリーム本体</b>へ——生成・中間操作・終端操作の3段階、<b>Optional</b>でnullを手なずけ、最後は<b>Collectors</b>で集計の技まで。</p>
+      <p>最初は <code>n -&gt; n * 2</code> の意味すら分からなかったかもしれません。でも今は、<code>stream().filter().map().collect()</code> の流れが<b>「やりたいことの順番」</b>として読めるはずです。それが何よりの成長です。</p>
+      <p>全部を完璧に覚える必要はありません。<b>困ったらこの11巻を辞書として開く</b>。それで十分。あなたのコードは、今日から確実に短く、読みやすくなります。<b>現場で、堂々と使ってください。</b></p>
+    </div>
+    <div class="series-list">
+      <div class="sl-label">— 全11巻の歩み —</div>
+      <div class="sl-row"><span class="sl-vol">Vol.1</span><span>入門・全体像編 — ストリームの地図</span></div>
+      <div class="sl-row"><span class="sl-vol">Vol.2</span><span>関数型インターフェース編 — 1メソッドの約束</span></div>
+      <div class="sl-row"><span class="sl-vol">Vol.3</span><span>標準関数型インターフェース編 — 4大の使い分け</span></div>
+      <div class="sl-row"><span class="sl-vol">Vol.4</span><span>ラムダ式編 — 引数→処理と省略ルール</span></div>
+      <div class="sl-row"><span class="sl-vol">Vol.5</span><span>メソッド参照・前編 — ::とstatic参照</span></div>
+      <div class="sl-row"><span class="sl-vol">Vol.6</span><span>メソッド参照・後編 — インスタンス/コンストラクタ参照</span></div>
+      <div class="sl-row"><span class="sl-vol">Vol.7</span><span>ストリーム入門編 — 3段階と使い捨て</span></div>
+      <div class="sl-row"><span class="sl-vol">Vol.8</span><span>中間操作編 — filter/map/sorted/distinct</span></div>
+      <div class="sl-row"><span class="sl-vol">Vol.9</span><span>終端操作編 — collect/count/reduce</span></div>
+      <div class="sl-row"><span class="sl-vol">Vol.10</span><span>Optionalクラス編 — null地獄からの卒業</span></div>
+      <div class="sl-row"><span class="sl-vol">Vol.11</span><span>Collectorsと困った時編 — 集計とQ&amp;A（本巻）</span></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <div class="sym">≫</div>
+  新・Java入門編 33  — ストリームAPI &nbsp;|&nbsp; Vol.11 Collectorsと困った時編 &nbsp;|&nbsp; 全11巻 完結
+</footer>
+</body>
+</html>

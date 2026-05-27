@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ストリームAPI 中間操作編 Vol.8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1b3930; --paper:#e8f1eb; --paper-2:#d0e3d7;
+  --accent:#2a7850; --accent-2:#519d73; --accent-3:#85ba97;
+  --muted:#617b6f; --line:#b5ccbe; --code-bg:#152723; --code-text:#d6e8df;
+  --panel-bg:#dcece3;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans JP",sans-serif; color:var(--ink); background:var(--paper); line-height:1.85; font-size:15px; -webkit-font-smoothing:antialiased;}
+h1,h2,h3,.section-num,.en{font-family:"Shippori Mincho",serif;}
+code,.code,.key,.tag-name,.menu-code{font-family:"JetBrains Mono",monospace;}
+.page-header{position:relative; overflow:hidden; padding:54px 40px 40px; border-bottom:2px solid var(--ink); background:linear-gradient(180deg,#ecf5ef 0%,var(--paper) 100%);}
+.page-header::before{content:"≫"; position:absolute; right:-10px; top:-30px; font-size:300px; font-family:"JetBrains Mono",monospace; font-weight:600; color:var(--accent); opacity:.13; line-height:1; z-index:0; letter-spacing:-30px;}
+.page-header>*{position:relative; z-index:1;}
+.series-tag{display:inline-block; background:var(--ink); color:var(--paper); font-size:11px; letter-spacing:2px; padding:4px 12px; border-radius:2px; font-weight:700;}
+.vol-tag{display:inline-block; background:var(--accent); color:var(--paper); font-size:11px; letter-spacing:1px; padding:4px 12px; border-radius:2px; margin-left:6px; font-weight:700;}
+.page-header h1{font-size:42px; font-weight:700; margin:22px 0 6px; letter-spacing:1px;}
+.subtitle{color:var(--muted); font-size:14px; letter-spacing:.5px;}
+.lead{max-width:640px; margin-top:18px; font-size:15px;}
+.toc{background:var(--paper-2); padding:20px 40px; border-bottom:1px solid var(--line);}
+.toc-label{font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:700; margin-bottom:8px;}
+.toc ul{list-style:none; display:flex; flex-wrap:wrap; gap:4px 22px;}
+.toc a{color:var(--ink); text-decoration:none; font-size:13.5px; position:relative; padding-left:16px;}
+.toc a::before{content:"—"; position:absolute; left:0; color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{max-width:1080px; margin:0 auto; padding:48px 40px 20px;}
+section{margin-bottom:54px;}
+.section-header{display:flex; align-items:baseline; gap:14px; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px;}
+.section-num{font-size:26px; color:var(--accent); font-weight:700; line-height:1;}
+.section-header h2{font-size:23px; font-weight:700; letter-spacing:.5px;}
+.section-header .en{margin-left:auto; font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:500;}
+.pattern-desc{max-width:700px; margin-bottom:20px; color:#2e463c;}
+.demo-card{border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#fff; box-shadow:0 1px 3px rgba(27,57,48,.05);}
+.demo-head{background:var(--paper-2); padding:11px 18px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+.tag-name{font-size:13px; font-weight:600; color:var(--accent);}
+.tag-desc{font-size:12.5px; color:var(--muted);}
+.demo-body{display:grid; grid-template-columns:1fr 1fr; gap:0;}
+.panel{background:var(--panel-bg); padding:20px; border-right:1px solid var(--line);}
+.panel-head,.code-head{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--muted); letter-spacing:1px; margin-bottom:12px;}
+.code{background:var(--code-bg); color:var(--code-text); padding:20px; overflow-x:auto;}
+.code pre{font-size:13px; line-height:1.7; white-space:pre; font-family:"JetBrains Mono",monospace;}
+.code .code-head{color:#7f93a0;}
+.kw{color:#ffc88a;} .type{color:#c2a3ff;} .fn{color:#a3c9ff;} .str{color:#b5e8b0;} .num{color:#f7a8d8;} .comment{color:#8395a0;} .ann{color:#f7c08a;}
+.map-grid{display:flex; flex-direction:column; gap:8px;}
+.map-row{background:#fff; border:1px solid var(--line); border-left:3px solid var(--accent-2); border-radius:4px; padding:9px 12px; font-size:13px;}
+.map-row b{color:var(--accent);}
+.viz{display:flex;flex-direction:column;gap:6px;}
+.viz-row{display:flex;align-items:center;gap:8px;font-family:"JetBrains Mono",monospace;font-size:12px;}
+.viz-label{width:54px;color:var(--muted);font-size:11px;text-align:right;}
+.chip{background:#fff;border:1px solid var(--accent-2);border-radius:3px;padding:2px 8px;font-size:12px;}
+.chip.out{background:var(--accent);color:var(--paper);border-color:var(--accent);}
+.chip.dim{opacity:.3;text-decoration:line-through;}
+.tip{border-left:3px solid var(--accent); background:rgba(42,120,80,.08); padding:14px 18px; border-radius:0 5px 5px 0; margin:18px 0; font-size:14px;}
+.tip .tip-label{font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600; color:var(--accent); letter-spacing:1.5px; display:block; margin-bottom:5px;}
+.tip b{color:var(--accent);}
+.key{background:var(--accent); color:var(--paper); padding:1px 6px; border-radius:3px; font-size:12px; font-weight:600;}
+.page-footer{border-top:2px solid var(--ink); margin-top:30px; padding:26px 40px; background:var(--paper-2); text-align:center; color:var(--muted); font-size:12.5px;}
+.page-footer .sym{font-family:"JetBrains Mono",monospace; color:var(--accent); font-size:18px;}
+@media(max-width:720px){.demo-body{grid-template-columns:1fr;}.panel{border-right:none; border-bottom:1px solid var(--line);}.page-header h1{font-size:32px;}.page-header::before{font-size:200px;}main{padding:32px 22px;}.section-header .en{display:none;}}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・JAVA入門編 33</span><span class="vol-tag">VOL.8 / 全11巻</span>
+  <h1>中間操作編</h1>
+  <div class="subtitle">INTERMEDIATE OPERATIONS</div>
+  <p class="lead">ストリームの心臓部・前半です。<b>中間操作</b>とは、流れの途中でデータを加工する操作のこと。<b>選ぶ（filter）・変える（map）・並べる（sorted）・重複を消す（distinct）</b>——よく使う中間操作を一気に学びます。どれも「Stream を返す」ので、いくつでも <code>.</code> で繋げられます。ここが使えると、ストリームが一気に実用的になります。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#filter">01 filter（選ぶ）</a></li>
+    <li><a href="#map">02 map（変える）</a></li>
+    <li><a href="#sorted">03 sorted（並べる）</a></li>
+    <li><a href="#distinct">04 distinct（重複削除）</a></li>
+    <li><a href="#limit">05 limit / skip（個数）</a></li>
+    <li><a href="#chain">06 繋げて使う</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="filter">
+  <div class="section-header"><span class="section-num">01</span><h2>filter（選ぶ）</h2><span class="en">FILTER</span></div>
+  <p class="pattern-desc">★★★ 最重要。<b>filter は「条件に合うものだけ残す」</b>操作です。渡すのはPredicate（判定）。<code>true</code> になったものだけが、次へ流れていきます。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.filter(Predicate)</span><span class="tag-desc">条件で絞り込む</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 偶数だけ残す</div>
+        <div class="viz">
+          <div class="viz-row"><span class="viz-label">入力</span><span class="chip">1</span><span class="chip">2</span><span class="chip">3</span><span class="chip">4</span></div>
+          <div class="viz-row"><span class="viz-label">判定</span><span style="font-size:11px;color:var(--muted);">偶数か？</span></div>
+          <div class="viz-row"><span class="viz-label">出力</span><span class="chip dim">1</span><span class="chip out">2</span><span class="chip dim">3</span><span class="chip out">4</span></div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">偶数の 2 と 4 だけが残ります。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 偶数だけ抽出</div>
+<pre><span class="type">List</span>.<span class="fn">of</span>(<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>)
+    .<span class="fn">stream</span>()
+    .<span class="fn">filter</span>(n -&gt; n % <span class="num">2</span> == <span class="num">0</span>)
+    .<span class="fn">forEach</span>(<span class="type">System</span>.out::<span class="fn">println</span>);
+
+<span class="comment">// → 2</span>
+<span class="comment">// → 4</span>
+
+<span class="comment">// true になった要素だけ通過</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>filterは<b>「ふるい」</b>です。条件（Predicate）を通った要素だけが下に落ちる。<code>n % 2 == 0</code>（偶数）、<code>s.length() &gt; 3</code>（4文字以上）、<code>!s.isEmpty()</code>（空でない）——条件は自由自在です。</div>
+</section>
+
+<!-- 02 -->
+<section id="map">
+  <div class="section-header"><span class="section-num">02</span><h2>map（変える）</h2><span class="en">MAP</span></div>
+  <p class="pattern-desc">★★★ 最重要。<b>map は「1つ1つを別のものに変換する」</b>操作です。渡すのはFunction（変換）。要素の<b>個数は変わらず、中身だけが変わります</b>。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.map(Function)</span><span class="tag-desc">全要素を変換</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 全部を大文字に</div>
+        <div class="viz">
+          <div class="viz-row"><span class="viz-label">入力</span><span class="chip">a</span><span class="chip">b</span><span class="chip">c</span></div>
+          <div class="viz-row"><span class="viz-label">変換</span><span style="font-size:11px;color:var(--muted);">大文字に</span></div>
+          <div class="viz-row"><span class="viz-label">出力</span><span class="chip out">A</span><span class="chip out">B</span><span class="chip out">C</span></div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">個数は3個のまま。中身だけ変わります。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 小文字 → 大文字に変換</div>
+<pre><span class="type">List</span>.<span class="fn">of</span>(<span class="str">"a"</span>,<span class="str">"b"</span>,<span class="str">"c"</span>)
+    .<span class="fn">stream</span>()
+    .<span class="fn">map</span>(<span class="type">String</span>::<span class="fn">toUpperCase</span>)
+    .<span class="fn">forEach</span>(<span class="type">System</span>.out::<span class="fn">println</span>);
+
+<span class="comment">// → A</span>
+<span class="comment">// → B</span>
+<span class="comment">// → C</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>filterとmapの違いを押さえましょう。<b>filterは「数を減らす（中身はそのまま）」、mapは「中身を変える（数はそのまま）」</b>。この2つがストリームの二大エース。<code>String::toUpperCase</code> のようにメソッド参照と相性抜群です。</div>
+</section>
+
+<!-- 03 -->
+<section id="sorted">
+  <div class="section-header"><span class="section-num">03</span><h2>sorted（並べる）</h2><span class="en">SORTED</span></div>
+  <p class="pattern-desc"><b>sorted は「並び替える」</b>操作です。引数なしで呼べば<b>自然順（数値なら小さい順、文字なら辞書順）</b>に並びます。逆順にしたいときは少し書き足します。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.sorted()</span><span class="tag-desc">並び替え</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 小さい順に並べる</div>
+        <div class="viz">
+          <div class="viz-row"><span class="viz-label">入力</span><span class="chip">3</span><span class="chip">1</span><span class="chip">2</span></div>
+          <div class="viz-row"><span class="viz-label">並替</span><span style="font-size:11px;color:var(--muted);">昇順</span></div>
+          <div class="viz-row"><span class="viz-label">出力</span><span class="chip out">1</span><span class="chip out">2</span><span class="chip out">3</span></div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 昇順・降順</div>
+<pre><span class="comment">// 昇順（小さい順）</span>
+<span class="type">List</span>.<span class="fn">of</span>(<span class="num">3</span>,<span class="num">1</span>,<span class="num">2</span>).<span class="fn">stream</span>()
+    .<span class="fn">sorted</span>()
+    .<span class="fn">forEach</span>(<span class="type">System</span>.out::<span class="fn">println</span>);
+<span class="comment">// → 1 2 3</span>
+
+<span class="comment">// 降順（大きい順）</span>
+<span class="type">List</span>.<span class="fn">of</span>(<span class="num">3</span>,<span class="num">1</span>,<span class="num">2</span>).<span class="fn">stream</span>()
+    .<span class="fn">sorted</span>(<span class="type">Comparator</span>
+            .<span class="fn">reverseOrder</span>())
+    .<span class="fn">forEach</span>(<span class="type">System</span>.out::<span class="fn">println</span>);
+<span class="comment">// → 3 2 1</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span>降順は <code>Comparator.reverseOrder()</code> を渡します。最初は「昇順は <code>sorted()</code>、降順は <code>sorted(Comparator.reverseOrder())</code>」と丸暗記でOK。<b>Comparatorは奥が深い</b>ので、今は2パターンだけ押さえれば十分です。</div>
+</section>
+
+<!-- 04 -->
+<section id="distinct">
+  <div class="section-header"><span class="section-num">04</span><h2>distinct（重複削除）</h2><span class="en">DISTINCT</span></div>
+  <p class="pattern-desc"><b>distinct は「重複を取り除く」</b>操作です。引数は不要。同じ値が複数あったら、1個だけ残してあとは消します。「ユニークな値だけ欲しい」ときの定番です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.distinct()</span><span class="tag-desc">重複を1個にまとめる</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ダブりを消す</div>
+        <div class="viz">
+          <div class="viz-row"><span class="viz-label">入力</span><span class="chip">1</span><span class="chip">2</span><span class="chip">2</span><span class="chip">3</span><span class="chip">3</span></div>
+          <div class="viz-row"><span class="viz-label">処理</span><span style="font-size:11px;color:var(--muted);">重複削除</span></div>
+          <div class="viz-row"><span class="viz-label">出力</span><span class="chip out">1</span><span class="chip out">2</span><span class="chip out">3</span></div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 重複を除く</div>
+<pre><span class="type">List</span>.<span class="fn">of</span>(<span class="num">1</span>,<span class="num">2</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">3</span>)
+    .<span class="fn">stream</span>()
+    .<span class="fn">distinct</span>()
+    .<span class="fn">forEach</span>(<span class="type">System</span>.out::<span class="fn">println</span>);
+
+<span class="comment">// → 1</span>
+<span class="comment">// → 2</span>
+<span class="comment">// → 3</span>
+
+<span class="comment">// ダブった 2 と 3 が1個ずつに</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>distinctは「同じかどうか」を <code>equals</code> で判定します。数値や文字列はそのまま使えて便利。<b>「リストからダブりを消したい」</b>は実務でも頻出。<code>.distinct()</code> 一発で済むのは超便利です。</div>
+</section>
+
+<!-- 05 -->
+<section id="limit">
+  <div class="section-header"><span class="section-num">05</span><h2>limit / skip（個数で操作）</h2><span class="en">LIMIT / SKIP</span></div>
+  <p class="pattern-desc"><b>limit は「先頭からN個だけ取る」、skip は「先頭からN個飛ばす」</b>操作です。「上位3件だけ」「最初の1件を除く」のような場面で活躍します。ページング処理の基礎にもなります。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.limit(n) / .skip(n)</span><span class="tag-desc">個数で切り出す</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// limit(2) と skip(2)</div>
+        <div class="viz">
+          <div class="viz-row"><span class="viz-label">入力</span><span class="chip">1</span><span class="chip">2</span><span class="chip">3</span><span class="chip">4</span></div>
+          <div class="viz-row"><span class="viz-label">limit2</span><span class="chip out">1</span><span class="chip out">2</span><span class="chip dim">3</span><span class="chip dim">4</span></div>
+          <div class="viz-row"><span class="viz-label">skip2</span><span class="chip dim">1</span><span class="chip dim">2</span><span class="chip out">3</span><span class="chip out">4</span></div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 先頭2個 / 先頭2個飛ばす</div>
+<pre><span class="comment">// 先頭から2個だけ</span>
+<span class="type">List</span>.<span class="fn">of</span>(<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>).<span class="fn">stream</span>()
+    .<span class="fn">limit</span>(<span class="num">2</span>)
+    .<span class="fn">forEach</span>(<span class="type">System</span>.out::<span class="fn">println</span>);
+<span class="comment">// → 1 2</span>
+
+<span class="comment">// 先頭2個を飛ばす</span>
+<span class="type">List</span>.<span class="fn">of</span>(<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>).<span class="fn">stream</span>()
+    .<span class="fn">skip</span>(<span class="num">2</span>)
+    .<span class="fn">forEach</span>(<span class="type">System</span>.out::<span class="fn">println</span>);
+<span class="comment">// → 3 4</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span><code>sorted()</code> と <code>limit()</code> を組み合わせると<b>「上位N件」</b>が作れます。例：<code>.sorted(reverseOrder()).limit(3)</code> で「大きい順トップ3」。<b>これは現場で超頻出の定番パターン</b>です。</div>
+</section>
+
+<!-- 06 -->
+<section id="chain">
+  <div class="section-header"><span class="section-num">06</span><h2>繋げて使う</h2><span class="en">CHAINING</span></div>
+  <p class="pattern-desc">中間操作の真価は<b>「いくつでも繋げられる」</b>こと。filter→map→sorted…と並べると、複雑な処理も1本の流れで書けます。<b>上から順に読めば処理が分かる</b>のが気持ちいいところ。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">filter → map → sorted</span><span class="tag-desc">★★ 中間操作の合わせ技</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">APPLE<br>GRAPE</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">5文字以上を選び、大文字化し、辞書順に。<br>"apple"と"grape"が残り、大文字＆ソート。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 3つの中間操作を連結</div>
+<pre><span class="type">List</span>.<span class="fn">of</span>(<span class="str">"apple"</span>,<span class="str">"fig"</span>,
+        <span class="str">"grape"</span>,<span class="str">"kiwi"</span>)
+    .<span class="fn">stream</span>()
+    .<span class="fn">filter</span>(s -&gt; s.<span class="fn">length</span>() &gt;= <span class="num">5</span>)
+    .<span class="fn">map</span>(<span class="type">String</span>::<span class="fn">toUpperCase</span>)
+    .<span class="fn">sorted</span>()
+    .<span class="fn">forEach</span>(<span class="type">System</span>.out::<span class="fn">println</span>);
+
+<span class="comment">// fig,kiwi は4文字以下で脱落</span>
+<span class="comment">// apple,grape が残り大文字化</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>順番には意味があります。<b>「選んでから変換」と「変換してから選ぶ」では結果が変わる</b>ことも。基本は<b>「filterで早めに減らす→mapで変換」</b>が効率的。読みやすさと効率、両方の意味で順番を意識してください。</div>
+
+  <div class="tip" style="margin-top:48px;">
+    <span class="tip-label">NEXT STEP —</span>
+    中間操作、お疲れさまでした。<b>filter・map・sorted・distinct・limit/skip</b>——この5つが使えれば、データ加工はほぼ思い通りです。でも、ここまで全部「中間操作（予約）」だけ。<b>まだ結果を受け取っていません</b>。次の<b>Vol.9「終端操作編」</b>で、いよいよ<b>流れを実行して結果を取り出す</b>方法（collect・count・reduce…）を学びます。ストリームの出口です。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <div class="sym">≫</div>
+  新・Java入門編 33  — ストリームAPI &nbsp;|&nbsp; Vol.8 中間操作編 &nbsp;|&nbsp; 全11巻
+</footer>
+</body>
+</html>

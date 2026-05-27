@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ストリームAPI Optionalクラス編 Vol.10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a3826; --paper:#e6f1e7; --paper-2:#cce3cf;
+  --accent:#2f7840; --accent-2:#579d64; --accent-3:#8aba90;
+  --muted:#5f7b66; --line:#b1ccb6; --code-bg:#13261a; --code-text:#d4e8d8;
+  --panel-bg:#daecdd;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans JP",sans-serif; color:var(--ink); background:var(--paper); line-height:1.85; font-size:15px; -webkit-font-smoothing:antialiased;}
+h1,h2,h3,.section-num,.en{font-family:"Shippori Mincho",serif;}
+code,.code,.key,.tag-name,.menu-code{font-family:"JetBrains Mono",monospace;}
+.page-header{position:relative; overflow:hidden; padding:54px 40px 40px; border-bottom:2px solid var(--ink); background:linear-gradient(180deg,#eaf5ec 0%,var(--paper) 100%);}
+.page-header::before{content:"≫"; position:absolute; right:-10px; top:-30px; font-size:300px; font-family:"JetBrains Mono",monospace; font-weight:600; color:var(--accent); opacity:.13; line-height:1; z-index:0; letter-spacing:-30px;}
+.page-header>*{position:relative; z-index:1;}
+.series-tag{display:inline-block; background:var(--ink); color:var(--paper); font-size:11px; letter-spacing:2px; padding:4px 12px; border-radius:2px; font-weight:700;}
+.vol-tag{display:inline-block; background:var(--accent); color:var(--paper); font-size:11px; letter-spacing:1px; padding:4px 12px; border-radius:2px; margin-left:6px; font-weight:700;}
+.page-header h1{font-size:42px; font-weight:700; margin:22px 0 6px; letter-spacing:1px;}
+.subtitle{color:var(--muted); font-size:14px; letter-spacing:.5px;}
+.lead{max-width:640px; margin-top:18px; font-size:15px;}
+.toc{background:var(--paper-2); padding:20px 40px; border-bottom:1px solid var(--line);}
+.toc-label{font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:700; margin-bottom:8px;}
+.toc ul{list-style:none; display:flex; flex-wrap:wrap; gap:4px 22px;}
+.toc a{color:var(--ink); text-decoration:none; font-size:13.5px; position:relative; padding-left:16px;}
+.toc a::before{content:"—"; position:absolute; left:0; color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{max-width:1080px; margin:0 auto; padding:48px 40px 20px;}
+section{margin-bottom:54px;}
+.section-header{display:flex; align-items:baseline; gap:14px; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px;}
+.section-num{font-size:26px; color:var(--accent); font-weight:700; line-height:1;}
+.section-header h2{font-size:23px; font-weight:700; letter-spacing:.5px;}
+.section-header .en{margin-left:auto; font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:500;}
+.pattern-desc{max-width:700px; margin-bottom:20px; color:#2c4633;}
+.demo-card{border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#fff; box-shadow:0 1px 3px rgba(26,56,38,.05);}
+.demo-head{background:var(--paper-2); padding:11px 18px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+.tag-name{font-size:13px; font-weight:600; color:var(--accent);}
+.tag-desc{font-size:12.5px; color:var(--muted);}
+.demo-body{display:grid; grid-template-columns:1fr 1fr; gap:0;}
+.panel{background:var(--panel-bg); padding:20px; border-right:1px solid var(--line);}
+.panel-head,.code-head{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--muted); letter-spacing:1px; margin-bottom:12px;}
+.code{background:var(--code-bg); color:var(--code-text); padding:20px; overflow-x:auto;}
+.code pre{font-size:13px; line-height:1.7; white-space:pre; font-family:"JetBrains Mono",monospace;}
+.code .code-head{color:#7f93a0;}
+.kw{color:#ffc88a;} .type{color:#c2a3ff;} .fn{color:#a3c9ff;} .str{color:#b5e8b0;} .num{color:#f7a8d8;} .comment{color:#8395a0;} .ann{color:#f7c08a;}
+.map-grid{display:flex; flex-direction:column; gap:8px;}
+.map-row{background:#fff; border:1px solid var(--line); border-left:3px solid var(--accent-2); border-radius:4px; padding:9px 12px; font-size:13px;}
+.map-row b{color:var(--accent);}
+.box{display:flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:5px;padding:12px;margin-bottom:8px;font-family:"JetBrains Mono",monospace;font-size:13px;}
+.box.full{border-left:3px solid var(--accent);}
+.box.empty{border-left:3px solid var(--muted);color:var(--muted);}
+.tip{border-left:3px solid var(--accent); background:rgba(47,120,64,.08); padding:14px 18px; border-radius:0 5px 5px 0; margin:18px 0; font-size:14px;}
+.tip .tip-label{font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600; color:var(--accent); letter-spacing:1.5px; display:block; margin-bottom:5px;}
+.tip b{color:var(--accent);}
+.key{background:var(--accent); color:var(--paper); padding:1px 6px; border-radius:3px; font-size:12px; font-weight:600;}
+.page-footer{border-top:2px solid var(--ink); margin-top:30px; padding:26px 40px; background:var(--paper-2); text-align:center; color:var(--muted); font-size:12.5px;}
+.page-footer .sym{font-family:"JetBrains Mono",monospace; color:var(--accent); font-size:18px;}
+.ng-ok{display:grid;grid-template-columns:1fr;gap:10px;}
+.box-ng,.box-ok{border-radius:5px;padding:10px 12px;font-size:13px;border:1px solid;}
+.box-ng{background:#fbeceb;border-color:#e7b6b3;} .box-ok{background:#e7f3ec;border-color:#a9d2ba;}
+.box-ng .bl,.box-ok .bl{font-weight:700;font-size:11px;letter-spacing:1px;display:block;margin-bottom:3px;}
+.box-ng .bl{color:#c0463f;} .box-ok .bl{color:#2f8050;}
+.box-ng code,.box-ok code{font-size:12px;}
+@media(max-width:720px){.demo-body{grid-template-columns:1fr;}.panel{border-right:none; border-bottom:1px solid var(--line);}.page-header h1{font-size:32px;}.page-header::before{font-size:200px;}main{padding:32px 22px;}.section-header .en{display:none;}}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・JAVA入門編 33</span><span class="vol-tag">VOL.10 / 全11巻</span>
+  <h1>Optional<br>クラス編</h1>
+  <div class="subtitle">OPTIONAL CLASS</div>
+  <p class="lead">プログラマを長年悩ませてきた<b><code>null</code>地獄</b>。「値が無いかもしれない」状況を安全に扱うために生まれたのが<b>Optional</b>です。中身が「あるかもしれないし、無いかもしれない箱」。ストリームの <code>findFirst</code> など「結果が1個あるか無いか分からない」場面で必ず出会います。この巻で<b>null恐怖症を卒業</b>しましょう。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#null">01 nullの問題</a></li>
+    <li><a href="#what">02 Optionalとは</a></li>
+    <li><a href="#stream">03 ストリームで出会う</a></li>
+    <li><a href="#orElse">04 orElse（無ければ代替）</a></li>
+    <li><a href="#ifPresent">05 ifPresent（あれば実行）</a></li>
+    <li><a href="#dont">06 やってはいけない</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="null">
+  <div class="section-header"><span class="section-num">01</span><h2>nullの問題</h2><span class="en">THE NULL PROBLEM</span></div>
+  <p class="pattern-desc">まず敵を知りましょう。<b><code>null</code> は「何も無い」を表す特別な値</b>。便利なようで、これに対してメソッドを呼ぶと<b>NullPointerException</b>という有名なエラーで落ちます。初学者が最初にぶつかる壁です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">NullPointerException</span><span class="tag-desc">通称ヌルポ、永遠の敵</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ落ちるか</div>
+        <div class="map-grid">
+          <div class="map-row">値が <b>null</b>（何も無い）</div>
+          <div class="map-row">null に <b>.length()</b> を呼ぶ</div>
+          <div class="map-row">「無いものは操作できない」</div>
+          <div class="map-row">→ <b>NullPointerException</b></div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// よくあるクラッシュ</div>
+<pre><span class="type">String</span> name = <span class="kw">null</span>;
+
+<span class="comment">// null に対してメソッドを呼ぶと…</span>
+<span class="type">System</span>.out.<span class="fn">println</span>(
+  name.<span class="fn">length</span>()  <span class="comment">// 💥 ここで落ちる</span>
+);
+
+<span class="comment">// NullPointerException</span>
+<span class="comment">// 「nullのメソッドは呼べない」</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span><b>NullPointerException（通称ヌルポ）</b>は、Javaでもっとも遭遇するエラーのひとつ。原因は「nullかもしれない値を、チェックせずに使った」こと。Optionalは<b>このうっかりを防ぐ仕組み</b>です。</div>
+</section>
+
+<!-- 02 -->
+<section id="what">
+  <div class="section-header"><span class="section-num">02</span><h2>Optionalとは</h2><span class="en">WHAT IS OPTIONAL</span></div>
+  <p class="pattern-desc"><b>Optional は「値が入っているかもしれない箱」</b>です。中身がある状態（present）と、空っぽの状態（empty）の2つ。<b>「箱ごと受け取って、開ける前に中身があるか確認できる」</b>のがミソ。いきなりnullで落ちることを防ぎます。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Optional&lt;T&gt;</span><span class="tag-desc">中身ありか空かの箱</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの状態</div>
+        <div class="box full">📦 中身あり：<b>"りんご"</b></div>
+        <div class="box empty">📦 空っぽ：empty</div>
+        <p style="margin-top:8px;font-size:12.5px;color:var(--muted);">どちらの状態かを安全に確認してから開けられます。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// Optionalを作ってみる</div>
+<pre><span class="comment">// 中身ありの箱</span>
+<span class="type">Optional</span>&lt;<span class="type">String</span>&gt; a =
+    <span class="type">Optional</span>.<span class="fn">of</span>(<span class="str">"りんご"</span>);
+
+<span class="comment">// 空っぽの箱</span>
+<span class="type">Optional</span>&lt;<span class="type">String</span>&gt; b =
+    <span class="type">Optional</span>.<span class="fn">empty</span>();
+
+<span class="comment">// 中身があるか確認</span>
+<span class="type">System</span>.out.<span class="fn">println</span>(
+  a.<span class="fn">isPresent</span>());  <span class="comment">// true</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>Optionalの発想は<b>「nullを直接扱わず、箱に包んで安全に運ぶ」</b>こと。箱を開ける前に「中身ある？」と聞ける。この一手間が、ヌルポを劇的に減らします。<b>これが神機能と呼ばれる理由</b>です。</div>
+</section>
+
+<!-- 03 -->
+<section id="stream">
+  <div class="section-header"><span class="section-num">03</span><h2>ストリームで出会う</h2><span class="en">MEET IN STREAMS</span></div>
+  <p class="pattern-desc">Optionalは<b>ストリームの終端操作の戻り値</b>としてよく登場します。代表が <code>findFirst</code>（最初の1件を取る）。「条件に合う要素が1個も無いかもしれない」ので、結果はOptionalで返ってくるのです。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.findFirst()</span><span class="tag-desc">結果はOptionalで返る</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜOptionalなのか</div>
+        <div class="map-grid">
+          <div class="map-row">条件に合う最初の1件を探す</div>
+          <div class="map-row">でも<b>1件も無いかも</b>しれない</div>
+          <div class="map-row">だから<b>「箱」で返す</b></div>
+          <div class="map-row">→ Optional&lt;String&gt;</div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 最初の長い単語を探す</div>
+<pre><span class="type">Optional</span>&lt;<span class="type">String</span>&gt; found =
+    <span class="type">List</span>.<span class="fn">of</span>(<span class="str">"fig"</span>,<span class="str">"apple"</span>)
+        .<span class="fn">stream</span>()
+        .<span class="fn">filter</span>(s -&gt; s.<span class="fn">length</span>() &gt; <span class="num">3</span>)
+        .<span class="fn">findFirst</span>();
+
+<span class="comment">// "apple" が入った箱が返る</span>
+<span class="comment">// もし条件に合う物が無ければ</span>
+<span class="comment">// 空っぽの箱が返る</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>「なぜそのまま文字列を返さないの？」——それは<b>「見つからなかった場合」があるから</b>。nullを返すと受け取った側がうっかり落とす。Optionalなら<b>「無いかもよ」と型で警告</b>してくれる。親切設計です。</div>
+</section>
+
+<!-- 04 -->
+<section id="orElse">
+  <div class="section-header"><span class="section-num">04</span><h2>orElse（無ければ代替値）</h2><span class="en">OR ELSE</span></div>
+  <p class="pattern-desc">★★★ 最重要。<b>orElse は「中身があればそれを、無ければ代わりの値を返す」</b>メソッドです。これがOptionalの主役級の使い方。「見つかればその値、見つからなければデフォルト値」が1行で書けます。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.orElse(代替値)</span><span class="tag-desc">空のときの保険</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">apple<br>該当なし</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">1つ目は見つかったので "apple"。<br>2つ目は空なので代替値 "該当なし"。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 無ければデフォルト値を使う</div>
+<pre><span class="comment">// 見つかるケース</span>
+<span class="type">String</span> r1 = <span class="type">List</span>.<span class="fn">of</span>(<span class="str">"apple"</span>)
+    .<span class="fn">stream</span>().<span class="fn">findFirst</span>()
+    .<span class="fn">orElse</span>(<span class="str">"該当なし"</span>);
+<span class="comment">// → apple</span>
+
+<span class="comment">// 見つからないケース</span>
+<span class="type">String</span> r2 = <span class="type">List</span>.&lt;<span class="type">String</span>&gt;<span class="fn">of</span>()
+    .<span class="fn">stream</span>().<span class="fn">findFirst</span>()
+    .<span class="fn">orElse</span>(<span class="str">"該当なし"</span>);
+<span class="comment">// → 該当なし（空だったので代替）</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span><code>orElse</code> を使えば<b>「もし無ければこの値」</b>を安全に書けます。nullチェックのif文を書く必要なし。<code>findFirst().orElse("デフォルト")</code> は<b>現場で頻出の鉄板パターン</b>。これだけ覚えれば初心者卒業です。</div>
+</section>
+
+<!-- 05 -->
+<section id="ifPresent">
+  <div class="section-header"><span class="section-num">05</span><h2>ifPresent（あれば実行）</h2><span class="en">IF PRESENT</span></div>
+  <p class="pattern-desc"><b>ifPresent は「中身があるときだけ、処理を実行する」</b>メソッドです。渡すのはConsumer（消費）。「値があれば表示、無ければ何もしない」が安全に書けます。空のときに何もしないので、ヌルポが起きません。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">.ifPresent(Consumer)</span><span class="tag-desc">あるときだけ動く</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">見つかった: apple</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">中身があったので表示。<br>空だったら、この行は何も起きません。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 中身があるときだけ表示</div>
+<pre><span class="type">List</span>.<span class="fn">of</span>(<span class="str">"apple"</span>,<span class="str">"fig"</span>)
+    .<span class="fn">stream</span>()
+    .<span class="fn">findFirst</span>()
+    .<span class="fn">ifPresent</span>(s -&gt;
+       <span class="type">System</span>.out.<span class="fn">println</span>(
+         <span class="str">"見つかった: "</span> + s));
+
+<span class="comment">// → 見つかった: apple</span>
+
+<span class="comment">// もし空なら何も表示されない</span>
+<span class="comment">// （エラーにもならない）</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span>使い分けの目安：<b>値を「取り出して使う」なら orElse、値が「あるときだけ何かする」なら ifPresent</b>。どちらも「箱を安全に開ける」ためのメソッド。この2つが使えれば、Optionalの実用は十分カバーできます。</div>
+</section>
+
+<!-- 06 -->
+<section id="dont">
+  <div class="section-header"><span class="section-num">06</span><h2>やってはいけないこと</h2><span class="en">ANTI-PATTERNS</span></div>
+  <p class="pattern-desc">最後に注意点。<b>Optionalを使う意味を消してしまうNG行為</b>があります。代表が <code>get()</code> をいきなり呼ぶこと。これは「箱を確認せず開ける」のと同じで、空だと結局エラーで落ちます。本末転倒です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">get()の直呼びは危険</span><span class="tag-desc">★★ ありがちな罠</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// NGとOK</div>
+        <div class="ng-ok">
+          <div class="box-ng"><span class="bl">NG：いきなりget()</span><code>opt.get()</code> 空だと例外で落ちる。Optionalの意味がない</div>
+          <div class="box-ok"><span class="bl">OK：orElseやifPresent</span><code>opt.orElse(代替)</code> 空でも安全に処理できる</div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 安全な書き方を選ぶ</div>
+<pre><span class="comment">// ✕ 危険：箱を確認せず開ける</span>
+<span class="type">String</span> s = opt.<span class="fn">get</span>();
+<span class="comment">// 空だと NoSuchElementException</span>
+
+<span class="comment">// ◯ 安全：代替値を用意</span>
+<span class="type">String</span> s = opt.<span class="fn">orElse</span>(<span class="str">"なし"</span>);
+
+<span class="comment">// ◯ 安全：あるときだけ処理</span>
+opt.<span class="fn">ifPresent</span>(
+  v -&gt; <span class="type">System</span>.out.<span class="fn">println</span>(v));</pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>鉄則：<b><code>get()</code> は基本使わない</b>。代わりに <code>orElse</code> か <code>ifPresent</code> を使う。せっかく安全な箱（Optional）を受け取ったのに、get()でいきなり開けたら台無し。<b>「箱は安全に開ける」</b>——これがOptionalのお約束です。</div>
+
+  <div class="tip" style="margin-top:48px;">
+    <span class="tip-label">NEXT STEP —</span>
+    Optional、お疲れさまでした。<b>「あるかもしれない箱」を orElse と ifPresent で安全に開ける</b>——これでnull恐怖症は卒業です。いよいよ次が最終巻。<b>Vol.11「Collectorsと困った時編」</b>では、collectの真の力<b>Collectors（groupingBy・toMap・joining）</b>を学び、さらに<b>Q&A形式のトラブルシューティング</b>でシリーズ全体の詰まりポイントを総ざらいします。そして——シリーズ完結です。最後までいきましょう。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <div class="sym">≫</div>
+  新・Java入門編 33  — ストリームAPI &nbsp;|&nbsp; Vol.10 Optionalクラス編 &nbsp;|&nbsp; 全11巻
+</footer>
+</body>
+</html>

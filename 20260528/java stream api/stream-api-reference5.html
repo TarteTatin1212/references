@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ストリームAPI メソッド参照・前編 Vol.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1f3739; --paper:#ebf1ee; --paper-2:#d6e3df;
+  --accent:#327668; --accent-2:#589d8b; --accent-3:#8cbaab;
+  --muted:#647b76; --line:#bbccc7; --code-bg:#18272a; --code-text:#d9e8e5;
+  --panel-bg:#e1ece8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans JP",sans-serif; color:var(--ink); background:var(--paper); line-height:1.85; font-size:15px; -webkit-font-smoothing:antialiased;}
+h1,h2,h3,.section-num,.en{font-family:"Shippori Mincho",serif;}
+code,.code,.key,.tag-name,.menu-code{font-family:"JetBrains Mono",monospace;}
+.page-header{position:relative; overflow:hidden; padding:54px 40px 40px; border-bottom:2px solid var(--ink); background:linear-gradient(180deg,#eff5f1 0%,var(--paper) 100%);}
+.page-header::before{content:"≫"; position:absolute; right:-10px; top:-30px; font-size:300px; font-family:"JetBrains Mono",monospace; font-weight:600; color:var(--accent); opacity:.13; line-height:1; z-index:0; letter-spacing:-30px;}
+.page-header>*{position:relative; z-index:1;}
+.series-tag{display:inline-block; background:var(--ink); color:var(--paper); font-size:11px; letter-spacing:2px; padding:4px 12px; border-radius:2px; font-weight:700;}
+.vol-tag{display:inline-block; background:var(--accent); color:var(--paper); font-size:11px; letter-spacing:1px; padding:4px 12px; border-radius:2px; margin-left:6px; font-weight:700;}
+.page-header h1{font-size:42px; font-weight:700; margin:22px 0 6px; letter-spacing:1px;}
+.subtitle{color:var(--muted); font-size:14px; letter-spacing:.5px;}
+.lead{max-width:640px; margin-top:18px; font-size:15px;}
+.toc{background:var(--paper-2); padding:20px 40px; border-bottom:1px solid var(--line);}
+.toc-label{font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:700; margin-bottom:8px;}
+.toc ul{list-style:none; display:flex; flex-wrap:wrap; gap:4px 22px;}
+.toc a{color:var(--ink); text-decoration:none; font-size:13.5px; position:relative; padding-left:16px;}
+.toc a::before{content:"—"; position:absolute; left:0; color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{max-width:1080px; margin:0 auto; padding:48px 40px 20px;}
+section{margin-bottom:54px;}
+.section-header{display:flex; align-items:baseline; gap:14px; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px;}
+.section-num{font-size:26px; color:var(--accent); font-weight:700; line-height:1;}
+.section-header h2{font-size:23px; font-weight:700; letter-spacing:.5px;}
+.section-header .en{margin-left:auto; font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:500;}
+.pattern-desc{max-width:700px; margin-bottom:20px; color:#324549;}
+.demo-card{border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#fff; box-shadow:0 1px 3px rgba(31,55,57,.05);}
+.demo-head{background:var(--paper-2); padding:11px 18px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+.tag-name{font-size:13px; font-weight:600; color:var(--accent);}
+.tag-desc{font-size:12.5px; color:var(--muted);}
+.demo-body{display:grid; grid-template-columns:1fr 1fr; gap:0;}
+.panel{background:var(--panel-bg); padding:20px; border-right:1px solid var(--line);}
+.panel-head,.code-head{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--muted); letter-spacing:1px; margin-bottom:12px;}
+.code{background:var(--code-bg); color:var(--code-text); padding:20px; overflow-x:auto;}
+.code pre{font-size:13px; line-height:1.7; white-space:pre; font-family:"JetBrains Mono",monospace;}
+.code .code-head{color:#7f93a0;}
+.kw{color:#ffc88a;} .type{color:#c2a3ff;} .fn{color:#a3c9ff;} .str{color:#b5e8b0;} .num{color:#f7a8d8;} .comment{color:#8395a0;} .ann{color:#f7c08a;}
+.map-grid{display:flex; flex-direction:column; gap:8px;}
+.map-row{background:#fff; border:1px solid var(--line); border-left:3px solid var(--accent-2); border-radius:4px; padding:9px 12px; font-size:13px;}
+.map-row b{color:var(--accent);}
+.tip{border-left:3px solid var(--accent); background:rgba(50,118,104,.08); padding:14px 18px; border-radius:0 5px 5px 0; margin:18px 0; font-size:14px;}
+.tip .tip-label{font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600; color:var(--accent); letter-spacing:1.5px; display:block; margin-bottom:5px;}
+.tip b{color:var(--accent);}
+.key{background:var(--accent); color:var(--paper); padding:1px 6px; border-radius:3px; font-size:12px; font-weight:600;}
+.page-footer{border-top:2px solid var(--ink); margin-top:30px; padding:26px 40px; background:var(--paper-2); text-align:center; color:var(--muted); font-size:12.5px;}
+.page-footer .sym{font-family:"JetBrains Mono",monospace; color:var(--accent); font-size:18px;}
+.transform{display:flex;flex-direction:column;gap:8px;align-items:center;}
+.t-box{background:#fff;border:1px solid var(--line);border-radius:5px;padding:10px 14px;font-family:"JetBrains Mono",monospace;font-size:13px;width:100%;text-align:center;}
+.t-box.lambda{border-left:3px solid var(--accent-2);}
+.t-box.ref{border-left:3px solid var(--accent);background:rgba(50,118,104,.06);}
+.t-arrow{color:var(--accent);font-size:16px;}
+@media(max-width:720px){.demo-body{grid-template-columns:1fr;}.panel{border-right:none; border-bottom:1px solid var(--line);}.page-header h1{font-size:32px;}.page-header::before{font-size:200px;}main{padding:32px 22px;}.section-header .en{display:none;}}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・JAVA入門編 33</span><span class="vol-tag">VOL.5 / 全11巻</span>
+  <h1>メソッド参照<br>前編</h1>
+  <div class="subtitle">METHOD REFERENCE — PART 1</div>
+  <p class="lead">ラムダ式をさらに短くする<b>「メソッド参照」</b>。<code>::</code>（コロン2つ）を使う、あの記法です。「ラムダの中で、メソッドを1個呼ぶだけ」のとき、もっと短く書けます。この前編では<b>メソッド参照の考え方と「staticメソッド参照」</b>を扱います。4種類あるうちの最初の1つです。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#what">01 メソッド参照とは</a></li>
+    <li><a href="#why">02 なぜ短くできるのか</a></li>
+    <li><a href="#four">03 4つの種類（全体像）</a></li>
+    <li><a href="#static">04 staticメソッド参照</a></li>
+    <li><a href="#example">05 実例で確認</a></li>
+    <li><a href="#judge">06 使える/使えない</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="what">
+  <div class="section-header"><span class="section-num">01</span><h2>メソッド参照とは</h2><span class="en">WHAT IS IT</span></div>
+  <p class="pattern-desc">メソッド参照は<b>「ラムダ式が、既存メソッドを1個呼ぶだけ」のときに使える、もっと短い書き方</b>です。<code>クラス名::メソッド名</code> という形。<code>::</code> が目印です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">クラス名::メソッド名</span><span class="tag-desc">ラムダの究極の省略形</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 短くなる流れ</div>
+        <div class="transform">
+          <div class="t-box lambda">s -&gt; s.length()</div>
+          <div class="t-arrow">▼ メソッド参照に</div>
+          <div class="t-box ref">String::length</div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">引数すら書かなくてよくなります。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// ラムダ → メソッド参照</div>
+<pre><span class="comment">// ラムダ式</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>,<span class="type">Integer</span>&gt; f1 =
+    s -&gt; s.<span class="fn">length</span>();
+
+<span class="comment">// メソッド参照（同じ意味）</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>,<span class="type">Integer</span>&gt; f2 =
+    <span class="type">String</span>::<span class="fn">length</span>;
+
+<span class="comment">// :: は「このメソッドを使う」の印</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>メソッド参照は<b>新しい機能ではありません</b>。ラムダ式の「さらなる省略形」です。だから、無理に使う必要はなし。<b>「ラムダで書けるものが、たまたまもっと短く書ける」</b>くらいの気軽さでOKです。</div>
+</section>
+
+<!-- 02 -->
+<section id="why">
+  <div class="section-header"><span class="section-num">02</span><h2>なぜ短くできるのか</h2><span class="en">WHY SHORTER</span></div>
+  <p class="pattern-desc">なぜ引数を省略できるのか。それは<b>「受け取った値を、そのままメソッドに渡すだけ」だから</b>です。<code>s -&gt; s.length()</code> は「sを受け取って、sのlengthを呼ぶ」。受け取ってそのまま渡すなら、<b>引数の名前すら不要</b>です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">「そのまま渡す」だけなら省ける</span><span class="tag-desc">仕組みの理解</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 省略できる条件</div>
+        <div class="map-grid">
+          <div class="map-row">受け取った<b>s</b>を…</div>
+          <div class="map-row">そのまま<b>s.length()</b>に使うだけ</div>
+          <div class="map-row">→ <b>sという名前が不要</b>になる</div>
+          <div class="map-row">→ <b>String::length</b> で済む</div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 「ただ渡すだけ」を見抜く</div>
+<pre><span class="comment">// このラムダは…</span>
+s -&gt; s.<span class="fn">length</span>()
+<span class="comment">// 「sを受け取り、sのメソッドを</span>
+<span class="comment">//  呼ぶだけ」</span>
+
+<span class="comment">// だから名前を省ける</span>
+<span class="type">String</span>::<span class="fn">length</span>
+
+<span class="comment">// 逆に加工が入ると省略できない</span>
+s -&gt; s.<span class="fn">length</span>() * <span class="num">2</span>
+<span class="comment">// ← これはメソッド参照にできない</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span>見分け方の鉄則：<b>「ラムダの中身が、メソッドを1個呼ぶ”だけ”か？」</b>。それだけならメソッド参照にできます。<code>* 2</code> のような追加の処理があると、ラムダのままにするしかありません。</div>
+</section>
+
+<!-- 03 -->
+<section id="four">
+  <div class="section-header"><span class="section-num">03</span><h2>4つの種類（全体像）</h2><span class="en">FOUR TYPES</span></div>
+  <p class="pattern-desc">メソッド参照には<b>4種類</b>あります。この前編で1つ、後編（Vol.6）で残り3つを扱います。まずは<b>全体像だけ</b>つかんでください。完璧に覚える必要はありません。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">メソッド参照 4種</span><span class="tag-desc">前編=1つ / 後編=3つ</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4種類のマップ</div>
+        <div class="map-grid">
+          <div class="map-row"><b>①static</b> クラス::staticメソッド <span style="color:var(--accent);font-size:11px;">←この巻</span></div>
+          <div class="map-row"><b>②インスタンス（型）</b> 型::メソッド <span style="font-size:11px;color:var(--muted);">Vol.6</span></div>
+          <div class="map-row"><b>③インスタンス（特定）</b> 変数::メソッド <span style="font-size:11px;color:var(--muted);">Vol.6</span></div>
+          <div class="map-row"><b>④コンストラクタ</b> クラス::new <span style="font-size:11px;color:var(--muted);">Vol.6</span></div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 見た目の例（雰囲気だけ）</div>
+<pre><span class="comment">① static メソッド参照</span>
+<span class="type">Integer</span>::<span class="fn">parseInt</span>
+
+<span class="comment">② 型のインスタンスメソッド参照</span>
+<span class="type">String</span>::<span class="fn">toUpperCase</span>
+
+<span class="comment">③ 特定インスタンスのメソッド参照</span>
+<span class="type">System</span>.out::<span class="fn">println</span>
+
+<span class="comment">④ コンストラクタ参照</span>
+<span class="type">ArrayList</span>::<span class="kw">new</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>4種類あると聞くと身構えますが、<b>書き方の見た目はどれも <code>○○::△△</code> で同じ</b>です。違うのは「::の左に何が来るか」だけ。今は「4つあるんだな」で十分。この巻では①に集中します。</div>
+</section>
+
+<!-- 04 -->
+<section id="static">
+  <div class="section-header"><span class="section-num">04</span><h2>staticメソッド参照</h2><span class="en">STATIC METHOD REF</span></div>
+  <p class="pattern-desc">1つ目、<b>staticメソッド参照</b>です。<code>クラス名::staticメソッド名</code>。staticメソッド（インスタンスを作らず呼べるメソッド）を参照します。★★★ いちばん分かりやすい型です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">Integer::parseInt</span><span class="tag-desc">クラス名::staticメソッド</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">123</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">文字列の "123" が、数値の 123 に変換されました。<br>Integer.parseInt を参照しています。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// staticメソッドを参照</div>
+<pre><span class="comment">// ラムダ式</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>,<span class="type">Integer</span>&gt; p1 =
+    s -&gt; <span class="type">Integer</span>.<span class="fn">parseInt</span>(s);
+
+<span class="comment">// static メソッド参照（同じ意味）</span>
+<span class="type">Function</span>&lt;<span class="type">String</span>,<span class="type">Integer</span>&gt; p2 =
+    <span class="type">Integer</span>::<span class="fn">parseInt</span>;
+
+<span class="type">System</span>.out.<span class="fn">println</span>(
+  p2.<span class="fn">apply</span>(<span class="str">"123"</span>));  <span class="comment">// → 123</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span><code>parseInt</code> は <code>Integer.parseInt(...)</code> のように<b>クラス名から直接呼べるメソッド</b>（static）。だから <code>Integer::parseInt</code> と書けます。「クラス名.メソッド名で呼べるもの」がstaticメソッド参照の対象です。</div>
+</section>
+
+<!-- 05 -->
+<section id="example">
+  <div class="section-header"><span class="section-num">05</span><h2>実例で確認</h2><span class="en">IN PRACTICE</span></div>
+  <p class="pattern-desc">少し先取りして、ストリームの中で使ってみます。<b>文字列のリストを、数値のリストに変換</b>する例。<code>map</code> の中にstaticメソッド参照を入れると、驚くほどすっきりします。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">ストリーム × static参照</span><span class="tag-desc">現場でよく使う形</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">[1, 2, 3]</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">文字列リスト ["1","2","3"] が<br>数値リスト [1,2,3] になりました。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 文字列リスト → 数値リスト</div>
+<pre><span class="type">List</span>&lt;<span class="type">String</span>&gt; strs =
+    <span class="type">List</span>.<span class="fn">of</span>(<span class="str">"1"</span>, <span class="str">"2"</span>, <span class="str">"3"</span>);
+
+<span class="type">List</span>&lt;<span class="type">Integer</span>&gt; nums = strs.<span class="fn">stream</span>()
+    .<span class="fn">map</span>(<span class="type">Integer</span>::<span class="fn">parseInt</span>)
+    .<span class="fn">toList</span>();
+
+<span class="type">System</span>.out.<span class="fn">println</span>(nums);
+<span class="comment">// → [1, 2, 3]</span>
+
+<span class="comment">// map(s -&gt; Integer.parseInt(s))</span>
+<span class="comment">// と書くより、ずっと短い！</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span><code>.map(Integer::parseInt)</code> は<b>「各要素をparseIntで変換する」</b>と読めます。ラムダより主語がはっきりして読みやすい。<b>これがメソッド参照が好まれる理由</b>です。現場でも頻出します。</div>
+</section>
+
+<!-- 06 -->
+<section id="judge">
+  <div class="section-header"><span class="section-num">06</span><h2>使える/使えないの判断</h2><span class="en">CAN I USE IT?</span></div>
+  <p class="pattern-desc">最後に判断基準です。<b>「迷ったらラムダ式のままでOK」</b>。メソッド参照は“短くできるときのボーナス”であって、必須ではありません。とはいえ見分けられると気持ちいいので、目安を示します。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">メソッド参照にできる条件</span><span class="tag-desc">無理しなくていい</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 判断フロー</div>
+        <div class="map-grid">
+          <div class="map-row">ラムダの中身は<b>メソッド1個呼ぶだけ？</b></div>
+          <div class="map-row">YES → <b>メソッド参照にできる</b></div>
+          <div class="map-row">計算や条件が<b>混じってる？</b></div>
+          <div class="map-row">YES → <b>ラムダのままが正解</b></div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// できる・できないの例</div>
+<pre><span class="comment">// ◯ メソッド1個だけ → 参照OK</span>
+s -&gt; <span class="type">Integer</span>.<span class="fn">parseInt</span>(s)
+   → <span class="type">Integer</span>::<span class="fn">parseInt</span>
+
+<span class="comment">// ✕ 計算が混じる → ラムダのまま</span>
+s -&gt; <span class="type">Integer</span>.<span class="fn">parseInt</span>(s) + <span class="num">1</span>
+
+<span class="comment">// ✕ 条件分岐がある → ラムダのまま</span>
+s -&gt; s.<span class="fn">isEmpty</span>() ? <span class="num">0</span> : <span class="num">1</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>無理にメソッド参照に変えようとして時間を溶かすのは本末転倒。<b>「短く書けたらラッキー、書けなければラムダでOK」</b>。読みやすさが第一です。IDEが「メソッド参照にできるよ」と提案してくれることも多いので、それに乗るのも手です。</div>
+
+  <div class="tip" style="margin-top:48px;">
+    <span class="tip-label">NEXT STEP —</span>
+    メソッド参照の考え方とstaticメソッド参照、つかめましたか？<b><code>::</code> は「このメソッドを使う」の印</b>、と覚えてください。次の<b>Vol.6「メソッド参照・後編」</b>では、残り3種類——<b>インスタンスメソッド参照（2タイプ）とコンストラクタ参照</b>を扱います。少しややこしい所ですが、丁寧に見分け方を解説します。これで土台パートが完結します。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <div class="sym">≫</div>
+  新・Java入門編 33  — ストリームAPI &nbsp;|&nbsp; Vol.5 メソッド参照・前編 &nbsp;|&nbsp; 全11巻
+</footer>
+</body>
+</html>

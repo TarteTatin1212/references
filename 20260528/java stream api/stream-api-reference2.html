@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ストリームAPI 関数型インターフェース編 Vol.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#243440; --paper:#eef1f1; --paper-2:#dce4e5;
+  --accent:#3a6e7a; --accent-2:#62989f; --accent-3:#96b8b8;
+  --muted:#697a80; --line:#c1cccc; --code-bg:#1b2730; --code-text:#dce7e9;
+  --panel-bg:#e5ecec;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans JP",sans-serif; color:var(--ink); background:var(--paper); line-height:1.85; font-size:15px; -webkit-font-smoothing:antialiased;}
+h1,h2,h3,.section-num,.en{font-family:"Shippori Mincho",serif;}
+code,.code,.key,.tag-name,.menu-code{font-family:"JetBrains Mono",monospace;}
+.page-header{position:relative; overflow:hidden; padding:54px 40px 40px; border-bottom:2px solid var(--ink); background:linear-gradient(180deg,#f2f5f4 0%,var(--paper) 100%);}
+.page-header::before{content:"≫"; position:absolute; right:-10px; top:-30px; font-size:300px; font-family:"JetBrains Mono",monospace; font-weight:600; color:var(--accent); opacity:.13; line-height:1; z-index:0; letter-spacing:-30px;}
+.page-header>*{position:relative; z-index:1;}
+.series-tag{display:inline-block; background:var(--ink); color:var(--paper); font-size:11px; letter-spacing:2px; padding:4px 12px; border-radius:2px; font-weight:700;}
+.vol-tag{display:inline-block; background:var(--accent); color:var(--paper); font-size:11px; letter-spacing:1px; padding:4px 12px; border-radius:2px; margin-left:6px; font-weight:700;}
+.page-header h1{font-size:42px; font-weight:700; margin:22px 0 6px; letter-spacing:1px;}
+.subtitle{color:var(--muted); font-size:14px; letter-spacing:.5px;}
+.lead{max-width:640px; margin-top:18px; font-size:15px;}
+.toc{background:var(--paper-2); padding:20px 40px; border-bottom:1px solid var(--line);}
+.toc-label{font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:700; margin-bottom:8px;}
+.toc ul{list-style:none; display:flex; flex-wrap:wrap; gap:4px 22px;}
+.toc a{color:var(--ink); text-decoration:none; font-size:13.5px; position:relative; padding-left:16px;}
+.toc a::before{content:"—"; position:absolute; left:0; color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{max-width:1080px; margin:0 auto; padding:48px 40px 20px;}
+section{margin-bottom:54px;}
+.section-header{display:flex; align-items:baseline; gap:14px; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px;}
+.section-num{font-size:26px; color:var(--accent); font-weight:700; line-height:1;}
+.section-header h2{font-size:23px; font-weight:700; letter-spacing:.5px;}
+.section-header .en{margin-left:auto; font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:500;}
+.pattern-desc{max-width:700px; margin-bottom:20px; color:#36454f;}
+.demo-card{border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#fff; box-shadow:0 1px 3px rgba(36,52,64,.05);}
+.demo-head{background:var(--paper-2); padding:11px 18px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+.tag-name{font-size:13px; font-weight:600; color:var(--accent);}
+.tag-desc{font-size:12.5px; color:var(--muted);}
+.demo-body{display:grid; grid-template-columns:1fr 1fr; gap:0;}
+.panel{background:var(--panel-bg); padding:20px; border-right:1px solid var(--line);}
+.panel-head,.code-head{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--muted); letter-spacing:1px; margin-bottom:12px;}
+.code{background:var(--code-bg); color:var(--code-text); padding:20px; overflow-x:auto;}
+.code pre{font-size:13px; line-height:1.7; white-space:pre; font-family:"JetBrains Mono",monospace;}
+.code .code-head{color:#7f93a0;}
+.kw{color:#ffc88a;} .type{color:#c2a3ff;} .fn{color:#a3c9ff;} .str{color:#b5e8b0;} .num{color:#f7a8d8;} .comment{color:#8395a0;} .ann{color:#f7c08a;}
+.map-grid{display:flex; flex-direction:column; gap:8px;}
+.map-row{background:#fff; border:1px solid var(--line); border-left:3px solid var(--accent-2); border-radius:4px; padding:9px 12px; font-size:13px;}
+.map-row b{color:var(--accent);}
+.flow{display:flex; flex-direction:column; gap:0; align-items:center;}
+.flow-box{background:#fff; border:1px solid var(--accent-2); border-radius:5px; padding:10px 16px; font-size:13px; width:100%; text-align:center;}
+.flow-box .lbl{font-size:10.5px; color:var(--muted); display:block; letter-spacing:1px;}
+.flow-box b{color:var(--accent); font-size:14px;}
+.flow-arrow{color:var(--accent-2); font-size:18px; padding:3px 0;}
+.tip{border-left:3px solid var(--accent); background:rgba(58,110,122,.08); padding:14px 18px; border-radius:0 5px 5px 0; margin:18px 0; font-size:14px;}
+.tip .tip-label{font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600; color:var(--accent); letter-spacing:1.5px; display:block; margin-bottom:5px;}
+.tip b{color:var(--accent);}
+.key{background:var(--accent); color:var(--paper); padding:1px 6px; border-radius:3px; font-size:12px; font-weight:600;}
+.page-footer{border-top:2px solid var(--ink); margin-top:30px; padding:26px 40px; background:var(--paper-2); text-align:center; color:var(--muted); font-size:12.5px;}
+.page-footer .sym{font-family:"JetBrains Mono",monospace; color:var(--accent); font-size:18px;}
+.ng-ok{display:grid;grid-template-columns:1fr;gap:10px;}
+.box-ng,.box-ok{border-radius:5px;padding:10px 12px;font-size:13px;border:1px solid;}
+.box-ng{background:#fbeceb;border-color:#e7b6b3;}
+.box-ok{background:#e7f3ec;border-color:#a9d2ba;}
+.box-ng .bl,.box-ok .bl{font-weight:700;font-size:11px;letter-spacing:1px;display:block;margin-bottom:3px;}
+.box-ng .bl{color:#c0463f;} .box-ok .bl{color:#2f8050;}
+@media(max-width:720px){.demo-body{grid-template-columns:1fr;}.panel{border-right:none; border-bottom:1px solid var(--line);}.page-header h1{font-size:32px;}.page-header::before{font-size:200px;}main{padding:32px 22px;}.section-header .en{display:none;}}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・JAVA入門編 33</span><span class="vol-tag">VOL.2 / 全11巻</span>
+  <h1>関数型<br>インターフェース編</h1>
+  <div class="subtitle">FUNCTIONAL INTERFACE</div>
+  <p class="lead">ストリームの土台、いちばん最初の一歩です。「関数型インターフェース」と聞くと難しそうですが、正体は<b>「メソッドが1個だけのインターフェース」</b>。たったそれだけ。この巻ではその意味と、なぜそれがラムダ式に繋がるのかを、ゆっくり解きほぐします。</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#review">01 インターフェース復習</a></li>
+    <li><a href="#what">02 関数型インターフェースとは</a></li>
+    <li><a href="#annotation">03 @FunctionalInterface</a></li>
+    <li><a href="#one">04 なぜ1メソッドなのか</a></li>
+    <li><a href="#anon">05 匿名クラスで実装</a></li>
+    <li><a href="#bridge">06 ラムダへの橋渡し</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="review">
+  <div class="section-header"><span class="section-num">01</span><h2>インターフェースの復習</h2><span class="en">INTERFACE REVIEW</span></div>
+  <p class="pattern-desc">まずは土台の土台。<b>インターフェースは「やることリスト（約束）」</b>です。中身は書かず、「このメソッドを必ず用意してね」と決めるだけ。実装する側がその約束を守ります。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">interface = 約束ごと</span><span class="tag-desc">中身は実装クラスが書く</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 関係を図にすると</div>
+        <div class="flow">
+          <div class="flow-box"><span class="lbl">INTERFACE 約束</span><b>Greeting</b></div>
+          <div class="flow-arrow">▼ implements</div>
+          <div class="flow-box"><span class="lbl">CLASS 実装</span><b>中身を書く</b></div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">約束（メソッド名）を決め、実装クラスが中身を埋める。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// インターフェースの基本</div>
+<pre><span class="comment">// 約束だけ書く（中身なし）</span>
+<span class="kw">interface</span> <span class="type">Greeting</span> {
+  <span class="type">String</span> <span class="fn">say</span>();   <span class="comment">// 中身なし</span>
+}
+
+<span class="comment">// 実装クラスが中身を書く</span>
+<span class="kw">class</span> <span class="type">Hello</span> <span class="kw">implements</span> <span class="type">Greeting</span> {
+  <span class="kw">public</span> <span class="type">String</span> <span class="fn">say</span>() {
+    <span class="kw">return</span> <span class="str">"こんにちは"</span>;
+  }
+}</pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>インターフェースは<b>「メソッド名と戻り値だけ決めて、中身は実装者に任せる」</b>仕組みです。この「中身は後で」という性質が、後のラムダ式に効いてきます。</div>
+</section>
+
+<!-- 02 -->
+<section id="what">
+  <div class="section-header"><span class="section-num">02</span><h2>関数型インターフェースとは</h2><span class="en">FUNCTIONAL INTERFACE</span></div>
+  <p class="pattern-desc">本題です。<b>関数型インターフェース＝「中身を書くべきメソッドが、ちょうど1個だけ」のインターフェース</b>。これだけ。さっきの <code>Greeting</code> も、メソッドが <code>say()</code> 1個だけなので、立派な関数型インターフェースです。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">抽象メソッドが1個 = 関数型</span><span class="tag-desc">★★★ 最重要の定義</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 関数型かどうかの判定</div>
+        <div class="map-grid">
+          <div class="map-row">メソッド<b>1個</b> → 関数型 ◯</div>
+          <div class="map-row">メソッド<b>2個</b> → 関数型 ✕</div>
+          <div class="map-row">メソッド<b>0個</b> → 関数型 ✕</div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">「中身を書く必要があるメソッド（抽象メソッド）」の数で決まります。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// これは全部 関数型インターフェース</div>
+<pre><span class="comment">// 1個だけ → OK</span>
+<span class="kw">interface</span> <span class="type">Greeting</span> {
+  <span class="type">String</span> <span class="fn">say</span>();
+}
+
+<span class="kw">interface</span> <span class="type">Calc</span> {
+  <span class="type">int</span> <span class="fn">apply</span>(<span class="type">int</span> a, <span class="type">int</span> b);
+}
+
+<span class="comment">// 2個 → 関数型ではない</span>
+<span class="kw">interface</span> <span class="type">NG</span> {
+  <span class="kw">void</span> <span class="fn">open</span>();
+  <span class="kw">void</span> <span class="fn">close</span>();  <span class="comment">// 2個目でアウト</span>
+}</pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>なぜ1個が大事か。<b>メソッドが1個だけなら「このインターフェースの仕事＝そのメソッド」と一意に決まる</b>からです。だからラムダ式という「中身だけの短い書き方」が使えるようになります。</div>
+</section>
+
+<!-- 03 -->
+<section id="annotation">
+  <div class="section-header"><span class="section-num">03</span><h2>@FunctionalInterface</h2><span class="en">THE ANNOTATION</span></div>
+  <p class="pattern-desc">関数型インターフェースには <code>@FunctionalInterface</code> という目印（アノテーション）を付けられます。<b>「これは関数型ですよ」と宣言する札</b>です。付けると、うっかりメソッドを2個書いた時にコンパイラが教えてくれます。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">@FunctionalInterface</span><span class="tag-desc">付けると安全になる目印</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// アノテーションの効果</div>
+        <div class="ng-ok">
+          <div class="box-ok"><span class="bl">あり：安全</span>メソッドが2個になったら<b>コンパイルエラー</b>で警告してくれる</div>
+          <div class="box-ng"><span class="bl">なし：危険</span>2個になっても気づかず、後でラムダが使えず混乱</div>
+        </div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">付けるのは任意。でも付けると間違いに早く気づけます。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 札を付けておく</div>
+<pre><span class="ann">@FunctionalInterface</span>
+<span class="kw">interface</span> <span class="type">Calc</span> {
+  <span class="type">int</span> <span class="fn">apply</span>(<span class="type">int</span> a, <span class="type">int</span> b);
+}
+
+<span class="comment">// もし間違えて2個書くと…</span>
+<span class="ann">@FunctionalInterface</span>
+<span class="kw">interface</span> <span class="type">Bad</span> {
+  <span class="kw">void</span> <span class="fn">a</span>();
+  <span class="kw">void</span> <span class="fn">b</span>();  <span class="comment">// ← ここで赤エラー！</span>
+}
+<span class="comment">// 「抽象メソッドが複数」と怒られる</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span><code>@FunctionalInterface</code> は<b>必須ではありません</b>。なくても1メソッドなら関数型として機能します。でも<b>「これはラムダで使う前提だよ」という意思表示</b>になるので、自作する時は付けるのが定番です。</div>
+</section>
+
+<!-- 04 -->
+<section id="one">
+  <div class="section-header"><span class="section-num">04</span><h2>なぜ「1メソッド」なのか</h2><span class="en">WHY ONLY ONE</span></div>
+  <p class="pattern-desc">少し立ち止まって考えます。<b>なぜメソッドが1個だと、ラムダ式という短い書き方が許されるのか</b>。理由は「迷わないから」です。メソッドが1個なら、書いた中身がどのメソッドのものか一目瞭然です。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">1個だから省略できる</span><span class="tag-desc">考え方の核心</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 1個なら迷わない</div>
+        <div class="map-grid">
+          <div class="map-row">メソッドが<b>1個</b><br><span style="font-size:12px;color:var(--muted);">→ 中身を書けば、どのメソッドかは明白</span></div>
+          <div class="map-row">だから<b>名前を省略</b>できる<br><span style="font-size:12px;color:var(--muted);">→ 中身（処理）だけ書けばいい</span></div>
+          <div class="map-row">それが<b>ラムダ式</b><br><span style="font-size:12px;color:var(--muted);">→ (a, b) -&gt; a + b</span></div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 「中身だけ」で済む理由</div>
+<pre><span class="comment">// Calc は apply 1個だけ</span>
+<span class="kw">interface</span> <span class="type">Calc</span> {
+  <span class="type">int</span> <span class="fn">apply</span>(<span class="type">int</span> a, <span class="type">int</span> b);
+}
+
+<span class="comment">// 中身を書く時、どうせ apply</span>
+<span class="comment">// なので名前を書く必要がない</span>
+
+<span class="comment">// → 引数と処理だけでOK</span>
+(a, b) -&gt; a + b
+<span class="comment">  ↑ これがラムダ式の正体</span></pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">POINT —</span>関数型インターフェースとラムダ式は<b>セットで覚える</b>のが鉄則です。「メソッド1個の約束（関数型インターフェース）」があるから、「中身だけ書く短い記法（ラムダ式）」が成立する。<b>この因果関係</b>がVOL.4で効いてきます。</div>
+</section>
+
+<!-- 05 -->
+<section id="anon">
+  <div class="section-header"><span class="section-num">05</span><h2>匿名クラスで実装してみる</h2><span class="en">ANONYMOUS CLASS</span></div>
+  <p class="pattern-desc">ラムダ式の「前の時代」の書き方も見ておきましょう。<b>匿名クラス</b>です。これはクラス名を付けずにその場で実装する書き方。冗長ですが、<b>ラムダ式がこれを短くしたもの</b>だと分かると理解が深まります。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">匿名クラス = 名前なし実装</span><span class="tag-desc">ラムダの一歩手前</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行結果</div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">8</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--muted);">3 + 5 が計算され、8 が表示されます。<br>長いけれど、ちゃんと動きます。</p>
+      </div>
+      <div class="code">
+        <div class="code-head">// 匿名クラスで Calc を実装</div>
+<pre><span class="type">Calc</span> calc = <span class="kw">new</span> <span class="type">Calc</span>() {
+  <span class="ann">@Override</span>
+  <span class="kw">public</span> <span class="type">int</span> <span class="fn">apply</span>(<span class="type">int</span> a, <span class="type">int</span> b) {
+    <span class="kw">return</span> a + b;
+  }
+};
+
+<span class="type">System</span>.out.<span class="fn">println</span>(
+  calc.<span class="fn">apply</span>(<span class="num">3</span>, <span class="num">5</span>)  <span class="comment">// → 8</span>
+);</pre>
+      </div>
+    </div>
+  </div>
+  <div class="tip"><span class="tip-label">TIP —</span>この書き方、<b>正直めんどくさい</b>ですよね。<code>new Calc(){...}</code>、<code>@Override</code>、<code>public int apply</code>…。やりたいのは「a + b」だけなのに。この<b>「めんどくさい」を解決するのがラムダ式</b>です。</div>
+</section>
+
+<!-- 06 -->
+<section id="bridge">
+  <div class="section-header"><span class="section-num">06</span><h2>ラムダへの橋渡し</h2><span class="en">BRIDGE TO LAMBDA</span></div>
+  <p class="pattern-desc">この巻のゴールです。匿名クラスから「飾り」をどんどん削ると、ラムダ式になります。<b>同じ処理が、こんなに短くなる</b>。その変化を目で追ってみてください。</p>
+  <div class="demo-card">
+    <div class="demo-head"><span class="tag-name">削って削って → ラムダ式</span><span class="tag-desc">次巻の予告編</span></div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 削れるもの</div>
+        <div class="map-grid">
+          <div class="map-row"><b>new Calc()</b> → 型は分かるので不要</div>
+          <div class="map-row"><b>@Override</b> → 1個しかないので不要</div>
+          <div class="map-row"><b>public int apply</b> → 名前も不要</div>
+          <div class="map-row">残るのは<b>引数と中身だけ</b></div>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code-head">// 同じ計算が、これだけに</div>
+<pre><span class="comment">// 匿名クラス（長い）</span>
+<span class="type">Calc</span> c1 = <span class="kw">new</span> <span class="type">Calc</span>() {
+  <span class="kw">public</span> <span class="type">int</span> <span class="fn">apply</span>(<span class="type">int</span> a, <span class="type">int</span> b){
+    <span class="kw">return</span> a + b;
+  }
+};
+
+<span class="comment">// ラムダ式（短い！）</span>
+<span class="type">Calc</span> c2 = (a, b) -&gt; a + b;
+
+<span class="comment">// やってることは全く同じ</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:48px;">
+    <span class="tip-label">NEXT STEP —</span>
+    関数型インターフェースの正体、つかめましたか？<b>「メソッド1個の約束」</b>——これさえ覚えれば十分です。次の<b>Vol.3「標準関数型インターフェース編」</b>では、自分で作らなくても使える<b>Javaが最初から用意している便利な関数型インターフェース</b>（Function・Consumer・Supplier・Predicate）を学びます。これらはストリームで毎回登場する主役たちです。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <div class="sym">≫</div>
+  新・Java入門編 33  — ストリームAPI &nbsp;|&nbsp; Vol.2 関数型インターフェース編 &nbsp;|&nbsp; 全11巻
+</footer>
+</body>
+</html>
