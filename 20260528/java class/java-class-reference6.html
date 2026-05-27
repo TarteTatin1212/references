@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新・Java入門編31 ローカル・匿名クラス編 Vol.6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0e2d33;
+  --paper:#ecf4f6;
+  --paper-2:#d8e8ea;
+  --accent:#196b78;
+  --accent-2:#298a98;
+  --accent-3:#52a3af;
+  --muted:#5d7c81;
+  --line:#b9d3d6;
+  --code-bg:#102326;
+  --code-text:#e2eef0;
+  --panel-bg:#e0eff1;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;-webkit-font-smoothing:antialiased;}
+.page-header{position:relative;padding:56px 7vw 40px;border-bottom:2px solid var(--ink);overflow:hidden;}
+.page-header::before{content:"{ }";position:absolute;right:3vw;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:260px;font-weight:600;color:var(--accent);opacity:0.13;z-index:0;line-height:1;}
+.page-header>*{position:relative;z-index:1;}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;margin-right:8px;}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;}
+.page-header h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:20px 0 8px;letter-spacing:1px;}
+.subtitle{color:var(--muted);font-size:14px;font-family:'JetBrains Mono',monospace;margin-bottom:20px;}
+.lead{max-width:640px;font-size:15px;}
+.lead b{color:var(--accent);}
+.toc{background:var(--paper-2);padding:20px 7vw;display:flex;flex-wrap:wrap;gap:6px 22px;border-bottom:1px solid var(--line);}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;font-family:'JetBrains Mono',monospace;transition:color .2s;}
+.toc a::before{content:"— ";color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{padding:48px 7vw 20px;max-width:1180px;margin:0 auto;}
+section{margin-bottom:64px;}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px;}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600;}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:25px;font-weight:700;}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;}
+.pattern-desc{max-width:680px;margin-bottom:20px;font-size:15px;}
+.pattern-desc b{color:var(--accent);}
+.demo-card{border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(14,45,51,.05);}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);}
+.tag-desc{font-size:12px;color:var(--muted);}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line);}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:.5px;}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;overflow-x:auto;white-space:pre;}
+.code .kw{color:#ffc88a;}
+.code .type{color:#c2a3ff;}
+.code .fn{color:#a3c9ff;}
+.code .str{color:#b5e8b0;}
+.code .num{color:#f7a8d8;}
+.code .comment{color:#7e9488;}
+.code .ann{color:#f7c08a;}
+.code-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7e9488;margin-bottom:10px;display:block;}
+.scope-vis{font-family:'JetBrains Mono',monospace;font-size:12px;background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px;line-height:1.8;}
+.scope-vis .m-box{border:2px solid var(--accent);border-radius:4px;padding:10px;}
+.scope-vis .c-box{border:1px dashed var(--accent-2);border-radius:4px;padding:8px;margin-top:6px;background:#edf6f7;}
+.scope-vis .lbl{font-weight:600;color:var(--accent);}
+.tip{border-left:3px solid var(--accent);background:rgba(25,107,120,.08);padding:16px 20px;border-radius:0 4px 4px 0;margin:20px 0;font-size:14px;}
+.tip .tip-head{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);letter-spacing:1px;margin-bottom:6px;}
+.tip b{color:var(--accent);}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.compare .box{border-radius:4px;padding:12px 14px;font-size:13px;}
+.compare .ng{background:#fbeaea;border-left:3px solid #c75050;}
+.compare .ok{background:#e8f4ea;border-left:3px solid var(--accent);}
+.compare .box .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-bottom:6px;}
+.compare .ng .lbl{color:#c75050;}
+.compare .ok .lbl{color:var(--accent);}
+.page-footer{border-top:2px solid var(--ink);padding:28px 7vw;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr;}
+  .panel{border-right:none;border-bottom:1px solid var(--line);}
+  .compare{grid-template-columns:1fr;}
+  .page-header h1{font-size:30px;}
+  .page-header::before{font-size:140px;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・Java入門編31</span><span class="vol-tag">Vol.6</span>
+  <h1>ローカル・匿名クラス編</h1>
+  <div class="subtitle">LOCAL & ANONYMOUS CLASS — disposable classes / chapter 9-10</div>
+  <p class="lead">塊③の続きです。今回は<b>「その場で使い捨てるクラス」</b>2種類。<b>ローカルクラス</b>はメソッドの中だけで使うクラス。<b>匿名クラス</b>はなんと<b>名前すら付けない</b>クラスです。「名前がないクラスって意味あるの？」——あります。むしろ現場では匿名クラスのほうが頻繁に登場します。実例で慣れていきましょう。</p>
+</header>
+
+<nav class="toc">
+  <a href="#local">ローカルクラス</a>
+  <a href="#local-scope">使える範囲</a>
+  <a href="#local-when">いつ使うか</a>
+  <a href="#anon">匿名クラス</a>
+  <a href="#anon-how">書き方</a>
+  <a href="#anon-real">現場での使われ方</a>
+</nav>
+
+<main>
+
+<section id="local">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>ローカルクラス（Local Class）</h2>
+    <span class="en">LOCAL CLASS</span>
+  </div>
+  <p class="pattern-desc"><b>メソッドの中に書くクラス</b>がローカルクラスです。ローカル変数（メソッド内の変数）と同じ感覚。<b>そのメソッドの中でしか使えません</b>。メソッドを抜けたら消えてしまう、限定的なクラスです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">local class</span>
+      <span class="tag-desc">メソッドの中だけのクラス</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// たとえ話：会議室のホワイトボード</div>
+        <p style="font-size:14px;">会議室のホワイトボードに書いたメモを想像してください。<b>その会議の間だけ使い、終わったら消す</b>。外には持ち出しません。</p>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">ローカルクラスも、<b style="color:var(--accent)">そのメソッドの中だけの一時的なクラス</b>です。</p>
+      </div>
+      <div class="code"><span class="code-label">// メソッド内にクラスを定義</span>
+<span class="kw">class</span> <span class="type">Greeter</span> {
+    <span class="type">void</span> <span class="fn">run</span>() {
+
+        <span class="comment">// メソッドの中でクラスを宣言！</span>
+        <span class="kw">class</span> <span class="type">Message</span> {
+            <span class="type">void</span> <span class="fn">show</span>() {
+                <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"やあ"</span>);
+            }
+        }
+
+        <span class="comment">// この中でだけ使える</span>
+        <span class="type">Message</span> m = <span class="kw">new</span> <span class="type">Message</span>();
+        m.<span class="fn">show</span>();
+    }
+}</div>
+    </div>
+  </div>
+</section>
+
+<section id="local-scope">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>使える範囲（スコープ）</h2>
+    <span class="en">SCOPE</span>
+  </div>
+  <p class="pattern-desc">ローカルクラスは<b>宣言したメソッドの中だけ</b>に存在します。メソッドの外からは見えません。だから<b>「他で使う予定が全くない、その場限りのクラス」</b>にぴったりです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">scope.vis</span>
+      <span class="tag-desc">見える範囲はメソッドの中だけ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 見える範囲</div>
+        <div class="scope-vis">
+          <div class="m-box">
+            <span class="lbl">method run() {</span>
+            <div class="c-box">
+              <span class="lbl" style="color:var(--accent-2)">class Message</span> ← ここでだけ見える
+            </div>
+            <span class="lbl">}</span>
+          </div>
+          <div style="margin-top:8px;color:var(--muted);">↑ メソッドの外からは Message は見えない</div>
+        </div>
+      </div>
+      <div class="code"><span class="code-label">// 範囲のルール</span>
+<span class="type">void</span> <span class="fn">run</span>() {
+    <span class="kw">class</span> <span class="type">Message</span> {}
+    <span class="kw">new</span> <span class="type">Message</span>();   <span class="comment">// ⭕ ここはOK</span>
+}
+
+<span class="type">void</span> <span class="fn">other</span>() {
+    <span class="kw">new</span> <span class="type">Message</span>();   <span class="comment">// ❌ 別メソッドからは見えない</span>
+}</div>
+    </div>
+  </div>
+</section>
+
+<section id="local-when">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>いつ使うか</h2>
+    <span class="en">WHEN TO USE</span>
+  </div>
+  <p class="pattern-desc">正直に言うと、ローカルクラスは<b>出番がかなり少ない</b>です。「1つのメソッドの中だけで、何度か使う複雑な処理を、クラスにまとめたい」という限定的な場面で使います。<b>読めればOK</b>のテーマです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">rare use</span>
+      <span class="tag-desc">出番は少なめ、読めれば十分</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 結論</div>
+        <div class="compare" style="grid-template-columns:1fr;">
+          <div class="box ok">
+            <div class="lbl">ローカルクラスの立ち位置</div>
+            「メソッド内専用のクラス」。でも実務では<b>次の匿名クラス</b>のほうが圧倒的によく使われる。
+          </div>
+        </div>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">なので、ここはサラッと「こういうのもある」で先へ進みましょう。本命は次のセクションです。</p>
+      </div>
+      <div class="code"><span class="code-label">// ローカルクラスのまとめ</span>
+<span class="comment">// ・メソッドの中に書くクラス</span>
+<span class="comment">// ・そのメソッド内でだけ使える</span>
+<span class="comment">// ・出番は少なめ</span>
+<span class="comment">// ・「読めればOK」でOK</span>
+
+<span class="comment">// → より実用的な「匿名クラス」へ続く</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="anon">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>匿名クラス（Anonymous Class）</h2>
+    <span class="en">ANONYMOUS CLASS</span>
+  </div>
+  <p class="pattern-desc">ここからが本命。<b>名前を付けないクラス</b>、それが匿名クラスです。「クラスを定義して、すぐ1回だけ new する」を<b>一気にまとめて書く</b>仕組み。インターフェースや抽象クラスを<b>その場で実装</b>したい時に大活躍します。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">anonymous class</span>
+      <span class="tag-desc">名前なし・その場で1回きり</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// なぜ名前がいらない？</div>
+        <p style="font-size:14px;"><b>一度しか使わないクラスに、わざわざ名前を付けるのは面倒</b>。だったら名前を省略して、その場で中身を書いて即 new しよう——という発想です。</p>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">使い捨ての紙コップに名前を書かないのと同じ。<b style="color:var(--accent)">一回きりだから名前は不要</b>なのです。</p>
+      </div>
+      <div class="code"><span class="code-label">// まず「普通のやり方」を見る</span>
+<span class="comment">// ① クラスを定義</span>
+<span class="kw">class</span> <span class="type">MyGreeting</span> <span class="kw">implements</span> <span class="type">Greeting</span> {
+    <span class="kw">public</span> <span class="type">void</span> <span class="fn">hello</span>() {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"やあ"</span>);
+    }
+}
+<span class="comment">// ② 使う</span>
+<span class="type">Greeting</span> g = <span class="kw">new</span> <span class="type">MyGreeting</span>();
+
+<span class="comment">// 1回しか使わないのに2手間…</span>
+<span class="comment">// これを1つにまとめたい！</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="anon-how">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>匿名クラスの書き方</h2>
+    <span class="en">HOW TO WRITE</span>
+  </div>
+  <p class="pattern-desc">書き方はこうです。<b><code>new インターフェース名() { ここに中身 }</code></b>。「new した直後に <code>{ }</code> で中身を書く」のが匿名クラスの目印。クラス定義と new が<b>合体</b>しています。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">new Type() { ... }</span>
+      <span class="tag-desc">定義とnewを合体させる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 前セクションと比べる</div>
+        <div class="compare" style="grid-template-columns:1fr;">
+          <div class="box ng">
+            <div class="lbl">普通のやり方</div>
+            クラスを別途定義してから new。2手間で行数も増える。
+          </div>
+          <div class="box ok">
+            <div class="lbl">匿名クラス</div>
+            <code>new Greeting() { ... }</code> で<b>その場で完結</b>。スッキリ。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-label">// 匿名クラスで一気に書く</span>
+<span class="type">Greeting</span> g = <span class="kw">new</span> <span class="type">Greeting</span>() {
+    <span class="ann">@Override</span>
+    <span class="kw">public</span> <span class="type">void</span> <span class="fn">hello</span>() {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"やあ"</span>);
+    }
+};  <span class="comment">// ← 最後のセミコロンを忘れずに！</span>
+
+g.<span class="fn">hello</span>();   <span class="comment">// → やあ</span>
+
+<span class="comment">// 名前なしクラスを定義しつつ即 new した</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    匿名クラスの<b>定番のハマりどころ</b>：閉じ <code>}</code> の後に<b>セミコロン <code>;</code> が必要</b>です。これは「new した式の文」だから。忘れるとエラーになるので注意。
+  </div>
+</section>
+
+<section id="anon-real">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>現場での使われ方</h2>
+    <span class="en">REAL WORLD</span>
+  </div>
+  <p class="pattern-desc">匿名クラスが<b>本当によく登場する</b>のが「ボタンを押したら○○する」のような処理です。<b>「この一回だけの動作」を、その場でサッと渡す</b>。これが匿名クラスの黄金パターンです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">event handler</span>
+      <span class="tag-desc">ボタンの動作をその場で渡す</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// よくある場面</div>
+        <p style="font-size:14px;">「ボタンがクリックされた時の処理」を渡したい。でもその処理は<b>このボタン専用で一回きり</b>。名前付きクラスを作るほどではない。</p>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">こういう時こそ匿名クラス。<b style="color:var(--accent)">処理をその場に書いて即渡す</b>のが自然です。</p>
+      </div>
+      <div class="code"><span class="code-label">// ボタンクリック処理を匿名クラスで</span>
+button.<span class="fn">setOnClick</span>(<span class="kw">new</span> <span class="type">ClickListener</span>() {
+    <span class="ann">@Override</span>
+    <span class="kw">public</span> <span class="type">void</span> <span class="fn">onClick</span>() {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"押されました！"</span>);
+    }
+});
+
+<span class="comment">// 「このボタン専用の動作」を</span>
+<span class="comment">// その場で書いて渡せる。これが定番。</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    実は最近のJavaでは、匿名クラスをさらに短く書ける<b>「ラムダ式」</b>という記法もあります（別レッスンで扱います）。でも<b>その土台になっているのが匿名クラス</b>。ここを理解しておくと、ラムダ式もスッと入ってきます。
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;">
+  <div class="tip-head">NEXT STEP —</div>
+  使い捨て系の2クラス、お疲れさまでした。次の<b>Vol.7「スタティックネステッドクラス編」</b>で、ネストの最後のピース ④ を学びます。内部クラスと似ていますが、<b><code>static</code> が付くだけで性質がガラッと変わります</b>。「外側に寄り添わない、独立寄りのクラス」とは何か。内部クラスとの違いをハッキリさせて、塊③を締めくくりましょう。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>新・Java入門編31 — クラスについてもっと学習しよう</span>
+  <span>Vol.6 / 9 — LOCAL & ANONYMOUS</span>
+</footer>
+
+</body>
+</html>

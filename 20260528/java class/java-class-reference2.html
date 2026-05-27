@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新・Java入門編31 イニシャライザ編 Vol.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#142e25;
+  --paper:#f0f5f1;
+  --paper-2:#dfeae3;
+  --accent:#2a6b50;
+  --accent-2:#3a8a66;
+  --accent-3:#62a386;
+  --muted:#677d72;
+  --line:#c4d4ca;
+  --code-bg:#15241d;
+  --code-text:#e6efe9;
+  --panel-bg:#e8f0ea;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;-webkit-font-smoothing:antialiased;}
+.page-header{position:relative;padding:56px 7vw 40px;border-bottom:2px solid var(--ink);overflow:hidden;}
+.page-header::before{content:"{ }";position:absolute;right:3vw;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:260px;font-weight:600;color:var(--accent);opacity:0.13;z-index:0;line-height:1;}
+.page-header>*{position:relative;z-index:1;}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;margin-right:8px;}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;}
+.page-header h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:20px 0 8px;letter-spacing:1px;}
+.subtitle{color:var(--muted);font-size:14px;font-family:'JetBrains Mono',monospace;margin-bottom:20px;}
+.lead{max-width:640px;font-size:15px;}
+.lead b{color:var(--accent);}
+.toc{background:var(--paper-2);padding:20px 7vw;display:flex;flex-wrap:wrap;gap:6px 22px;border-bottom:1px solid var(--line);}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;font-family:'JetBrains Mono',monospace;transition:color .2s;}
+.toc a::before{content:"— ";color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{padding:48px 7vw 20px;max-width:1180px;margin:0 auto;}
+section{margin-bottom:64px;}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px;}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600;}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:25px;font-weight:700;}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;}
+.pattern-desc{max-width:680px;margin-bottom:20px;font-size:15px;}
+.pattern-desc b{color:var(--accent);}
+.demo-card{border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(20,46,37,.05);}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);}
+.tag-desc{font-size:12px;color:var(--muted);}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line);}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:.5px;}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;overflow-x:auto;white-space:pre;}
+.code .kw{color:#ffc88a;}
+.code .type{color:#c2a3ff;}
+.code .fn{color:#a3c9ff;}
+.code .str{color:#b5e8b0;}
+.code .num{color:#f7a8d8;}
+.code .comment{color:#7e9488;}
+.code .ann{color:#f7c08a;}
+.code-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7e9488;margin-bottom:10px;display:block;}
+.console{background:#0e1814;color:#9fd4b0;padding:14px 16px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;margin-top:14px;}
+.console .c-label{color:#5e7468;font-size:10px;display:block;margin-bottom:6px;}
+.order-list{display:flex;flex-direction:column;gap:8px;}
+.order-item{display:flex;align-items:center;gap:10px;font-size:13px;background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:3px;padding:10px 12px;}
+.order-item .ord{background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.order-item code{font-family:'JetBrains Mono',monospace;background:var(--paper-2);padding:1px 6px;border-radius:3px;font-size:12px;}
+.tip{border-left:3px solid var(--accent);background:rgba(42,107,80,.08);padding:16px 20px;border-radius:0 4px 4px 0;margin:20px 0;font-size:14px;}
+.tip .tip-head{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);letter-spacing:1px;margin-bottom:6px;}
+.tip b{color:var(--accent);}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.compare .box{border-radius:4px;padding:12px 14px;font-size:13px;}
+.compare .ng{background:#fbeaea;border-left:3px solid #c75050;}
+.compare .ok{background:#e8f4ea;border-left:3px solid var(--accent);}
+.compare .box .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-bottom:6px;}
+.compare .ng .lbl{color:#c75050;}
+.compare .ok .lbl{color:var(--accent);}
+.page-footer{border-top:2px solid var(--ink);padding:28px 7vw;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr;}
+  .panel{border-right:none;border-bottom:1px solid var(--line);}
+  .compare{grid-template-columns:1fr;}
+  .page-header h1{font-size:30px;}
+  .page-header::before{font-size:140px;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・Java入門編31</span><span class="vol-tag">Vol.2</span>
+  <h1>イニシャライザ編</h1>
+  <div class="subtitle">INITIALIZERS — instance & static / chapter 1-2</div>
+  <p class="lead">フィールドに最初の値を入れる作業が<b>初期化（イニシャライズ）</b>です。コンストラクタは知っていますね。実は<b>コンストラクタ以外にも初期化を書ける場所</b>があります。この巻ではその2つ——インスタンスイニシャライザとスタティックイニシャライザ——を学びます。さらに<b>「どの順番で実行されるか」</b>を整理すれば、初期化まわりのバグはほぼ怖くなくなります。</p>
+</header>
+
+<nav class="toc">
+  <a href="#review">初期化のおさらい</a>
+  <a href="#instance">インスタンスイニシャライザ</a>
+  <a href="#why-inst">なぜ使うのか</a>
+  <a href="#static">スタティックイニシャライザ</a>
+  <a href="#why-static">なぜ使うのか</a>
+  <a href="#order">実行順序の整理</a>
+  <a href="#pitfall">ハマりどころ</a>
+</nav>
+
+<main>
+
+<section id="review">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>初期化のおさらい</h2>
+    <span class="en">REVIEW</span>
+  </div>
+  <p class="pattern-desc">まず復習です。フィールドに値を入れる方法を、知っているものから並べてみます。<b>「宣言と同時」と「コンストラクタ」</b>の2つはもう使えますね。今回はここに2つ追加します。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">init.review</span>
+      <span class="tag-desc">初期化を書ける場所は全部で4つ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 初期化スポット一覧</div>
+        <div class="order-list">
+          <div class="order-item"><span class="ord">既</span><span>フィールド宣言と同時 <code>int x = 5;</code></span></div>
+          <div class="order-item"><span class="ord">既</span><span>コンストラクタ <code>Sample() { ... }</code></span></div>
+          <div class="order-item"><span class="ord">新</span><span>インスタンスイニシャライザ <code>{ ... }</code></span></div>
+          <div class="order-item"><span class="ord">新</span><span>スタティックイニシャライザ <code>static { ... }</code></span></div>
+        </div>
+      </div>
+      <div class="code">
+<span class="code-label">// 知っている2つ</span>
+<span class="kw">class</span> <span class="type">Sample</span> {
+    <span class="type">int</span> x = <span class="num">5</span>;          <span class="comment">// ① 宣言と同時</span>
+
+    <span class="type">int</span> y;
+    <span class="type">Sample</span>() {            <span class="comment">// ② コンストラクタ</span>
+        y = <span class="num">10</span>;
+    }
+}
+
+<span class="comment">// ③ と ④ がこの巻のテーマ</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="instance">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>インスタンスイニシャライザ</h2>
+    <span class="en">INSTANCE INITIALIZER</span>
+  </div>
+  <p class="pattern-desc">クラスの中に、ただ<b><code>{ }</code> だけ</b>のブロックを書きます。これがインスタンスイニシャライザです。<b>インスタンスを作るたびに（new するたびに）実行</b>されます。コンストラクタの兄弟だと思ってください。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">{ } block</span>
+      <span class="tag-desc">new のたびに走る初期化ブロック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動かすと…</div>
+        <p style="font-size:14px;">右のコードで <code style="font-family:'JetBrains Mono';background:var(--paper-2);padding:1px 5px;border-radius:3px;">new Sample()</code> を2回呼ぶと、ブロックも<b>2回</b>実行されます。</p>
+        <div class="console">
+          <span class="c-label">// 出力結果</span>
+          インスタンスイニシャライザ実行<br>
+          コンストラクタ実行<br>
+          インスタンスイニシャライザ実行<br>
+          コンストラクタ実行
+        </div>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">毎回「ブロック → コンストラクタ」の順で走るのがポイントです。</p>
+      </div>
+      <div class="code">
+<span class="code-label">// インスタンスイニシャライザ</span>
+<span class="kw">class</span> <span class="type">Sample</span> {
+
+    {  <span class="comment">// ← これがインスタンスイニシャライザ</span>
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"インスタンスイニシャライザ実行"</span>);
+    }
+
+    <span class="type">Sample</span>() {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"コンストラクタ実行"</span>);
+    }
+}
+
+<span class="kw">public</span> <span class="kw">static</span> <span class="type">void</span> <span class="fn">main</span>(<span class="type">String</span>[] args) {
+    <span class="kw">new</span> <span class="type">Sample</span>();
+    <span class="kw">new</span> <span class="type">Sample</span>();   <span class="comment">// 2回 new した</span>
+}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="why-inst">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>なぜ使うのか</h2>
+    <span class="en">WHY USE IT</span>
+  </div>
+  <p class="pattern-desc">「コンストラクタがあるのに、なぜブロックが必要？」と思いますよね。正直、<b>使う場面はそんなに多くありません</b>。でも便利なケースがひとつあります。<b>コンストラクタが複数あって、共通の初期化を1か所にまとめたい時</b>です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">use case</span>
+      <span class="tag-desc">複数コンストラクタの共通処理をまとめる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 比較してみる</div>
+        <div class="compare" style="grid-template-columns:1fr;">
+          <div class="box ng">
+            <div class="lbl">まとめない場合</div>
+            コンストラクタが3つあると、共通の初期化コードを<b>3回コピペ</b>。修正漏れの温床に。
+          </div>
+          <div class="box ok">
+            <div class="lbl">ブロックにまとめる</div>
+            共通処理を <code>{ }</code> に1回書けば、どのコンストラクタでも<b>必ず実行</b>される。
+          </div>
+        </div>
+      </div>
+      <div class="code">
+<span class="code-label">// 共通処理をブロックに集約</span>
+<span class="kw">class</span> <span class="type">User</span> {
+    <span class="type">List</span>&lt;<span class="type">String</span>&gt; logs;
+
+    {  <span class="comment">// どのコンストラクタでも必ず走る</span>
+        logs = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+        logs.<span class="fn">add</span>(<span class="str">"生成されました"</span>);
+    }
+
+    <span class="type">User</span>() { }
+    <span class="type">User</span>(<span class="type">String</span> name) { }  <span class="comment">// どちらも logs は準備済み</span>
+}
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    実務では<b>「コンストラクタに直接書く」または「メソッドに切り出して呼ぶ」ことの方が多い</b>です。インスタンスイニシャライザは<b>「読めればOK」</b>のテーマ。無理に使わなくても大丈夫です。
+  </div>
+</section>
+
+<section id="static">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>スタティックイニシャライザ</h2>
+    <span class="en">STATIC INITIALIZER</span>
+  </div>
+  <p class="pattern-desc">こちらは <code>static { }</code> と書きます。<b>クラスが最初に使われる時、たった一度だけ</b>実行されます。何回 new しても、再実行されません。<b>static フィールド（クラス全体で共有する変数）の準備</b>に使います。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">static { } block</span>
+      <span class="tag-desc">最初の一度だけ走る初期化ブロック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動かすと…</div>
+        <p style="font-size:14px;"><code style="font-family:'JetBrains Mono';background:var(--paper-2);padding:1px 5px;border-radius:3px;">new Config()</code> を何回呼んでも、<code style="font-family:'JetBrains Mono';background:var(--paper-2);padding:1px 5px;border-radius:3px;">static { }</code> は<b>1回しか</b>走りません。</p>
+        <div class="console">
+          <span class="c-label">// 出力結果（new を3回しても）</span>
+          スタティック初期化（1回だけ）<br>
+          コンストラクタ実行<br>
+          コンストラクタ実行<br>
+          コンストラクタ実行
+        </div>
+      </div>
+      <div class="code">
+<span class="code-label">// スタティックイニシャライザ</span>
+<span class="kw">class</span> <span class="type">Config</span> {
+    <span class="kw">static</span> <span class="type">String</span> appName;
+
+    <span class="kw">static</span> {  <span class="comment">// 最初の一度だけ</span>
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"スタティック初期化（1回だけ）"</span>);
+        appName = <span class="str">"MyApp"</span>;
+    }
+
+    <span class="type">Config</span>() {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"コンストラクタ実行"</span>);
+    }
+}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="why-static">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>なぜ使うのか</h2>
+    <span class="en">WHY USE IT</span>
+  </div>
+  <p class="pattern-desc">スタティックイニシャライザは<b>インスタンスイニシャライザより出番が多い</b>です。<b>「複雑な準備が必要な共有データ」を一度だけ作る</b>のに向いています。たとえば計算で求める定数表や、設定の読み込みなどです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">use case</span>
+      <span class="tag-desc">一度だけ作ればよい共有データの準備</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 典型例</div>
+        <p style="font-size:14px;">単純な代入なら宣言と同時でOK。でも<b>ループや計算が必要</b>な準備は <code>static { }</code> の出番です。</p>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">右の例は「0〜9を2乗した表」を一度だけ作って、全インスタンスで共有しています。何度 new しても表は作り直されません。</p>
+      </div>
+      <div class="code">
+<span class="code-label">// 計算が必要な共有データの準備</span>
+<span class="kw">class</span> <span class="type">Squares</span> {
+    <span class="kw">static</span> <span class="type">int</span>[] table = <span class="kw">new</span> <span class="type">int</span>[<span class="num">10</span>];
+
+    <span class="kw">static</span> {
+        <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; <span class="num">10</span>; i++) {
+            table[i] = i * i;   <span class="comment">// 0,1,4,9,16...</span>
+        }
+    }
+    <span class="comment">// table はプログラム中ずっと使い回せる</span>
+}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="order">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>実行順序の整理</h2>
+    <span class="en">EXECUTION ORDER</span>
+  </div>
+  <p class="pattern-desc">ここがこの巻の<b>いちばん大事なところ</b>です。4つの初期化が、どの順で実行されるか。<b>この順番さえ覚えれば</b>、「なぜか変数が空っぽ」系のバグはほぼ解決できます。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">order.rule</span>
+      <span class="tag-desc">初期化が走る順番（鉄則）</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 実行される順番</div>
+        <div class="order-list">
+          <div class="order-item"><span class="ord">1</span><span><code>static { }</code> と static変数（最初の一度だけ）</span></div>
+          <div class="order-item"><span class="ord">2</span><span><code>{ }</code> とインスタンス変数（new のたびに）</span></div>
+          <div class="order-item"><span class="ord">3</span><span>コンストラクタ <code>Sample()</code></span></div>
+        </div>
+        <p style="font-size:13px;margin-top:14px;color:var(--muted);"><b style="color:var(--accent)">static が最優先で一度だけ → 残りは new ごとに上から</b>、と覚えましょう。</p>
+      </div>
+      <div class="code">
+<span class="code-label">// 全部入りで確認</span>
+<span class="kw">class</span> <span class="type">Demo</span> {
+    <span class="kw">static</span> { <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"1: static"</span>); }
+    {        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"2: instance"</span>); }
+    <span class="type">Demo</span>() { <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"3: constructor"</span>); }
+}
+<span class="comment">// new Demo(); new Demo(); の出力 ↓</span>
+<span class="comment">// 1: static       ← 一度だけ</span>
+<span class="comment">// 2: instance     ← 1回目</span>
+<span class="comment">// 3: constructor</span>
+<span class="comment">// 2: instance     ← 2回目（static は出ない）</span>
+<span class="comment">// 3: constructor</span>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    覚え方は<b>「スタ → インスタ → コンスト」</b>。スタティックが先頭で1回きり、あとはインスタンス用が new のたびに繰り返されます。
+  </div>
+</section>
+
+<section id="pitfall">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ハマりどころ</h2>
+    <span class="en">COMMON PITFALLS</span>
+  </div>
+  <p class="pattern-desc">初学者が初期化で詰まる<b>定番のポイント</b>を2つ紹介します。どちらも「順番」を意識すれば防げます。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pitfall.guide</span>
+      <span class="tag-desc">よくあるミスと回避法</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ハマりどころ①</div>
+        <p style="font-size:14px;"><b>まだ準備されていない変数を使ってしまう</b>。上から順に走るので、下で宣言した変数を上のブロックで使うとエラーになります。</p>
+        <div class="compare" style="grid-template-columns:1fr;margin-top:12px;">
+          <div class="box ng">
+            <div class="lbl">NG</div>
+            ブロックで使う変数が、ブロックより<b>下</b>に書いてある
+          </div>
+          <div class="box ok">
+            <div class="lbl">OK</div>
+            使う変数は、使う場所より<b>上</b>で宣言する
+          </div>
+        </div>
+      </div>
+      <div class="code">
+<span class="code-label">// ハマりどころ②：staticの中でインスタンス変数</span>
+<span class="kw">class</span> <span class="type">Bad</span> {
+    <span class="type">int</span> count = <span class="num">0</span>;
+
+    <span class="kw">static</span> {
+        count = <span class="num">5</span>;   <span class="comment">// ❌ エラー！</span>
+        <span class="comment">// static の中では</span>
+        <span class="comment">// インスタンス変数は使えない</span>
+        <span class="comment">// （まだ存在しないから）</span>
+    }
+}
+<span class="comment">// → static { } では static 変数だけ触る</span>
+      </div>
+    </div>
+  </div>
+  <div class="compare">
+    <div class="box ng">
+      <div class="lbl">詰まりポイント</div>
+      <code>static { }</code> の中でインスタンス変数（static なしの変数）を触ろうとしてコンパイルエラー。
+    </div>
+    <div class="box ok">
+      <div class="lbl">鉄則</div>
+      <b>static の世界 と インスタンスの世界 は別物</b>。static ブロックからは static のものだけ触れる。
+    </div>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;">
+  <div class="tip-head">NEXT STEP —</div>
+  初期化まわりはこれで卒業です。次の<b>Vol.3「抽象クラス編」</b>からは、いよいよ塊②「抽象化」に入ります。<b>abstract</b>という新しいキーワードが登場します。「中身を書かないメソッド」という不思議な存在を、たとえ話からじっくり理解していきましょう。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>新・Java入門編31 — クラスについてもっと学習しよう</span>
+  <span>Vol.2 / 9 — INITIALIZERS</span>
+</footer>
+
+</body>
+</html>

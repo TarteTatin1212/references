@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新・Java入門編31 抽象クラス編 Vol.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#122e28;
+  --paper:#eff5f2;
+  --paper-2:#dde9e5;
+  --accent:#266b58;
+  --accent-2:#358a72;
+  --accent-3:#5fa38e;
+  --muted:#647d76;
+  --line:#c2d4ce;
+  --code-bg:#13241f;
+  --code-text:#e5efea;
+  --panel-bg:#e6f0ec;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;-webkit-font-smoothing:antialiased;}
+.page-header{position:relative;padding:56px 7vw 40px;border-bottom:2px solid var(--ink);overflow:hidden;}
+.page-header::before{content:"{ }";position:absolute;right:3vw;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:260px;font-weight:600;color:var(--accent);opacity:0.13;z-index:0;line-height:1;}
+.page-header>*{position:relative;z-index:1;}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;margin-right:8px;}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;}
+.page-header h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:20px 0 8px;letter-spacing:1px;}
+.subtitle{color:var(--muted);font-size:14px;font-family:'JetBrains Mono',monospace;margin-bottom:20px;}
+.lead{max-width:640px;font-size:15px;}
+.lead b{color:var(--accent);}
+.toc{background:var(--paper-2);padding:20px 7vw;display:flex;flex-wrap:wrap;gap:6px 22px;border-bottom:1px solid var(--line);}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;font-family:'JetBrains Mono',monospace;transition:color .2s;}
+.toc a::before{content:"— ";color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{padding:48px 7vw 20px;max-width:1180px;margin:0 auto;}
+section{margin-bottom:64px;}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px;}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600;}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:25px;font-weight:700;}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;}
+.pattern-desc{max-width:680px;margin-bottom:20px;font-size:15px;}
+.pattern-desc b{color:var(--accent);}
+.demo-card{border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(18,46,40,.05);}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);}
+.tag-desc{font-size:12px;color:var(--muted);}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line);}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:.5px;}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;overflow-x:auto;white-space:pre;}
+.code .kw{color:#ffc88a;}
+.code .type{color:#c2a3ff;}
+.code .fn{color:#a3c9ff;}
+.code .str{color:#b5e8b0;}
+.code .num{color:#f7a8d8;}
+.code .comment{color:#7e9488;}
+.code .ann{color:#f7c08a;}
+.code-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7e9488;margin-bottom:10px;display:block;}
+.diagram{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.dia-box{background:#fff;border:1px solid var(--line);border-radius:4px;padding:10px 16px;font-size:13px;text-align:center;min-width:160px;}
+.dia-box.abs{border:2px dashed var(--accent);background:#eef6f2;}
+.dia-box .dt{font-family:'Shippori Mincho',serif;font-weight:700;}
+.dia-box .dd{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.dia-arrow{color:var(--accent);font-size:20px;line-height:1;}
+.dia-row{display:flex;gap:12px;}
+.tip{border-left:3px solid var(--accent);background:rgba(38,107,88,.08);padding:16px 20px;border-radius:0 4px 4px 0;margin:20px 0;font-size:14px;}
+.tip .tip-head{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);letter-spacing:1px;margin-bottom:6px;}
+.tip b{color:var(--accent);}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.compare .box{border-radius:4px;padding:12px 14px;font-size:13px;}
+.compare .ng{background:#fbeaea;border-left:3px solid #c75050;}
+.compare .ok{background:#e8f4ea;border-left:3px solid var(--accent);}
+.compare .box .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-bottom:6px;}
+.compare .ng .lbl{color:#c75050;}
+.compare .ok .lbl{color:var(--accent);}
+.page-footer{border-top:2px solid var(--ink);padding:28px 7vw;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr;}
+  .panel{border-right:none;border-bottom:1px solid var(--line);}
+  .compare{grid-template-columns:1fr;}
+  .page-header h1{font-size:30px;}
+  .page-header::before{font-size:140px;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・Java入門編31</span><span class="vol-tag">Vol.3</span>
+  <h1>抽象クラス編</h1>
+  <div class="subtitle">ABSTRACT CLASS — incomplete blueprint / chapter 3-4</div>
+  <p class="lead">ここから塊②「抽象化」に入ります。最初の主役は<b>abstract（アブストラクト）</b>。日本語で「抽象的な」という意味です。<b>「中身を書かないメソッド」と「new できないクラス」</b>という、ちょっと不思議な存在が登場します。でも安心してください。<b>「未完成の設計図」</b>というたとえ一発で腑に落ちますよ。</p>
+</header>
+
+<nav class="toc">
+  <a href="#problem">こんな悩みから</a>
+  <a href="#abs-method">抽象メソッド</a>
+  <a href="#abs-class">抽象クラス</a>
+  <a href="#extend">継承して完成させる</a>
+  <a href="#no-new">new できない理由</a>
+  <a href="#mix">普通のメソッドと混ぜる</a>
+  <a href="#when">いつ使うか</a>
+</nav>
+
+<main>
+
+<section id="problem">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>こんな悩みから始まります</h2>
+    <span class="en">THE PROBLEM</span>
+  </div>
+  <p class="pattern-desc">動物クラスを考えます。犬も猫も鳥も「鳴く」けれど、<b>鳴き方はバラバラ</b>。親クラスの Animal に <code>cry()</code> を書きたいけれど、<b>「親の時点では中身を決められない」</b>。この悩みを解決するのが abstract です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">motivation</span>
+      <span class="tag-desc">親では中身を決められないメソッド</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 困りごと</div>
+        <p style="font-size:14px;">Animal を継承する犬・猫は、それぞれ違う鳴き方をします。</p>
+        <div class="diagram" style="margin-top:14px;">
+          <div class="dia-box abs"><div class="dt">Animal</div><div class="dd">cry() ← 中身は？</div></div>
+          <div class="dia-arrow">▲</div>
+          <div class="dia-row">
+            <div class="dia-box"><div class="dt">Dog</div><div class="dd">ワン</div></div>
+            <div class="dia-box"><div class="dt">Cat</div><div class="dd">ニャー</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+<span class="code-label">// 親で書こうとすると…</span>
+<span class="kw">class</span> <span class="type">Animal</span> {
+    <span class="type">void</span> <span class="fn">cry</span>() {
+        <span class="comment">// ここに何を書く？？</span>
+        <span class="comment">// 犬かもしれないし猫かもしれない</span>
+        <span class="comment">// 親の時点では決められない！</span>
+    }
+}
+
+<span class="comment">// → 「中身は子に任せる」と宣言したい</span>
+<span class="comment">//    それが abstract メソッド</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="abs-method">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>抽象メソッド（abstractメソッド）</h2>
+    <span class="en">ABSTRACT METHOD</span>
+  </div>
+  <p class="pattern-desc"><b>中身（<code>{ }</code> の処理）を書かないメソッド</b>を、抽象メソッドと呼びます。<code>abstract</code> を付けて、<b><code>{ }</code> の代わりに <code>;</code> で終わらせる</b>のがルール。「やることはあるけど、中身は子クラスに任せる」という宣言です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">abstract method</span>
+      <span class="tag-desc">中身のない、宣言だけのメソッド</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 普通のメソッドとの違い</div>
+        <div class="compare" style="grid-template-columns:1fr;">
+          <div class="box ok">
+            <div class="lbl">普通のメソッド</div>
+            <code>void cry() { ... }</code> ← 中身あり、<code>{ }</code> で終わる
+          </div>
+          <div class="box ok">
+            <div class="lbl">抽象メソッド</div>
+            <code>abstract void cry();</code> ← 中身なし、<code>;</code> で終わる
+          </div>
+        </div>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);"><b style="color:var(--accent)">中身を書かない＝子に「必ず作ってね」と義務付ける</b>、という意味になります。</p>
+      </div>
+      <div class="code">
+<span class="code-label">// 抽象メソッドの書き方</span>
+<span class="kw">abstract</span> <span class="type">void</span> <span class="fn">cry</span>();
+<span class="comment">//  ↑キーワード  ↑中身なし、セミコロンで終わり</span>
+
+<span class="comment">// これは「鳴くという行動はある。</span>
+<span class="comment">//  でも中身は子クラスが書くこと」</span>
+<span class="comment">//  という約束を表します</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="abs-class">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>抽象クラス（abstractクラス）</h2>
+    <span class="en">ABSTRACT CLASS</span>
+  </div>
+  <p class="pattern-desc">抽象メソッドを<b>1つでも持つクラスは、クラス自体にも <code>abstract</code> が必要</b>です。これを抽象クラスと呼びます。<b>「未完成のメソッドがあるから、このクラスはまだ未完成ですよ」</b>という印です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">abstract class</span>
+      <span class="tag-desc">未完成の設計図</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// たとえ話：未完成の設計図</div>
+        <p style="font-size:14px;">家の設計図に「ここに窓を付ける（種類は施主が選ぶ）」と書いてある状態。<b>枠は決まっているが、一部は空欄</b>。</p>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">この設計図のままでは家は建ちません（＝<code>new</code> できない）。空欄を埋めた<b>完成版の設計図（子クラス）</b>が必要です。</p>
+      </div>
+      <div class="code">
+<span class="code-label">// 抽象クラスの完成形</span>
+<span class="kw">abstract</span> <span class="kw">class</span> <span class="type">Animal</span> {
+    <span class="comment">// 抽象メソッド（中身は子に任せる）</span>
+    <span class="kw">abstract</span> <span class="type">void</span> <span class="fn">cry</span>();
+}
+<span class="comment">// ↑ class の前にも abstract が必要</span>
+
+<span class="comment">// もし abstract を付け忘れると…</span>
+<span class="comment">// 「抽象メソッドがあるのにクラスが</span>
+<span class="comment">//  abstract じゃない」とエラーになる</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="extend">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>継承して完成させる</h2>
+    <span class="en">EXTEND & COMPLETE</span>
+  </div>
+  <p class="pattern-desc">抽象クラスは <code>extends</code> で継承します。継承した子クラスは<b>抽象メソッドの中身を必ず書かなければなりません</b>。書けば完成、書かなければエラー。この<b>「強制力」</b>が abstract の最大の価値です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">extends</span>
+      <span class="tag-desc">子クラスが空欄を埋める</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 完成までの流れ</div>
+        <div class="diagram">
+          <div class="dia-box abs"><div class="dt">Animal（abstract）</div><div class="dd">abstract cry();</div></div>
+          <div class="dia-arrow">▲ extends</div>
+          <div class="dia-box"><div class="dt">Dog</div><div class="dd">cry(){ "ワン" }</div></div>
+        </div>
+        <p style="font-size:13px;margin-top:14px;color:var(--muted);">Dog が <code>cry()</code> の中身を書いたので、<b style="color:var(--accent)">Dog は完成＝new できる</b>クラスになりました。</p>
+      </div>
+      <div class="code">
+<span class="code-label">// 子クラスで中身を実装（オーバーライド）</span>
+<span class="kw">class</span> <span class="type">Dog</span> <span class="kw">extends</span> <span class="type">Animal</span> {
+    <span class="ann">@Override</span>
+    <span class="type">void</span> <span class="fn">cry</span>() {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"ワン"</span>);  <span class="comment">// 中身を書いた</span>
+    }
+}
+
+<span class="kw">class</span> <span class="type">Cat</span> <span class="kw">extends</span> <span class="type">Animal</span> {
+    <span class="ann">@Override</span>
+    <span class="type">void</span> <span class="fn">cry</span>() {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"ニャー"</span>);
+    }
+}
+<span class="comment">// Dog も Cat も new できる！</span>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    抽象メソッドの中身を書き忘れると、子クラスもまだ未完成扱いになり<b>コンパイルエラー</b>になります。これは欠点ではなく<b>「書き忘れを防いでくれる安全装置」</b>です。
+  </div>
+</section>
+
+<section id="no-new">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>抽象クラスは new できない</h2>
+    <span class="en">CANNOT INSTANTIATE</span>
+  </div>
+  <p class="pattern-desc">抽象クラスの大きな特徴が<b>「直接 new できない」</b>こと。未完成の設計図から家が建たないのと同じです。<b>new できるのは、空欄を埋めた子クラスだけ</b>。これも仕様であり、わざとそうなっています。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">no instantiation</span>
+      <span class="tag-desc">未完成だから直接は作れない</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// new できる / できない</div>
+        <div class="compare" style="grid-template-columns:1fr;">
+          <div class="box ng">
+            <div class="lbl">NG</div>
+            <code>new Animal();</code> ← 抽象クラスは作れない
+          </div>
+          <div class="box ok">
+            <div class="lbl">OK</div>
+            <code>new Dog();</code> ← 完成した子クラスはOK
+          </div>
+        </div>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">「Animal という抽象的な動物」は世の中に存在しません。存在するのは犬や猫といった<b style="color:var(--accent)">具体的な動物</b>だけ。コードもそれを表しています。</p>
+      </div>
+      <div class="code">
+<span class="code-label">// 実際のコード</span>
+<span class="type">Animal</span> a = <span class="kw">new</span> <span class="type">Animal</span>();  <span class="comment">// ❌ コンパイルエラー</span>
+
+<span class="type">Animal</span> dog = <span class="kw">new</span> <span class="type">Dog</span>();  <span class="comment">// ⭕ OK</span>
+dog.<span class="fn">cry</span>();                  <span class="comment">// → ワン</span>
+
+<span class="type">Animal</span> cat = <span class="kw">new</span> <span class="type">Cat</span>();  <span class="comment">// ⭕ OK</span>
+cat.<span class="fn">cry</span>();                  <span class="comment">// → ニャー</span>
+
+<span class="comment">// 型は Animal、中身は Dog や Cat。</span>
+<span class="comment">// これがポリモーフィズムの土台です</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="mix">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>普通のメソッドも混ぜられる</h2>
+    <span class="en">MIXING METHODS</span>
+  </div>
+  <p class="pattern-desc">抽象クラスは<b>「中身あり」と「中身なし」のメソッドを混ぜて持てます</b>。共通の処理は親に書いてしまい、バラバラな部分だけ abstract にする。これが<b>抽象クラスの一番おいしい使い方</b>です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">concrete + abstract</span>
+      <span class="tag-desc">共通処理は親、違う部分だけ子に任せる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 役割分担</div>
+        <p style="font-size:14px;">「寝る」は全動物共通だから親に書く。「鳴く」はバラバラだから子に任せる。</p>
+        <div class="compare" style="grid-template-columns:1fr;margin-top:12px;">
+          <div class="box ok">
+            <div class="lbl">親に書く（共通）</div>
+            <code>sleep()</code> ← 全動物「Zzz」で同じ
+          </div>
+          <div class="box ok">
+            <div class="lbl">子に任せる（バラバラ）</div>
+            <code>cry()</code> ← 動物ごとに違う
+          </div>
+        </div>
+      </div>
+      <div class="code">
+<span class="code-label">// 混在させた抽象クラス</span>
+<span class="kw">abstract</span> <span class="kw">class</span> <span class="type">Animal</span> {
+
+    <span class="comment">// 中身あり：共通処理</span>
+    <span class="type">void</span> <span class="fn">sleep</span>() {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"Zzz..."</span>);
+    }
+
+    <span class="comment">// 中身なし：子に任せる</span>
+    <span class="kw">abstract</span> <span class="type">void</span> <span class="fn">cry</span>();
+}
+
+<span class="comment">// Dog は sleep() をそのまま使い、</span>
+<span class="comment">// cry() だけ自分で書けばよい</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="when">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>いつ使うか</h2>
+    <span class="en">WHEN TO USE</span>
+  </div>
+  <p class="pattern-desc">最後に「結論」です。抽象クラスは<b>「共通の親を作りたいけれど、一部だけは子ごとに変えたい」</b>時に使います。<b>共通部分の使い回し＋バラバラ部分の強制</b>、この2つを同時に叶えたい時の道具です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">抽象クラスの使いどころ まとめ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 結論</div>
+        <p style="font-size:14px;">こういう時に抽象クラス：</p>
+        <ul style="font-size:13px;margin:10px 0 0 18px;line-height:1.9;">
+          <li>複数のクラスに<b>共通の親</b>を持たせたい</li>
+          <li>でも<b>一部のメソッドは子ごとに違う</b></li>
+          <li>その違う部分を<b>「書き忘れさせたくない」</b></li>
+        </ul>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">3つ揃ったら abstract の出番です。</p>
+      </div>
+      <div class="code">
+<span class="code-label">// 抽象クラスの3点セット（暗記不要・感覚でOK）</span>
+<span class="comment">// ① abstract class で宣言</span>
+<span class="kw">abstract</span> <span class="kw">class</span> <span class="type">Base</span> {
+
+<span class="comment">// ② 共通処理は普通に書く</span>
+    <span class="type">void</span> <span class="fn">common</span>() { ... }
+
+<span class="comment">// ③ 子に任せる部分は abstract</span>
+    <span class="kw">abstract</span> <span class="type">void</span> <span class="fn">custom</span>();
+}
+      </div>
+    </div>
+  </div>
+  <div class="compare">
+    <div class="box ng">
+      <div class="lbl">こんな時は抽象クラス不要</div>
+      共通の親がいらない、単独のクラスで済む → 普通のクラスでOK。
+    </div>
+    <div class="box ok">
+      <div class="lbl">こんな時に抽象クラス</div>
+      「テンプレートを親で用意し、細部だけ子に埋めさせる」設計をしたい時。
+    </div>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;">
+  <div class="tip-head">NEXT STEP —</div>
+  抽象クラスは「<b>共通の親＋未完成の部分</b>」でした。次の<b>Vol.4「インターフェース編」</b>では、よく似ているけれど少し違う <b>interface</b> を学びます。「abstractクラスと何が違うの？」という疑問は、Vol.4を読めばスッキリします。<b>2つを比べると、両方の意味が立体的に見えてきます</b>よ。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>新・Java入門編31 — クラスについてもっと学習しよう</span>
+  <span>Vol.3 / 9 — ABSTRACT CLASS</span>
+</footer>
+
+</body>
+</html>

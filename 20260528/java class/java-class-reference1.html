@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新・Java入門編31 クラス再入門・全体像編 Vol.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16302180;
+  --ink:#163021;
+  --paper:#f2f5f0;
+  --paper-2:#e3ebe2;
+  --accent:#2f6b47;
+  --accent-2:#3f8a5c;
+  --accent-3:#6aa37c;
+  --muted:#6b7d70;
+  --line:#c7d4c6;
+  --code-bg:#16241c;
+  --code-text:#e6efe6;
+  --panel-bg:#eaf0e8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Noto Sans JP',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+.page-header{
+  position:relative;
+  padding:56px 7vw 40px;
+  border-bottom:2px solid var(--ink);
+  overflow:hidden;
+}
+.page-header::before{
+  content:"{ }";
+  position:absolute;
+  right:3vw;top:50%;
+  transform:translateY(-50%);
+  font-family:'JetBrains Mono',monospace;
+  font-size:260px;
+  font-weight:600;
+  color:var(--accent);
+  opacity:0.13;
+  z-index:0;
+  line-height:1;
+}
+.page-header>*{position:relative;z-index:1;}
+.series-tag{
+  display:inline-block;
+  background:var(--ink);
+  color:var(--paper);
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  letter-spacing:1px;
+  padding:4px 12px;
+  margin-right:8px;
+}
+.vol-tag{
+  display:inline-block;
+  background:var(--accent);
+  color:var(--paper);
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  letter-spacing:1px;
+  padding:4px 12px;
+}
+.page-header h1{
+  font-family:'Shippori Mincho',serif;
+  font-size:42px;
+  font-weight:700;
+  margin:20px 0 8px;
+  letter-spacing:1px;
+}
+.subtitle{color:var(--muted);font-size:14px;font-family:'JetBrains Mono',monospace;margin-bottom:20px;}
+.lead{max-width:640px;font-size:15px;}
+.lead b{color:var(--accent);}
+
+.toc{
+  background:var(--paper-2);
+  padding:20px 7vw;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 22px;
+  border-bottom:1px solid var(--line);
+}
+.toc a{
+  color:var(--ink);
+  text-decoration:none;
+  font-size:13px;
+  font-family:'JetBrains Mono',monospace;
+  transition:color .2s;
+}
+.toc a::before{content:"— ";color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+
+main{padding:48px 7vw 20px;max-width:1180px;margin:0 auto;}
+
+section{margin-bottom:64px;}
+.section-header{
+  display:flex;
+  align-items:baseline;
+  gap:16px;
+  border-bottom:1px solid var(--line);
+  padding-bottom:10px;
+  margin-bottom:18px;
+}
+.section-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px;
+  color:var(--accent);
+  font-weight:600;
+}
+.section-header h2{
+  font-family:'Shippori Mincho',serif;
+  font-size:25px;
+  font-weight:700;
+}
+.section-header .en{
+  margin-left:auto;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--muted);
+  letter-spacing:1px;
+}
+.pattern-desc{max-width:680px;margin-bottom:20px;font-size:15px;}
+.pattern-desc b{color:var(--accent);}
+
+.demo-card{
+  border:1px solid var(--line);
+  border-radius:4px;
+  overflow:hidden;
+  background:#fff;
+  box-shadow:0 1px 3px rgba(22,48,33,.05);
+}
+.demo-head{
+  background:var(--paper-2);
+  padding:10px 16px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.tag-name{
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+  font-weight:600;
+  color:var(--accent);
+}
+.tag-desc{font-size:12px;color:var(--muted);}
+.demo-body{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+}
+.panel{
+  background:var(--panel-bg);
+  padding:22px;
+  border-right:1px solid var(--line);
+}
+.panel-head{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:14px;
+  letter-spacing:.5px;
+}
+.code{
+  background:var(--code-bg);
+  color:var(--code-text);
+  padding:22px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+  line-height:1.75;
+  overflow-x:auto;
+  white-space:pre;
+}
+.code .kw{color:#ffc88a;}
+.code .type{color:#c2a3ff;}
+.code .fn{color:#a3c9ff;}
+.code .str{color:#b5e8b0;}
+.code .num{color:#f7a8d8;}
+.code .comment{color:#7e9488;}
+.code .ann{color:#f7c08a;}
+.code-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:#7e9488;
+  margin-bottom:10px;
+  display:block;
+}
+
+/* 全体像マップ */
+.map-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+.map-block{
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  background:#fff;
+  border-radius:3px;
+  padding:14px 16px;
+}
+.map-block .mb-title{
+  font-family:'Shippori Mincho',serif;
+  font-weight:700;
+  font-size:15px;
+  margin-bottom:4px;
+}
+.map-block .mb-items{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--muted);
+  line-height:1.6;
+}
+
+/* 巻一覧テーブル */
+.vol-table{width:100%;border-collapse:collapse;font-size:13px;}
+.vol-table th,.vol-table td{
+  border:1px solid var(--line);
+  padding:8px 10px;
+  text-align:left;
+  vertical-align:top;
+}
+.vol-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;}
+.vol-table td:first-child{
+  font-family:'JetBrains Mono',monospace;
+  color:var(--accent);
+  font-weight:600;
+  text-align:center;
+  width:48px;
+}
+.vol-table tr.here{background:#eef6ee;}
+.vol-table tr.here td{font-weight:700;}
+
+.flow{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.flow-step{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:13px;
+}
+.flow-step .num{
+  background:var(--accent);
+  color:#fff;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  width:24px;height:24px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+
+.key{
+  background:var(--accent);
+  color:var(--paper);
+  padding:1px 6px;
+  border-radius:3px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+}
+
+.tip{
+  border-left:3px solid var(--accent);
+  background:rgba(47,107,71,.08);
+  padding:16px 20px;
+  border-radius:0 4px 4px 0;
+  margin:20px 0;
+  font-size:14px;
+}
+.tip .tip-head{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  font-weight:600;
+  color:var(--accent);
+  letter-spacing:1px;
+  margin-bottom:6px;
+}
+.tip b{color:var(--accent);}
+
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.compare .box{border-radius:4px;padding:12px 14px;font-size:13px;}
+.compare .ng{background:#fbeaea;border-left:3px solid #c75050;}
+.compare .ok{background:#e8f4ea;border-left:3px solid var(--accent);}
+.compare .box .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-bottom:6px;}
+.compare .ng .lbl{color:#c75050;}
+.compare .ok .lbl{color:var(--accent);}
+
+.page-footer{
+  border-top:2px solid var(--ink);
+  padding:28px 7vw;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  color:var(--muted);
+  display:flex;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr;}
+  .panel{border-right:none;border-bottom:1px solid var(--line);}
+  .map-grid{grid-template-columns:1fr;}
+  .compare{grid-template-columns:1fr;}
+  .page-header h1{font-size:30px;}
+  .page-header::before{font-size:140px;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・Java入門編31</span><span class="vol-tag">Vol.1</span>
+  <h1>クラス再入門・全体像編</h1>
+  <div class="subtitle">CLASS DEEP DIVE — THE MAP / 14 chapters overview</div>
+  <p class="lead">クラスの基本はもう習いました。ここからは<b>「クラスのもっと深い世界」</b>に踏み込みます。といっても身構えなくて大丈夫。この巻はまず<b>全体の地図</b>を広げる回です。14個のテーマがどう繋がっているか、どの順で学べば迷子にならないかを、ざっくり掴みましょう。</p>
+</header>
+
+<nav class="toc">
+  <a href="#why">なぜ深掘りするのか</a>
+  <a href="#four">4つの塊</a>
+  <a href="#init">塊1 イニシャライザ</a>
+  <a href="#abstract">塊2 抽象化</a>
+  <a href="#nested">塊3 ネスト</a>
+  <a href="#special">塊4 特殊なクラス</a>
+  <a href="#route">学習ルート</a>
+  <a href="#volumes">全9巻の地図</a>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>なぜクラスを深掘りするのか</h2>
+    <span class="en">WHY GO DEEPER</span>
+  </div>
+  <p class="pattern-desc">基本のクラスだけでもプログラムは書けます。でも現場のコードを読むと、見慣れない書き方が次々出てきます。<b>その「見慣れない書き方」の正体が、この14テーマ</b>です。読めるようになれば世界が一気に広がります。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">class++</span>
+      <span class="tag-desc">基本クラスの「次」に何があるか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// イメージ：道具箱が増える</div>
+        <div class="map-grid">
+          <div class="map-block">
+            <div class="mb-title">これまで</div>
+            <div class="mb-items">class / フィールド / メソッド / コンストラクタ / 継承</div>
+          </div>
+          <div class="map-block">
+            <div class="mb-title">これから</div>
+            <div class="mb-items">abstract / interface / 内部クラス / enum / record / annotation …</div>
+          </div>
+        </div>
+        <p style="font-size:13px;margin-top:14px;color:var(--muted);">同じ「クラス」という言葉でも、目的に応じた<b style="color:var(--accent)">いろんな種類・書き方</b>がある、というのが今回のテーマです。</p>
+      </div>
+      <div class="code">
+<span class="code-label">// 現場のコードでよく見る光景</span>
+<span class="kw">public</span> <span class="kw">abstract</span> <span class="kw">class</span> <span class="type">Animal</span> { ... }   <span class="comment">// 抽象クラス？</span>
+
+<span class="kw">public</span> <span class="kw">interface</span> <span class="type">Runnable</span> { ... }     <span class="comment">// インターフェース？</span>
+
+button.<span class="fn">addClickListener</span>(<span class="kw">new</span> <span class="type">Handler</span>() {
+    ...                            <span class="comment">// この { } は何者？</span>
+});
+
+<span class="kw">enum</span> <span class="type">Color</span> { <span class="num">RED</span>, <span class="num">GREEN</span>, <span class="num">BLUE</span> }  <span class="comment">// enum？</span>
+
+<span class="kw">record</span> <span class="type">Point</span>(<span class="type">int</span> x, <span class="type">int</span> y) {}    <span class="comment">// record？</span>
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    今回のゴールは<b>「全部を完璧に使いこなす」ことではありません</b>。まずは<b>読めて、なんとなく意図がわかる</b>状態を目指します。厳密な細部はあとから何度でも辞書として開けばOKです。
+  </div>
+</section>
+
+<section id="four">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>14テーマは「4つの塊」に分かれる</h2>
+    <span class="en">FOUR GROUPS</span>
+  </div>
+  <p class="pattern-desc">14個を一気に覚えようとすると確実にパンクします。だから<b>4つのグループ</b>に分けて考えます。この地図さえ頭に入れば、あとは1つずつ埋めていくだけです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">overview.map</span>
+      <span class="tag-desc">14チャプターの全体マップ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4つの塊</div>
+        <div class="map-grid">
+          <div class="map-block">
+            <div class="mb-title">① 初期化の仕組み</div>
+            <div class="mb-items">インスタンスイニシャライザ / スタティックイニシャライザ</div>
+          </div>
+          <div class="map-block">
+            <div class="mb-title">② 抽象化の仕組み</div>
+            <div class="mb-items">abstractクラス / abstractメソッド / interface / implements</div>
+          </div>
+          <div class="map-block">
+            <div class="mb-title">③ ネストされたクラス</div>
+            <div class="mb-items">内部 / ローカル / 匿名 / staticネステッド</div>
+          </div>
+          <div class="map-block">
+            <div class="mb-title">④ 特殊なクラス</div>
+            <div class="mb-items">enum / annotation / record</div>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+<span class="code-label">// 4つの塊 → 9巻への割り当て</span>
+塊①  初期化      <span class="comment">→ Vol.2</span>
+塊②  抽象化      <span class="comment">→ Vol.3, Vol.4</span>
+塊③  ネスト      <span class="comment">→ Vol.5, Vol.6, Vol.7</span>
+塊④  特殊クラス   <span class="comment">→ Vol.8</span>
+
+そして…
+全体像          <span class="comment">→ Vol.1 (いまここ)</span>
+困った時のQ&amp;A    <span class="comment">→ Vol.9</span>
+
+<span class="comment">// 1つずつ進めば必ずゴールできます</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="init">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>塊① 初期化の仕組み</h2>
+    <span class="en">INITIALIZERS</span>
+  </div>
+  <p class="pattern-desc">オブジェクトが作られる時、フィールドに最初の値を入れる作業を<b>初期化</b>と言います。コンストラクタはもう知っていますね。実はそれ以外にも<b>初期化を書ける場所</b>があるのです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">{ } と static { }</span>
+      <span class="tag-desc">コンストラクタ以外の初期化スポット</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// たとえ話</div>
+        <p style="font-size:14px;">引っ越しを想像してください。</p>
+        <div class="map-grid" style="margin-top:12px;">
+          <div class="map-block">
+            <div class="mb-title">インスタンス初期化</div>
+            <div class="mb-items">部屋を借りるたびに毎回やる準備（カーテンを付ける等）</div>
+          </div>
+          <div class="map-block">
+            <div class="mb-title">スタティック初期化</div>
+            <div class="mb-items">マンション全体で一度だけやる準備（共用ロビーの設営）</div>
+          </div>
+        </div>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);"><b style="color:var(--accent)">「毎回」か「一度だけ」か</b>が分かれ目です。</p>
+      </div>
+      <div class="code">
+<span class="code-label">// Vol.2 で詳しくやります（予告編）</span>
+<span class="kw">class</span> <span class="type">Sample</span> {
+    <span class="comment">// インスタンスイニシャライザ</span>
+    {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"作るたびに実行"</span>);
+    }
+
+    <span class="comment">// スタティックイニシャライザ</span>
+    <span class="kw">static</span> {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"最初の一度だけ実行"</span>);
+    }
+}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="abstract">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>塊② 抽象化の仕組み</h2>
+    <span class="en">ABSTRACTION</span>
+  </div>
+  <p class="pattern-desc">プログラムが大きくなると<b>「共通の決まりごと」</b>を作りたくなります。abstractクラスとinterfaceは、その決まりごとを表現する道具です。<b>「中身は後で、形だけ先に決める」</b>のがキーワードです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">abstract / interface</span>
+      <span class="tag-desc">未完成の設計図・できることの約束</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// たとえ話</div>
+        <div class="map-grid">
+          <div class="map-block">
+            <div class="mb-title">抽象クラス</div>
+            <div class="mb-items">「動物」という未完成の型。犬や猫が中身を完成させる</div>
+          </div>
+          <div class="map-block">
+            <div class="mb-title">インターフェース</div>
+            <div class="mb-items">「泳げる」という約束。魚も人も守れば名乗れる</div>
+          </div>
+        </div>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">どちらも<b style="color:var(--accent)">「これを継ぐ／守るなら、このメソッドは必ず用意してね」</b>と強制する仕組みです。</p>
+      </div>
+      <div class="code">
+<span class="code-label">// Vol.3・Vol.4 で詳しくやります（予告編）</span>
+<span class="kw">abstract</span> <span class="kw">class</span> <span class="type">Animal</span> {
+    <span class="kw">abstract</span> <span class="type">void</span> <span class="fn">cry</span>();   <span class="comment">// 中身なし＝子に丸投げ</span>
+}
+
+<span class="kw">interface</span> <span class="type">Swimmable</span> {
+    <span class="type">void</span> <span class="fn">swim</span>();          <span class="comment">// 「泳げる」という約束</span>
+}
+
+<span class="kw">class</span> <span class="type">Dog</span> <span class="kw">extends</span> <span class="type">Animal</span> <span class="kw">implements</span> <span class="type">Swimmable</span> {
+    <span class="comment">// cry() と swim() を必ず書く義務が発生</span>
+}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="nested">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>塊③ ネストされたクラス</h2>
+    <span class="en">NESTED CLASSES</span>
+  </div>
+  <p class="pattern-desc"><b>クラスの中に、さらにクラスを書く</b>——それがネスト（入れ子）です。「え、そんなことできるの？」と思いますよね。できます。そして種類が4つあるので、ここが今回いちばんボリュームのある塊です（Vol.5〜7）。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">nested classes ×4</span>
+      <span class="tag-desc">クラスの中のクラス、4タイプ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4種類の早見</div>
+        <div class="flow">
+          <div class="flow-step"><span class="num">1</span><span><b>内部クラス</b>：外側にべったり寄り添うクラス</span></div>
+          <div class="flow-step"><span class="num">2</span><span><b>ローカルクラス</b>：メソッドの中だけで使うクラス</span></div>
+          <div class="flow-step"><span class="num">3</span><span><b>匿名クラス</b>：名前すら付けない使い捨てクラス</span></div>
+          <div class="flow-step"><span class="num">4</span><span><b>staticネステッド</b>：外側と距離を置いた独立寄りのクラス</span></div>
+        </div>
+      </div>
+      <div class="code">
+<span class="code-label">// 入れ子のイメージ</span>
+<span class="kw">class</span> <span class="type">Outer</span> {            <span class="comment">// 外側</span>
+
+    <span class="kw">class</span> <span class="type">Inner</span> {        <span class="comment">// 中のクラス（内部クラス）</span>
+    }
+
+    <span class="kw">static</span> <span class="kw">class</span> <span class="type">Nested</span> { <span class="comment">// staticネステッド</span>
+    }
+
+    <span class="type">void</span> <span class="fn">method</span>() {
+        <span class="kw">class</span> <span class="type">Local</span> {}   <span class="comment">// ローカルクラス</span>
+    }
+}
+      </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    ネストされたクラスは<b>「使い分けの理由」</b>が分かりにくいテーマです。Vol.5〜7では「いつ・なぜ使うか」を必ずセットで説明します。丸暗記しなくて大丈夫。
+  </div>
+</section>
+
+<section id="special">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>塊④ 特殊なクラス</h2>
+    <span class="en">SPECIAL CLASSES</span>
+  </div>
+  <p class="pattern-desc">最後の塊は、特定の目的に特化した<b>「便利な専用クラス」</b>たちです。enum・annotation・record。どれも<b>「普通のクラスで書くと面倒なことを、短く安全に書く」</b>ための仕組みです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">enum / annotation / record</span>
+      <span class="tag-desc">目的特化型のクラス</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// それぞれの一言まとめ</div>
+        <div class="map-grid">
+          <div class="map-block">
+            <div class="mb-title">enum（列挙型）</div>
+            <div class="mb-items">「選択肢が決まってる値」を安全に表す（曜日・信号の色など）</div>
+          </div>
+          <div class="map-block">
+            <div class="mb-title">annotation</div>
+            <div class="mb-items">コードに付ける「付箋・ラベル」。@Override など</div>
+          </div>
+          <div class="map-block">
+            <div class="mb-title">record</div>
+            <div class="mb-items">「データを入れる箱」を一行で作れる新しいクラス</div>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+<span class="code-label">// Vol.8 で詳しくやります（予告編）</span>
+<span class="kw">enum</span> <span class="type">Signal</span> { <span class="num">RED</span>, <span class="num">YELLOW</span>, <span class="num">GREEN</span> }
+
+<span class="ann">@Override</span>                  <span class="comment">// これがアノテーション</span>
+<span class="kw">public</span> <span class="type">String</span> <span class="fn">toString</span>() { ... }
+
+<span class="kw">record</span> <span class="type">Point</span>(<span class="type">int</span> x, <span class="type">int</span> y) {}  <span class="comment">// たった1行でデータクラス完成</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="route">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>おすすめの学習ルート</h2>
+    <span class="en">LEARNING ROUTE</span>
+  </div>
+  <p class="pattern-desc">この巻から順番に読めば、自然と難易度が上がっていくよう設計してあります。<b>つまずいたら前の巻に戻ってOK</b>。辞書のように使ってください。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">route.guide</span>
+      <span class="tag-desc">迷わないための進め方</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 進め方のお約束</div>
+        <div class="flow">
+          <div class="flow-step"><span class="num">1</span><span>まず手を動かす。コードを<b>写経</b>して動かす</span></div>
+          <div class="flow-step"><span class="num">2</span><span>エラーが出たら<b>Vol.9（Q&amp;A）</b>を開く</span></div>
+          <div class="flow-step"><span class="num">3</span><span>「なぜ使うか」が腑に落ちなくても<b>先に進む</b></span></div>
+          <div class="flow-step"><span class="num">4</span><span>後の巻で「あ、これか」と<b>繋がる瞬間</b>が来る</span></div>
+        </div>
+      </div>
+      <div class="code">
+<span class="code-label">// 完璧主義を捨てるのが上達のコツ</span>
+<span class="comment">// ❌ 1テーマを完璧に理解してから次へ</span>
+<span class="comment">//     → 抽象化で必ず止まる</span>
+
+<span class="comment">// ⭕ 7割わかったら次へ進む</span>
+<span class="comment">//     → 全体が見えてから戻ると一気に理解</span>
+
+<span class="comment">// プログラミングは「行ったり来たり」で</span>
+<span class="comment">// 身につくものです。あせらず行きましょう。</span>
+      </div>
+    </div>
+  </div>
+  <div class="compare">
+    <div class="box ng">
+      <div class="lbl">ありがちな失敗</div>
+      Vol.3の抽象クラスで「なぜ必要なの？」と完全に納得するまで進まず、そこで挫折。
+    </div>
+    <div class="box ok">
+      <div class="lbl">おすすめ</div>
+      「とりあえず書き方はこう」と覚えて先へ。Vol.4のinterfaceと比べると意味が見えてくる。
+    </div>
+  </div>
+</section>
+
+<section id="volumes">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>全9巻の地図</h2>
+    <span class="en">SERIES MAP</span>
+  </div>
+  <p class="pattern-desc">このシリーズの全体像です。<b>いま「Vol.1」にいます</b>。各巻は独立して開けるので、必要な巻だけ拾い読みしても構いません。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">series.index</span>
+      <span class="tag-desc">新・Java入門編31 全9巻</span>
+    </div>
+    <div class="demo-body" style="grid-template-columns:1fr;">
+      <div class="panel" style="border-right:none;">
+        <table class="vol-table">
+          <thead><tr><th>Vol</th><th>タイトル</th><th>扱う内容</th></tr></thead>
+          <tbody>
+            <tr class="here"><td>1</td><td>クラス再入門・全体像編</td><td>14テーマの地図・4つの塊・学習ルート（いまここ）</td></tr>
+            <tr><td>2</td><td>イニシャライザ編</td><td>インスタンス／スタティックイニシャライザと実行順序</td></tr>
+            <tr><td>3</td><td>抽象クラス編</td><td>abstractクラス・abstractメソッド</td></tr>
+            <tr><td>4</td><td>インターフェース編</td><td>interface・implements</td></tr>
+            <tr><td>5</td><td>ネストされたクラス入門編</td><td>ネストの全体像・内部クラス</td></tr>
+            <tr><td>6</td><td>ローカル・匿名クラス編</td><td>ローカルクラス・匿名クラス</td></tr>
+            <tr><td>7</td><td>スタティックネステッドクラス編</td><td>static nested class・使い分け</td></tr>
+            <tr><td>8</td><td>特殊なクラス編</td><td>enum・annotation・record</td></tr>
+            <tr><td>9</td><td>困った時のクラス編</td><td>Q&amp;A形式トラブルシューティング</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;">
+  <div class="tip-head">NEXT STEP —</div>
+  全体像はこれでバッチリです。次の<b>Vol.2「イニシャライザ編」</b>では、塊①に踏み込みます。「コンストラクタ以外で初期化を書く場所」と、その<b>実行される順番</b>を、実際に動かしながら整理します。順番が分かると「なぜか変数が空っぽ」系のバグがグッと減りますよ。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>新・Java入門編31 — クラスについてもっと学習しよう</span>
+  <span>Vol.1 / 9 — CLASS DEEP DIVE</span>
+</footer>
+
+</body>
+</html>

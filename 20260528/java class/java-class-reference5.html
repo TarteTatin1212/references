@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新・Java入門編31 ネストされたクラス入門編 Vol.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f2e30;
+  --paper:#edf5f5;
+  --paper-2:#dae9ea;
+  --accent:#1b6b70;
+  --accent-2:#2b8a90;
+  --accent-3:#54a3a8;
+  --muted:#5f7d7f;
+  --line:#bcd4d5;
+  --code-bg:#112324;
+  --code-text:#e3efef;
+  --panel-bg:#e2f0f0;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;-webkit-font-smoothing:antialiased;}
+.page-header{position:relative;padding:56px 7vw 40px;border-bottom:2px solid var(--ink);overflow:hidden;}
+.page-header::before{content:"{ }";position:absolute;right:3vw;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:260px;font-weight:600;color:var(--accent);opacity:0.13;z-index:0;line-height:1;}
+.page-header>*{position:relative;z-index:1;}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;margin-right:8px;}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;}
+.page-header h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:20px 0 8px;letter-spacing:1px;}
+.subtitle{color:var(--muted);font-size:14px;font-family:'JetBrains Mono',monospace;margin-bottom:20px;}
+.lead{max-width:640px;font-size:15px;}
+.lead b{color:var(--accent);}
+.toc{background:var(--paper-2);padding:20px 7vw;display:flex;flex-wrap:wrap;gap:6px 22px;border-bottom:1px solid var(--line);}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;font-family:'JetBrains Mono',monospace;transition:color .2s;}
+.toc a::before{content:"— ";color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{padding:48px 7vw 20px;max-width:1180px;margin:0 auto;}
+section{margin-bottom:64px;}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px;}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600;}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:25px;font-weight:700;}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;}
+.pattern-desc{max-width:680px;margin-bottom:20px;font-size:15px;}
+.pattern-desc b{color:var(--accent);}
+.demo-card{border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(15,46,48,.05);}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);}
+.tag-desc{font-size:12px;color:var(--muted);}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line);}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:.5px;}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;overflow-x:auto;white-space:pre;}
+.code .kw{color:#ffc88a;}
+.code .type{color:#c2a3ff;}
+.code .fn{color:#a3c9ff;}
+.code .str{color:#b5e8b0;}
+.code .num{color:#f7a8d8;}
+.code .comment{color:#7e9488;}
+.code .ann{color:#f7c08a;}
+.code-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7e9488;margin-bottom:10px;display:block;}
+.nest-vis{font-family:'JetBrains Mono',monospace;font-size:12px;background:#fff;border:1px solid var(--line);border-radius:4px;padding:16px;line-height:1.8;}
+.nest-vis .outer-box{border:2px solid var(--accent);border-radius:4px;padding:12px;}
+.nest-vis .inner-box{border:2px dashed var(--accent-2);border-radius:4px;padding:10px;margin-top:8px;background:#eef7f7;}
+.nest-vis .lbl{font-weight:600;color:var(--accent);}
+.map-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.map-block{border:1px solid var(--line);border-left:3px solid var(--accent);background:#fff;border-radius:3px;padding:12px 14px;}
+.map-block .mb-title{font-family:'Shippori Mincho',serif;font-weight:700;font-size:14px;margin-bottom:4px;}
+.map-block .mb-items{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);line-height:1.6;}
+.tip{border-left:3px solid var(--accent);background:rgba(27,107,112,.08);padding:16px 20px;border-radius:0 4px 4px 0;margin:20px 0;font-size:14px;}
+.tip .tip-head{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);letter-spacing:1px;margin-bottom:6px;}
+.tip b{color:var(--accent);}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.compare .box{border-radius:4px;padding:12px 14px;font-size:13px;}
+.compare .ng{background:#fbeaea;border-left:3px solid #c75050;}
+.compare .ok{background:#e8f4ea;border-left:3px solid var(--accent);}
+.compare .box .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-bottom:6px;}
+.compare .ng .lbl{color:#c75050;}
+.compare .ok .lbl{color:var(--accent);}
+.page-footer{border-top:2px solid var(--ink);padding:28px 7vw;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr;}
+  .panel{border-right:none;border-bottom:1px solid var(--line);}
+  .compare{grid-template-columns:1fr;}
+  .map-grid{grid-template-columns:1fr;}
+  .page-header h1{font-size:30px;}
+  .page-header::before{font-size:140px;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・Java入門編31</span><span class="vol-tag">Vol.5</span>
+  <h1>ネストされたクラス入門編</h1>
+  <div class="subtitle">NESTED CLASSES — intro & inner class / chapter 7-8</div>
+  <p class="lead">塊③に突入です。<b>ネスト（nest）</b>とは「入れ子」のこと。つまり<b>クラスの中に、さらにクラスを書く</b>のがネストされたクラスです。「そんなことできるの？」——できます。種類が4つあるので、この巻ではまず<b>全体像</b>を掴み、最初の1つ<b>「内部クラス（Inner Class）」</b>をじっくり学びます。あせらず一歩ずつ。</p>
+</header>
+
+<nav class="toc">
+  <a href="#what">入れ子とは</a>
+  <a href="#four">4種類の地図</a>
+  <a href="#inner">内部クラス</a>
+  <a href="#access">外側を触れる</a>
+  <a href="#create">作り方</a>
+  <a href="#when">いつ使うか</a>
+</nav>
+
+<main>
+
+<section id="what">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>入れ子（ネスト）とは</h2>
+    <span class="en">WHAT IS NESTING</span>
+  </div>
+  <p class="pattern-desc">これまでクラスは「ファイルにひとつ」が基本でした。でも実は<b>クラスの <code>{ }</code> の中に、別のクラスを書ける</b>のです。外側のクラスを<b>外部クラス（Outer）</b>、中のクラスを<b>ネストされたクラス</b>と呼びます。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">class in class</span>
+      <span class="tag-desc">クラスの中のクラス</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 入れ子のイメージ</div>
+        <div class="nest-vis">
+          <div class="outer-box">
+            <span class="lbl">Outer クラス（外側）</span>
+            <div class="inner-box">
+              <span class="lbl" style="color:var(--accent-2)">Inner クラス（中）</span>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">マトリョーシカや、引き出しの中の小箱を想像してください。<b style="color:var(--accent)">外があって、その中に入っている</b>関係です。</p>
+      </div>
+      <div class="code"><span class="code-label">// クラスの中にクラス</span>
+<span class="kw">class</span> <span class="type">Outer</span> {        <span class="comment">// 外側のクラス</span>
+
+    <span class="kw">class</span> <span class="type">Inner</span> {    <span class="comment">// 中のクラス（ネスト）</span>
+        <span class="comment">// ここにもフィールドや</span>
+        <span class="comment">// メソッドが普通に書ける</span>
+    }
+}</div>
+    </div>
+  </div>
+</section>
+
+<section id="four">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>ネストされたクラスは4種類</h2>
+    <span class="en">FOUR TYPES</span>
+  </div>
+  <p class="pattern-desc">「クラスの中のクラス」には、<b>書く場所と書き方によって4つの種類</b>があります。今この地図を頭に入れておくと、Vol.5〜7で迷子になりません。<b>この巻では①の内部クラス</b>を扱います。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">nested.map</span>
+      <span class="tag-desc">4種類とそれぞれの担当巻</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4種類の地図</div>
+        <div class="map-grid">
+          <div class="map-block">
+            <div class="mb-title">① 内部クラス</div>
+            <div class="mb-items">Inner Class<br>← この巻（Vol.5）</div>
+          </div>
+          <div class="map-block">
+            <div class="mb-title">② ローカルクラス</div>
+            <div class="mb-items">Local Class<br>← Vol.6</div>
+          </div>
+          <div class="map-block">
+            <div class="mb-title">③ 匿名クラス</div>
+            <div class="mb-items">Anonymous Class<br>← Vol.6</div>
+          </div>
+          <div class="map-block">
+            <div class="mb-title">④ staticネステッド</div>
+            <div class="mb-items">Static Nested<br>← Vol.7</div>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-label">// 書く場所で種類が決まる</span>
+<span class="kw">class</span> <span class="type">Outer</span> {
+
+    <span class="kw">class</span> <span class="type">Inner</span> {}          <span class="comment">// ① 内部クラス</span>
+
+    <span class="kw">static</span> <span class="kw">class</span> <span class="type">Nested</span> {}   <span class="comment">// ④ static付き</span>
+
+    <span class="type">void</span> <span class="fn">method</span>() {
+        <span class="kw">class</span> <span class="type">Local</span> {}        <span class="comment">// ② メソッド内</span>
+    }
+}</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    4つの違いは「<b>どこに書くか</b>」と「<b>static が付くか</b>」だけ。今は全部覚えなくて大丈夫。<b>「4種類あるんだな」</b>と知っていれば十分です。
+  </div>
+</section>
+
+<section id="inner">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>内部クラス（Inner Class）</h2>
+    <span class="en">INNER CLASS</span>
+  </div>
+  <p class="pattern-desc">外部クラスの中に、<b><code>static</code> を付けずに</b>書いたクラスが内部クラスです。一番の特徴は<b>「外側にべったり寄り添う」</b>こと。外部クラスのインスタンスとセットでしか存在できません。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">inner class</span>
+      <span class="tag-desc">外側に寄り添うクラス</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// たとえ話：車とエンジン</div>
+        <p style="font-size:14px;">車（Outer）の中のエンジン（Inner）を想像してください。エンジンは<b>必ず特定の車に積まれた状態</b>で存在します。エンジン単体がポツンと道に転がっていることはありません。</p>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">内部クラスも同じで、<b style="color:var(--accent)">外部クラスのインスタンスがあって初めて作れる</b>のです。</p>
+      </div>
+      <div class="code"><span class="code-label">// 内部クラスの定義</span>
+<span class="kw">class</span> <span class="type">Car</span> {              <span class="comment">// 外側＝車</span>
+    <span class="type">String</span> name = <span class="str">"愛車"</span>;
+
+    <span class="kw">class</span> <span class="type">Engine</span> {        <span class="comment">// 内部＝エンジン</span>
+        <span class="type">void</span> <span class="fn">start</span>() {
+            <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"始動！"</span>);
+        }
+    }
+}
+<span class="comment">// Engine は Car とセットで存在する</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="access">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>外側のフィールドを直接触れる</h2>
+    <span class="en">ACCESS OUTER</span>
+  </div>
+  <p class="pattern-desc">内部クラスの<b>うれしい特権</b>がこれ。内部クラスからは、<b>外部クラスのフィールドやメソッドに自由にアクセスできます</b>。private なものですら触れます。「べったり寄り添う」関係だからこそ許される特権です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">access privilege</span>
+      <span class="tag-desc">外側の中身を自由に使える</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動かすと…</div>
+        <p style="font-size:14px;">内部クラス Engine から、外側 Car の <code>name</code> をそのまま読めます。引数で渡す必要すらありません。</p>
+        <div class="compare" style="grid-template-columns:1fr;margin-top:12px;">
+          <div class="box ok">
+            <div class="lbl">出力</div>
+            愛車のエンジン始動！
+          </div>
+        </div>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">外側の <code>name</code>（"愛車"）を、内部クラスがそのまま使えています。</p>
+      </div>
+      <div class="code"><span class="code-label">// 外側のフィールドを直接使う</span>
+<span class="kw">class</span> <span class="type">Car</span> {
+    <span class="kw">private</span> <span class="type">String</span> name = <span class="str">"愛車"</span>;
+
+    <span class="kw">class</span> <span class="type">Engine</span> {
+        <span class="type">void</span> <span class="fn">start</span>() {
+            <span class="comment">// 外側の name をそのまま参照！</span>
+            <span class="type">System</span>.out.<span class="fn">println</span>(name + <span class="str">"のエンジン始動！"</span>);
+        }
+    }
+}</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    この「外側のメンバーに自由に触れる」性質が、内部クラスを使う<b>一番の理由</b>です。外側と密接に協力する小さな部品を作りたい時に向いています。
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>内部クラスの作り方（new の書き方）</h2>
+    <span class="en">HOW TO CREATE</span>
+  </div>
+  <p class="pattern-desc">ここが<b>ハマりどころ</b>。内部クラスを new する書き方は、ちょっと独特です。<b>まず外側を new してから、その外側を通して内部を new</b>します。「車を用意してから、その車のエンジンを作る」順番です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">outer.new Inner()</span>
+      <span class="tag-desc">独特な生成の書き方</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 生成の手順</div>
+        <ol style="font-size:13px;margin:0 0 0 18px;line-height:2;">
+          <li>まず外部クラスを <code>new</code> する</li>
+          <li>その変数に <code>.new</code> を付けて内部クラスを作る</li>
+        </ol>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);"><code>car.new Engine()</code> という見慣れない形になります。最初は戸惑いますが、<b style="color:var(--accent)">「車があってのエンジン」</b>と思えば納得です。</p>
+      </div>
+      <div class="code"><span class="code-label">// 内部クラスを生成して使う</span>
+<span class="kw">public</span> <span class="kw">static</span> <span class="type">void</span> <span class="fn">main</span>(<span class="type">String</span>[] args) {
+    <span class="comment">// ① まず外側を new</span>
+    <span class="type">Car</span> car = <span class="kw">new</span> <span class="type">Car</span>();
+
+    <span class="comment">// ② 外側を通して内部を new</span>
+    <span class="type">Car</span>.<span class="type">Engine</span> engine = car.<span class="kw">new</span> <span class="type">Engine</span>();
+
+    engine.<span class="fn">start</span>();   <span class="comment">// → 愛車のエンジン始動！</span>
+}</div>
+    </div>
+  </div>
+  <div class="compare">
+    <div class="box ng">
+      <div class="lbl">NG（やりがちなミス）</div>
+      <code>new Car.Engine()</code> のように、外側のインスタンス無しで作ろうとするとエラー。
+    </div>
+    <div class="box ok">
+      <div class="lbl">OK（正しい形）</div>
+      <code>car.new Engine()</code> と、外側インスタンス経由で作る。
+    </div>
+  </div>
+</section>
+
+<section id="when">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>いつ使うか</h2>
+    <span class="en">WHEN TO USE</span>
+  </div>
+  <p class="pattern-desc">結論です。内部クラスは<b>「外側のクラスとセットで動く、外には公開しない小さな部品」</b>を作りたい時に使います。外側の中身を自由に触れるので、密接に協力する役割にぴったりです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">summary</span>
+      <span class="tag-desc">内部クラスの使いどころ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// こんな時に内部クラス</div>
+        <ul style="font-size:13px;margin:0 0 0 18px;line-height:1.9;">
+          <li>外側クラス<b>専用</b>の補助的な部品</li>
+          <li>外側のフィールドを<b>頻繁に使う</b></li>
+          <li>外部に単独で見せる必要が<b>ない</b></li>
+        </ul>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">逆に「単独でも使いたい」なら、内部クラスではなく普通のクラスか、Vol.7の static ネステッドが向いています。</p>
+      </div>
+      <div class="code"><span class="code-label">// 現場でよくある例：リストの中身を管理</span>
+<span class="kw">class</span> <span class="type">MyList</span> {
+    <span class="comment">// 外には見せない、内部専用の「節（ノード）」</span>
+    <span class="kw">class</span> <span class="type">Node</span> {
+        <span class="type">Object</span> value;
+        <span class="type">Node</span> next;
+    }
+    <span class="comment">// MyList の中だけで Node を使い回す</span>
+}
+<span class="comment">// Node は MyList とべったりで構わない</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;">
+  <div class="tip-head">NEXT STEP —</div>
+  内部クラスは「外側に寄り添う部品」でした。次の<b>Vol.6「ローカル・匿名クラス編」</b>では、さらに変わり種を2つ学びます。<b>メソッドの中だけで使うクラス</b>と、<b>名前すら付けない使い捨てクラス</b>。「え、名前なし？」と思いますよね。これが意外と現場で大活躍するんです。お楽しみに。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>新・Java入門編31 — クラスについてもっと学習しよう</span>
+  <span>Vol.5 / 9 — NESTED CLASSES INTRO</span>
+</footer>
+
+</body>
+</html>

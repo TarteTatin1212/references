@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新・Java入門編31 インターフェース編 Vol.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#102e2c;
+  --paper:#eef5f4;
+  --paper-2:#dce9e8;
+  --accent:#1f6b66;
+  --accent-2:#2f8a84;
+  --accent-3:#58a39d;
+  --muted:#617d7a;
+  --line:#bfd4d2;
+  --code-bg:#122422;
+  --code-text:#e4efed;
+  --panel-bg:#e4f0ef;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;-webkit-font-smoothing:antialiased;}
+.page-header{position:relative;padding:56px 7vw 40px;border-bottom:2px solid var(--ink);overflow:hidden;}
+.page-header::before{content:"{ }";position:absolute;right:3vw;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:260px;font-weight:600;color:var(--accent);opacity:0.13;z-index:0;line-height:1;}
+.page-header>*{position:relative;z-index:1;}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;margin-right:8px;}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;}
+.page-header h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:20px 0 8px;letter-spacing:1px;}
+.subtitle{color:var(--muted);font-size:14px;font-family:'JetBrains Mono',monospace;margin-bottom:20px;}
+.lead{max-width:640px;font-size:15px;}
+.lead b{color:var(--accent);}
+.toc{background:var(--paper-2);padding:20px 7vw;display:flex;flex-wrap:wrap;gap:6px 22px;border-bottom:1px solid var(--line);}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;font-family:'JetBrains Mono',monospace;transition:color .2s;}
+.toc a::before{content:"— ";color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{padding:48px 7vw 20px;max-width:1180px;margin:0 auto;}
+section{margin-bottom:64px;}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px;}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600;}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:25px;font-weight:700;}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;}
+.pattern-desc{max-width:680px;margin-bottom:20px;font-size:15px;}
+.pattern-desc b{color:var(--accent);}
+.demo-card{border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(16,46,44,.05);}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);}
+.tag-desc{font-size:12px;color:var(--muted);}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line);}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:.5px;}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;overflow-x:auto;white-space:pre;}
+.code .kw{color:#ffc88a;}
+.code .type{color:#c2a3ff;}
+.code .fn{color:#a3c9ff;}
+.code .str{color:#b5e8b0;}
+.code .num{color:#f7a8d8;}
+.code .comment{color:#7e9488;}
+.code .ann{color:#f7c08a;}
+.code-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7e9488;margin-bottom:10px;display:block;}
+.diagram{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.dia-box{background:#fff;border:1px solid var(--line);border-radius:4px;padding:10px 16px;font-size:13px;text-align:center;min-width:150px;}
+.dia-box.iface{border:2px dotted var(--accent);background:#e7f3f1;}
+.dia-box .dt{font-family:'Shippori Mincho',serif;font-weight:700;}
+.dia-box .dd{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.dia-arrow{color:var(--accent);font-size:20px;line-height:1;}
+.dia-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+.tip{border-left:3px solid var(--accent);background:rgba(31,107,102,.08);padding:16px 20px;border-radius:0 4px 4px 0;margin:20px 0;font-size:14px;}
+.tip .tip-head{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);letter-spacing:1px;margin-bottom:6px;}
+.tip b{color:var(--accent);}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.compare .box{border-radius:4px;padding:12px 14px;font-size:13px;}
+.compare .ng{background:#fbeaea;border-left:3px solid #c75050;}
+.compare .ok{background:#e8f4ea;border-left:3px solid var(--accent);}
+.compare .box .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-bottom:6px;}
+.compare .ng .lbl{color:#c75050;}
+.compare .ok .lbl{color:var(--accent);}
+.vs-table{width:100%;border-collapse:collapse;font-size:13px;}
+.vs-table th,.vs-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;}
+.vs-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;}
+.vs-table td:first-child{font-weight:600;background:#fafdfc;}
+.page-footer{border-top:2px solid var(--ink);padding:28px 7vw;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr;}
+  .panel{border-right:none;border-bottom:1px solid var(--line);}
+  .compare{grid-template-columns:1fr;}
+  .page-header h1{font-size:30px;}
+  .page-header::before{font-size:140px;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・Java入門編31</span><span class="vol-tag">Vol.4</span>
+  <h1>インターフェース編</h1>
+  <div class="subtitle">INTERFACE — a promise of abilities / chapter 5-6</div>
+  <p class="lead">塊②「抽象化」の後半です。<b>interface（インターフェース）</b>は、抽象クラスとよく似た仲間。でも役割が少し違います。キーワードは<b>「できることの約束」</b>。「このメソッドを持っていますよ」という宣言だけを集めたものです。<b>implements</b> で「その約束を守ります」と表明します。前巻のabstractと比べながら読むと、両者の違いがくっきり見えてきます。</p>
+</header>
+
+<nav class="toc">
+  <a href="#concept">約束という考え方</a>
+  <a href="#define">interfaceの書き方</a>
+  <a href="#implements">implements</a>
+  <a href="#multi">複数implements</a>
+  <a href="#vs-abstract">抽象クラスとの違い</a>
+  <a href="#why">なぜ便利か</a>
+  <a href="#default">defaultメソッド</a>
+</nav>
+
+<main>
+
+<section id="concept">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>「できることの約束」という考え方</h2>
+    <span class="en">A PROMISE</span>
+  </div>
+  <p class="pattern-desc">インターフェースは<b>「これができますよ」という約束のリスト</b>です。中身は書きません。「泳げる」「飛べる」のように、<b>能力の名前だけ</b>を並べます。それを守ると約束したクラスは、必ずその能力を実装します。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">interface = contract</span>
+      <span class="tag-desc">能力の約束、それがインターフェース</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// たとえ話：資格・免許</div>
+        <p style="font-size:14px;">「泳げる」という資格を考えてください。魚も人もカエルも、種類はバラバラ。でも<b>「泳げる」という資格を持つ点では同じ</b>です。</p>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">インターフェースは<b style="color:var(--accent)">「血のつながり（継承）」ではなく「持っている資格」</b>でクラスをまとめる仕組みです。</p>
+      </div>
+      <div class="code"><span class="code-label">// 「泳げる」という約束</span>
+<span class="kw">interface</span> <span class="type">Swimmable</span> {
+    <span class="type">void</span> <span class="fn">swim</span>();   <span class="comment">// 中身なし＝約束だけ</span>
+}
+
+<span class="comment">// この約束を守るクラスは、</span>
+<span class="comment">// 種類が何であれ swim() を持つ。</span>
+<span class="comment">// → 魚でも人でも「泳げる仲間」</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="define">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>interfaceの書き方</h2>
+    <span class="en">DEFINE INTERFACE</span>
+  </div>
+  <p class="pattern-desc"><code>class</code> の代わりに <code>interface</code> と書きます。中のメソッドは<b>すべて中身なし（<code>;</code> で終わる）</b>が基本。<code>abstract</code> を付ける必要すらありません（自動でそうなる約束だから）。とてもシンプルです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">interface { }</span>
+      <span class="tag-desc">メソッド名だけを並べる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ルール</div>
+        <ul style="font-size:13px;margin:0 0 0 18px;line-height:2;">
+          <li><code>class</code> ではなく <code>interface</code></li>
+          <li>メソッドは<b>中身なし・<code>;</code> 終わり</b></li>
+          <li><code>abstract</code> や <code>public</code> は省略可（自動付与）</li>
+        </ul>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">「やることリスト」だけを書く、と覚えればOKです。</p>
+      </div>
+      <div class="code"><span class="code-label">// インターフェースの定義</span>
+<span class="kw">interface</span> <span class="type">Flyable</span> {
+    <span class="type">void</span> <span class="fn">fly</span>();
+    <span class="type">int</span> <span class="fn">maxHeight</span>();   <span class="comment">// 複数並べてもOK</span>
+}
+
+<span class="comment">// 全部「中身なし」。</span>
+<span class="comment">// これが Flyable という資格の中身。</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="implements">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>implements で約束を守る</h2>
+    <span class="en">IMPLEMENTS</span>
+  </div>
+  <p class="pattern-desc">クラスがインターフェースの約束を守ると宣言するのが <code>implements</code>（インプリメンツ＝「実装する」）です。<b>extends が「継ぐ」なら、implements は「約束を守る」</b>。約束したメソッドは<b>必ず中身を書く義務</b>が生まれます。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">class ... implements ...</span>
+      <span class="tag-desc">約束を守ると表明する</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 流れ</div>
+        <div class="diagram">
+          <div class="dia-box iface"><div class="dt">Flyable（約束）</div><div class="dd">fly();</div></div>
+          <div class="dia-arrow">▲ implements</div>
+          <div class="dia-box"><div class="dt">Bird</div><div class="dd">fly(){ "羽ばたく" }</div></div>
+        </div>
+        <p style="font-size:13px;margin-top:14px;color:var(--muted);">Bird は「飛べる」と約束したので、<b style="color:var(--accent)">fly() の中身を必ず書きます</b>。</p>
+      </div>
+      <div class="code"><span class="code-label">// implements で実装</span>
+<span class="kw">class</span> <span class="type">Bird</span> <span class="kw">implements</span> <span class="type">Flyable</span> {
+    <span class="ann">@Override</span>
+    <span class="kw">public</span> <span class="type">void</span> <span class="fn">fly</span>() {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"羽ばたいて飛ぶ"</span>);
+    }
+    <span class="ann">@Override</span>
+    <span class="kw">public</span> <span class="type">int</span> <span class="fn">maxHeight</span>() {
+        <span class="kw">return</span> <span class="num">100</span>;
+    }
+}
+<span class="comment">// 約束した2つを両方書いた → 完成</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    インターフェースのメソッドを実装する時は <code>public</code> を付けます（インターフェース側が自動でpublic扱いなので、実装側も合わせる必要があるため）。<b>付け忘れると地味にハマる</b>定番ポイントです。
+  </div>
+</section>
+
+<section id="multi">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>複数のインターフェースを実装できる</h2>
+    <span class="en">MULTIPLE IMPLEMENTS</span>
+  </div>
+  <p class="pattern-desc">ここが<b>インターフェース最大の強み</b>。クラスの継承（extends）は<b>1つしかできない</b>のに、インターフェースは<b>いくつでも implements できます</b>。「泳げて、かつ飛べる」を同時に表現できるわけです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">implements A, B, C</span>
+      <span class="tag-desc">複数の資格を同時に持てる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// カモは泳げて飛べる</div>
+        <div class="diagram">
+          <div class="dia-row">
+            <div class="dia-box iface"><div class="dt">Swimmable</div><div class="dd">swim();</div></div>
+            <div class="dia-box iface"><div class="dt">Flyable</div><div class="dd">fly();</div></div>
+          </div>
+          <div class="dia-arrow">▲ 両方 implements</div>
+          <div class="dia-box"><div class="dt">Duck</div><div class="dd">swim() も fly() も持つ</div></div>
+        </div>
+      </div>
+      <div class="code"><span class="code-label">// カンマ区切りで複数実装</span>
+<span class="kw">class</span> <span class="type">Duck</span> <span class="kw">implements</span> <span class="type">Swimmable</span>, <span class="type">Flyable</span> {
+    <span class="ann">@Override</span>
+    <span class="kw">public</span> <span class="type">void</span> <span class="fn">swim</span>() {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"スイスイ"</span>);
+    }
+    <span class="ann">@Override</span>
+    <span class="kw">public</span> <span class="type">void</span> <span class="fn">fly</span>() {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"バサバサ"</span>);
+    }
+}
+<span class="comment">// 両方の約束を守れば、両方の仲間になれる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    クラスの多重継承（親を2つ持つこと）はJavaでは<b>禁止</b>されています。混乱のもとだからです。でもインターフェースなら<b>いくつ持ってもOK</b>。これがインターフェースが重宝される大きな理由です。
+  </div>
+</section>
+
+<section id="vs-abstract">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>抽象クラスとの違い</h2>
+    <span class="en">VS ABSTRACT CLASS</span>
+  </div>
+  <p class="pattern-desc">前巻の抽象クラスと、今回のインターフェース。「似てるけど何が違うの？」——ここで<b>表にして整理</b>します。これが今巻のハイライトです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">abstract vs interface</span>
+      <span class="tag-desc">2つの違いを一覧で</span>
+    </div>
+    <div class="demo-body" style="grid-template-columns:1fr;">
+      <div class="panel" style="border-right:none;">
+        <table class="vs-table">
+          <thead><tr><th></th><th>抽象クラス</th><th>インターフェース</th></tr></thead>
+          <tbody>
+            <tr><td>キーワード</td><td>abstract class</td><td>interface</td></tr>
+            <tr><td>継ぐ言葉</td><td>extends</td><td>implements</td></tr>
+            <tr><td>同時にいくつ</td><td>1つだけ</td><td>何個でもOK</td></tr>
+            <tr><td>中身ありメソッド</td><td>持てる</td><td>原則なし（※default除く）</td></tr>
+            <tr><td>フィールド（変数）</td><td>普通に持てる</td><td>定数のみ</td></tr>
+            <tr><td>イメージ</td><td>未完成の設計図</td><td>できることの約束</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="compare">
+    <div class="box ok">
+      <div class="lbl">抽象クラスを選ぶ時</div>
+      共通の処理・状態（フィールド）を親にまとめて持たせたい。「血のつながり」がある仲間。
+    </div>
+    <div class="box ok">
+      <div class="lbl">インターフェースを選ぶ時</div>
+      種類はバラバラだが「同じ能力を持つ」でまとめたい。複数の能力を組み合わせたい。
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>なぜ便利なのか</h2>
+    <span class="en">WHY USEFUL</span>
+  </div>
+  <p class="pattern-desc">インターフェースの本当のうれしさは<b>「中身を気にせず、能力だけで扱える」</b>点です。「飛べるもの」をまとめて扱う時、それが鳥か飛行機かを気にしなくていい。<b>これが現場のコードを柔軟にします</b>。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">polymorphism</span>
+      <span class="tag-desc">能力でまとめて扱う</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 中身を気にしない</div>
+        <p style="font-size:14px;"><code>Flyable</code> 型の変数には、<b>Flyable を実装したものなら何でも</b>入れられます。鳥でも飛行機でも。</p>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">使う側は <code>fly()</code> が呼べることだけ知っていればOK。<b style="color:var(--accent)">中身の違いに振り回されない</b>のが利点です。</p>
+      </div>
+      <div class="code"><span class="code-label">// 能力でまとめて扱う</span>
+<span class="type">Flyable</span>[] things = {
+    <span class="kw">new</span> <span class="type">Bird</span>(),
+    <span class="kw">new</span> <span class="type">Airplane</span>()   <span class="comment">// 種類はバラバラ</span>
+};
+
+<span class="kw">for</span> (<span class="type">Flyable</span> f : things) {
+    f.<span class="fn">fly</span>();   <span class="comment">// 鳥も飛行機も同じ呼び方で飛ばせる</span>
+}
+<span class="comment">// → "羽ばたいて飛ぶ" / "エンジンで飛ぶ"</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="default">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>おまけ：defaultメソッド</h2>
+    <span class="en">DEFAULT METHOD</span>
+  </div>
+  <p class="pattern-desc">「インターフェースは中身なし」と言いましたが、実は<b>例外</b>があります。<code>default</code> を付けると<b>中身付きのメソッド</b>も書けます。「実装しなくても使える共通機能」を用意したい時に便利です。最初は「そういうのもある」程度でOK。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">default method</span>
+      <span class="tag-desc">中身を持てる例外ルール</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// どんな時に使う？</div>
+        <p style="font-size:14px;">実装するクラスが<b>「書いても書かなくてもいい」共通処理</b>を、インターフェース側で用意できます。</p>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">実装側で書かなければ default の中身が使われ、書けばそちらが優先されます。</p>
+      </div>
+      <div class="code"><span class="code-label">// default メソッド</span>
+<span class="kw">interface</span> <span class="type">Greetable</span> {
+    <span class="type">void</span> <span class="fn">name</span>();   <span class="comment">// 普通の約束</span>
+
+    <span class="kw">default</span> <span class="type">void</span> <span class="fn">hello</span>() {  <span class="comment">// 中身つき！</span>
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"こんにちは"</span>);
+    }
+}
+<span class="comment">// implements 側は hello() を書かなくても</span>
+<span class="comment">// "こんにちは" が使える</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    <b>これだけ覚えれば初心者卒業</b>：インターフェースは「能力の約束」、implementsは「約束を守る宣言」、複数持てるのが強み。defaultは後回しでも全く問題ありません。
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;">
+  <div class="tip-head">NEXT STEP —</div>
+  抽象化（塊②）はこれで完了です。お疲れさまでした。次の<b>Vol.5「ネストされたクラス入門編」</b>からは塊③に入ります。<b>クラスの中にクラスを書く</b>という新しい世界です。まずは全体像と「内部クラス」から、ゆっくり踏み込んでいきましょう。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>新・Java入門編31 — クラスについてもっと学習しよう</span>
+  <span>Vol.4 / 9 — INTERFACE</span>
+</footer>
+
+</body>
+</html>
