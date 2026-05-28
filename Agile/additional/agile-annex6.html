@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アジャイル開発編 別館 なぜWIP制限がフローを速くするのか Vol.6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#121226;
+  --paper:#dedcd6;
+  --paper-2:#ccc9c2;
+  --accent:#2a2a54;
+  --accent-2:#585878;
+  --accent-3:#404060;
+  --muted:#626266;
+  --line:#aeaca6;
+  --code-bg:#141426;
+  --code-text:#dedcd6;
+  --panel-bg:#d2cfc6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;font-size:15px}
+.page-header{position:relative;padding:64px 48px 48px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'※';position:absolute;right:0;top:-20px;font-size:300px;color:var(--accent);opacity:0.12;font-family:'Shippori Mincho',serif;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em}
+.annex-tag{display:inline-block;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:3px 13px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:38px;font-weight:700;margin-top:24px;letter-spacing:0.04em;line-height:1.4}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+.lead{max-width:680px;margin-top:24px;font-size:15px;line-height:2}
+.toc{background:var(--paper-2);padding:24px 48px;border-bottom:1px solid var(--line)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:12px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:'—';position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+main{padding:48px}
+section{margin-bottom:72px}
+.section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700;flex:1;line-height:1.4}
+.en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:680px;margin-bottom:24px;font-size:14px;line-height:2}
+.demo-card{background:#fff;border:1px solid var(--line);overflow:hidden}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}
+.code .type{color:#c2a3ff}
+.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}
+.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}
+.code .ann{color:#f7c08a}
+.code .step{color:#ffc88a;font-weight:600}
+.tip{border-left:3px solid var(--accent);background:rgba(42,42,84,0.06);padding:16px 20px;margin:24px 0;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;margin-bottom:6px;font-weight:600}
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px}
+b{font-weight:700;color:var(--accent-3)}
+.quote-box{margin:12px 0;padding:14px 18px;background:rgba(255,255,255,0.5);border-left:3px solid var(--accent-2);font-family:'Shippori Mincho',serif;font-size:14px;font-style:italic;line-height:1.8}
+.quote-source{font-family:'JetBrains Mono',monospace;font-style:normal;font-size:11px;color:var(--muted);margin-top:6px;letter-spacing:0.1em}
+.callout-row{display:flex;gap:12px;margin-top:12px}
+.callout-box{flex:1;padding:12px;font-size:12px;background:#fff;border:1px solid var(--line)}
+.callout-box.ng{border-left:3px solid #c43030}
+.callout-box.ok{border-left:3px solid var(--accent)}
+.callout-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;margin-bottom:4px;color:var(--muted)}
+ul.bullet{list-style:none;margin-top:8px}
+ul.bullet li{padding-left:18px;position:relative;margin-bottom:6px;font-size:13px}
+ul.bullet li::before{content:'◇';position:absolute;left:0;color:var(--accent);font-size:11px}
+.star{color:var(--accent);font-weight:700;letter-spacing:0.1em}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.compare-table th,.compare-table td{padding:8px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.compare-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;color:var(--accent-3)}
+.compare-table tr:nth-child(even) td{background:rgba(222,220,214,0.5)}
+.page-footer{border-top:2px solid var(--ink);padding:32px 48px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.reference-list{font-size:12px;line-height:1.8;color:var(--muted);font-family:'Shippori Mincho',serif;margin-top:8px}
+.reference-list .ref-label{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;margin-right:8px}
+.formula{font-family:'JetBrains Mono',monospace;font-size:16px;text-align:center;padding:16px;background:rgba(255,255,255,0.6);border:1px solid var(--line);margin:10px 0;color:var(--accent-3);font-weight:700;letter-spacing:0.05em}
+.formula .var{color:var(--accent);font-style:italic}
+.formula .label{font-size:11px;color:var(--muted);font-weight:normal;letter-spacing:0.1em;margin-top:6px}
+@media (max-width:720px){
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  main{padding:24px}
+  .page-header{padding:32px 24px}
+  h1{font-size:24px}
+  .toc{padding:16px 24px}
+  .callout-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">AGILE REFERENCE</span>
+  <span class="vol-tag">VOL.06 / 09</span>
+  <span class="annex-tag">ANNEX — WHY</span>
+  <h1>なぜWIP制限がフローを速くするのか</h1>
+  <div class="subtitle">ANNEX VOL.06 — LITTLE'S LAW &amp; THE MATHEMATICS OF FLOW</div>
+  <p class="lead">
+    本館 Vol.6 で見た<b>WIP制限</b>。「同時着手数を制限すると速くなる」──直感に反するこの主張は、実は<b>数学的に証明されている</b>事実です。<b>リトルの法則</b>。1961年に MIT のJohn Littleが発表したこの法則が、現代のソフトウェア開発の流れを支配しています。本巻はこの数学的核心に踏み込みます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS — ANNEX</div>
+  <ul>
+    <li><a href="#counter">01 直感に反する事実</a></li>
+    <li><a href="#little">02 リトルの法則</a></li>
+    <li><a href="#proof">03 なぜ常に成立するのか</a></li>
+    <li><a href="#queue">04 待ち行列理論</a></li>
+    <li><a href="#multitask">05 マルチタスクの数学的害</a></li>
+    <li><a href="#push-pull">06 プッシュ型 vs プル型</a></li>
+    <li><a href="#local-global">07 局所最適と全体最適</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="counter">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>直感に反する事実</h2>
+    <span class="en">COUNTERINTUITIVE TRUTH</span>
+  </div>
+  <p class="pattern-desc">
+    <b>「同時に多くこなせば、たくさん終わる」</b>──これは直感的には正しく見えます。しかし<b>現実は逆</b>です。<b>「同時に1つに集中すれば、結果的にもっと早く・もっと多く終わる」</b>。これは経験則ではなく<b>数学的事実</b>です。なぜ我々の直感は外れるのか、そこから話を始めます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">counter.intuition</span>
+      <span class="tag-desc">直感が外れる理由</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 「忙しいのに進まない」の正体</div>
+        <div class="quote-box">
+          「もっと働けば、もっと終わる」── これは間違っている
+          <div class="quote-source">— D. REINERTSEN, 製品開発フロー研究</div>
+        </div>
+        <ul class="bullet" style="margin-top:14px">
+          <li>稼働率100% → <b>必ず</b>キューが滞留する（数学的事実）</li>
+          <li>稼働率80%でも、待ち時間は急増（待ち行列理論）</li>
+          <li>「忙しさ」と「成果」は別物</li>
+          <li>「全員フル稼働」が破滅への道</li>
+        </ul>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ 工場・サービス業・道路交通でも全く同じ現象が観測される<b>普遍法則</b>。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 直感が外れる原因</span>
+
+<span class="ann">@原因1: 線形に考える</span>
+  「同時に2倍やれば
+   2倍終わる」
+  → これは線形思考
+  
+  現実は<b>非線形</b>
+  キューが指数的に増える
+
+<span class="ann">@原因2: 切替コストを忘れる</span>
+  タスク切替コスト = 15〜30分
+  
+  10タスク同時 →
+  切替が頻繁に発生 →
+  実作業時間が削られる
+
+<span class="ann">@原因3: 個人視点で考える</span>
+  自分1人なら理解できる
+  → システム全体の挙動は別
+
+<span class="comment">// 例: 高速道路</span>
+
+<span class="kw">道路に車が少ない</span>:
+  皆スイスイ走れる
+  
+<span class="kw">道路が80%混雑</span>:
+  まだ流れる
+  
+<span class="kw">道路が90%混雑</span>:
+  渋滞発生
+  急に流速ダウン
+  
+<span class="kw">道路が100%</span>:
+  完全停止
+  「全員乗れた」が
+  「誰も進まない」
+
+<span class="comment">// ソフト開発も同じ</span>
+
+WIP上限なし =
+全員フル稼働 =
+皆忙しいが進まない</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「100%稼働」「全員フル活用」</b>は、経営層が好む KPI ですが、<b>科学的には壊滅的</b>。<b>稼働率を意図的に80%程度に保つ</b>のがフロー最大化のポリシーです。<b>「遊んでる時間」は無駄ではなく、フローを保つための余白</b>。これを上層部に説明できることが、アジャイル熟達者の証。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="little">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>リトルの法則</h2>
+    <span class="en">LITTLE'S LAW</span>
+  </div>
+  <p class="pattern-desc">
+    1961年、MIT のJohn Little が<b>たった1つの数式</b>を証明しました。<b>L = λW</b>。これが<b>「リトルの法則」</b>。製造業・サービス業・コンピュータシステム・道路交通──<b>あらゆる「流れ」</b>を支配する驚くべき普遍法則です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">law.little</span>
+      <span class="tag-desc">L = λW の意味</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// リトルの法則</div>
+        <div class="formula">
+          L = λ × W
+          <div class="label">FUNDAMENTAL LAW OF QUEUING</div>
+        </div>
+        <ul class="bullet" style="margin-top:14px">
+          <li><b>L</b> = システム内のアイテム数（WIP）</li>
+          <li><b>λ</b> = 到着率（単位時間あたりの新規流入）</li>
+          <li><b>W</b> = 滞在時間（リードタイム）</li>
+        </ul>
+        <p style="margin-top:14px;font-size:13px;line-height:1.8">
+          式を変形すると：<br>
+          <b>リードタイム = WIP ÷ スループット</b>
+        </p>
+        <div class="quote-box" style="margin-top:14px">
+          「分布の形・処理順序・分散・到着間隔──これらに関係なく、定常状態であれば必ず成立する」
+          <div class="quote-source">— J. LITTLE, 1961</div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// 具体的な計算例</span>
+
+<span class="ann">@チームの状況</span>
+  WIP (進行中) = 20 件
+  スループット = 5 件/週
+
+<span class="ann">@リトルの法則で計算</span>
+  リードタイム
+   = WIP / スループット
+   = 20 / 5
+   = <b>4週</b>
+
+<span class="comment">// WIP を半分にすると?</span>
+
+<span class="ann">@WIPを10件に制限</span>
+  WIP = 10
+  スループット = 5 件/週
+  (変わらない)
+  
+  リードタイム
+   = 10 / 5
+   = <b>2週</b>
+  
+  → <b>半分になる</b>
+
+<span class="comment">// 何が起きたか</span>
+
+<span class="kw">同じスループット</span>のまま
+<span class="kw">リードタイムが半減</span>
+  → 顧客満足度UP
+  → 機能リリース速度UP
+
+<span class="comment">// しかも実際は…</span>
+
+<span class="kw">WIP削減でスループットも上がる</span>
+  ↓
+  ✓ 切替コスト減
+  ✓ 集中力UP
+  ✓ コンフリクト減
+  ✓ レビュー待ち減
+  → スループット8 件/週へ
+
+  リードタイム
+   = 10 / 8
+   = <b>1.25週</b>
+  
+  → <b>3分の1以下に</b>
+
+<span class="comment">// これがWIP制限の威力</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    リトルの法則は<b>「物が流れるあらゆる場所」</b>で成立します。スーパーのレジ・空港の入国審査・コールセンター・道路交通。<b>ソフトウェア開発も例外ではない</b>──このシンプルな事実が、カンバンの理論的根拠です。「WIP制限がフローを速くする」のは経験則ではなく、<b>1961年から数学的に証明された事実</b>です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="proof">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>なぜ常に成立するのか</h2>
+    <span class="en">WHY ALWAYS HOLDS</span>
+  </div>
+  <p class="pattern-desc">
+    リトルの法則の驚くべき点は<b>「ほぼ何の前提も置かない」</b>こと。タスクの大きさ・処理順序・到着間隔──全てがバラバラでも成立します。これは<b>「保存則」</b>に近い、システムの<b>原理的性質</b>。なぜ無条件で成立するのかを直感的に理解しておきます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">law.proof</span>
+      <span class="tag-desc">法則が常に成立する理由</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 直感的説明</div>
+<div class="code" style="background:rgba(255,255,255,0.4);color:var(--ink);padding:14px;font-size:11.5px;white-space:pre">  時間 →
+
+  カード1: ●━━━━━━━●
+  カード2:    ●━━━━━━━●
+  カード3:       ●━━━━━━━●
+  カード4:          ●━━━━━━━●
+              │
+              ↓ この時点での
+              ↓ WIP = 4
+              ↓ それぞれの
+              ↓ 滞在時間 (W)</div>
+        <p style="margin-top:14px;font-size:13px;line-height:1.8">
+          全アイテムの<b>合計滞在時間</b>を集計すると：
+        </p>
+        <p style="font-size:13px;margin-top:8px;font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,0.5);padding:8px;border:1px dashed var(--line);text-align:center">
+          総滞在時間 = WIP × 平均滞在 = 完了数 × 平均滞在
+        </p>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ これは保存則。どう測っても辻褄が合う。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 法則の数学的優美さ</span>
+
+<span class="ann">@前提が極めて少ない</span>
+  ✗ タスクサイズ均一
+  ✗ 到着間隔均一
+  ✗ 処理速度均一
+  
+  これらいずれも<b>不要</b>
+
+<span class="ann">@必要な前提は1つだけ</span>
+  「定常状態」であること
+  = 入る量と出る量が
+    長期的に等しい
+
+<span class="comment">// なぜ前提が緩いか</span>
+
+L = λW は
+<span class="kw">時間平均の関係</span>を述べる
+  
+  どんなにバラついても
+  長期で見ると
+  平均は安定する
+
+<span class="comment">// 例: スーパーのレジ</span>
+
+10時に客10人 / 退店3人
+11時に客5人 / 退店8人
+…
+1日平均で見ると
+入る量 = 出る量
+→ 法則成立
+
+<span class="ann">@同様に成立する場所</span>
+  ✓ 工場の生産ライン
+  ✓ コールセンター
+  ✓ 空港の入国審査
+  ✓ ATM の列
+  ✓ Web サーバーのリクエスト処理
+  ✓ <b>カンバンボード</b>
+
+<span class="comment">// 重要な含意</span>
+
+「特殊な前提があるのでは?」
+  → ない
+「ソフト開発は違うのでは?」
+  → 違わない
+
+<span class="kw">どんな現場でも</span>
+<span class="kw">必ず成立する</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「うちは特別だからリトルの法則は当てはまらない」</b>──現場でよく聞く反論ですが、<b>これは間違い</b>。リトルの法則は「特別な状況」を許容しない、<b>究極の一般化された法則</b>。例外は存在しません。<b>WIP を増やすとリードタイムが延びる</b>のは、業種・現場・規模に関係なく成立します。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="queue">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>待ち行列理論</h2>
+    <span class="en">QUEUING THEORY</span>
+  </div>
+  <p class="pattern-desc">
+    リトルの法則は<b>待ち行列理論（Queuing Theory）</b>という大きな数学分野の一部です。<b>稼働率（utilization）と待ち時間（wait time）の関係</b>を扱うこの理論は、<b>「稼働率を上げるほど待ち時間が指数的に増える」</b>という極めて非直感的な事実を教えてくれます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">queue.theory</span>
+      <span class="tag-desc">稼働率と待ち時間の関係</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 稼働率と待ち時間（M/M/1モデル）</div>
+        <table class="compare-table">
+          <tr><th>稼働率 ρ</th><th>相対待ち時間</th></tr>
+          <tr><td>50%</td><td>1.0（基準）</td></tr>
+          <tr><td>70%</td><td>2.3</td></tr>
+          <tr><td>80%</td><td>4.0</td></tr>
+          <tr><td>90%</td><td>9.0</td></tr>
+          <tr><td>95%</td><td>19.0</td></tr>
+          <tr><td>99%</td><td>99.0</td></tr>
+        </table>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ <b>稼働率を上げると待ち時間は指数的に爆発</b>。これが「忙しいのに進まない」の正体。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 待ち行列理論の基本式</span>
+
+<span class="kw">M/M/1 モデル</span>での平均待ち時間:
+
+  W = ρ / (1 - ρ) × 1/μ
+
+  ρ = 稼働率
+  μ = 処理速度
+
+<span class="ann">@ρ が 1 に近づくと…</span>
+  分母 (1-ρ) が 0 に近づく
+  → W が無限大に発散
+
+<span class="comment">// 視覚化</span>
+
+         待ち時間
+            │
+            │      ↗
+            │     /
+            │    /
+            │   /
+            │  /
+            │_/
+  0%──50%──80%──95%──稼働率
+  
+  80%超で<b>急激</b>に
+  待ち時間が増える
+
+<span class="comment">// なぜ稼働率を上げてはダメか</span>
+
+<span class="ann">@変動性の影響</span>
+  現実のタスクは
+  サイズも到着も<b>ばらつく</b>
+  
+  稼働率が高いと
+  少しの変動で
+  キューが溜まる
+
+<span class="ann">@回復不能</span>
+  一度溜まったキューは
+  なかなか減らない
+  「均衡」に時間がかかる
+
+<span class="comment">// アジャイルでの含意</span>
+
+<span class="kw">稼働率 70〜80%</span>を狙う
+  ✓ 余白が変動を吸収
+  ✓ 緊急対応の余力
+  ✓ 学習・改善の時間
+  ✓ <b>持続可能なペース</b>
+
+<span class="kw">稼働率 100%</span>は
+  ✗ 短期は速く見える
+  ✗ 中長期で破綻
+  ✗ <b>燃え尽きの罠</b>
+
+<span class="comment">// 結論</span>
+余白こそ価値である</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    Donald Reinertsen の<b>『The Principles of Product Development Flow』（2009）</b>は、待ち行列理論を製品開発に応用した名著。<b>「変動性を許容する設計」「キューを管理する経済」</b>など、現代カンバン理論の<b>数学的基盤</b>を提供しています。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="multitask">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>マルチタスクの数学的害</h2>
+    <span class="en">MULTITASKING IS HARMFUL</span>
+  </div>
+  <p class="pattern-desc">
+    「<b>マルチタスクは効率を下げる</b>」──これは心理学・脳科学の常識になっていますが、ソフトウェア開発でも<b>数学的に証明可能</b>です。タスクを並行進行させると、<b>「切替コスト」が積算</b>し、全体のリードタイムが<b>線形以上に</b>増えます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">multitask.cost</span>
+      <span class="tag-desc">マルチタスクの数学的害</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 単独 vs 並行</div>
+<div class="code" style="background:rgba(255,255,255,0.4);color:var(--ink);padding:14px;font-size:11.5px;white-space:pre">  [単独実行]
+  
+  タスクA: ━━━━━━━━━ (5日)
+  タスクB:           ━━━━━━━━━ (5日)
+  タスクC:                     ━━━━━━━━━ (5日)
+  
+  完了タイミング: A=5日, B=10日, C=15日
+  平均完了: 10日
+
+  [並行実行(コンテキスト切替なし)]
+  
+  タスクA: ━━━━━━━━━━━━━━━━━━━━━━ (15日)
+  タスクB: ━━━━━━━━━━━━━━━━━━━━━━ (15日)
+  タスクC: ━━━━━━━━━━━━━━━━━━━━━━ (15日)
+  
+  完了タイミング: 全部15日
+  平均完了: 15日  ← 50%遅い</div>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ <b>切替コストを入れるとさらに悪化</b>。実態は20%増し以上。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 切替コストの実測値</span>
+
+<span class="ann">@心理学研究</span>
+  Rubinstein, Meyer, Evans
+  (2001) の実験:
+  「タスク切替で<b>40%</b>の
+   時間が失われる」
+
+<span class="ann">@プログラミング特有</span>
+  コンテキスト復帰に
+  さらに時間を要する
+  「あれ、どこまでやったっけ」
+
+<span class="ann">@実用的な観測</span>
+  並行タスク数を増やすと
+  リードタイムは<b>急増</b>
+  
+  並行1: 5日
+  並行2: 12日 (2.4倍)
+  並行3: 21日 (4.2倍)
+  並行4: 35日 (7.0倍)
+
+<span class="comment">// 数学モデル</span>
+
+<span class="ann">@単純加算モデル</span>
+  実時間 = 純作業 × n
+
+<span class="ann">@切替コストモデル</span>
+  実時間 = 純作業 × n + 切替 × (n-1)
+
+<span class="ann">@脳の限界モデル</span>
+  実時間 = 純作業 × n × (1 + c)^n
+  c = 切替の累積効果
+
+  → 並行数が増えると
+    指数的に悪化
+
+<span class="comment">// ソフト開発の現実</span>
+
+<span class="kw">「複数案件兼任」</span>
+  → 切替で集中力消費
+  → コンテキスト復帰で時間
+  → 結局どれも進まない
+
+<span class="kw">「全員フル稼働」</span>
+  → 余裕なし
+  → 緊急対応で他案件停滞
+  → 連鎖的遅延
+
+<span class="comment">// 鉄則</span>
+<span class="kw">"One Piece Flow"</span>
+1つずつ終わらせる
+これが最も速い</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「1つずつ終わらせる方が、結果的に多く終わる」</b>──これは経験則ではなく、数学的に証明される事実。<b>"Stop Starting, Start Finishing"</b>（始めるのをやめ、終わらせるのを始めよ）は、待ち行列理論の必然です。新人に教える時は「数学だから守れ」と説明できます。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="push-pull">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>プッシュ型 vs プル型</h2>
+    <span class="en">PUSH VS PULL</span>
+  </div>
+  <p class="pattern-desc">
+    WIP制限を理解する上で重要なのが<b>「プッシュ型」と「プル型」</b>の対比。<b>プッシュ型</b>＝上流が下流に押し付ける。<b>プル型</b>＝下流が必要に応じて引く。<b>トヨタ生産方式の本質</b>はこのプル型への転換にあり、カンバンもまた<b>プル型システム</b>です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">flow.pull</span>
+      <span class="tag-desc">プッシュとプルの構造的違い</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// プッシュ型 vs プル型</div>
+<div class="code" style="background:rgba(255,255,255,0.4);color:var(--ink);padding:14px;font-size:11.5px;white-space:pre">  [プッシュ型]
+  
+  上流  →→→→→  中流  →→→→→  下流
+   ●●●●●●     ●●●        ●
+       過剰        滞留      閑古鳥
+   作業押付けで
+   下流が処理しきれず溜まる
+
+  [プル型]
+  
+  上流  ←←←←←  中流  ←←←←←  下流
+   ●          ●●          ●●
+    要求あり時のみ流す
+   下流の処理能力に合わせる</div>
+        <table class="compare-table" style="margin-top:14px">
+          <tr><th>側面</th><th>プッシュ</th><th>プル</th></tr>
+          <tr><td>主導</td><td>上流</td><td>下流</td></tr>
+          <tr><td>WIP</td><td>溜まる</td><td>制限される</td></tr>
+          <tr><td>変動対応</td><td>難しい</td><td>容易</td></tr>
+          <tr><td>例</td><td>従来工場</td><td>トヨタ・カンバン</td></tr>
+        </table>
+      </div>
+      <div class="code">
+<span class="comment">// プル型がなぜ優れるか</span>
+
+<span class="ann">@変動への適応</span>
+  下流が要求した分だけ
+  → 過剰生産なし
+  → 在庫が積み上がらない
+
+<span class="ann">@フィードバックループ</span>
+  下流の状態を
+  上流が見ながら動く
+  → 全体最適に向かう
+
+<span class="ann">@「カンバン」が情報媒体</span>
+  カンバンが渡されたら作る
+  渡されなければ作らない
+  → シンプルな仕組み
+
+<span class="comment">// ソフト開発での適用</span>
+
+<span class="ann">@プッシュ的な現場</span>
+  PM「来週までにこれやれ」
+  → 開発者が処理しきれない
+  → タスクが溜まる
+  → 「忙しいけど進まない」
+
+<span class="ann">@プル的な現場</span>
+  開発者「次のタスク取る」
+  → WIP上限に達すれば停止
+  → 上流に「詰まってる」が
+    シグナルとして伝わる
+  → 全体が落ち着く
+
+<span class="comment">// WIP制限はプル型の道具</span>
+
+<span class="kw">WIP上限</span> = プル型を保証する仕組み
+  ↓
+WIPが上限なら新規着手不可
+  ↓
+完了するまで誰も流せない
+  ↓
+完了が速くなる
+  ↓
+全体が速くなる
+
+<span class="comment">// トヨタの教え</span>
+「<b>必要なものを、必要な時に、</b>
+ <b>必要なだけ作る</b>」
+Just In Time の核心</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    プッシュ型の典型が<b>「マネージャがタスクを割り当てる」</b>運用。プル型は<b>「開発者が自分でタスクを引く」</b>。後者の方が遥かに健全です。<b>「タスクを取りに来ない人」「割り当てがないと動かない人」</b>はプル型に向きません。プル型は<b>自律的なチーム</b>を前提とします。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="local-global">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>局所最適と全体最適</h2>
+    <span class="en">LOCAL VS GLOBAL OPTIMIZATION</span>
+  </div>
+  <p class="pattern-desc">
+    最後に<b>「局所最適 vs 全体最適」</b>の問題。<b>「個々の人を最大効率にすれば、全体も最速になる」</b>は<b>典型的な間違い</b>。<b>Eliyahu Goldratt</b>が著書<b>『The Goal』</b>で示したこの逆説は、現代の組織論の中心的テーマです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">optimization.global</span>
+      <span class="tag-desc">部分最適化の罠</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 工場の例え（『The Goal』）</div>
+        <div class="quote-box">
+          「個々のマシンの稼働率を上げても、ボトルネック以外の改善は全体には貢献しない」
+          <div class="quote-source">— E.M. GOLDRATT, "THE GOAL"</div>
+        </div>
+        <ul class="bullet" style="margin-top:14px">
+          <li>各工程が個別に100%稼働 → 在庫が溜まる</li>
+          <li>ボトルネック以外を高速化 → 全体は変わらない</li>
+          <li>全体最適には<b>「制約理論」</b>が必要</li>
+        </ul>
+        <div class="quote-box" style="margin-top:14px">
+          「全体の流速は、最も遅い工程によって決まる」
+          <div class="quote-source">— THEORY OF CONSTRAINTS（制約理論）</div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// 部分最適化の例</span>
+
+<span class="ann">@「Aさんを最大効率に」</span>
+  Aさんが速く作る
+  → Bさんの所に溜まる
+  → Bさんが詰まる
+  → 全体は変わらない
+
+<span class="ann">@「全員フル稼働」</span>
+  各人忙しい
+  → でも完成しない
+  → 「やってる感」だけ
+
+<span class="comment">// 制約理論の処方箋</span>
+
+<span class="step">1.</span> ボトルネックを<b>特定</b>
+<span class="step">2.</span> ボトルネックを<b>活用</b>
+   (最大限働かせる)
+<span class="step">3.</span> 他工程を<b>従属</b>させる
+   (ボトルネックに合わせる)
+<span class="step">4.</span> ボトルネックを<b>強化</b>
+   (能力を増やす)
+<span class="step">5.</span> 次のボトルネックを探す
+
+<span class="comment">// アジャイル現場の含意</span>
+
+<span class="ann">@「全員フル活用」志向</span>
+  経営層がやりがち
+  → 局所最適の罠
+
+<span class="ann">@「ボトルネック中心」志向</span>
+  本物のアジャイル
+  → QAが詰まってるなら
+    全員でQAを助けに行く
+  → 自分の専門外OK
+  → これが「全体最適」
+
+<span class="comment">// 鉄則</span>
+
+<span class="kw">"The goal is to make</span>
+<span class="kw"> the team productive,</span>
+<span class="kw"> not the individuals"</span>
+
+個人の生産性ではない
+チームの生産性が目的
+
+<span class="comment">// WIP制限はこの考えの実装</span>
+
+WIP制限が
+個人最適化を阻む
+ボトルネック中心の動きを誘発
+→ 全体最適へ自然に向かう
+
+<span class="comment">// 結論</span>
+
+WIP制限は単なるルールではない
+<b>組織の哲学を変える装置</b></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>『The Goal』（1984）</b>は工場の現場長を主人公にした<b>経営小説</b>で、制約理論を物語形式で学べる名著。アジャイル熟達者の必読書の1つです。「<b>個別最適化の幻想</b>」を脱却するには、この本の物語を頭に焼き付けるのが一番。<b>「ハーバート（鎖の最も弱い輪）」</b>の比喩は一度読むと忘れません。<span class="star">★★★</span>
+  </div>
+
+  <div class="tip" style="margin-top:48px;">
+    <div class="tip-head">NEXT STEP —</div>
+    リトルの法則・待ち行列理論・制約理論──カンバンとWIP制限の<b>数学的核心</b>を辿りました。「直感に反するが数学的に証明できる」事実の数々。これを上層部に説明できれば、<b>「全員フル稼働」</b>という有害なKPIから組織を救えます。次の本館 Vol.7 では XPのCIから派生した<b>現代のCI/CD・DevOps</b>に進みます。<b>自動テスト戦略・ブランチ運用・デプロイパイプライン・フィーチャートグル</b>──技術プラクティスの集大成です。
+  </div>
+
+  <div class="reference-list" style="margin-top:32px;padding-top:16px;border-top:1px solid var(--line)">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);margin-bottom:8px">REFERENCES —</div>
+    <div><span class="ref-label">1961</span>J.D.C. Little, "A Proof for the Queuing Formula: L = λW", Operations Research</div>
+    <div><span class="ref-label">1984</span>E.M. Goldratt &amp; J. Cox, "The Goal: A Process of Ongoing Improvement"</div>
+    <div><span class="ref-label">1988</span>大野耐一『トヨタ生産方式──脱規模の経営をめざして』</div>
+    <div><span class="ref-label">2001</span>Rubinstein, Meyer, Evans, "Executive Control of Cognitive Processes in Task Switching"</div>
+    <div><span class="ref-label">2009</span>D.G. Reinertsen, "The Principles of Product Development Flow"</div>
+    <div><span class="ref-label">2010</span>D.J. Anderson, "Kanban: Successful Evolutionary Change for Your Technology Business"</div>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>AGILE REFERENCE — ANNEX VOL.06 / WHY WIP LIMITS SPEED UP FLOW</span>
+  <span>※ NEXT → MAIN VOL.07 CI/CD &amp; PRACTICES</span>
+</footer>
+
+</body>
+</html>

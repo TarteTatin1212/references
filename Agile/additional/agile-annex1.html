@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アジャイル開発編 別館 なぜアジャイルは生まれたか Vol.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a1a24;
+  --paper:#e8e6e0;
+  --paper-2:#d6d4ce;
+  --accent:#3a3a5c;
+  --accent-2:#6a6a8a;
+  --accent-3:#52526e;
+  --muted:#6a6a70;
+  --line:#b8b6b0;
+  --code-bg:#1e1e2a;
+  --code-text:#e8e6e0;
+  --panel-bg:#dcd9d0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;font-size:15px}
+.page-header{position:relative;padding:64px 48px 48px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'※';position:absolute;right:0;top:-20px;font-size:300px;color:var(--accent);opacity:0.12;font-family:'Shippori Mincho',serif;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em}
+.annex-tag{display:inline-block;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:3px 13px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:38px;font-weight:700;margin-top:24px;letter-spacing:0.04em;line-height:1.4}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+.lead{max-width:680px;margin-top:24px;font-size:15px;line-height:2}
+.toc{background:var(--paper-2);padding:24px 48px;border-bottom:1px solid var(--line)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:12px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:'—';position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+main{padding:48px}
+section{margin-bottom:72px}
+.section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700;flex:1;line-height:1.4}
+.en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:680px;margin-bottom:24px;font-size:14px;line-height:2}
+.demo-card{background:#fff;border:1px solid var(--line);overflow:hidden}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}
+.code .type{color:#c2a3ff}
+.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}
+.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}
+.code .ann{color:#f7c08a}
+.code .step{color:#ffc88a;font-weight:600}
+.tip{border-left:3px solid var(--accent);background:rgba(58,58,92,0.06);padding:16px 20px;margin:24px 0;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;margin-bottom:6px;font-weight:600}
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px}
+b{font-weight:700;color:var(--accent-3)}
+.timeline{font-family:'Shippori Mincho',serif;margin-top:10px}
+.timeline-item{display:flex;gap:14px;padding:8px 0;border-bottom:1px dotted var(--line);font-size:13.5px}
+.timeline-year{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;min-width:60px;font-size:12px;padding-top:3px}
+.timeline-body{flex:1;line-height:1.7}
+.quote-box{margin:12px 0;padding:14px 18px;background:rgba(255,255,255,0.5);border-left:3px solid var(--accent-2);font-family:'Shippori Mincho',serif;font-size:14px;font-style:italic;line-height:1.8}
+.quote-source{font-family:'JetBrains Mono',monospace;font-style:normal;font-size:11px;color:var(--muted);margin-top:6px;letter-spacing:0.1em}
+.callout-row{display:flex;gap:12px;margin-top:12px}
+.callout-box{flex:1;padding:12px;font-size:12px;background:#fff;border:1px solid var(--line)}
+.callout-box.ng{border-left:3px solid #c43030}
+.callout-box.ok{border-left:3px solid var(--accent)}
+.callout-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;margin-bottom:4px;color:var(--muted)}
+ul.bullet{list-style:none;margin-top:8px}
+ul.bullet li{padding-left:18px;position:relative;margin-bottom:6px;font-size:13px}
+ul.bullet li::before{content:'◇';position:absolute;left:0;color:var(--accent);font-size:11px}
+.star{color:var(--accent);font-weight:700;letter-spacing:0.1em}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.compare-table th,.compare-table td{padding:8px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.compare-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;color:var(--accent-3)}
+.compare-table tr:nth-child(even) td{background:rgba(232,230,224,0.5)}
+.page-footer{border-top:2px solid var(--ink);padding:32px 48px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.reference-list{font-size:12px;line-height:1.8;color:var(--muted);font-family:'Shippori Mincho',serif;margin-top:8px}
+.reference-list .ref-label{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;margin-right:8px}
+@media (max-width:720px){
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  main{padding:24px}
+  .page-header{padding:32px 24px}
+  h1{font-size:24px}
+  .toc{padding:16px 24px}
+  .callout-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">AGILE REFERENCE</span>
+  <span class="vol-tag">VOL.01 / 09</span>
+  <span class="annex-tag">ANNEX — WHY</span>
+  <h1>なぜアジャイルは生まれたのか</h1>
+  <div class="subtitle">ANNEX VOL.01 — THE BIRTH OF AGILE / HISTORICAL ORIGINS</div>
+  <p class="lead">
+    本館 Vol.1 で見た「アジャイル」という言葉。<b>当たり前のように使っていますが、その誕生はわずか2001年</b>です。なぜこの時代に生まれたのか。それ以前は何が問題だったのか。スノーバードの山荘で何が起きたのか。本巻は<b>歴史の縦糸</b>を辿り、アジャイル誕生の必然性を解きほぐします。これを知ると、宣言の<b>68語</b>が違って見えてきます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS — ANNEX</div>
+  <ul>
+    <li><a href="#crisis">01 1968年「ソフトウェア危機」</a></li>
+    <li><a href="#royce">02 ウォーターフォール誤読史</a></li>
+    <li><a href="#lightweight">03 1990年代の軽量手法群</a></li>
+    <li><a href="#snowbird">04 スノーバード会議の真実</a></li>
+    <li><a href="#naming">05「軽量」から「アジャイル」へ</a></li>
+    <li><a href="#seventeen">06 宣言の17人 その後</a></li>
+    <li><a href="#why">07 なぜ宣言は時を超えたか</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="crisis">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>1968年「ソフトウェア危機」の宣告</h2>
+    <span class="en">THE SOFTWARE CRISIS</span>
+  </div>
+  <p class="pattern-desc">
+    アジャイル誕生の<b>33年前</b>、すでに業界は危機を宣告されていました。1968年、ドイツ・ガルミッシュで開催されたNATO主催のソフトウェア工学会議。ここで初めて<b>「ソフトウェア危機（Software Crisis）」</b>という言葉が公式に使われます。要件が膨らみ、納期が遅れ、品質は劣化する──現在も続く<b>業界の宿痾</b>が、半世紀前に言語化されていたのです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">history.crisis</span>
+      <span class="tag-desc">1968年・NATO会議という分水嶺</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 危機の現象</div>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-year">1950s</div>
+            <div class="timeline-body">ハードが主役。ソフトはおまけ扱い。<b>個人芸</b>で書かれていた</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1960s</div>
+            <div class="timeline-body">大規模化が進む。OS/360 開発が予算3倍・人月数千の<b>大炎上</b></div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1968</div>
+            <div class="timeline-body">NATO会議で<b>「ソフトウェア危機」</b>宣告。「ソフトウェア工学」誕生</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1975</div>
+            <div class="timeline-body">F.P.ブルックス<b>『人月の神話』</b>刊行。OS/360の教訓を世に</div>
+          </div>
+        </div>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ この時代の課題は「いかに大規模開発を予測通り進めるか」──ここから<b>工学的アプローチ</b>が花開きます。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 危機の症状（1960年代後半）</span>
+
+<span class="ann">@大規模化</span>
+  10人の開発 → 100人の開発
+  → コミュニケーション
+    爆発的増加
+  → 全員の認識を揃えるのが
+    至難の業
+
+<span class="ann">@複雑化</span>
+  単純な計算 → OS・DB・GUI
+  → 想定外の挙動
+  → デバッグ困難
+
+<span class="ann">@納期遅延</span>
+  「見積もり 6ヶ月」
+   → 実際 18ヶ月
+  → 信頼の崩壊
+
+<span class="ann">@品質劣化</span>
+  完成しても動かない
+  リリース後にバグ続出
+
+<span class="comment">// 出典</span>
+<span class="kw">NATO Conference</span>
+on Software Engineering
+<span class="kw">1968</span>, Garmisch, Germany
+P. Naur &amp; B. Randell 編
+        </div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    「ソフトウェア工学」という用語が生まれたのもこの会議です。<b>「土木工学・機械工学のような体系」</b>をソフトウェアにも与えようとした努力の出発点。<b>ウォーターフォールはこの努力の一形態</b>として登場したのであって、最初から「悪者」だったわけではないのです。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="royce">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>ウォーターフォール誤読史</h2>
+    <span class="en">THE MISREAD OF ROYCE 1970</span>
+  </div>
+  <p class="pattern-desc">
+    アジャイルの<b>仮想敵</b>とされるウォーターフォール開発。その元祖とされる<b>Winston W. Royce の 1970年論文</b>には、驚くべき事実が隠されています。Royce 自身が論文の中で<b>「この単純なモデルは危険であり、失敗する」</b>と明言していたのです。ウォーターフォールは<b>反面教師として提示された図</b>──それが世界中で<b>正反対に読まれた</b>歴史こそ、アジャイル誕生の遠因です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">history.royce</span>
+      <span class="tag-desc">Royce 1970論文の本当の主張</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 論文の本当の構造</div>
+        <ul class="bullet">
+          <li>論文冒頭：<b>単純な線形モデル</b>を提示</li>
+          <li>続く一節：「<b>このやり方はリスクが高い</b>」</li>
+          <li>論文後半：<b>反復・先行プロトタイプ・顧客関与</b>を提案</li>
+          <li>結論：<b>「私が主張するのは反復型だ」</b></li>
+        </ul>
+        <div class="quote-box">
+          「私はこの方式（最初に示した線形モデル）を信じない。失敗を招くから」
+          <div class="quote-source">— W.W. ROYCE, 1970（意訳）</div>
+        </div>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ 業界は<b>最初の図だけ</b>を引用し、Royce の警告を無視して「これがベストプラクティスだ」と広めた。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 論文タイトル</span>
+
+<span class="kw">"Managing the Development</span>
+<span class="kw"> of Large Software Systems"</span>
+W.W. Royce, <span class="num">1970</span>
+IEEE WESCON
+
+<span class="comment">// 論文の主張ステップ</span>
+
+<span class="step">Step1.</span> 単純なモデルを図示
+   要件→設計→実装→
+   テスト→運用
+   (これが後の"ウォーターフォール")
+
+<span class="step">Step2.</span> 「これは危険」と明言
+   <span class="str">"risky and invites</span>
+   <span class="str">failure"</span>
+
+<span class="step">Step3.</span> 改善案を提示
+   ✓ 各工程の<b>反復</b>
+   ✓ <b>顧客の関与</b>
+   ✓ <b>先行プロトタイプ</b>
+   ✓ <b>事前設計</b>
+   ✓ <b>テスト計画の早期</b>
+
+<span class="comment">// 何が起きたか</span>
+論文の<b>1枚目の図</b>だけが
+独り歩きし、Royce の警告は
+忘れられた
+
+<span class="comment">// 結果</span>
+30年間、業界は
+"単純化されたモデル"を
+正解と信じ込んだ</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    Craig Larman &amp; Victor Basili の論文<b>「Iterative and Incremental Development: A Brief History」(2003)</b>はこの誤読史を詳細に追跡した名著。<b>反復型開発は1950年代から実践されていた</b>こと、ウォーターフォールは「正解として提示されたものではない」ことを綿密に検証しています。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="lightweight">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>1990年代の軽量手法群</h2>
+    <span class="en">LIGHTWEIGHT METHODS ERA</span>
+  </div>
+  <p class="pattern-desc">
+    1990年代、現場の不満が臨界点に達します。<b>分厚い手順書ベースの開発手法</b>（CMM・ISO等）への反動として、現場発の<b>「軽量手法（Lightweight Methods）」</b>が次々と誕生。Scrum・XP・Crystal・DSDM・FDD・ASD──これらが後の宣言の<b>母体</b>になります。<b>「アジャイル」という言葉が生まれる前から、思想は各地で芽吹いていた</b>のです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">history.lightweight</span>
+      <span class="tag-desc">1990年代に各地で生まれた軽量手法</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 軽量手法の系譜</div>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-year">1986</div>
+            <div class="timeline-body">野中・竹内<b>"The New New Product Development Game"</b> HBR</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1993</div>
+            <div class="timeline-body">Jeff Sutherland、最初の<b>Scrum</b>実装（イーゼル社）</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1994</div>
+            <div class="timeline-body"><b>DSDM</b> 発表（英国・反復型）</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1995</div>
+            <div class="timeline-body">Schwaber &amp; Sutherland、<b>Scrum論文</b>OOPSLA発表</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1996</div>
+            <div class="timeline-body">Kent Beck、C3プロジェクトで<b>XP</b>確立</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1997</div>
+            <div class="timeline-body">Alistair Cockburn、<b>Crystal</b>シリーズ提唱</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1999</div>
+            <div class="timeline-body">Beck<b>『Extreme Programming Explained』</b>刊行</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1999</div>
+            <div class="timeline-body">Jim Highsmith<b>『Adaptive Software Development』</b>刊行</div>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// 軽量手法たちの共通項</span>
+
+<span class="ann">@反復型</span>
+  数週間で動くものを出す
+  ↑ ウォーターフォールへの反動
+
+<span class="ann">@人間中心</span>
+  プロセスより個人を重視
+  ↑ CMM等への反動
+
+<span class="ann">@顧客近接</span>
+  契約より協調
+  ↑ 受託地獄への反動
+
+<span class="ann">@変化歓迎</span>
+  事前計画より適応
+  ↑ 大規模設計への反動
+
+<span class="comment">// それぞれの特徴</span>
+
+<span class="type">Scrum</span>: チームの動かし方
+<span class="type">XP</span>: 技術プラクティス
+<span class="type">Crystal</span>: チーム規模別調整
+<span class="type">DSDM</span>: 反復+優先順位制御
+<span class="type">FDD</span>: フィーチャー単位開発
+<span class="type">ASD</span>: 適応的開発・推測〜学習
+
+<span class="comment">// 共通の悩み</span>
+「同じ思想なのに
+ ばらばらに呼ばれ
+ ばらばらに広まり
+ 互いに対立して見える」
+
+→ <b>統一の必要性</b>が
+  業界内で高まっていた</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    特に<b>1996年のC3プロジェクト</b>（クライスラー社の給与システム）でKent Beckが実践したXPは、業界に衝撃を与えました。「<b>動くものを毎週リリース</b>」「<b>テストを先に書く</b>」「<b>ペアプログラミング</b>」──全部が当時の常識を覆す実践でした。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="snowbird">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>2001年・スノーバード会議の真実</h2>
+    <span class="en">SNOWBIRD 2001 — WHAT REALLY HAPPENED</span>
+  </div>
+  <p class="pattern-desc">
+    <b>2001年2月11日〜13日</b>、米国ユタ州スノーバードのスキーリゾート。<b>17人の開発者・著作家</b>が集まりました。目的は<b>「軽量手法の共通点を見出すこと」</b>。スキーをし、議論し、ホワイトボードに殴り書きをし、2日半で<b>68語の宣言</b>を仕上げる──業界の歴史を変えた<b>奇跡の3日間</b>です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">history.snowbird</span>
+      <span class="tag-desc">2001年2月、ユタの山荘で起きたこと</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// スノーバード会議・3日間の記録</div>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-year">Day 1</div>
+            <div class="timeline-body">17人が到着・自己紹介。<b>「我々の共通点は何か」</b>を議論。各自の手法を持ち寄る</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">Day 2</div>
+            <div class="timeline-body">午前は<b>スキー</b>。午後に集中議論。<b>「価値観」を4つ</b>に整理することで合意</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">Day 3</div>
+            <div class="timeline-body">文言を<b>磨き上げ</b>、宣言完成。会議後に「<b>12原則</b>」をメールで策定</div>
+          </div>
+        </div>
+        <div class="quote-box">
+          「私たちは皆、お互いに敵対していた競合する手法の提唱者でした。それでも、共通の核心があると信じていました」
+          <div class="quote-source">— ROBERT C. MARTIN, 後年の回想</div>
+        </div>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ 招集を主導したのは <b>Robert C. Martin</b>（Uncle Bob）。彼の呼びかけで集まった。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 出席した17人</span>
+
+<span class="ann">@Scrum 系</span>
+  Ken Schwaber
+  Jeff Sutherland
+  Mike Beedle
+
+<span class="ann">@XP 系</span>
+  Kent Beck
+  Ward Cunningham
+  Ron Jeffries
+  James Grenning
+  Robert C. Martin
+
+<span class="ann">@DSDM 系</span>
+  Arie van Bennekum
+
+<span class="ann">@FDD 系</span>
+  Jon Kern
+
+<span class="ann">@Crystal 系</span>
+  Alistair Cockburn
+
+<span class="ann">@ASD 系</span>
+  Jim Highsmith
+
+<span class="ann">@ Pragmatic 系</span>
+  Andrew Hunt
+  Dave Thomas
+
+<span class="ann">@その他</span>
+  Brian Marick
+  Martin Fowler
+  Steve Mellor
+
+<span class="comment">// 全員白人男性17名</span>
+<span class="comment">これが後年「多様性なし」</span>
+<span class="comment">と批判される論点に</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">裏技 —</div>
+    会議の費用は<b>17人が自腹</b>でした。誰かのスポンサーがついた訳ではなく、純粋に「業界を良くしたい」という有志の集まり。<b>会議は2日半・宣言の作成は数時間</b>と言われています。<b>偉大な文書ほど短く、早く生まれる</b>──これも一つの真実です。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="naming">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>「軽量」から「アジャイル」へ — 言葉の選定</h2>
+    <span class="en">FROM LIGHTWEIGHT TO AGILE</span>
+  </div>
+  <p class="pattern-desc">
+    実はスノーバード会議に集った人々は、自分たちを<b>「軽量手法（Lightweight Methods）」</b>の提唱者と呼んでいました。しかし会議で議論するうち、<b>「軽量」という言葉が誤解を生む</b>と気づきます。「軽い＝中身が薄い＝劣る」と読まれてしまう。代わりに選ばれたのが<b>"Agile"</b>──「機敏」「適応性が高い」を意味する言葉でした。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">history.naming</span>
+      <span class="tag-desc">なぜ「アジャイル」が選ばれたか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 候補と却下理由</div>
+        <table class="compare-table">
+          <tr><th>候補</th><th>意味</th><th>却下理由</th></tr>
+          <tr><td>Lightweight</td><td>軽量</td><td>軽い＝劣ると誤読される</td></tr>
+          <tr><td>Adaptive</td><td>適応的</td><td>Highsmithの手法名と重複</td></tr>
+          <tr><td>Iterative</td><td>反復的</td><td>すでに使われ陳腐化</td></tr>
+          <tr><td>Pragmatic</td><td>実用的</td><td>抽象度が高すぎる</td></tr>
+          <tr><td><b>Agile</b></td><td><b>機敏</b></td><td>—（採用）</td></tr>
+        </table>
+        <div class="quote-box" style="margin-top:14px">
+          「『軽量』は『重要でない』と聞こえる。我々がやっていることは重要だ。『アジャイル』が正しい」
+          <div class="quote-source">— MIKE BEEDLE, 当時の発言（意訳）</div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// "Agile" の語源と含意</span>
+
+<span class="kw">語源</span>:
+  ラテン語 <span class="str">"agere"</span>
+   = <span class="str">"行動する・動かす"</span>
+
+<span class="kw">英語の意味</span>:
+  ✓ 機敏な
+  ✓ 素早く動ける
+  ✓ 柔軟に対応できる
+  ✓ 軽快な
+
+<span class="comment">// なぜこの語が刺さったか</span>
+
+<span class="ann">@軽さ + 機動性</span>
+  単に軽いのではなく
+  <b>動ける軽さ</b>を示唆
+
+<span class="ann">@適応性</span>
+  状況に応じて
+  形を変えられる
+
+<span class="ann">@誇り</span>
+  「軽量」と違って
+  能力の高さを示す
+
+<span class="comment">// 選定後の影響</span>
+
+「<span class="kw">アジャイル開発宣言</span>」
+「<span class="kw">アジャイル原則</span>」
+「<span class="kw">アジャイル手法</span>」
+「<span class="kw">アジャイルコーチ</span>」
+「<span class="kw">アジャイル組織</span>」
+
+<span class="comment">→ "Agile" が形容詞・名詞化</span>
+<span class="comment">  業界の共通語彙へ</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    名前は<b>運動の運命を決めます</b>。もし「軽量開発宣言」と命名されていたら、これほど普及しなかったでしょう。<b>"Agile"</b>という一語が持つ<b>機敏さと前向きさ</b>のニュアンスが、業界・経営層・経営学にまで広がる土台を作りました。命名の力です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="seventeen">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>宣言の17人 — その後の道</h2>
+    <span class="en">THE 17 AUTHORS — THEIR PATHS</span>
+  </div>
+  <p class="pattern-desc">
+    スノーバードの17人は、その後それぞれの道を歩みました。<b>Scrum派・XP派・職人主義派</b>に分かれ、時に協調し、時に対立し、アジャイルというムーブメントを<b>育てつつ揉ませてきた</b>のです。彼らの「その後」を知ると、現在のアジャイル界の<b>派閥構造</b>が理解できます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">history.aftermath</span>
+      <span class="tag-desc">17人の主要なその後</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 主要メンバーの軌跡</div>
+        <ul class="bullet">
+          <li><b>Ken Schwaber</b> → Scrum.org 創設・Scrumガイドの主筆</li>
+          <li><b>Jeff Sutherland</b> → Scrum Inc. 創設・大規模Scrum伝道</li>
+          <li><b>Kent Beck</b> → XP・TDD・カンバン拡張・Facebookで活動</li>
+          <li><b>Robert C. Martin</b> → 『Clean Code』『Clean Architecture』職人主義</li>
+          <li><b>Martin Fowler</b> → リファクタリング第一人者・ThoughtWorks</li>
+          <li><b>Alistair Cockburn</b> → ハートオブアジャイル提唱（4動詞へ）</li>
+          <li><b>Andrew Hunt &amp; Dave Thomas</b> → 『達人プログラマー』著者</li>
+          <li><b>Ward Cunningham</b> → Wikiの発明者でもある</li>
+          <li><b>Mike Beedle</b> → 2018年、若くして悲劇的死</li>
+        </ul>
+      </div>
+      <div class="code">
+<span class="comment">// 主要な派閥（現代の地図）</span>
+
+<span class="ann">@Scrum 純粋派</span>
+  Schwaber, Sutherland
+  → Scrum.org, Scrum Inc.
+  → スケーリング Scrum
+  → Scrumガイドの守護者
+
+<span class="ann">@XP / 技術主義派</span>
+  Beck, Fowler, R.C.Martin
+  → TDD, リファクタリング,
+    Clean Code 系列
+  → 「コード品質こそ核」
+
+<span class="ann">@職人主義派</span>
+  R.C.Martin (Uncle Bob)
+  → Software Craftsmanship
+  → 倫理を強調
+
+<span class="ann">@モダンアジャイル派</span>
+  Cockburn (Heart of Agile)
+  Joshua Kerievsky
+  → 「フレームワーク」より
+    「コア4動詞」
+  Collaborate, Deliver,
+  Reflect, Improve
+
+<span class="comment">// 派閥対立の側面</span>
+派閥は時に対立する
+が、根は宣言という共通土台</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    Alistair Cockburn は2016年に<b>「Heart of Agile」</b>を提唱しました。「アジャイルが複雑化しすぎた」として、<b>Collaborate, Deliver, Reflect, Improve</b>の4動詞に削ぎ落とす運動。「宣言は今でも有効か？」という問いを業界に投げかけ続けています。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="why">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>なぜ宣言は時を超えたか</h2>
+    <span class="en">WHY THE MANIFESTO ENDURES</span>
+  </div>
+  <p class="pattern-desc">
+    宣言から25年経った現在も、<b>一字一句変えられていません</b>。これは奇跡的なことです。技術書なら数年で陳腐化する業界で、宣言だけは<b>変化を超越して残った</b>。なぜか。答えは宣言の<b>構造</b>にあります。具体的手法を書かず、<b>価値観だけ</b>を提示したからこそ、時代を超えられたのです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">history.endurance</span>
+      <span class="tag-desc">宣言が古びない構造的理由</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 宣言が残る3つの理由</div>
+        <ul class="bullet">
+          <li><b>抽象度が高い</b> — 具体的手法を書かなかった</li>
+          <li><b>普遍的な人間性に依拠</b> — 対話・協調・適応は不変</li>
+          <li><b>"より価値を置く"形式</b> — 一方を否定せず、優先順位を示すだけ</li>
+        </ul>
+        <div class="quote-box">
+          「アジャイル宣言は10年経っても20年経っても古びない。なぜならそれは『道具』について書いていないからだ」
+          <div class="quote-source">— MARTIN FOWLER, 10周年ブログ（意訳）</div>
+        </div>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ 一方で「手法」は変化を続けている。Scrum Guide は2020までに5回改訂・SAFeは大規模化、Heart of Agile は削ぎ落とし──運動は<b>生きている</b>。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 宣言の構造的強さ</span>
+
+<span class="ann">@抽象 vs 具体</span>
+  宣言：抽象的価値観
+  手法：具体的やり方
+  → 手法は変わるが
+    宣言は不変
+
+<span class="ann">@排他 vs 比較</span>
+  「Aを使え」 → Aが古くなれば終わる
+  「Bより A」 → 関係性は不変
+
+<span class="comment">// 宣言の構文設計</span>
+<span class="kw">A よりも B に価値を置く</span>
+  ↑
+  比較構造のため
+  時代に依存しない
+
+<span class="comment">// 25年間で変わったもの</span>
+ハードウェア性能 ×1000倍
+言語・フレームワーク 数百
+ツール 数千
+
+<span class="comment">// 変わらないもの</span>
+✓ 人と人の対話の価値
+✓ 動くものへの信頼
+✓ 顧客との協調
+✓ 変化への適応
+
+<span class="comment">// 結論</span>
+<span class="kw">ソフトウェア開発は</span>
+<span class="kw">人間の営みである</span>
+ゆえに人間が変わらない限り
+宣言も色褪せない</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    本館 Vol.2 で見る<b>「4つの価値・12原則」</b>は、この<b>抽象度の高さ</b>こそが武器。手法と違って<b>具体性を切り捨てたからこそ普遍を獲得した</b>のです。これは哲学・宗教経典・憲法と同じ構造。<b>「具体性」と「永続性」はトレードオフ</b>──宣言は永続を選んだ文書です。<span class="star">★★★</span>
+  </div>
+
+  <div class="tip" style="margin-top:48px;">
+    <div class="tip-head">NEXT STEP —</div>
+    歴史の縦糸が見えたところで、次の別館 Vol.2 では<b>宣言と12原則の構造</b>を解剖します。「<b>左より右</b>」という構文は何を意味するのか。<b>4つの価値はなぜ"4つ"なのか</b>。12原則を<b>3グループ</b>に整理する視点。本館 Vol.2 で<b>「何を書いてあるか」</b>を学んだあなたに、別館 Vol.2 では<b>「なぜそう書かれたか」</b>を提供します。
+  </div>
+
+  <div class="reference-list" style="margin-top:32px;padding-top:16px;border-top:1px solid var(--line)">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);margin-bottom:8px">REFERENCES —</div>
+    <div><span class="ref-label">1968</span>NATO Software Engineering Conference, Garmisch (P. Naur &amp; B. Randell)</div>
+    <div><span class="ref-label">1970</span>W.W. Royce, "Managing the Development of Large Software Systems"</div>
+    <div><span class="ref-label">1975</span>F.P. Brooks, "The Mythical Man-Month"</div>
+    <div><span class="ref-label">1986</span>I. Nonaka &amp; H. Takeuchi, "The New New Product Development Game", HBR</div>
+    <div><span class="ref-label">2001</span>The Agile Manifesto — agilemanifesto.org</div>
+    <div><span class="ref-label">2003</span>C. Larman &amp; V. Basili, "Iterative and Incremental Development: A Brief History"</div>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>AGILE REFERENCE — ANNEX VOL.01 / WHY AGILE EMERGED</span>
+  <span>※ NEXT → ANNEX VOL.02 WHY WORKING SOFTWARE</span>
+</footer>
+
+</body>
+</html>

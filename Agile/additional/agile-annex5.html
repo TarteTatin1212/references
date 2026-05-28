@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アジャイル開発編 別館 なぜTDDはテストから書くのか Vol.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#141426;
+  --paper:#e0ded8;
+  --paper-2:#cecbc4;
+  --accent:#2c2c58;
+  --accent-2:#5a5a7c;
+  --accent-3:#444460;
+  --muted:#646468;
+  --line:#b0aea8;
+  --code-bg:#161628;
+  --code-text:#e0ded8;
+  --panel-bg:#d4d1c8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;font-size:15px}
+.page-header{position:relative;padding:64px 48px 48px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'※';position:absolute;right:0;top:-20px;font-size:300px;color:var(--accent);opacity:0.12;font-family:'Shippori Mincho',serif;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em}
+.annex-tag{display:inline-block;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:3px 13px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:38px;font-weight:700;margin-top:24px;letter-spacing:0.04em;line-height:1.4}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+.lead{max-width:680px;margin-top:24px;font-size:15px;line-height:2}
+.toc{background:var(--paper-2);padding:24px 48px;border-bottom:1px solid var(--line)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:12px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:'—';position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+main{padding:48px}
+section{margin-bottom:72px}
+.section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700;flex:1;line-height:1.4}
+.en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:680px;margin-bottom:24px;font-size:14px;line-height:2}
+.demo-card{background:#fff;border:1px solid var(--line);overflow:hidden}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}
+.code .type{color:#c2a3ff}
+.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}
+.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}
+.code .ann{color:#f7c08a}
+.code .step{color:#ffc88a;font-weight:600}
+.tip{border-left:3px solid var(--accent);background:rgba(44,44,88,0.06);padding:16px 20px;margin:24px 0;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;margin-bottom:6px;font-weight:600}
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px}
+b{font-weight:700;color:var(--accent-3)}
+.quote-box{margin:12px 0;padding:14px 18px;background:rgba(255,255,255,0.5);border-left:3px solid var(--accent-2);font-family:'Shippori Mincho',serif;font-size:14px;font-style:italic;line-height:1.8}
+.quote-source{font-family:'JetBrains Mono',monospace;font-style:normal;font-size:11px;color:var(--muted);margin-top:6px;letter-spacing:0.1em}
+.callout-row{display:flex;gap:12px;margin-top:12px}
+.callout-box{flex:1;padding:12px;font-size:12px;background:#fff;border:1px solid var(--line)}
+.callout-box.ng{border-left:3px solid #c43030}
+.callout-box.ok{border-left:3px solid var(--accent)}
+.callout-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;margin-bottom:4px;color:var(--muted)}
+ul.bullet{list-style:none;margin-top:8px}
+ul.bullet li{padding-left:18px;position:relative;margin-bottom:6px;font-size:13px}
+ul.bullet li::before{content:'◇';position:absolute;left:0;color:var(--accent);font-size:11px}
+.star{color:var(--accent);font-weight:700;letter-spacing:0.1em}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.compare-table th,.compare-table td{padding:8px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.compare-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;color:var(--accent-3)}
+.compare-table tr:nth-child(even) td{background:rgba(224,222,216,0.5)}
+.page-footer{border-top:2px solid var(--ink);padding:32px 48px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.reference-list{font-size:12px;line-height:1.8;color:var(--muted);font-family:'Shippori Mincho',serif;margin-top:8px}
+.reference-list .ref-label{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;margin-right:8px}
+.timeline{font-family:'Shippori Mincho',serif;margin-top:10px}
+.timeline-item{display:flex;gap:14px;padding:8px 0;border-bottom:1px dotted var(--line);font-size:13.5px}
+.timeline-year{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;min-width:60px;font-size:12px;padding-top:3px}
+.timeline-body{flex:1;line-height:1.7}
+@media (max-width:720px){
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  main{padding:24px}
+  .page-header{padding:32px 24px}
+  h1{font-size:24px}
+  .toc{padding:16px 24px}
+  .callout-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">AGILE REFERENCE</span>
+  <span class="vol-tag">VOL.05 / 09</span>
+  <span class="annex-tag">ANNEX — WHY</span>
+  <h1>なぜTDDはテストから書くのか</h1>
+  <div class="subtitle">ANNEX VOL.05 — TEST FIRST AS A DESIGN TOOL</div>
+  <p class="lead">
+    本館 Vol.5 で見た<b>TDD</b>。「テストを先に書く」という<b>業界の常識を覆した手法</b>。実装してからテストを書いた方が普通では？という疑問は当然です。本巻はその答えを<b>Kent Beck の原典・認知科学・哲学</b>から掘り下げます。<b>「TDDは設計の道具」</b>──この一文の意味が、本巻を読み終える頃に腹落ちするはずです。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS — ANNEX</div>
+  <ul>
+    <li><a href="#origin">01 TDDの誕生と Smalltalk</a></li>
+    <li><a href="#design">02 「設計の道具」という主張</a></li>
+    <li><a href="#cognition">03 認知科学から見た意味</a></li>
+    <li><a href="#testable">04 テスト可能性が強制する設計</a></li>
+    <li><a href="#feedback">05 フィードバックループの最短化</a></li>
+    <li><a href="#docs">06 テストは実行可能な仕様書</a></li>
+    <li><a href="#dhh">07 TDD is Dead 論争</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="origin">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>TDDの誕生と Smalltalk</h2>
+    <span class="en">BIRTH OF TDD</span>
+  </div>
+  <p class="pattern-desc">
+    TDDの起源は意外と古く、<b>1990年代初頭</b>に遡ります。<b>Kent Beck が Smalltalk コミュニティ</b>で実践していた「Test First Programming」が原型。「これは新発明ではなく、<b>古い実践の再発見</b>だ」とBeckが書いています。NASA や IBM が1960年代から類似の手法を実践していた事実があるのです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">history.tdd</span>
+      <span class="tag-desc">TDDの起源と Kent Beck</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// TDDの系譜</div>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-year">1960s</div>
+            <div class="timeline-body">NASA Mercury 計画：<b>各小ステップにテスト</b>を書いていた</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1990</div>
+            <div class="timeline-body">Kent Beck、Smalltalk で<b>Test First</b> 実践開始</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1996</div>
+            <div class="timeline-body">C3 プロジェクトで XP の中核として位置づけ</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1998</div>
+            <div class="timeline-body">Kent Beck &amp; Erich Gamma が<b>JUnit</b> を開発</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">2002</div>
+            <div class="timeline-body">Beck<b>『Test Driven Development by Example』</b>刊行</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">2010s</div>
+            <div class="timeline-body">業界標準化。ほぼ全ての言語に xUnit 系フレームワーク</div>
+          </div>
+        </div>
+        <div class="quote-box" style="margin-top:14px">
+          「これは私の発明ではない。古いプログラマたちが実践していた知恵を、現代に再導入しただけだ」
+          <div class="quote-source">— KENT BECK, "TDD by Example"</div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// NASA の古い実践</span>
+
+<span class="kw">1960年代 Mercury 計画</span>:
+  「先に期待する出力を
+   テストに書く」
+  「実装はテストを満たす
+   ことを目的に書く」
+
+  ↑ TDD の本質と同一
+
+<span class="comment">// なぜ忘れられたか</span>
+
+<span class="ann">@1970-80年代</span>
+  ソフトが大規模化
+  → テストは「最後の工程」
+   に押しやられた
+  → 開発者と分離
+
+<span class="ann">@1990年代</span>
+  Kent Beck が再発見
+  ペアプロ・XPと統合
+  → 業界全体へ波及
+
+<span class="comment">// JUnit の影響</span>
+
+<span class="kw">JUnit (1998)</span>:
+  Java 用のテストフレームワーク
+  Kent Beck と Erich Gamma が共著
+
+<span class="kw">xUnit ファミリーへ</span>:
+  PyUnit, RUnit, NUnit
+  Mocha, Jest, RSpec
+  → 全言語へ展開
+
+<span class="comment">// 結論</span>
+
+TDDは Beck の「発明」ではなく
+<span class="kw">忘れられた知恵の再導入</span>
+そして<b>体系化・普及</b>
+
+これがTDD史の本質</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    Kent Beck の名著<b>『Test Driven Development by Example』（2002）</b>は、TDDを学ぶ全ての人が読むべき原典。<b>多通貨計算を題材に、TDDの一連のサイクル</b>を実演する形式で、200ページほどの薄い本ですが密度が高い。<b>翻訳版『テスト駆動開発』</b>も入手可能です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="design">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>「設計の道具」という主張</h2>
+    <span class="en">TDD AS A DESIGN TOOL</span>
+  </div>
+  <p class="pattern-desc">
+    Kent Beck が繰り返し強調するのは<b>「TDDはテスト技法ではなく、設計技法だ」</b>という主張。この一文がTDDの本質を捉えています。テストを先に書くと<b>「テスト可能なコードを書かざるを得なくなる」</b>。そして「テスト可能なコード＝モジュラーな良い設計」になるのです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">tdd.design</span>
+      <span class="tag-desc">TDDが導く設計品質</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// TDDが促す設計の特性</div>
+        <ul class="bullet">
+          <li><b>疎結合</b> ── 単体でテストするには分離されている必要がある</li>
+          <li><b>高凝集</b> ── 1つのことだけする関数のほうがテストしやすい</li>
+          <li><b>明確なインターフェイス</b> ── 引数と戻り値が明確でないとテスト書けない</li>
+          <li><b>副作用の局在化</b> ── グローバル状態が多いとテストが難しい</li>
+        </ul>
+        <div class="quote-box" style="margin-top:14px">
+          「TDDはコードのデザインを駆動する。テストはコードを良い形に導くフィードバック装置だ」
+          <div class="quote-source">— KENT BECK, "TDD by Example"</div>
+        </div>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ 「テスト後付け」だと、テストしにくいコードでも「動いてる」と通せてしまう。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// テストしにくいコードの例</span>
+
+<span class="comment">// グローバル状態に依存</span>
+<span class="kw">function</span> <span class="fn">processOrder</span>() {
+  <span class="kw">const</span> user = currentUser;
+  <span class="comment">// テスト時に user 差替不能</span>
+}
+
+<span class="comment">// 多すぎる責務</span>
+<span class="kw">function</span> <span class="fn">checkout</span>() {
+  validate();
+  calcTax();
+  saveDB();
+  sendEmail();
+  updateStock();
+  log();
+  <span class="comment">// 何をテストする?</span>
+}
+
+<span class="comment">// 副作用ベタ書き</span>
+<span class="kw">function</span> <span class="fn">getUser</span>(id) {
+  <span class="kw">return</span> db.<span class="fn">query</span>(...);
+  <span class="comment">// DB なしでテスト不能</span>
+}
+
+<span class="comment">// TDDが導く改善</span>
+
+<span class="comment">// 依存注入</span>
+<span class="kw">function</span> <span class="fn">processOrder</span>(user, db) {
+  <span class="comment">// 引数で受ける → 差替可</span>
+}
+
+<span class="comment">// 責務分離</span>
+<span class="kw">class</span> <span class="type">Checkout</span> {
+  <span class="fn">validate</span>(order) {...}
+  <span class="fn">calcTax</span>(order) {...}
+  <span class="fn">execute</span>(order) {
+    <span class="comment">// validate と calcTax</span>
+    <span class="comment">// を呼ぶだけ</span>
+  }
+}
+
+<span class="comment">// 関数の純粋化</span>
+<span class="kw">function</span> <span class="fn">calculateTax</span>(price) {
+  <span class="kw">return</span> price * <span class="num">0.1</span>;
+  <span class="comment">// 副作用なし</span>
+  <span class="comment">// テストしやすい</span>
+}</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「テストが書きにくい」</b>と感じる時、それは<b>「設計が悪い」のシグナル</b>です。「テストを書きやすくするにはどう設計を変えるか？」を考えることで<b>必然的に良い設計</b>に至る。TDDが「設計の道具」と呼ばれる所以です。<b>テストを書く前に設計を考える</b>のは順序が逆──TDDではテストが設計を導きます。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="cognition">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>認知科学から見た意味</h2>
+    <span class="en">COGNITIVE PERSPECTIVE</span>
+  </div>
+  <p class="pattern-desc">
+    TDDがなぜ機能するか、認知科学的にも説明できます。<b>「ゴールから逆算する」</b>という思考順序が、人間の脳に<b>「集中の構造」を与える</b>。これは<b>SMARTゴール</b>や<b>逆引き計画法</b>と同じ原理です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">cognition.goal-first</span>
+      <span class="tag-desc">ゴール先行思考の認知効果</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの思考順序</div>
+        <table class="compare-table">
+          <tr><th>思考</th><th>実装先</th><th>テスト先（TDD）</th></tr>
+          <tr><td>出発点</td><td>「何を作る？」</td><td>「どう完成と判定？」</td></tr>
+          <tr><td>視点</td><td>実装者目線</td><td>利用者目線</td></tr>
+          <tr><td>判断</td><td>主観的</td><td>客観的</td></tr>
+          <tr><td>過剰実装</td><td>起きやすい</td><td>起きにくい</td></tr>
+          <tr><td>YAGNI</td><td>意識しないと逸脱</td><td>自然に守れる</td></tr>
+        </table>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ <b>「完成の定義」を先に書く</b>ことで、無駄な道に逸れにくくなる。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 実装先の典型的な迷走</span>
+
+<span class="ann">@「とりあえず書く」</span>
+  function checkout() {
+    // どこから書こう...
+    // 課税は先?後?
+    // エラー処理は?
+    // ログは入れる?
+    → 詰まる → 過剰実装
+
+<span class="ann">@「念のため入れとく」症候群</span>
+  完成判定がないので
+  「あれもこれも」と
+  機能を盛りがち
+  → YAGNI 違反
+
+<span class="comment">// テスト先の集中力</span>
+
+<span class="ann">@明確なゴール</span>
+  「税込価格を返す」
+  ← これだけ
+  → 余計な機能を考えない
+
+<span class="ann">@順次的な視点切替</span>
+  Step 1: 利用者として
+   「期待する振る舞いは?」
+  Step 2: 実装者として
+   「最小限でどう実装?」
+  → 視点の役割分担
+
+<span class="comment">// SMARTゴール理論との一致</span>
+
+<span class="kw">S</span>pecific(具体的)
+<span class="kw">M</span>easurable(測定可)
+<span class="kw">A</span>chievable(達成可)
+<span class="kw">R</span>elevant(関連あり)
+<span class="kw">T</span>ime-bound(期限あり)
+
+  ↑ 心理学・経営学で
+    効果実証されたゴール設定
+
+テストはまさにこれを
+コードに対して行うもの
+
+<span class="comment">// 結論</span>
+TDDは認知科学的に
+<span class="kw">「集中の仕掛け」</span>として
+機能する</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    心理学者<b>Locke &amp; Latham のゴール設定理論</b>は<b>「具体的で挑戦的なゴール」が成果を最大化する</b>ことを実証しています。TDDの「失敗するテストを最初に書く」は、このゴール設定理論の<b>コードレベルでの実装</b>と見ることができます。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="testable">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>テスト可能性が強制する設計</h2>
+    <span class="en">TESTABILITY DRIVES DESIGN</span>
+  </div>
+  <p class="pattern-desc">
+    TDDのコアな主張は<b>「テスト可能性（Testability）が設計品質と相関する」</b>こと。これは経験的に観察される事実です。<b>SOLID原則</b>の主要部分は、実は「<b>テスト可能性を担保する</b>」ための原則と読むこともできます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">testability.solid</span>
+      <span class="tag-desc">SOLIDとテスト可能性の関係</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// SOLID原則とテスト可能性</div>
+        <table class="compare-table">
+          <tr><th>原則</th><th>テストへの効果</th></tr>
+          <tr><td><b>S</b>ingle Responsibility</td><td>テストが小さく書ける</td></tr>
+          <tr><td><b>O</b>pen/Closed</td><td>既存テストを壊さず拡張</td></tr>
+          <tr><td><b>L</b>iskov Substitution</td><td>モック差替が安全</td></tr>
+          <tr><td><b>I</b>nterface Segregation</td><td>必要分だけモックすれば良い</td></tr>
+          <tr><td><b>D</b>ependency Inversion</td><td>依存を差替えてテスト可能</td></tr>
+        </table>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ TDDを実践すると、結果的にSOLID準拠の設計に近づく。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// テスト可能性の3要素</span>
+
+<span class="ann">@1. 観察可能性 (Observability)</span>
+  振る舞いを<b>確認</b>できるか?
+  
+  ✗ 内部状態を確認する手段なし
+  ✓ 戻り値・公開状態で確認可
+
+<span class="ann">@2. 制御可能性 (Controllability)</span>
+  入力を<b>操作</b>できるか?
+  
+  ✗ ハードコードされた値
+  ✓ 引数・依存注入で差替可
+
+<span class="ann">@3. 分離可能性 (Isolability)</span>
+  単独で<b>動かせる</b>か?
+  
+  ✗ 他クラスと密結合
+  ✓ 1つだけで動作可能
+
+<span class="comment">// 依存性逆転の例</span>
+
+<span class="ann">@テストしにくい (直接依存)</span>
+<span class="kw">class</span> <span class="type">OrderService</span> {
+  <span class="fn">submit</span>(order) {
+    <span class="comment">// 直接 DB に書く</span>
+    Database.<span class="fn">save</span>(order);
+  }
+}
+<span class="comment">// テストで DB 必須</span>
+
+<span class="ann">@テストしやすい (DI)</span>
+<span class="kw">class</span> <span class="type">OrderService</span> {
+  <span class="kw">constructor</span>(repo) {
+    <span class="kw">this</span>.repo = repo;
+  }
+  <span class="fn">submit</span>(order) {
+    <span class="kw">this</span>.repo.<span class="fn">save</span>(order);
+  }
+}
+<span class="comment">// テストでモック差替可</span>
+
+<span class="comment">// この変換を強制するのが TDD</span>
+<span class="comment">テストから書くから</span>
+<span class="comment">最初から DI 設計になる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「テストしやすいコード」を追求すると、結果的にSOLID準拠の設計</b>になる。逆に「テスト後付け」だと、テストしにくいコードでも動いていれば通せてしまう。<b>TDDは設計品質を強制する</b>──これがBeckらの主張の核心です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="feedback">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>フィードバックループの最短化</h2>
+    <span class="en">SHORTEST FEEDBACK LOOP</span>
+  </div>
+  <p class="pattern-desc">
+    TDDは<b>「フィードバックを最短にする」</b>戦略でもあります。「数日かけて実装してからテスト」では、間違いに気づくのが遅すぎる。<b>「数分のサイクル」</b>で動かしては失敗、動かしては成功──これが学習速度を最大化します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">feedback.loop</span>
+      <span class="tag-desc">フィードバックループの距離</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// フィードバックの遅延コスト</div>
+        <table class="compare-table">
+          <tr><th>検出時点</th><th>修正コスト</th></tr>
+          <tr><td>TDDサイクル中（数分）</td><td>1</td></tr>
+          <tr><td>同じセッション内（1時間）</td><td>5</td></tr>
+          <tr><td>翌日</td><td>10</td></tr>
+          <tr><td>レビュー時</td><td>20</td></tr>
+          <tr><td>QAでの発見</td><td>50</td></tr>
+          <tr><td>本番リリース後</td><td>100+</td></tr>
+        </table>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ Capers Jones や Steve McConnell らによる業界統計。<b>早期発見ほど指数的に安い</b>。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// なぜ早期発見が安いか</span>
+
+<span class="ann">@文脈がまだ頭にある</span>
+  数分前なら
+  「あ、ここがダメだ」
+  → 即修正
+  
+  数日後なら
+  「何書いたんだっけ?」
+  → 思い出すコスト
+
+<span class="ann">@依存コードがまだ少ない</span>
+  早期なら
+  影響範囲が小さい
+  
+  後期なら
+  別箇所も依存してる
+  → 連鎖的修正
+
+<span class="ann">@心理的負担が違う</span>
+  即発見:
+  「次行こう」
+  
+  本番後発見:
+  「障害対応...」
+  「報告書...」
+  「再発防止策...」
+
+<span class="comment">// TDDのループ構造</span>
+
+  ┌─→ Red (失敗テスト書く)
+  │      │
+  │      ↓ 数分
+  │   Green (実装)
+  │      │
+  │      ↓ 数分
+  │   Refactor (改善)
+  │      │
+  └──────┘
+       1サイクル: 5〜15分
+
+<span class="comment">// 学習速度の最大化</span>
+
+短いループを高速で回す
+  → 学習の機会が増える
+  → 設計が洗練される
+  → バグが早期発見される
+
+<span class="comment">// 鉄則</span>
+<span class="kw">"Make the feedback</span>
+<span class="kw"> loop as short</span>
+<span class="kw"> as possible"</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">裏技 —</div>
+    フィードバックループを短く保つには<b>「テスト実行が速いこと」</b>が前提。テストに10分かかったら、TDDは成立しません。<b>「ユニットテストは1秒以内」「全テストでも10秒以内」</b>が目安。テストが遅くなったら、それ自体がチーム改善のシグナルです。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="docs">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>テストは実行可能な仕様書</h2>
+    <span class="en">TESTS AS LIVING SPECIFICATION</span>
+  </div>
+  <p class="pattern-desc">
+    TDDの副次効果として、<b>「テストが仕様書になる」</b>という現象があります。ドキュメントは古びますが、<b>テストは常に動いて検証される</b>。<b>「Living Documentation（生きたドキュメント）」</b>──これがTDD実践の現場で起きる驚きの効果です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">docs.living</span>
+      <span class="tag-desc">テストが仕様書になる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ドキュメント vs テスト</div>
+        <table class="compare-table">
+          <tr><th>側面</th><th>普通のドキュメント</th><th>テストコード</th></tr>
+          <tr><td>正確性</td><td>すぐ古びる</td><td>動かないと気づく</td></tr>
+          <tr><td>具体性</td><td>抽象的</td><td>具体的</td></tr>
+          <tr><td>網羅性</td><td>主要ケースのみ</td><td>エッジケースまで</td></tr>
+          <tr><td>更新</td><td>後回しになる</td><td>必須</td></tr>
+          <tr><td>信頼性</td><td>低い</td><td>高い（動いてる）</td></tr>
+        </table>
+        <div class="quote-box" style="margin-top:14px">
+          「仕様書は嘘をつくが、テストは嘘をつかない」
+          <div class="quote-source">— アジャイル界の格言</div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// テストが仕様書になる例</span>
+
+<span class="ann">@仕様書での記述</span>
+  「ユーザーがログインに
+   失敗した場合、エラー
+   メッセージを表示する」
+  
+  → 曖昧:
+   - 何回失敗で?
+   - どんなメッセージ?
+   - ロックは?
+
+<span class="ann">@テストでの記述</span>
+<span class="kw">describe</span>(<span class="str">'ログイン失敗'</span>, () =&gt; {
+  <span class="kw">it</span>(<span class="str">'3回失敗で30分ロック'</span>, () =&gt; {
+    <span class="kw">for</span> (<span class="kw">let</span> i=<span class="num">0</span>; i&lt;<span class="num">3</span>; i++) {
+      <span class="fn">login</span>(<span class="str">'wrong'</span>);
+    }
+    <span class="kw">expect</span>(<span class="fn">login</span>(<span class="str">'right'</span>))
+      .<span class="fn">toThrow</span>(<span class="str">'Locked'</span>);
+  });
+});
+
+<span class="comment">// テストが語ること</span>
+✓ 3回までは失敗OK
+✓ 4回目はロック
+✓ 30分後に解除
+✓ 動作する保証付き
+
+<span class="comment">// BDDの源流</span>
+
+<span class="kw">Behavior Driven Development</span>
+Dan North 提唱
+TDDのテストを<b>仕様風</b>に書く
+
+例: Cucumber, RSpec
+<span class="kw">Given</span> ログイン画面
+<span class="kw">When</span>  ID/PWを誤入力
+<span class="kw">Then</span>  エラーメッセージ表示
+
+<span class="comment">// 結論</span>
+
+テストは
+<span class="kw">「動く仕様書」</span>であり
+<span class="kw">「形式知の保存装置」</span>
+
+新メンバーが入った時
+仕様書ではなくテストを読めば
+コードの振る舞いが分かる</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    新メンバーが入った時に<b>「READMEを読め」</b>ではなく<b>「テストを読め」</b>と言える現場は強い。テストが網羅的なら、それが<b>最も正確で最新のドキュメント</b>になります。<b>「テスト = 仕様書」</b>として運用すると、コメントの陳腐化問題が消えます。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="dhh">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>TDD is Dead 論争</h2>
+    <span class="en">"TDD IS DEAD" CONTROVERSY</span>
+  </div>
+  <p class="pattern-desc">
+    2014年、Ruby on Rails の作者<b>DHH（David Heinemeier Hansson）</b>が<b>「TDD is Dead」</b>と宣言し、アジャイル界が大揺れしました。Kent Beck・Martin Fowler との<b>「TDDイズデッド対談」</b>はYouTubeで現存。TDDの過剰適用への警鐘として、この論争は重要な意味を持ちます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">debate.tdd-dead</span>
+      <span class="tag-desc">2014年の歴史的論争</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// DHHの主張と反論</div>
+        <div class="quote-box">
+          「TDDの厳格な信奉者は、テストのためにコードを歪めている。これは本末転倒だ」
+          <div class="quote-source">— DAVID HEINEMEIER HANSSON, 2014</div>
+        </div>
+        <ul class="bullet" style="margin-top:14px">
+          <li>DHH：<b>「TDDは内向きのテスト」</b>になりやすく、過剰なモック地獄を生む</li>
+          <li>DHH：<b>「コードを歪めて100%カバー」</b>するのは本末転倒</li>
+          <li>Beck：<b>「TDDは万能ではない、文脈で選べ」</b>が本来の姿勢</li>
+          <li>Fowler：<b>「テストファースト vs テストアフター」より目的を見よ</b></li>
+        </ul>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ <b>「TDD is Dead」シリーズ対談</b>は YouTube で公開され続けている重要資料。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 論争の構造</span>
+
+<span class="ann">@DHHが批判したもの</span>
+  ✗ <b>テスト原理主義</b>
+   100%カバレッジ強要
+  ✗ 大量のモック
+   テスト用に内部構造を露出
+  ✗ システムテスト軽視
+   ユニットテストばかり
+
+<span class="ann">@DHHが擁護したもの</span>
+  ✓ <b>システムテスト</b>
+   E2Eで動作を確認
+  ✓ <b>判断のあるテスト</b>
+   全部書くのではない
+
+<span class="ann">@Beck の応答</span>
+  「私はTDDを<b>万能</b>と
+   言ったことはない」
+  「文脈で適切に選択する」
+  「<b>過剰適用は問題</b>」
+
+<span class="ann">@Fowler の整理</span>
+  - <b>ユニットテスト</b>
+   小さく素早く
+  - <b>統合テスト</b>
+   接続を確認
+  - <b>システムテスト</b>
+   全体を確認
+  
+  ピラミッド型バランスが理想
+
+<span class="comment">// 論争から得た教訓</span>
+
+<span class="kw">TDDは道具</span>
+  目的化してはダメ
+  状況で使い分ける
+
+<span class="kw">テストの種類のバランス</span>
+  ユニット偏重は危険
+  E2E も入れる
+
+<span class="kw">原理主義の罠</span>
+  「100%カバレッジ」は
+  必ずしも品質を意味しない
+
+<span class="comment">// 現在の主流</span>
+
+「適切な所でTDD」
+「適切な所で<b>テストアフター</b>」
+両方をバランス良く</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「TDD原理主義」</b>はBeck本人も否定する立場。<b>「常に必ずテストファースト」</b>ではなく、<b>「文脈に応じて使い分ける」</b>のが熟練者の姿勢。プロトタイピング段階・探索的コーディング・UI調整など、TDDが不向きな局面もある。<b>道具は道具、目的化しない</b>──このバランス感覚が大事です。<span class="star">★★★</span>
+  </div>
+
+  <div class="tip" style="margin-top:48px;">
+    <div class="tip-head">NEXT STEP —</div>
+    TDDが<b>「設計の道具」</b>であり、<b>認知科学・フィードバック理論・仕様化</b>のすべてに根ざした合理的な実践だと見てきました。最後に「TDD is Dead」論争で<b>万能視への警鐘</b>も加えました。次の別館 Vol.6 は本館 Vol.6 のカンバンに対応し、「<b>なぜWIP制限がフローを速くするのか</b>」を<b>リトルの法則</b>から数学的に解き明かします。「直感に反するが数学的に証明可能」な現象です。
+  </div>
+
+  <div class="reference-list" style="margin-top:32px;padding-top:16px;border-top:1px solid var(--line)">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);margin-bottom:8px">REFERENCES —</div>
+    <div><span class="ref-label">2002</span>K. Beck, "Test Driven Development: By Example"</div>
+    <div><span class="ref-label">2002</span>R.C. Martin, "Agile Software Development: Principles, Patterns, and Practices"</div>
+    <div><span class="ref-label">2009</span>S. Freeman &amp; N. Pryce, "Growing Object-Oriented Software, Guided by Tests"</div>
+    <div><span class="ref-label">2014</span>D.H. Hansson, "TDD is Dead. Long Live Testing"</div>
+    <div><span class="ref-label">2014</span>"Is TDD Dead?" Conversation Series — Beck / Fowler / DHH</div>
+    <div><span class="ref-label">2017</span>K. Beck, "Test Driven Development: By Example"（邦訳改訂）</div>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>AGILE REFERENCE — ANNEX VOL.05 / WHY TDD WRITES TEST FIRST</span>
+  <span>※ NEXT → ANNEX VOL.06 WHY WIP LIMITS SPEED UP FLOW</span>
+</footer>
+
+</body>
+</html>

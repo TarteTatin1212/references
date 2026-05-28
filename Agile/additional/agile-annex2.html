@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アジャイル開発編 別館 なぜ動くソフトウェアが価値なのか Vol.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#181828;
+  --paper:#e6e4de;
+  --paper-2:#d4d2cc;
+  --accent:#36365e;
+  --accent-2:#666688;
+  --accent-3:#50506c;
+  --muted:#686870;
+  --line:#b6b4ae;
+  --code-bg:#1c1c2a;
+  --code-text:#e6e4de;
+  --panel-bg:#dad7ce;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;font-size:15px}
+.page-header{position:relative;padding:64px 48px 48px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'※';position:absolute;right:0;top:-20px;font-size:300px;color:var(--accent);opacity:0.12;font-family:'Shippori Mincho',serif;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em}
+.annex-tag{display:inline-block;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:3px 13px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:38px;font-weight:700;margin-top:24px;letter-spacing:0.04em;line-height:1.4}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+.lead{max-width:680px;margin-top:24px;font-size:15px;line-height:2}
+.toc{background:var(--paper-2);padding:24px 48px;border-bottom:1px solid var(--line)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:12px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:'—';position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+main{padding:48px}
+section{margin-bottom:72px}
+.section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700;flex:1;line-height:1.4}
+.en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:680px;margin-bottom:24px;font-size:14px;line-height:2}
+.demo-card{background:#fff;border:1px solid var(--line);overflow:hidden}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}
+.code .type{color:#c2a3ff}
+.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}
+.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}
+.code .ann{color:#f7c08a}
+.code .step{color:#ffc88a;font-weight:600}
+.tip{border-left:3px solid var(--accent);background:rgba(54,54,94,0.06);padding:16px 20px;margin:24px 0;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;margin-bottom:6px;font-weight:600}
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px}
+b{font-weight:700;color:var(--accent-3)}
+.quote-box{margin:12px 0;padding:14px 18px;background:rgba(255,255,255,0.5);border-left:3px solid var(--accent-2);font-family:'Shippori Mincho',serif;font-size:14px;font-style:italic;line-height:1.8}
+.quote-source{font-family:'JetBrains Mono',monospace;font-style:normal;font-size:11px;color:var(--muted);margin-top:6px;letter-spacing:0.1em}
+.callout-row{display:flex;gap:12px;margin-top:12px}
+.callout-box{flex:1;padding:12px;font-size:12px;background:#fff;border:1px solid var(--line)}
+.callout-box.ng{border-left:3px solid #c43030}
+.callout-box.ok{border-left:3px solid var(--accent)}
+.callout-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;margin-bottom:4px;color:var(--muted)}
+ul.bullet{list-style:none;margin-top:8px}
+ul.bullet li{padding-left:18px;position:relative;margin-bottom:6px;font-size:13px}
+ul.bullet li::before{content:'◇';position:absolute;left:0;color:var(--accent);font-size:11px}
+.star{color:var(--accent);font-weight:700;letter-spacing:0.1em}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.compare-table th,.compare-table td{padding:8px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.compare-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;color:var(--accent-3)}
+.compare-table tr:nth-child(even) td{background:rgba(230,228,222,0.5)}
+.page-footer{border-top:2px solid var(--ink);padding:32px 48px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.value-pair{display:flex;align-items:center;gap:16px;padding:10px;background:rgba(255,255,255,0.5);margin:6px 0;font-size:13px}
+.value-left{flex:1;text-align:right;color:var(--muted)}
+.value-mid{color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px}
+.value-right{flex:1;font-weight:600;color:var(--ink)}
+.principle-group{margin-top:10px;padding:10px;background:rgba(255,255,255,0.4);border-left:3px solid var(--accent-2)}
+.group-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.1em;margin-bottom:4px;font-weight:700}
+.group-list{font-size:12.5px;line-height:1.7}
+@media (max-width:720px){
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  main{padding:24px}
+  .page-header{padding:32px 24px}
+  h1{font-size:24px}
+  .toc{padding:16px 24px}
+  .callout-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">AGILE REFERENCE</span>
+  <span class="vol-tag">VOL.02 / 09</span>
+  <span class="annex-tag">ANNEX — WHY</span>
+  <h1>なぜ「動くソフトウェア」が価値なのか</h1>
+  <div class="subtitle">ANNEX VOL.02 — STRUCTURAL ANALYSIS OF THE MANIFESTO</div>
+  <p class="lead">
+    本館 Vol.2 で見た<b>4つの価値・12原則</b>。これを「<b>構造</b>」から眺めると、宣言の設計思想が浮かび上がります。なぜ「<b>左より右</b>」という奇妙な構文を使ったのか。なぜ価値は<b>4つ</b>なのか。12原則を<b>3グループ</b>に分けると何が見えるか。本巻はそれぞれの<b>「なぜ」</b>を解剖します。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS — ANNEX</div>
+  <ul>
+    <li><a href="#left-right">01「左より右」の論理構造</a></li>
+    <li><a href="#why-four">02 なぜ価値は4つなのか</a></li>
+    <li><a href="#working">03 なぜ「動く」が情報の極致か</a></li>
+    <li><a href="#three-groups">04 12原則を3グループで読む</a></li>
+    <li><a href="#misread">05 誤読される原則ベスト3</a></li>
+    <li><a href="#why-sw">06 なぜソフトウェア「だけ」か</a></li>
+    <li><a href="#craft">07 宣言を超えて — クラフトマンシップ宣言</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="left-right">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>「左より右」の論理構造</h2>
+    <span class="en">LOGIC OF "OVER"</span>
+  </div>
+  <p class="pattern-desc">
+    宣言の特異な構文<b>「A よりも B」</b>。哲学的に言えばこれは<b>「両立する選好」</b>の表明です。Aを否定せずBを優先する。<b>排他的二者択一ではない</b>──この構文が宣言を<b>永続的</b>にしました。「Aを使うな」と書けば手法的になり、時代遅れになる。「Bにより価値を置く」と書いたから、25年経っても朽ちないのです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">structure.over</span>
+      <span class="tag-desc">「over」が示す論理関係</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの選好パターン</div>
+        <table class="compare-table">
+          <tr><th>構文</th><th>意味</th><th>例</th></tr>
+          <tr><td>A or B</td><td>排他的選択</td><td>「Aを取るかBを取るか」</td></tr>
+          <tr><td>A &gt; B</td><td>序列・優越</td><td>「AはBより優れる」</td></tr>
+          <tr><td><b>B over A</b></td><td><b>選好の重み付け</b></td><td>「両方ある中でBに重きを置く」</td></tr>
+        </table>
+        <div class="quote-box" style="margin-top:14px">
+          「われわれは右側のものにより価値を置く。だからといって左側のものに価値がないわけではない」
+          <div class="quote-source">— アジャイル宣言・末尾</div>
+        </div>
+        <p style="font-size:12px;margin-top:10px;color:var(--muted)">
+          ※ この一文が宣言の<b>解釈の鍵</b>。これを無視すると宣言は危険な独断になる。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// "A over B" の構文設計</span>
+
+<span class="ann">@排他構造の問題</span>
+  「Aを捨ててBを取る」
+  → 時代でAの価値変わると
+    宣言が無効化される
+
+<span class="ann">@序列構造の問題</span>
+  「AはBより劣る」
+  → 文脈次第で逆転
+  → 普遍性なし
+
+<span class="ann">@選好構造の強さ</span>
+  「BにAより重きを置く」
+  → どちらも認める
+  → 比較関係は時代不変
+
+<span class="comment">// 哲学用語で言えば</span>
+<span class="kw">非排他的選好</span>
+(Non-exclusive preference)
+
+<span class="comment">// 同じ構造の他例</span>
+<span class="str">「速さよりも正確さ」</span>
+→ 速さも要る
+→ ただ正確さを優先
+
+<span class="str">「量よりも質」</span>
+→ 量も要る
+→ ただ質を優先
+
+<span class="comment">// 結論</span>
+<span class="kw">宣言は</span>「捨てる」<span class="kw">のではなく</span>
+<span class="kw">「優先する」</span>形式である</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    アジャイル批判の多くは<b>この構文を理解しない</b>ところから生まれます。「アジャイルはドキュメント否定」「計画否定」──全て構文の誤読。<b>「優先順位の宣言」を「価値の否定」と読む</b>ことが、現場の混乱の元凶です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="why-four">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>なぜ価値は4つなのか</h2>
+    <span class="en">WHY FOUR VALUES</span>
+  </div>
+  <p class="pattern-desc">
+    宣言の4つの価値には<b>対称的な構造</b>があります。<b>「人・モノ・関係・時間」</b>の4軸を<b>過不足なく</b>カバーするように設計されているのです。これは偶然ではなく、17人が会議で議論を重ねた結果<b>「これ以上は減らせず、これ以上は増やせない」</b>状態に到達した、ということを意味します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">structure.four-axes</span>
+      <span class="tag-desc">4つの価値の対称性</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4つの価値の構造分析</div>
+        <div class="value-pair">
+          <div class="value-left">プロセスやツール</div>
+          <div class="value-mid">人 (WHO)</div>
+          <div class="value-right">個人と対話</div>
+        </div>
+        <div class="value-pair">
+          <div class="value-left">包括的ドキュメント</div>
+          <div class="value-mid">モノ (WHAT)</div>
+          <div class="value-right">動くソフトウェア</div>
+        </div>
+        <div class="value-pair">
+          <div class="value-left">契約交渉</div>
+          <div class="value-mid">関係 (WITH)</div>
+          <div class="value-right">顧客との協調</div>
+        </div>
+        <div class="value-pair">
+          <div class="value-left">計画に従うこと</div>
+          <div class="value-mid">時間 (WHEN)</div>
+          <div class="value-right">変化への対応</div>
+        </div>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ 4軸（人・モノ・関係・時間）が<b>過不足なく</b>カバーされている設計
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// なぜ4つに収まったか</span>
+
+<span class="ann">@WHO の軸</span>
+  価値1：個人と対話
+  → 誰がやるか・どう関わるか
+
+<span class="ann">@WHAT の軸</span>
+  価値2：動くソフトウェア
+  → 何を作るか・何が成果か
+
+<span class="ann">@WITH の軸</span>
+  価値3：顧客との協調
+  → 誰とやるか・どう組むか
+
+<span class="ann">@WHEN の軸</span>
+  価値4：変化への対応
+  → いつやるか・どう変えるか
+
+<span class="comment">// 5つ目があり得るか？</span>
+
+<span class="kw">候補</span>: WHERE / WHY
+<span class="kw">議論</span>: 検討されたが…
+  ・WHERE は WHO に含まれる
+  ・WHY は WHAT に含まれる
+→ 4軸で<b>必要十分</b>
+
+<span class="comment">// 同じ4軸の他例</span>
+
+<span class="kw">広告のWho/What/When/Where</span>
+<span class="kw">PMの 4 dimension</span>
+<span class="kw">5W1Hの How を除いた4軸</span>
+
+<span class="comment">// 結論</span>
+4は<b>偶然ではなく必然</b>
+「これ以上は冗長、これ未満は不足」</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    哲学者・数学者にとって<b>「4」は古典的な完全数</b>。古代中国・古代ギリシャでも「四元素」「四方位」「四季」など、世界の完備性を示す数として使われてきました。<b>4は人間の認識限界に近い</b>──Miller の「マジカルナンバー7」より厳しく、保持しやすい数なのです。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="working">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>なぜ「動く」が情報の極致か</h2>
+    <span class="en">WORKING AS THE ULTIMATE INFORMATION</span>
+  </div>
+  <p class="pattern-desc">
+    4つの価値の中で<b>最も革命的</b>なのが「動くソフトウェア」。これは<b>情報理論的</b>に正しい主張です。仕様書・設計書は<b>「人間が解釈する記号」</b>に過ぎませんが、動くソフトウェアは<b>「現実そのもの」</b>。<b>解釈の余地がない</b>。これが「動くものこそ最も信頼できる進捗指標である」と原則7にまで昇格した理由です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">structure.working</span>
+      <span class="tag-desc">「動くもの」の情報論的優位</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 情報伝達の正確度</div>
+        <div class="quote-box">
+          「最も効率的で効果的な情報伝達方法は、対面での会話である」
+          <div class="quote-source">— 12 PRINCIPLES, NO.6</div>
+        </div>
+        <p style="margin-top:10px;font-size:13px;line-height:1.8">
+          原則6は<b>「人 → 人」</b>の最良手段が対面と述べる。<br>
+          ならば<b>「人 → モノ」</b>の最良手段は何か？<br>
+          それが<b>「動くソフトウェア」</b>。<br>
+          現物以上に正確な伝達手段はない。
+        </p>
+        <ul class="bullet" style="margin-top:14px">
+          <li><b>仕様書</b>：書き手の解釈 → 読み手の解釈 → 二重の歪み</li>
+          <li><b>設計図</b>：抽象化された情報 → 実装で必ず情報損失</li>
+          <li><b>動くもの</b>：解釈不要 → 触れば全てがわかる</li>
+        </ul>
+      </div>
+      <div class="code">
+<span class="comment">// シャノンの情報理論で見る</span>
+
+<span class="kw">情報源</span>
+  「顧客が欲しいもの」
+   ↓ <span class="ann">@符号化</span>(要件記述)
+<span class="kw">仕様書</span>
+   ↓ <span class="ann">@伝送</span>(読み手の理解)
+<span class="kw">設計書</span>
+   ↓ <span class="ann">@符号化</span>(設計)
+<span class="kw">コード</span>
+   ↓ <span class="ann">@実行</span>
+<span class="kw">動くソフトウェア</span>
+
+<span class="comment">// 各段階で情報が損失する</span>
+
+<span class="ann">@顧客の頭</span>
+  100%
+<span class="ann">@仕様書</span>
+  → 60〜80%
+<span class="ann">@設計書</span>
+  → 40〜60%
+<span class="ann">@コード</span>
+  → 30〜50%
+<span class="ann">@動くもの</span>
+  → 触ったら<b>100%</b>確認可
+
+<span class="comment">// だから「動くもの」を</span>
+<span class="comment">早く出すと、顧客との</span>
+<span class="comment">情報ギャップが急速に縮む</span>
+
+<span class="comment">// 結論</span>
+動くソフトウェアは
+<span class="kw">情報損失ゼロ</span>の状態
+これが原則7の本質</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>Alistair Cockburn</b> は「情報伝達の効率」を縦軸に、「<b>2人がホワイトボードで対話</b>＞対面会話＞ビデオ通話＞電話＞紙＞メール」と図示しました。<b>動くソフトウェアはこの軸の頂点</b>に位置します。「触れる」「使える」を超える情報伝達手段はソフトウェア開発にはない、というのが彼の論。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="three-groups">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>12原則を3グループで読む</h2>
+    <span class="en">12 PRINCIPLES IN 3 GROUPS</span>
+  </div>
+  <p class="pattern-desc">
+    本館 Vol.2 では12原則を<b>「前半6・後半6」</b>に分けて解説しました。別館ではさらに踏み込み、<b>3つのグループ</b>に再編します。<b>「顧客」「チーム」「卓越」</b>──この3軸で読み直すと、12原則が単なる箇条書きではなく、<b>緻密な体系</b>として見えてきます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">structure.three-groups</span>
+      <span class="tag-desc">12原則の3グループ再編</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3グループでの再構成</div>
+        <div class="principle-group">
+          <div class="group-label">[A] 顧客への価値提供（4原則）</div>
+          <div class="group-list">
+            01. 早く継続的に価値を届ける<br>
+            02. 変更要求を歓迎する<br>
+            03. 動くソフトウェアを頻繁に<br>
+            07. 動くものが進捗の尺度
+          </div>
+        </div>
+        <div class="principle-group">
+          <div class="group-label">[B] チームのあり方（4原則）</div>
+          <div class="group-list">
+            04. ビジネス側と毎日協働<br>
+            05. 意欲ある個人を中心に<br>
+            06. 対面の会話が最良<br>
+            11. 自己組織化チームから創発
+          </div>
+        </div>
+        <div class="principle-group">
+          <div class="group-label">[C] 持続性と卓越性（4原則）</div>
+          <div class="group-list">
+            08. 持続可能なペースを保つ<br>
+            09. 技術的卓越と設計に注意<br>
+            10. シンプルさが本質<br>
+            12. 定期的に振り返り改善
+          </div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// 3グループ構造の意味</span>
+
+<span class="ann">@A: 顧客への価値提供</span>
+  WHAT × WHEN
+  「何を・いつ届けるか」
+  → 外向きの軸
+
+<span class="ann">@B: チームのあり方</span>
+  WHO × WITH
+  「誰が・誰と作るか」
+  → 内向きの軸
+
+<span class="ann">@C: 持続性と卓越性</span>
+  HOW + REFLECT
+  「どう続けるか」
+  → 時間の軸
+
+<span class="comment">// 3軸の相互作用</span>
+
+      [A]顧客
+        │
+        │
+  [B]チーム ─── [C]卓越
+        │
+        ↓
+   持続可能な
+   価値創造
+
+<span class="comment">// 鉄則</span>
+
+<span class="kw">A だけ重視</span> → ブラック労働
+<span class="kw">B だけ重視</span> → 自己満足
+<span class="kw">C だけ重視</span> → 学級閉鎖
+
+<span class="kw">3つの均衡</span>こそが
+アジャイルの真髄</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    この3グループ分けは、<b>レトロスペクティブで議論を構造化する</b>のに使えます。「最近Aは強いがBが弱い」「Cの卓越性に投資できていない」と分析すれば、<b>どの原則を強化すべきか</b>が見えます。原則は<b>診断ツール</b>としても機能するのです。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="misread">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>誤読される原則ベスト3</h2>
+    <span class="en">TOP 3 MISREAD PRINCIPLES</span>
+  </div>
+  <p class="pattern-desc">
+    本館では「ありがちな誤解」を価値レベルで紹介しました。別館では<b>原則レベル</b>での誤読を3つ取り上げ、<b>「なぜ誤読が起きるか」</b>の構造を解剖します。誤読には<b>パターン</b>があり、これを知ると現場のアジャイル議論の<b>地雷を回避</b>できます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">structure.misread</span>
+      <span class="tag-desc">誤読の構造分析</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 誤読されやすい3原則</div>
+        <div class="callout-row" style="margin-bottom:10px">
+          <div class="callout-box ng">
+            <div class="callout-label">原則2の誤読</div>
+            「変更要求を歓迎」<br>
+            → 「何でも追加OK」<br>
+            <b>本来</b>：<b>競争上の利益</b>のための変更を歓迎。無制限ではない
+          </div>
+          <div class="callout-box ng">
+            <div class="callout-label">原則10の誤読</div>
+            「シンプルさが本質」<br>
+            → 「単純に作ればOK」<br>
+            <b>本来</b>：<b>やらない仕事を最大化</b>する技術。複雑問題を単純に削ぐ
+          </div>
+        </div>
+        <div class="callout-row">
+          <div class="callout-box ng">
+            <div class="callout-label">原則11の誤読</div>
+            「自己組織化」<br>
+            → 「放任主義」「無管理」<br>
+            <b>本来</b>：<b>支援的環境</b>の中での自律。野放しではない
+          </div>
+          <div class="callout-box ok">
+            <div class="callout-label">誤読の共通構造</div>
+            <b>原則の一部</b>だけ抜粋<br>
+            原文には<b>条件・但し書き</b>がある<br>
+            それを無視して<b>都合よく解釈</b>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// 誤読パターンの構造</span>
+
+<span class="ann">@パターン1：</span>
+  <span class="kw">but節を読み飛ばす</span>
+
+  原文: 「Welcome changing
+        requirements, even
+        late in development.
+        <b>Agile processes</b>
+        <b>harness change for</b>
+        <b>the customer's</b>
+        <b>competitive advantage</b>」
+
+  誤読：前半だけ拾う
+  正解：「競争優位のため」が条件
+
+<span class="ann">@パターン2：</span>
+  <span class="kw">語を字義的に取る</span>
+
+  原文: 「Simplicity—the art
+        of maximizing the
+        amount of work
+        <b>NOT</b> done」
+
+  誤読：「シンプル＝楽」
+  正解：「何をやらないか」の技
+
+<span class="ann">@パターン3：</span>
+  <span class="kw">条件節を欠落させる</span>
+
+  原文: 「Give them the
+        environment and
+        support they need,
+        and trust them」
+
+  誤読：「信頼して放任」
+  正解：「環境と支援を与えた上で」</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    アジャイル原則の<b>原文（英語）</b>には条件節が多用されています。日本語訳は短く綺麗ですが、<b>条件節がボヤけがち</b>。誤読が気になったら<b>必ず原文</b>に戻ること。たった200語ほどの12原則なので、5分で読めます。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="why-sw">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>なぜソフトウェア「だけ」か</h2>
+    <span class="en">WHY ONLY SOFTWARE</span>
+  </div>
+  <p class="pattern-desc">
+    宣言の正式名称は<b>「アジャイル<u>ソフトウェア</u>開発宣言」</b>。<b>"Software"</b> の語が明示的に入っています。これは偶然ではありません。17人は<b>「ソフトウェア固有の性質」</b>に向き合った人々であり、宣言を<b>無闇に他領域に広げない</b>ようにした意図的な制限なのです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">structure.scope</span>
+      <span class="tag-desc">ソフトウェアの特殊性</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ソフトウェアの特殊性</div>
+        <table class="compare-table">
+          <tr><th>性質</th><th>ソフトウェア</th><th>建築・製造</th></tr>
+          <tr><td>変更コスト</td><td>低い（再ビルド）</td><td>高い（壊して建て直し）</td></tr>
+          <tr><td>製造コスト</td><td>ほぼゼロ（コピー）</td><td>毎回かかる</td></tr>
+          <tr><td>動作確認</td><td>動かして見れる</td><td>完成しないとわからない</td></tr>
+          <tr><td>不確実性</td><td>極めて高い</td><td>比較的予測可能</td></tr>
+          <tr><td>知的労働比率</td><td>ほぼ100%</td><td>肉体労働含む</td></tr>
+        </table>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ <b>「変更コストが低い」「動かして確認できる」</b>がアジャイル成立の前提条件。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// なぜ「ソフトウェア」と限定したか</span>
+
+<span class="ann">@制限その1</span>
+  ハードウェア開発には
+  そのまま当てはまらない
+  (試作1回が数億円のことも)
+
+<span class="ann">@制限その2</span>
+  建築・土木には
+  そのまま当てはまらない
+  (基礎打ち後の変更は無理)
+
+<span class="ann">@制限その3</span>
+  医薬品開発には
+  そのまま当てはまらない
+  (規制で事前承認必須)
+
+<span class="comment">// しかし現代では…</span>
+
+<span class="kw">"Agile" の越境</span>
+  → マーケティング
+  → 経営
+  → 教育
+  → 個人の自己管理
+
+<span class="comment">// 越境の是非</span>
+
+<span class="kw">肯定派</span>：
+  価値観は普遍的
+  どの領域でも使える
+
+<span class="kw">慎重派</span>：
+  ソフトウェア固有の
+  前提を忘れて広げると
+  形骸化する
+
+<span class="comment">// 結論</span>
+宣言は<b>ソフトウェアのため</b>
+他領域への適用は
+<b>前提条件の確認</b>が必要</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">裏技 —</div>
+    <b>「ビジネスアジャイル」「組織アジャイル」</b>といった越境的活用が広がっています。これらが成功するかは<b>「ソフトウェアと同じ前提が成立するか」</b>で決まります。<b>「変更コストが低い」「フィードバックが速い」</b>場合は応用可能。逆に、これらの前提が崩れる領域では<b>カーゴカルト</b>になりがちです。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="craft">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>宣言を超えて — クラフトマンシップ宣言</h2>
+    <span class="en">BEYOND — SOFTWARE CRAFTSMANSHIP</span>
+  </div>
+  <p class="pattern-desc">
+    宣言から8年後の<b>2009年</b>、Robert C. Martin らが<b>「ソフトウェアクラフトマンシップ宣言」</b>を発表します。<b>「アジャイル宣言だけでは技術品質が語られない」</b>という問題意識から、アジャイル宣言を<b>補完</b>する目的で書かれました。これを知ると、アジャイルの<b>進化の方向性</b>が見えてきます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">structure.craftsmanship</span>
+      <span class="tag-desc">2009年・補完される宣言</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// クラフトマンシップ宣言の構造</div>
+        <div class="quote-box">
+          「私たちは見習いの志を胸に、ソフトウェアの匠としての技を高めることを願い、他者がその道を歩むのを助ける」
+          <div class="quote-source">— SOFTWARE CRAFTSMANSHIP MANIFESTO, 2009（意訳）</div>
+        </div>
+        <div class="value-pair">
+          <div class="value-left">動くソフトウェア</div>
+          <div class="value-mid">+α</div>
+          <div class="value-right">よく作られたソフト</div>
+        </div>
+        <div class="value-pair">
+          <div class="value-left">変化への対応</div>
+          <div class="value-mid">+α</div>
+          <div class="value-right">着実な価値の付加</div>
+        </div>
+        <div class="value-pair">
+          <div class="value-left">個人と対話</div>
+          <div class="value-mid">+α</div>
+          <div class="value-right">プロのコミュニティ</div>
+        </div>
+        <div class="value-pair">
+          <div class="value-left">顧客との協調</div>
+          <div class="value-mid">+α</div>
+          <div class="value-right">生産的なパートナー</div>
+        </div>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ アジャイル宣言を<b>否定せず・補強</b>する構造（左にも価値あり、と同じ）。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// なぜ補完されたか</span>
+
+<span class="ann">@アジャイルの問題意識</span>
+  動くものを早く！
+  → 急ぐあまり
+    技術的負債が蓄積
+  → コードが腐る
+
+<span class="ann">@クラフトマンシップの主張</span>
+  動くだけじゃダメ
+  <b>よく作られたソフト</b>
+  でなければ持続不可
+
+<span class="comment">// 両者の関係</span>
+
+  アジャイル宣言
+    │
+    │ + 技術品質への
+    │   コミットメント
+    ↓
+  クラフトマンシップ宣言
+
+  ✓ アジャイルの上に乗る
+  ✓ 否定しない
+  ✓ 補完する
+
+<span class="comment">// 主要メンバー</span>
+Robert C. Martin (Uncle Bob)
+Sandro Mancuso
+他、技術主義派の人々
+
+<span class="comment">// 影響を受けた書籍</span>
+『<span class="kw">Clean Code</span>』
+『<span class="kw">Clean Architecture</span>』
+『<span class="kw">Software Craftsman</span>』
+
+<span class="comment">// 現代の継承</span>
+モダンなテックチームは
+両宣言を<b>セット</b>で
+受け入れている</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    アジャイル宣言は<b>「価値観の宣言」</b>、クラフトマンシップ宣言は<b>「技術的責任の宣言」</b>。両者は<b>補完関係</b>にあります。本館 Vol.5 で扱う<b>XP・TDD</b>はクラフトマンシップ系の実装にあたります。<b>「Scrumをやってるが品質がボロボロ」</b>なチームは、クラフトマンシップ宣言の側に欠落があるサインです。<span class="star">★★★</span>
+  </div>
+
+  <div class="tip" style="margin-top:48px;">
+    <div class="tip-head">NEXT STEP —</div>
+    宣言と原則の<b>構造</b>を解剖しました。次の別館 Vol.3 では、本館 Vol.3「Scrum編」に対応して<b>「なぜScrumはこの形なのか」</b>を辿ります。<b>1986年・野中・竹内の「ラグビー論文」</b>から始まり、なぜ役割は3つなのか、なぜタイムボックスなのか──Scrumの<b>遺伝子</b>を解読します。日本人として誇らしい歴史でもあります。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>AGILE REFERENCE — ANNEX VOL.02 / WHY WORKING SOFTWARE</span>
+  <span>※ NEXT → ANNEX VOL.03 WHY SCRUM IS SHAPED THIS WAY</span>
+</footer>
+
+</body>
+</html>

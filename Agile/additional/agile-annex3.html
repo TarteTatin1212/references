@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アジャイル開発編 別館 なぜScrumはこの形なのか Vol.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#15152a;
+  --paper:#e4e2dc;
+  --paper-2:#d2d0ca;
+  --accent:#32325e;
+  --accent-2:#626284;
+  --accent-3:#4c4c6a;
+  --muted:#66666e;
+  --line:#b4b2ac;
+  --code-bg:#1a1a2c;
+  --code-text:#e4e2dc;
+  --panel-bg:#d8d5cc;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;font-size:15px}
+.page-header{position:relative;padding:64px 48px 48px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'※';position:absolute;right:0;top:-20px;font-size:300px;color:var(--accent);opacity:0.12;font-family:'Shippori Mincho',serif;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em}
+.annex-tag{display:inline-block;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:3px 13px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-left:6px}
+h1{font-family:'Shippori Mincho',serif;font-size:38px;font-weight:700;margin-top:24px;letter-spacing:0.04em;line-height:1.4}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+.lead{max-width:680px;margin-top:24px;font-size:15px;line-height:2}
+.toc{background:var(--paper-2);padding:24px 48px;border-bottom:1px solid var(--line)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:12px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:'—';position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+main{padding:48px}
+section{margin-bottom:72px}
+.section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700;flex:1;line-height:1.4}
+.en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:680px;margin-bottom:24px;font-size:14px;line-height:2}
+.demo-card{background:#fff;border:1px solid var(--line);overflow:hidden}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}
+.code .type{color:#c2a3ff}
+.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}
+.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}
+.code .ann{color:#f7c08a}
+.code .step{color:#ffc88a;font-weight:600}
+.tip{border-left:3px solid var(--accent);background:rgba(50,50,94,0.06);padding:16px 20px;margin:24px 0;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;margin-bottom:6px;font-weight:600}
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px}
+b{font-weight:700;color:var(--accent-3)}
+.timeline{font-family:'Shippori Mincho',serif;margin-top:10px}
+.timeline-item{display:flex;gap:14px;padding:8px 0;border-bottom:1px dotted var(--line);font-size:13.5px}
+.timeline-year{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;min-width:60px;font-size:12px;padding-top:3px}
+.timeline-body{flex:1;line-height:1.7}
+.quote-box{margin:12px 0;padding:14px 18px;background:rgba(255,255,255,0.5);border-left:3px solid var(--accent-2);font-family:'Shippori Mincho',serif;font-size:14px;font-style:italic;line-height:1.8}
+.quote-source{font-family:'JetBrains Mono',monospace;font-style:normal;font-size:11px;color:var(--muted);margin-top:6px;letter-spacing:0.1em}
+.callout-row{display:flex;gap:12px;margin-top:12px}
+.callout-box{flex:1;padding:12px;font-size:12px;background:#fff;border:1px solid var(--line)}
+.callout-box.ng{border-left:3px solid #c43030}
+.callout-box.ok{border-left:3px solid var(--accent)}
+.callout-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;margin-bottom:4px;color:var(--muted)}
+ul.bullet{list-style:none;margin-top:8px}
+ul.bullet li{padding-left:18px;position:relative;margin-bottom:6px;font-size:13px}
+ul.bullet li::before{content:'◇';position:absolute;left:0;color:var(--accent);font-size:11px}
+.star{color:var(--accent);font-weight:700;letter-spacing:0.1em}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.compare-table th,.compare-table td{padding:8px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.compare-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;color:var(--accent-3)}
+.compare-table tr:nth-child(even) td{background:rgba(228,226,220,0.5)}
+.page-footer{border-top:2px solid var(--ink);padding:32px 48px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.reference-list{font-size:12px;line-height:1.8;color:var(--muted);font-family:'Shippori Mincho',serif;margin-top:8px}
+.reference-list .ref-label{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;margin-right:8px}
+.feature-pair{display:flex;align-items:center;gap:14px;padding:10px;background:rgba(255,255,255,0.5);margin:6px 0;font-size:13px}
+.feature-left{flex:1;color:var(--accent-3);font-weight:700;font-family:'Shippori Mincho',serif}
+.feature-mid{color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px}
+.feature-right{flex:1.2;font-size:12.5px;color:var(--ink);line-height:1.6}
+@media (max-width:720px){
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  main{padding:24px}
+  .page-header{padding:32px 24px}
+  h1{font-size:24px}
+  .toc{padding:16px 24px}
+  .callout-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">AGILE REFERENCE</span>
+  <span class="vol-tag">VOL.03 / 09</span>
+  <span class="annex-tag">ANNEX — WHY</span>
+  <h1>なぜScrumはこの形なのか</h1>
+  <div class="subtitle">ANNEX VOL.03 — THE ORIGIN OF SCRUM / FROM RUGBY TO SOFTWARE</div>
+  <p class="lead">
+    Scrumの3-5-3構造はどこから来たのか。実は<b>1986年・日本人の手による論文</b>がScrumの遺伝子です。野中郁次郎・竹内弘高が<b>Harvard Business Review</b>に発表した<b>「The New New Product Development Game」</b>。富士ゼロックス・ホンダ・キヤノン・NEC等の日本企業の<b>新製品開発の研究</b>から、Scrumの原型は生まれました。本巻はその系譜を辿ります。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS — ANNEX</div>
+  <ul>
+    <li><a href="#1986">01 1986年・運命の論文</a></li>
+    <li><a href="#rugby">02 なぜ「スクラム」なのか</a></li>
+    <li><a href="#six-features">03 6つの特徴と現代Scrum</a></li>
+    <li><a href="#three-roles">04 なぜ役割は3つなのか</a></li>
+    <li><a href="#timebox">05 なぜタイムボックスなのか</a></li>
+    <li><a href="#sprint-length">06 なぜ1〜4週なのか</a></li>
+    <li><a href="#guide-history">07 Scrum Guide の変遷</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="1986">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>1986年・運命の論文</h2>
+    <span class="en">THE 1986 PAPER</span>
+  </div>
+  <p class="pattern-desc">
+    <b>1986年1月・Harvard Business Review</b>。野中郁次郎（一橋大）と竹内弘高（一橋大）が<b>"The New New Product Development Game"</b>を発表します。当時、日本企業は<b>「製品開発の速さ」で世界を席巻</b>していました。富士ゼロックス・ホンダ・キヤノン・NEC・エプソン──彼らの<b>新製品開発の秘密</b>を経営学者として解き明かしたのがこの論文。Scrumの<b>遺伝子</b>がここに眠っています。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">history.1986-paper</span>
+      <span class="tag-desc">伝説の論文の背景</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 論文の概要</div>
+        <div class="quote-box">
+          「日本の新製品開発は、リレーのバトンパスではなく、ラグビーのスクラムのように行われている。フィールドを前後しながらボールを<b>チーム全体</b>で運ぶのだ」
+          <div class="quote-source">— I. NONAKA &amp; H. TAKEUCHI, HBR 1986（意訳）</div>
+        </div>
+        <ul class="bullet" style="margin-top:14px">
+          <li>研究対象：<b>富士ゼロックス・ホンダ・キヤノン・エプソン・NEC・ブラザー工業</b></li>
+          <li>当時：日本製品の<b>品質と速度</b>が米国を圧倒していた時代</li>
+          <li>米国経営学者：「<b>なぜ日本だけ</b>こんなに速いのか」を研究</li>
+          <li>結論：開発手法そのものが<b>根本的に違う</b>と発見</li>
+        </ul>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ 米国型「リレー方式（フェーズごとの引き継ぎ）」と、日本型「スクラム方式（並行協働）」の対比が論文の骨格。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 論文の発見：日米の対比</span>
+
+<span class="ann">@米国型: リレー方式</span>
+  企画 → 設計 → 製造
+  →↓     →↓     →↓
+  人A    人B    人C
+  バトン渡しで完了
+  <b>シーケンシャル</b>
+
+<span class="ann">@日本型: スクラム方式</span>
+  ┌──────────────┐
+  │企画担当       │
+  │設計担当       │ ←同時並行
+  │製造担当       │   議論しつつ
+  │マーケ担当     │   進む
+  └──────────────┘
+  <b>オーバーラップ</b>
+
+<span class="comment">// なぜ日本型が速かったか</span>
+
+<span class="kw">情報の流動性</span>
+  全員が全工程の状況把握
+  → 手戻りが少ない
+
+<span class="kw">暗黙知の共有</span>
+  対面・会話・観察
+  → 文書化されない知恵
+    が伝わる
+
+<span class="kw">自己組織化</span>
+  上から指示されず
+  チーム自身で動く
+
+<span class="comment">// 衝撃</span>
+この論文が米国経営学に
+"日本式"の発見をもたらす
+→ 後にトヨタ生産方式と並び
+  研究対象となる</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    野中・竹内はその後、<b>『知識創造企業』</b>（1995, "The Knowledge-Creating Company"）で<b>SECIモデル</b>を提唱。世界の経営学に多大な影響を与えました。<b>Scrum は単なる開発手法ではなく、日本の組織論・知識論の伝統</b>を継ぐものなのです。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="rugby">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>なぜ「スクラム」なのか</h2>
+    <span class="en">WHY "SCRUM"</span>
+  </div>
+  <p class="pattern-desc">
+    論文タイトルにある<b>「ラグビーのスクラム」</b>。これがそのまま<b>Scrum</b>の名前になりました。ラグビーのスクラムとは、両チーム8人ずつが組み合って力を出し合う<b>集団的押し合い</b>。なぜこの比喩なのか。<b>1人の英雄</b>でも、<b>並んでバトン渡し</b>でもなく、<b>密集して同時に力を出す</b>──この姿が日本式開発の本質だったのです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">metaphor.rugby</span>
+      <span class="tag-desc">なぜラグビーが比喩になったか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ラグビーのスクラム</div>
+        <ul class="bullet">
+          <li>両チーム8人が<b>密集</b>して組む</li>
+          <li>誰か1人ではなく<b>全員</b>で押す</li>
+          <li><b>同時に</b>力を発揮する</li>
+          <li>ボールは<b>チーム全体</b>のもの</li>
+          <li>方向と進路は<b>チーム内</b>で決まる</li>
+        </ul>
+        <div class="quote-box" style="margin-top:14px">
+          「（米国の）リレー方式では遅すぎる。スクラム方式は密集と密接でこそ機能する」
+          <div class="quote-source">— H. TAKEUCHI, 後年の講演（意訳）</div>
+        </div>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ なお、英語の "scrum" は名詞・動詞両方に使われ、「集まる」「群がる」のニュアンスも持つ。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 比喩としての適合性</span>
+
+<span class="ann">@野球の比喩</span>
+  打者・投手の1対1構造
+  → 個人英雄中心
+  → 米国的価値観
+
+<span class="ann">@リレーの比喩</span>
+  バトン渡し
+  → シーケンシャル
+  → 1人ずつ完結
+  → ウォーターフォール的
+
+<span class="ann">@ラグビーの比喩</span>
+  全員で密集して動く
+  → 同時並行
+  → 全員が全責任
+  → 日本型開発に最適
+
+<span class="comment">// この比喩は何を伝えるか</span>
+
+<span class="kw">"All for one</span>
+<span class="kw"> One for all"</span>
+  ↑
+  これが Scrum の精神
+
+<span class="comment">// Jeff Sutherland の証言</span>
+1993年、Easel社で
+最初のScrum実装時
+野中・竹内論文を再読
+→ そのまま<b>「Scrum」</b>と命名
+
+<span class="comment">// なぜ Scrum が魅力的だったか</span>
+<span class="kw">短い・響きが良い</span>
+<span class="kw">スポーツの躍動感</span>
+<span class="kw">集団性のニュアンス</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    Jeff Sutherland は著書<b>『SCRUM 仕事が4倍速くなる"世界標準"のチーム戦術』</b>で、論文との出会いを詳細に語っています。「私はこの論文を10回以上読み返した。日本式開発の凝縮されたエッセンスがここにあった」と。<b>1986年の野中・竹内論文がなければ、現代のScrumは存在しなかった</b>のです。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="six-features">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>6つの特徴と現代Scrum</h2>
+    <span class="en">SIX FEATURES MAPPED</span>
+  </div>
+  <p class="pattern-desc">
+    野中・竹内論文は、日本式開発の<b>6つの特徴</b>を抽出しました。これを現代Scrumと並べると、<b>驚くほど一致</b>します。Sutherland と Schwaber は単に「ラグビー」という比喩を借りたのではなく、<b>6つの特徴をすべて</b>Scrumに組み込んでいたのです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">structure.six-features</span>
+      <span class="tag-desc">1986論文の6特徴と現代Scrum</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 6つの特徴 → 現代Scrumへの対応</div>
+        <div class="feature-pair">
+          <div class="feature-left">不安定性</div>
+          <div class="feature-mid">→</div>
+          <div class="feature-right">挑戦的なスプリントゴール</div>
+        </div>
+        <div class="feature-pair">
+          <div class="feature-left">自己組織化チーム</div>
+          <div class="feature-mid">→</div>
+          <div class="feature-right">開発者の自己管理</div>
+        </div>
+        <div class="feature-pair">
+          <div class="feature-left">フェーズの重複</div>
+          <div class="feature-mid">→</div>
+          <div class="feature-right">設計・実装・テスト並行</div>
+        </div>
+        <div class="feature-pair">
+          <div class="feature-left">多重学習</div>
+          <div class="feature-mid">→</div>
+          <div class="feature-right">レビュー・レトロ・リファイン</div>
+        </div>
+        <div class="feature-pair">
+          <div class="feature-left">微細な制御</div>
+          <div class="feature-mid">→</div>
+          <div class="feature-right">デイリースクラム</div>
+        </div>
+        <div class="feature-pair">
+          <div class="feature-left">学習の組織転移</div>
+          <div class="feature-mid">→</div>
+          <div class="feature-right">DoD・コミュニティ・LeSS</div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// 特徴1: Built-in Instability</span>
+
+「<span class="kw">経営者は明確な目標を示す。</span>
+<span class="kw">が、達成方法は</span><b>自由</b><span class="kw">に</span>」
+→ スプリントゴールはPOが示し
+  How は開発者が決める
+  という Scrum の原則
+
+<span class="comment">// 特徴2: Self-organizing</span>
+
+「<span class="kw">小さな自律的チーム</span>
+<span class="kw">が新製品を作る</span>」
+→ Scrum チーム =
+  3〜10人の自己管理チーム
+
+<span class="comment">// 特徴3: Overlapping Phases</span>
+
+「<span class="kw">フェーズの境界が</span>
+<span class="kw">ぼかされる</span>」
+→ 設計と実装が並行
+  ウォーターフォール否定
+
+<span class="comment">// 特徴4: "Multilearning"</span>
+
+「<span class="kw">複数レベルで</span>
+<span class="kw">学習が起きる</span>」
+→ レトロ＋レビュー＋
+  バックログリファインメント
+
+<span class="comment">// 特徴5: Subtle Control</span>
+
+「<span class="kw">微細な制御を保ちつつ</span>
+<span class="kw">自律を尊重する</span>」
+→ デイリーで進捗共有
+  ただし指示はしない
+
+<span class="comment">// 特徴6: Transfer of Learning</span>
+
+「<span class="kw">学びを組織に広げる</span>」
+→ DoDの組織化
+  実践共有のコミュニティ</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    Scrumは<b>「米国人が考案したフレームワーク」</b>と思われがちですが、その<b>骨格はほぼ全て日本企業の実践</b>から抽出されたものです。<b>Sutherland と Schwaber が果たした役割</b>は、「日本式開発を学び、ソフトウェア領域に翻訳し、ルール化した」ことにある──これがScrum史の<b>正しい理解</b>です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="three-roles">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>なぜ役割は3つなのか</h2>
+    <span class="en">WHY THREE ROLES</span>
+  </div>
+  <p class="pattern-desc">
+    Scrumには<b>3つの役割</b>しかありません。PO・SM・開発者。<b>「プロジェクトマネージャ」も「アーキテクト」も「QAリード」もない</b>。これは偶然ではなく、<b>責任を3つの独立した軸に分けた</b>意図的な設計です。<b>「何を作るか」「どう作るか」「うまく作れる環境か」</b>──この3軸が独立しているからこそScrumは機能します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">structure.three-roles</span>
+      <span class="tag-desc">3つの責任軸の分離</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの責任軸</div>
+        <table class="compare-table">
+          <tr><th>軸</th><th>役割</th><th>責任</th></tr>
+          <tr><td>WHAT</td><td><b>プロダクトオーナー</b></td><td>何を作るか・優先順位</td></tr>
+          <tr><td>HOW</td><td><b>開発者</b></td><td>どう作るか・実装</td></tr>
+          <tr><td>HOW WELL</td><td><b>スクラムマスター</b></td><td>仕組みが機能するか</td></tr>
+        </table>
+        <div class="quote-box" style="margin-top:14px">
+          「これらの役割を1人が兼ねると、責任の境界がぼやけ、いずれかの軸が抜け落ちる」
+          <div class="quote-source">— SCRUM GUIDE, 解釈</div>
+        </div>
+        <p style="font-size:12px;margin-top:10px;color:var(--muted)">
+          ※ <b>3軸の独立</b>がScrumの肝。1人が兼ねるとScrum-but になる。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 3軸の独立性の効果</span>
+
+<span class="ann">@もしPOがいなければ…</span>
+  → 何を作るか不明
+  → 開発者が「考える」
+  → 顧客視点が抜ける
+  → 技術的に面白いが
+    使われないものを作る
+
+<span class="ann">@もしSMがいなければ…</span>
+  → プロセス改善の主体不在
+  → 障害が放置される
+  → POと開発者の対立
+    が解消されない
+  → チーム機能不全
+
+<span class="ann">@もし開発者がいなければ…</span>
+  → 言うまでもなく
+    そもそも作れない
+
+<span class="comment">// 古典的な「2人1組」</span>
+<span class="comment">との対比</span>
+
+<span class="kw">2人1組（PM+開発リーダ）</span>:
+  PMが全責任を負う
+  → 過負荷
+  → 失敗時の責任集中
+
+<span class="kw">Scrumの3軸</span>:
+  3つの責任が
+  <b>並立して独立</b>
+  → 単一障害点なし
+  → 互いに牽制
+
+<span class="comment">// もう1つの設計意図</span>
+
+<span class="kw">PO ↔ 開発者</span>: 創造的緊張
+<span class="kw">SM</span>: その緊張を健全に保つ
+→ <b>三角形の安定構造</b></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    <b>「PO兼SM」「PO兼開発者」</b>は最初の混乱期によく見られるアンチパターン。<b>3軸が独立してこそ</b>機能するので、無理にでも分離するのが鉄則。とくに<b>SMが開発者を兼任</b>すると、改善の声を上げにくくなり、Scrumが急速に形骸化します。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="timebox">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>なぜタイムボックスなのか</h2>
+    <span class="en">WHY TIME-BOXED</span>
+  </div>
+  <p class="pattern-desc">
+    Scrumの全イベントには<b>時間制限（タイムボックス）</b>があります。スプリント・プランニング・デイリー・レビュー・レトロ──全て<b>時間で区切られた箱</b>。なぜか。<b>パーキンソンの法則</b>──「<b>仕事は与えられた時間を満たすまで膨張する</b>」を逆手に取った設計です。<b>箱を小さくすれば、仕事はその大きさに収まる</b>。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">structure.timebox</span>
+      <span class="tag-desc">タイムボックスの心理学的設計</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// パーキンソンの法則</div>
+        <div class="quote-box">
+          「仕事の量は、その仕事に充てられる時間を満たすまで膨張する」
+          <div class="quote-source">— CYRIL N. PARKINSON, 1957</div>
+        </div>
+        <ul class="bullet" style="margin-top:14px">
+          <li>会議を1時間予約 → 1時間使い切る</li>
+          <li>会議を15分予約 → 15分で終わる</li>
+          <li>これは<b>人間の心理</b>として観察される現象</li>
+        </ul>
+        <p style="margin-top:14px;font-size:13px;line-height:1.8">
+          Scrumはこの法則を<b>逆利用</b>。タイムボックスを<b>意図的に短く</b>設定することで、<b>議論の濃度</b>を上げる。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 各イベントのタイムボックス設計理由</span>
+
+<span class="ann">@デイリー: 15分</span>
+  「立つ＋15分」で
+  雑談混入を防ぐ
+  → 同期だけに集中
+
+<span class="ann">@プランニング:最大8h</span>
+  「1ヶ月スプリントなら8h」
+  → 1日で終わらせる
+  → 余韻なく実行に入れる
+
+<span class="ann">@レビュー: 最大4h</span>
+  「動くものを見せる」
+  → 長くなるなら
+    分けるべき症状
+
+<span class="ann">@レトロ: 最大3h</span>
+  「全員で話す」
+  → 3hを超えると疲労
+
+<span class="ann">@スプリント: 1〜4週</span>
+  「短いほど学習が速い」
+
+<span class="comment">// もしタイムボックスがないと…</span>
+
+<span class="kw">プランニング</span>: 5時間
+  → 細かい議論が延々
+  → 結論出ず
+
+<span class="kw">デイリー</span>: 1時間
+  → 報告会化
+  → 全員が疲弊
+
+<span class="kw">レトロ</span>: 半日
+  → 議論が拡散
+  → 改善行動に至らない
+
+<span class="comment">// 結論</span>
+<span class="kw">時間の箱を切る</span>
+<span class="kw">議論は濃くなる</span>
+<span class="kw">アクションが出やすい</span>
+
+これがScrum設計の<b>知恵</b></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    タイムボックスは<b>「終わらなくても切る」</b>のが鉄則。「議論が途中だから延長」を許すと、すぐ崩壊します。<b>「次回までの宿題」「別途打ち合わせ」</b>に逃がす運用が定番。<b>時間管理は規律の証</b>であり、規律こそアジャイルの真髄です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="sprint-length">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>なぜ1〜4週なのか</h2>
+    <span class="en">WHY 1 TO 4 WEEKS</span>
+  </div>
+  <p class="pattern-desc">
+    スプリント期間は<b>「1ヶ月以下」</b>と Scrumガイドに明記されています。なぜ1ヶ月以下なのか。なぜ「2週間がベストプラクティス」と言われるのか。これには<b>人間の認知限界・市場の変化速度・チームの集中力</b>が関係しています。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">structure.sprint-length</span>
+      <span class="tag-desc">スプリント期間の最適解</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 期間別の特徴</div>
+        <table class="compare-table">
+          <tr><th>期間</th><th>長所</th><th>短所</th></tr>
+          <tr><td>1週</td><td>超高速学習</td><td>儀式比率高い</td></tr>
+          <tr><td><b>2週</b></td><td><b>バランス最良</b></td><td>—</td></tr>
+          <tr><td>3週</td><td>余裕あり</td><td>変化対応がやや遅い</td></tr>
+          <tr><td>4週</td><td>大きな機能</td><td>軌道修正が遅い</td></tr>
+        </table>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ 業界統計では<b>2週間スプリントが約7〜8割</b>。これが「ちょうどいい」とされる定番。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// なぜ「1ヶ月以下」が上限か</span>
+
+<span class="ann">@認知限界の壁</span>
+  人間は1ヶ月以上先を
+  詳細に予測できない
+  → 計画精度が落ちる
+
+<span class="ann">@市場変化の壁</span>
+  現代の市場は
+  1〜2ヶ月で前提変化
+  → 1ヶ月超えると古びる
+
+<span class="ann">@チームの集中限界</span>
+  4週連続のスプリントは
+  振り返りが遠すぎる
+  → 燃え尽き・惰性
+
+<span class="comment">// なぜ2週間がベストプラクティス?</span>
+
+<span class="kw">儀式 vs 開発の比率</span>:
+  1週: 儀式比率高い (20%)
+  2週: 適切 (10%)
+  3週: 偏り (7%)
+  4週: 振り返り間隔が長い
+
+<span class="kw">心理的サイクル</span>:
+  人は「2週ペース」で
+  リズムを作りやすい
+  (ジムやサウナ通いも
+   2週間サイクル定着しやすい)
+
+<span class="kw">学習サイクル</span>:
+  PDCA を回す最小単位
+  として2週間が観察される
+
+<span class="comment">// 4週から2週への移行</span>
+多くのチームが経験する
+「4週で始めて2週に短縮」
+→ <b>短い方が早く学べる</b>
+  ことを体験する</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">裏技 —</div>
+    迷ったら<b>「2週間」</b>から始めること。これが業界の経験則。慣れたら<b>1週間</b>に短縮することで学習速度を上げられる。逆に4週間にすると、ほぼ確実に<b>「2週目に手戻り発覚」</b>のパターンに陥ります。<b>短くする勇気</b>はScrum熟達の指標です。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="guide-history">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>Scrum Guide の変遷</h2>
+    <span class="en">EVOLUTION OF THE SCRUM GUIDE</span>
+  </div>
+  <p class="pattern-desc">
+    Scrum Guide は<b>2010年に初版</b>が出され、<b>2020年版が最新</b>。<b>10年間で5回改訂</b>されています。改訂の歴史を見ると、<b>Scrumがどう進化したか・何を捨てたか</b>がわかります。これを知らずに「Scrum」を語ると、古い理解で議論することになりかねません。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">history.scrum-guide</span>
+      <span class="tag-desc">Scrum Guide 改訂史</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 改訂タイムライン</div>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-year">1995</div>
+            <div class="timeline-body">Schwaber が OOPSLA で<b>Scrum 論文</b>発表（公式起源）</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">2001</div>
+            <div class="timeline-body">Schwaber &amp; Beedle <b>『Agile Software Development with Scrum』</b>刊行</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">2010</div>
+            <div class="timeline-body"><b>Scrum Guide 初版</b>公開（Schwaber &amp; Sutherland 共著）</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">2011</div>
+            <div class="timeline-body">第2版：5つの価値を追加</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">2013</div>
+            <div class="timeline-body">第3版：用語整理</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">2016</div>
+            <div class="timeline-body">第4版：価値観の明確化</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">2017</div>
+            <div class="timeline-body">第5版：プロダクトオーナー責任拡張</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">2020</div>
+            <div class="timeline-body"><b>最新版</b>：大幅簡素化・プロダクトゴール導入</div>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// 2020年版の主な変更点</span>
+
+<span class="ann">@大幅簡素化</span>
+  19p → 14p
+  「軽量さ」を体現
+  例：「開発チーム」削除
+   → スクラムチーム1つに
+
+<span class="ann">@プロダクトゴール導入</span>
+  プロダクトの長期目標
+  バックログを束ねる
+  「北極星」になる
+
+<span class="ann">@役割名の変更</span>
+  "Development Team"
+   → "Developers"
+  チーム内チームを否定
+
+<span class="ann">@3つのコミットメント</span>
+  プロダクトゴール
+  スプリントゴール
+  Done の定義
+
+<span class="comment">// 削除されたもの</span>
+
+<span class="kw">2020年版で消えた語</span>
+  ・「3つの質問」
+   (デイリースクラム)
+   → 形式に縛られない設計に
+  ・「サーバントリーダー」
+   (SM) → 「真のリーダー」に
+  ・「Sprint Cancellation」
+    の詳細記述
+
+<span class="comment">// 進化の方向</span>
+<span class="kw">具体化 → 抽象化</span>
+<span class="kw">指示的 → 原則的</span>
+<span class="kw">細則重視 → 柔軟性重視</span>
+
+(原文の精神に近づく方向)</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    古い書籍やネット記事には<b>「3つの質問をデイリーでする」</b>等の旧版ベースの説明が残ります。<b>2020年版では削除</b>されているので、最新Scrumガイドで確認すること。Scrumは<b>生きている文書</b>です。<b>原典をたまに読み直す</b>のが熟達者の習慣。<span class="star">★★★</span>
+  </div>
+
+  <div class="tip" style="margin-top:48px;">
+    <div class="tip-head">NEXT STEP —</div>
+    Scrumの遺伝子を辿りました。日本企業の組織論にルーツがあること、3-5-3の構造に明確な設計意図があること──これを知った上で本館 Vol.3 を読み直すと、Scrumガイドの<b>一行一行が異なる重みで読める</b>はずです。次の本館 Vol.4 では、Scrumを実用化する<b>燃料</b>──<b>ユーザーストーリーと見積もり</b>に進みます。バックログを「動かす」ための技術です。
+  </div>
+
+  <div class="reference-list" style="margin-top:32px;padding-top:16px;border-top:1px solid var(--line)">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--accent);margin-bottom:8px">REFERENCES —</div>
+    <div><span class="ref-label">1986</span>I. Nonaka &amp; H. Takeuchi, "The New New Product Development Game", HBR Jan/Feb</div>
+    <div><span class="ref-label">1995</span>K. Schwaber, "SCRUM Development Process", OOPSLA</div>
+    <div><span class="ref-label">1995</span>I. Nonaka &amp; H. Takeuchi, "The Knowledge-Creating Company"</div>
+    <div><span class="ref-label">2001</span>K. Schwaber &amp; M. Beedle, "Agile Software Development with Scrum"</div>
+    <div><span class="ref-label">2014</span>J. Sutherland, "Scrum: The Art of Doing Twice the Work in Half the Time"</div>
+    <div><span class="ref-label">2020</span>The Scrum Guide — scrumguides.org</div>
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>AGILE REFERENCE — ANNEX VOL.03 / WHY SCRUM IS SHAPED THIS WAY</span>
+  <span>※ NEXT → MAIN VOL.04 USER STORIES &amp; ESTIMATION</span>
+</footer>
+
+</body>
+</html>

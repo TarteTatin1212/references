@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アジャイル開発編 別館 なぜアジャイルは失敗するのか Vol.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0a0a20;
+  --paper:#d8d6d0;
+  --paper-2:#c6c3bc;
+  --accent:#1e1e4c;
+  --accent-2:#4e4e70;
+  --accent-3:#363656;
+  --muted:#585860;
+  --line:#a6a49e;
+  --code-bg:#0c0c20;
+  --code-text:#d8d6d0;
+  --panel-bg:#ccc9c0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;font-size:15px}
+.page-header{position:relative;padding:64px 48px 48px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'※';position:absolute;right:0;top:-20px;font-size:300px;color:var(--accent);opacity:0.12;font-family:'Shippori Mincho',serif;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em}
+.annex-tag{display:inline-block;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:3px 13px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-left:6px}
+.final-tag{display:inline-block;background:var(--paper);color:var(--accent);border:1px solid var(--accent);padding:3px 13px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-left:6px;font-weight:700}
+h1{font-family:'Shippori Mincho',serif;font-size:38px;font-weight:700;margin-top:24px;letter-spacing:0.04em;line-height:1.4}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+.lead{max-width:680px;margin-top:24px;font-size:15px;line-height:2}
+.toc{background:var(--paper-2);padding:24px 48px;border-bottom:1px solid var(--line)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:12px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:'—';position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+main{padding:48px}
+section{margin-bottom:72px}
+.section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:700;flex:1;line-height:1.4}
+.en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:680px;margin-bottom:24px;font-size:14px;line-height:2}
+.demo-card{background:#fff;border:1px solid var(--line);overflow:hidden}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}
+.code .type{color:#c2a3ff}
+.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}
+.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}
+.code .ann{color:#f7c08a}
+.code .step{color:#ffc88a;font-weight:600}
+.tip{border-left:3px solid var(--accent);background:rgba(30,30,76,0.06);padding:16px 20px;margin:24px 0;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;margin-bottom:6px;font-weight:600}
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px}
+b{font-weight:700;color:var(--accent-3)}
+.quote-box{margin:12px 0;padding:14px 18px;background:rgba(255,255,255,0.5);border-left:3px solid var(--accent-2);font-family:'Shippori Mincho',serif;font-size:14px;font-style:italic;line-height:1.8}
+.quote-source{font-family:'JetBrains Mono',monospace;font-style:normal;font-size:11px;color:var(--muted);margin-top:6px;letter-spacing:0.1em}
+.callout-row{display:flex;gap:12px;margin-top:12px}
+.callout-box{flex:1;padding:12px;font-size:12px;background:#fff;border:1px solid var(--line)}
+.callout-box.ng{border-left:3px solid #c43030}
+.callout-box.ok{border-left:3px solid var(--accent)}
+.callout-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;margin-bottom:4px;color:var(--muted)}
+ul.bullet{list-style:none;margin-top:8px}
+ul.bullet li{padding-left:18px;position:relative;margin-bottom:6px;font-size:13px}
+ul.bullet li::before{content:'◇';position:absolute;left:0;color:var(--accent);font-size:11px}
+.star{color:var(--accent);font-weight:700;letter-spacing:0.1em}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.compare-table th,.compare-table td{padding:8px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.compare-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;color:var(--accent-3)}
+.compare-table tr:nth-child(even) td{background:rgba(216,214,208,0.5)}
+.page-footer{border-top:2px solid var(--ink);padding:32px 48px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.reference-list{font-size:12px;line-height:1.8;color:var(--muted);font-family:'Shippori Mincho',serif;margin-top:8px}
+.reference-list .ref-label{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;margin-right:8px}
+.ending{margin-top:80px;padding:60px 40px;background:linear-gradient(180deg, var(--paper-2), var(--paper));border:2px solid var(--accent);text-align:center;position:relative}
+.ending::before{content:'※';position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:32px;color:var(--accent);font-family:'Shippori Mincho',serif}
+.ending h2{font-family:'Shippori Mincho',serif;font-size:32px;font-weight:700;color:var(--ink);margin-top:24px;letter-spacing:0.05em;line-height:1.4}
+.subtitle-end{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.3em;color:var(--accent);margin:14px 0 32px;font-weight:700}
+.ending .message{font-family:'Shippori Mincho',serif;font-size:15px;line-height:2;color:var(--ink);max-width:600px;margin:0 auto 32px;text-align:left}
+.series-list{max-width:600px;margin:32px auto 0;text-align:left;font-size:13px;line-height:2;padding:24px;background:rgba(255,255,255,0.5);border:1px dashed var(--line)}
+.series-list-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.2em;margin-bottom:14px;font-weight:700;text-align:center}
+.series-list-item{padding:4px 0;border-bottom:1px dotted var(--line);font-family:'Shippori Mincho',serif}
+.series-list-item:last-child{border-bottom:none}
+.series-list-vol{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;margin-right:8px;font-size:11px}
+.epitaph{margin-top:32px;text-align:center;font-family:'Shippori Mincho',serif;font-size:14px;font-style:italic;color:var(--accent-3);line-height:1.9;padding:20px;background:rgba(255,255,255,0.4);border:1px dashed var(--line)}
+@media (max-width:720px){
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  main{padding:24px}
+  .page-header{padding:32px 24px}
+  h1{font-size:24px}
+  .toc{padding:16px 24px}
+  .callout-row{flex-direction:column}
+  .ending{padding:40px 24px}
+  .ending h2{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">AGILE REFERENCE</span>
+  <span class="vol-tag">VOL.09 / 09</span>
+  <span class="annex-tag">ANNEX — WHY</span>
+  <span class="final-tag">★ FINAL VOLUME</span>
+  <h1>なぜアジャイルは失敗するのか</h1>
+  <div class="subtitle">ANNEX VOL.09 — WHY AGILE FAILS / AND WHAT'S NEXT</div>
+  <p class="lead">
+    シリーズの最終巻。「アジャイル変革プロジェクトの<b>50%以上が失敗</b>」というデータがあります。なぜか。<b>Cargo Cult Agile</b>、<b>「やってる感アジャイル」</b>症候群、<b>業界の利権構造</b>。本巻はアジャイルの<b>影の部分</b>に光を当て、それでも<b>なお続ける価値</b>を再確認します。シリーズ全体を貫く問いへの最終回答です。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS — ANNEX</div>
+  <ul>
+    <li><a href="#cargo">01 Cargo Cult Agile の構造</a></li>
+    <li><a href="#dark">02 Dark Scrum 症候群</a></li>
+    <li><a href="#industrial">03 アジャイル産業複合体</a></li>
+    <li><a href="#dead">04「アジャイルは死んだ」論争</a></li>
+    <li><a href="#statistics">05 失敗統計を直視する</a></li>
+    <li><a href="#next">06 これからのアジャイル</a></li>
+    <li><a href="#essence">07 残るのは「価値観」だけ</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="cargo">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>Cargo Cult Agile の構造</h2>
+    <span class="en">CARGO CULT AGILE</span>
+  </div>
+  <p class="pattern-desc">
+    本館 Vol.9 で触れた<b>「Cargo Cult Agile」</b>を構造的に解剖します。語源は、第二次大戦後の南太平洋の島民が<b>米軍機を真似て木製の管制塔を作った</b>逸話。「形を真似れば飛行機が来る」という<b>因果の取り違え</b>。アジャイル業界にも全く同じ現象が起きています。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">failure.cargo-cult</span>
+      <span class="tag-desc">形だけ真似る失敗構造</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Cargo Cult の歴史的起源</div>
+        <div class="quote-box">
+          「南太平洋の島民は、米軍が去った後も木製の滑走路と管制塔を作り続けた。形を真似れば物資が空から降ってくると信じて」
+          <div class="quote-source">— Richard Feynman 物理学者の講演（1974）</div>
+        </div>
+        <ul class="bullet" style="margin-top:14px">
+          <li><b>形は完璧</b> ── 滑走路・管制塔・誘導灯</li>
+          <li><b>しかし飛行機は来ない</b> ── 因果関係を取り違えていた</li>
+          <li><b>本質は「米軍の物資輸送システム」</b> ── 木製の塔ではない</li>
+        </ul>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ Feynman はこの逸話で<b>「科学的でない研究」</b>を批判。後にアジャイル界でも援用される。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// アジャイル界のCargo Cult</span>
+
+<span class="ann">@形を真似る</span>
+  ✓ スプリント設定 (2週間)
+  ✓ デイリースクラム実施
+  ✓ JIRA でバックログ管理
+  ✓ レトロも毎回開催
+  ✓ ポイント見積もりもやってる
+
+<span class="ann">@しかし機能しない</span>
+  ✗ 動くソフトが出ない
+  ✗ 顧客満足が上がらない
+  ✗ チームが疲弊する
+  ✗ 改善が起きない
+
+<span class="ann">@なぜか</span>
+  <b>「形」と「本質」</b>を取り違え
+  
+  本質は:
+   ✓ 価値観の体現
+   ✓ 信頼の文化
+   ✓ 適応する姿勢
+   ✓ 継続的な学習
+
+  これらは<b>儀式の中にはない</b>
+
+<span class="comment">// 典型症状</span>
+
+<span class="kw">儀式完璧症候群</span>
+  デイリーは15分ピッタリ
+  でも何も解決していない
+  → 形が目的化
+
+<span class="kw">ベロシティ崇拝</span>
+  ポイントは順調に消化
+  でも価値が出ていない
+  → 数字が目的化
+
+<span class="kw">JIRA完璧主義</span>
+  チケットは綺麗
+  でも対話は消滅
+  → ツールが目的化
+
+<span class="comment">// 構造的に説明する</span>
+
+<span class="kw">表層 (見える)</span>:
+  ✓ スプリント
+  ✓ デイリー
+  ✓ レトロ
+  ✓ バックログ
+
+<span class="kw">中層 (見えにくい)</span>:
+  ✓ なぜそうするか
+  ✓ どう運用するか
+
+<span class="kw">深層 (見えない)</span>:
+  ✓ 価値観
+  ✓ 文化
+  ✓ 信頼
+
+  ↓
+  表層だけ真似て
+  深層がない状態
+  = Cargo Cult Agile
+
+<span class="comment">// 結論</span>
+
+形は<b>結果</b>であり<b>原因</b>ではない
+価値観が形を生むのであって
+形が価値観を生むのではない</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「Cargo Cult」</b>を見抜くには「<b>これは本当に動いているか？</b>」と問うこと。儀式を全部やっていても、<b>「動くソフトウェアが顧客に頻繁に届いているか」「変化に適応できているか」「チームが学習しているか」</b>が<b>NO</b>なら、それはアジャイルではありません。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="dark">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>Dark Scrum 症候群</h2>
+    <span class="en">DARK SCRUM SYNDROME</span>
+  </div>
+  <p class="pattern-desc">
+    Ron Jeffries（XPの提唱者の1人）が2016年に発信した警鐘<b>「Dark Scrum」</b>。Scrumが<b>「開発者を苦しめる道具」</b>に変質した現象を指します。皮肉なことに、開発者の自律と尊厳を守るはずのScrumが、<b>監視と圧迫のツール</b>として使われてしまう──業界の影の現実です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">failure.dark-scrum</span>
+      <span class="tag-desc">Scrumが悪用される現象</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Dark Scrum の症状</div>
+        <ul class="bullet">
+          <li><b>デイリーが報告会</b> ── 上司への進捗報告</li>
+          <li><b>ベロシティで評価</b> ── 個人ノルマに転化</li>
+          <li><b>POが上意下達</b> ── 開発者の意見無視</li>
+          <li><b>レトロが追及会</b> ── 失敗を個人責任化</li>
+          <li><b>持続不可能なペース</b> ── 残業常態化</li>
+        </ul>
+        <div class="quote-box" style="margin-top:14px">
+          「Scrumが開発者を犠牲にする道具になっている。これは私たちの想定したものではない」
+          <div class="quote-source">— RON JEFFRIES, 2016</div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// なぜDark Scrumが生まれるか</span>
+
+<span class="ann">@原因1: 管理者の旧来思考</span>
+  「進捗を可視化したい」
+  → デイリーを監視に使う
+  → ベロシティを評価指標に
+  
+  Scrumの形を使って
+  伝統的管理を実施
+
+<span class="ann">@原因2: 中間管理職の生き残り</span>
+  プロジェクトマネージャ役の消失
+  → 自分の存在意義を確保したい
+  → Scrum Master を
+    「PMの新名前」と理解
+
+<span class="ann">@原因3: 経営層の理解不足</span>
+  「アジャイル＝速い」
+  → 「もっとポイント消化しろ」
+  → 持続可能性を考えない
+
+<span class="ann">@原因4: コンサルの利益</span>
+  「Scrum 認定取得を全員に」
+  「SAFe 導入で売上UP」
+  → 利益優先で本質軽視
+
+<span class="comment">// Jeffries の処方箋</span>
+
+<span class="ann">@1. 開発者の声を聞く</span>
+  「Scrumがあなたを
+   苦しめていないか?」
+  と定期的に問う
+
+<span class="ann">@2. 価値観に立ち返る</span>
+  「個人と対話」
+  「持続可能なペース」
+  これらが守られているか?
+
+<span class="ann">@3. 必要なら離脱する勇気</span>
+  Dark Scrumを続けるくらいなら
+  Scrumをやめる方がマシ
+  
+  「Scrumゾンビ」よりは
+  「正直なウォーターフォール」
+
+<span class="comment">// アンチパターン認識</span>
+
+<span class="kw">良いScrum</span>:
+  ✓ 開発者が活き活き
+  ✓ 創造性が発揮される
+  ✓ 学習が起きている
+
+<span class="kw">Dark Scrum</span>:
+  ✗ 開発者が疲弊
+  ✗ 監視されてる感
+  ✗ 数字に追われる
+
+<span class="comment">// 結論</span>
+
+Scrum は<b>道具</b>
+道具は<b>誰が・どう使うか</b>で
+天使にも悪魔にもなる
+
+開発者と組織を
+守るためのScrumが
+苦しめる道具になっていないか?</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    Ron Jeffries は<b>Dark Scrumを認識した上で、それでもScrumを擁護</b>しています。「Scrumが悪いのではなく、使い方が間違っている」と。<b>「アジャイルゾンビ」「Scrumゾンビ」</b>と化した現場では、いっそScrumをやめて伝統的開発に戻る方が誠実──<b>Jeffriesの厳しいメッセージ</b>です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="industrial">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>アジャイル産業複合体</h2>
+    <span class="en">AGILE INDUSTRIAL COMPLEX</span>
+  </div>
+  <p class="pattern-desc">
+    Martin Fowler が2018年に放った言葉<b>「Agile Industrial Complex（アジャイル産業複合体）」</b>。<b>「アジャイル」を商売道具にする業界構造</b>を批判する強烈な表現です。<b>認定資格・コンサル・研修・ツール</b>──ビジネスとなったアジャイルが、本来の精神から離れていく構造的問題。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">failure.industrial-complex</span>
+      <span class="tag-desc">アジャイルがビジネス化した影</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 業界の構造</div>
+        <div class="quote-box">
+          「アジャイル・インダストリアル・コンプレックスが、本来の精神を曇らせている」
+          <div class="quote-source">— MARTIN FOWLER, AGILE AUSTRALIA 2018</div>
+        </div>
+        <ul class="bullet" style="margin-top:14px">
+          <li><b>認定資格ビジネス</b> ── CSM・PSM・SAFe認定の量産</li>
+          <li><b>コンサル業界</b> ── 高額な変革プロジェクト販売</li>
+          <li><b>ツールベンダー</b> ── JIRA・Azure DevOps等の競争</li>
+          <li><b>研修ビジネス</b> ── 2日コースで「アジャイル習得」</li>
+        </ul>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ 業界規模は<b>数十億ドル</b>。アジャイルは<b>巨大ビジネス</b>になった。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 問題点の構造</span>
+
+<span class="ann">@認定資格ビジネス</span>
+  Scrum Master 認定 (CSM/PSM)
+  → 2日研修 + 試験
+  → 「Scrum Master」名乗れる
+  
+  問題:
+   ✗ 2日で習得できるはずなし
+   ✗ 試験パスが目的化
+   ✗ 経験ない人が"指導"する
+
+<span class="ann">@コンサル丸投げ</span>
+  「3ヶ月でアジャイル変革!」
+  数億円のプロジェクト
+  
+  問題:
+   ✗ 短期で文化は変わらない
+   ✗ 撤退後に元に戻る
+   ✗ 内部能力が育たない
+
+<span class="ann">@ツール幻想</span>
+  「JIRAでアジャイル化」
+  「Azure DevOpsで生産性UP」
+  
+  問題:
+   ✗ ツールは道具
+   ✗ 文化・人なくして
+     ツールに価値なし
+   ✗ ベンダーの利益優先
+
+<span class="ann">@フレームワーク商業化</span>
+  SAFe = 商標
+  認定資格・教材で収益化
+  
+  問題:
+   ✗ 中立性が疑われる
+   ✗ 「SAFe教徒」化
+   ✗ 批判が許されない雰囲気
+
+<span class="comment">// 業界の発信</span>
+
+<span class="kw">2018: Martin Fowler の批判</span>
+  「Agile Industrial Complex」
+  業界自体への警鐘
+
+<span class="kw">2019: "Heart of Agile"</span>
+  Alistair Cockburn が
+  原点回帰運動を立ち上げ
+
+<span class="kw">2020s: シンプル化の流れ</span>
+  「フレームワーク減らせ」
+  「儀式減らせ」
+  「価値観に戻ろう」
+
+<span class="comment">// 抵抗の難しさ</span>
+
+業界が儲かる構造で
+本質回帰は<b>商売の敵</b>
+
+「シンプルでいい」と言うと
+コンサル・ベンダーが困る
+
+→ 業界は本質回帰を
+  歓迎しないインセンティブ
+
+<span class="comment">// 個人ができること</span>
+
+✓ 原典を読む
+   宣言・Scrum Guide
+✓ 認定資格に依存しない
+   自分で考える
+✓ コンサルに丸投げしない
+   内部で学び合う
+✓ ツールに頼らない
+   本質を問い続ける</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">裏技 —</div>
+    アジャイルの<b>原典は全て無料</b>です。<b>agilemanifesto.org・scrumguides.org・less.works</b>──公式文書は全部読み放題。<b>有料の本・コース・認定資格</b>に頼らずとも、アジャイルの本質は学べます。<b>「お金を払わないと学べない」幻想を超える</b>こと。これがインダストリアル・コンプレックスへの最大の抵抗です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="dead">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>「アジャイルは死んだ」論争</h2>
+    <span class="en">"AGILE IS DEAD" CONTROVERSY</span>
+  </div>
+  <p class="pattern-desc">
+    2014年から定期的に業界を揺るがす論争があります。<b>「Agile is Dead」</b>。Dave Thomas（『達人プログラマー』著者・宣言の17人の1人）が放ったこの宣言は、業界に大きな波紋を呼びました。<b>「アジャイルという言葉が腐敗した」</b>──この主張の真意を解きほぐします。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">debate.agile-dead</span>
+      <span class="tag-desc">2014年・Dave Thomas の宣言</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Dave Thomas の主張</div>
+        <div class="quote-box">
+          「『アジャイル』という名詞は、その元の意味を失った。我々は『アジャイルにやる』という動詞に戻るべきだ」
+          <div class="quote-source">— DAVE THOMAS, GOTO CONFERENCE 2015</div>
+        </div>
+        <ul class="bullet" style="margin-top:14px">
+          <li>名詞の<b>「アジャイル」</b>は商業化で腐敗</li>
+          <li>動詞の<b>「アジャイルにやる」</b>は今も生きている</li>
+          <li>形容詞・動詞として使い、<b>名詞として使うな</b></li>
+        </ul>
+        <p style="font-size:13px;margin-top:14px;line-height:1.8">
+          Dave Thomas は<b>「Agile is Dead, Long Live Agility」</b>と表現。<b>「アジャイル」は死んだ、「アジリティ」は生きよ</b>。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 名詞 vs 動詞の対立</span>
+
+<span class="ann">@名詞の「アジャイル」</span>
+  ✗ 「アジャイル<b>導入</b>」
+   名詞として扱われ
+   モノとして導入される
+  ✗ 「アジャイル<b>移行</b>プロジェクト」
+   一回完了するイベント
+  ✗ 「アジャイル<b>認定</b>」
+   試験パスで取得するもの
+
+<span class="ann">@動詞の「アジャイルに動く」</span>
+  ✓ 「<b>アジャイルに</b>判断する」
+   状況に応じて
+  ✓ 「<b>アジャイルに</b>適応する」
+   継続的な姿勢
+  ✓ 「<b>アジャイルに</b>学ぶ」
+   日常の行動
+
+<span class="comment">// Dave Thomas の処方箋</span>
+
+<span class="ann">@4つのシンプルな指針</span>
+
+  1. あなたが今いる場所を知る
+  2. 価値を生み出す小さな
+     ステップを選ぶ
+  3. そのステップを実行
+  4. 結果を評価して
+     最初に戻る
+
+<span class="kw">これだけ</span>でアジャイル
+
+複雑なフレームワーク不要
+詳細なルール不要
+高額認定資格不要
+
+<span class="comment">// 業界の反応</span>
+
+<span class="ann">@賛同派</span>
+  Martin Fowler
+  Robert C. Martin
+  Alistair Cockburn
+  → 原点回帰の流れ
+
+<span class="ann">@困惑派</span>
+  認定資格ビジネスの人々
+  「アジャイルが死んだら
+   うちのビジネスが…」
+
+<span class="ann">@中立派</span>
+  「商業化はあるが
+   実践は生きてる」
+  使い分ければよい
+
+<span class="comment">// 派生運動</span>
+
+<span class="kw">Heart of Agile</span> (Cockburn)
+  Collaborate, Deliver,
+  Reflect, Improve
+  この4動詞だけ
+
+<span class="kw">Modern Agile</span> (Kerievsky)
+  Make People Awesome
+  Make Safety a Prerequisite
+  Experiment & Learn Rapidly
+  Deliver Value Continuously
+
+→ どちらも
+  名詞より動詞
+  シンプルさ重視
+
+<span class="comment">// 結論</span>
+
+「アジャイル<b>という業界</b>」は
+死につつあるかもしれない
+
+しかし
+「アジャイル<b>な姿勢</b>」は
+今も生きている</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「アジャイル」を名詞として使う時、ほぼ間違いなく罠</b>です。<b>「アジャイル変革」「アジャイル導入」「アジャイル組織」</b>──これらの言葉が出てきたら警戒。代わりに<b>「より早く動く」「より頻繁に学ぶ」「より柔軟に変える」</b>と動詞で語る方が、本質に近い。<b>名詞は商業化されやすく、動詞は実践に近い</b>──Dave Thomas の慧眼です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="statistics">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>失敗統計を直視する</h2>
+    <span class="en">FACING THE FAILURE STATS</span>
+  </div>
+  <p class="pattern-desc">
+    複数の調査が示す<b>厳しい現実</b>。<b>「アジャイル変革プロジェクトの50〜70%が失敗または期待を下回る」</b>。これは厳然たる事実です。なぜこれほど失敗するのか。<b>失敗パターンを統計から見直し</b>、現実を直視します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">stats.failure</span>
+      <span class="tag-desc">業界調査が示す現実</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 失敗統計</div>
+        <table class="compare-table">
+          <tr><th>調査</th><th>失敗率</th></tr>
+          <tr><td>VersionOne 17th State of Agile</td><td>失敗・期待下回り 47%</td></tr>
+          <tr><td>McKinsey 2020 調査</td><td>変革成功率 30%</td></tr>
+          <tr><td>Gartner 2019 報告</td><td>大規模変革の 60% が頓挫</td></tr>
+          <tr><td>Boston Consulting Group</td><td>「規模化失敗」 50%</td></tr>
+        </table>
+        <div class="quote-box" style="margin-top:14px">
+          「組織変革は本質的に難しい。アジャイルだけが特別失敗率高いわけではないが、低くもない」
+          <div class="quote-source">— 業界統計の総括</div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// 失敗の主因（統計分析）</span>
+
+<span class="ann">@TOP1: 文化的抵抗 (45%)</span>
+  既存文化が変革を拒む
+  ↑ 最大の壁
+
+<span class="ann">@TOP2: 経営層のサポート不足 (40%)</span>
+  口先だけのサポート
+  実質的な権限委譲なし
+
+<span class="ann">@TOP3: 能力・スキル不足 (37%)</span>
+  内部に経験者がいない
+  外部依存
+
+<span class="ann">@TOP4: 既存プロセスとの整合 (35%)</span>
+  予算・人事評価制度が
+  アジャイルと矛盾
+
+<span class="ann">@TOP5: ツール選定の失敗 (30%)</span>
+  「JIRAで解決」幻想
+
+<span class="comment">// 失敗パターンの類型</span>
+
+<span class="kw">パターン1: 形式優先型</span>
+  儀式は全部やる
+  でも本質変わらず
+  → Cargo Cult Agile
+
+<span class="kw">パターン2: 拙速変革型</span>
+  3〜6ヶ月で成果要求
+  形だけ整える
+  → 数年で崩壊
+
+<span class="kw">パターン3: 外部依存型</span>
+  コンサルに丸投げ
+  撤退後に元に戻る
+  → 「冷凍されたアジャイル」
+
+<span class="kw">パターン4: 中間管理職放置型</span>
+  経営層と現場は変革
+  中間管理職が無視
+  → サンドイッチで圧死
+
+<span class="kw">パターン5: ツール頼み型</span>
+  「JIRAで解決!」
+  ツールが目的化
+  → 形骸化が加速
+
+<span class="comment">// 成功例の共通項</span>
+
+<span class="ann">@経営層の長期コミット</span>
+  3〜5年の覚悟
+
+<span class="ann">@内部人材の育成</span>
+  外部依存を脱却
+
+<span class="ann">@評価制度の刷新</span>
+  個人ノルマから
+  チーム成果へ
+
+<span class="ann">@失敗の許容</span>
+  心理的安全性が前提
+
+<span class="ann">@小さく始める</span>
+  パイロット成功から
+  徐々に拡大
+
+<span class="comment">// 厳しい現実</span>
+
+これらすべて満たすのは
+<span class="kw">困難</span>
+だから多くが失敗する
+
+しかし
+<span class="kw">それでも</span>
+挑戦する価値はある
+というのが業界の合意</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「失敗率50%超」</b>は厳しい数字ですが、これは<b>「組織変革プロジェクト一般の失敗率」とほぼ同等</b>。アジャイルが特別失敗しやすいわけではありません。<b>組織変革は本質的に難しい</b>──この現実を踏まえた上で、それでも挑む価値があると判断する人だけが取り組むべき仕事です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="next">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>これからのアジャイル</h2>
+    <span class="en">FUTURE OF AGILE</span>
+  </div>
+  <p class="pattern-desc">
+    25年経ち、アジャイルは岐路に立っています。<b>商業化で本質が見えにくくなる一方</b>、<b>原点回帰の運動も活発化</b>。リモートワーク・AI・新世代の働き方など、<b>環境変化</b>も加速します。これからのアジャイルはどう進化するのか。業界の<b>「次の25年」</b>を展望します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">future.agile</span>
+      <span class="tag-desc">これからの方向性</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 観察される潮流</div>
+        <ul class="bullet">
+          <li><b>シンプル化の流れ</b> ── Heart of Agile, Modern Agile</li>
+          <li><b>原点回帰</b> ── 宣言と価値観への回帰</li>
+          <li><b>リモート対応</b> ── 非同期コミュニケーションの統合</li>
+          <li><b>AI協働</b> ── 開発者とAIの新しい関係</li>
+          <li><b>持続可能性</b> ── 持続可能なペースの再強調</li>
+          <li><b>多様性</b> ── 「17人の白人男性」批判への応答</li>
+        </ul>
+      </div>
+      <div class="code">
+<span class="comment">// 5つの観察される変化</span>
+
+<span class="ann">@1. シンプル化運動</span>
+
+  Heart of Agile (Cockburn)
+   Collaborate
+   Deliver
+   Reflect
+   Improve
+   → たった4動詞
+  
+  Modern Agile (Kerievsky)
+   4つの原則のみ
+  
+  共通点:
+   フレームワーク批判
+   価値観への回帰
+
+<span class="ann">@2. リモート前提の進化</span>
+
+  非同期コミュニケーション
+  ドキュメント主体
+  Loom 等の動画文化
+  バーチャルオフィス
+  
+  → 「対面が最良」原則の
+    現代的解釈が進む
+
+<span class="ann">@3. AI協働時代</span>
+
+  GitHub Copilot
+  ChatGPT
+  → コードを書くのは人?AI?
+  → ペアプロ相手がAIに?
+  → 開発者の役割再定義
+
+  アジャイルの意味も変わる
+  「学習速度」がさらに重要に
+
+<span class="ann">@4. 持続可能性</span>
+
+  「燃え尽き症候群」の認識
+  メンタルヘルス重視
+  4日勤務などの実験
+  
+  → 原則8「持続可能なペース」
+    が再評価される時代
+
+<span class="ann">@5. 多様性と包摂</span>
+
+  「17人の白人男性」が
+  作った宣言という批判
+  → 多様な視点の取り込み
+  
+  Women in Agile
+  Black in Agile 等
+  コミュニティの拡張
+
+<span class="comment">// 矛盾する2つの流れ</span>
+
+<span class="kw">商業化の継続</span>:
+  SAFe等の認定資格
+  コンサルビジネス
+  ツールベンダー
+  → 業界規模は拡大続く
+
+<span class="kw">原点回帰の運動</span>:
+  シンプル志向
+  認定資格批判
+  「アジャイル業界」批判
+  → 知識層の主張
+
+<span class="comment">// 両者は当面共存</span>
+
+大企業: 商業化された
+       フレームワーク採用継続
+
+熟練者: 原点回帰
+       シンプルな実践
+
+<span class="comment">// 25年後の予測</span>
+
+「アジャイル」という用語は
+過去のものになるかもしれない
+
+しかし
+「短いサイクルで学ぶ」
+「価値を頻繁に届ける」
+「変化に適応する」
+という<b>姿勢</b>は
+名前を変えて続く</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    アジャイルの<b>「終わり」</b>を予言する人もいれば、<b>「進化形」</b>を提唱する人もいます。<b>大事なのは「名前」ではなく「中身」</b>。Heart of Agile・Modern Agile・あるいは未来の名称──呼び方は変わっても、<b>「人と人が協働して価値を生む」</b>本質は不変です。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="essence">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>残るのは「価値観」だけ</h2>
+    <span class="en">ONLY VALUES REMAIN</span>
+  </div>
+  <p class="pattern-desc">
+    シリーズ全18巻の<b>最終結論</b>を述べます。Scrum も XP もKanbanも、本巻で触れた失敗パターンも、業界の影も──<b>すべて変わりゆくもの</b>。25年前と今で残っているもの、これから25年後も残るもの。それは<b>「価値観」だけ</b>。これがシリーズを通じての最終的な答えです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">essence.final</span>
+      <span class="tag-desc">シリーズの最終結論</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 残るものと変わるもの</div>
+        <table class="compare-table">
+          <tr><th>変わる</th><th>残る</th></tr>
+          <tr><td>具体的フレームワーク</td><td>価値観・原則</td></tr>
+          <tr><td>ツール</td><td>対話の姿勢</td></tr>
+          <tr><td>手順・儀式</td><td>適応する精神</td></tr>
+          <tr><td>役職名</td><td>協働の本質</td></tr>
+          <tr><td>用語・流行</td><td>「動くもの」への信頼</td></tr>
+        </table>
+        <div class="quote-box" style="margin-top:14px">
+          「方法論は来ては去る。原則は残る」
+          <div class="quote-source">— アジャイル先達の格言</div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// 25年前(2001年)からの不変</span>
+
+<span class="kw">アジャイル宣言</span>:
+  一字一句変わっていない
+  
+  プロセスやツール
+   よりも個人と対話を
+  
+  包括的なドキュメント
+   よりも動くソフトウェアを
+  
+  契約交渉
+   よりも顧客との協調を
+  
+  計画に従うこと
+   よりも変化への対応を
+
+<span class="comment">// 25年で変わったもの</span>
+
+<span class="ann">@手法</span>
+  XPからScrum中心へ
+  カンバン台頭
+  DevOps統合
+
+<span class="ann">@ツール</span>
+  CVS → SVN → Git
+  Bugzilla → JIRA → Linear
+  Jenkins → GitHub Actions
+
+<span class="ann">@用語</span>
+  「Scrum Master」
+  → 「真のリーダー」
+  「Development Team」
+  → 「Developers」
+
+<span class="ann">@文脈</span>
+  オフィス前提
+   → リモート前提
+  人だけ
+   → 人+AI協働
+
+<span class="comment">// しかし価値観は不変</span>
+
+「個人と対話」
+   今も真理
+「動くソフトウェア」
+   今も真理
+「顧客との協調」
+   今も真理
+「変化への対応」
+   今も真理
+
+<span class="comment">// シリーズを貫く問い</span>
+
+「ソフトウェアは
+ 人の営みである」
+  ↓
+「人を尊重するか?」
+  ↓
+「動くものを信頼するか?」
+  ↓
+「変化を歓迎するか?」
+  ↓
+これらに YES と答え続ける限り
+それがアジャイル
+
+<span class="comment">// 最後のメッセージ</span>
+
+形は変わる
+名前は変わる
+道具は変わる
+
+しかし
+価値観は変わらない
+
+<span class="kw">"Welcoming change,</span>
+<span class="kw"> even late</span>
+<span class="kw"> in development."</span>
+
+これだけ覚えていれば
+あなたは
+アジャイルである</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    本シリーズの<b>最終メッセージ</b>です。<b>「アジャイル」という言葉が将来消えても、価値観は消えない</b>。Scrum も SAFe も認定資格も、すべて変わりゆく道具に過ぎない。<b>あなたが「動くものを早く届けようとする」「変化を歓迎する」「人と人の対話を大事にする」──その瞬間、あなたはアジャイルです</b>。これ以上のことは要りません。<span class="star">★★★</span>
+  </div>
+</section>
+
+<div class="ending">
+  <h2>アジャイル開発編 別館 全9巻 完結<br>― シリーズ全18巻 完結 ―</h2>
+  <div class="subtitle-end">★ COMPLETE SERIES — ALL VOLUMES ★</div>
+  <div class="message">
+    本館9巻・別館9巻、計<b>18巻</b>のリファレンスシリーズを最後までお読みいただき、本当にありがとうございました。<br><br>
+    アジャイル開発は<b>1986年の野中・竹内論文</b>から始まり、<b>2001年のスノーバード会議</b>で結晶化し、<b>25年</b>を経て世界の標準実践になりました。その間、栄光と影、賛美と批判、純粋な実践と商業化の両方を経験してきました。本シリーズはそのすべてを描こうとしました。<br><br>
+    本館は<b>「どうやるか」の辞書</b>として、別館は<b>「なぜそうなのか」の思索編</b>として。両方を持って、ようやくアジャイルの全体像が見えると信じています。<b>「どうやるか」だけでは Cargo Cult に陥る</b>。<b>「なぜそうなのか」だけでは机上の空論</b>。両輪が必要でした。<br><br>
+    最後に伝えたいことは、Vol.9 で書いた一文に尽きます。<b>「価値観だけが残る」</b>。Scrum も SAFe も、いずれ姿を変えるでしょう。しかし、<b>「動くものを早く届けようとする」「変化を歓迎する」「人を尊重する」</b>──この姿勢を持ち続ける限り、あなたは何と呼ばれようと<b>アジャイル</b>です。<br><br>
+    変化を歓迎する旅は、これからも続きます。<br>
+    あなたの開発が、より<b>機敏（Agile）</b>に、より<b>楽しく</b>、より<b>持続可能</b>になりますように。
+  </div>
+
+  <div class="series-list">
+    <div class="series-list-head">— AGILE REFERENCE / 本館 (MAIN) —</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.01</span>アジャイル入門・全体像編</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.02</span>アジャイル宣言と12原則編</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.03</span>Scrum編</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.04</span>ユーザーストーリーと見積もり編</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.05</span>XP（エクストリームプログラミング）編</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.06</span>カンバンとリーン編</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.07</span>CI/CDと開発プラクティス編</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.08</span>スケーリングと組織編</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.09</span>困った時のアジャイル編</div>
+  </div>
+
+  <div class="series-list" style="margin-top:18px">
+    <div class="series-list-head">— AGILE REFERENCE / 別館 (ANNEX) —</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.01</span>なぜアジャイルは生まれたのか</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.02</span>なぜ「動くソフトウェア」が価値なのか</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.03</span>なぜScrumはこの形なのか</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.04</span>なぜストーリーポイントは時間ではないのか</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.05</span>なぜTDDはテストから書くのか</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.06</span>なぜWIP制限がフローを速くするのか</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.07</span>なぜCI/CDが必須になったのか</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.08</span>なぜスケーリングは難しいのか</div>
+    <div class="series-list-item"><span class="series-list-vol">VOL.09</span>なぜアジャイルは失敗するのか（本巻）</div>
+  </div>
+
+  <div class="epitaph">
+    Welcoming change, even late in development.<br>
+    変化を歓迎する、たとえ開発の後期であっても。<br><br>
+    — Agile Manifesto, 2001 —
+  </div>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>AGILE REFERENCE — ANNEX VOL.09 / WHY AGILE FAILS</span>
+  <span>★ ALL 18 VOLUMES — SERIES COMPLETE ★</span>
+</footer>
+
+</body>
+</html>
