@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新・Java入門編31 特殊なクラス編 Vol.8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0c2b3a;
+  --paper:#eaf3f7;
+  --paper-2:#d4e6ed;
+  --accent:#156982;
+  --accent-2:#2588a6;
+  --accent-3:#4ea1bb;
+  --muted:#587a86;
+  --line:#b3d1da;
+  --code-bg:#0e222b;
+  --code-text:#e0edf3;
+  --panel-bg:#dceef4;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;-webkit-font-smoothing:antialiased;}
+.page-header{position:relative;padding:56px 7vw 40px;border-bottom:2px solid var(--ink);overflow:hidden;}
+.page-header::before{content:"{ }";position:absolute;right:3vw;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:260px;font-weight:600;color:var(--accent);opacity:0.13;z-index:0;line-height:1;}
+.page-header>*{position:relative;z-index:1;}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;margin-right:8px;}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;}
+.page-header h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:20px 0 8px;letter-spacing:1px;}
+.subtitle{color:var(--muted);font-size:14px;font-family:'JetBrains Mono',monospace;margin-bottom:20px;}
+.lead{max-width:640px;font-size:15px;}
+.lead b{color:var(--accent);}
+.toc{background:var(--paper-2);padding:20px 7vw;display:flex;flex-wrap:wrap;gap:6px 22px;border-bottom:1px solid var(--line);}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;font-family:'JetBrains Mono',monospace;transition:color .2s;}
+.toc a::before{content:"— ";color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+.group-band{background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:2px;padding:6px 7vw;}
+main{padding:48px 7vw 20px;max-width:1180px;margin:0 auto;}
+section{margin-bottom:64px;}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px;}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600;}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:25px;font-weight:700;}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;}
+.pattern-desc{max-width:680px;margin-bottom:20px;font-size:15px;}
+.pattern-desc b{color:var(--accent);}
+.demo-card{border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(12,43,58,.05);}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);}
+.tag-desc{font-size:12px;color:var(--muted);}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line);}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:.5px;}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;overflow-x:auto;white-space:pre;}
+.code .kw{color:#ffc88a;}
+.code .type{color:#c2a3ff;}
+.code .fn{color:#a3c9ff;}
+.code .str{color:#b5e8b0;}
+.code .num{color:#f7a8d8;}
+.code .comment{color:#7e9488;}
+.code .ann{color:#f7c08a;}
+.code-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7e9488;margin-bottom:10px;display:block;}
+.tip{border-left:3px solid var(--accent);background:rgba(21,105,130,.08);padding:16px 20px;border-radius:0 4px 4px 0;margin:20px 0;font-size:14px;}
+.tip .tip-head{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);letter-spacing:1px;margin-bottom:6px;}
+.tip b{color:var(--accent);}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.compare .box{border-radius:4px;padding:12px 14px;font-size:13px;}
+.compare .ng{background:#fbeaea;border-left:3px solid #c75050;}
+.compare .ok{background:#e8f4ea;border-left:3px solid var(--accent);}
+.compare .box .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-bottom:6px;}
+.compare .ng .lbl{color:#c75050;}
+.compare .ok .lbl{color:var(--accent);}
+.enum-chips{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:#fff;}
+.chip.red{background:#fbe6e6;border-color:#e0a0a0;color:#b03838;}
+.chip.yellow{background:#fbf3df;border-color:#ddc278;color:#9a7a1a;}
+.chip.green{background:#e3f3e6;border-color:#94c79c;color:#2f7a44;}
+.page-footer{border-top:2px solid var(--ink);padding:28px 7vw;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr;}
+  .panel{border-right:none;border-bottom:1px solid var(--line);}
+  .compare{grid-template-columns:1fr;}
+  .page-header h1{font-size:30px;}
+  .page-header::before{font-size:140px;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・Java入門編31</span><span class="vol-tag">Vol.8</span>
+  <h1>特殊なクラス編</h1>
+  <div class="subtitle">SPECIAL CLASSES — enum / annotation / record / chapter 12-14</div>
+  <p class="lead">いよいよ最後の塊④です。ここでは<b>目的特化型の便利クラス</b>を3つ学びます。<b>enum</b>＝決まった選択肢を安全に表す。<b>annotation</b>＝コードに付ける付箋。<b>record</b>＝データの箱を一行で作る。どれも「普通のクラスで書くと面倒」を解決する道具。3つとも、基本の使い方だけサクッと押さえましょう。</p>
+</header>
+
+<nav class="toc">
+  <a href="#enum">enum①基本</a>
+  <a href="#enum-use">enum②使い方</a>
+  <a href="#enum-field">enum③値を持たせる</a>
+  <a href="#ann">annotation①基本</a>
+  <a href="#ann-use">annotation②よく使う種類</a>
+  <a href="#record">record①基本</a>
+  <a href="#record-why">record②うれしさ</a>
+</nav>
+
+<div class="group-band">PART 1 — 列挙型 enum</div>
+<main>
+
+<section id="enum">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>列挙型（enum）の基本</h2>
+    <span class="en">ENUM BASICS</span>
+  </div>
+  <p class="pattern-desc"><b>enum（イーナム／列挙型）</b>は、<b>「選択肢が決まっている値」</b>を表す専用クラスです。信号の色（赤・黄・青）、曜日（月〜日）、方角（東西南北）など。<b>「この中のどれか」</b>しかありえない値を、安全に扱えます。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">enum</span>
+      <span class="tag-desc">決まった選択肢を表す</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// たとえ：信号の色は3つだけ</div>
+        <div class="enum-chips">
+          <span class="chip red">RED</span>
+          <span class="chip yellow">YELLOW</span>
+          <span class="chip green">GREEN</span>
+        </div>
+        <p style="font-size:13px;margin-top:14px;color:var(--muted);">信号に「紫」や「水玉」はありません。<b style="color:var(--accent)">この3つしかない</b>と決まっている。enum はそれをコードで表現します。</p>
+      </div>
+      <div class="code"><span class="code-label">// enum の定義</span>
+<span class="kw">enum</span> <span class="type">Signal</span> {
+    <span class="num">RED</span>, <span class="num">YELLOW</span>, <span class="num">GREEN</span>
+}
+<span class="comment">// この3つ以外の Signal は作れない</span>
+
+<span class="comment">// もし文字列で管理すると…</span>
+<span class="type">String</span> s = <span class="str">"あか"</span>;  <span class="comment">// ❌ タイプミスし放題</span>
+<span class="comment">// enum なら間違った値が入らず安全！</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="enum-use">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>enumの使い方</h2>
+    <span class="en">USING ENUM</span>
+  </div>
+  <p class="pattern-desc">enumの値は <code>Signal.RED</code> のように<b>「型名.値」</b>で取り出します。<code>switch</code> と組み合わせると、<b>「どの選択肢か」で処理を分ける</b>のがとてもキレイに書けます。これがenumの定番の使い方です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">enum + switch</span>
+      <span class="tag-desc">選択肢ごとに処理を分ける</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 動かすと…</div>
+        <p style="font-size:14px;"><code>Signal.RED</code> を渡すと「止まれ」、<code>GREEN</code> なら「進め」。<b>選択肢ごとの分岐</b>が読みやすく書けます。</p>
+        <div class="compare" style="grid-template-columns:1fr;margin-top:12px;">
+          <div class="box ok">
+            <div class="lbl">出力（RED を渡した場合）</div>
+            止まれ
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-label">// enum で分岐</span>
+<span class="type">Signal</span> sig = <span class="type">Signal</span>.<span class="num">RED</span>;
+
+<span class="kw">switch</span> (sig) {
+    <span class="kw">case</span> <span class="num">RED</span>    -&gt; <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"止まれ"</span>);
+    <span class="kw">case</span> <span class="num">YELLOW</span> -&gt; <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"注意"</span>);
+    <span class="kw">case</span> <span class="num">GREEN</span>  -&gt; <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"進め"</span>);
+}
+<span class="comment">// case に存在しない値を書けない＝安全</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    enumの<b>一番のメリットは「ありえない値が入らない」こと</b>。文字列や数字で管理すると、タイプミスや想定外の値でバグります。<b>選択肢が決まっているなら迷わずenum</b>、が鉄則です。
+  </div>
+</section>
+
+<section id="enum-field">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>enumに値を持たせる（応用）</h2>
+    <span class="en">ENUM WITH FIELDS</span>
+  </div>
+  <p class="pattern-desc">enumは実は<b>各選択肢に追加情報を持たせられます</b>。たとえば惑星に「重力」を、信号に「待ち時間」を。ここはやや応用なので<b>「こんなこともできる」</b>程度でOKです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">enum field</span>
+      <span class="tag-desc">各値にデータを紐づける</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 各色に秒数を持たせる</div>
+        <p style="font-size:14px;">RED は30秒、GREEN は25秒…のように、<b>選択肢ごとに固有の値</b>を持たせられます。</p>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">単なる「ラベル」を超えて、<b style="color:var(--accent)">データ付きの選択肢</b>として使えるのがenumの底力です。</p>
+      </div>
+      <div class="code"><span class="code-label">// 各値に秒数を持たせる</span>
+<span class="kw">enum</span> <span class="type">Signal</span> {
+    <span class="num">RED</span>(<span class="num">30</span>), <span class="num">YELLOW</span>(<span class="num">5</span>), <span class="num">GREEN</span>(<span class="num">25</span>);
+
+    <span class="kw">final</span> <span class="type">int</span> seconds;
+    <span class="type">Signal</span>(<span class="type">int</span> s) {   <span class="comment">// enum用コンストラクタ</span>
+        seconds = s;
+    }
+}
+
+<span class="comment">// 使う時</span>
+<span class="type">System</span>.out.<span class="fn">println</span>(<span class="type">Signal</span>.<span class="num">RED</span>.seconds); <span class="comment">// → 30</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="group-band">PART 2 — アノテーション annotation</div>
+
+<section id="ann">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>アノテーションの基本</h2>
+    <span class="en">ANNOTATION BASICS</span>
+  </div>
+  <p class="pattern-desc"><b>アノテーション</b>は <code>@</code> で始まる<b>「コードに貼る付箋・ラベル」</b>です。実は <code>@Override</code> をこれまで何度も使ってきましたね。あれがアノテーションです。<b>プログラムの動きを変えるのではなく、「目印」を付ける</b>のが役割です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">@Annotation</span>
+      <span class="tag-desc">コードに付ける目印</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// たとえ：本に貼る付箋</div>
+        <p style="font-size:14px;">本の重要ページに付箋を貼っても、本の中身は変わりません。でも<b>「ここ大事」という情報</b>が増えます。</p>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">アノテーションも同じ。<b style="color:var(--accent)">コードに「これはこういう意味ですよ」という情報を添える</b>道具です。コンパイラやツールがそれを読み取ります。</p>
+      </div>
+      <div class="code"><span class="code-label">// もう使っていた @Override</span>
+<span class="kw">class</span> <span class="type">Dog</span> <span class="kw">extends</span> <span class="type">Animal</span> {
+    <span class="ann">@Override</span>          <span class="comment">// ← これがアノテーション</span>
+    <span class="type">void</span> <span class="fn">cry</span>() {
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"ワン"</span>);
+    }
+}
+<span class="comment">// 「これは親メソッドの上書きですよ」</span>
+<span class="comment">// という目印。書き間違えると警告が出る</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="ann-use">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>よく使うアノテーション</h2>
+    <span class="en">COMMON ANNOTATIONS</span>
+  </div>
+  <p class="pattern-desc">初学者がまず出会う<b>定番アノテーション</b>を押さえましょう。自分で作ることもできますが（だから「Annotation Interfaces」と呼ばれます）、最初は<b>「使う側」</b>として知っていれば十分です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">common ones</span>
+      <span class="tag-desc">まず覚える3つ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 定番3種</div>
+        <ul style="font-size:13px;margin:0 0 0 18px;line-height:2;">
+          <li><code>@Override</code>：親メソッドの上書き宣言</li>
+          <li><code>@Deprecated</code>：「もう古い、使わないで」の印</li>
+          <li><code>@SuppressWarnings</code>：警告を黙らせる</li>
+        </ul>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">特に <code>@Override</code> は<b style="color:var(--accent)">付ける習慣をつけると安全</b>です。タイプミスを防いでくれます。</p>
+      </div>
+      <div class="code"><span class="code-label">// 定番アノテーションの例</span>
+<span class="ann">@Override</span>
+<span class="type">void</span> <span class="fn">run</span>() { ... }
+
+<span class="ann">@Deprecated</span>            <span class="comment">// 「この機能は古い」</span>
+<span class="type">void</span> <span class="fn">oldMethod</span>() { ... }
+
+<span class="ann">@SuppressWarnings</span>(<span class="str">"unchecked"</span>)  <span class="comment">// 警告を抑制</span>
+<span class="type">void</span> <span class="fn">tricky</span>() { ... }</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    現場のフレームワーク（Spring など）では <code>@Controller</code> や <code>@Service</code> のような<b>独自アノテーションが大量に登場</b>します。「@で始まる付箋なんだな」と分かっていれば、初見でも怖くありません。
+  </div>
+</section>
+
+<div class="group-band">PART 3 — レコードクラス record</div>
+
+<section id="record">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>レコードクラス（record）の基本</h2>
+    <span class="en">RECORD BASICS</span>
+  </div>
+  <p class="pattern-desc"><b>record（レコード）</b>は<b>「データを入れる箱」を一行で作れる</b>新しいクラスです。名前と年齢、X座標とY座標——こういう<b>「データをまとめて持つだけ」のクラス</b>を、驚くほど短く書けます。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">record</span>
+      <span class="tag-desc">データの箱を一行で</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 普通のクラスだと…</div>
+        <p style="font-size:14px;">「名前と年齢を持つだけ」のクラスでも、普通に書くとフィールド・コンストラクタ・getter…と<b>何十行</b>になります。</p>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">record なら<b style="color:var(--accent)">たった一行</b>。面倒な部分を全部自動生成してくれます。</p>
+      </div>
+      <div class="code"><span class="code-label">// 普通のクラス（長い…）</span>
+<span class="kw">class</span> <span class="type">Point</span> {
+    <span class="kw">private</span> <span class="type">int</span> x;
+    <span class="kw">private</span> <span class="type">int</span> y;
+    <span class="type">Point</span>(<span class="type">int</span> x, <span class="type">int</span> y) {
+        <span class="kw">this</span>.x = x; <span class="kw">this</span>.y = y;
+    }
+    <span class="type">int</span> <span class="fn">x</span>() { <span class="kw">return</span> x; }
+    <span class="type">int</span> <span class="fn">y</span>() { <span class="kw">return</span> y; }
+    <span class="comment">// equals, hashCode, toString も…</span>
+}
+
+<span class="code-label" style="margin-top:14px;">// record なら一行！</span>
+<span class="kw">record</span> <span class="type">Point</span>(<span class="type">int</span> x, <span class="type">int</span> y) {}</div>
+    </div>
+  </div>
+</section>
+
+<section id="record-why">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>recordのうれしさ</h2>
+    <span class="en">WHY RECORD</span>
+  </div>
+  <p class="pattern-desc">recordは<b>一行書くだけで、必要なものを全部用意</b>してくれます。コンストラクタ、値を取り出すメソッド、表示用の文字列、比較機能——全部自動。<b>「データの箱」を作るならrecordが圧倒的にラク</b>です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">auto-generated</span>
+      <span class="tag-desc">面倒を全部自動でやってくれる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 自動で付いてくるもの</div>
+        <ul style="font-size:13px;margin:0 0 0 18px;line-height:1.9;">
+          <li>コンストラクタ（値を受け取る）</li>
+          <li>値を取り出すメソッド <code>x()</code> <code>y()</code></li>
+          <li>見やすい <code>toString()</code></li>
+          <li>中身が同じか比べる機能</li>
+        </ul>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">これを手で書くと数十行。それが<b style="color:var(--accent)">一行で済む</b>のです。</p>
+      </div>
+      <div class="code"><span class="code-label">// record はすぐ使える</span>
+<span class="kw">record</span> <span class="type">Point</span>(<span class="type">int</span> x, <span class="type">int</span> y) {}
+
+<span class="type">Point</span> p = <span class="kw">new</span> <span class="type">Point</span>(<span class="num">3</span>, <span class="num">5</span>);
+
+<span class="type">System</span>.out.<span class="fn">println</span>(p.<span class="fn">x</span>());   <span class="comment">// → 3</span>
+<span class="type">System</span>.out.<span class="fn">println</span>(p);       <span class="comment">// → Point[x=3, y=5]</span>
+
+<span class="comment">// 全部自動。データの箱はこれでOK</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    <b>これだけ覚えれば初心者卒業</b>：enum＝決まった選択肢、annotation＝コードへの付箋、record＝データの箱。3つとも「面倒を減らす道具」。深い使い方は必要になった時に辞書として開けばOKです。
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;">
+  <div class="tip-head">NEXT STEP —</div>
+  これで4つの塊すべてを走り抜けました。本当にお疲れさまでした。最後の<b>Vol.9「困った時のクラス編」</b>は、今までの内容で<b>初学者が必ずぶつかる詰まりポイント</b>をQ&amp;A形式で総ざらいします。「abstractとinterfaceどっち？」「enumの比較でハマった」など、実際の悩みに答えていきます。シリーズの締めくくりです。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>新・Java入門編31 — クラスについてもっと学習しよう</span>
+  <span>Vol.8 / 9 — SPECIAL CLASSES</span>
+</footer>
+
+</body>
+</html>

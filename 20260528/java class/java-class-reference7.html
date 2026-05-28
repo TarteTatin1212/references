@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新・Java入門編31 スタティックネステッドクラス編 Vol.7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0d2c36;
+  --paper:#ebf4f7;
+  --paper-2:#d6e7ec;
+  --accent:#176a7f;
+  --accent-2:#2789a0;
+  --accent-3:#50a2b6;
+  --muted:#5b7b84;
+  --line:#b6d2d9;
+  --code-bg:#0f2329;
+  --code-text:#e1eef2;
+  --panel-bg:#deeff3;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;-webkit-font-smoothing:antialiased;}
+.page-header{position:relative;padding:56px 7vw 40px;border-bottom:2px solid var(--ink);overflow:hidden;}
+.page-header::before{content:"{ }";position:absolute;right:3vw;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:260px;font-weight:600;color:var(--accent);opacity:0.13;z-index:0;line-height:1;}
+.page-header>*{position:relative;z-index:1;}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;margin-right:8px;}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;}
+.page-header h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:20px 0 8px;letter-spacing:1px;}
+.subtitle{color:var(--muted);font-size:14px;font-family:'JetBrains Mono',monospace;margin-bottom:20px;}
+.lead{max-width:640px;font-size:15px;}
+.lead b{color:var(--accent);}
+.toc{background:var(--paper-2);padding:20px 7vw;display:flex;flex-wrap:wrap;gap:6px 22px;border-bottom:1px solid var(--line);}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;font-family:'JetBrains Mono',monospace;transition:color .2s;}
+.toc a::before{content:"— ";color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{padding:48px 7vw 20px;max-width:1180px;margin:0 auto;}
+section{margin-bottom:64px;}
+.section-header{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px;}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600;}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:25px;font-weight:700;}
+.section-header .en{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;}
+.pattern-desc{max-width:680px;margin-bottom:20px;font-size:15px;}
+.pattern-desc b{color:var(--accent);}
+.demo-card{border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(13,44,54,.05);}
+.demo-head{background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);}
+.tag-desc{font-size:12px;color:var(--muted);}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line);}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:.5px;}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;overflow-x:auto;white-space:pre;}
+.code .kw{color:#ffc88a;}
+.code .type{color:#c2a3ff;}
+.code .fn{color:#a3c9ff;}
+.code .str{color:#b5e8b0;}
+.code .num{color:#f7a8d8;}
+.code .comment{color:#7e9488;}
+.code .ann{color:#f7c08a;}
+.code-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7e9488;margin-bottom:10px;display:block;}
+.nest-vis{font-family:'JetBrains Mono',monospace;font-size:12px;background:#fff;border:1px solid var(--line);border-radius:4px;padding:16px;line-height:1.8;}
+.nest-vis .outer-box{border:2px solid var(--accent);border-radius:4px;padding:12px;}
+.nest-vis .inner-box{border:2px solid var(--accent-2);border-radius:4px;padding:10px;margin-top:8px;background:#e7f3f6;}
+.nest-vis .lbl{font-weight:600;color:var(--accent);}
+.vs-table{width:100%;border-collapse:collapse;font-size:13px;}
+.vs-table th,.vs-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;}
+.vs-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;}
+.vs-table td:first-child{font-weight:600;background:#fafdfe;}
+.tip{border-left:3px solid var(--accent);background:rgba(23,106,127,.08);padding:16px 20px;border-radius:0 4px 4px 0;margin:20px 0;font-size:14px;}
+.tip .tip-head{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);letter-spacing:1px;margin-bottom:6px;}
+.tip b{color:var(--accent);}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.compare .box{border-radius:4px;padding:12px 14px;font-size:13px;}
+.compare .ng{background:#fbeaea;border-left:3px solid #c75050;}
+.compare .ok{background:#e8f4ea;border-left:3px solid var(--accent);}
+.compare .box .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-bottom:6px;}
+.compare .ng .lbl{color:#c75050;}
+.compare .ok .lbl{color:var(--accent);}
+.page-footer{border-top:2px solid var(--ink);padding:28px 7vw;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+@media(max-width:720px){
+  .demo-body{grid-template-columns:1fr;}
+  .panel{border-right:none;border-bottom:1px solid var(--line);}
+  .compare{grid-template-columns:1fr;}
+  .page-header h1{font-size:30px;}
+  .page-header::before{font-size:140px;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・Java入門編31</span><span class="vol-tag">Vol.7</span>
+  <h1>スタティックネステッドクラス編</h1>
+  <div class="subtitle">STATIC NESTED CLASS — the independent one / chapter 11</div>
+  <p class="lead">ネストの最後のピースです。<b>スタティックネステッドクラス</b>は、外側の中に書くけれど <code>static</code> が付いたクラス。<b><code>static</code> がひとつ付くだけで、内部クラスとは性質がガラッと変わります</b>。キーワードは<b>「外側に寄り添わない、独立寄りのクラス」</b>。Vol.5の内部クラスと並べて、違いをハッキリさせましょう。これで塊③は完結です。</p>
+</header>
+
+<nav class="toc">
+  <a href="#what">staticネステッドとは</a>
+  <a href="#diff">内部クラスとの違い</a>
+  <a href="#create">作り方</a>
+  <a href="#table">比較表で総整理</a>
+  <a href="#when">使い分け</a>
+  <a href="#wrap">塊③のまとめ</a>
+</nav>
+
+<main>
+
+<section id="what">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>スタティックネステッドクラスとは</h2>
+    <span class="en">WHAT IT IS</span>
+  </div>
+  <p class="pattern-desc">外側のクラスの中に <code>static class</code> と書いたものが、スタティックネステッドクラスです。内部クラスとの見た目の違いは<b><code>static</code> がひとつあるだけ</b>。でも意味は大きく変わります。<b>外側のインスタンスがなくても作れる</b>のです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">static class</span>
+      <span class="tag-desc">外側から独立したネストクラス</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// たとえ話：マンションと管理会社</div>
+        <p style="font-size:14px;">マンション（Outer）の資料に「管理会社の情報」が載っています。でも管理会社は<b>マンションとは別の独立した存在</b>。資料に書かれているだけで、マンションがなくても会社は存在します。</p>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">staticネステッドも<b style="color:var(--accent)">「外側の中に書いてあるけど、独立して動ける」</b>クラスです。</p>
+      </div>
+      <div class="code"><span class="code-label">// static を付けてネスト</span>
+<span class="kw">class</span> <span class="type">Outer</span> {
+
+    <span class="kw">static</span> <span class="kw">class</span> <span class="type">Nested</span> {   <span class="comment">// ← static 付き</span>
+        <span class="type">void</span> <span class="fn">hello</span>() {
+            <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"独立してます"</span>);
+        }
+    }
+}
+<span class="comment">// Vol.5 の内部クラスとの差は static だけ</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="diff">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>内部クラスとの決定的な違い</h2>
+    <span class="en">KEY DIFFERENCE</span>
+  </div>
+  <p class="pattern-desc">違いは大きく2つ。<b>①外側のインスタンスが不要</b>、<b>②外側の（staticでない）フィールドには触れない</b>。内部クラスが「外側べったり」だったのに対し、staticネステッドは<b>「外側と距離を置く」</b>関係です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">inner vs static</span>
+      <span class="tag-desc">寄り添う / 距離を置く</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 関係の違い</div>
+        <div class="compare" style="grid-template-columns:1fr;">
+          <div class="box ok">
+            <div class="lbl">内部クラス（Vol.5）</div>
+            外側のインスタンスとセット。外側の private にも自由に触れる。<b>べったり</b>。
+          </div>
+          <div class="box ok">
+            <div class="lbl">staticネステッド（今回）</div>
+            外側インスタンス不要。外側のインスタンス変数には触れない。<b>独立寄り</b>。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-label">// 触れる / 触れないの違い</span>
+<span class="kw">class</span> <span class="type">Outer</span> {
+    <span class="type">int</span> x = <span class="num">10</span>;          <span class="comment">// インスタンス変数</span>
+    <span class="kw">static</span> <span class="type">int</span> y = <span class="num">20</span>;   <span class="comment">// static 変数</span>
+
+    <span class="kw">static</span> <span class="kw">class</span> <span class="type">Nested</span> {
+        <span class="type">void</span> <span class="fn">test</span>() {
+            <span class="comment">// x は触れない（インスタンス変数だから）</span>
+            <span class="type">System</span>.out.<span class="fn">println</span>(y);  <span class="comment">// ⭕ static の y はOK</span>
+        }
+    }
+}</div>
+    </div>
+  </div>
+</section>
+
+<section id="create">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>作り方はシンプル</h2>
+    <span class="en">HOW TO CREATE</span>
+  </div>
+  <p class="pattern-desc">内部クラスの <code>car.new Engine()</code> は独特でしたね。staticネステッドは<b>もっと素直</b>。外側のインスタンスがいらないので、<b><code>new Outer.Nested()</code></b> と普通に書けます。ここが内部クラスより楽なポイントです。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">new Outer.Nested()</span>
+      <span class="tag-desc">外側インスタンス不要で素直に作れる</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 作り方の比較</div>
+        <div class="compare" style="grid-template-columns:1fr;">
+          <div class="box ng">
+            <div class="lbl">内部クラス（手間あり）</div>
+            <code>Outer o = new Outer();</code><br><code>o.new Inner();</code>
+          </div>
+          <div class="box ok">
+            <div class="lbl">staticネステッド（素直）</div>
+            <code>new Outer.Nested();</code> 一発でOK
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-label">// staticネステッドの生成</span>
+<span class="kw">public</span> <span class="kw">static</span> <span class="type">void</span> <span class="fn">main</span>(<span class="type">String</span>[] args) {
+
+    <span class="comment">// 外側を new しなくていい！</span>
+    <span class="type">Outer</span>.<span class="type">Nested</span> n = <span class="kw">new</span> <span class="type">Outer</span>.<span class="type">Nested</span>();
+
+    n.<span class="fn">hello</span>();   <span class="comment">// → 独立してます</span>
+}</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    覚え方：<b>static が付く＝外側から独立＝普通に new できる</b>。staticのない内部クラスだけが「外側インスタンス経由」という特殊な作り方になる、と整理すると混乱しません。
+  </div>
+</section>
+
+<section id="table">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>4種類を比較表で総整理</h2>
+    <span class="en">FULL COMPARISON</span>
+  </div>
+  <p class="pattern-desc">ここで<b>ネストされたクラス4種類</b>を一枚の表にまとめます。Vol.5〜7の総まとめです。<b>この表が頭に入れば、ネストはもう怖くありません</b>。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">nested.summary</span>
+      <span class="tag-desc">4種類の早見表</span>
+    </div>
+    <div class="demo-body" style="grid-template-columns:1fr;">
+      <div class="panel" style="border-right:none;">
+        <table class="vs-table">
+          <thead><tr><th>種類</th><th>書く場所</th><th>名前</th><th>主な用途</th></tr></thead>
+          <tbody>
+            <tr><td>内部クラス</td><td>クラス直下（static無）</td><td>あり</td><td>外側と密接に協力する部品</td></tr>
+            <tr><td>staticネステッド</td><td>クラス直下（static付）</td><td>あり</td><td>外側に関連するが独立した部品</td></tr>
+            <tr><td>ローカルクラス</td><td>メソッドの中</td><td>あり</td><td>そのメソッド内だけの一時クラス</td></tr>
+            <tr><td>匿名クラス</td><td>その場（new と合体）</td><td>なし</td><td>一回きりの実装をサッと渡す</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="when">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>内部クラスとの使い分け</h2>
+    <span class="en">WHICH TO USE</span>
+  </div>
+  <p class="pattern-desc">「内部クラスとstaticネステッド、どっちを使えば？」——<b>結論はシンプル</b>。外側のインスタンス変数を使いたいなら内部クラス、使わないならstaticネステッド。<b>迷ったら static を付ける</b>のが現場の鉄則です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">decision</span>
+      <span class="tag-desc">迷ったら static</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 判断フロー</div>
+        <p style="font-size:14px;">「外側のインスタンスの中身（static でないフィールド）を、このネストクラスから使いたい？」</p>
+        <div class="compare" style="grid-template-columns:1fr;margin-top:12px;">
+          <div class="box ok">
+            <div class="lbl">YES → 内部クラス</div>
+            外側にべったり寄り添う必要がある。
+          </div>
+          <div class="box ok">
+            <div class="lbl">NO → staticネステッド</div>
+            独立できるなら static のほうが無駄がない。
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-label">// 鉄則：迷ったら static を付ける</span>
+<span class="comment">// 理由：</span>
+<span class="comment">// static の方が外側との結びつきが弱く、</span>
+<span class="comment">// メモリやバグの面で扱いやすい。</span>
+
+<span class="comment">// 「外側の中身を本当に使う時だけ」</span>
+<span class="comment">// static を外して内部クラスにする、</span>
+<span class="comment">// という順序で考えると安全です。</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    現場では「<b>とりあえず static ネステッドで書き始め、外側の中身が必要になったら static を外す</b>」という進め方が多いです。最初から内部クラスにする必要はあまりありません。
+  </div>
+</section>
+
+<section id="wrap">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>塊③「ネスト」のまとめ</h2>
+    <span class="en">GROUP 3 WRAP-UP</span>
+  </div>
+  <p class="pattern-desc">Vol.5〜7でネストされたクラスを一通り見ました。<b>「クラスの中にクラス」という発想</b>に、もう驚かなくなったはず。それぞれ「いつ使うか」がぼんやり見えていれば大成功です。</p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">recap</span>
+      <span class="tag-desc">ネスト3巻の振り返り</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3巻でやったこと</div>
+        <ul style="font-size:13px;margin:0 0 0 18px;line-height:1.9;">
+          <li><b>Vol.5</b>：ネスト全体像＋内部クラス（外側べったり）</li>
+          <li><b>Vol.6</b>：ローカル＋匿名（その場で使い捨て）</li>
+          <li><b>Vol.7</b>：staticネステッド（独立寄り）</li>
+        </ul>
+        <p style="font-size:13px;margin-top:12px;color:var(--muted);">全部「<b style="color:var(--accent)">外側との距離感</b>」で性格が決まる、と捉えると一気に整理できます。</p>
+      </div>
+      <div class="code"><span class="code-label">// 外側との「距離感」で並べると…</span>
+近い  ┃ 内部クラス      (べったり)
+  ↑   ┃ ローカルクラス  (メソッド内限定)
+  ┃   ┃ 匿名クラス      (その場限り)
+遠い  ┃ staticネステッド (独立寄り)
+
+<span class="comment">// 距離感の地図として覚えると忘れません</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="tip" style="margin-top:48px;">
+  <div class="tip-head">NEXT STEP —</div>
+  これで塊③「ネスト」も卒業です。残るは塊④。次の<b>Vol.8「特殊なクラス編」</b>では、目的特化型の便利クラスを3つ一気に学びます。<b>enum（決まった選択肢）・annotation（コードへの付箋）・record（データの箱）</b>。どれも「普通のクラスで書くと面倒なことを、短く安全に」してくれる現代Javaの強い味方です。
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>新・Java入門編31 — クラスについてもっと学習しよう</span>
+  <span>Vol.7 / 9 — STATIC NESTED CLASS</span>
+</footer>
+
+</body>
+</html>

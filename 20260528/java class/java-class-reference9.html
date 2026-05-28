@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新・Java入門編31 困った時のクラス編 Vol.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0a2a3f;
+  --paper:#e9f2f7;
+  --paper-2:#d2e4ed;
+  --accent:#13688a;
+  --accent-2:#2387ae;
+  --accent-3:#4ca1c1;
+  --muted:#56798a;
+  --line:#b1d0dd;
+  --code-bg:#0c212e;
+  --code-text:#dfecf3;
+  --panel-bg:#daedf5;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;-webkit-font-smoothing:antialiased;}
+.page-header{position:relative;padding:56px 7vw 40px;border-bottom:2px solid var(--ink);overflow:hidden;}
+.page-header::before{content:"{ }";position:absolute;right:3vw;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:260px;font-weight:600;color:var(--accent);opacity:0.13;z-index:0;line-height:1;}
+.page-header>*{position:relative;z-index:1;}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;margin-right:8px;}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:4px 12px;}
+.page-header h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin:20px 0 8px;letter-spacing:1px;}
+.subtitle{color:var(--muted);font-size:14px;font-family:'JetBrains Mono',monospace;margin-bottom:20px;}
+.lead{max-width:640px;font-size:15px;}
+.lead b{color:var(--accent);}
+.toc{background:var(--paper-2);padding:20px 7vw;display:flex;flex-wrap:wrap;gap:6px 22px;border-bottom:1px solid var(--line);}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;font-family:'JetBrains Mono',monospace;transition:color .2s;}
+.toc a::before{content:"— ";color:var(--accent-2);}
+.toc a:hover{color:var(--accent);}
+main{padding:48px 7vw 20px;max-width:1180px;margin:0 auto;}
+
+/* Q&A スタイル */
+.qa{margin-bottom:48px;}
+.qa-head{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:14px;}
+.qa-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;background:var(--paper-2);padding:3px 10px;border-radius:3px;}
+.qa-q{font-family:'Shippori Mincho',serif;font-size:21px;font-weight:700;}
+.qa-card{border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(10,42,63,.05);}
+.qa-card .qa-body{display:grid;grid-template-columns:1fr 1fr;}
+.qa-card .panel{background:var(--panel-bg);padding:22px;border-right:1px solid var(--line);}
+.qa-card .panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:.5px;}
+.answer-label{display:inline-block;background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;padding:2px 10px;border-radius:3px;margin-bottom:10px;letter-spacing:1px;}
+.code{background:var(--code-bg);color:var(--code-text);padding:22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;overflow-x:auto;white-space:pre;}
+.code .kw{color:#ffc88a;}
+.code .type{color:#c2a3ff;}
+.code .fn{color:#a3c9ff;}
+.code .str{color:#b5e8b0;}
+.code .num{color:#f7a8d8;}
+.code .comment{color:#7e9488;}
+.code .ann{color:#f7c08a;}
+.code-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7e9488;margin-bottom:10px;display:block;}
+
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.compare .box{border-radius:4px;padding:12px 14px;font-size:13px;}
+.compare .ng{background:#fbeaea;border-left:3px solid #c75050;}
+.compare .ok{background:#e8f4ea;border-left:3px solid var(--accent);}
+.compare .box .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-bottom:6px;}
+.compare .ng .lbl{color:#c75050;}
+.compare .ok .lbl{color:var(--accent);}
+
+.tip{border-left:3px solid var(--accent);background:rgba(19,104,138,.08);padding:14px 18px;border-radius:0 4px 4px 0;margin-top:14px;font-size:13px;}
+.tip .tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:1px;margin-bottom:4px;}
+.tip b{color:var(--accent);}
+
+/* エンディング */
+.ending{margin-top:80px;padding:60px 40px;background:linear-gradient(180deg,var(--paper-2) 0%,#fff 100%);border:2px solid var(--accent);border-radius:8px;text-align:center;position:relative;overflow:hidden;}
+.ending::before{content:"{ }";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:'JetBrains Mono',monospace;font-size:360px;font-weight:600;color:var(--accent);opacity:0.06;line-height:1;pointer-events:none;}
+.ending>*{position:relative;z-index:1;}
+.ending h2{font-family:'Shippori Mincho',serif;font-size:36px;font-weight:700;margin-bottom:8px;letter-spacing:2px;}
+.ending .subtitle-end{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);letter-spacing:4px;margin-bottom:32px;}
+.ending .message{max-width:600px;margin:0 auto 32px;font-size:15px;line-height:2;text-align:left;}
+.ending .message b{color:var(--accent);}
+.ending .series-list{max-width:680px;margin:0 auto;text-align:left;background:#fff;border:1px solid var(--line);border-radius:4px;padding:24px;}
+.ending .series-list .sl-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:14px;}
+.ending .series-list ol{list-style:none;counter-reset:vol;padding:0;}
+.ending .series-list li{counter-increment:vol;padding:8px 0;border-bottom:1px dotted var(--line);font-size:13px;display:flex;gap:14px;align-items:baseline;}
+.ending .series-list li:last-child{border-bottom:none;}
+.ending .series-list li::before{content:"Vol." counter(vol);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;min-width:48px;}
+.ending .series-list .vt{font-family:'Shippori Mincho',serif;font-weight:700;color:var(--ink);}
+.ending .closing{margin-top:28px;font-family:'Shippori Mincho',serif;font-size:18px;color:var(--accent);font-weight:700;letter-spacing:2px;}
+
+.page-footer{border-top:2px solid var(--ink);padding:28px 7vw;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:40px;}
+
+@media(max-width:720px){
+  .qa-card .qa-body{grid-template-columns:1fr;}
+  .qa-card .panel{border-right:none;border-bottom:1px solid var(--line);}
+  .compare{grid-template-columns:1fr;}
+  .page-header h1{font-size:30px;}
+  .page-header::before{font-size:140px;}
+  .ending{padding:40px 20px;}
+  .ending h2{font-size:26px;}
+  .ending::before{font-size:200px;}
+}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <span class="series-tag">新・Java入門編31</span><span class="vol-tag">Vol.9</span>
+  <h1>困った時のクラス編</h1>
+  <div class="subtitle">TROUBLESHOOTING Q&A — series finale</div>
+  <p class="lead">ついに最終巻。これまでの内容で<b>初学者が必ずぶつかる詰まりポイント</b>を、Q&amp;A形式で総ざらいします。「abstractとinterfaceどっち？」「new で型を間違えてエラー」「enum の比較が動かない」など、<b>実際の悩み</b>に答えていきます。困った時はここを辞書のように開いてください。最後にシリーズの完結セクションも用意しました。</p>
+</header>
+
+<nav class="toc">
+  <a href="#q01">Q.01 abstractかinterfaceか</a>
+  <a href="#q02">Q.02 抽象クラスをnew</a>
+  <a href="#q03">Q.03 implementsの書き忘れ</a>
+  <a href="#q04">Q.04 内部クラスのnew</a>
+  <a href="#q05">Q.05 匿名クラスのセミコロン</a>
+  <a href="#q06">Q.06 NullPointer頻発</a>
+  <a href="#q07">Q.07 enumの比較</a>
+  <a href="#q08">Q.08 staticから触れない</a>
+  <a href="#q09">Q.09 recordを変更したい</a>
+  <a href="#q10">Q.10 何巻に戻れば？</a>
+</nav>
+
+<main>
+
+<!-- Q.01 -->
+<div class="qa" id="q01">
+  <div class="qa-head">
+    <span class="qa-num">Q.01</span>
+    <h2 class="qa-q">abstractクラスとinterface、結局どっちを使えばいい？</h2>
+  </div>
+  <div class="qa-card">
+    <div class="qa-body">
+      <div class="panel">
+        <div class="panel-head">// 判断基準</div>
+        <span class="answer-label">A. ANSWER</span>
+        <p style="font-size:14px;">迷ったら<b>まずinterface</b>です。<b>共通の処理やフィールドを親に持たせたい</b>時だけabstractクラスを選びます。</p>
+        <div class="compare">
+          <div class="box ok">
+            <div class="lbl">interface を選ぶ</div>
+            「○○できる」という能力でまとめたい／複数の能力を組み合わせたい
+          </div>
+          <div class="box ok">
+            <div class="lbl">abstract を選ぶ</div>
+            共通の処理やフィールドを親で用意したい／血のつながりで結びたい
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-label">// 判断のコツ</span>
+<span class="comment">// ① 共通のフィールドやメソッドの中身を</span>
+<span class="comment">//    親に書きたい？</span>
+<span class="comment">//    YES → abstract クラス</span>
+<span class="comment">//    NO  → interface</span>
+
+<span class="comment">// ② 複数の親を持たせたい？</span>
+<span class="comment">//    YES → interface（複数implements可）</span>
+<span class="comment">//    NO  → どちらでもOK</span>
+
+<span class="comment">// 迷ったら interface でだいたい正解</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    実は<b>abstractクラスとinterfaceは併用できます</b>。共通処理はabstractで親に置き、能力はinterfaceで足す——という設計が定番です。
+  </div>
+</div>
+
+<!-- Q.02 -->
+<div class="qa" id="q02">
+  <div class="qa-head">
+    <span class="qa-num">Q.02</span>
+    <h2 class="qa-q">「Animal is abstract; cannot be instantiated」と怒られます</h2>
+  </div>
+  <div class="qa-card">
+    <div class="qa-body">
+      <div class="panel">
+        <div class="panel-head">// 原因と対処</div>
+        <span class="answer-label">A. ANSWER</span>
+        <p style="font-size:14px;"><b>抽象クラスを直接 new しようとした</b>のが原因です。抽象クラスは未完成の設計図なので、<b>new できるのは継承した子クラスだけ</b>。</p>
+        <p style="font-size:13px;margin-top:10px;color:var(--muted);">「Animal」型の変数に、子クラス（Dog や Cat）を入れる形にしましょう。</p>
+      </div>
+      <div class="code"><span class="code-label">// NG / OK</span>
+<span class="type">Animal</span> a = <span class="kw">new</span> <span class="type">Animal</span>();   <span class="comment">// ❌ NG</span>
+<span class="comment">//                ↑ 抽象クラスは new 不可</span>
+
+<span class="type">Animal</span> a = <span class="kw">new</span> <span class="type">Dog</span>();      <span class="comment">// ⭕ OK</span>
+<span class="comment">// 型は Animal、中身は具体的な Dog</span>
+
+<span class="comment">// interface も同じ。new はできない</span>
+<span class="type">Swimmable</span> s = <span class="kw">new</span> <span class="type">Swimmable</span>(); <span class="comment">// ❌</span>
+<span class="type">Swimmable</span> s = <span class="kw">new</span> <span class="type">Duck</span>();      <span class="comment">// ⭕</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    <b>戻る先：Vol.3「抽象クラス編」</b>。「new できない理由」のセクションを再読すると腑に落ちます。
+  </div>
+</div>
+
+<!-- Q.03 -->
+<div class="qa" id="q03">
+  <div class="qa-head">
+    <span class="qa-num">Q.03</span>
+    <h2 class="qa-q">interfaceをimplementsしたのに「実装されていない」と怒られる</h2>
+  </div>
+  <div class="qa-card">
+    <div class="qa-body">
+      <div class="panel">
+        <div class="panel-head">// よくある2パターン</div>
+        <span class="answer-label">A. ANSWER</span>
+        <p style="font-size:14px;">原因はほぼ2つです。<b>①メソッドを1つでも実装し忘れ</b>、<b>②publicを付け忘れ</b>。とくに②は地味にハマります。</p>
+        <div class="compare">
+          <div class="box ng">
+            <div class="lbl">NG</div>
+            <code>void hello() { … }</code>（publicなし）
+          </div>
+          <div class="box ok">
+            <div class="lbl">OK</div>
+            <code>public void hello() { … }</code>
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-label">// publicを忘れがち</span>
+<span class="kw">interface</span> <span class="type">Greeting</span> {
+    <span class="type">void</span> <span class="fn">hello</span>();
+}
+
+<span class="kw">class</span> <span class="type">JP</span> <span class="kw">implements</span> <span class="type">Greeting</span> {
+    <span class="type">void</span> <span class="fn">hello</span>() {            <span class="comment">// ❌ public なし</span>
+        <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"やあ"</span>);
+    }
+}
+
+<span class="comment">// 正しくは：</span>
+<span class="kw">public</span> <span class="type">void</span> <span class="fn">hello</span>() { ... }   <span class="comment">// ⭕</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    interfaceのメソッドは<b>自動的にpublic扱い</b>。実装側で「より狭く」できないので、<b>必ず public</b> を付けます。<b>戻る先：Vol.4</b>。
+  </div>
+</div>
+
+<!-- Q.04 -->
+<div class="qa" id="q04">
+  <div class="qa-head">
+    <span class="qa-num">Q.04</span>
+    <h2 class="qa-q">内部クラスを new しようとするとエラーになる</h2>
+  </div>
+  <div class="qa-card">
+    <div class="qa-body">
+      <div class="panel">
+        <div class="panel-head">// 書き方が独特</div>
+        <span class="answer-label">A. ANSWER</span>
+        <p style="font-size:14px;">内部クラス（static無し）の生成は<b>独特の書き方</b>です。<b>外側を先にnewしてから <code>.new</code></b>。<code>new Outer.Inner()</code> ではダメ。</p>
+        <p style="font-size:13px;margin-top:10px;color:var(--muted);">staticネステッドなら普通に <code>new</code> できますが、内部クラスはこのルールに従う必要があります。</p>
+      </div>
+      <div class="code"><span class="code-label">// NG / OK</span>
+<span class="kw">new</span> <span class="type">Outer</span>.<span class="type">Inner</span>();      <span class="comment">// ❌ NG</span>
+
+<span class="type">Outer</span> o = <span class="kw">new</span> <span class="type">Outer</span>();
+<span class="type">Outer</span>.<span class="type">Inner</span> i = o.<span class="kw">new</span> <span class="type">Inner</span>();  <span class="comment">// ⭕</span>
+
+<span class="comment">// staticネステッドなら普通でOK</span>
+<span class="kw">new</span> <span class="type">Outer</span>.<span class="type">Nested</span>();    <span class="comment">// ⭕（static付きクラス）</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    そもそも独立して使いたいなら<b>最初から static を付けてネステッドにする</b>のがラクです。<b>戻る先：Vol.5・Vol.7</b>。
+  </div>
+</div>
+
+<!-- Q.05 -->
+<div class="qa" id="q05">
+  <div class="qa-head">
+    <span class="qa-num">Q.05</span>
+    <h2 class="qa-q">匿名クラスで「';' expected」と出る</h2>
+  </div>
+  <div class="qa-card">
+    <div class="qa-body">
+      <div class="panel">
+        <div class="panel-head">// 定番のハマり</div>
+        <span class="answer-label">A. ANSWER</span>
+        <p style="font-size:14px;">匿名クラスの<b>閉じ <code>}</code> の後にセミコロン</b>を忘れています。匿名クラスは「new式の文」なので、<b><code>};</code> で終わる</b>のが正解です。</p>
+      </div>
+      <div class="code"><span class="code-label">// 1文字違いの罠</span>
+<span class="comment">// ❌ NG（セミコロンなし）</span>
+<span class="type">Greeting</span> g = <span class="kw">new</span> <span class="type">Greeting</span>() {
+    <span class="kw">public</span> <span class="type">void</span> <span class="fn">hello</span>() { ... }
+}
+
+<span class="comment">// ⭕ OK</span>
+<span class="type">Greeting</span> g = <span class="kw">new</span> <span class="type">Greeting</span>() {
+    <span class="kw">public</span> <span class="type">void</span> <span class="fn">hello</span>() { ... }
+};   <span class="comment">// ← この ; が必要！</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    匿名クラスは「クラス定義」ではなく「<b>式</b>」です。だから文末の <code>;</code> が要る、と覚えましょう。<b>戻る先：Vol.6</b>。
+  </div>
+</div>
+
+<!-- Q.06 -->
+<div class="qa" id="q06">
+  <div class="qa-head">
+    <span class="qa-num">Q.06</span>
+    <h2 class="qa-q">フィールドを使うと NullPointerException が頻発します</h2>
+  </div>
+  <div class="qa-card">
+    <div class="qa-body">
+      <div class="panel">
+        <div class="panel-head">// 初期化のタイミング</div>
+        <span class="answer-label">A. ANSWER</span>
+        <p style="font-size:14px;"><b>「フィールドが初期化される前に使ってしまった」</b>のが定番原因です。Vol.2の<b>実行順序</b>を思い出しましょう。スタ→インスタ→コンスト、の順です。</p>
+        <p style="font-size:13px;margin-top:10px;color:var(--muted);">特に <code>static { }</code> の中で<b>インスタンス変数</b>を触ろうとすると「まだ存在しない」状態になります。</p>
+      </div>
+      <div class="code"><span class="code-label">// 順番を意識する</span>
+<span class="kw">class</span> <span class="type">Sample</span> {
+    <span class="type">List</span>&lt;<span class="type">String</span>&gt; logs;
+
+    <span class="comment">// ❌ コンストラクタで初期化忘れ</span>
+    <span class="type">Sample</span>() { }
+
+    <span class="type">void</span> <span class="fn">add</span>(<span class="type">String</span> s) {
+        logs.<span class="fn">add</span>(s);   <span class="comment">// 💥 logs が null</span>
+    }
+}
+
+<span class="comment">// ⭕ 宣言と同時に初期化</span>
+<span class="type">List</span>&lt;<span class="type">String</span>&gt; logs = <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    <b>戻る先：Vol.2「実行順序の整理」</b>。「スタ→インスタ→コンスト」を口に出すだけで、初期化バグはぐっと減ります。
+  </div>
+</div>
+
+<!-- Q.07 -->
+<div class="qa" id="q07">
+  <div class="qa-head">
+    <span class="qa-num">Q.07</span>
+    <h2 class="qa-q">enumの比較は == と equals のどっち？</h2>
+  </div>
+  <div class="qa-card">
+    <div class="qa-body">
+      <div class="panel">
+        <div class="panel-head">// enumの比較</div>
+        <span class="answer-label">A. ANSWER</span>
+        <p style="font-size:14px;"><b>enumは <code>==</code> でOK</b>です。文字列だと <code>==</code> ではダメで <code>equals()</code> が必要ですが、enumは選択肢が1つずつ唯一の存在なので<b><code>==</code> で安全に比較できる</b>のです。</p>
+        <div class="compare">
+          <div class="box ok">
+            <div class="lbl">⭕ enum</div>
+            <code>sig == Signal.RED</code>
+          </div>
+          <div class="box ng">
+            <div class="lbl">⚠️ String</div>
+            <code>str == "abc"</code> はNG。<code>equals</code>を使う
+          </div>
+        </div>
+      </div>
+      <div class="code"><span class="code-label">// enumの比較</span>
+<span class="type">Signal</span> sig = <span class="type">Signal</span>.<span class="num">RED</span>;
+
+<span class="kw">if</span> (sig == <span class="type">Signal</span>.<span class="num">RED</span>) {    <span class="comment">// ⭕ OK</span>
+    <span class="type">System</span>.out.<span class="fn">println</span>(<span class="str">"赤！"</span>);
+}
+
+<span class="comment">// equals() でも動くが、== で十分</span>
+<span class="kw">if</span> (sig.<span class="fn">equals</span>(<span class="type">Signal</span>.<span class="num">RED</span>)) { ... }  <span class="comment">// ⭕ OKだが冗長</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    enumと<code>switch</code>の組み合わせも超便利。<code>switch(sig)</code>でケースに値だけ書けば、自動でenumの値として扱われます。<b>戻る先：Vol.8 Part1</b>。
+  </div>
+</div>
+
+<!-- Q.08 -->
+<div class="qa" id="q08">
+  <div class="qa-head">
+    <span class="qa-num">Q.08</span>
+    <h2 class="qa-q">staticメソッドから普通のフィールドが触れない</h2>
+  </div>
+  <div class="qa-card">
+    <div class="qa-body">
+      <div class="panel">
+        <div class="panel-head">// staticの世界の壁</div>
+        <span class="answer-label">A. ANSWER</span>
+        <p style="font-size:14px;">これも<b>仕様</b>です。<code>static</code> はクラス全体のもの、普通のフィールドは<b>インスタンスごと</b>のもの。どのインスタンスのフィールドかを<code>static</code>側からは決められないので<b>触れない</b>のです。</p>
+      </div>
+      <div class="code"><span class="code-label">// staticから普通のフィールドはNG</span>
+<span class="kw">class</span> <span class="type">Sample</span> {
+    <span class="type">int</span> count = <span class="num">0</span>;   <span class="comment">// インスタンス変数</span>
+
+    <span class="kw">static</span> <span class="type">void</span> <span class="fn">show</span>() {
+        <span class="type">System</span>.out.<span class="fn">println</span>(count);  <span class="comment">// ❌</span>
+    }
+}
+
+<span class="comment">// 解決策：</span>
+<span class="comment">// ① count に static を付ける、または</span>
+<span class="comment">// ② show() を普通のメソッドにする</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    Vol.2の<b>「staticの世界とインスタンスの世界は別物」</b>がここでも効きます。staticブロックの中でも同じ制約があります。
+  </div>
+</div>
+
+<!-- Q.09 -->
+<div class="qa" id="q09">
+  <div class="qa-head">
+    <span class="qa-num">Q.09</span>
+    <h2 class="qa-q">recordの値を後から変えたいのですが…</h2>
+  </div>
+  <div class="qa-card">
+    <div class="qa-body">
+      <div class="panel">
+        <div class="panel-head">// recordはイミュータブル</div>
+        <span class="answer-label">A. ANSWER</span>
+        <p style="font-size:14px;"><b>recordは「中身を変えられない」</b>のが特徴です（イミュータブル）。値を変えたい時は<b>新しいrecordを作り直します</b>。「壊して作る」のが record の流儀です。</p>
+      </div>
+      <div class="code"><span class="code-label">// recordは作り直す</span>
+<span class="kw">record</span> <span class="type">Point</span>(<span class="type">int</span> x, <span class="type">int</span> y) {}
+
+<span class="type">Point</span> p = <span class="kw">new</span> <span class="type">Point</span>(<span class="num">3</span>, <span class="num">5</span>);
+
+p.x = <span class="num">10</span>;  <span class="comment">// ❌ 変更不可</span>
+
+<span class="comment">// ⭕ 新しい record を作る</span>
+<span class="type">Point</span> p2 = <span class="kw">new</span> <span class="type">Point</span>(<span class="num">10</span>, p.<span class="fn">y</span>());
+<span class="comment">// xだけ変えた新しい Point ができる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP</div>
+    変更が頻繁にあるデータには<b>recordではなく普通のクラス</b>を使いましょう。recordは「変わらない値の組」を表すのに向いています。<b>戻る先：Vol.8 Part3</b>。
+  </div>
+</div>
+
+<!-- Q.10 -->
+<div class="qa" id="q10">
+  <div class="qa-head">
+    <span class="qa-num">Q.10</span>
+    <h2 class="qa-q">用語が混乱してきました。何巻に戻ればいい？</h2>
+  </div>
+  <div class="qa-card">
+    <div class="qa-body">
+      <div class="panel">
+        <div class="panel-head">// 用語→巻のクイックインデックス</div>
+        <span class="answer-label">A. ANSWER</span>
+        <p style="font-size:14px;">下の一覧から、忘れた用語の<b>担当巻に戻ってください</b>。シリーズは辞書として使えるよう設計してあります。完璧主義は禁物。<b>気軽に行ったり来たり</b>しましょう。</p>
+      </div>
+      <div class="code"><span class="code-label">// 用語 → 戻る巻</span>
+インスタンスイニシャライザ   → Vol.2
+スタティックイニシャライザ   → Vol.2
+abstract クラス／メソッド    → Vol.3
+interface / implements      → Vol.4
+内部クラス（Inner）         → Vol.5
+ローカルクラス              → Vol.6
+匿名クラス                  → Vol.6
+staticネステッドクラス      → Vol.7
+enum（列挙型）              → Vol.8
+annotation                  → Vol.8
+record                      → Vol.8
+
+<span class="comment">// 全体像が怪しくなったら Vol.1 に戻る</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT</div>
+    <b>「忘れたら戻る、戻ったら少し進む」</b>。これが上達のコツです。一発で全部覚えなくていい。何度も開いた巻ほど身につきます。
+  </div>
+</div>
+
+<!-- エンディング -->
+<div class="ending">
+  <h2>新・Java入門編31 全9巻 完結</h2>
+  <div class="subtitle-end">★ SERIES — COMPLETE ★</div>
+  <div class="message">
+    <p>ここまで読み通してくださって、本当にお疲れさまでした。クラスの<b>「もっと深い世界」</b>の14テーマを、一緒に走り抜けましたね。</p>
+    <p style="margin-top:14px;">最初は <code>abstract</code> も <code>interface</code> も <code>record</code> も、見たことのない呪文に見えたはず。でも今では、コードの中で見かけても<b>「あ、これか」と意味がわかる</b>状態になっているはずです。それは大きな前進です。</p>
+    <p style="margin-top:14px;">完璧に覚えている必要はありません。<b>「あの巻にあったな」</b>と思い出せれば十分。困った時はこのシリーズを辞書のように開いてください。あなたのJava学習を、これからもずっと支える9冊になります。</p>
+    <p style="margin-top:14px;">次のステップは、ここで学んだ道具を<b>実際のプログラムで使ってみる</b>こと。手を動かすたびに、知識が血肉になっていきます。あせらず、楽しく、続けていきましょう。</p>
+  </div>
+  <div class="series-list">
+    <div class="sl-head">// 新・Java入門編31 全9巻 振り返り</div>
+    <ol>
+      <li><span class="vt">クラス再入門・全体像編</span></li>
+      <li><span class="vt">イニシャライザ編</span></li>
+      <li><span class="vt">抽象クラス編</span></li>
+      <li><span class="vt">インターフェース編</span></li>
+      <li><span class="vt">ネストされたクラス入門編</span></li>
+      <li><span class="vt">ローカル・匿名クラス編</span></li>
+      <li><span class="vt">スタティックネステッドクラス編</span></li>
+      <li><span class="vt">特殊なクラス編</span></li>
+      <li><span class="vt">困った時のクラス編</span></li>
+    </ol>
+  </div>
+  <div class="closing">— ありがとうございました —</div>
+</div>
+
+</main>
+
+<footer class="page-footer">
+  <span>新・Java入門編31 — クラスについてもっと学習しよう</span>
+  <span>Vol.9 / 9 — TROUBLESHOOTING & FINALE</span>
+</footer>
+
+</body>
+</html>
