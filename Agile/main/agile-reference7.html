@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アジャイル開発編 CI/CDと開発プラクティス Vol.7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3a1808;
+  --paper:#ecd4b4;
+  --paper-2:#d8b88e;
+  --accent:#b03a14;
+  --accent-2:#c08858;
+  --accent-3:#722a0c;
+  --muted:#856042;
+  --line:#ad8a58;
+  --code-bg:#241008;
+  --code-text:#ecd4b4;
+  --panel-bg:#e3c89e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;font-size:15px}
+.page-header{position:relative;padding:64px 48px 48px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'◆';position:absolute;right:-20px;top:-40px;font-size:340px;color:var(--accent);opacity:0.15;font-family:'Shippori Mincho',serif;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:24px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+.lead{max-width:640px;margin-top:24px;font-size:15px;line-height:2}
+.toc{background:var(--paper-2);padding:24px 48px;border-bottom:1px solid var(--line)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:12px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:'—';position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+main{padding:48px}
+section{margin-bottom:72px}
+.section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:640px;margin-bottom:24px;font-size:14px;line-height:2}
+.demo-card{background:#fff;border:1px solid var(--line);overflow:hidden}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}
+.code .type{color:#c2a3ff}
+.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}
+.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}
+.code .ann{color:#f7c08a}
+.code .step{color:#ffc88a;font-weight:600}
+.tip{border-left:3px solid var(--accent);background:rgba(176,58,20,0.08);padding:16px 20px;margin:24px 0;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;margin-bottom:6px;font-weight:600}
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px}
+b{font-weight:700;color:var(--accent-3)}
+.diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;color:var(--ink);background:rgba(255,255,255,0.4);padding:14px;border:1px dashed var(--line);white-space:pre;overflow-x:auto}
+.callout-row{display:flex;gap:12px;margin-top:12px}
+.callout-box{flex:1;padding:12px;font-size:12px;background:#fff;border:1px solid var(--line)}
+.callout-box.ng{border-left:3px solid #c43030}
+.callout-box.ok{border-left:3px solid var(--accent)}
+.callout-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;margin-bottom:4px;color:var(--muted)}
+ul.bullet{list-style:none;margin-top:8px}
+ul.bullet li{padding-left:18px;position:relative;margin-bottom:6px;font-size:13px}
+ul.bullet li::before{content:'◇';position:absolute;left:0;color:var(--accent);font-size:11px}
+.star{color:var(--accent);font-weight:700;letter-spacing:0.1em}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.compare-table th,.compare-table td{padding:8px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.compare-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;color:var(--accent-3)}
+.compare-table tr:nth-child(even) td{background:rgba(236,212,180,0.5)}
+.page-footer{border-top:2px solid var(--ink);padding:32px 48px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+@media (max-width:720px){
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  main{padding:24px}
+  .page-header{padding:32px 24px}
+  h1{font-size:28px}
+  .toc{padding:16px 24px}
+  .callout-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">AGILE REFERENCE</span>
+  <span class="vol-tag">VOL.07 / 09</span>
+  <h1>CI/CDと開発プラクティス編</h1>
+  <div class="subtitle">CI/CD &amp; ENGINEERING PRACTICES — FROM XP TO DEVOPS</div>
+  <p class="lead">
+    XPが提唱した<b>継続的インテグレーション（CI）</b>。これが進化して現代の<b>CI/CD・DevOps</b>になりました。「コード書いてから本番リリースまで、いかに自動化するか」「いかにバグなく素早く届けるか」──これが現代の技術的アジャイルの中核です。本巻では<b>テスト戦略・ブランチ運用・デプロイパイプライン・フィーチャートグル</b>を網羅します。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#cicd">01 CI/CDの全体像</a></li>
+    <li><a href="#pyramid">02 テストピラミッド</a></li>
+    <li><a href="#branch">03 ブランチ戦略</a></li>
+    <li><a href="#trunk">04 トランクベース開発</a></li>
+    <li><a href="#pipeline">05 デプロイパイプライン</a></li>
+    <li><a href="#toggle">06 フィーチャートグル</a></li>
+    <li><a href="#release">07 リリース戦略</a></li>
+    <li><a href="#devops">08 DevOps文化</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="cicd">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>CI/CDの全体像</h2>
+    <span class="en">CI/CD OVERVIEW</span>
+  </div>
+  <p class="pattern-desc">
+    CI/CDは<b>3つの段階</b>を持ちます。<b>CI（Continuous Integration）</b>＝継続的統合、<b>CD（Continuous Delivery）</b>＝継続的デリバリー、<b>CD（Continuous Deployment）</b>＝継続的デプロイ。略すと同じ「CD」ですが、<b>明確に違う概念</b>です。ここを区別できると、現場で混乱しません。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">cicd.overview</span>
+      <span class="tag-desc">CI / Delivery / Deployment の違い</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3段階の関係</div>
+<div class="diagram">  ┌──────────────────────────────┐
+  │ CI                            │
+  │ Continuous Integration         │
+  │ コードを統合し、テストする       │
+  │ → ビルド+自動テストが成功      │
+  └────────────┬─────────────────┘
+               │
+  ┌────────────▼─────────────────┐
+  │ Continuous Delivery            │
+  │ いつでも本番に出せる状態を      │
+  │ <b>自動的</b>に維持              │
+  │ → デプロイは<b>人間がボタン押す</b>│
+  └────────────┬─────────────────┘
+               │
+  ┌────────────▼─────────────────┐
+  │ Continuous Deployment          │
+  │ テスト通過したら<b>自動で</b>     │
+  │ 本番デプロイまで実行            │
+  │ → 完全自動・人間介在なし        │
+  └──────────────────────────────┘
+
+  上から下へ自動化が進む</div>
+      </div>
+      <div class="code">
+<span class="comment">// 3つの違い・詳細比較</span>
+
+<span class="ann">@CI (Continuous Integration)</span>
+  目的: 統合を継続的に
+  対象: ソースコード
+  自動化: ビルド・テスト
+  結果: 「動くマスター」維持
+  
+<span class="ann">@Continuous Delivery</span>
+  目的: いつでも出せる状態
+  対象: デプロイ可能パッケージ
+  自動化: 環境準備・配信
+  結果: ボタン1つでリリース
+  
+<span class="ann">@Continuous Deployment</span>
+  目的: 完全自動デプロイ
+  対象: 本番環境
+  自動化: 本番デプロイまで
+  結果: 1日に数十回リリース
+
+<span class="comment">// 段階的に成熟する</span>
+
+<span class="kw">レベル0</span>: 手動ビルド・手動テスト
+   → 統合は怖い行為
+
+<span class="kw">レベル1</span>: CI 導入
+   → コミット毎に自動テスト
+   → マスターは常に動く
+
+<span class="kw">レベル2</span>: Continuous Delivery
+   → ステージング環境まで自動
+   → 本番リリースは人間判断
+
+<span class="kw">レベル3</span>: Continuous Deployment
+   → 全工程自動
+   → 1日数十回のデプロイ
+
+<span class="comment">// 業界のトップ企業</span>
+
+Amazon: 1秒に1回デプロイ
+Netflix: 1日数千回
+Etsy: 1日50回以上
+→ レベル3の世界
+
+<span class="comment">// 鉄則</span>
+段階的に進める
+いきなりレベル3は無謀</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「Continuous Delivery」と「Continuous Deployment」を混同しない</b>こと。前者は<b>「いつでも出せる」</b>状態、後者は<b>「自動で出す」</b>仕組み。<b>規制業界（金融・医療）</b>では Continuous Delivery 止まり、<b>Web系</b>では Continuous Deployment まで進むのが定番です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="pyramid">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>テストピラミッド</h2>
+    <span class="en">TEST PYRAMID</span>
+  </div>
+  <p class="pattern-desc">
+    自動テストには<b>階層</b>があります。Mike Cohn が提唱した<b>テストピラミッド</b>──下から<b>ユニット・統合・E2E</b>の順に積み上げる構造。<b>「下を厚く、上は薄く」</b>が鉄則。逆ピラミッド（<b>アイスクリームコーン</b>）になっている現場は危険信号です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">test.pyramid</span>
+      <span class="tag-desc">テスト階層の理想と現実</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// テストピラミッド（理想）</div>
+<div class="diagram">           ▲ 数少・遅・脆
+          ╱│╲ E2E (UI)
+         ╱ │ ╲ ブラウザ操作テスト
+        ╱──┼──╲
+       ╱   │   ╲ 統合テスト
+      ╱    │    ╲ API・DB連携
+     ╱─────┼─────╲
+    ╱      │      ╲ ユニットテスト
+   ╱       │       ╲ 関数・クラス単位
+  ▼ 数多・速・安定 ▼
+
+  下層ほど:
+   ✓ 数が多い
+   ✓ 実行が速い
+   ✓ 安定している
+   ✓ 修正コストが低い</div>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ 比率の目安：<b>ユニット70% / 統合20% / E2E 10%</b>
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 各層の特徴</span>
+
+<span class="ann">@ユニットテスト</span>
+  対象: 関数・クラス単位
+  速度: ミリ秒
+  個数: 数百〜数千
+  ツール: Jest, JUnit, pytest
+  例: 「税込価格を返す関数」
+
+<span class="ann">@統合テスト</span>
+  対象: 複数モジュール連携
+  速度: 数秒〜数十秒
+  個数: 数十〜百
+  ツール: Postman, REST Assured
+  例: 「APIからDBへの保存」
+
+<span class="ann">@E2Eテスト</span>
+  対象: UI から DB まで
+  速度: 数十秒〜分
+  個数: 十〜数十
+  ツール: Cypress, Playwright,
+        Selenium
+  例: 「注文完了までの一連操作」
+
+<span class="comment">// アンチパターン：アイスクリームコーン</span>
+
+  ▲ E2Eテスト多い
+   │ 
+   │ ← 大量のUIテスト
+   │   遅い・壊れやすい
+   │   修正コスト爆発
+  ▼
+   手動テスト
+   さらに上を覆う
+
+→ 「自動化したつもり」で
+  実は何も改善されない
+
+<span class="comment">// なぜ下層を厚くするか</span>
+
+<span class="kw">速度</span>: 数秒で全実行
+<span class="kw">特定</span>: バグの場所が明確
+<span class="kw">維持</span>: 仕様変更時に壊れにくい
+<span class="kw">数</span>: 多い → カバレッジ高い
+
+<span class="comment">// 鉄則</span>
+「<b>下に厚く投資せよ</b>」</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    現実には<b>「テスト不足のままE2Eだけ書く」</b>現場が多い。これは<b>アイスクリームコーン</b>の典型。<b>「E2Eテストがあるから安心」</b>と思い込みがちですが、E2Eは<b>遅く壊れやすい</b>ので、頻繁な実行に向きません。<b>下層から育てる</b>のが正攻法です。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="branch">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>ブランチ戦略</h2>
+    <span class="en">BRANCHING STRATEGY</span>
+  </div>
+  <p class="pattern-desc">
+    Git の運用方法、<b>ブランチ戦略</b>。代表的な3パターン──<b>Git Flow・GitHub Flow・GitLab Flow</b>。それぞれ哲学が違い、プロジェクトの特性で選びます。<b>「複雑すぎるブランチ運用は、それ自体がアンチパターン」</b>──現代の流れは<b>シンプル化</b>に向かっています。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git.branch-strategies</span>
+      <span class="tag-desc">3大ブランチ戦略</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3戦略の比較</div>
+        <table class="compare-table">
+          <tr><th>戦略</th><th>ブランチ数</th><th>適合</th></tr>
+          <tr><td>Git Flow</td><td>多（master/develop/feature/release/hotfix）</td><td>パッケージ製品・規制業界</td></tr>
+          <tr><td>GitHub Flow</td><td>少（main/feature のみ）</td><td>Web系・継続的デプロイ</td></tr>
+          <tr><td>GitLab Flow</td><td>中（main/環境ブランチ）</td><td>段階的デプロイ環境</td></tr>
+        </table>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ <b>「Git Flow」</b>は2010年に Vincent Driessen が提唱。当時革新的だったが、現在は<b>「複雑すぎる」</b>と見直しが進む。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// Git Flow（複雑）</span>
+
+<span class="kw">master</span>          ───●─────●──────●→ 本番
+<span class="kw">develop</span>    ──●─●─●─●─●─●─●─●→ 開発中
+<span class="kw">feature/X</span>     ╲ ╲╱
+<span class="kw">release/1.0</span>      ╲─●─●─●
+<span class="kw">hotfix</span>         ╲────●
+
+ブランチ5種類
+ルール多い
+学習コスト高い
+
+<span class="comment">// GitHub Flow（シンプル）</span>
+
+<span class="kw">main</span>          ──●─●─●─●─●→
+<span class="kw">feature/X</span>      ╲ ╱
+<span class="kw">feature/Y</span>        ╲ ╱
+                  ╲ ╱
+
+ブランチ2種類
+PRでマージ
+本番=main
+
+<span class="comment">// 各戦略のメリット・デメリット</span>
+
+<span class="ann">@Git Flow</span>
+  ✓ リリース管理が緻密
+  ✗ 学習コスト高い
+  ✗ 長期ブランチが発生
+  ✗ コンフリクト頻発
+
+<span class="ann">@GitHub Flow</span>
+  ✓ シンプル・直感的
+  ✓ 継続的デプロイ向き
+  ✗ 環境管理は別途必要
+
+<span class="ann">@GitLab Flow</span>
+  ✓ 環境ごとブランチ
+  ✓ ステージング→本番管理
+  △ 中間的な複雑さ
+
+<span class="comment">// 現代の流れ</span>
+
+<span class="kw">「シンプル化」</span>
+  → 多くの現場が Git Flow
+   から GitHub Flow へ移行
+   
+<span class="kw">「短命ブランチ」</span>
+  → 数時間〜1日で main にマージ
+  → 長期ブランチを避ける</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    Vincent Driessen 自身が2020年に<b>「Git Flow は2010年代の戦略だった。継続的デリバリーには合わない」</b>と発言しています。<b>「Git Flow が定番」</b>と思い込んでいる現場は、一度立ち止まる価値があります。<b>シンプルな運用ほどフローが速い</b>──カンバンと同じ原則です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="trunk">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>トランクベース開発</h2>
+    <span class="en">TRUNK-BASED DEVELOPMENT</span>
+  </div>
+  <p class="pattern-desc">
+    シンプル化の<b>究極形</b>が<b>トランクベース開発（TBD）</b>。<b>「全員が main（トランク）に直接コミットする」</b>──常識を覆す運用です。<b>Google・Facebook・Microsoft</b>等の超大規模組織が採用しており、<b>1日に複数回</b>main にマージするのが標準。フィーチャートグルとセットで使われます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">git.trunk-based</span>
+      <span class="tag-desc">トランクベースの哲学</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// TBDの基本</div>
+<div class="diagram">  [短命ブランチ TBD]
+  
+  main  ●━●━●━●━●━●━●━●━●→
+        ↑   ↑   ↑   ↑
+        全員が1日に複数回
+        小さな変更を直接マージ
+
+  ブランチ寿命: 数時間〜1日
+  PR: あってもごく短時間
+
+  [長命ブランチ (典型的)]
+  
+  main      ●━━━━━━━━━━━━━━━━●
+   feature   ●━━━━━━━━━━━━━━━━●
+              ↑
+              1週間〜1ヶ月
+
+  TBD の哲学:
+  「<b>統合は痛い。だから頻繁に</b>」</div>
+      </div>
+      <div class="code">
+<span class="comment">// TBDのルール</span>
+
+<span class="ann">@1. ブランチは短命</span>
+  寿命 < 1日
+  数時間で main にマージ
+
+<span class="ann">@2. 小さな変更</span>
+  1コミット = 1論理単位
+  PRは数百行以内
+
+<span class="ann">@3. 未完成機能は隠す</span>
+  フィーチャートグル使用
+  リリースとデプロイを分離
+
+<span class="ann">@4. 強力なCI</span>
+  すべてのコミットで
+  全テスト実行
+  main は常に動く状態
+
+<span class="ann">@5. 信頼の文化</span>
+  メンバー全員がmainに直接書く
+  → 互いに信頼
+
+<span class="comment">// なぜTBDが効くか</span>
+
+<span class="ann">@リトルの法則</span>
+  WIP = 進行中ブランチ数
+  WIPを減らせば
+  リードタイムが縮む
+
+<span class="ann">@統合コスト</span>
+  長期ブランチは
+  必ず統合コストを生む
+  → 短くすれば回避
+
+<span class="ann">@フィードバック速度</span>
+  即マージで
+  即統合テスト実行
+  → 問題発見が速い
+
+<span class="comment">// 採用企業</span>
+
+Google: ほぼ全社的に TBD
+Facebook: 大半が TBD
+Microsoft: 多くのチームで TBD
+LinkedIn, Salesforce など
+
+<span class="comment">// DORA研究の結論</span>
+
+<span class="kw">『Accelerate』</span>(2018) で
+ハイパフォーマンスチームの
+共通点として TBD が浮上
+
+<span class="kw">「短命ブランチ」</span>と
+<span class="kw">「頻繁な統合」</span>が
+パフォーマンス指標と相関
+
+<span class="comment">// アンチパターン</span>
+
+「TBDだから main に
+ とりあえずpush」
+→ テスト不十分でNG
+TBD には<b>強力なテスト</b>必須</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">裏技 —</div>
+    トランクベース開発を学ぶなら<b>trunkbaseddevelopment.com</b>が公式リソース。<b>『Accelerate』（Forsgren, Humble, Kim）</b>はDORAレポートを書籍化した名著で、<b>「ハイパフォーマンスなチームの共通点」</b>を統計的に示しています。「ブランチ寿命の短さ」がパフォーマンスと相関する事実は衝撃的です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="pipeline">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>デプロイパイプライン</h2>
+    <span class="en">DEPLOYMENT PIPELINE</span>
+  </div>
+  <p class="pattern-desc">
+    コードコミットから本番デプロイまでの<b>「自動化された流れ」</b>がデプロイパイプライン。Jez Humble の<b>『Continuous Delivery』</b>（2010）で体系化されました。<b>各ステージでチェックを行い、合格したら次へ</b>──失敗したらラインを止めて修正。これがソフトウェアの<b>「生産ライン」</b>です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">pipeline.stages</span>
+      <span class="tag-desc">標準的なパイプライン構成</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 標準的なステージ</div>
+<div class="diagram">  [1] Commit Stage（数分以内）
+       ├ コンパイル
+       ├ 単体テスト
+       └ 静的解析
+            │
+       NG → 失敗通知
+       OK ↓
+  [2] Integration Stage（〜10分）
+       ├ 統合テスト
+       └ 軽量受け入れテスト
+            │
+       OK ↓
+  [3] Staging Stage（〜30分）
+       ├ E2Eテスト
+       ├ 負荷試験
+       └ セキュリティスキャン
+            │
+       OK ↓
+  [4] Production Deploy
+       ├ Blue-Green
+       └ カナリアリリース
+            │
+            ↓
+       監視・観測</div>
+      </div>
+      <div class="code">
+<span class="comment">// 各ステージの設計原則</span>
+
+<span class="ann">@Fail Fast</span>
+  早いステージで失敗を検出
+  → 後段で失敗するほど高コスト
+
+<span class="ann">@Stage Independence</span>
+  各ステージは独立
+  並列実行可能なものは並列で
+
+<span class="ann">@Idempotency (冪等性)</span>
+  同じインプット → 同じアウトプット
+  リトライ可能
+
+<span class="ann">@Visibility</span>
+  パイプライン全体を見える化
+  どこで止まったか即わかる
+
+<span class="comment">// CI/CDツール</span>
+
+<span class="kw">GitHub Actions</span>: GitHub統合
+<span class="kw">GitLab CI</span>: GitLab統合
+<span class="kw">CircleCI</span>: 設定柔軟
+<span class="kw">Jenkins</span>: オンプレ定番
+<span class="kw">ArgoCD</span>: K8s向けGitOps
+<span class="kw">Spinnaker</span>: Netflix製・大規模
+
+<span class="comment">// YAMLでパイプライン定義の例</span>
+
+<span class="ann">@.github/workflows/main.yml</span>
+<span class="kw">name</span>: CI/CD
+<span class="kw">on</span>:
+  <span class="kw">push</span>:
+    <span class="kw">branches</span>: [main]
+
+<span class="kw">jobs</span>:
+  <span class="fn">test</span>:
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/checkout@v3
+      - <span class="kw">run</span>: npm install
+      - <span class="kw">run</span>: npm test
+
+  <span class="fn">deploy</span>:
+    <span class="kw">needs</span>: test
+    <span class="kw">steps</span>:
+      - <span class="kw">run</span>: ./deploy.sh
+
+<span class="comment">// 鉄則</span>
+
+<span class="kw">"If it hurts,</span>
+<span class="kw"> do it more often"</span>
+痛いことほど頻繁に
+→ 自動化が完成する</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    パイプラインは<b>「ソフトウェアの生産ライン」</b>。トヨタ生産方式の「<b>異常で止める（自働化）</b>」がそのまま適用されます。<b>パイプラインが赤くなったら全員で修正</b>。これがチームの規律になります。「<b>赤いビルドを放置するな</b>」は鉄則です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="toggle">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>フィーチャートグル</h2>
+    <span class="en">FEATURE TOGGLES</span>
+  </div>
+  <p class="pattern-desc">
+    フィーチャートグル（フィーチャーフラグ）は<b>「コードに組み込んだスイッチ」</b>。デプロイとリリースを<b>分離</b>します。未完成機能をmainにマージしても、トグルOFFにしておけば<b>ユーザーには見えない</b>。これがトランクベース開発を可能にする秘密兵器です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">feature.toggles</span>
+      <span class="tag-desc">トグルの4種類</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4種のフィーチャートグル</div>
+        <table class="compare-table">
+          <tr><th>種類</th><th>寿命</th><th>用途</th></tr>
+          <tr><td>Release</td><td>短期</td><td>未完成機能の隠蔽</td></tr>
+          <tr><td>Experiment</td><td>中期</td><td>A/Bテスト</td></tr>
+          <tr><td>Ops</td><td>長期</td><td>機能の緊急停止</td></tr>
+          <tr><td>Permission</td><td>永続</td><td>有料機能・ロール別</td></tr>
+        </table>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ Martin Fowler が分類。<b>用途に応じて使い分け</b>る。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 基本的な使い方</span>
+
+<span class="kw">if</span> (featureFlag.<span class="fn">isEnabled</span>(<span class="str">'new-checkout'</span>)) {
+  <span class="fn">newCheckout</span>();
+} <span class="kw">else</span> {
+  <span class="fn">legacyCheckout</span>();
+}
+
+<span class="comment">// メリット</span>
+
+<span class="ann">@デプロイとリリースの分離</span>
+  デプロイ: コードを配置
+  リリース: 機能を有効化
+  
+  → 別々のタイミングで実行
+
+<span class="ann">@段階的ロールアウト</span>
+  最初は内部ユーザーのみ
+  → 5%のユーザーに公開
+  → 50%に拡大
+  → 100%
+
+<span class="ann">@緊急停止</span>
+  問題が起きたら即OFF
+  ロールバック不要
+
+<span class="ann">@A/Bテスト</span>
+  パターンAとB両方デプロイ
+  ユーザー群でランダム振分
+
+<span class="comment">// アンチパターン</span>
+
+<span class="kw">トグル爆発</span>
+  気づくと数百のトグル
+  → コードがif地獄
+  → デバッグ困難
+
+<span class="kw">トグル放置</span>
+  Release トグルなのに
+  リリース後も削除されない
+  → 死んだコード残存
+
+<span class="comment">// 対策</span>
+
+<span class="ann">@命名規則</span>
+  種類_期限_名称
+  例: REL_2024Q1_new_search
+
+<span class="ann">@期限設定</span>
+  Release は3ヶ月以内に
+  削除がルール
+
+<span class="ann">@定期的な棚卸し</span>
+  四半期ごとに不要トグル削除
+
+<span class="comment">// ツール</span>
+LaunchDarkly (デファクト)
+Split.io
+Unleash (OSS)
+ConfigCat
+独自実装 (シンプル用途)
+
+<span class="comment">// 結論</span>
+<span class="kw">トグルは強力</span>
+<span class="kw">だが管理コストもある</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    Martin Fowler の記事<b>「Feature Toggles」</b>は最も読まれているリソースの1つ。<b>「リリース型トグルは寿命を短く」</b>「<b>パーミッション型は別管理</b>」など、種類別の運用が大事。<b>「とりあえずトグル」</b>は地獄への道です。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="release">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>リリース戦略</h2>
+    <span class="en">RELEASE STRATEGIES</span>
+  </div>
+  <p class="pattern-desc">
+    本番への<b>新バージョンの出し方</b>には複数のパターンがあります。<b>Blue-Green・カナリア・ローリング・シャドウ</b>──それぞれの<b>安全性とコスト</b>のトレードオフを理解しておくと、現場で適切な選択ができます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">release.strategies</span>
+      <span class="tag-desc">主要なリリース戦略</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4つの戦略</div>
+<div class="diagram">  [Blue-Green]
+   Blue (現行) → Green (新)
+   一斉切替
+   即座のロールバック可能
+   コスト: 2倍のリソース必要
+
+  [Canary]
+   1% → 10% → 50% → 100%
+   段階的に流し増やす
+   問題発生時の影響限定
+
+  [Rolling]
+   サーバを順次入れ替え
+   サービス停止なし
+   一般的・低コスト
+
+  [Shadow]
+   本番トラフィックを
+   新環境にも複製送信
+   実トラフィックで検証
+   ユーザーには影響ゼロ</div>
+      </div>
+      <div class="code">
+<span class="comment">// 各戦略の詳細</span>
+
+<span class="ann">@Blue-Green Deployment</span>
+  仕組み:
+   Blue (現行本番)
+   Green (新環境準備)
+   ロードバランサーで切替
+  
+  メリット:
+   ✓ 即座のロールバック
+   ✓ ダウンタイムゼロ
+  デメリット:
+   ✗ 2倍のリソース
+   ✗ DBマイグレーション複雑
+
+<span class="ann">@Canary Release</span>
+  仕組み:
+   一部ユーザーから段階公開
+   メトリクスを観察しながら拡大
+  
+  メリット:
+   ✓ 問題早期発見
+   ✓ 影響範囲限定
+  デメリット:
+   ✗ 段階管理の手間
+   ✗ 監視体制必須
+
+<span class="ann">@Rolling Deployment</span>
+  仕組み:
+   N台のサーバを順次切替
+   1台ずつ新バージョンに
+  
+  メリット:
+   ✓ シンプル
+   ✓ 既存インフラで実現
+  デメリット:
+   ✗ ロールバック遅い
+   ✗ 旧新混在期間あり
+
+<span class="ann">@Shadow Deployment</span>
+  仕組み:
+   本番トラフィック複製
+   新環境で並行処理
+   結果は破棄
+  
+  メリット:
+   ✓ 実トラフィックで検証
+   ✓ ユーザー影響ゼロ
+  デメリット:
+   ✗ 副作用ある処理に不向き
+
+<span class="comment">// 業界別の典型</span>
+
+Webサービス: Canary が定番
+モバイル: 段階配信
+エンタープライズ: Blue-Green
+金融: Shadow → Blue-Green</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>Netflix・Google</b>等は<b>「カナリア＋自動ロールバック」</b>を組み合わせています。「メトリクスが悪化したら自動でロールバック」──Spinnaker等のツールで実現可能。<b>人間の判断を介さずに安全性を確保</b>するのが、現代のハイパフォーマンスチームの定番です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="devops">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>DevOps文化</h2>
+    <span class="en">DEVOPS CULTURE</span>
+  </div>
+  <p class="pattern-desc">
+    CI/CD の延長線上にあるのが<b>DevOps</b>。「<b>開発と運用の壁を取り払う</b>」文化運動です。<b>「You Build It, You Run It」</b>（作った人が運用する）が原則。Amazon の Werner Vogels が広めたこの言葉が、DevOpsの本質を端的に表しています。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">devops.culture</span>
+      <span class="tag-desc">DevOpsの本質</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// CALMS フレームワーク</div>
+        <ul class="bullet">
+          <li><b>C</b>ulture（文化）── 協働と信頼の文化を醸成</li>
+          <li><b>A</b>utomation（自動化）── 反復作業を全自動化</li>
+          <li><b>L</b>ean（リーン）── ムダ排除・フロー最適化</li>
+          <li><b>M</b>easurement（計測）── データで判断・継続改善</li>
+          <li><b>S</b>haring（共有）── 知識・成功・失敗の共有</li>
+        </ul>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ Damon Edwards &amp; John Willis が提唱した DevOps 5原則。
+        </p>
+        <div class="callout-row" style="margin-top:14px">
+          <div class="callout-box ng">
+            <div class="callout-label">DevOps 以前</div>
+            開発：「動いた、リリースしろ」<br>
+            運用：「動かない、ロールバック」<br>
+            互いに責任転嫁
+          </div>
+          <div class="callout-box ok">
+            <div class="callout-label">DevOps 以後</div>
+            開発と運用が同じチーム<br>
+            「自分たちで作り、運用する」<br>
+            責任を共有
+          </div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// DevOpsの起源</span>
+
+<span class="kw">2009</span>: Velocity Conference
+       John Allspaw &amp; Paul Hammond
+       <span class="str">"10+ Deploys Per Day"</span>
+       Flickrの事例発表
+       → DevOps運動の始まり
+
+<span class="kw">2010</span>: DevOpsDays Ghent
+       「DevOps」用語確立
+
+<span class="kw">2013</span>: 『The Phoenix Project』
+       Gene Kim 著
+       小説形式でDevOpsを伝授
+
+<span class="kw">2016</span>: 『The DevOps Handbook』
+       実践的なガイド
+
+<span class="kw">2018</span>: 『Accelerate』
+       Forsgren, Humble, Kim
+       DORAレポート書籍化
+
+<span class="comment">// DORA 4 Key Metrics</span>
+
+<span class="ann">@デプロイ頻度</span>
+  Elite: 1日複数回
+  High: 週〜日
+  Medium: 月
+  Low: 半年以上
+
+<span class="ann">@変更リードタイム</span>
+  Elite: 1日以内
+  High: 1週間
+  Medium: 1ヶ月
+  Low: 数ヶ月
+
+<span class="ann">@変更失敗率</span>
+  Elite: 0〜15%
+  High: 16〜30%
+  Medium: 16〜30%
+  Low: 46〜60%
+
+<span class="ann">@復旧時間 (MTTR)</span>
+  Elite: 1時間以内
+  High: 1日
+  Medium: 1日〜1週間
+  Low: 1週間以上
+
+<span class="comment">// 結論</span>
+
+<span class="kw">DevOps = ツールではない</span>
+<span class="kw">DevOps = 文化である</span>
+
+ツールはCALMSの「A」だけ
+他の4つは組織と人の話</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「DevOps部署を作る」</b>のはアンチパターン。これは<b>新しい壁を作る</b>だけ。本来のDevOpsは<b>「開発と運用の壁を消す」</b>運動です。Site Reliability Engineering（<b>SRE</b>）も同じ哲学。Google の<b>『SRE Book』</b>は無料公開されており必読。<b>「You Build It, You Run It」</b>を組織でどう実現するかが、DevOps成功の鍵です。<span class="star">★★★</span>
+  </div>
+
+  <div class="tip" style="margin-top:48px;">
+    <div class="tip-head">NEXT STEP —</div>
+    技術プラクティスの集大成を見終わりました。CI/CD・テスト戦略・ブランチ運用・デプロイ・DevOps──「アジャイル」の<b>技術的全体像</b>が見えたはずです。次の Vol.8 は<b>「スケーリングと組織」</b>。1チームのアジャイルを<b>10チーム・100チーム</b>に広げる課題。<b>LeSS・SAFe・Spotifyモデル</b>を扱います。最後の Vol.9 はQ&A形式の<b>「困った時のアジャイル」</b>でシリーズを締めます。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>AGILE REFERENCE — VOL.07 / CI/CD &amp; PRACTICES</span>
+  <span>◆ NEXT → VOL.08 SCALING &amp; ORGANIZATION</span>
+</footer>
+
+</body>
+</html>

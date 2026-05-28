@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アジャイル開発編 スケーリングと組織 Vol.8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3c1810;
+  --paper:#ead0b0;
+  --paper-2:#d5b288;
+  --accent:#a83612;
+  --accent-2:#bf8854;
+  --accent-3:#702612;
+  --muted:#86603f;
+  --line:#a98756;
+  --code-bg:#220e08;
+  --code-text:#ead0b0;
+  --panel-bg:#e1c498;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;font-size:15px}
+.page-header{position:relative;padding:64px 48px 48px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'◆';position:absolute;right:-20px;top:-40px;font-size:340px;color:var(--accent);opacity:0.15;font-family:'Shippori Mincho',serif;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:24px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+.lead{max-width:640px;margin-top:24px;font-size:15px;line-height:2}
+.toc{background:var(--paper-2);padding:24px 48px;border-bottom:1px solid var(--line)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:12px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:'—';position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+main{padding:48px}
+section{margin-bottom:72px}
+.section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:640px;margin-bottom:24px;font-size:14px;line-height:2}
+.demo-card{background:#fff;border:1px solid var(--line);overflow:hidden}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}
+.code .type{color:#c2a3ff}
+.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}
+.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}
+.code .ann{color:#f7c08a}
+.code .step{color:#ffc88a;font-weight:600}
+.tip{border-left:3px solid var(--accent);background:rgba(168,54,18,0.08);padding:16px 20px;margin:24px 0;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;margin-bottom:6px;font-weight:600}
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px}
+b{font-weight:700;color:var(--accent-3)}
+.diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;color:var(--ink);background:rgba(255,255,255,0.4);padding:14px;border:1px dashed var(--line);white-space:pre;overflow-x:auto}
+.callout-row{display:flex;gap:12px;margin-top:12px}
+.callout-box{flex:1;padding:12px;font-size:12px;background:#fff;border:1px solid var(--line)}
+.callout-box.ng{border-left:3px solid #c43030}
+.callout-box.ok{border-left:3px solid var(--accent)}
+.callout-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;margin-bottom:4px;color:var(--muted)}
+ul.bullet{list-style:none;margin-top:8px}
+ul.bullet li{padding-left:18px;position:relative;margin-bottom:6px;font-size:13px}
+ul.bullet li::before{content:'◇';position:absolute;left:0;color:var(--accent);font-size:11px}
+.star{color:var(--accent);font-weight:700;letter-spacing:0.1em}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.compare-table th,.compare-table td{padding:8px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.compare-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;color:var(--accent-3)}
+.compare-table tr:nth-child(even) td{background:rgba(234,208,176,0.5)}
+.page-footer{border-top:2px solid var(--ink);padding:32px 48px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+@media (max-width:720px){
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  main{padding:24px}
+  .page-header{padding:32px 24px}
+  h1{font-size:28px}
+  .toc{padding:16px 24px}
+  .callout-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">AGILE REFERENCE</span>
+  <span class="vol-tag">VOL.08 / 09</span>
+  <h1>スケーリングと組織編</h1>
+  <div class="subtitle">SCALING AGILE — FROM ONE TEAM TO ENTERPRISE</div>
+  <p class="lead">
+    1チームのアジャイルを<b>10チーム・100チーム</b>に拡げる時、何が起きるのか。これが<b>スケーリング</b>の課題です。<b>LeSS・SAFe・Spotifyモデル・Scrum@Scale</b>──多くのフレームワークが提唱されてきましたが、<b>「すべてが万能ではない」</b>のが現実。本巻は各フレームワークの哲学と、現場で見るアンチパターンを扱います。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#why-hard">01 なぜスケーリングは難しいか</a></li>
+    <li><a href="#less">02 LeSS</a></li>
+    <li><a href="#safe">03 SAFe</a></li>
+    <li><a href="#spotify">04 Spotifyモデル</a></li>
+    <li><a href="#scrumatscale">05 Scrum@Scale</a></li>
+    <li><a href="#choose">06 フレームワーク選択</a></li>
+    <li><a href="#antipattern">07 スケーリングのアンチパターン</a></li>
+    <li><a href="#culture">08 組織変革の現実</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="why-hard">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>なぜスケーリングは難しいか</h2>
+    <span class="en">WHY SCALING IS HARD</span>
+  </div>
+  <p class="pattern-desc">
+    アジャイルは元々<b>小さなチームを前提</b>に設計されました。Scrumは<b>3〜10人</b>、XPも同様。これを100人・1000人規模に拡大しようとすると、<b>コミュニケーションコスト・依存関係・調整負担</b>が指数的に膨らみます。<b>「スケーリング＝単純な掛け算」</b>では絶対に成功しません。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">scaling.difficulty</span>
+      <span class="tag-desc">スケーリングの根本問題</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 規模による課題変化</div>
+        <table class="compare-table">
+          <tr><th>規模</th><th>主な課題</th></tr>
+          <tr><td>1チーム（〜10人）</td><td>チーム内の協働</td></tr>
+          <tr><td>2〜3チーム（〜30人）</td><td>同期と依存管理</td></tr>
+          <tr><td>5〜10チーム（〜100人）</td><td>アーキテクチャ・調整</td></tr>
+          <tr><td>10〜50チーム（〜500人）</td><td>組織設計・文化</td></tr>
+          <tr><td>50チーム以上</td><td>会社全体の経営課題</td></tr>
+        </table>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ <b>規模が変わると課題の性質が変わる</b>。1チームの解は10チームには効かない。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// コミュニケーションパスの数</span>
+
+<span class="kw">N人チーム</span>のコミュニケーションパス:
+   P = N × (N-1) / 2
+
+<span class="ann">@5人</span>:  10 パス
+<span class="ann">@10人</span>: 45 パス
+<span class="ann">@20人</span>: 190 パス
+<span class="ann">@50人</span>: 1,225 パス
+<span class="ann">@100人</span>: 4,950 パス
+
+→ 急激に膨らむ
+→ 全員が情報を共有できなくなる
+
+<span class="comment">// ダンバー数</span>
+
+人類学者 Robin Dunbar の研究:
+人間が安定した社会関係を
+保てる人数 = <b>約150人</b>
+
+組織がこれを超えると
+形式的なルールが必須に
+→ 文化が変質する
+
+<span class="comment">// スケーリングの3課題</span>
+
+<span class="ann">@1: 同期</span>
+  複数チームの作業を揃える
+  → スプリント同期・PI Planning
+
+<span class="ann">@2: 依存関係</span>
+  チーム間で互いに必要なもの
+  → アーキテクチャ・API契約
+
+<span class="ann">@3: アライメント</span>
+  全員が同じ方向を向く
+  → ビジョン・ロードマップ
+
+<span class="comment">// 結論</span>
+
+<span class="kw">スケーリング</span> ≠
+<span class="kw">「アジャイルチームの</span>
+<span class="kw">単純な複製」</span>
+
+<b>新たな問題群</b>が現れる
+それに対応する仕組みが必要</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「うまく回っている1チーム」を10コピーすれば10チームでうまく回る</b>は完全な間違い。<b>規模の問題は質的に異なる</b>。これを理解せずに「スプリント同期しよう」「合同レトロやろう」と表層を真似ると失敗します。スケーリングは<b>組織全体の設計問題</b>です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="less">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>LeSS</h2>
+    <span class="en">LARGE-SCALE SCRUM</span>
+  </div>
+  <p class="pattern-desc">
+    <b>LeSS（Large-Scale Scrum）</b>は<b>「Scrumをそのまま大きくする」</b>哲学。Craig Larman &amp; Bas Vodde が提唱。<b>「シンプルを保つ」</b>を最重視し、新しい役割や階層を増やさない方針です。Scrumの原則に忠実なため、Scrum熟練チームには馴染みやすい構造です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">scaling.less</span>
+      <span class="tag-desc">LeSSの構造</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// LeSSの基本構造</div>
+<div class="diagram">  [LeSS (2〜8チーム)]
+  
+  ┌─────────────────────┐
+  │ 1人のプロダクトオーナー │
+  │   1つのプロダクトBL   │
+  └──────────┬──────────┘
+              │
+   ┌──────┬──┴──┬──────┐
+   ▼      ▼     ▼      ▼
+  Team1  Team2  ...   Team8
+    │     │      │     │
+  各チームはScrumを実践
+
+  [LeSS Huge (8チーム以上)]
+   エリア(Area)で分割
+   各エリアにエリアPO配置</div>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ <b>PO は1人</b>。<b>バックログも1つ</b>。これがLeSSの絶対原則。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// LeSSの10原則（抜粋）</span>
+
+<span class="ann">@1. Large-Scale Scrum is Scrum</span>
+  → スケールしてもScrum
+
+<span class="ann">@2. Empirical Process Control</span>
+  → 経験的プロセス制御
+
+<span class="ann">@3. Whole-Product Focus</span>
+  → 全プロダクト視点
+  → 個々の機能ではなく
+    全体を最適化
+
+<span class="ann">@4. Customer-Centric</span>
+  → 顧客中心
+
+<span class="ann">@5. Continuous Improvement</span>
+  → 完全性への絶え間ない改善
+
+<span class="ann">@6. Lean Thinking</span>
+  → リーン思想
+
+<span class="ann">@7. Systems Thinking</span>
+  → システム思考
+
+<span class="comment">// LeSSの特徴的なイベント</span>
+
+<span class="kw">スプリントプランニング1</span>
+  全チーム合同
+  「何を作るか」分担
+
+<span class="kw">スプリントプランニング2</span>
+  各チーム個別
+  「どう作るか」
+
+<span class="kw">合同レビュー</span>
+  全チームが集まり
+  全インクリメントをデモ
+
+<span class="kw">合同レトロ</span>
+  「私たちの<b>連携</b>を改善」
+
+<span class="comment">// 採用基準</span>
+
+<span class="ann">@LeSS が合う</span>
+  ✓ 1つのプロダクトに集中
+  ✓ Scrum 熟練済み
+  ✓ シンプル志向の組織
+
+<span class="ann">@LeSS が合わない</span>
+  ✗ 複数プロダクト並走
+  ✗ 既存階層を残したい
+  ✗ 「役職」を増やしたい
+
+<span class="comment">// 採用企業</span>
+JPMorgan, BMW
+シンガポール政府
+…シンプル志向の組織</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    LeSS の公式サイト<b>less.works</b>には豊富な日本語資料があります。<b>『Large-Scale Scrum』</b>（Larman &amp; Vodde）は分厚いが必読。<b>「Scrumに新しい階層を持ち込まない」</b>頑なな姿勢が特徴。「シンプルさは複雑さを征服する」という著者の信念が貫かれています。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="safe">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>SAFe</h2>
+    <span class="en">SCALED AGILE FRAMEWORK</span>
+  </div>
+  <p class="pattern-desc">
+    <b>SAFe（Scaled Agile Framework）</b>は、<b>大企業向けに体系化された</b>最も詳細なスケーリング手法。Dean Leffingwell が提唱。<b>役職と階層が多く、ルールも詳細</b>。「LeSSと真逆の方向性」と評されることも。世界の大企業で最も採用率が高いフレームワークです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">scaling.safe</span>
+      <span class="tag-desc">SAFeの構造</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// SAFeの4階層</div>
+<div class="diagram">  ┌──────────────────────────┐
+  │ Portfolio (ポートフォリオ)  │
+  │ 戦略・投資判断              │
+  └────────────┬─────────────┘
+                │
+  ┌─────────────▼────────────┐
+  │ Large Solution             │
+  │ (任意・超大規模時のみ)      │
+  └────────────┬─────────────┘
+                │
+  ┌─────────────▼────────────┐
+  │ Essential (ART)            │
+  │ Agile Release Train         │
+  │ 5〜12 チームの束ね単位       │
+  │ PI Planning で同期          │
+  └────────────┬─────────────┘
+                │
+  ┌─────────────▼────────────┐
+  │ Team                       │
+  │ Scrum or Kanban 単一チーム  │
+  └──────────────────────────┘
+
+  PI = Program Increment (10週間)</div>
+      </div>
+      <div class="code">
+<span class="comment">// SAFeの特徴的な要素</span>
+
+<span class="ann">@PI Planning</span>
+  10週間ごとに
+  全チーム合同で計画
+  数百人が一同に会する
+  「2日間の超大イベント」
+
+<span class="ann">@ART</span> (Agile Release Train)
+  5〜12チームの束ね単位
+  共通の目標で動く
+  Release Train Engineer (RTE)
+  が運営
+
+<span class="ann">@役職リスト</span>
+  Release Train Engineer
+  Solution Train Engineer
+  System Architect
+  Product Manager
+  Business Owner
+  Lean Portfolio Manager
+  Epic Owner
+  ... 多数
+
+<span class="comment">// SAFeの賛否両論</span>
+
+<span class="ann">@肯定派</span>
+  ✓ 大企業に即適用可
+  ✓ 詳細手順書あり
+  ✓ コンサル支援豊富
+  ✓ 経営層に説明しやすい
+
+<span class="ann">@否定派</span>
+  ✗ 階層が多すぎ
+  ✗ 役職が多すぎ
+  ✗ 「アジャイル」と呼べるか?
+  ✗ ScrumGod が批判
+   "Dark SAFe"とも揶揄される
+
+<span class="comment">// 業界の声</span>
+
+「<span class="str">"SAFeは大企業の</span>
+ <span class="str">既存階層を温存できる</span>
+ <span class="str">"アジャイル風"の仕組み"</span>」
+       ↑ 厳しい批判
+
+「<span class="str">"完璧でなくても</span>
+ <span class="str">移行のための足場として価値"</span>」
+       ↑ 擁護論
+
+<span class="comment">// 採用企業</span>
+Cisco, Lockheed Martin
+富士通, 多くの保険会社
+規模・規制重視の組織で人気</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    SAFe は<b>「大企業の既存階層を温存できる」</b>のが採用率の高さの理由。<b>批判派</b>は「これはアジャイルではなくウォーターフォール風アジャイル」と切り捨て、<b>擁護派</b>は「移行段階の現実解」と評価。<b>正しい答えはなく、組織の成熟度・現実制約による選択</b>です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="spotify">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>Spotifyモデル</h2>
+    <span class="en">SPOTIFY MODEL</span>
+  </div>
+  <p class="pattern-desc">
+    Spotify が公開した<b>独自の組織モデル</b>。<b>Squad・Tribe・Chapter・Guild</b>という階層構造で、フレームワークというより<b>「文化」</b>として広まりました。<b>「Spotifyモデルは Spotify でも完全にはやってない」</b>とSpotify社員が認めた逸話も。憧れと現実のギャップが大きい例です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">scaling.spotify</span>
+      <span class="tag-desc">Spotifyの4階層</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// Spotifyモデルの4階層</div>
+<div class="diagram">  ━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+  Squad (チーム)
+   6〜12人の自律的単位
+   1つのミッション
+   Scrum や Kanban を選択
+   
+  Tribe (部族)
+   関連する Squad の集合
+   ダンバー数で40〜150人
+   
+  Chapter (章)
+   横断的な専門グループ
+   例: 全 Squad のフロント担当
+   技術交流・教育の場
+   
+  Guild (ギルド)
+   関心に基づく緩い集まり
+   例: AI ガード, アジャイル研究
+   自発的参加</div>
+      </div>
+      <div class="code">
+<span class="comment">// Spotifyモデルの特徴</span>
+
+<span class="ann">@Squadの自律性</span>
+  各 Squad が
+  Scrum/Kanban/Scrumban
+  自由に選択
+  「ミニスタートアップ」
+
+<span class="ann">@マトリクス組織</span>
+  Squad: ミッション単位
+  Chapter: 専門単位
+  → 両方の上司がいる
+
+<span class="ann">@文化重視</span>
+  「Failure Friday」
+  失敗を学びに変える文化
+  「Hack Week」
+  自由開発期間
+
+<span class="comment">// 公開の経緯</span>
+
+<span class="kw">2012</span>: Henrik Kniberg らが
+       Squad モデルを公開
+       業界に衝撃
+
+<span class="kw">2014</span>: ビデオでさらに広まる
+       多くの企業が真似
+
+<span class="kw">2016</span>: Spotify エンジニアが
+       「<b>我々もこの通りには</b>
+        <b>やっていない</b>」と発言
+       業界騒然
+
+<span class="kw">2020〜</span>: 「Spotify モデル神話」
+       の見直しが進む
+
+<span class="comment">// 業界の教訓</span>
+
+<span class="ann">@ベストプラクティスの罠</span>
+  他社の成功事例を
+  そのまま真似ても
+  自社の文脈が違うと失敗
+
+<span class="ann">@「モデル」の幻想</span>
+  Squad/Tribe は<b>言葉</b>
+  本質は「自律」「信頼」
+  これらの<b>文化</b>が重要
+
+<span class="comment">// 結論</span>
+
+Spotify モデルは
+<span class="kw">「インスピレーション」</span>
+として参考にせよ
+<span class="kw">「処方箋」</span>として
+使うのは危険</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">裏技 —</div>
+    <b>「Spotify は Spotify モデルをやっていない」</b>とは、2016年の社内ブログで明かされた事実。<b>「組織モデルは進化し続けるもの」</b>であり、<b>2012年のモデルを2024年に丸コピーする</b>のはアジャイル精神に反します。<b>「真似より対話」</b>──各組織が自分の文脈で模索すべきです。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="scrumatscale">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>Scrum@Scale</h2>
+    <span class="en">SCRUM@SCALE</span>
+  </div>
+  <p class="pattern-desc">
+    <b>Scrum@Scale</b>は<b>Jeff Sutherland</b>（Scrum共同創始者）が提唱したスケーリング手法。<b>「Scrum of Scrums」</b>の発展形で、複数のScrumを<b>「フラクタル構造」</b>で組み上げます。LeSSと似ていますが、より<b>「経営戦略」</b>を扱う領域まで踏み込みます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">scaling.scrum-at-scale</span>
+      <span class="tag-desc">フラクタル構造</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// フラクタル構造</div>
+<div class="diagram">  [単一 Scrum チーム]
+   PO + SM + 開発者
+   ↓ スケール
+  
+  [Scrum of Scrums]
+   5チームの代表者で同期
+   → "EAT" (Executive Action Team)
+   → "EMS" (Executive MetaScrum)
+  
+   ↓ さらにスケール
+  
+  [Scrum of Scrum of Scrums]
+   同じパターンを繰り返す
+   フラクタル
+
+  ━━━━━━━━━━━━━━━━━━━━━
+  各階層が「Scrum」の構造
+  同じパターンの拡大
+  ━━━━━━━━━━━━━━━━━━━━━</div>
+      </div>
+      <div class="code">
+<span class="comment">// Scrum@Scaleの構造</span>
+
+<span class="ann">@2つのサイクル</span>
+
+<span class="kw">SDP (Scrum Master Cycle)</span>
+  「どう作るか」
+  How サイクル
+  SoS, SoSoS と階層構造
+
+<span class="kw">PDP (Product Owner Cycle)</span>
+  「何を作るか」
+  What サイクル
+  MetaScrum, EMS と階層
+
+<span class="ann">@SoS (Scrum of Scrums)</span>
+  代表が定期同期
+  「他チームを止めて<b>いる</b>こと
+   止めて<b>いない</b>こと」
+  を共有
+
+<span class="ann">@EAT</span>
+  Executive Action Team
+  経営層レベルの Scrum
+  組織の障害を除去
+
+<span class="ann">@EMS</span>
+  Executive MetaScrum
+  プロダクト戦略の意思決定
+
+<span class="comment">// LeSSとの違い</span>
+
+<span class="kw">LeSS</span>:
+  経営に踏み込まない
+  「Scrum を大きく」のみ
+
+<span class="kw">Scrum@Scale</span>:
+  経営戦略まで Scrum 化
+  「組織全体の SoS 化」
+
+<span class="comment">// メリット</span>
+
+✓ 完全な対称性
+✓ 経営層まで巻き込める
+✓ Scrum 思考の徹底
+
+<span class="comment">// デメリット</span>
+
+✗ 経営層の理解が必須
+✗ 階層が深くなると同期コスト
+✗ 経営層が Scrum 嫌うと崩壊
+
+<span class="comment">// 採用</span>
+3M, John Deere, Bayer
+SoS 部分のみ取り入れ
+ハイブリッド運用が多い</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「Scrum of Scrums」</b>という用語は元々 Jeff Sutherland が1996年に IDX 社で導入したのが起源。<b>Scrum@Scale</b>はこれを体系化したもの。<b>「経営層を Scrum 化する」</b>という野心が特徴。経営層の協力が前提なので、トップダウンの覚悟が要ります。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="choose">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>フレームワーク選択</h2>
+    <span class="en">CHOOSING A FRAMEWORK</span>
+  </div>
+  <p class="pattern-desc">
+    結局<b>「どれを採用すべきか」</b>。答えは<b>「組織の文化と現状」</b>で決まります。同じ会社でも、部門ごとに違うフレームワークを採用するのも普通。<b>「フレームワーク選びは目的ではなく手段」</b>──組織の成熟度を見極めて選ぶことが大事です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">scaling.choose</span>
+      <span class="tag-desc">どれを選ぶか判断軸</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// フレームワーク比較</div>
+        <table class="compare-table">
+          <tr><th>軸</th><th>LeSS</th><th>SAFe</th><th>Spotify</th><th>Scrum@Scale</th></tr>
+          <tr><td>複雑さ</td><td>低</td><td>高</td><td>中</td><td>中</td></tr>
+          <tr><td>規模</td><td>〜8</td><td>10〜100</td><td>柔軟</td><td>柔軟</td></tr>
+          <tr><td>階層数</td><td>少</td><td>多</td><td>中</td><td>中</td></tr>
+          <tr><td>役職</td><td>少</td><td>多</td><td>中</td><td>少</td></tr>
+          <tr><td>経営層</td><td>関与少</td><td>強関与</td><td>緩い</td><td>強関与</td></tr>
+          <tr><td>習得難易</td><td>低</td><td>高</td><td>中</td><td>中</td></tr>
+        </table>
+      </div>
+      <div class="code">
+<span class="comment">// 判断のヒント</span>
+
+<span class="ann">@Scrum熟練組織なら</span>
+  → LeSS
+  シンプル維持できる
+
+<span class="ann">@大企業・規制業界なら</span>
+  → SAFe
+  既存階層と整合性
+  経営層に説明しやすい
+
+<span class="ann">@文化的に自律性高いなら</span>
+  → Spotify インスパイア
+  ガイドラインに留める
+
+<span class="ann">@経営層もアジャイル理解</span>
+  → Scrum@Scale
+  全社的に統一思想
+
+<span class="comment">// 「正解」はないので</span>
+
+<span class="kw">小さく始める</span>
+  まず1チームでアジャイル
+  実績作る
+
+<span class="kw">徐々に拡げる</span>
+  2〜3チームに増やしてみる
+  問題点を観察
+
+<span class="kw">必要になったら導入</span>
+  「フレームワーク必要」
+  と感じてから検討
+
+<span class="comment">// 注意</span>
+
+<span class="kw">フレームワーク先行は失敗</span>
+  「SAFe導入する」
+  と決めてから現場展開
+  → 形だけになる
+
+<span class="kw">現場発で必要を確認</span>
+  「同期に困った」
+  「アライメントが取れない」
+  → そこで初めて検討
+
+<span class="comment">// 結論</span>
+
+<span class="kw">フレームワークは</span>
+<span class="kw">手段であって目的ではない</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    アジャイルコーチに<b>「うちはどのフレームワークが良いですか？」</b>と聞いた時、即答する人は怪しい。良いコーチは<b>「まず現状を見せてください」</b>と返します。<b>フレームワーク選びは、現状分析の後</b>。逆順は失敗パターンです。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="antipattern">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>スケーリングのアンチパターン</h2>
+    <span class="en">SCALING ANTI-PATTERNS</span>
+  </div>
+  <p class="pattern-desc">
+    スケーリングの<b>失敗例</b>には<b>明確なパターン</b>があります。「<b>役職だけ増やす</b>」「<b>会議体で同期しようとする</b>」「<b>ツール導入で解決する</b>」──これらは<b>失敗への高速道路</b>。事前に知っておけば回避できます。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">scaling.anti-patterns</span>
+      <span class="tag-desc">よくある失敗パターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 5大アンチパターン</div>
+        <ul class="bullet">
+          <li><b>「アジャイル部署」を作る</b> ── 既存組織の上に乗せるだけで形骸化</li>
+          <li><b>役職だけ増やす</b> ── 肩書だけ変わって動きは旧来通り</li>
+          <li><b>会議体で同期</b> ── 「同期ミーティング」が増殖し、開発時間が消える</li>
+          <li><b>ツールで解決</b> ── JIRA導入で「アジャイルになった」と勘違い</li>
+          <li><b>コンサル丸投げ</b> ── 外部の言う通りに導入して文化が育たない</li>
+        </ul>
+        <div class="callout-row" style="margin-top:14px">
+          <div class="callout-box ng">
+            <div class="callout-label">失敗パターンの共通項</div>
+            <b>「形」だけ真似て</b><br>
+            <b>「文化」を見ない</b><br>
+            → 表層的なアジャイル化
+          </div>
+          <div class="callout-box ok">
+            <div class="callout-label">成功の条件</div>
+            <b>小さく始めて学ぶ</b><br>
+            <b>現場の声を聞く</b><br>
+            <b>失敗を許容する</b>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// アンチパターン詳細</span>
+
+<span class="ann">@「アジャイル部署」設立</span>
+
+  問題:
+   既存組織と並立して
+   「アジャイル推進部」を作る
+   → 既存階層は変わらない
+   → 部署対立が生じる
+
+  対策:
+   既存組織を<b>変える</b>
+   並立ではなく統合
+
+<span class="ann">@役職だけ増える</span>
+
+  「Agile Coach」
+  「Chief Agile Officer」
+  「Agile Project Manager」
+  → 肩書だけ変わる
+  → 仕事内容は前と同じ
+
+  対策:
+   役職より<b>仕事</b>を変える
+
+<span class="ann">@同期会議の増殖</span>
+
+  Scrum of Scrums
+  Daily of Dailies
+  Retrospective of Retros
+  → 会議のための会議
+  → 開発時間が消える
+
+  対策:
+   非同期コミュニケーション
+   ドキュメント化
+   必要最小限の同期
+
+<span class="ann">@ツール幻想</span>
+
+  「JIRA使えばアジャイル」
+  「Confluenceで文化醸成」
+  → ツールは道具
+  → 文化は別の問題
+
+  対策:
+   ツールは最後に決める
+   まず実践・観察・改善
+
+<span class="ann">@コンサル丸投げ</span>
+
+  外部コンサルに依存
+  → 撤退後に元の形に戻る
+  → 内製能力育たず
+
+  対策:
+   コーチング受けつつ
+   <b>内部人材を育てる</b></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    最大のアンチパターンは<b>「形だけ真似る」</b>こと。Spotify モデルの図、SAFe のロードマップ、PI Planning の写真。<b>「見える部分」を模倣しても、本質である「文化」「信頼」「自律」は移植できません</b>。組織変革は時間がかかる。近道はない、と腹を括る覚悟が必要です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="culture">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>組織変革の現実</h2>
+    <span class="en">REALITY OF TRANSFORMATION</span>
+  </div>
+  <p class="pattern-desc">
+    最後に組織変革の<b>厳しい現実</b>を伝えます。<b>「アジャイル変革プロジェクト」</b>の<b>大半は失敗</b>します。なぜか。<b>「人と文化」</b>の問題を<b>「手法と仕組み」</b>で解決しようとするから。本巻の締めくくりとして、<b>変革の本質的な難しさ</b>に向き合います。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">transformation.reality</span>
+      <span class="tag-desc">変革の難しさと真因</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 変革が失敗する原因</div>
+        <ul class="bullet">
+          <li><b>経営層の理解不足</b> ── 数字で評価する旧来の思考が抜けない</li>
+          <li><b>中間管理職の抵抗</b> ── 自分の役割が脅かされる恐怖</li>
+          <li><b>現場の燃え尽き</b> ── 既存業務＋アジャイル導入で疲弊</li>
+          <li><b>短期成果の要求</b> ── 「3ヶ月で成果出せ」で形だけになる</li>
+          <li><b>失敗を許さない文化</b> ── 「アジャイルは失敗から学ぶ」が機能しない</li>
+        </ul>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ 統計的には<b>「アジャイル変革プロジェクトの 50%以上が失敗」</b>と複数調査で示されている。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 成功する変革の共通項</span>
+
+<span class="ann">@1: 経営層のコミット</span>
+  形だけのスポンサーシップでなく
+  経営層自身がアジャイル学ぶ
+  経営層がスクラム実践
+
+<span class="ann">@2: 時間をかける</span>
+  最低 3〜5年の長期視点
+  3ヶ月で成果は無理
+
+<span class="ann">@3: 内部人材を育てる</span>
+  外部コンサルに依存しない
+  内部に文化を蓄積
+
+<span class="ann">@4: 失敗を許容する</span>
+  「失敗 = 学び」の文化
+  心理的安全性が前提
+
+<span class="ann">@5: 小さく始める</span>
+  パイロットチーム1つから
+  成功事例を作る
+  徐々に拡げる
+
+<span class="comment">// コンウェイの法則</span>
+
+「<span class="str">システムの設計は、</span>
+ <span class="str">それを設計した組織の</span>
+ <span class="str">コミュニケーション構造を</span>
+ <span class="str">模倣する</span>」
+            — Melvin Conway, 1968
+
+<span class="comment">// 含意</span>
+
+<span class="kw">組織を変えなければ</span>
+<span class="kw">システム(ソフト)も変わらない</span>
+組織変革は<b>本気のシステム改革</b>
+
+<span class="comment">// 鉄則</span>
+
+<span class="kw">「文化は朝食に戦略を食う」</span>
+       — Peter Drucker
+
+どんなに完璧な戦略でも
+組織文化に逆らえば負ける
+
+<span class="comment">// 結論</span>
+
+スケーリングは
+フレームワーク選びではなく
+<b>文化変革</b>である
+
+その覚悟と時間がないなら
+小規模なまま留まる選択も
+立派なアジャイル</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    Peter Drucker の<b>「文化は朝食に戦略を食う」</b>は、組織変革の格言。<b>どんな完璧なアジャイルフレームワーク</b>を導入しても、<b>文化（信頼・自律・失敗許容）が育たない限り形骸化</b>します。<b>「アジャイル変革は人の問題」</b>──ここを腹に落とすことが、最大の出発点です。<span class="star">★★★</span>
+  </div>
+
+  <div class="tip" style="margin-top:48px;">
+    <div class="tip-head">NEXT STEP —</div>
+    本館のラスト Vol.9 は<b>「困った時のアジャイル」</b>──Q&A形式の<b>辞書編</b>。「スプリントが終わらない」「POが決めてくれない」「見積もりが当たらない」「レトロが形骸化してる」「経営層に説明できない」「リモートで対話が減った」──現場でよく出る<b>10個の質問</b>に、これまで全8巻の知識を総動員して答えます。<b>シリーズ完結の特別なエンディング</b>もお楽しみに。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>AGILE REFERENCE — VOL.08 / SCALING &amp; ORGANIZATION</span>
+  <span>◆ NEXT → VOL.09 TROUBLESHOOTING Q&amp;A</span>
+</footer>
+
+</body>
+</html>

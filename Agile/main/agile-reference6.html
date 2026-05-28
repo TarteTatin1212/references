@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アジャイル開発編 カンバンとリーン Vol.6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3a1d0e;
+  --paper:#ecd8b8;
+  --paper-2:#d9bc94;
+  --accent:#a64018;
+  --accent-2:#c08252;
+  --accent-3:#6f3010;
+  --muted:#85674a;
+  --line:#a88a58;
+  --code-bg:#241608;
+  --code-text:#ecd8b8;
+  --panel-bg:#e3cba0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;font-size:15px}
+.page-header{position:relative;padding:64px 48px 48px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'◆';position:absolute;right:-20px;top:-40px;font-size:340px;color:var(--accent);opacity:0.15;font-family:'Shippori Mincho',serif;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:24px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+.lead{max-width:640px;margin-top:24px;font-size:15px;line-height:2}
+.toc{background:var(--paper-2);padding:24px 48px;border-bottom:1px solid var(--line)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:12px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:'—';position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+main{padding:48px}
+section{margin-bottom:72px}
+.section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:640px;margin-bottom:24px;font-size:14px;line-height:2}
+.demo-card{background:#fff;border:1px solid var(--line);overflow:hidden}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}
+.code .type{color:#c2a3ff}
+.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}
+.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}
+.code .ann{color:#f7c08a}
+.code .step{color:#ffc88a;font-weight:600}
+.tip{border-left:3px solid var(--accent);background:rgba(166,64,24,0.08);padding:16px 20px;margin:24px 0;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;margin-bottom:6px;font-weight:600}
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px}
+b{font-weight:700;color:var(--accent-3)}
+.diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;color:var(--ink);background:rgba(255,255,255,0.4);padding:14px;border:1px dashed var(--line);white-space:pre;overflow-x:auto}
+.callout-row{display:flex;gap:12px;margin-top:12px}
+.callout-box{flex:1;padding:12px;font-size:12px;background:#fff;border:1px solid var(--line)}
+.callout-box.ng{border-left:3px solid #c43030}
+.callout-box.ok{border-left:3px solid var(--accent)}
+.callout-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;margin-bottom:4px;color:var(--muted)}
+ul.bullet{list-style:none;margin-top:8px}
+ul.bullet li{padding-left:18px;position:relative;margin-bottom:6px;font-size:13px}
+ul.bullet li::before{content:'◇';position:absolute;left:0;color:var(--accent);font-size:11px}
+.star{color:var(--accent);font-weight:700;letter-spacing:0.1em}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.compare-table th,.compare-table td{padding:8px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.compare-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;color:var(--accent-3)}
+.compare-table tr:nth-child(even) td{background:rgba(236,216,184,0.5)}
+.page-footer{border-top:2px solid var(--ink);padding:32px 48px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.kanban-board{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:8px}
+.kanban-col{background:rgba(255,255,255,0.5);border:1px solid var(--line);padding:8px;font-size:11px}
+.kanban-col-head{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.1em;margin-bottom:6px;font-weight:700;text-align:center;padding:3px;background:var(--paper-2);border-radius:2px}
+.kanban-card{background:#fff;border:1px solid var(--line);padding:4px 6px;margin-bottom:4px;font-size:10.5px;font-family:'Shippori Mincho',serif}
+.wip-limit{text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent);margin-top:3px;font-weight:700}
+@media (max-width:720px){
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  main{padding:24px}
+  .page-header{padding:32px 24px}
+  h1{font-size:28px}
+  .toc{padding:16px 24px}
+  .callout-row{flex-direction:column}
+  .kanban-board{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">AGILE REFERENCE</span>
+  <span class="vol-tag">VOL.06 / 09</span>
+  <h1>カンバンとリーン編</h1>
+  <div class="subtitle">KANBAN &amp; LEAN — THE FLOW PARADIGM</div>
+  <p class="lead">
+    Scrumのスプリント区切りに対し、カンバンは<b>「流れ続ける」</b>パラダイムです。<b>トヨタ生産方式</b>から生まれた日本由来の思想を、ソフトウェア開発に応用したのが<b>カンバン（David J. Anderson, 2010）</b>。リーンソフトウェア開発と合わせて、<b>「ムダの排除」「フロー最適化」「リードタイム短縮」</b>を実現します。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#origin">01 トヨタからソフトへ</a></li>
+    <li><a href="#kanban">02 カンバンボードの基本</a></li>
+    <li><a href="#wip">03 WIP制限の魔法</a></li>
+    <li><a href="#flow">04 フロー最適化</a></li>
+    <li><a href="#lead">05 リードタイムとサイクルタイム</a></li>
+    <li><a href="#lean">06 リーン7つのムダ</a></li>
+    <li><a href="#scrumban">07 Scrumbanという折衷</a></li>
+    <li><a href="#choose">08 Scrum vs Kanban の選択</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="origin">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>トヨタからソフトへ</h2>
+    <span class="en">FROM TOYOTA TO SOFTWARE</span>
+  </div>
+  <p class="pattern-desc">
+    「カンバン」「リーン」のルーツは<b>トヨタ生産方式</b>。<b>大野耐一</b>が体系化し、戦後日本の自動車産業を世界一に押し上げた製造哲学です。これが<b>1990年代に Womack &amp; Jones</b>によって「リーン生産方式」として欧米に紹介され、2000年代に<b>ソフトウェア開発</b>に応用されました。日本人として知っておきたい系譜です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">history.toyota</span>
+      <span class="tag-desc">トヨタ生産方式の系譜</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 思想の系譜</div>
+<div class="diagram">  1948年 トヨタ
+    │
+    │ 大野耐一が体系化
+    │ ジャストインタイム
+    │ 自働化
+    │ 看板（かんばん）
+    ↓
+  1950s〜1980s
+    トヨタ生産方式
+    日本の製造業に普及
+    │
+    │ Womack &amp; Jones らが
+    │ 欧米に紹介
+    ↓
+  1990年 『The Machine That
+       Changed the World』
+       「Lean」と命名
+    │
+    │ Mary &amp; Tom Poppendieck が
+    │ ソフトウェアに翻訳
+    ↓
+  2003年 『Lean Software
+       Development』
+    │
+    │ David J. Anderson が
+    │ 看板をソフトに応用
+    ↓
+  2010年 『Kanban』
+       システム化される</div>
+      </div>
+      <div class="code">
+<span class="comment">// トヨタ生産方式の2本柱</span>
+
+<span class="ann">@Just In Time</span>
+  必要なものを
+  必要なときに
+  必要なだけ作る
+  → 在庫を最小化
+
+<span class="ann">@自働化 (じどうか)</span>
+  異常があれば
+  機械が自分で止まる
+  → 不良を増やさない
+
+<span class="comment">// 「かんばん」(看板) とは</span>
+
+<span class="kw">語源</span>: 工程間で部品を
+       注文する「指示書」
+<span class="kw">役割</span>: 後工程の必要量に
+       応じて前工程が動く
+       (プル型)
+
+<span class="kw">対比 (プッシュ型)</span>:
+  上流が下流に押し付ける
+  → 在庫過多になりがち
+
+<span class="comment">// 日本人として誇る系譜</span>
+
+<span class="kw">大野耐一</span>『トヨタ生産方式』
+<span class="kw">野中・竹内</span> Scrum 起源
+<span class="kw">石川馨</span> QC・PDCA
+<span class="kw">SECIモデル</span> 知識創造
+
+→ アジャイルの源流の
+  多くが日本由来</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    アジャイル界には<b>「日本に学べ」</b>という時代がありました。1980年代の日本企業の強さの研究から、Scrum・カンバン・リーンが派生したのです。<b>カイゼン・カイカク・KAIZEN・KANBAN・MUDA</b>──これらが英語でそのまま使われるのは、日本の経営哲学への敬意の証です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="kanban">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>カンバンボードの基本</h2>
+    <span class="en">KANBAN BOARD</span>
+  </div>
+  <p class="pattern-desc">
+    カンバンの中心にあるのが<b>カンバンボード</b>。<b>「作業を見える化」</b>するシンプルな仕組みで、これが現代のソフトウェア開発を変えました。<b>JIRA・Trello・Asana</b>──現在使われるツール全てがカンバンボード形式です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">kanban.board</span>
+      <span class="tag-desc">基本的なカンバンボード</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 4列カンバンボード（基本形）</div>
+        <div class="kanban-board">
+          <div class="kanban-col">
+            <div class="kanban-col-head">TODO</div>
+            <div class="kanban-card">注文履歴UI</div>
+            <div class="kanban-card">検索機能</div>
+            <div class="kanban-card">通知設定</div>
+            <div class="kanban-card">プロフ画像</div>
+            <div class="wip-limit">∞</div>
+          </div>
+          <div class="kanban-col">
+            <div class="kanban-col-head">DOING</div>
+            <div class="kanban-card">レビュー機能</div>
+            <div class="kanban-card">ログイン改善</div>
+            <div class="wip-limit">WIP: 3</div>
+          </div>
+          <div class="kanban-col">
+            <div class="kanban-col-head">REVIEW</div>
+            <div class="kanban-card">在庫API</div>
+            <div class="wip-limit">WIP: 2</div>
+          </div>
+          <div class="kanban-col">
+            <div class="kanban-col-head">DONE</div>
+            <div class="kanban-card">決済修正</div>
+            <div class="kanban-card">404対応</div>
+            <div class="wip-limit">—</div>
+          </div>
+        </div>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ カードが左から右へ<b>流れていく</b>。各列のWIP制限が肝。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// カンバンの4原則</span>
+
+<span class="ann">@原則1: 見える化</span>
+  全作業をボード上に
+  誰が見てもわかる状態に
+  → 透明性
+
+<span class="ann">@原則2: WIP制限</span>
+  各列に同時着手数の上限
+  → フローを保つ
+
+<span class="ann">@原則3: フロー管理</span>
+  カードの流れを観察
+  詰まりを発見し解消
+
+<span class="ann">@原則4: 改善 (カイゼン)</span>
+  ボードの運用そのものを
+  継続的に見直す
+
+<span class="comment">// 基本の列構成</span>
+
+<span class="kw">最小構成 (3列)</span>:
+  TODO / DOING / DONE
+
+<span class="kw">実用構成 (5〜7列)</span>:
+  Backlog / Ready /
+  Dev (Doing/Done) /
+  Test (Doing/Done) /
+  Deploy / Done
+
+<span class="comment">// カードに書く情報</span>
+
+✓ タイトル(短く)
+✓ 担当 (アバター)
+✓ 優先度 (色)
+✓ ストーリーポイント
+✓ 作成日 / 着手日
+✓ Blocked マーク (詰まり)</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    物理ボード（ホワイトボード＋付箋）には<b>独特の力</b>があります。デジタルツールより<b>「触れる感触」「歩いて見に行く」「全員が同時に見る」</b>が強い。リモート時代でも、オフィス出社日には<b>物理ボードを併用</b>する現場が増えています。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="wip">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>WIP制限の魔法</h2>
+    <span class="en">WIP LIMITS</span>
+  </div>
+  <p class="pattern-desc">
+    カンバン最大の発明が<b>WIP制限（Work In Progress Limit）</b>。<b>「同時着手数に上限を設ける」</b>シンプルなルールですが、これが現場のフローを劇的に改善します。<b>「忙しいのに進まない」</b>という現場の謎は、WIP制限を入れた瞬間に解消することが多いのです。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">kanban.wip</span>
+      <span class="tag-desc">WIP制限の効果</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// WIP制限なし vs あり</div>
+<div class="diagram">  [WIP制限なし]
+   DOING: タスクが10個
+   全部少しずつ進む
+   完了がいつまで来ない
+   ↓
+   コンテキスト切替
+   割込み増加
+   品質低下
+
+  [WIP制限あり (例: 3)]
+   DOING: 3個まで
+   3個完了するまで
+   新規着手NG
+   ↓
+   集中して終わる
+   完了が速い
+   品質も上がる
+
+  ━━━━━━━━━━━━━━━━━━━━━
+  「<b>始めるのをやめ、</b>
+   <b>終わらせるのを始めよう</b>」
+  ━━━━━━━━━━━━━━━━━━━━━</div>
+      </div>
+      <div class="code">
+<span class="comment">// WIP制限がなぜ機能するか</span>
+
+<span class="ann">@リトルの法則</span>
+  リードタイム =
+   WIP数 ÷ スループット
+
+  WIPを減らせば
+  リードタイムは縮む
+  (数学的に保証される)
+
+<span class="ann">@マルチタスクの害</span>
+  人間は同時に2つに集中不能
+  切替コスト 15〜30分
+  → タスク多いほど効率低下
+
+<span class="ann">@詰まりが見える</span>
+  WIP上限に達すると
+  「もう着手できない」状態
+  → 詰まり箇所が明確化
+  → 全員でその列を助けに行く
+
+<span class="comment">// WIP制限の決め方</span>
+
+<span class="kw">経験則</span>:
+  各列のWIP = チーム人数 × 1.5
+  例: 5人なら WIP = 7〜8
+
+<span class="kw">段階的調整</span>:
+  まず緩めの制限から始める
+  徐々に厳しく
+  「窮屈」と感じる手前が最適
+
+<span class="comment">// よくある抵抗</span>
+
+<span class="kw">「上限に達したから着手しない」</span>
+  → 「サボってる」と誤解される
+
+<span class="kw">対策</span>: 経営層に説明
+  「WIPを減らすほど早く終わる」
+  「数学的に証明されている」</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    名言「<b>"Stop Starting, Start Finishing"</b>」（始めるのをやめ、終わらせるのを始めよ）はカンバンの心臓部。<b>10個を半端に進めるより、3個を完了させる</b>方が遥かに価値が出ます。WIP制限はそれを<b>仕組みで強制する</b>装置。詳細は別館 Vol.6 で。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="flow">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>フロー最適化</h2>
+    <span class="en">FLOW OPTIMIZATION</span>
+  </div>
+  <p class="pattern-desc">
+    カンバンは<b>「流れ（フロー）」</b>の最適化を目指します。スプリント区切りがないので、<b>「常に何かを流し続ける」</b>パラダイム。ボトルネック（詰まり）を見つけて解消し、流れを<b>滑らかに保つ</b>のが運用の核です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">kanban.flow</span>
+      <span class="tag-desc">フロー観察とボトルネック</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ボトルネックの発見</div>
+<div class="diagram">  Dev    →  QA     →  Deploy
+  ────────────────────────────
+  3 cards   8 cards    2 cards
+  ↑         ↑          ↑
+  普通      <b>溜まってる</b>  普通
+
+  QA がボトルネック
+  ↓
+  対策:
+    ・QA担当を増やす
+    ・自動テストで負荷軽減
+    ・QA前段で品質チェック
+
+  ━━━━━━━━━━━━━━━━━━━━━
+  最も遅い工程が
+  全体の速度を決める
+  (Goldratt の制約理論)
+  ━━━━━━━━━━━━━━━━━━━━━</div>
+      </div>
+      <div class="code">
+<span class="comment">// フローを観察する指標</span>
+
+<span class="ann">@累積フロー図</span>
+ (Cumulative Flow Diagram)
+  各列のカード数を時系列で
+  → 詰まりが視覚化
+
+<span class="ann">@リードタイム分布</span>
+  カードごとの所要時間
+  → ばらつき・予測可能性
+
+<span class="ann">@スループット</span>
+  単位時間あたり完了数
+  → チームの実力
+
+<span class="comment">// フロー阻害要因</span>
+
+<span class="kw">外部依存待ち</span>
+  「他チームのレビュー待ち」
+<span class="kw">割り込み作業</span>
+  「至急のバグ対応」
+<span class="kw">技術的負債</span>
+  「設計が悪くて時間かかる」
+<span class="kw">知識属人化</span>
+  「Aさんしかできない」
+
+<span class="comment">// フロー改善の手順</span>
+
+<span class="step">1.</span> 観察 (1〜2週間)
+<span class="step">2.</span> ボトルネック特定
+<span class="step">3.</span> 仮説を立てる
+<span class="step">4.</span> 改善試行
+<span class="step">5.</span> 効果測定
+<span class="step">6.</span> 次のボトルネックへ
+
+<span class="comment">// 鉄則</span>
+<span class="kw">全工程を均等改善するより</span>
+<span class="kw">ボトルネックに集中せよ</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">裏技 —</div>
+    <b>「制約理論（Theory of Constraints）」</b>はEliyahu Goldratt が提唱した、ボトルネック最適化の理論。著書<b>『The Goal』</b>は名著。「<b>ボトルネック以外を最適化しても全体は速くならない</b>」という非直感的な真実を、小説形式で教えてくれます。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="lead">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>リードタイムとサイクルタイム</h2>
+    <span class="en">LEAD &amp; CYCLE TIME</span>
+  </div>
+  <p class="pattern-desc">
+    カンバン運用の<b>2大指標</b>がリードタイムとサイクルタイム。混同されがちですが、<b>明確に違う概念</b>です。これを理解すると、<b>「顧客満足」と「チーム効率」</b>を別々に最適化できるようになります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">kanban.metrics</span>
+      <span class="tag-desc">リードタイム vs サイクルタイム</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 2つの時間軸</div>
+<div class="diagram">  ┌────────────────────────┐
+  │  顧客から見た時間       │
+  │                         │
+  │  依頼 ━━━━━━━━━━━ 完了 │
+  │  ←  リードタイム  →    │
+  │   (Lead Time)           │
+  └────────────────────────┘
+
+  ┌────────────────────────┐
+  │  開発から見た時間       │
+  │                         │
+  │  待機 → 着手 ━━━ 完了   │
+  │       ←サイクル→       │
+  │       (Cycle Time)      │
+  └────────────────────────┘
+
+  リードタイム =
+    待機時間 + サイクルタイム
+
+  「待機時間」が
+  最適化の大きな鉱脈</div>
+      </div>
+      <div class="code">
+<span class="comment">// 各指標の意味</span>
+
+<span class="ann">@Lead Time</span>
+  カード作成 → 完了
+  顧客の体感速度
+  「依頼してから何日?」
+
+<span class="ann">@Cycle Time</span>
+  着手 → 完了
+  開発側の純粋作業時間
+  「動き出してから何日?」
+
+<span class="ann">@待機時間</span>
+  Lead Time - Cycle Time
+  =「順番待ちしてる時間」
+
+<span class="comment">// 改善のヒント</span>
+
+<span class="kw">Lead Timeを縮めたい</span>
+  → バックログを短く
+  → 不要なものを切る
+  → 優先順位を厳しく
+
+<span class="kw">Cycle Timeを縮めたい</span>
+  → ストーリー小さく
+  → WIP制限厳しく
+  → 自動化推進
+
+<span class="comment">// 計測のしかた</span>
+
+<span class="ann">@散布図</span>
+  完了したカードを点に
+  X軸: 完了日
+  Y軸: サイクルタイム
+  → ばらつきが見える
+
+<span class="ann">@SLE設定</span>
+  Service Level Expectation
+  「85%が10日以内」と公言
+  予測可能性の指標
+
+<span class="comment">// 鉄則</span>
+<span class="kw">平均より「85%値」</span>を見る
+<span class="kw">少数の外れ値が</span>
+<span class="kw">体感を悪化させる</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    <b>「平均リードタイム5日」</b>と言われても、実体験は<b>「ばらつき」</b>で決まります。<b>85%パーセンタイル（85%のカードが○日以内）</b>を指標にするのが現代の主流。<b>SLE（Service Level Expectation）</b>として顧客に公言することで、信頼性のあるチームに育ちます。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="lean">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>リーン7つのムダ</h2>
+    <span class="en">SEVEN WASTES OF LEAN</span>
+  </div>
+  <p class="pattern-desc">
+    トヨタ生産方式に由来する<b>「7つのムダ」</b>。Mary &amp; Tom Poppendieck が<b>ソフトウェア版に翻訳</b>しました。製造業の「在庫過多」「運搬」を、ソフトウェアの「未完成機能」「タスク切替」に対応させる視点が斬新で、現在も<b>レトロで使える診断ツール</b>です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">lean.7wastes</span>
+      <span class="tag-desc">ソフトウェア開発7つのムダ</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 7つのムダ・対応表</div>
+        <table class="compare-table">
+          <tr><th>製造業</th><th>ソフトウェア</th></tr>
+          <tr><td>在庫</td><td>未完成機能 / 部分完成</td></tr>
+          <tr><td>余分な処理</td><td>過剰機能・過剰設計</td></tr>
+          <tr><td>運搬</td><td>引き継ぎ・部署間移送</td></tr>
+          <tr><td>待ち</td><td>承認待ち・レビュー待ち</td></tr>
+          <tr><td>動作</td><td>タスク切替・コンテキスト変更</td></tr>
+          <tr><td>欠陥</td><td>バグ・手戻り</td></tr>
+          <tr><td>作りすぎ</td><td>使われない機能</td></tr>
+        </table>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ <b>Poppendieckの本『リーンソフトウェア開発』（2003）</b>で体系化されたソフト版。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 7つのムダ・詳細</span>
+
+<span class="ann">@1: 未完成機能</span>
+  「ほぼできてる」が滞留
+  → 価値を生まない在庫
+  → 完成優先で消化
+
+<span class="ann">@2: 過剰機能</span>
+  「将来使うかも」で実装
+  → 8割は使われない
+  → YAGNI で防ぐ
+
+<span class="ann">@3: 引き継ぎ</span>
+  人から人への情報伝達
+  → 情報損失が起きる
+  → クロス機能チームで削減
+
+<span class="ann">@4: 待ち</span>
+  承認待ち・レビュー待ち
+  → 単純に時間の浪費
+  → セルフサービス化で削減
+
+<span class="ann">@5: タスク切替</span>
+  別作業に切り替える
+  → 集中力15〜30分浪費
+  → WIP制限で削減
+
+<span class="ann">@6: 欠陥</span>
+  バグ・手戻り
+  → 最大のムダ
+  → TDD・自動テストで削減
+
+<span class="ann">@7: 作りすぎ</span>
+  使われない機能の量産
+  → リーン最大の敵
+  → 検証→学習で削減
+
+<span class="comment">// レトロでの使い方</span>
+「今週、どのムダが多かった?」
+→ 7軸での議論</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    <b>「7つのムダ」</b>でレトロを構造化すると、改善行動が出やすい。「<b>今週は『待ち』が多かった、誰の承認待ち?</b>」「<b>『過剰機能』を作ってないか?</b>」──ピンポイントで詰めると改善案が具体的になります。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="scrumban">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>Scrumbanという折衷</h2>
+    <span class="en">SCRUMBAN — THE HYBRID</span>
+  </div>
+  <p class="pattern-desc">
+    Scrum と Kanban は対立する概念ではなく、<b>組み合わせ可能</b>です。両者を融合した<b>Scrumban</b>は、Corey Ladas が2008年に提唱。<b>「Scrumのチーム運営＋Kanbanのフロー管理」</b>として現場で広く使われています。<b>完全Scrumから卒業しつつあるチーム</b>に向く形態です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">scrumban</span>
+      <span class="tag-desc">Scrum・Kanban・Scrumbanの比較</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つの比較</div>
+        <table class="compare-table">
+          <tr><th></th><th>Scrum</th><th>Scrumban</th><th>Kanban</th></tr>
+          <tr><td>スプリント</td><td>有(1〜4週)</td><td>任意</td><td>無</td></tr>
+          <tr><td>役割</td><td>3つ厳格</td><td>緩い</td><td>無</td></tr>
+          <tr><td>イベント</td><td>5つ厳格</td><td>選択的</td><td>無 or 任意</td></tr>
+          <tr><td>WIP制限</td><td>暗黙的</td><td>明示的</td><td>必須</td></tr>
+          <tr><td>変更</td><td>スプリント外</td><td>柔軟</td><td>常時OK</td></tr>
+          <tr><td>適合</td><td>新規開発</td><td>過渡期</td><td>保守・運用</td></tr>
+        </table>
+      </div>
+      <div class="code">
+<span class="comment">// Scrumban の典型構成</span>
+
+<span class="ann">@Scrumから採用</span>
+  ✓ スプリント (任意)
+  ✓ デイリースクラム
+  ✓ レトロスペクティブ
+  ✓ プランニング(軽量化)
+
+<span class="ann">@Kanbanから採用</span>
+  ✓ WIP制限を明示
+  ✓ プル型ワークフロー
+  ✓ リードタイム計測
+  ✓ 累積フロー図
+
+<span class="comment">// よくある移行パターン</span>
+
+<span class="kw">Scrum → Scrumban</span>
+  運用が回りすぎて
+  スプリントが形式的に
+  → カンバン的要素を追加
+
+<span class="kw">Kanban → Scrumban</span>
+  振り返りや計画が
+  足りないと感じる
+  → スクラム儀式を追加
+
+<span class="comment">// どんな現場で有効か</span>
+
+<span class="ann">@保守＋新規ミックス</span>
+  保守は流す
+  新規はスプリントで
+
+<span class="ann">@オンコール持ち</span>
+  割り込み多い
+  Scrum純度は保てない
+
+<span class="ann">@小〜中規模チーム</span>
+  独自運用が許される
+  柔軟性が活きる
+
+<span class="comment">// 注意点</span>
+<span class="kw">"なんとなくScrumban"</span> は危険
+両方の良さを<b>意図的に</b>選び取る</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    Scrumbanを名乗る現場の多くは、<b>「Scrum-but の言い訳」</b>になっていることがあります。「儀式やってないから Scrumban です」は危ない。<b>「両方の長所を意図的に選ぶ」</b>のがScrumbanの本来。<b>「面倒だから簡略化」のSukurumban</b>とは別物です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="choose">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>Scrum vs Kanban の選択</h2>
+    <span class="en">SCRUM OR KANBAN</span>
+  </div>
+  <p class="pattern-desc">
+    現場で「<b>Scrumとカンバン、どちらを採用すべきか</b>」と問われることがあります。答えは<b>「仕事の性質」</b>で決まります。<b>計画立てて区切って進める仕事</b>はScrum、<b>流れる仕事・差し込み多い仕事</b>はカンバン。これを言語化できると、上層部にも説明しやすくなります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">choose.method</span>
+      <span class="tag-desc">手法選択の判断基準</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 仕事の種類で選ぶ</div>
+        <div class="callout-row" style="margin-bottom:10px">
+          <div class="callout-box ok">
+            <div class="callout-label">Scrum が合う</div>
+            <ul class="bullet">
+              <li>新規プロダクト開発</li>
+              <li>明確な目標がある</li>
+              <li>2週間単位で計画OK</li>
+              <li>差し込みが少ない</li>
+              <li>POが専任で動ける</li>
+              <li>機能を束ねてリリース</li>
+            </ul>
+          </div>
+          <div class="callout-box ok">
+            <div class="callout-label">Kanban が合う</div>
+            <ul class="bullet">
+              <li>運用・保守業務</li>
+              <li>差し込み多い</li>
+              <li>個々の依頼が独立</li>
+              <li>機能ごとに即リリース</li>
+              <li>サポートチーム</li>
+              <li>インフラ・SREチーム</li>
+            </ul>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--muted)">
+          ※ <b>「両方やる」</b>のもアリ。プロダクトチームはScrum、運用チームはKanban、等。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// 選択フローチャート</span>
+
+<span class="kw">Q1.</span> 目標は固定 or 流動的?
+  ├ 固定的 → Scrum 候補
+  └ 流動的 → Kanban 候補
+
+<span class="kw">Q2.</span> 差し込み頻度は?
+  ├ 少ない → Scrum 候補
+  └ 多い   → Kanban 候補
+
+<span class="kw">Q3.</span> リリース戦略は?
+  ├ 機能束ねる   → Scrum
+  └ 都度リリース → Kanban
+
+<span class="kw">Q4.</span> 中間的な状況なら?
+  → Scrumban
+
+<span class="comment">// 移行のタイミング</span>
+
+<span class="ann">@Scrumから Kanban へ</span>
+  ✓ プロダクトが安定期
+  ✓ 機能追加が運用化
+  ✓ スプリントが形骸化
+
+<span class="ann">@Kanbanから Scrumへ</span>
+  ✓ 新規開発フェーズ突入
+  ✓ チームに計画リズム必要
+  ✓ 振り返り機会増やしたい
+
+<span class="comment">// 現実の使い分け例</span>
+
+<span class="kw">プロダクトチーム</span>: Scrum
+  新機能開発に集中
+
+<span class="kw">運用チーム</span>: Kanban
+  問い合わせ流れ続ける
+
+<span class="kw">QAチーム</span>: Scrumban
+  両方のチームと連携
+
+<span class="comment">// 鉄則</span>
+<span class="kw">手法は手段</span>
+<span class="kw">仕事に合わせて選ぶ</span>
+逆ではない</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    Scrum vs Kanban は<b>「宗教戦争」になりがち</b>。「Scrumこそ正義」「いやKanbanこそ柔軟」と派閥対立する場面を見かけますが、<b>仕事の性質に合わせて選ぶ</b>のが大人の態度。<b>1つの組織で複数の手法を使い分ける</b>のが現代の主流です。<span class="star">★★★</span>
+  </div>
+
+  <div class="tip" style="margin-top:48px;">
+    <div class="tip-head">NEXT STEP —</div>
+    Scrumの「区切り」、Kanbanの「流れ」、両方の道具立てが揃いました。次の Vol.7 は技術プラクティスの集大成<b>「CI/CDと開発プラクティス」</b>に進みます。<b>自動テスト戦略・ブランチ戦略・デプロイパイプライン・フィーチャートグル</b>──XPが提唱した CI が、現代の DevOps へと進化した姿。ここを押さえると、アジャイル開発の<b>技術的全体像</b>が見えてきます。なお別館 Vol.6 では「<b>なぜWIP制限がフローを速くするのか</b>」をリトルの法則から数学的に解説します。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>AGILE REFERENCE — VOL.06 / KANBAN &amp; LEAN</span>
+  <span>◆ NEXT → VOL.07 CI/CD &amp; PRACTICES</span>
+</footer>
+
+</body>
+</html>

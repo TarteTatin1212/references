@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アジャイル開発編 ストーリーと見積もり Vol.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3a1f0e;
+  --paper:#efddc0;
+  --paper-2:#ddc59f;
+  --accent:#c54a1a;
+  --accent-2:#d2945a;
+  --accent-3:#7a3e14;
+  --muted:#8a6948;
+  --line:#b59766;
+  --code-bg:#26180c;
+  --code-text:#efddc0;
+  --panel-bg:#e8d2aa;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;font-size:15px}
+.page-header{position:relative;padding:64px 48px 48px;border-bottom:2px solid var(--ink);overflow:hidden}
+.page-header::before{content:'◆';position:absolute;right:-20px;top:-40px;font-size:340px;color:var(--accent);opacity:0.15;font-family:'Shippori Mincho',serif;z-index:0;line-height:1}
+.page-header > *{position:relative;z-index:1}
+.series-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;margin-right:8px}
+.vol-tag{display:inline-block;background:var(--accent);color:var(--paper);padding:4px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.15em}
+h1{font-family:'Shippori Mincho',serif;font-size:42px;font-weight:700;margin-top:24px;letter-spacing:0.04em}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
+.lead{max-width:640px;margin-top:24px;font-size:15px;line-height:2}
+.toc{background:var(--paper-2);padding:24px 48px;border-bottom:1px solid var(--line)}
+.toc-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.2em;color:var(--muted);margin-bottom:12px}
+.toc ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px}
+.toc a{color:var(--ink);text-decoration:none;font-size:13px;position:relative;padding-left:14px}
+.toc a::before{content:'—';position:absolute;left:0;color:var(--accent)}
+.toc a:hover{color:var(--accent)}
+main{padding:48px}
+section{margin-bottom:72px}
+.section-header{display:flex;align-items:baseline;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);font-weight:600}
+.section-header h2{font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700;flex:1}
+.en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em}
+.pattern-desc{max-width:640px;margin-bottom:24px;font-size:14px;line-height:2}
+.demo-card{background:#fff;border:1px solid var(--line);overflow:hidden}
+.demo-head{background:var(--paper-2);padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);font-weight:600}
+.tag-desc{font-size:12px;color:var(--muted)}
+.demo-body{display:grid;grid-template-columns:1fr 1fr}
+.panel{background:var(--panel-bg);padding:24px;border-right:1px solid var(--line)}
+.panel-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-3);margin-bottom:14px;letter-spacing:0.1em}
+.code{background:var(--code-bg);color:var(--code-text);padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre}
+.code .kw{color:#ffc88a}
+.code .type{color:#c2a3ff}
+.code .fn{color:#a3c9ff}
+.code .str{color:#b5e8b0}
+.code .num{color:#f7a8d8}
+.code .comment{color:#998aaa;font-style:italic}
+.code .ann{color:#f7c08a}
+.code .step{color:#ffc88a;font-weight:600}
+.tip{border-left:3px solid var(--accent);background:rgba(197,74,26,0.08);padding:16px 20px;margin:24px 0;font-size:13.5px}
+.tip-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;margin-bottom:6px;font-weight:600}
+.key{display:inline-block;background:var(--accent);color:var(--paper);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px}
+b{font-weight:700;color:var(--accent-3)}
+.diagram{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;color:var(--ink);background:rgba(255,255,255,0.4);padding:14px;border:1px dashed var(--line);white-space:pre;overflow-x:auto}
+.callout-row{display:flex;gap:12px;margin-top:12px}
+.callout-box{flex:1;padding:12px;font-size:12px;background:#fff;border:1px solid var(--line)}
+.callout-box.ng{border-left:3px solid #c43030}
+.callout-box.ok{border-left:3px solid var(--accent)}
+.callout-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;margin-bottom:4px;color:var(--muted)}
+ul.bullet{list-style:none;margin-top:8px}
+ul.bullet li{padding-left:18px;position:relative;margin-bottom:6px;font-size:13px}
+ul.bullet li::before{content:'◇';position:absolute;left:0;color:var(--accent);font-size:11px}
+.star{color:var(--accent);font-weight:700;letter-spacing:0.1em}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.compare-table th,.compare-table td{padding:8px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.compare-table th{background:var(--paper-2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;color:var(--accent-3)}
+.compare-table tr:nth-child(even) td{background:rgba(239,221,192,0.5)}
+.page-footer{border-top:2px solid var(--ink);padding:32px 48px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.story-card{background:rgba(255,255,255,0.6);border:1px solid var(--line);border-left:4px solid var(--accent);padding:14px;margin:10px 0;font-size:13px;line-height:1.8;font-family:'Shippori Mincho',serif}
+.story-card .story-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.15em;color:var(--accent);margin-bottom:6px}
+@media (max-width:720px){
+  .demo-body{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--line)}
+  main{padding:24px}
+  .page-header{padding:32px 24px}
+  h1{font-size:28px}
+  .toc{padding:16px 24px}
+  .callout-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <span class="series-tag">AGILE REFERENCE</span>
+  <span class="vol-tag">VOL.04 / 09</span>
+  <h1>ユーザーストーリーと見積もり編</h1>
+  <div class="subtitle">USER STORIES &amp; ESTIMATION — FUELING THE BACKLOG</div>
+  <p class="lead">
+    Scrumの<b>燃料</b>がユーザーストーリーです。「ログイン機能を作る」という機能発想ではなく、「<b>ユーザーとして〜したい</b>」という<b>価値発想</b>でバックログを書く。これに見積もり技術が加わって、初めてバックログは<b>動き始める</b>。本巻は<b>「ストーリー作成のINVEST原則」「プランニングポーカー」「ベロシティ」</b>を網羅し、Scrumを実用レベルで回す技術を身につけます。
+  </p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">CONTENTS</div>
+  <ul>
+    <li><a href="#story">01 ユーザーストーリーとは</a></li>
+    <li><a href="#invest">02 INVEST原則</a></li>
+    <li><a href="#accept">03 受け入れ基準</a></li>
+    <li><a href="#3c">04 3Cの法則</a></li>
+    <li><a href="#point">05 ストーリーポイント</a></li>
+    <li><a href="#poker">06 プランニングポーカー</a></li>
+    <li><a href="#velocity">07 ベロシティ</a></li>
+    <li><a href="#split">08 ストーリー分割</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="story">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>ユーザーストーリーとは</h2>
+    <span class="en">WHAT IS A USER STORY</span>
+  </div>
+  <p class="pattern-desc">
+    ユーザーストーリーは<b>「機能仕様」ではありません</b>。<b>「誰が」「何を」「なぜ」</b>したいかを<b>3要素</b>で書く、短い物語。これがバックログ項目の<b>標準フォーマット</b>になりました。<b>機能発想から価値発想への転換</b>──それがストーリーの本質です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">story.definition</span>
+      <span class="tag-desc">ストーリーの基本フォーマット</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 標準テンプレート</div>
+        <div class="story-card">
+          <div class="story-label">USER STORY</div>
+          <b>〜として</b>（誰が）<br>
+          <b>〜したい</b>（何を）<br>
+          <b>なぜなら〜だから</b>（なぜ）
+        </div>
+        <div class="story-card">
+          <div class="story-label">EXAMPLE 1</div>
+          <b>通販利用者として</b><br>
+          <b>注文履歴を1年分見たい</b><br>
+          <b>なぜなら前回購入したものを再度買いたいから</b>
+        </div>
+        <div class="story-card">
+          <div class="story-label">EXAMPLE 2</div>
+          <b>管理者として</b><br>
+          <b>ユーザーを一括停止したい</b><br>
+          <b>なぜなら不正利用時に即座に対応したいから</b>
+        </div>
+      </div>
+      <div class="code">
+<span class="comment">// なぜストーリーを書くか</span>
+
+<span class="ann">@機能仕様の問題</span>
+  「履歴画面を作る」
+  → 何のためか不明
+  → 開発者が困る
+  → ユーザー視点が抜ける
+
+<span class="ann">@ストーリーの効果</span>
+  「履歴を見たい
+   = 再購入のため」
+  → 目的が明確
+  → 設計判断ができる
+  → ユーザー視点で語れる
+
+<span class="comment">// ストーリーの三要素</span>
+
+<span class="kw">As a</span> &lt;persona&gt;,
+<span class="kw">I want</span> &lt;goal&gt;,
+<span class="kw">so that</span> &lt;reason&gt;.
+
+<span class="comment">// 日本語訳</span>
+
+<span class="kw">〜として、</span>
+<span class="kw">〜したい、</span>
+<span class="kw">なぜなら〜だから。</span>
+
+<span class="comment">// 「なぜなら」が最重要</span>
+
+<span class="kw">"so that"</span> 節は
+仕様変更時の判断軸になる
+→ 削るとストーリーが死ぬ
+
+<span class="comment">// 発祥</span>
+1990年代後半 XP コミュニティ
+Kent Beck らが提唱
+インデックスカードに書く
+→「<b>3x5カード</b>に収まる粒度」</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    最重要なのは<b>「なぜなら」</b>の部分。これがあると、開発中に判断に迷ったとき「目的に照らしてどちらが良いか」を即判断できます。<b>「なぜなら」を省くストーリーは骨抜きのストーリー</b>です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="invest">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>INVEST原則</h2>
+    <span class="en">INVEST PRINCIPLE</span>
+  </div>
+  <p class="pattern-desc">
+    良いストーリーは<b>INVEST</b>を満たします。<b>Independent・Negotiable・Valuable・Estimable・Small・Testable</b>──Bill Wake が2003年に提唱した6つの頭文字。「<b>このストーリーは大丈夫か？</b>」を診断する<b>チェックリスト</b>として今も現役です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">story.invest</span>
+      <span class="tag-desc">良いストーリーの6条件</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// INVEST チェック</div>
+        <table class="compare-table">
+          <tr><th>頭字</th><th>意味</th><th>悪い例</th></tr>
+          <tr><td><b>I</b></td><td>Independent（独立）</td><td>他依存ばかり</td></tr>
+          <tr><td><b>N</b></td><td>Negotiable（交渉可）</td><td>詳細を固めすぎ</td></tr>
+          <tr><td><b>V</b></td><td>Valuable（価値あり）</td><td>裏方すぎる</td></tr>
+          <tr><td><b>E</b></td><td>Estimable（見積可）</td><td>大きすぎ・不明瞭</td></tr>
+          <tr><td><b>S</b></td><td>Small（小さい）</td><td>1スプリント超え</td></tr>
+          <tr><td><b>T</b></td><td>Testable（テスト可）</td><td>受け入れ基準なし</td></tr>
+        </table>
+      </div>
+      <div class="code">
+<span class="comment">// 各原則の意味</span>
+
+<span class="ann">@Independent (独立)</span>
+  他のストーリーと
+  独立して着手できる
+  → 順序の制約最小化
+
+<span class="ann">@Negotiable (交渉可能)</span>
+  詳細は実装直前に決める
+  → 早期固定を避ける
+  → カードに細部は書かない
+
+<span class="ann">@Valuable (価値あり)</span>
+  ユーザーに価値を届ける
+  → 「内部リファクタ」は
+    本当はストーリーではない
+
+<span class="ann">@Estimable (見積可能)</span>
+  チームが時間を見積もれる
+  → 不明瞭なものは
+    まずスパイク調査
+
+<span class="ann">@Small (小さい)</span>
+  数日で実装可能
+  → 1スプリント内完了
+
+<span class="ann">@Testable (テスト可能)</span>
+  完成判定できる
+  → 受け入れ基準必須
+
+<span class="comment">// アンチパターン例</span>
+
+<span class="kw">"システムを改善する"</span>
+  → V × E × S × T  全滅
+
+<span class="kw">"DBを移行する"</span>
+  → V （価値が遠い）
+  → 技術タスクではある</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    INVESTで<b>1つでも欠けるストーリーは要再考</b>。特に<b>E（見積可能）</b>と<b>S（小さい）</b>を満たさないものは、<b>分割するか</b>、<b>スパイク</b>（調査用の小タスク）として独立させるのが定番。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="accept">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>受け入れ基準</h2>
+    <span class="en">ACCEPTANCE CRITERIA</span>
+  </div>
+  <p class="pattern-desc">
+    ストーリーは<b>「これが満たされたら完成」</b>という条件、すなわち<b>受け入れ基準（Acceptance Criteria）</b>とペアで存在します。これがないストーリーは<b>完成の定義が曖昧</b>になり、永遠に終わらない地獄を生みます。受け入れ基準の書き方には<b>「Given-When-Then」</b>形式が定番です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">story.acceptance</span>
+      <span class="tag-desc">Given-When-Then 形式</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 受け入れ基準の書き方</div>
+        <div class="story-card">
+          <div class="story-label">USER STORY</div>
+          通販利用者として、注文履歴を1年分見たい
+        </div>
+        <div class="story-card">
+          <div class="story-label">ACCEPTANCE CRITERIA</div>
+          <b>Given</b> ログイン済みであり、過去注文がある場合<br>
+          <b>When</b> 「注文履歴」をタップ<br>
+          <b>Then</b> 直近1年の注文がカード形式で表示される
+        </div>
+        <div class="story-card">
+          <div class="story-label">CRITERIA 2</div>
+          <b>Given</b> 過去注文が一件もない場合<br>
+          <b>When</b> 「注文履歴」をタップ<br>
+          <b>Then</b> 「履歴がありません」とおすすめ商品が表示される
+        </div>
+        <p style="font-size:12px;margin-top:10px;color:var(--muted)">
+          ※ 1ストーリーに<b>2〜5個</b>の基準が定番。これがそのまま<b>テストケース</b>になる。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// Given-When-Then の構造</span>
+
+<span class="kw">Given</span> &lt;前提条件&gt;
+<span class="kw">When</span>  &lt;ユーザー操作&gt;
+<span class="kw">Then</span>  &lt;期待される結果&gt;
+
+<span class="comment">// なぜこの形式が良いか</span>
+
+<span class="ann">@明確さ</span>
+  状態 / 動作 / 結果
+  3要素に分かれる
+  → 曖昧さがなくなる
+
+<span class="ann">@テスト容易性</span>
+  そのままテストコードに
+  変換可能
+  → BDD (Behavior Driven
+     Development) と親和
+
+<span class="ann">@対話の促進</span>
+  顧客と一緒に書ける
+  「この場合どうなる？」
+  → エッジケース発掘
+
+<span class="comment">// 派生:Cucumber 等のツール</span>
+
+<span class="type">Feature</span>: 注文履歴表示
+  <span class="type">Scenario</span>: 過去注文あり
+    <span class="kw">Given</span> ログイン済み
+    <span class="kw">When</span>  履歴をタップ
+    <span class="kw">Then</span>  1年分が表示
+
+<span class="comment">// アンチパターン</span>
+
+<span class="kw">"使いやすいこと"</span>
+  → 主観的 / 測定不可能
+  → 基準として失格
+
+<span class="kw">"バグがないこと"</span>
+  → 当然 / 不要
+
+<span class="comment">// 鉄則</span>
+受け入れ基準は
+<span class="kw">客観的に検証できる</span>
+ものに限る</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    受け入れ基準は<b>「DoD（Doneの定義）」とは別物</b>です。<b>受け入れ基準</b>はストーリー固有の完成条件、<b>DoD</b>はチーム全体で全ストーリー共通の品質基準。<b>両方を満たして初めて「Done」</b>になります。混同しないこと。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="3c">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>3Cの法則</h2>
+    <span class="en">THREE C'S OF STORIES</span>
+  </div>
+  <p class="pattern-desc">
+    ユーザーストーリーには<b>3つのC</b>があります。<b>Card・Conversation・Confirmation</b>──Ron Jeffries が提唱した3要素。ストーリーは<b>「カードに書かれた文字列」だけではない</b>。会話と確認の<b>仕組み</b>を含めて初めてストーリーになる、という重要な視点です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">story.3c</span>
+      <span class="tag-desc">3Cの構造</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 3つのCの役割</div>
+<div class="diagram">  ┌──────────────────────────┐
+  │  C1: Card (カード)       │
+  │    短い文字列            │
+  │    会話のきっかけ        │
+  │    詳細は書かない        │
+  └──────────────────────────┘
+              │
+              ↓
+  ┌──────────────────────────┐
+  │  C2: Conversation (会話) │
+  │    POと開発者で話す      │
+  │    詳細はここで詰める    │
+  │    暗黙知を共有          │
+  └──────────────────────────┘
+              │
+              ↓
+  ┌──────────────────────────┐
+  │  C3: Confirmation (確認) │
+  │    受け入れ基準で検証    │
+  │    Doneを判定            │
+  └──────────────────────────┘
+
+  3つそろって<b>1つのストーリー</b></div>
+      </div>
+      <div class="code">
+<span class="comment">// なぜカードだけではダメか</span>
+
+<span class="ann">@紙きれの限界</span>
+  カードに書ける情報量は
+  限られる
+  → 全部書こうとすると
+    仕様書化する
+  → 重くなり、変更に弱い
+
+<span class="ann">@会話で補う</span>
+  POと開発者の対話
+  「これってどうすべき？」
+  「こういう場合は？」
+  → 暗黙知が共有される
+
+<span class="ann">@確認で完成</span>
+  受け入れ基準を満たしたか
+  POが判定
+  → Done が確定する
+
+<span class="comment">// アンチパターン</span>
+
+<span class="kw">"完璧なカード"症候群</span>
+  カードに詳細を全部書く
+  → 仕様書になる
+  → 会話が省略される
+  → ストーリーが死ぬ
+
+<span class="kw">"会話なし"症候群</span>
+  カードだけ渡される
+  「あとはよろしく」
+  → 開発者が想像で作る
+  → 結果がPO の想定と
+    かけ離れる
+
+<span class="comment">// 鉄則</span>
+
+<span class="kw">Card</span>: 短く
+<span class="kw">Conversation</span>: たっぷり
+<span class="kw">Confirmation</span>: 明確に
+
+3つの均衡が肝</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">裏技 —</div>
+    JIRA等のツール時代は<b>「カード」が消えやすい</b>のが落とし穴。ツールに長文を書けるからといって書きすぎると、「対話」の儀式が消えて<b>仕様書文化</b>に逆戻り。<b>意図的にカード本文を短く保つ</b>のがアジャイル熟達者の習慣です。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="point">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>ストーリーポイント</h2>
+    <span class="en">STORY POINTS</span>
+  </div>
+  <p class="pattern-desc">
+    アジャイルの<b>最大の発明</b>と言われるのがストーリーポイント。<b>「時間」ではなく「規模感」で見積もる</b>という発想の転換です。「このストーリーは3ポイント」と言われても何時間かわからない──それでいい、というのが革命的な点。なぜこれが機能するのか、見ていきましょう。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">story.points</span>
+      <span class="tag-desc">なぜ時間じゃないのか</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 時間 vs ポイント</div>
+        <table class="compare-table">
+          <tr><th>側面</th><th>時間見積もり</th><th>ポイント見積もり</th></tr>
+          <tr><td>単位</td><td>時・日</td><td>抽象的数値</td></tr>
+          <tr><td>属人性</td><td>あり（早い人/遅い人）</td><td>なし（チームの相対）</td></tr>
+          <tr><td>当たりやすさ</td><td>低い</td><td>比較的高い</td></tr>
+          <tr><td>感情的圧力</td><td>強い（締切意識）</td><td>弱い</td></tr>
+          <tr><td>使用尺度</td><td>連続値</td><td>フィボナッチ</td></tr>
+        </table>
+        <p style="font-size:12px;margin-top:14px;color:var(--muted)">
+          ※ <b>1, 2, 3, 5, 8, 13, 21, 40, 100</b> — フィボナッチ数列を使う。
+        </p>
+      </div>
+      <div class="code">
+<span class="comment">// ストーリーポイントの考え方</span>
+
+<span class="ann">@相対見積もり</span>
+  「あのストーリーが3なら
+   こっちは5」
+  → 絶対値は不要
+  → 比較は容易
+
+<span class="ann">@複合的な指標</span>
+  ポイント = 規模感 + 複雑度
+            + 不確実性
+  → 単純な時間ではない
+
+<span class="comment">// なぜフィボナッチ?</span>
+
+<span class="kw">1, 2, 3, 5, 8, 13, 21...</span>
+
+  ✓ 大きくなるほど誤差大
+   → 数値も粗くなって整合
+  ✓ 「5か6か」迷わない
+   (6は無いので)
+  ✓ 直感に合う
+
+<span class="comment">// 各値の目安</span>
+
+<span class="kw">1点</span>: 一瞬で終わる
+<span class="kw">2点</span>: 数時間
+<span class="kw">3点</span>: 半日〜1日
+<span class="kw">5点</span>: 1〜2日
+<span class="kw">8点</span>: 2〜3日
+<span class="kw">13点</span>: 大きい・分割検討
+<span class="kw">21点</span>: 必ず分割
+
+<span class="comment">// よくある勘違い</span>
+
+<span class="kw">"1点 = 1時間"</span>
+  → 時間に変換すると
+    ポイントの意味喪失
+  → 絶対NG
+
+<span class="comment">// 結論</span>
+<span class="kw">ポイントは</span>
+<span class="kw">時間に翻訳しない</span></div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    上層部から「<b>1ポイントは何時間？</b>」と聞かれたら、それは<b>アジャイル理解の浅さのサイン</b>。「ベロシティとして観測されますが、固定換算はしません」と説明すること。<b>固定換算した瞬間にポイントの意味は死にます</b>。これは別館 Vol.4 で深掘りします。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="poker">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>プランニングポーカー</h2>
+    <span class="en">PLANNING POKER</span>
+  </div>
+  <p class="pattern-desc">
+    複数人で見積もるとき、<b>声の大きい人</b>の意見に引きずられる──これが業界の長年の問題でした。これを解決するのが<b>プランニングポーカー</b>。James Grenning が2002年に発案し、Mike Cohn が広めた手法。<b>カードを一斉公開</b>することで、独立した判断を引き出します。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">estimation.poker</span>
+      <span class="tag-desc">ポーカーの進め方</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// プランニングポーカー手順</div>
+<div class="diagram">  STEP 1
+   POが1ストーリー紹介
+   「注文履歴を1年分表示」
+
+  STEP 2
+   開発者が質問・議論
+   仕様の不明点を解消
+
+  STEP 3
+   全員が同時にカード提示
+   ────────────────
+    [3]  [3]  [5]  [8]  [3]
+   ────────────────
+   バラついた！
+
+  STEP 4
+   最高と最低が理由を説明
+   「8の人」: 認証連携で複雑
+   「3の人」: シンプルだと思った
+   → 新情報共有される
+
+  STEP 5
+   再投票
+   ────────────────
+    [5]  [5]  [5]  [5]  [5]
+   ────────────────
+   一致した → 5点で確定</div>
+      </div>
+      <div class="code">
+<span class="comment">// なぜポーカーが優れるか</span>
+
+<span class="ann">@独立判断</span>
+  全員が同時に出す
+  → 他人に流されない
+  → 個々の見立てが現れる
+
+<span class="ann">@議論の起点</span>
+  バラついた所が
+  そのまま議論ポイント
+  → 認識ズレが見つかる
+
+<span class="ann">@楽しさ</span>
+  ゲーム的要素
+  → 単調にならない
+  → 全員参加が維持される
+
+<span class="comment">// よくあるトラブル</span>
+
+<span class="kw">先輩の声に合わせる</span>
+  → 「先輩が3なら3」
+  → 独立判断にならない
+  → ポーカーの意義喪失
+
+  対策: 経験少ない人から
+       理由を語る
+
+<span class="kw">議論が永遠</span>
+  → タイムボックス
+   (1ストーリー5分等)
+
+<span class="kw">単位の混乱</span>
+  「これって時間？」
+  → 都度教育
+
+<span class="comment">// ツール</span>
+
+<span class="kw">物理カード</span>
+  Mountain Goat Software 等
+<span class="kw">オンライン</span>
+  PlanITPoker, Scrum Poker
+<span class="kw">Slack 連携</span>
+  PokerBot 等</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">TIP —</div>
+    リモートワーク時代は<b>オンライン版</b>が便利。<b>PlanITPoker</b>や<b>Scrum Poker Online</b>はブラウザだけで動き、無料で使えます。<b>「みんなで一斉に出す」「最大と最小が説明する」</b>を守れば、物理かオンラインかは問いません。<span class="star">★★</span>
+  </div>
+</section>
+
+<section id="velocity">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>ベロシティ</h2>
+    <span class="en">VELOCITY</span>
+  </div>
+  <p class="pattern-desc">
+    ベロシティ＝<b>「1スプリントで完了したポイント合計」</b>。これがアジャイルの<b>進捗指標</b>です。日々の進捗報告でも、ガントチャートでもない。<b>実績ポイントの推移</b>で、チームの<b>本当のキャパシティ</b>を観測します。<b>「予測ではなく観測」</b>──これがベロシティ思考の核です。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">estimation.velocity</span>
+      <span class="tag-desc">ベロシティの計測と活用</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// ベロシティの推移例</div>
+<div class="diagram">  スプリント   完了ポイント
+  ─────────────────────────
+  Sprint 1     18 pt
+  Sprint 2     22 pt
+  Sprint 3     25 pt
+  Sprint 4     28 pt
+  Sprint 5     27 pt
+  Sprint 6     30 pt
+  ─────────────────────────
+
+  最近3回の平均: 28 pt
+  → 次スプリントは
+    25〜30ptを目安に積む
+
+  ━━━━━━━━━━━━━━━━━━━━━
+  ベロシティは
+  「目標」ではなく「観測」
+  ━━━━━━━━━━━━━━━━━━━━━</div>
+        <ul class="bullet" style="margin-top:14px">
+          <li>初回は<b>当てずっぽう</b>でよい</li>
+          <li>3スプリント目から<b>安定</b>し始める</li>
+          <li>5〜10スプリントで<b>真の値</b>が見える</li>
+        </ul>
+      </div>
+      <div class="code">
+<span class="comment">// ベロシティの活用</span>
+
+<span class="ann">@スプリント計画</span>
+  「平均28pt なら
+   今回も25〜30ptを上限に」
+  → 詰め込み過ぎ防止
+
+<span class="ann">@リリース予測</span>
+  残100pt / 平均28pt
+   = 約4スプリント
+  → 予測の根拠を持つ
+
+<span class="ann">@チーム健康診断</span>
+  ✓ 安定 → 健全
+  ✗ 乱高下 → 問題あり
+  ✗ 漸減 → 燃え尽き兆候
+
+<span class="comment">// よくある罠</span>
+
+<span class="kw">"ベロシティ目標化"</span>
+  「来期は30→40に！」
+  → ポイント水増しが横行
+  → 信頼性崩壊
+  → 絶対NG
+
+<span class="kw">"他チームと比較"</span>
+  「あのチームは50なのに」
+  → ポイントは相対値
+  → チーム間比較は無意味
+  → 絶対NG
+
+<span class="comment">// 鉄則</span>
+
+<span class="kw">ベロシティは</span>
+✓ 自チームの観測ツール
+✗ KPI / 目標 / 評価指標
+
+<span class="comment">// 別の指標との関係</span>
+バーンダウンチャート:
+スプリント内残量推移
+バーンアップチャート:
+累積完了量推移
+両方ともベロシティと併用</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">POINT —</div>
+    ベロシティを<b>「個人の評価」「チーム間比較」「経営目標」</b>に使うのは<b>絶対NG</b>。これをやると<b>ポイント水増し</b>が即発生し、見積もりが信頼できなくなります。「ベロシティは観測値であって目標ではない」──経営層への説明が、PO/SMの大事な仕事です。<span class="star">★★★</span>
+  </div>
+</section>
+
+<section id="split">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>ストーリー分割</h2>
+    <span class="en">STORY SPLITTING</span>
+  </div>
+  <p class="pattern-desc">
+    大きすぎるストーリーは<b>スプリントに入りません</b>。8点を超えるストーリーは分割を検討、13点なら必ず分割──これが定番。しかし「大きいから2つに切る」では不十分。<b>分割パターン</b>を知ると、ストーリー分割が<b>機械的</b>にできるようになります。
+  </p>
+  <div class="demo-card">
+    <div class="demo-head">
+      <span class="tag-name">story.splitting</span>
+      <span class="tag-desc">ストーリー分割の定番パターン</span>
+    </div>
+    <div class="demo-body">
+      <div class="panel">
+        <div class="panel-head">// 分割の定番8パターン</div>
+        <ul class="bullet">
+          <li><b>ワークフロー</b>：処理の段階で分ける（登録→確認→完了）</li>
+          <li><b>業務ルール</b>：単純ケース→例外ケース</li>
+          <li><b>努力レベル</b>：MVP→ベター→ベスト版</li>
+          <li><b>データ種別</b>：単一データ→複数データ対応</li>
+          <li><b>データ操作</b>：CRUD で分ける（読→書→更新→削除）</li>
+          <li><b>機能レベル</b>：MUST→SHOULD→COULD</li>
+          <li><b>パフォーマンス</b>：機能版→最適化版</li>
+          <li><b>ハッピーパス</b>：正常系→エッジケース</li>
+        </ul>
+      </div>
+      <div class="code">
+<span class="comment">// 具体例：注文機能の分割</span>
+
+<span class="kw">大ストーリー (13pt)</span>
+「ユーザーとして注文したい」
+
+<span class="comment">// パターン: ワークフロー分割</span>
+
+<span class="ann">@分割後1 (3pt)</span>
+  カートに商品を追加
+  → 単独で動くか
+
+<span class="ann">@分割後2 (3pt)</span>
+  カート画面で確認
+
+<span class="ann">@分割後3 (3pt)</span>
+  決済情報を入力
+
+<span class="ann">@分割後4 (5pt)</span>
+  注文確定
+
+<span class="comment">// パターン: 努力レベル分割</span>
+
+<span class="ann">@MVP (3pt)</span>
+  クレカ決済のみ対応
+
+<span class="ann">@ベター (5pt)</span>
+  + 電子マネー対応
+
+<span class="ann">@ベスト (8pt)</span>
+  + 銀行振込・コンビニ決済
+
+<span class="comment">// 重要：垂直分割</span>
+
+<span class="kw">水平分割</span>: UI 層・ロジ層
+  ↑ NG（動かないものになる）
+
+<span class="kw">垂直分割</span>: UI〜DB まで
+  ↑ OK（小さく動く）
+
+<span class="comment">// 鉄則</span>
+分割後の各ストーリーは
+<b>それぞれ価値を持つ</b>
+INVEST のVを維持</div>
+    </div>
+  </div>
+  <div class="tip">
+    <div class="tip-head">裏技 —</div>
+    SPIDR パターン（Spike・Path・Interface・Data・Rules）も有名な分割技法。Mike Cohn が体系化したもの。<b>「困ったらまずパス（業務フロー）で分けろ」</b>が現場の経験則です。<b>水平分割（DB層だけ・UI層だけ）は禁忌</b>──動くものにならないストーリーは価値を生みません。<span class="star">★★★</span>
+  </div>
+
+  <div class="tip" style="margin-top:48px;">
+    <div class="tip-head">NEXT STEP —</div>
+    ストーリーと見積もりの技術が揃いました。次の Vol.5 では、Scrumを<b>技術面から支える</b>──<b>XP（エクストリームプログラミング）</b>に踏み込みます。<b>TDD・ペアプロ・リファクタリング・継続的インテグレーション</b>。「Scrumで何を作るか・XPでどう作るか」と覚えると整理しやすいです。Scrumだけでは品質は守れません。XP的プラクティスを組み合わせて初めて<b>持続可能な開発</b>になります。なお別館 Vol.4 では「<b>なぜストーリーポイントは時間じゃないのか</b>」を認知科学から掘り下げます。
+  </div>
+</section>
+
+</main>
+
+<footer class="page-footer">
+  <span>AGILE REFERENCE — VOL.04 / USER STORIES &amp; ESTIMATION</span>
+  <span>◆ NEXT → VOL.05 EXTREME PROGRAMMING</span>
+</footer>
+
+</body>
+</html>
